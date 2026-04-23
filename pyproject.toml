@@ -22,8 +22,10 @@ dependencies = [
     "dash>=2.16.1",
     "dash-bootstrap-components>=1.5.0",
     "polars>=0.20.16",
-    "plotly>=5.20.0"
-    ]
+    "plotly>=5.20.0",
+    "bcrypt>=5.0.0",
+    "python-jose>=3.3.0",
+]
 
 classifiers = [
     'Programming Language :: Python :: 3.12',

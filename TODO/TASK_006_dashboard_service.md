@@ -50,6 +50,7 @@ Manage dashboards with config-driven architecture
   - filters: [{column, value}]
   - computed_fields: [{name, expression}]
   - aggregations: [{column, operation, alias}]
+  - group_by: [columns]
 
 ### Testing
 - Test dashboard creation

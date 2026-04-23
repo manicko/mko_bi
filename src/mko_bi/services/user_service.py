@@ -2,6 +2,7 @@ from typing import Optional
 from mko_bi.db.models.user import User as UserModel
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.core.security import hash_password
+from mko_bi.models.user import UserDB
 
 
 def create_user(email: str, password: str, role: str = "viewer") -> UserModel:
@@ -34,3 +35,23 @@ def create_user(email: str, password: str, role: str = "viewer") -> UserModel:
     }
 
     return UserRepository.create(user_data)
+
+
+def get_user_by_email(email: str) -> Optional[UserDB]:
+    """Get user by email.
+
+    Args:
+        email: User email address
+
+    Returns:
+        User model or None
+    """
+    user = UserRepository.get_by_email(email)
+    if user:
+        return UserDB(
+            id=user.id,
+            email=user.email,
+            password_hash=user.password_hash,
+            role=user.role,
+        )
+    return None
