@@ -20,6 +20,11 @@ def check_access(user_id: int, dashboard_id: int) -> bool:
     if user and user.role == "admin":
         return True
 
+    # Check if the user is the creator of the dashboard
+    dashboard = DashboardRepository.get(dashboard_id)
+    if dashboard and dashboard.user_id == user_id:
+        return True
+
     # Check specific access record
     access = AccessRepository.get(user_id, dashboard_id)
     return access is not None

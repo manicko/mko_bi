@@ -1,7 +1,9 @@
+import json
 from typing import List, Optional, Dict, Any
 from mko_bi.db.models.dashboard import Dashboard as DashboardModel
 from mko_bi.db.repositories.dashboard_repo import DashboardRepository
-from mko_bi.core.permissions import check_access
+from mko_bi.db.repositories.access_repo import AccessRepository
+from mko_bi.core.permissions import check_access, get_user_by_id
 
 
 def create_dashboard(
