@@ -25,6 +25,7 @@ dependencies = [
     "plotly>=5.20.0",
     "bcrypt>=5.0.0",
     "python-jose>=3.3.0",
+    "httpx>=0.28.1",
 ]
 
 classifiers = [
