@@ -62,14 +62,14 @@ async def register(request: RegisterRequest) -> LoginResponse:
         JWT access token for the new user
 
     Raises:
-        HTTPException: 400 if user already exists
+        HTTPException: 400 if user already exists or validation fails
     """
     try:
         user = create_user(request.email, request.password, request.role)
-    except ValueError as e:
+    except ValueError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e),
+            detail="Could not create user",
         )
 
     token = create_access_token({"user_id": user.id})
