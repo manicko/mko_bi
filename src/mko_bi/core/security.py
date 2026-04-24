@@ -1,6 +1,6 @@
 import bcrypt
 from typing import Optional, Dict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from jose import jwt
 from jose.exceptions import JWTError
 from mko_bi.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
@@ -15,8 +15,12 @@ def hash_password(password: str) -> str:
     Returns:
         Hashed password as string
     """
+    password_bytes = password.encode("utf-8")
+    # bcrypt has a 72 byte limit for passwords
+    if len(password_bytes) > 72:
+        password_bytes = password_bytes[:72]
     salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
+    hashed = bcrypt.hashpw(password_bytes, salt)
     return hashed.decode("utf-8")
 
 
@@ -30,7 +34,11 @@ def verify_password(password: str, hash_value: str) -> bool:
     Returns:
         True if password matches hash, False otherwise
     """
-    return bcrypt.checkpw(password.encode("utf-8"), hash_value.encode("utf-8"))
+    password_bytes = password.encode("utf-8")
+    # bcrypt has a 72 byte limit for passwords
+    if len(password_bytes) > 72:
+        password_bytes = password_bytes[:72]
+    return bcrypt.checkpw(password_bytes, hash_value.encode("utf-8"))
 
 
 def create_access_token(data: Dict) -> str:
@@ -43,7 +51,7 @@ def create_access_token(data: Dict) -> str:
         JWT token string
     """
     to_encode = data.copy()
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
