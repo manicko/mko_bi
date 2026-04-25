@@ -203,7 +203,164 @@
 
 ---
 
-## 15. UI (минимум)
+## 15. Database Schema (PostgreSQL)
+
+### 15.1 Core Tables
+
+#### `users` - Пользователи системы
+```sql
+users (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email           TEXT UNIQUE NOT NULL,
+    password_hash   TEXT NOT NULL,
+    role            TEXT NOT NULL CHECK (role IN ('admin', 'editor', 'viewer')),
+    is_active       BOOLEAN DEFAULT TRUE,
+    created_at      TIMESTAMP DEFAULT NOW()
+);
+```
+- **role**: `admin` | `editor` | `viewer`
+- Пароли хранятся как bcrypt hash
+
+#### `layouts` - UI композиция (без привязки к данным)
+```sql
+layouts (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name            TEXT UNIQUE NOT NULL,
+    definition      JSONB NOT NULL,
+    created_at      TIMESTAMP DEFAULT NOW()
+);
+```
+- `definition` JSONB структура:
+  ```json
+  {
+    "grid": [...],
+    "graphs": [...],
+    "filters": [...],
+    "bindings": [
+      { "filter": "year", "graphs": ["g1", "g2"] }
+    ]
+  }
+  ```
+
+#### `dashboards` - Дашборды
+```sql
+dashboards (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name            TEXT UNIQUE NOT NULL,
+    description     TEXT,
+    layout_id       UUID REFERENCES layouts(id),
+    created_by      UUID REFERENCES users(id),
+    created_at      TIMESTAMP DEFAULT NOW(),
+    updated_at      TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### `graphs` - Определения графиков
+```sql
+graphs (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    dashboard_id    UUID NOT NULL REFERENCES dashboards(id) ON DELETE CASCADE,
+    name            TEXT NOT NULL,
+    type            TEXT NOT NULL CHECK (type IN ('bar', 'line', 'pie', 'table')),
+    config          JSONB NOT NULL,  -- оси, цвета, настройки визуализации
+    dimensions      JSONB NOT NULL,  -- список измерений
+    metrics         JSONB NOT NULL,  -- список метрик
+    created_at      TIMESTAMP DEFAULT NOW(),
+    UNIQUE (dashboard_id, name)
+);
+```
+- **type**: `bar` | `line` | `pie` | `table`
+- `config` содержит: axis config, colors, display options
+- `dimensions`: список полей для группировки
+- `metrics`: список агрегируемых полей
+
+#### `filters` - Глобальные фильтры
+```sql
+filters (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name            TEXT UNIQUE NOT NULL,
+    type            TEXT NOT NULL,  -- 'select' | 'multiselect' | 'range' | 'date'
+    config          JSONB NOT NULL,
+    created_at      TIMESTAMP DEFAULT NOW()
+);
+```
+- Пример `config`: `{"field": "year", "source": "dims", "multi": false}`
+- Фильтры не принадлежат конкретному дашборду (переиспользуемые)
+
+#### `dashboard_access` - Управление доступом
+```sql
+dashboard_access (
+    user_id         UUID REFERENCES users(id) ON DELETE CASCADE,
+    dashboard_id    UUID REFERENCES dashboards(id) ON DELETE CASCADE,
+    permission      TEXT NOT NULL CHECK (permission IN ('view', 'edit', 'admin')),
+    PRIMARY KEY (user_id, dashboard_id)
+);
+```
+- **permission**: `view` | `edit` | `admin`
+
+#### `processing_configs` - Настройки обработки
+```sql
+processing_configs (
+    dashboard_id    UUID PRIMARY KEY REFERENCES dashboards(id) ON DELETE CASCADE,
+    settings        JSONB NOT NULL,
+    updated_at      TIMESTAMP DEFAULT NOW()
+);
+```
+- Пример: `{"loader": "sales_loader", "date_column": "event_date", "timezone": "UTC"}`
+- Только настройки, без бизнес-логики
+
+#### `aggregated_data` - Агрегированные данные (CORE)
+```sql
+aggregated_data (
+    id              BIGSERIAL PRIMARY KEY,
+    dashboard_id    UUID NOT NULL REFERENCES dashboards(id) ON DELETE CASCADE,
+    graph_id        UUID NOT NULL REFERENCES graphs(id) ON DELETE CASCADE,
+    dims            JSONB NOT NULL,  -- значения измерений
+    metrics         JSONB NOT NULL   -- значения метрик
+);
+```
+- 1 строка = 1 точка графика
+- `dims`: ключ-значение для фильтров и осей
+- `metrics`: ключ-значение для отображения
+
+#### `processing_logs` - Логи обработки
+```sql
+processing_logs (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    dashboard_id    UUID REFERENCES dashboards(id),
+    status          TEXT NOT NULL CHECK (status IN ('started', 'success', 'failed')),
+    message         TEXT,
+    started_at      TIMESTAMP,
+    finished_at     TIMESTAMP
+);
+```
+
+### 15.2 Indexes
+```sql
+CREATE INDEX idx_agg_graph_id ON aggregated_data(graph_id);
+CREATE INDEX idx_agg_dashboard_id ON aggregated_data(dashboard_id);
+CREATE INDEX idx_agg_dims_gin ON aggregated_data USING GIN (dims);
+CREATE INDEX idx_access_user ON dashboard_access(user_id);
+CREATE INDEX idx_access_dashboard ON dashboard_access(dashboard_id);
+```
+
+### 15.3 Data Principles
+- **Гибкость**: JSONB для dims/metrics — поддержка любых данных без миграций
+- **Производительность**: GIN индекс для фильтрации по dims
+- **Безопасность**: ON DELETE CASCADE для связанных данных
+- **Масштабируемость**: Отдельные таблицы под каждый дашборд не нужны — гибкая схема
+
+---
+
+## 16. Dashboard Layer (Dash)
+
+* читает агрегаты из backend/API
+* строит графики через Plotly
+* применяет фильтры
+
+---
+
+## 17. UI (минимум)
 
 * login page
 * dashboard list
@@ -211,7 +368,7 @@
 
 ---
 
-## 16. Logging
+## 18. Logging
 
 логируются:
 
@@ -228,7 +385,7 @@
 
 ---
 
-## 17. Testing
+## 19. Testing
 
 * pytest
 * покрытие:
