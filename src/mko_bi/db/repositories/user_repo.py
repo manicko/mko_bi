@@ -5,6 +5,7 @@
 """
 
 import logging
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -24,11 +25,11 @@ class UserRepository:
     """
 
     @classmethod
-    def get(cls, user_id: int, db: SessionLocal) -> user_model.User | None:
+    def get(cls, user_id: UUID, db: SessionLocal) -> user_model.User | None:
         """Получить пользователя по ID.
 
         Args:
-            user_id: Идентификатор пользователя.
+            user_id: Идентификатор пользователя (UUID).
             db: Сессия базы данных.
 
         Returns:
@@ -106,11 +107,11 @@ class UserRepository:
             raise
 
     @classmethod
-    def update(cls, user_id: int, db: SessionLocal, **kwargs) -> user_model.User | None:
+    def update(cls, user_id: UUID, db: SessionLocal, **kwargs) -> user_model.User | None:
         """Обновить данные пользователя.
 
         Args:
-            user_id: Идентификатор пользователя.
+            user_id: Идентификатор пользователя (UUID).
             db: Сессия базы данных.
             **kwargs: Поля для обновления.
 
@@ -140,11 +141,11 @@ class UserRepository:
             raise
 
     @classmethod
-    def delete(cls, user_id: int, db: SessionLocal) -> bool:
+    def delete(cls, user_id: UUID, db: SessionLocal) -> bool:
         """Удалить пользователя.
 
         Args:
-            user_id: Идентификатор пользователя.
+            user_id: Идентификатор пользователя (UUID).
             db: Сессия базы данных.
 
         Returns:

@@ -5,6 +5,7 @@
 """
 
 import logging
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -28,16 +29,16 @@ class AccessRepository:
     def grant_access(
         cls,
         db: SessionLocal,
-        user_id: int,
-        dashboard_id: int,
-        permission_level: str = "read",
+        user_id: UUID,
+        dashboard_id: UUID,
+        permission: str = "view",
     ) -> access_model.Access | None:
         """Предоставить пользователю доступ к дашборду.
 
         Args:
-            user_id: Идентификатор пользователя.
-            dashboard_id: Идентификатор дашборда.
-            permission_level: Уровень доступа (read/write/admin).
+            user_id: Идентификатор пользователя (UUID).
+            dashboard_id: Идентификатор дашборда (UUID).
+            permission: Уровень доступа (view/edit/admin).
             db: Сессия базы данных.
 
         Returns:
@@ -65,7 +66,7 @@ class AccessRepository:
             access_obj = access_model.Access(
                 user_id=user_id,
                 dashboard_id=dashboard_id,
-                permission_level=permission_level,
+                permission=permission,
             )
             db.add(access_obj)
             db.commit()
@@ -74,7 +75,7 @@ class AccessRepository:
                 "Право доступа предоставлено: user_id=%s, dashboard_id=%s, permission=%s",
                 user_id,
                 dashboard_id,
-                permission_level,
+                permission,
             )
             return access_obj
         except SQLAlchemyError as e:
@@ -88,12 +89,12 @@ class AccessRepository:
             raise
 
     @classmethod
-    def revoke_access(cls, user_id: int, dashboard_id: int, db: SessionLocal) -> bool:
+    def revoke_access(cls, user_id: UUID, dashboard_id: UUID, db: SessionLocal) -> bool:
         """Отозвать доступ пользователя к дашборду.
 
         Args:
-            user_id: Идентификатор пользователя.
-            dashboard_id: Идентификатор дашборда.
+            user_id: Идентификатор пользователя (UUID).
+            dashboard_id: Идентификатор дашборда (UUID).
             db: Сессия базы данных.
 
         Returns:
@@ -136,17 +137,17 @@ class AccessRepository:
 
     @classmethod
     def check_access(
-        cls, user_id: int, dashboard_id: int, db: SessionLocal
+        cls, user_id: UUID, dashboard_id: UUID, db: SessionLocal
     ) -> str | None:
         """Проверить уровень доступа пользователя к дашборду.
 
         Args:
-            user_id: Идентификатор пользователя.
-            dashboard_id: Идентификатор дашборда.
+            user_id: Идентификатор пользователя (UUID).
+            dashboard_id: Идентификатор дашборда (UUID).
             db: Сессия базы данных.
 
         Returns:
-            Уровень доступа (read/write/admin) или None, если доступа нет.
+            Уровень доступа (view/edit/admin) или None, если доступа нет.
 
         Raises:
             SQLAlchemyError: При ошибке базы данных.
@@ -163,9 +164,9 @@ class AccessRepository:
                     "Проверка доступа: user_id=%s, dashboard_id=%s, permission=%s",
                     user_id,
                     dashboard_id,
-                    access_obj.permission_level,
+                    access_obj.permission,
                 )
-                return access_obj.permission_level
+                return access_obj.permission
             logger.warning(
                 "Доступ отсутствует: user_id=%s, dashboard_id=%s",
                 user_id,
@@ -183,12 +184,12 @@ class AccessRepository:
 
     @classmethod
     def get_user_dashboards(
-        cls, user_id: int, db: SessionLocal
+        cls, user_id: UUID, db: SessionLocal
     ) -> list[dashboard_model.Dashboard]:
         """Получить все дашборды, доступные пользователю.
 
         Args:
-            user_id: Идентификатор пользователя.
+            user_id: Идентификатор пользователя (UUID).
             db: Сессия базы данных.
 
         Returns:

@@ -1,4 +1,7 @@
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict, EmailStr
+from typing import Literal
+from uuid import UUID
 
 
 class LoginRequest(BaseModel):
@@ -58,14 +61,14 @@ class TokenData(BaseModel):
     """Модель данных токена."""
 
     email: EmailStr | None = None
-    user_id: int | None = None
+    user_id: UUID | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
         json_schema_extra={
             "example": {
                 "email": "user@example.com",
-                "user_id": 1,
+                "user_id": "550e8400-e29b-41d4-a716-446655440000",
             }
         },
     )
@@ -89,17 +92,17 @@ class RefreshRequest(BaseModel):
 class AccessCheck(BaseModel):
     """Модель проверки доступа."""
 
-    user_id: int
-    dashboard_id: int
-    required_permission: str | None = "read"
+    user_id: UUID
+    dashboard_id: UUID
+    required_permission: str | None = "view"
 
     model_config = ConfigDict(
         from_attributes=True,
         json_schema_extra={
             "example": {
-                "user_id": 1,
-                "dashboard_id": 1,
-                "required_permission": "read",
+                "user_id": "550e8400-e29b-41d4-a716-446655440000",
+                "dashboard_id": "550e8400-e29b-41d4-a716-446655440001",
+                "required_permission": "view",
             }
         },
     )
@@ -108,17 +111,17 @@ class AccessCheck(BaseModel):
 class AccessGrant(BaseModel):
     """Модель предоставления доступа."""
 
-    user_id: int
-    dashboard_id: int
-    permission_level: str = "read"
+    user_id: UUID
+    dashboard_id: UUID
+    permission_level: str = "view"
 
     model_config = ConfigDict(
         from_attributes=True,
         json_schema_extra={
             "example": {
-                "user_id": 1,
-                "dashboard_id": 1,
-                "permission_level": "read",
+                "user_id": "550e8400-e29b-41d4-a716-446655440000",
+                "dashboard_id": "550e8400-e29b-41d4-a716-446655440001",
+                "permission_level": "view",
             }
         },
     )

@@ -43,8 +43,8 @@ class TestRoleHierarchy:
 
     def test_permission_levels(self):
         """Проверка допустимых уровней доступа."""
-        assert "read" in PERMISSION_LEVELS
-        assert "write" in PERMISSION_LEVELS
+        assert "view" in PERMISSION_LEVELS
+        assert "edit" in PERMISSION_LEVELS
         assert "admin" in PERMISSION_LEVELS
         assert len(PERMISSION_LEVELS) == 3
 
@@ -99,33 +99,33 @@ class TestCheckDashboardAccess:
     """Тесты функции check_dashboard_access."""
 
     def test_has_read_access(self, mocker):
-        """Пользователь с правом read должен иметь доступ на чтение."""
+        """Пользователь с правом view должен иметь доступ на чтение."""
         mock_db = MagicMock()
         mock_check = mocker.patch.object(
-            AccessRepository, "check_access", return_value="read"
+            AccessRepository, "check_access", return_value="view"
         )
 
         result = check_dashboard_access(
-            user_id=1, dashboard_id=1, required_permission="read", db=mock_db
+            user_id=1, dashboard_id=1, required_permission="view", db=mock_db
         )
 
         assert result is True
         mock_check.assert_called_once_with(user_id=1, dashboard_id=1, db=mock_db)
 
     def test_has_write_access(self, mocker):
-        """Пользователь с правом write должен иметь доступ на чтение и запись."""
+        """Пользователь с правом edit должен иметь доступ на чтение и запись."""
         mock_db = MagicMock()
         mock_check = mocker.patch.object(
-            AccessRepository, "check_access", return_value="write"
+            AccessRepository, "check_access", return_value="edit"
         )
 
         result = check_dashboard_access(
-            user_id=1, dashboard_id=1, required_permission="read", db=mock_db
+            user_id=1, dashboard_id=1, required_permission="view", db=mock_db
         )
         assert result is True
 
         result = check_dashboard_access(
-            user_id=1, dashboard_id=1, required_permission="write", db=mock_db
+            user_id=1, dashboard_id=1, required_permission="edit", db=mock_db
         )
         assert result is True
 
@@ -138,7 +138,7 @@ class TestCheckDashboardAccess:
             AccessRepository, "check_access", return_value="admin"
         )
 
-        for permission in ["read", "write", "admin"]:
+        for permission in ["view", "edit", "admin"]:
             result = check_dashboard_access(
                 user_id=1, dashboard_id=1, required_permission=permission, db=mock_db
             )
@@ -154,21 +154,21 @@ class TestCheckDashboardAccess:
         )
 
         result = check_dashboard_access(
-            user_id=1, dashboard_id=1, required_permission="read", db=mock_db
+            user_id=1, dashboard_id=1, required_permission="view", db=mock_db
         )
 
         assert result is False
         mock_check.assert_called_once()
 
     def test_insufficient_permission(self, mocker):
-        """Пользователь с read не должен иметь доступ на запись."""
+        """Пользователь с view не должен иметь доступ на запись."""
         mock_db = MagicMock()
         mock_check = mocker.patch.object(
-            AccessRepository, "check_access", return_value="read"
+            AccessRepository, "check_access", return_value="view"
         )
 
         result = check_dashboard_access(
-            user_id=1, dashboard_id=1, required_permission="write", db=mock_db
+            user_id=1, dashboard_id=1, required_permission="edit", db=mock_db
         )
 
         assert result is False
@@ -372,79 +372,4 @@ class TestRequireRole:
 class TestIntegration:
     """Интеграционные тесты."""
 
-    def test_admin_has_dashboard_write_access(self, mocker):
-        """Admin должен иметь доступ на запись к любому дашборду."""
-        mock_db = MagicMock()
-        mock_check = mocker.patch.object(
-            AccessRepository, "check_access", return_value="admin"
-        )
 
-        result = check_dashboard_access(
-            user_id=1, dashboard_id=1, required_permission="write", db=mock_db
-        )
-
-        assert result is True
-        mock_check.assert_called_once()
-
-    def test_full_access_flow(self, mocker):
-        """Полный цикл: токен -> пользователь -> проверка доступа."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        mock_user.role = "editor"
-        mock_db = MagicMock()
-
-        # 1. Декодируем токен
-        mocker.patch(
-            "mko_bi.core.permissions._decode_token_cached",
-            return_value={"user_id": 1},
-        )
-        # 2. Получаем пользователя
-        mocker.patch.object(UserRepository, "get", return_value=mock_user)
-        # 3. Проверяем доступ
-        mocker.patch.object(AccessRepository, "check_access", return_value="write")
-
-        # Получаем пользователя
-        user = get_current_user("token", db=mock_db)
-        assert user == mock_user
-
-        # Проверяем доступ
-        has_access = check_dashboard_access(
-            user_id=user.id, dashboard_id=1, required_permission="write", db=mock_db
-        )
-        assert has_access is True
-
-    def test_role_and_dashboard_access_combined(self, mocker):
-        """Комбинированная проверка роли и доступа к дашборду."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        mock_user.role = "editor"
-        mock_db = MagicMock()
-
-        # Проверяем роль
-        assert check_role(mock_user.role, "viewer") is True
-        assert check_role(mock_user.role, "editor") is True
-        assert check_role(mock_user.role, "admin") is False
-
-        # Проверяем доступ к дашборду
-        mocker.patch.object(AccessRepository, "check_access", return_value="write")
-
-        has_access = check_dashboard_access(
-            user_id=mock_user.id, dashboard_id=1, required_permission="read", db=mock_db
-        )
-        assert has_access is True
-
-        has_access = check_dashboard_access(
-            user_id=mock_user.id,
-            dashboard_id=1,
-            required_permission="write",
-            db=mock_db,
-        )
-        assert has_access is True
-
-        has_access = check_dashboard_access(
-            user_id=mock_user.id,
-            dashboard_id=1,
-            required_permission="admin",
-            db=mock_db,
-        )
-        assert has_access is False

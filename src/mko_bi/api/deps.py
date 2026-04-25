@@ -302,7 +302,7 @@ def require_dashboard_read_access(
     if not check_dashboard_access(
         user_id=user.id,
         dashboard_id=dashboard_id,
-        required_permission="read",
+        required_permission="view",
         db=db,
     ):
         logger.warning(
@@ -346,7 +346,7 @@ def require_dashboard_write_access(
     if not check_dashboard_access(
         user_id=user.id,
         dashboard_id=dashboard_id,
-        required_permission="write",
+        required_permission="edit",
         db=db,
     ):
         logger.warning(

@@ -48,7 +48,7 @@ ROLE_LEVELS: dict[str, int] = {
 }
 
 # Уровни доступа и минимальная роль для каждого
-PERMISSION_LEVELS = {"read", "write", "admin"}
+PERMISSION_LEVELS = {"view", "edit", "admin"}
 
 
 # --- Исключения ---

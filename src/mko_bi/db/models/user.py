@@ -1,85 +1,94 @@
 from datetime import datetime
+from uuid import uuid4, UUID
+from typing import TYPE_CHECKING
+import enum
 
 from sqlalchemy import (
-    Column,
+    Boolean,
     DateTime,
     Enum,
-    Integer,
-    String,
     Index,
+    String,
+    text,
 )
-from sqlalchemy.orm import Mapped, relationship
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mko_bi.db.base import Base
 
+if TYPE_CHECKING:
+    from mko_bi.models.access import DashboardAccess
+    from mko_bi.models.dashboard import DashboardConfig
+
 
 class User(Base):
-    """Модель пользователя системы BI Dashboard.
-
-    Атрибуты:
-        id: Уникальный идентификатор пользователя.
-        email: Email пользователя (уникальный).
-        password_hash: Хэш пароля (bcrypt).
-        role: Роль пользователя (admin/editor/viewer).
-        created_at: Дата и время создания записи.
-        accesses: Связь с правами доступа к дашбордам.
-
-    Индексы:
-        - Уникальный индекс на email
-        - Индекс на role для фильтрации по ролям
-    """
+    """Модель пользователя системы BI Dashboard."""
 
     __tablename__ = "users"
 
-    id: Mapped[int] = Column(Integer, primary_key=True, index=True)
-    email: Mapped[str] = Column(
+    id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        primary_key=True,
+        default=uuid4,
+        server_default=text("gen_random_uuid()"),
+    )
+
+    email: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
         unique=True,
     )
-    password_hash: Mapped[str] = Column(
+
+    password_hash: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
     )
-    role: Mapped[str] = Column(
+
+    role: Mapped[UserRoleEnum] = mapped_column(
         Enum(
-            "admin",
-            "editor",
-            "viewer",
+            UserRoleEnum,
             name="user_role",
-            create_constraint=False,
         ),
         nullable=False,
-        default="viewer",
+        default=UserRoleEnum.viewer,
+        server_default=text("'viewer'"),
     )
-    created_at: Mapped[datetime] = Column(
-        DateTime,
+
+    is_active: Mapped[bool] = mapped_column(
+        Boolean,
         nullable=False,
-        default=datetime.utcnow,
+        default=True,
+        server_default=text("true"),
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("NOW()"),
     )
 
     # Связь с правами доступа
-    accesses: Mapped[set["Access"]] = relationship(  # noqa: F821
-        "Access",
+    accesses: Mapped[list["DashboardAccess"]] = relationship(
+        "DashboardAccess",
         back_populates="user",
         cascade="all, delete-orphan",
         lazy="selectin",
     )
 
-    # Связь с дашбордами через права доступа
-    dashboards: Mapped[set["Dashboard"]] = relationship(  # noqa: F821
+    # Связь с дашбордами через таблицу доступа
+    dashboards: Mapped[list["DashboardConfig"]] = relationship(
         "Dashboard",
-        secondary="accesses",
+        secondary="dashboard_access",
         back_populates="users",
         lazy="selectin",
     )
 
     def __repr__(self) -> str:
-        return f"<User(id={self.id}, email='{self.email}', role='{self.role}')>"
+        return f"<User id={self.id} email={self.email} role={self.role.value}>"
 
     def __str__(self) -> str:
         return self.email
 
 
-# Индекс на role для быстрого фильтрации
+# Индекс на роль (если часто фильтруешь пользователей по ролям)
 Index("ix_users_role", User.role)

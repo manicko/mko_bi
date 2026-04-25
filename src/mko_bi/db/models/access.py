@@ -1,73 +1,75 @@
+from typing import TYPE_CHECKING
+from uuid import UUID
+
 from sqlalchemy import (
-    Column,
     Enum,
     ForeignKey,
-    Integer,
     Index,
+    PrimaryKeyConstraint,
+    text,
 )
-from sqlalchemy.orm import Mapped, relationship
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mko_bi.db.base import Base
+from mko_bi.models.user_roles import PermissionEnum
+
+if TYPE_CHECKING:
+    from mko_bi.models.dashboard import DashboardConfig
+    from mko_bi.models.user import UserBase
 
 
-class Access(Base):
-    """Модель прав доступа пользователя к дашборду.
+class DashboardAccess(Base):
+    """Модель прав доступа пользователя к дашборду."""
 
-    Атрибуты:
-        id: Уникальный идентификатор права доступа.
-        user_id: ID пользователя (внешний ключ).
-        dashboard_id: ID дашборда (внешний ключ).
-        permission_level: Уровень доступа (read/write/admin).
-        user: Связь с моделью пользователя.
-        dashboard: Связь с моделью дашборда.
+    __tablename__ = "dashboard_access"
 
-    Индексы:
-        - Уникальный индекс на комбинацию user_id и dashboard_id
-        - Индекс на user_id
-        - Индекс на dashboard_id
-    """
-
-    __tablename__ = "accesses"
-
-    id: Mapped[int] = Column(Integer, primary_key=True, index=True)
-    user_id: Mapped[int] = Column(
-        Integer,
+    user_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
         nullable=False,
     )
-    dashboard_id: Mapped[int] = Column(
-        Integer,
+
+    dashboard_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
         ForeignKey("dashboards.id", ondelete="CASCADE"),
         nullable=False,
     )
-    permission_level: Mapped[str] = Column(
+
+    permission: Mapped[PermissionEnum] = mapped_column(
         Enum(
-            "read",
-            "write",
-            "admin",
-            name="access_permission_level",
-            create_constraint=False,
+            PermissionEnum,
+            name="dashboard_permission_level",
         ),
         nullable=False,
-        default="read",
+        default=PermissionEnum.view,
+        server_default=text("'view'"),
     )
 
     # Связи
+    user: Mapped["UserBase"] = relationship(
+        "User",
+        back_populates="accesses",
+    )
 
-    dashboard: Mapped["Dashboard"] = relationship(  # noqa: F821
+    dashboard: Mapped["DashboardConfig"] = relationship(
         "Dashboard",
         back_populates="accesses",
     )
 
+    __table_args__ = (
+        PrimaryKeyConstraint(
+            "user_id",
+            "dashboard_id",
+            name="dashboard_access_pkey",
+        ),
+        Index("idx_access_dashboard", "dashboard_id"),
+    )
+
     def __repr__(self) -> str:
         return (
-            f"<Access(id={self.id}, user_id={self.user_id}, "
-            f"dashboard_id={self.dashboard_id}, "
-            f"permission='{self.permission_level}')>"
+            f"<DashboardAccess "
+            f"user_id={self.user_id} "
+            f"dashboard_id={self.dashboard_id} "
+            f"permission={self.permission.value}>"
         )
-
-
-# Индексы для быстрого поиска
-Index("ix_accesses_user_id", Access.user_id)
-Index("ix_accesses_dashboard_id", Access.dashboard_id)
-Index("ix_accesses_permission_level", Access.permission_level)

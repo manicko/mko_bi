@@ -5,6 +5,7 @@
 """
 
 import logging
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -25,12 +26,12 @@ class DashboardRepository:
 
     @classmethod
     def get(
-        cls, dashboard_id: int, db: SessionLocal
+        cls, dashboard_id: UUID, db: SessionLocal
     ) -> dashboard_model.Dashboard | None:
         """Получить дашборд по ID.
 
         Args:
-            dashboard_id: Идентификатор дашборда.
+            dashboard_id: Идентификатор дашборда (UUID).
             db: Сессия базы данных.
 
         Returns:
@@ -56,12 +57,12 @@ class DashboardRepository:
 
     @classmethod
     def get_by_user(
-        cls, user_id: int, db: SessionLocal
+        cls, user_id: UUID, db: SessionLocal
     ) -> list[dashboard_model.Dashboard]:
         """Получить все дашборды, доступные пользователю.
 
         Args:
-            user_id: Идентификатор пользователя.
+            user_id: Идентификатор пользователя (UUID).
             db: Сессия базы данных.
 
         Returns:
@@ -125,12 +126,12 @@ class DashboardRepository:
 
     @classmethod
     def update(
-        cls, dashboard_id: int, db: SessionLocal, **kwargs
+        cls, dashboard_id: UUID, db: SessionLocal, **kwargs
     ) -> dashboard_model.Dashboard | None:
         """Обновить данные дашборда.
 
         Args:
-            dashboard_id: Идентификатор дашборда.
+            dashboard_id: Идентификатор дашборда (UUID).
             db: Сессия базы данных.
             **kwargs: Поля для обновления.
 
@@ -162,11 +163,11 @@ class DashboardRepository:
             raise
 
     @classmethod
-    def delete(cls, dashboard_id: int, db: SessionLocal) -> bool:
+    def delete(cls, dashboard_id: UUID, db: SessionLocal) -> bool:
         """Удалить дашборд.
 
         Args:
-            dashboard_id: Идентификатор дашборда.
+            dashboard_id: Идентификатор дашборда (UUID).
             db: Сессия базы данных.
 
         Returns:

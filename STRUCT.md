@@ -93,13 +93,14 @@ C:\py_exp\mko_bi
 ├── TASK_TEMPLATE.md
 ├── TASKS.md
 ├── tests
+│   ├── conftest.py
 │   ├── test_deps.py
 │   ├── test_permissions.py
 │   ├── test_pydantic_models.py
 │   └── test_security.py
 ├── TODO
 │   ├── PLAN.md
-│   ├── TASK_001_config_DONE.md
+│   ├── TASK_001_config_CHECKED.md
 │   ├── TASK_002_base_models_DONE.md
 │   ├── TASK_003_pydantic_models.md.DONE
 │   ├── TASK_004_repositories_DONE.md

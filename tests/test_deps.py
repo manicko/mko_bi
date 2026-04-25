@@ -328,7 +328,7 @@ class TestRequireDashboardAccess:
 
         assert result == mock_user
         mock_check.assert_called_once_with(
-            user_id=1, dashboard_id=1, required_permission="read", db=mock_db
+            user_id=1, dashboard_id=1, required_permission="view", db=mock_db
         )
 
     def test_read_access_denied(self, mocker):
