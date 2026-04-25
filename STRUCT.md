@@ -1,9 +1,12 @@
 C:\py_exp\mko_bi
+├── check_tables.py
+├── create_db.sql
 ├── data
 │   ├── logs
 │   ├── pgre
 │   └── tmp_uploads
 ├── DB_STRUCTURE.md
+├── DBSTR.md
 ├── fix_deps.py
 ├── fix_test2.py
 ├── fix_tests.py
@@ -89,20 +92,11 @@ C:\py_exp\mko_bi
 ├── STRUCT.md
 ├── TASK_TEMPLATE.md
 ├── TASKS.md
-├── test_database.db
 ├── tests
-│   ├── conftest.py
-│   ├── test_auth_api.py
-│   ├── test_auth_service.py
-│   ├── test_dashboard_service.py
 │   ├── test_deps.py
-│   ├── test_models.py
 │   ├── test_permissions.py
 │   ├── test_pydantic_models.py
-│   ├── test_repositories.py
-│   ├── test_security.py
-│   ├── test_session.py
-│   └── test_user_service.py
+│   └── test_security.py
 ├── TODO
 │   ├── PLAN.md
 │   ├── TASK_001_config_DONE.md
