@@ -1,21 +1,63 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship
+from datetime import datetime
+from typing import Set
+
+from sqlalchemy import Column, DateTime, Index, Integer, String, Text
+from sqlalchemy.orm import Mapped, relationship
+
 from mko_bi.db.base import Base
 
 
 class Dashboard(Base):
-    """Dashboard model.
+    """Модель дашборда BI-системы.
 
-    Represents a dashboard with its configuration.
+    Атрибуты:
+        id: Уникальный идентификатор дашборда.
+        name: Название дашборда.
+        config: JSON-конфигурация дашборда (структура графиков, фильтров и т.д.).
+        created_at: Дата и время создания записи.
+        accesses: Связь с правами доступа пользователей.
+
+    Индексы:
+        - Уникальный индекс на name
     """
 
     __tablename__ = "dashboards"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
-    config = Column(String, nullable=False)  # JSON string
-    user_id = Column(Integer, ForeignKey("users.id"))
+    id: Mapped[int] = Column(Integer, primary_key=True, index=True)
+    name: Mapped[str] = Column(
+        String(255),
+        nullable=False,
+        unique=True,
+    )
+    config: Mapped[str] = Column(
+        Text,
+        nullable=False,
+        default="{}",
+    )
+    created_at: Mapped[datetime] = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
 
-    # Relationships
-    user = relationship("User")
-    accesses = relationship("Access", back_populates="dashboard")
+    # Связь с правами доступа
+    accesses: Mapped[Set["Access"]] = relationship(
+        "Access",
+        back_populates="dashboard",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+    # Связь с пользователями через права доступа
+    users: Mapped[Set["User"]] = relationship(
+        "User",
+        secondary="accesses",
+        back_populates="dashboards",
+        lazy="selectin",
+    )
+
+    def __repr__(self) -> str:
+        return f"<Dashboard(id={self.id}, name='{self.name}')>"
+
+    def __str__(self) -> str:
+        return self.name

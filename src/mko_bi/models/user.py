@@ -1,30 +1,97 @@
-from pydantic import BaseModel, EmailStr
+from datetime import datetime
+from typing import Optional
+from pydantic import BaseModel, ConfigDict, EmailStr
 from typing import Literal
 
 
-class UserCreate(BaseModel):
+class UserBase(BaseModel):
+    """Базовая модель пользователя."""
+
     email: EmailStr
+    role: Literal["admin", "editor", "viewer"]
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "email": "user@example.com",
+                "role": "viewer",
+            }
+        },
+    )
+
+
+class UserCreate(UserBase):
+    """Модель для создания нового пользователя."""
+
     password: str
-    role: Literal["admin", "editor", "viewer"]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "email": "user@example.com",
+                "password": "secure_password123",
+                "role": "viewer",
+            }
+        },
+    )
 
 
-class UserRead(BaseModel):
+class UserRead(UserBase):
+    """Модель для чтения данных пользователя (без пароля)."""
+
     id: int
-    email: EmailStr
-    role: Literal["admin", "editor", "viewer"]
+    created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "id": 1,
+                "email": "user@example.com",
+                "role": "viewer",
+                "created_at": "2026-04-24T16:02:46+03:00",
+            }
+        },
+    )
 
 
-class UserDB(BaseModel):
+class UserDB(UserBase):
+    """Модель пользователя для базы данных (с хэшем пароля)."""
+
     id: int
-    email: EmailStr
     password_hash: str
-    role: Literal["admin", "editor", "viewer"]
+    created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "id": 1,
+                "email": "user@example.com",
+                "password_hash": "$2b$12$examplehash",
+                "role": "viewer",
+                "created_at": "2026-04-24T16:02:46+03:00",
+            }
+        },
+    )
+
+
+class UserUpdate(BaseModel):
+    """Модель для обновления пользователя."""
+
+    email: Optional[EmailStr] = None
+    role: Optional[Literal["admin", "editor", "viewer"]] = None
+    password: Optional[str] = None
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "email": "newemail@example.com",
+                "role": "editor",
+                "password": "new_secure_password",
+            }
+        },
+    )

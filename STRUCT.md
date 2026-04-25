@@ -1,15 +1,24 @@
-C:\py_dev\mko_bi
+C:\py_exp\mko_bi
 ├── data
+│   ├── logs
 │   ├── pgre
 │   └── tmp_uploads
+├── DB_STRUCTURE.md
+├── fix_deps.py
+├── fix_test2.py
+├── fix_tests.py
 ├── IMPLEMENTATION_COMPLETE.md
 ├── IMPLEMENTATION_SUMMARY.md
+├── IMPLEMENTATION_SUMMARY_DASHBOARD_SERVICE.md
 ├── nginx
 │   └── nginx.conf
 ├── 'Pydantic TASKS.md'
 ├── pyproject.toml
 ├── SPEC.md
 ├── src
+│   ├── data
+│   │   ├── logs
+│   │   └── tmp_uploads
 │   └── mko_bi
 │       ├── api
 │       │   ├── deps.py
@@ -71,6 +80,8 @@ C:\py_dev\mko_bi
 │       │   ├── dashboard_service.py
 │       │   ├── data_service.py
 │       │   └── user_service.py
+│       ├── settings
+│       │   └── app.yaml
 │       └── utils
 │           ├── exceptions.py
 │           ├── file_utils.py
@@ -78,49 +89,46 @@ C:\py_dev\mko_bi
 ├── STRUCT.md
 ├── TASK_TEMPLATE.md
 ├── TASKS.md
-├── test_comprehensive.py
-├── test_imports.py
-├── test_models.py
-├── test_security.py
-├── test_security_only.py
-├── test_user_service.py
+├── test_database.db
 ├── tests
-│   ├── api
-│   │   ├── test_auth.py
-│   │   ├── test_upload.py
-│   │   └── test_users.py
 │   ├── conftest.py
-│   ├── data
-│   │   ├── test_pipeline.py
-│   │   └── test_processing.py
-│   └── services
-│       ├── test_auth_service.py
-│       ├── test_dashboard_service.py
-│       └── test_user_service.py
+│   ├── test_auth_api.py
+│   ├── test_auth_service.py
+│   ├── test_dashboard_service.py
+│   ├── test_deps.py
+│   ├── test_models.py
+│   ├── test_permissions.py
+│   ├── test_pydantic_models.py
+│   ├── test_repositories.py
+│   ├── test_security.py
+│   ├── test_session.py
+│   └── test_user_service.py
 ├── TODO
-│   ├── IMPLEMENTATION_SUMMARY.md
 │   ├── PLAN.md
-│   ├── TASK_001_hash_password_DONE.md
-│   ├── TASK_002_jwt_token_DONE.md
-│   ├── TASK_003_login_endpoint_DONE.md
-│   ├── TASK_004_user_service.md
-│   ├── TASK_005_users_api.md
-│   ├── TASK_006_dashboard_service.md
-│   ├── TASK_007_dashboards_api.md
-│   ├── TASK_008_access_control.md
-│   ├── TASK_009_csv_upload.md
-│   ├── TASK_010_csv_loading.md
-│   ├── TASK_011_data_validation.md
-│   ├── TASK_012_data_pipeline.md
-│   ├── TASK_013_data_transformations.md
-│   ├── TASK_014_aggregations_registry.md
-│   ├── TASK_015_data_storage.md
-│   ├── TASK_016_data_retrieval.md
-│   ├── TASK_017_dashboard_base.md
-│   ├── TASK_018_dashboard_registry.md
-│   ├── TASK_019_bar_chart.md
-│   ├── TASK_020_dot_chart.md
-│   ├── TASK_021_filters.md
-│   ├── TASK_022_layout.md
-│   └── TASK_023_implementation.md
+│   ├── TASK_001_config_DONE.md
+│   ├── TASK_002_base_models_DONE.md
+│   ├── TASK_003_pydantic_models.md.DONE
+│   ├── TASK_004_repositories_DONE.md
+│   ├── TASK_005_security_DONE.md
+│   ├── TASK_006_auth_service_DONE.md
+│   ├── TASK_007_user_service.md.DONE
+│   ├── TASK_008_dashboard_service.md.DONE
+│   ├── TASK_009_permissions_DONE.md
+│   ├── TASK_010_auth_api.md
+│   ├── TASK_011_users_api.md
+│   ├── TASK_012_dashboards_api.md
+│   ├── TASK_013_upload_api.md
+│   ├── TASK_014_data_api.md
+│   ├── TASK_015_data_loader.md
+│   ├── TASK_016_data_processing.md
+│   ├── TASK_017_data_storage.md
+│   ├── TASK_018_dashboard_base.md
+│   ├── TASK_019_chart_components.md
+│   ├── TASK_020_dashboard_impl.md
+│   ├── TASK_021_main_app.md
+│   ├── TASK_022_utils.md
+│   ├── TASK_023_tests_models_repos.md
+│   ├── TASK_024_tests_services.md
+│   ├── TASK_025_tests_api.md
+│   └── TASK_026_tests_data_pipeline.md
 └── uv.lock

@@ -1,90 +1,203 @@
-from typing import Optional
-from sqlalchemy.orm import Session
+"""Репозиторий для работы с пользователями.
 
-from mko_bi.db.models.user import User as UserModel
-from mko_bi.db.base import SessionLocal
+Предоставляет методы CRUD для модели User.
+Все методы используют контекстный менеджер сессий и обрабатывают ошибки.
+"""
+
+import logging
+from typing import Optional
+
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+
+from mko_bi.db.models import user as user_model
+from mko_bi.db.session import SessionLocal
+
+logger = logging.getLogger(__name__)
 
 
 class UserRepository:
-    """Repository for User model operations."""
+    """Репозиторий для операций с пользователями.
+
+    Предоставляет методы для создания, чтения, обновления и удаления
+    пользователей в базе данных. Все операции выполняются в рамках
+    отдельной сессии базы данных с автоматическим управлением транзакциями.
+    """
 
     @classmethod
-    def get(cls, user_id: int) -> Optional[UserModel]:
-        """Get user by ID.
+    def get(cls, user_id: int, db: SessionLocal) -> Optional[user_model.User]:
+        """Получить пользователя по ID.
 
         Args:
-            user_id: User ID
+            user_id: Идентификатор пользователя.
+            db: Сессия базы данных.
 
         Returns:
-            User model or None
+            Модель пользователя или None, если не найден.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
         """
-        with SessionLocal() as session:
-            return session.query(UserModel).filter(UserModel.id == user_id).first()
+        try:
+            result = db.execute(
+                select(user_model.User).where(user_model.User.id == user_id)
+            ).scalar_one_or_none()
+            if result:
+                logger.info("Пользователь получен: id=%s", user_id)
+            else:
+                logger.warning("Пользователь не найден: id=%s", user_id)
+            return result
+        except SQLAlchemyError as e:
+            logger.error("Ошибка при получении пользователя id=%s: %s", user_id, e)
+            raise
 
     @classmethod
-    def get_by_email(cls, email: str) -> Optional[UserModel]:
-        """Get user by email.
+    def get_by_email(cls, email: str, db: SessionLocal) -> Optional[user_model.User]:
+        """Получить пользователя по email.
 
         Args:
-            email: User email
+            email: Email пользователя.
+            db: Сессия базы данных.
 
         Returns:
-            User model or None
+            Модель пользователя или None, если не найден.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
         """
-        with SessionLocal() as session:
-            return session.query(UserModel).filter(UserModel.email == email).first()
+        try:
+            result = db.execute(
+                select(user_model.User).where(user_model.User.email == email)
+            ).scalar_one_or_none()
+            if result:
+                logger.info("Пользователь получен по email: %s", email)
+            else:
+                logger.warning("Пользователь не найден по email: %s", email)
+            return result
+        except SQLAlchemyError as e:
+            logger.error("Ошибка при получении пользователя email=%s: %s", email, e)
+            raise
 
     @classmethod
-    def create(cls, data: dict) -> UserModel:
-        """Create a new user.
+    def create(cls, db: SessionLocal, **kwargs) -> Optional[user_model.User]:
+        """Создать нового пользователя.
 
         Args:
-            data: User data dictionary
+            db: Сессия базы данных.
+            **kwargs: Параметры пользователя (email, password_hash, role).
 
         Returns:
-            Created user model
+            Модель созданного пользователя с ID или None при ошибке.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
         """
-        with SessionLocal() as session:
-            user = UserModel(**data)
-            session.add(user)
-            session.commit()
-            session.refresh(user)
-            return user
+        try:
+            user_obj = user_model.User(**kwargs)
+            db.add(user_obj)
+            db.commit()
+            db.refresh(user_obj)
+            logger.info(
+                "Пользователь создан: id=%s, email=%s", user_obj.id, user_obj.email
+            )
+            return user_obj
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error("Ошибка при создании пользователя: %s", e)
+            raise
 
     @classmethod
-    def update(cls, user_id: int, data: dict) -> Optional[UserModel]:
-        """Update user.
+    def update(
+        cls, user_id: int, db: SessionLocal, **kwargs
+    ) -> Optional[user_model.User]:
+        """Обновить данные пользователя.
 
         Args:
-            user_id: User ID
-            data: Update data
+            user_id: Идентификатор пользователя.
+            db: Сессия базы данных.
+            **kwargs: Поля для обновления.
 
         Returns:
-            Updated user model or None
+            Обновленная модель пользователя или None, если не найден.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
         """
-        with SessionLocal() as session:
-            user = session.query(UserModel).filter(UserModel.id == user_id).first()
-            if user:
-                for key, value in data.items():
-                    setattr(user, key, value)
-                session.commit()
-                session.refresh(user)
-            return user
+        try:
+            user_obj = db.execute(
+                select(user_model.User).where(user_model.User.id == user_id)
+            ).scalar_one_or_none()
+            if not user_obj:
+                logger.warning("Пользователь не найден для обновления: id=%s", user_id)
+                return None
+            for key, value in kwargs.items():
+                if hasattr(user_obj, key):
+                    setattr(user_obj, key, value)
+            db.commit()
+            db.refresh(user_obj)
+            logger.info("Пользователь обновлен: id=%s", user_id)
+            return user_obj
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error("Ошибка при обновлении пользователя id=%s: %s", user_id, e)
+            raise
 
     @classmethod
-    def delete(cls, user_id: int) -> bool:
-        """Delete user.
+    def delete(cls, user_id: int, db: SessionLocal) -> bool:
+        """Удалить пользователя.
 
         Args:
-            user_id: User ID
+            user_id: Идентификатор пользователя.
+            db: Сессия базы данных.
 
         Returns:
-            True if deleted
+            True, если удаление успешно, False - если пользователь не найден.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
         """
-        with SessionLocal() as session:
-            user = session.query(UserModel).filter(UserModel.id == user_id).first()
-            if user:
-                session.delete(user)
-                session.commit()
-                return True
-            return False
+        try:
+            user_obj = db.execute(
+                select(user_model.User).where(user_model.User.id == user_id)
+            ).scalar_one_or_none()
+            if not user_obj:
+                logger.warning("Пользователь не найден для удаления: id=%s", user_id)
+                return False
+            db.delete(user_obj)
+            db.commit()
+            logger.info("Пользователь удален: id=%s", user_id)
+            return True
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error("Ошибка при удалении пользователя id=%s: %s", user_id, e)
+            raise
+
+    @classmethod
+    def get_session(cls) -> SessionLocal:
+        """Создать и вернуть новую сессию базы данных.
+
+        Returns:
+            Новая сессия SessionLocal.
+        """
+        return SessionLocal()
+
+    @classmethod
+    def get_all(cls, db: SessionLocal) -> list[user_model.User]:
+        """Получить всех пользователей.
+
+        Args:
+            db: Сессия базы данных.
+
+        Returns:
+            Список всех пользователей.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
+        """
+        try:
+            result = db.execute(select(user_model.User)).scalars().all()
+            logger.info("Получен список пользователей, количество: %s", len(result))
+            return result
+        except SQLAlchemyError as e:
+            logger.error("Ошибка при получении списка пользователей: %s", e)
+            raise

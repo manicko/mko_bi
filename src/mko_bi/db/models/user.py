@@ -1,20 +1,87 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship
+from datetime import datetime
+from typing import Set
+
+from sqlalchemy import (
+    Column,
+    DateTime,
+    Enum,
+    Integer,
+    String,
+    UniqueConstraint,
+    Index,
+)
+from sqlalchemy.orm import Mapped, relationship
+
 from mko_bi.db.base import Base
 
 
 class User(Base):
-    """User model.
+    """Модель пользователя системы BI Dashboard.
 
-    Represents a system user with role-based access control.
+    Атрибуты:
+        id: Уникальный идентификатор пользователя.
+        email: Email пользователя (уникальный).
+        password_hash: Хэш пароля (bcrypt).
+        role: Роль пользователя (admin/editor/viewer).
+        created_at: Дата и время создания записи.
+        accesses: Связь с правами доступа к дашбордам.
+
+    Индексы:
+        - Уникальный индекс на email
+        - Индекс на role для фильтрации по ролям
     """
 
     __tablename__ = "users"
 
-    id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, unique=True, index=True, nullable=False)
-    password_hash = Column(String, nullable=False)
-    role = Column(String, default="viewer")
+    id: Mapped[int] = Column(Integer, primary_key=True, index=True)
+    email: Mapped[str] = Column(
+        String(255),
+        nullable=False,
+        unique=True,
+    )
+    password_hash: Mapped[str] = Column(
+        String(255),
+        nullable=False,
+    )
+    role: Mapped[str] = Column(
+        Enum(
+            "admin",
+            "editor",
+            "viewer",
+            name="user_role",
+            create_constraint=False,
+        ),
+        nullable=False,
+        default="viewer",
+    )
+    created_at: Mapped[datetime] = Column(
+        DateTime,
+        nullable=False,
+        default=datetime.utcnow,
+    )
 
-    # Relationships
-    accesses = relationship("Access", back_populates="user")
+    # Связь с правами доступа
+    accesses: Mapped[Set["Access"]] = relationship(
+        "Access",
+        back_populates="user",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+    # Связь с дашбордами через права доступа
+    dashboards: Mapped[Set["Dashboard"]] = relationship(
+        "Dashboard",
+        secondary="accesses",
+        back_populates="users",
+        lazy="selectin",
+    )
+
+    def __repr__(self) -> str:
+        return f"<User(id={self.id}, email='{self.email}', role='{self.role}')>"
+
+    def __str__(self) -> str:
+        return self.email
+
+
+# Индекс на role для быстрого фильтрации
+Index("ix_users_role", User.role)

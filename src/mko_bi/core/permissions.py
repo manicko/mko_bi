@@ -1,85 +1,421 @@
-from typing import Optional
-from mko_bi.db.models.access import Access as AccessModel
-from mko_bi.db.models.user import User as UserModel
-from mko_bi.db.models.dashboard import Dashboard as DashboardModel
+"""Модуль управления доступом и проверки прав.
+
+Предоставляет функции и зависимости для проверки прав доступа пользователей
+к дашбордам и операциям в системе BI Dashboard.
+
+Иерархия ролей:
+    admin > editor > viewer
+
+Где admin имеет все права, editor может читать и писать,
+viewer только читать.
+"""
+
+import logging
+from enum import Enum
+from functools import lru_cache
+from typing import Dict, Optional
+
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from jose import JWTError
+from sqlalchemy.orm import Session
+
+from mko_bi.config import config
+from mko_bi.core.security import decode_token
+from mko_bi.db.models import user as user_model
 from mko_bi.db.repositories.access_repo import AccessRepository
+from mko_bi.db.repositories.user_repo import UserRepository
+from mko_bi.db.session import SessionLocal
+from mko_bi.models.user import UserDB
+
+logger = logging.getLogger(__name__)
 
 
-def check_access(user_id: int, dashboard_id: int) -> bool:
-    """Check if a user has access to a dashboard.
-
-    Args:
-        user_id: User ID to check
-        dashboard_id: Dashboard ID to check access for
-
-    Returns:
-        True if user has access, False otherwise
-    """
-    # Admin users have access to all dashboards
-    user = get_user_by_id(user_id)
-    if user and user.role == "admin":
-        return True
-
-    # Check if the user is the creator of the dashboard
-    dashboard = DashboardRepository.get(dashboard_id)
-    if dashboard and dashboard.user_id == user_id:
-        return True
-
-    # Check specific access record
-    access = AccessRepository.get(user_id, dashboard_id)
-    return access is not None
+# --- Констанны ---
 
 
-def grant_access(user_id: int, dashboard_id: int) -> bool:
-    """Grant access to a dashboard for a user.
+# Иерархия ролей (чем выше значение, тем больше прав)
+class RoleHierarchy(Enum):
+    """Иерархия ролей пользователей."""
 
-    Args:
-        user_id: User ID to grant access to
-        dashboard_id: Dashboard ID to grant access to
-
-    Returns:
-        True if granted successfully
-    """
-    access_data = {
-        "user_id": user_id,
-        "dashboard_id": dashboard_id,
-    }
-    AccessRepository.create(access_data)
-    return True
+    VIEWER = 1
+    EDITOR = 2
+    ADMIN = 3
 
 
-def revoke_access(user_id: int, dashboard_id: int) -> bool:
-    """Revoke access to a dashboard for a user.
+# Соответствие строковых ролей значениям иерархии
+ROLE_LEVELS: Dict[str, int] = {
+    "viewer": RoleHierarchy.VIEWER.value,
+    "editor": RoleHierarchy.EDITOR.value,
+    "admin": RoleHierarchy.ADMIN.value,
+}
 
-    Args:
-        user_id: User ID to revoke access from
-        dashboard_id: Dashboard ID to revoke access from
-
-    Returns:
-        True if revoked successfully
-    """
-    return AccessRepository.delete(user_id, dashboard_id)
+# Уровни доступа и минимальная роль для каждого
+PERMISSION_LEVELS = {"read", "write", "admin"}
 
 
-def get_user_by_id(user_id: int) -> Optional[UserModel]:
-    """Get user by ID.
+# --- Исключения ---
+
+
+class PermissionError(Exception):
+    """Исключение, выбрасываемое при отсутствии прав доступа."""
+
+    pass
+
+
+class AuthenticationError(Exception):
+    """Исключение, выбрасываемое при ошибке аутентификации."""
+
+    pass
+
+
+# --- Вспомогательные функции ---
+
+
+def _get_role_level(role: str) -> int:
+    """Получить числовой уровень роли.
 
     Args:
-        user_id: User ID to look up
+        role: Строковое представление роли (viewer, editor, admin).
 
     Returns:
-        User model or None if not found
+        int: Числовой уровень роли.
+
+    Raises:
+        ValueError: Если роль неизвестна.
     """
-    return UserRepository.get(user_id)
+    if role not in ROLE_LEVELS:
+        logger.error("Неизвестная роль: %s", role)
+        raise ValueError(f"Неизвестная роль: '{role}'")
+    return ROLE_LEVELS[role]
 
 
-def get_user_by_email(email: str) -> Optional[UserModel]:
-    """Get user by email.
+# --- Основные функции проверки прав ---
+
+
+def check_role(user_role: str, required_role: str) -> bool:
+    """Проверить, достаточно ли роли пользователя для выполнения операции.
+
+    Сравнивает уровень роли пользователя с требуемым уровнем.
+    Использует иерархию: admin > editor > viewer.
 
     Args:
-        email: Email to look up
+        user_role: Роль пользователя (viewer, editor, admin).
+        required_role: Минимально требуемая роль.
 
     Returns:
-        User model or None if not found
+        bool: True, если роль пользователя достаточна, иначе False.
+
+    Example:
+        >>> check_role("admin", "viewer")
+        True
+        >>> check_role("editor", "admin")
+        False
+        >>> check_role("viewer", "viewer")
+        True
     """
-    return UserRepository.get_by_email(email)
+    try:
+        user_level = _get_role_level(user_role)
+        required_level = _get_role_level(required_role)
+        has_access = user_level >= required_level
+        logger.debug(
+            "Проверка роли: user_role=%s (уровень %d), "
+            "required_role=%s (уровень %d) -> %s",
+            user_role,
+            user_level,
+            required_role,
+            required_level,
+            has_access,
+        )
+        return has_access
+    except ValueError as e:
+        logger.error("Ошибка при проверке роли: %s", e)
+        return False
+
+
+def check_dashboard_access(
+    user_id: int,
+    dashboard_id: int,
+    required_permission: str = "read",
+    db: Optional[Session] = None,
+) -> bool:
+    """Проверить, есть ли у пользователя доступ к дашборду.
+
+    Проверяет наличие записи в таблице доступа и достаточность
+    уровня разрешения.
+
+    Args:
+        user_id: ID пользователя.
+        dashboard_id: ID дашборда.
+        required_permission: Требуемый уровень доступа (read/write/admin).
+            По умолчанию "read".
+        db: Сессия базы данных. Если не передана, создается новая.
+
+    Returns:
+        bool: True, если доступ есть и достаточен, иначе False.
+
+    Raises:
+        ValueError: Если передан неизвестный уровень доступа.
+    """
+    if required_permission not in PERMISSION_LEVELS:
+        raise ValueError(
+            f"Неизвестный уровень доступа: '{required_permission}'. "
+            f"Допустимые значения: {PERMISSION_LEVELS}"
+        )
+
+    local_session = False
+    if db is None:
+        db = SessionLocal()
+        local_session = True
+
+    try:
+        # Получаем уровень доступа пользователя
+        permission = AccessRepository.check_access(
+            user_id=user_id,
+            dashboard_id=dashboard_id,
+            db=db,
+        )
+
+        if permission is None:
+            logger.warning(
+                "Доступ отсутствует: user_id=%s, dashboard_id=%s",
+                user_id,
+                dashboard_id,
+            )
+            return False
+
+        # Иерархия разрешений: admin > write > read
+        permission_levels = {"read": 1, "write": 2, "admin": 3}
+        has_access = (
+            permission_levels[permission] >= permission_levels[required_permission]
+        )
+
+        logger.info(
+            "Проверка доступа: user_id=%s, dashboard_id=%s, "
+            "permission=%s, required=%s -> %s",
+            user_id,
+            dashboard_id,
+            permission,
+            required_permission,
+            has_access,
+        )
+
+        return has_access
+
+    except Exception as e:
+        logger.error(
+            "Ошибка при проверке доступа user_id=%s, dashboard_id=%s: %s",
+            user_id,
+            dashboard_id,
+            e,
+        )
+        return False
+    finally:
+        if local_session:
+            db.close()
+
+
+@lru_cache(maxsize=128)
+def _decode_token_cached(token: str) -> Optional[dict]:
+    """Кэшированное декодирование токена.
+
+    Args:
+        token: JWT токен.
+
+    Returns:
+        dict | None: Декодированные данные токена или None.
+    """
+    return decode_token(token)
+
+
+def get_current_user(
+    token: str,
+    db: Optional[Session] = None,
+) -> UserDB:
+    """Получить текущего пользователя по токену.
+
+    Декодирует JWT токен, извлекает user_id и получает
+    данные пользователя из базы.
+
+    Args:
+        token: JWT токен доступа.
+        db: Сессия базы данных. Если не передана, создается новая.
+
+    Returns:
+        UserDB: Модель пользователя с данными из базы.
+
+    Raises:
+        AuthenticationError: Если токен недействителен или пользователь не найден.
+    """
+    local_session = False
+    if db is None:
+        db = SessionLocal()
+        local_session = True
+
+    try:
+        # Декодируем токен (с кэшированием)
+        payload = _decode_token_cached(token)
+        if payload is None:
+            logger.warning("Недействительный токен")
+            raise AuthenticationError("Недействительный токен")
+
+        user_id: int = payload.get("user_id")
+        if user_id is None:
+            logger.warning("В токене отсутствует user_id")
+            raise AuthenticationError("Некорректный токен")
+
+        # Получаем пользователя из базы
+        user = UserRepository.get(user_id, db)
+        if user is None:
+            logger.warning("Пользователь не найден: user_id=%s", user_id)
+            raise AuthenticationError("Пользователь не найден")
+
+        logger.info("Пользователь аутентифицирован: user_id=%s", user_id)
+        return UserDB.model_validate(user)
+
+    except JWTError as e:
+        logger.error("Ошибка декодирования JWT: %s", e)
+        raise AuthenticationError("Ошибка декодирования токена") from e
+    except Exception as e:
+        if not isinstance(e, AuthenticationError):
+            logger.error("Ошибка при получении пользователя: %s", e)
+        raise
+    finally:
+        if local_session:
+            db.close()
+
+
+# --- FastAPI зависимости ---
+
+security = HTTPBearer()
+
+
+def get_current_user_dependency(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(SessionLocal),
+) -> UserDB:
+    """FastAPI зависимость для получения текущего пользователя.
+
+    Извлекает токен из заголовка Authorization, декодирует его
+    и возвращает данные пользователя.
+
+    Args:
+        credentials: Учетные данные из заголовка Authorization.
+        db: Сессия базы данных.
+
+    Returns:
+        UserDB: Модель аутентифицированного пользователя.
+
+    Raises:
+        HTTPException: Если токен недействителен или пользователь не найден.
+    """
+    try:
+        user = get_current_user(credentials.credentials, db)
+        # Сохраняем пользователя в state запроса для последующего использования
+        # (будет доступно через request.state.user)
+        return user
+    except AuthenticationError as e:
+        logger.warning("Ошибка аутентификации: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from e
+    except Exception as e:
+        logger.error("Неожиданная ошибка аутентификации: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Внутренняя ошибка сервера",
+        ) from e
+
+
+def require_role(required_role: str):
+    """Создает FastAPI зависимость для проверки роли пользователя.
+
+    Args:
+        required_role: Минимально требуемая роль.
+
+    Returns:
+        Callable: Зависимость FastAPI.
+
+    Raises:
+        HTTPException: Если у пользователя недостаточно прав.
+
+    Example:
+        @app.get("/admin")
+        async def admin_route(user: UserDB = Depends(get_current_user_dependency),
+                             _: None = Depends(require_role("admin"))):
+            return {"message": "Admin area"}
+    """
+
+    def role_checker(user: UserDB = Depends(get_current_user_dependency)) -> UserDB:
+        """Проверяет роль пользователя и возвращает его при успехе."""
+        if not check_role(user.role, required_role):
+            logger.warning(
+                "Недостаточно прав: user_id=%s, user_role=%s, required_role=%s",
+                user.id,
+                user.role,
+                required_role,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Требуется роль: {required_role} или выше",
+            )
+        return user
+
+    return role_checker
+
+
+def require_dashboard_access(
+    required_permission: str = "read",
+):
+    """Создает FastAPI зависимость для проверки доступа к дашборду.
+
+    Проверяет, есть ли у пользователя доступ к указанному дашборду
+    с требуемым уровнем разрешения.
+
+    Args:
+        required_permission: Требуемый уровень доступа (read/write/admin).
+            По умолчанию "read".
+
+    Returns:
+        Callable: Зависимость FastAPI.
+
+    Raises:
+        HTTPException: Если у пользователя нет доступа.
+
+    Example:
+        @app.get("/dashboards/{dashboard_id}")
+        async def get_dashboard(
+            dashboard_id: int,
+            user: UserDB = Depends(get_current_user_dependency),
+            _: None = Depends(require_dashboard_access("read")),
+        ):
+            return {"message": "Dashboard data"}
+    """
+
+    def access_checker(
+        dashboard_id: int,
+        user: UserDB = Depends(get_current_user_dependency),
+        db: Session = Depends(SessionLocal),
+    ) -> UserDB:
+        """Проверяет доступ пользователя к дашборду."""
+        if not check_dashboard_access(
+            user_id=user.id,
+            dashboard_id=dashboard_id,
+            required_permission=required_permission,
+            db=db,
+        ):
+            logger.warning(
+                "Отказано в доступе: user_id=%s, dashboard_id=%s, required=%s",
+                user.id,
+                dashboard_id,
+                required_permission,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="У вас нет доступа к этому дашборду",
+            )
+        return user
+
+    return access_checker

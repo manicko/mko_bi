@@ -1,120 +1,224 @@
-from typing import Optional
-from sqlalchemy.orm import Session
+"""Репозиторий для работы с дашбордами.
 
-from mko_bi.db.models.dashboard import Dashboard as DashboardModel
-from mko_bi.db.base import SessionLocal
+Предоставляет методы CRUD для модели Dashboard.
+Все методы используют контекстный менеджер сессий и обрабатывают ошибки.
+"""
+
+import logging
+from typing import Optional
+
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+
+from mko_bi.db.models import dashboard as dashboard_model
+from mko_bi.db.session import SessionLocal
+
+logger = logging.getLogger(__name__)
 
 
 class DashboardRepository:
-    """Repository for Dashboard model operations."""
+    """Репозиторий для операций с дашбордами.
+
+    Предоставляет методы для создания, чтения, обновления и удаления
+    дашбордов в базе данных. Все операции выполняются в рамках
+    отдельной сессии базы данных с автоматическим управлением транзакциями.
+    """
 
     @classmethod
-    def get(cls, dashboard_id: int) -> Optional[DashboardModel]:
-        """Get dashboard by ID.
+    def get(
+        cls, dashboard_id: int, db: SessionLocal
+    ) -> Optional[dashboard_model.Dashboard]:
+        """Получить дашборд по ID.
 
         Args:
-            dashboard_id: Dashboard ID
+            dashboard_id: Идентификатор дашборда.
+            db: Сессия базы данных.
 
         Returns:
-            Dashboard model or None
+            Модель дашборда или None, если не найден.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
         """
-        with SessionLocal() as session:
-            return (
-                session
-                .query(DashboardModel)
-                .filter(DashboardModel.id == dashboard_id)
-                .first()
+        try:
+            result = db.execute(
+                select(dashboard_model.Dashboard).where(
+                    dashboard_model.Dashboard.id == dashboard_id
+                )
+            ).scalar_one_or_none()
+            if result:
+                logger.info("Дашборд получен: id=%s", dashboard_id)
+            else:
+                logger.warning("Дашборд не найден: id=%s", dashboard_id)
+            return result
+        except SQLAlchemyError as e:
+            logger.error("Ошибка при получении дашборда id=%s: %s", dashboard_id, e)
+            raise
+
+    @classmethod
+    def get_by_user(
+        cls, user_id: int, db: SessionLocal
+    ) -> list[dashboard_model.Dashboard]:
+        """Получить все дашборды, доступные пользователю.
+
+        Args:
+            user_id: Идентификатор пользователя.
+            db: Сессия базы данных.
+
+        Returns:
+            Список дашбордов, доступных пользователю.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
+        """
+        try:
+            from mko_bi.db.models import access as access_model
+
+            result = (
+                db.execute(
+                    select(dashboard_model.Dashboard)
+                    .join(access_model.Access)
+                    .where(access_model.Access.user_id == user_id)
+                )
+                .scalars()
+                .all()
             )
-
-    @classmethod
-    def get_by_name(cls, name: str) -> Optional[DashboardModel]:
-        """Get dashboard by name.
-
-        Args:
-            name: Dashboard name
-
-        Returns:
-            Dashboard model or None
-        """
-        with SessionLocal() as session:
-            return (
-                session
-                .query(DashboardModel)
-                .filter(DashboardModel.name == name)
-                .first()
+            logger.info(
+                "Получены дашборды для пользователя id=%s, количество: %s",
+                user_id,
+                len(result),
             )
-
-    @classmethod
-    def create(cls, data: dict) -> DashboardModel:
-        """Create a new dashboard.
-
-        Args:
-            data: Dashboard data dictionary
-
-        Returns:
-            Created dashboard model
-        """
-        with SessionLocal() as session:
-            dashboard = DashboardModel(**data)
-            session.add(dashboard)
-            session.commit()
-            session.refresh(dashboard)
-            return dashboard
-
-    @classmethod
-    def update(cls, dashboard_id: int, data: dict) -> Optional[DashboardModel]:
-        """Update dashboard.
-
-        Args:
-            dashboard_id: Dashboard ID
-            data: Update data
-
-        Returns:
-            Updated dashboard model or None
-        """
-        with SessionLocal() as session:
-            dashboard = (
-                session
-                .query(DashboardModel)
-                .filter(DashboardModel.id == dashboard_id)
-                .first()
+            return result
+        except SQLAlchemyError as e:
+            logger.error(
+                "Ошибка при получении дашбордов для пользователя id=%s: %s", user_id, e
             )
-            if dashboard:
-                for key, value in data.items():
-                    setattr(dashboard, key, value)
-                session.commit()
-                session.refresh(dashboard)
-            return dashboard
+            raise
 
     @classmethod
-    def delete(cls, dashboard_id: int) -> bool:
-        """Delete dashboard.
+    def create(cls, db: SessionLocal, **kwargs) -> Optional[dashboard_model.Dashboard]:
+        """Создать новый дашборд.
 
         Args:
-            dashboard_id: Dashboard ID
+            db: Сессия базы данных.
+            **kwargs: Параметры дашборда (name, config).
 
         Returns:
-            True if deleted
+            Модель созданного дашборда с ID или None при ошибке.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
         """
-        with SessionLocal() as session:
-            dashboard = (
-                session
-                .query(DashboardModel)
-                .filter(DashboardModel.id == dashboard_id)
-                .first()
+        try:
+            dashboard_obj = dashboard_model.Dashboard(**kwargs)
+            db.add(dashboard_obj)
+            db.commit()
+            db.refresh(dashboard_obj)
+            logger.info(
+                "Дашборд создан: id=%s, name=%s", dashboard_obj.id, dashboard_obj.name
             )
-            if dashboard:
-                session.delete(dashboard)
-                session.commit()
-                return True
-            return False
+            return dashboard_obj
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error("Ошибка при создании дашборда: %s", e)
+            raise
 
     @classmethod
-    def list_all(cls) -> list:
-        """List all dashboards.
+    def update(
+        cls, dashboard_id: int, db: SessionLocal, **kwargs
+    ) -> Optional[dashboard_model.Dashboard]:
+        """Обновить данные дашборда.
+
+        Args:
+            dashboard_id: Идентификатор дашборда.
+            db: Сессия базы данных.
+            **kwargs: Поля для обновления.
 
         Returns:
-            List of dashboard models
+            Обновленная модель дашборда или None, если не найден.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
         """
-        with SessionLocal() as session:
-            return session.query(DashboardModel).all()
+        try:
+            dashboard_obj = db.execute(
+                select(dashboard_model.Dashboard).where(
+                    dashboard_model.Dashboard.id == dashboard_id
+                )
+            ).scalar_one_or_none()
+            if not dashboard_obj:
+                logger.warning("Дашборд не найден для обновления: id=%s", dashboard_id)
+                return None
+            for key, value in kwargs.items():
+                if hasattr(dashboard_obj, key):
+                    setattr(dashboard_obj, key, value)
+            db.commit()
+            db.refresh(dashboard_obj)
+            logger.info("Дашборд обновлен: id=%s", dashboard_id)
+            return dashboard_obj
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error("Ошибка при обновлении дашборда id=%s: %s", dashboard_id, e)
+            raise
+
+    @classmethod
+    def delete(cls, dashboard_id: int, db: SessionLocal) -> bool:
+        """Удалить дашборд.
+
+        Args:
+            dashboard_id: Идентификатор дашборда.
+            db: Сессия базы данных.
+
+        Returns:
+            True, если удаление успешно, False - если дашборд не найден.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
+        """
+        try:
+            dashboard_obj = db.execute(
+                select(dashboard_model.Dashboard).where(
+                    dashboard_model.Dashboard.id == dashboard_id
+                )
+            ).scalar_one_or_none()
+            if not dashboard_obj:
+                logger.warning("Дашборд не найден для удаления: id=%s", dashboard_id)
+                return False
+            db.delete(dashboard_obj)
+            db.commit()
+            logger.info("Дашборд удален: id=%s", dashboard_id)
+            return True
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error("Ошибка при удалении дашборда id=%s: %s", dashboard_id, e)
+            raise
+
+    @classmethod
+    def get_session(cls) -> SessionLocal:
+        """Создать и вернуть новую сессию базы данных.
+
+        Returns:
+            Новая сессия SessionLocal.
+        """
+        return SessionLocal()
+
+    @classmethod
+    def get_all(cls, db: SessionLocal) -> list[dashboard_model.Dashboard]:
+        """Получить все дашборды.
+
+        Args:
+            db: Сессия базы данных.
+
+        Returns:
+            Список всех дашбордов.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
+        """
+        try:
+            result = db.execute(select(dashboard_model.Dashboard)).scalars().all()
+            logger.info("Получен список дашбордов, количество: %s", len(result))
+            return result
+        except SQLAlchemyError as e:
+            logger.error("Ошибка при получении списка дашбордов: %s", e)
+            raise

@@ -1,75 +1,251 @@
-from typing import Optional
-from sqlalchemy.orm import Session
+"""Репозиторий для работы с правами доступа.
 
-from mko_bi.db.models.access import Access as AccessModel
-from mko_bi.db.base import SessionLocal
+Предоставляет методы для управления правами доступа пользователей к дашбордам.
+Все методы используют контекстный менеджер сессий и обрабатывают ошибки.
+"""
+
+import logging
+from typing import Optional
+
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
+
+from mko_bi.db.models import access as access_model
+from mko_bi.db.models import dashboard as dashboard_model
+from mko_bi.db.session import SessionLocal
+
+logger = logging.getLogger(__name__)
 
 
 class AccessRepository:
-    """Repository for Access model operations."""
+    """Репозиторий для операций с правами доступа.
+
+    Предоставляет методы для управления правами доступа пользователей
+    к дашбордам. Все операции выполняются в рамках отдельной сессии
+    базы данных с автоматическим управлением транзакциями.
+    """
 
     @classmethod
-    def get(cls, user_id: int, dashboard_id: int) -> Optional[AccessModel]:
-        """Get access record.
+    def grant_access(
+        cls,
+        db: SessionLocal,
+        user_id: int,
+        dashboard_id: int,
+        permission_level: str = "read",
+    ) -> Optional[access_model.Access]:
+        """Предоставить пользователю доступ к дашборду.
 
         Args:
-            user_id: User ID
-            dashboard_id: Dashboard ID
+            user_id: Идентификатор пользователя.
+            dashboard_id: Идентификатор дашборда.
+            permission_level: Уровень доступа (read/write/admin).
+            db: Сессия базы данных.
 
         Returns:
-            Access model or None
+            Модель права доступа или None при ошибке.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
         """
-        with SessionLocal() as session:
-            return (
-                session
-                .query(AccessModel)
-                .filter(
-                    AccessModel.user_id == user_id,
-                    AccessModel.dashboard_id == dashboard_id,
+        try:
+            # Проверяем, не существует ли уже такое право доступа
+            existing = db.execute(
+                select(access_model.Access).where(
+                    access_model.Access.user_id == user_id,
+                    access_model.Access.dashboard_id == dashboard_id,
                 )
-                .first()
-            )
-
-    @classmethod
-    def create(cls, data: dict) -> AccessModel:
-        """Create access record.
-
-        Args:
-            data: Access data dictionary
-
-        Returns:
-            Created access model
-        """
-        with SessionLocal() as session:
-            access = AccessModel(**data)
-            session.add(access)
-            session.commit()
-            session.refresh(access)
-            return access
-
-    @classmethod
-    def delete(cls, user_id: int, dashboard_id: int) -> bool:
-        """Delete access record.
-
-        Args:
-            user_id: User ID
-            dashboard_id: Dashboard ID
-
-        Returns:
-            True if deleted
-        """
-        with SessionLocal() as session:
-            access = (
-                session
-                .query(AccessModel)
-                .filter(
-                    AccessModel.user_id == user_id,
-                    AccessModel.dashboard_id == dashboard_id,
+            ).scalar_one_or_none()
+            if existing:
+                logger.warning(
+                    "Право доступа уже существует: user_id=%s, dashboard_id=%s",
+                    user_id,
+                    dashboard_id,
                 )
-                .first()
+                return existing
+
+            access_obj = access_model.Access(
+                user_id=user_id,
+                dashboard_id=dashboard_id,
+                permission_level=permission_level,
             )
-            if access:
-                session.delete(access)
-                session.commit()
-                return True
-            return False
+            db.add(access_obj)
+            db.commit()
+            db.refresh(access_obj)
+            logger.info(
+                "Право доступа предоставлено: user_id=%s, dashboard_id=%s, permission=%s",
+                user_id,
+                dashboard_id,
+                permission_level,
+            )
+            return access_obj
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(
+                "Ошибка при предоставлении доступа user_id=%s, dashboard_id=%s: %s",
+                user_id,
+                dashboard_id,
+                e,
+            )
+            raise
+
+    @classmethod
+    def revoke_access(cls, user_id: int, dashboard_id: int, db: SessionLocal) -> bool:
+        """Отозвать доступ пользователя к дашборду.
+
+        Args:
+            user_id: Идентификатор пользователя.
+            dashboard_id: Идентификатор дашборда.
+            db: Сессия базы данных.
+
+        Returns:
+            True, если доступ успешно отозван, False - если право доступа не найдено.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
+        """
+        try:
+            access_obj = db.execute(
+                select(access_model.Access).where(
+                    access_model.Access.user_id == user_id,
+                    access_model.Access.dashboard_id == dashboard_id,
+                )
+            ).scalar_one_or_none()
+            if not access_obj:
+                logger.warning(
+                    "Право доступа не найдено для отзыва: user_id=%s, dashboard_id=%s",
+                    user_id,
+                    dashboard_id,
+                )
+                return False
+            db.delete(access_obj)
+            db.commit()
+            logger.info(
+                "Право доступа отозвано: user_id=%s, dashboard_id=%s",
+                user_id,
+                dashboard_id,
+            )
+            return True
+        except SQLAlchemyError as e:
+            db.rollback()
+            logger.error(
+                "Ошибка при отзыве доступа user_id=%s, dashboard_id=%s: %s",
+                user_id,
+                dashboard_id,
+                e,
+            )
+            raise
+
+    @classmethod
+    def check_access(
+        cls, user_id: int, dashboard_id: int, db: SessionLocal
+    ) -> Optional[str]:
+        """Проверить уровень доступа пользователя к дашборду.
+
+        Args:
+            user_id: Идентификатор пользователя.
+            dashboard_id: Идентификатор дашборда.
+            db: Сессия базы данных.
+
+        Returns:
+            Уровень доступа (read/write/admin) или None, если доступа нет.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
+        """
+        try:
+            access_obj = db.execute(
+                select(access_model.Access).where(
+                    access_model.Access.user_id == user_id,
+                    access_model.Access.dashboard_id == dashboard_id,
+                )
+            ).scalar_one_or_none()
+            if access_obj:
+                logger.info(
+                    "Проверка доступа: user_id=%s, dashboard_id=%s, permission=%s",
+                    user_id,
+                    dashboard_id,
+                    access_obj.permission_level,
+                )
+                return access_obj.permission_level
+            logger.warning(
+                "Доступ отсутствует: user_id=%s, dashboard_id=%s",
+                user_id,
+                dashboard_id,
+            )
+            return None
+        except SQLAlchemyError as e:
+            logger.error(
+                "Ошибка при проверке доступа user_id=%s, dashboard_id=%s: %s",
+                user_id,
+                dashboard_id,
+                e,
+            )
+            raise
+
+    @classmethod
+    def get_user_dashboards(
+        cls, user_id: int, db: SessionLocal
+    ) -> list[dashboard_model.Dashboard]:
+        """Получить все дашборды, доступные пользователю.
+
+        Args:
+            user_id: Идентификатор пользователя.
+            db: Сессия базы данных.
+
+        Returns:
+            Список дашбордов, доступных пользователю.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
+        """
+        try:
+            result = (
+                db.execute(
+                    select(dashboard_model.Dashboard)
+                    .join(access_model.Access)
+                    .where(access_model.Access.user_id == user_id)
+                )
+                .scalars()
+                .all()
+            )
+            logger.info(
+                "Получены дашборды пользователя id=%s, количество: %s",
+                user_id,
+                len(result),
+            )
+            return result
+        except SQLAlchemyError as e:
+            logger.error(
+                "Ошибка при получении дашбордов пользователя id=%s: %s", user_id, e
+            )
+            raise
+
+    @classmethod
+    def get_session(cls) -> SessionLocal:
+        """Создать и вернуть новую сессию базы данных.
+
+        Returns:
+            Новая сессия SessionLocal.
+        """
+        return SessionLocal()
+
+    @classmethod
+    def get_all(cls, db: SessionLocal) -> list[access_model.Access]:
+        """Получить все права доступа.
+
+        Args:
+            db: Сессия базы данных.
+
+        Returns:
+            Список всех прав доступа.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
+        """
+        try:
+            result = db.execute(select(access_model.Access)).scalars().all()
+            logger.info("Получен список прав доступа, количество: %s", len(result))
+            return result
+        except SQLAlchemyError as e:
+            logger.error("Ошибка при получении списка прав доступа: %s", e)
+            raise

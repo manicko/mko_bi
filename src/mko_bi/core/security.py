@@ -1,73 +1,176 @@
-import bcrypt
-from typing import Optional, Dict
+"""Модуль безопасности для хеширования паролей и работы с JWT токенами."""
+
+import logging
 from datetime import datetime, timedelta, timezone
-from jose import jwt
-from jose.exceptions import JWTError
-from mko_bi.config import SECRET_KEY, ALGORITHM, ACCESS_TOKEN_EXPIRE_MINUTES
+from typing import Any, Optional
+
+import bcrypt
+from jose import JWTError, jwt
+
+from mko_bi.config import config
+
+logger = logging.getLogger(__name__)
+
+
+# Константы
+SALT_ROUNDS: int = 12
+MAX_PASSWORD_LENGTH: int = 72
+
+
+def _truncate_password(password: str) -> str:
+    """Обрезает пароль до максимальной длины для bcrypt (72 байта).
+
+    Bcrypt имеет ограничение на длину пароля - 72 байта.
+    Если пароль длиннее, он обрезается до этой длины.
+
+    Args:
+        password: Исходный пароль.
+
+    Returns:
+        str: Пароль, обрезанный до 72 байт при необходимости.
+    """
+    encoded = password.encode("utf-8")
+    if len(encoded) > MAX_PASSWORD_LENGTH:
+        truncated = encoded[:MAX_PASSWORD_LENGTH].decode("utf-8", errors="ignore")
+        logger.warning(
+            "Пароль длиннее %d байт и был обрезан до %d байт",
+            len(encoded),
+            MAX_PASSWORD_LENGTH,
+        )
+        return truncated
+    return password
 
 
 def hash_password(password: str) -> str:
-    """Hash a password using bcrypt.
+    """Хеширует пароль с использованием bcrypt.
+
+    Использует алгоритм bcrypt с заданным числом раундов соли (SALT_ROUNDS=12).
+    Пароль обрезается до 72 байт перед хешированием, так как bcrypt имеет
+    ограничение на максимальную длину пароля.
 
     Args:
-        password: Plain text password
+        password: Пароль в виде обычной строки.
 
     Returns:
-        Hashed password as string
+        str: Хеш пароля в формате bcrypt.
+
+    Example:
+        >>> hash = hash_password("my_secure_password")
+        >>> isinstance(hash, str)
+        True
     """
-    password_bytes = password.encode("utf-8")
-    # bcrypt has a 72 byte limit for passwords
-    if len(password_bytes) > 72:
-        password_bytes = password_bytes[:72]
-    salt = bcrypt.gensalt()
-    hashed = bcrypt.hashpw(password_bytes, salt)
-    return hashed.decode("utf-8")
+    truncated_password = _truncate_password(password)
+    password_bytes = truncated_password.encode("utf-8")
+    salt = bcrypt.gensalt(rounds=SALT_ROUNDS)
+    password_hash = bcrypt.hashpw(password_bytes, salt)
+    logger.info("Пароль успешно захеширован")
+    return password_hash.decode("latin-1")
 
 
 def verify_password(password: str, hash_value: str) -> bool:
-    """Verify a password against a hash.
+    """Проверяет соответствие пароля хешу.
+
+    Сравнивает переданный пароль с сохраненным хешем bcrypt.
+    Пароль обрезается до 72 байт перед проверкой.
 
     Args:
-        password: Plain text password to verify
-        hash_value: Hashed password to compare against
+        password: Пароль в виде обычной строки для проверки.
+        hash_value: Хеш пароля, сохраненный в базе данных.
 
     Returns:
-        True if password matches hash, False otherwise
+        bool: True, если пароль соответствует хешу, иначе False.
+
+    Example:
+        >>> hash = hash_password("my_password")
+        >>> verify_password("my_password", hash)
+        True
+        >>> verify_password("wrong_password", hash)
+        False
     """
-    password_bytes = password.encode("utf-8")
-    # bcrypt has a 72 byte limit for passwords
-    if len(password_bytes) > 72:
-        password_bytes = password_bytes[:72]
-    return bcrypt.checkpw(password_bytes, hash_value.encode("utf-8"))
+    truncated_password = _truncate_password(password)
+    password_bytes = truncated_password.encode("utf-8")
+    hash_bytes = hash_value.encode("latin-1")
+    try:
+        result = bcrypt.checkpw(password_bytes, hash_bytes)
+        if result:
+            logger.info("Пароль успешно верифицирован")
+        else:
+            logger.warning("Неудачная попытка верификации пароля")
+        return result
+    except (ValueError, TypeError) as e:
+        logger.error("Ошибка при верификации пароля: %s", e)
+        return False
 
 
-def create_access_token(data: Dict) -> str:
-    """Create a JWT access token.
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    """Создает JWT токен доступа с указанными данными.
+
+    Токен содержит переданные данные и время истечения (exp).
+    Если expires_delta не указан, используется значение из конфигурации
+    (по умолчанию 30 минут).
 
     Args:
-        data: Dictionary with user data (e.g., {"user_id": 1})
+        data: Данные для включения в токен (например, user_id, email).
+        expires_delta: Дополнительное время жизни токена.
+            Если None, используется значение из конфигурации.
 
     Returns:
-        JWT token string
+        str: Закодированный JWT токен.
+
+    Example:
+        >>> token = create_access_token({"user_id": 1, "email": "user@example.com"})
+        >>> isinstance(token, str)
+        True
     """
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    if expires_delta:
+        expire = datetime.now(timezone.utc) + expires_delta
+    else:
+        expire = datetime.now(timezone.utc) + timedelta(
+            minutes=config.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+        )
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode,
+        config.JWT_SECRET_KEY,
+        algorithm=config.JWT_ALGORITHM,
+    )
+    logger.info("JWT токен успешно создан")
     return encoded_jwt
 
 
-def decode_token(token: str) -> Dict:
-    """Decode and validate a JWT token.
+def decode_token(token: str) -> Optional[dict[str, Any]]:
+    """Декодирует и валидирует JWT токен.
+
+    Проверяет подпись токена и время его действия (exp).
+    В случае ошибки декодирования или валидации возвращает None.
 
     Args:
-        token: JWT token string
+        token: JWT токен для декодирования.
 
     Returns:
-        Decoded payload dictionary
+        dict[str, Any] | None: Декодированные данные токена или None,
+            если токен недействителен.
 
-    Raises:
-        JWTError: If token is invalid or expired
+    Example:
+        >>> token = create_access_token({"user_id": 1})
+        >>> data = decode_token(token)
+        >>> data["user_id"]
+        1
+        >>> decode_token("invalid.token.here") is None
+        True
     """
-    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-    return payload
+    try:
+        payload = jwt.decode(
+            token,
+            config.JWT_SECRET_KEY,
+            algorithms=[config.JWT_ALGORITHM],
+        )
+        logger.info("JWT токен успешно декодирован")
+        return payload
+    except JWTError as e:
+        logger.error("Ошибка декодирования JWT токена: %s", e)
+        return None
+    except Exception as e:
+        logger.error("Непредвиденная ошибка при декодировании токена: %s", e)
+        return None

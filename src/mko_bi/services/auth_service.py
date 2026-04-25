@@ -1,0 +1,270 @@
+"""Сервис аутентификации и регистрации пользователей.
+
+Предоставляет бизнес-логику для регистрации, аутентификации и авторизации
+пользователей в системе BI Dashboard.
+"""
+
+import logging
+import re
+from typing import Optional
+
+from mko_bi.config import config
+from mko_bi.core.security import create_access_token, hash_password, verify_password
+from mko_bi.db.models import user as user_model
+from mko_bi.db.repositories.user_repo import UserRepository
+from mko_bi.db.session import Session, SessionLocal
+from mko_bi.models.user import UserCreate, UserRead, UserDB
+
+logger = logging.getLogger(__name__)
+
+
+VALID_ROLES = {"admin", "editor", "viewer"}
+
+# Регулярное выражение для валидации email
+EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+
+
+def _validate_role(role: str) -> None:
+    """Проверяет, что роль является допустимой.
+
+    Args:
+        role: Роль пользователя для проверки.
+
+    Raises:
+        ValueError: Если роль не входит в список допустимых.
+    """
+    if role not in VALID_ROLES:
+        logger.error("Недопустимая роль: %s. Допустимые роли: %s", role, VALID_ROLES)
+        raise ValueError(
+            f"Недопустимая роль: '{role}'. "
+            f"Допустимые значения: {', '.join(sorted(VALID_ROLES))}"
+        )
+
+
+def _validate_email_format(email: str) -> str:
+    """Проверяет формат email с использованием регулярного выражения.
+
+    Args:
+        email: Email для проверки.
+
+    Returns:
+        str: Валидный email.
+
+    Raises:
+        ValueError: Если email имеет некорректный формат.
+    """
+    if not EMAIL_REGEX.match(email):
+        logger.error("Некорректный формат email: %s", email)
+        raise ValueError(f"Некорректный формат email: '{email}'")
+    return email
+
+
+def _check_email_uniqueness(email: str, db: Session) -> None:
+    """Проверяет, что email не используется другим пользователем.
+
+    Args:
+        email: Email для проверки уникальности.
+        db: Сессия базы данных.
+
+    Raises:
+        ValueError: Если пользователь с таким email уже существует.
+    """
+    existing_user = UserRepository.get_by_email(email, db)
+    if existing_user is not None:
+        logger.warning("Попытка регистрации с существующим email: %s", email)
+        raise ValueError(f"Пользователь с email '{email}' уже существует")
+
+
+def register_user(
+    email: str, password: str, role: str, db: Optional[Session] = None
+) -> UserRead:
+    """Регистрирует нового пользователя в системе.
+
+    Выполняет валидацию email и роли, проверяет уникальность email,
+    хеширует пароль и сохраняет пользователя в базе данных.
+
+    Args:
+        email: Email пользователя. Должен быть валидным и уникальным.
+        password: Пароль пользователя. Будет захеширован перед сохранением.
+        role: Роль пользователя. Допустимые значения: 'admin', 'editor', 'viewer'.
+        db: Опциональная сессия базы данных. Если не передана, создается новая.
+
+    Returns:
+        UserRead: Модель пользователя без пароля (с id и created_at).
+
+    Raises:
+        ValueError: Если email или роль некорректны, либо email уже занят.
+        SQLAlchemyError: При ошибке базы данных.
+
+    Example:
+        >>> user = register_user("user@example.com", "secure_password", "viewer")
+        >>> user.email
+        'user@example.com'
+        >>> user.role
+        'viewer'
+        >>> hasattr(user, 'password_hash')
+        False
+    """
+    logger.info("Starting user registration: email=%s, role=%s", email, role)
+
+    # Валидация роли
+    _validate_role(role)
+
+    # Валидация формата email
+    _validate_email_format(email)
+
+    # Если сессия не передана, создаем новую
+    local_session = False
+    if db is None:
+        db = SessionLocal()
+        local_session = True
+
+    try:
+        # Проверка уникальности email
+        _check_email_uniqueness(email, db)
+
+        # Хеширование пароля
+        password_hash = hash_password(password)
+        logger.info("Password successfully hashed for user: %s", email)
+
+        # Создание пользователя
+        user_obj = UserRepository.create(
+            db=db,
+            email=email,
+            password_hash=password_hash,
+            role=role,
+        )
+
+        logger.info(
+            "User successfully registered: id=%s, email=%s, role=%s",
+            user_obj.id,
+            email,
+            role,
+        )
+
+        # Преобразование в Pydantic модель (без password_hash)
+        return UserRead.model_validate(user_obj)
+
+    except Exception as e:
+        if local_session:
+            db.rollback()
+        logger.error("Error during user registration %s: %s", email, e)
+        raise
+    finally:
+        if local_session:
+            db.close()
+
+
+def authenticate_user(
+    email: str, password: str, db: Optional[Session] = None
+) -> Optional[UserDB]:
+    """Аутентифицирует пользователя по email и паролю.
+
+    Ищет пользователя по email и проверяет соответствие пароля.
+
+    Args:
+        email: Email пользователя.
+        password: Пароль в открытом виде.
+        db: Опциональная сессия базы данных. Если не передана, создается новая.
+
+    Returns:
+        UserDB | None: Модель пользователя с хешем пароля, если аутентификация
+        успешна, иначе None.
+
+    Example:
+        >>> user = authenticate_user("user@example.com", "correct_password")
+        >>> user is not None
+        True
+        >>> user = authenticate_user("user@example.com", "wrong_password")
+        >>> user is None
+        True
+    """
+    logger.info("Attempting user authentication: %s", email)
+
+    # Если сессия не передана, создаем новую
+    local_session = False
+    if db is None:
+        db = SessionLocal()
+        local_session = True
+
+    try:
+        # Поиск пользователя по email
+        user_obj = UserRepository.get_by_email(email, db)
+
+        if user_obj is None:
+            logger.warning("User not found during authentication: %s", email)
+            return None
+
+        # Проверка пароля
+        if not verify_password(password, user_obj.password_hash):
+            logger.warning("Invalid password for user: %s", email)
+            return None
+
+        logger.info("User successfully authenticated: %s", email)
+
+        # Преобразование в Pydantic модель
+        return UserDB.model_validate(user_obj)
+
+    except Exception as e:
+        logger.error("Error during user authentication %s: %s", email, e)
+        raise
+    finally:
+        if local_session:
+            db.close()
+
+
+def login_user(email: str, password: str, db: Optional[Session] = None) -> dict:
+    """Выполняет вход пользователя и возвращает JWT токен.
+
+    Аутентифицирует пользователя и при успехе создает JWT токен доступа.
+
+    Args:
+        email: Email пользователя.
+        password: Пароль в открытом виде.
+        db: Опциональная сессия базы данных. Если не передана, создается новая.
+
+    Returns:
+        dict: Словарь с ключами:
+            - access_token: JWT токен доступа
+            - token_type: Тип токена (обычно "bearer")
+            - user_id: ID пользователя
+            - email: Email пользователя
+            - role: Роль пользователя
+
+    Raises:
+        ValueError: Если аутентификация не удалась.
+
+    Example:
+        >>> result = login_user("user@example.com", "correct_password")
+        >>> "access_token" in result
+        True
+        >>> result["token_type"]
+        'bearer'
+    """
+    logger.info("Attempting user login: %s", email)
+
+    # Аутентификация
+    user = authenticate_user(email, password, db)
+
+    if user is None:
+        logger.warning("Failed login attempt (неверный email или пароль): %s", email)
+        raise ValueError("Неверный email или пароль")
+
+    # Создание JWT токена
+    access_token = create_access_token(
+        data={
+            "user_id": user.id,
+            "email": user.email,
+            "role": user.role,
+        }
+    )
+
+    logger.info("User successfully logged in: %s", email)
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user_id": user.id,
+        "email": user.email,
+        "role": user.role,
+    }
