@@ -32,7 +32,7 @@ class AccessRepository:
         user_id: UUID,
         dashboard_id: UUID,
         permission: str = "view",
-    ) -> access_model.Access | None:
+    ) -> access_model.DashboardAccess | None:
         """Предоставить пользователю доступ к дашборду.
 
         Args:
@@ -50,9 +50,9 @@ class AccessRepository:
         try:
             # Проверяем, не существует ли уже такое право доступа
             existing = db.execute(
-                select(access_model.Access).where(
-                    access_model.Access.user_id == user_id,
-                    access_model.Access.dashboard_id == dashboard_id,
+                select(access_model.DashboardAccess).where(
+                    access_model.DashboardAccess.user_id == user_id,
+                    access_model.DashboardAccess.dashboard_id == dashboard_id,
                 )
             ).scalar_one_or_none()
             if existing:
@@ -63,7 +63,7 @@ class AccessRepository:
                 )
                 return existing
 
-            access_obj = access_model.Access(
+            access_obj = access_model.DashboardAccess(
                 user_id=user_id,
                 dashboard_id=dashboard_id,
                 permission=permission,
@@ -105,9 +105,9 @@ class AccessRepository:
         """
         try:
             access_obj = db.execute(
-                select(access_model.Access).where(
-                    access_model.Access.user_id == user_id,
-                    access_model.Access.dashboard_id == dashboard_id,
+                select(access_model.DashboardAccess).where(
+                    access_model.DashboardAccess.user_id == user_id,
+                    access_model.DashboardAccess.dashboard_id == dashboard_id,
                 )
             ).scalar_one_or_none()
             if not access_obj:
@@ -154,9 +154,9 @@ class AccessRepository:
         """
         try:
             access_obj = db.execute(
-                select(access_model.Access).where(
-                    access_model.Access.user_id == user_id,
-                    access_model.Access.dashboard_id == dashboard_id,
+                select(access_model.DashboardAccess).where(
+                    access_model.DashboardAccess.user_id == user_id,
+                    access_model.DashboardAccess.dashboard_id == dashboard_id,
                 )
             ).scalar_one_or_none()
             if access_obj:
@@ -203,8 +203,8 @@ class AccessRepository:
                 db
                 .execute(
                     select(dashboard_model.Dashboard)
-                    .join(access_model.Access)
-                    .where(access_model.Access.user_id == user_id)
+                    .join(access_model.DashboardAccess)
+                    .where(access_model.DashboardAccess.user_id == user_id)
                 )
                 .scalars()
                 .all()
@@ -231,7 +231,7 @@ class AccessRepository:
         return SessionLocal()
 
     @classmethod
-    def get_all(cls, db: SessionLocal) -> list[access_model.Access]:
+    def get_all(cls, db: SessionLocal) -> list[access_model.DashboardAccess]:
         """Получить все права доступа.
 
         Args:
@@ -244,7 +244,7 @@ class AccessRepository:
             SQLAlchemyError: При ошибке базы данных.
         """
         try:
-            result = db.execute(select(access_model.Access)).scalars().all()
+            result = db.execute(select(access_model.DashboardAccess)).scalars().all()
             logger.info("Получен список прав доступа, количество: %s", len(result))
             return result
         except SQLAlchemyError as e:

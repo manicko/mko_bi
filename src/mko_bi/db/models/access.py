@@ -73,3 +73,7 @@ class DashboardAccess(Base):
             f"dashboard_id={self.dashboard_id} "
             f"permission={self.permission.value}>"
         )
+
+
+# Псевдоним для обратной совместимости
+Access = DashboardAccess

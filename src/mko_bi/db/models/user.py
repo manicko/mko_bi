@@ -1,7 +1,6 @@
 from datetime import datetime
 from uuid import uuid4, UUID
 from typing import TYPE_CHECKING
-import enum
 
 from sqlalchemy import (
     Boolean,
@@ -15,6 +14,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mko_bi.db.base import Base
+from mko_bi.models.user_roles import UserRoleEnum
 
 if TYPE_CHECKING:
     from mko_bi.models.access import DashboardAccess
@@ -64,7 +64,7 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("NOW()"),
+        server_default=text("(datetime('now'))"),
     )
 
     # Связь с правами доступа

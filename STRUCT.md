@@ -62,6 +62,7 @@ C:\py_exp\mko_bi
 │       │   ├── models
 │       │   │   ├── access.py
 │       │   │   ├── dashboard.py
+│       │   │   ├── layout.py
 │       │   │   └── user.py
 │       │   ├── repositories
 │       │   │   ├── access_repo.py
@@ -73,10 +74,12 @@ C:\py_exp\mko_bi
 │       ├── logging_config.py
 │       ├── main.py
 │       ├── models
+│       │   ├── acceess.py
 │       │   ├── auth.py
 │       │   ├── dashboard.py
 │       │   ├── data.py
-│       │   └── user.py
+│       │   ├── user.py
+│       │   └── user_roles.py
 │       ├── services
 │       │   ├── access_service.py
 │       │   ├── auth_service.py
@@ -94,6 +97,7 @@ C:\py_exp\mko_bi
 ├── TASKS.md
 ├── tests
 │   ├── conftest.py
+│   ├── test_base_models.py
 │   ├── test_deps.py
 │   ├── test_permissions.py
 │   ├── test_pydantic_models.py

@@ -12,6 +12,7 @@
 
 import logging
 from typing import Annotated
+from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -274,7 +275,7 @@ def require_role_dependency(required_role: str):
 
 
 def require_dashboard_read_access(
-    dashboard_id: int,
+    dashboard_id: UUID,
     user: UserDB = Depends(get_current_user_dependency),
     db: Session = Depends(get_db),
 ) -> UserDB:
@@ -294,7 +295,7 @@ def require_dashboard_read_access(
     Example:
         @app.get("/dashboards/{dashboard_id}")
         async def get_dashboard(
-            dashboard_id: int,
+            dashboard_id: UUID,
             user: UserDB = Depends(require_dashboard_read_access),
         ):
             return {"message": "Dashboard data"}
@@ -318,7 +319,7 @@ def require_dashboard_read_access(
 
 
 def require_dashboard_write_access(
-    dashboard_id: int,
+    dashboard_id: UUID,
     user: UserDB = Depends(get_current_user_dependency),
     db: Session = Depends(get_db),
 ) -> UserDB:
@@ -338,7 +339,7 @@ def require_dashboard_write_access(
     Example:
         @app.put("/dashboards/{dashboard_id}")
         async def update_dashboard(
-            dashboard_id: int,
+            dashboard_id: UUID,
             user: UserDB = Depends(require_dashboard_write_access),
         ):
             return {"message": "Update allowed"}
@@ -362,7 +363,7 @@ def require_dashboard_write_access(
 
 
 def require_dashboard_admin_access(
-    dashboard_id: int,
+    dashboard_id: UUID,
     user: UserDB = Depends(get_current_user_dependency),
     db: Session = Depends(get_db),
 ) -> UserDB:
@@ -382,7 +383,7 @@ def require_dashboard_admin_access(
     Example:
         @app.delete("/dashboards/{dashboard_id}")
         async def delete_dashboard(
-            dashboard_id: int,
+            dashboard_id: UUID,
             user: UserDB = Depends(require_dashboard_admin_access),
         ):
             return {"message": "Delete allowed"}
@@ -415,7 +416,7 @@ ViewerUser = Annotated[UserDB, Depends(require_viewer_role)]
 
 
 def get_dashboard_permissions(
-    dashboard_id: int,
+    dashboard_id: UUID,
     user: UserDB = Depends(get_current_user_dependency),
     db: Session = Depends(get_db),
 ) -> dict:

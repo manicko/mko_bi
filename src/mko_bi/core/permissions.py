@@ -13,6 +13,7 @@ viewer только читать.
 import logging
 from enum import Enum
 from functools import lru_cache
+from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -131,8 +132,8 @@ def check_role(user_role: str, required_role: str) -> bool:
 
 
 def check_dashboard_access(
-    user_id: int,
-    dashboard_id: int,
+    user_id: UUID,
+    dashboard_id: UUID,
     required_permission: str = "read",
     db: Session | None = None,
 ) -> bool:
@@ -256,7 +257,7 @@ def get_current_user(
             logger.warning("Недействительный токен")
             raise AuthenticationError("Недействительный токен")
 
-        user_id: int = payload.get("user_id")
+        user_id: UUID = payload.get("user_id")
         if user_id is None:
             logger.warning("В токене отсутствует user_id")
             raise AuthenticationError("Некорректный токен")
@@ -392,7 +393,7 @@ def require_dashboard_access(
     """
 
     def access_checker(
-        dashboard_id: int,
+        dashboard_id: UUID,
         user: UserDB = Depends(get_current_user_dependency),
         db: Session = Depends(SessionLocal),
     ) -> UserDB:

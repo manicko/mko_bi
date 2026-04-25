@@ -78,8 +78,8 @@ class DashboardRepository:
                 db
                 .execute(
                     select(dashboard_model.Dashboard)
-                    .join(access_model.Access)
-                    .where(access_model.Access.user_id == user_id)
+                    .join(access_model.DashboardAccess)
+                    .where(access_model.DashboardAccess.user_id == user_id)
                 )
                 .scalars()
                 .all()

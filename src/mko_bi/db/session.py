@@ -136,7 +136,7 @@ def init_db() -> None:
         вместо автоматического создания таблиц.
     """
     # noqa: F401 - импорт нужен для регистрации моделей в Base.metadata
-    from mko_bi.db.models import access, dashboard, user  # noqa: F401
+    from mko_bi.db.models import access, dashboard, layout, user  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
 
@@ -149,6 +149,6 @@ def drop_db() -> None:
         или при полной переинициализации базы данных.
     """
     # noqa: F401 - импорт нужен для регистрации моделей в Base.metadata
-    from mko_bi.db.models import access, dashboard, user  # noqa: F401
+    from mko_bi.db.models import access, dashboard, layout, user  # noqa: F401
 
     Base.metadata.drop_all(bind=engine)
