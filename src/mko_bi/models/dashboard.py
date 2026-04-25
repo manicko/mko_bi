@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 from pydantic import BaseModel, ConfigDict
 from typing import Literal
 
@@ -7,12 +7,12 @@ from typing import Literal
 class DashboardConfig(BaseModel):
     """Модель конфигурации дашборда."""
 
-    graph_types: List[Literal["bar", "line", "pie", "table"]]
-    filters: Optional[List[Dict[str, Any]]] = None
-    aggregations: Optional[List[Dict[str, Any]]] = None
-    charts: Optional[List[Dict[str, Any]]] = None
-    title: Optional[str] = None
-    description: Optional[str] = None
+    graph_types: list[Literal["bar", "line", "pie", "table"]]
+    filters: list[dict[str, Any]] | None = None
+    aggregations: list[dict[str, Any]] | None = None
+    charts: list[dict[str, Any]] | None = None
+    title: str | None = None
+    description: str | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -96,8 +96,8 @@ class DashboardRead(BaseModel):
 class DashboardUpdate(BaseModel):
     """Модель для обновления дашборда."""
 
-    name: Optional[str] = None
-    config: Optional[DashboardConfig] = None
+    name: str | None = None
+    config: DashboardConfig | None = None
 
     model_config = ConfigDict(
         from_attributes=True,

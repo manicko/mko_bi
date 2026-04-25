@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any
 from pydantic import BaseModel, ConfigDict
 from typing import Literal
 
@@ -24,11 +24,11 @@ class DataUpload(BaseModel):
 class ProcessingConfig(BaseModel):
     """Модель конфигурации обработки данных."""
 
-    transformations: Optional[List[Dict[str, Any]]] = None
-    aggregations: Optional[List[Dict[str, Any]]] = None
-    groupby: Optional[List[str]] = None
-    filters: Optional[List[Dict[str, Any]]] = None
-    metrics: Optional[List[Dict[str, Any]]] = None
+    transformations: list[dict[str, Any]] | None = None
+    aggregations: list[dict[str, Any]] | None = None
+    groupby: list[str] | None = None
+    filters: list[dict[str, Any]] | None = None
+    metrics: list[dict[str, Any]] | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -59,7 +59,7 @@ class ProcessingResult(BaseModel):
     dashboard_id: int
     rows_processed: int
     message: str
-    data: Optional[Dict[str, Any]] = None
+    data: dict[str, Any] | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -80,8 +80,8 @@ class AggregatedData(BaseModel):
 
     dashboard_id: int
     chart_type: Literal["bar", "line", "pie", "table"]
-    data: List[Dict[str, Any]]
-    metadata: Optional[Dict[str, Any]] = None
+    data: list[dict[str, Any]]
+    metadata: dict[str, Any] | None = None
 
     model_config = ConfigDict(
         from_attributes=True,

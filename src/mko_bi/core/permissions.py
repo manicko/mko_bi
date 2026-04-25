@@ -13,16 +13,13 @@ viewer только читать.
 import logging
 from enum import Enum
 from functools import lru_cache
-from typing import Dict, Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError
 from sqlalchemy.orm import Session
 
-from mko_bi.config import config
 from mko_bi.core.security import decode_token
-from mko_bi.db.models import user as user_model
 from mko_bi.db.repositories.access_repo import AccessRepository
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.db.session import SessionLocal
@@ -44,7 +41,7 @@ class RoleHierarchy(Enum):
 
 
 # Соответствие строковых ролей значениям иерархии
-ROLE_LEVELS: Dict[str, int] = {
+ROLE_LEVELS: dict[str, int] = {
     "viewer": RoleHierarchy.VIEWER.value,
     "editor": RoleHierarchy.EDITOR.value,
     "admin": RoleHierarchy.ADMIN.value,
@@ -137,7 +134,7 @@ def check_dashboard_access(
     user_id: int,
     dashboard_id: int,
     required_permission: str = "read",
-    db: Optional[Session] = None,
+    db: Session | None = None,
 ) -> bool:
     """Проверить, есть ли у пользователя доступ к дашборду.
 
@@ -216,7 +213,7 @@ def check_dashboard_access(
 
 
 @lru_cache(maxsize=128)
-def _decode_token_cached(token: str) -> Optional[dict]:
+def _decode_token_cached(token: str) -> dict | None:
     """Кэшированное декодирование токена.
 
     Args:
@@ -230,7 +227,7 @@ def _decode_token_cached(token: str) -> Optional[dict]:
 
 def get_current_user(
     token: str,
-    db: Optional[Session] = None,
+    db: Session | None = None,
 ) -> UserDB:
     """Получить текущего пользователя по токену.
 

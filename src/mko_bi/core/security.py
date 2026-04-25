@@ -1,8 +1,8 @@
 """Модуль безопасности для хеширования паролей и работы с JWT токенами."""
 
 import logging
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from datetime import datetime, timedelta, UTC
+from typing import Any
 
 import bcrypt
 from jose import JWTError, jwt
@@ -102,7 +102,7 @@ def verify_password(password: str, hash_value: str) -> bool:
         return False
 
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """Создает JWT токен доступа с указанными данными.
 
     Токен содержит переданные данные и время истечения (exp).
@@ -124,9 +124,9 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     """
     to_encode = data.copy()
     if expires_delta:
-        expire = datetime.now(timezone.utc) + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(
+        expire = datetime.now(UTC) + timedelta(
             minutes=config.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
         )
     to_encode.update({"exp": expire})
@@ -139,7 +139,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return encoded_jwt
 
 
-def decode_token(token: str) -> Optional[dict[str, Any]]:
+def decode_token(token: str) -> dict[str, Any] | None:
     """Декодирует и валидирует JWT токен.
 
     Проверяет подпись токена и время его действия (exp).

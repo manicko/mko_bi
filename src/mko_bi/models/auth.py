@@ -1,4 +1,3 @@
-from typing import Optional
 from pydantic import BaseModel, ConfigDict, EmailStr
 
 
@@ -58,8 +57,8 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     """Модель данных токена."""
 
-    email: Optional[EmailStr] = None
-    user_id: Optional[int] = None
+    email: EmailStr | None = None
+    user_id: int | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -92,7 +91,7 @@ class AccessCheck(BaseModel):
 
     user_id: int
     dashboard_id: int
-    required_permission: Optional[str] = "read"
+    required_permission: str | None = "read"
 
     model_config = ConfigDict(
         from_attributes=True,

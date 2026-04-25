@@ -6,13 +6,12 @@
 """
 
 import logging
-from typing import Optional
 
 from mko_bi.core.security import hash_password
 from mko_bi.db.models import user as user_model
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.db.session import Session, SessionLocal
-from mko_bi.models.user import UserCreate, UserDB, UserRead
+from mko_bi.models.user import UserRead
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +38,7 @@ def _validate_role(role: str) -> None:
         )
 
 
-def _validate_user_exists(user_id: int, db: Session) -> Optional[user_model.User]:
+def _validate_user_exists(user_id: int, db: Session) -> user_model.User | None:
     """Проверяет существование пользователя и возвращает его модель.
 
     Args:
@@ -84,7 +83,7 @@ def _check_admin_deletion_allowed(db: Session) -> None:
 
 
 def create_user(
-    email: str, password: str, role: str, db: Optional[Session] = None
+    email: str, password: str, role: str, db: Session | None = None
 ) -> UserRead:
     """Создает нового пользователя в системе.
 
@@ -166,9 +165,7 @@ def create_user(
             db.close()
 
 
-def get_user_by_email(
-    email: str, db: Optional[Session] = None
-) -> Optional[user_model.User]:
+def get_user_by_email(email: str, db: Session | None = None) -> user_model.User | None:
     """Получает пользователя по email.
 
     Args:
@@ -204,9 +201,7 @@ def get_user_by_email(
             db.close()
 
 
-def get_user_by_id(
-    user_id: int, db: Optional[Session] = None
-) -> Optional[user_model.User]:
+def get_user_by_id(user_id: int, db: Session | None = None) -> user_model.User | None:
     """Получает пользователя по ID.
 
     Args:
@@ -243,8 +238,8 @@ def get_user_by_id(
 
 
 def update_user_role(
-    user_id: int, new_role: str, db: Optional[Session] = None
-) -> Optional[user_model.User]:
+    user_id: int, new_role: str, db: Session | None = None
+) -> user_model.User | None:
     """Обновляет роль пользователя.
 
     Проверяет валидность новой роли и существование пользователя,
@@ -307,7 +302,7 @@ def update_user_role(
             db.close()
 
 
-def delete_user(user_id: int, db: Optional[Session] = None) -> bool:
+def delete_user(user_id: int, db: Session | None = None) -> bool:
     """Удаляет пользователя из системы.
 
     Проверяет существование пользователя и запрещает удаление
@@ -367,7 +362,7 @@ def delete_user(user_id: int, db: Optional[Session] = None) -> bool:
             db.close()
 
 
-def get_all_users(db: Optional[Session] = None) -> list[user_model.User]:
+def get_all_users(db: Session | None = None) -> list[user_model.User]:
     """Получает список всех пользователей в системе.
 
     Args:
@@ -400,7 +395,7 @@ def get_all_users(db: Optional[Session] = None) -> list[user_model.User]:
 
 
 def register_user(
-    email: str, password: str, role: str, db: Optional[Session] = None
+    email: str, password: str, role: str, db: Session | None = None
 ) -> UserRead:
     """Регистрирует нового пользователя (алиас для create_user).
 

@@ -20,8 +20,6 @@ from sqlalchemy.orm import Session
 
 from mko_bi.core.permissions import (
     get_current_user,
-    require_role,
-    require_dashboard_access,
     check_dashboard_access,
     check_role,
     AuthenticationError,

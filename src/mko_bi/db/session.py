@@ -1,4 +1,4 @@
-from typing import Generator
+from collections.abc import Generator
 import os
 
 from sqlalchemy import create_engine
@@ -135,7 +135,8 @@ def init_db() -> None:
         В продакшене предпочтительнее использовать миграции (например, Alembic)
         вместо автоматического создания таблиц.
     """
-    from mko_bi.db.models import access, dashboard, user
+    # noqa: F401 - импорт нужен для регистрации моделей в Base.metadata
+    from mko_bi.db.models import access, dashboard, user  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
 
@@ -147,6 +148,7 @@ def drop_db() -> None:
         Операция разрушительная! Использовать только для тестов
         или при полной переинициализации базы данных.
     """
-    from mko_bi.db.models import access, dashboard, user
+    # noqa: F401 - импорт нужен для регистрации моделей в Base.metadata
+    from mko_bi.db.models import access, dashboard, user  # noqa: F401
 
     Base.metadata.drop_all(bind=engine)

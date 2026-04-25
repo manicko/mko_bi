@@ -5,7 +5,6 @@
 """
 
 import logging
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -27,7 +26,7 @@ class DashboardRepository:
     @classmethod
     def get(
         cls, dashboard_id: int, db: SessionLocal
-    ) -> Optional[dashboard_model.Dashboard]:
+    ) -> dashboard_model.Dashboard | None:
         """Получить дашборд по ID.
 
         Args:
@@ -75,7 +74,8 @@ class DashboardRepository:
             from mko_bi.db.models import access as access_model
 
             result = (
-                db.execute(
+                db
+                .execute(
                     select(dashboard_model.Dashboard)
                     .join(access_model.Access)
                     .where(access_model.Access.user_id == user_id)
@@ -96,7 +96,7 @@ class DashboardRepository:
             raise
 
     @classmethod
-    def create(cls, db: SessionLocal, **kwargs) -> Optional[dashboard_model.Dashboard]:
+    def create(cls, db: SessionLocal, **kwargs) -> dashboard_model.Dashboard | None:
         """Создать новый дашборд.
 
         Args:
@@ -126,7 +126,7 @@ class DashboardRepository:
     @classmethod
     def update(
         cls, dashboard_id: int, db: SessionLocal, **kwargs
-    ) -> Optional[dashboard_model.Dashboard]:
+    ) -> dashboard_model.Dashboard | None:
         """Обновить данные дашборда.
 
         Args:

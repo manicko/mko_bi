@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Set
 
 from sqlalchemy import (
     Column,
@@ -7,7 +6,6 @@ from sqlalchemy import (
     Enum,
     Integer,
     String,
-    UniqueConstraint,
     Index,
 )
 from sqlalchemy.orm import Mapped, relationship
@@ -61,7 +59,7 @@ class User(Base):
     )
 
     # Связь с правами доступа
-    accesses: Mapped[Set["Access"]] = relationship(
+    accesses: Mapped[set["Access"]] = relationship(  # noqa: F821
         "Access",
         back_populates="user",
         cascade="all, delete-orphan",
@@ -69,7 +67,7 @@ class User(Base):
     )
 
     # Связь с дашбордами через права доступа
-    dashboards: Mapped[Set["Dashboard"]] = relationship(
+    dashboards: Mapped[set["Dashboard"]] = relationship(  # noqa: F821
         "Dashboard",
         secondary="accesses",
         back_populates="users",

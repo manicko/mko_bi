@@ -5,7 +5,6 @@
 """
 
 import logging
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -25,7 +24,7 @@ class UserRepository:
     """
 
     @classmethod
-    def get(cls, user_id: int, db: SessionLocal) -> Optional[user_model.User]:
+    def get(cls, user_id: int, db: SessionLocal) -> user_model.User | None:
         """Получить пользователя по ID.
 
         Args:
@@ -52,7 +51,7 @@ class UserRepository:
             raise
 
     @classmethod
-    def get_by_email(cls, email: str, db: SessionLocal) -> Optional[user_model.User]:
+    def get_by_email(cls, email: str, db: SessionLocal) -> user_model.User | None:
         """Получить пользователя по email.
 
         Args:
@@ -79,7 +78,7 @@ class UserRepository:
             raise
 
     @classmethod
-    def create(cls, db: SessionLocal, **kwargs) -> Optional[user_model.User]:
+    def create(cls, db: SessionLocal, **kwargs) -> user_model.User | None:
         """Создать нового пользователя.
 
         Args:
@@ -107,9 +106,7 @@ class UserRepository:
             raise
 
     @classmethod
-    def update(
-        cls, user_id: int, db: SessionLocal, **kwargs
-    ) -> Optional[user_model.User]:
+    def update(cls, user_id: int, db: SessionLocal, **kwargs) -> user_model.User | None:
         """Обновить данные пользователя.
 
         Args:

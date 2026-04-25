@@ -3,7 +3,6 @@ from sqlalchemy import (
     Enum,
     ForeignKey,
     Integer,
-    UniqueConstraint,
     Index,
 )
 from sqlalchemy.orm import Mapped, relationship
@@ -54,11 +53,8 @@ class Access(Base):
     )
 
     # Связи
-    user: Mapped["User"] = relationship(
-        "User",
-        back_populates="accesses",
-    )
-    dashboard: Mapped["Dashboard"] = relationship(
+
+    dashboard: Mapped["Dashboard"] = relationship(  # noqa: F821
         "Dashboard",
         back_populates="accesses",
     )

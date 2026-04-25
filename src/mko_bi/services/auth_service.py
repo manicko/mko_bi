@@ -6,14 +6,11 @@
 
 import logging
 import re
-from typing import Optional
 
-from mko_bi.config import config
 from mko_bi.core.security import create_access_token, hash_password, verify_password
-from mko_bi.db.models import user as user_model
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.db.session import Session, SessionLocal
-from mko_bi.models.user import UserCreate, UserRead, UserDB
+from mko_bi.models.user import UserRead, UserDB
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +73,7 @@ def _check_email_uniqueness(email: str, db: Session) -> None:
 
 
 def register_user(
-    email: str, password: str, role: str, db: Optional[Session] = None
+    email: str, password: str, role: str, db: Session | None = None
 ) -> UserRead:
     """Регистрирует нового пользователя в системе.
 
@@ -156,8 +153,8 @@ def register_user(
 
 
 def authenticate_user(
-    email: str, password: str, db: Optional[Session] = None
-) -> Optional[UserDB]:
+    email: str, password: str, db: Session | None = None
+) -> UserDB | None:
     """Аутентифицирует пользователя по email и паролю.
 
     Ищет пользователя по email и проверяет соответствие пароля.
@@ -213,7 +210,7 @@ def authenticate_user(
             db.close()
 
 
-def login_user(email: str, password: str, db: Optional[Session] = None) -> dict:
+def login_user(email: str, password: str, db: Session | None = None) -> dict:
     """Выполняет вход пользователя и возвращает JWT токен.
 
     Аутентифицирует пользователя и при успехе создает JWT токен доступа.

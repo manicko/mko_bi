@@ -1,7 +1,6 @@
 from datetime import datetime
-from typing import Set
 
-from sqlalchemy import Column, DateTime, Index, Integer, String, Text
+from sqlalchemy import Column, DateTime, Integer, String, Text
 from sqlalchemy.orm import Mapped, relationship
 
 from mko_bi.db.base import Base
@@ -41,7 +40,7 @@ class Dashboard(Base):
     )
 
     # Связь с правами доступа
-    accesses: Mapped[Set["Access"]] = relationship(
+    accesses: Mapped[set["Access"]] = relationship(  # noqa: F821
         "Access",
         back_populates="dashboard",
         cascade="all, delete-orphan",
@@ -49,7 +48,7 @@ class Dashboard(Base):
     )
 
     # Связь с пользователями через права доступа
-    users: Mapped[Set["User"]] = relationship(
+    users: Mapped[set["User"]] = relationship(  # noqa: F821
         "User",
         secondary="accesses",
         back_populates="dashboards",

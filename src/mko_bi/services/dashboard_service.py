@@ -7,7 +7,6 @@
 
 import json
 import logging
-from typing import Optional
 
 from mko_bi.db.models import dashboard as dashboard_model
 from mko_bi.db.repositories.access_repo import AccessRepository
@@ -15,9 +14,7 @@ from mko_bi.db.repositories.dashboard_repo import DashboardRepository
 from mko_bi.db.session import SessionLocal
 from mko_bi.models.dashboard import (
     DashboardConfig,
-    DashboardCreate,
     DashboardRead,
-    DashboardUpdate,
 )
 
 logger = logging.getLogger(__name__)
@@ -73,7 +70,7 @@ def _validate_config(config: DashboardConfig) -> None:
 
 def _validate_dashboard_exists(
     dashboard_id: int, db: SessionLocal
-) -> Optional[dashboard_model.Dashboard]:
+) -> dashboard_model.Dashboard | None:
     """Проверяет существование дашборда и возвращает его модель.
 
     Args:
@@ -113,7 +110,7 @@ def _check_owner_permission(dashboard_id: int, user_id: int, db: SessionLocal) -
 
 
 def create_dashboard(
-    name: str, config: dict, owner_id: int, db: Optional[SessionLocal] = None
+    name: str, config: dict, owner_id: int, db: SessionLocal | None = None
 ) -> DashboardRead:
     """Создает новый дашборд с владельцем.
 
@@ -166,7 +163,7 @@ def create_dashboard(
         )
 
         # Предоставление прав администратора владельцу
-        access_obj = AccessRepository.grant_access(
+        AccessRepository.grant_access(
             db=db,
             user_id=owner_id,
             dashboard_id=dashboard_obj.id,
@@ -204,8 +201,8 @@ def create_dashboard(
 
 
 def get_dashboard(
-    dashboard_id: int, user_id: int, db: Optional[SessionLocal] = None
-) -> Optional[DashboardRead]:
+    dashboard_id: int, user_id: int, db: SessionLocal | None = None
+) -> DashboardRead | None:
     """Получает дашборд по ID с проверкой доступа.
 
     Проверяет, есть ли у пользователя доступ к дашборду,
@@ -272,7 +269,7 @@ def get_dashboard(
 
 
 def get_user_dashboards(
-    user_id: int, db: Optional[SessionLocal] = None
+    user_id: int, db: SessionLocal | None = None
 ) -> list[DashboardRead]:
     """Получает все дашборды, доступные пользователю.
 
@@ -327,8 +324,8 @@ def get_user_dashboards(
 
 
 def update_dashboard(
-    dashboard_id: int, config: dict, db: Optional[SessionLocal] = None
-) -> Optional[DashboardRead]:
+    dashboard_id: int, config: dict, db: SessionLocal | None = None
+) -> DashboardRead | None:
     """Обновляет конфигурацию дашборда.
 
     Проверяет права доступа и обновляет конфигурацию дашборда.
@@ -394,7 +391,7 @@ def update_dashboard(
             db.close()
 
 
-def delete_dashboard(dashboard_id: int, db: Optional[SessionLocal] = None) -> bool:
+def delete_dashboard(dashboard_id: int, db: SessionLocal | None = None) -> bool:
     """Удаляет дашборд и все связанные права доступа.
 
     Выполняет каскадное удаление дашборда и всех прав доступа к нему.
@@ -442,7 +439,7 @@ def grant_access(
     dashboard_id: int,
     user_id: int,
     permission: str,
-    db: Optional[SessionLocal] = None,
+    db: SessionLocal | None = None,
 ) -> bool:
     """Предоставляет пользователю доступ к дашборду.
 
@@ -482,7 +479,7 @@ def grant_access(
             raise ValueError(f"Дашборд с id={dashboard_id} не найден")
 
         # Предоставление доступа через репозиторий
-        access_obj = AccessRepository.grant_access(
+        AccessRepository.grant_access(
             db=db,
             user_id=user_id,
             dashboard_id=dashboard_id,

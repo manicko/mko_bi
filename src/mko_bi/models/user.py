@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 from pydantic import BaseModel, ConfigDict, EmailStr
 from typing import Literal
 
@@ -81,9 +80,9 @@ class UserDB(UserBase):
 class UserUpdate(BaseModel):
     """Модель для обновления пользователя."""
 
-    email: Optional[EmailStr] = None
-    role: Optional[Literal["admin", "editor", "viewer"]] = None
-    password: Optional[str] = None
+    email: EmailStr | None = None
+    role: Literal["admin", "editor", "viewer"] | None = None
+    password: str | None = None
 
     model_config = ConfigDict(
         from_attributes=True,

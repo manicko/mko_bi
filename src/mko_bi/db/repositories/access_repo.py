@@ -5,7 +5,6 @@
 """
 
 import logging
-from typing import Optional
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -32,7 +31,7 @@ class AccessRepository:
         user_id: int,
         dashboard_id: int,
         permission_level: str = "read",
-    ) -> Optional[access_model.Access]:
+    ) -> access_model.Access | None:
         """Предоставить пользователю доступ к дашборду.
 
         Args:
@@ -138,7 +137,7 @@ class AccessRepository:
     @classmethod
     def check_access(
         cls, user_id: int, dashboard_id: int, db: SessionLocal
-    ) -> Optional[str]:
+    ) -> str | None:
         """Проверить уровень доступа пользователя к дашборду.
 
         Args:
@@ -200,7 +199,8 @@ class AccessRepository:
         """
         try:
             result = (
-                db.execute(
+                db
+                .execute(
                     select(dashboard_model.Dashboard)
                     .join(access_model.Access)
                     .where(access_model.Access.user_id == user_id)

@@ -107,7 +107,7 @@ C:\py_exp\mko_bi
 │   ├── TASK_006_auth_service_DONE.md
 │   ├── TASK_007_user_service.md.DONE
 │   ├── TASK_008_dashboard_service.md.DONE
-│   ├── TASK_009_permissions_DONE.md
+│   ├── TASK_009_permissions_CHECKED.md
 │   ├── TASK_010_auth_api.md
 │   ├── TASK_011_users_api.md
 │   ├── TASK_012_dashboards_api.md

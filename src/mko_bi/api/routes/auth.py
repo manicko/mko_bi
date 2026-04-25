@@ -13,7 +13,6 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from pydantic import EmailStr
 from sqlalchemy.orm import Session
 
 from mko_bi.api.deps import get_db
@@ -22,7 +21,6 @@ from mko_bi.models.auth import LoginRequest, RegisterRequest, Token, RefreshRequ
 from mko_bi.models.user import UserRead
 from mko_bi.services.auth_service import (
     authenticate_user,
-    login_user,
     register_user,
 )
 
@@ -315,7 +313,6 @@ async def refresh(
     # Проверяем наличие user_id
     user_id = payload.get("user_id")
     email = payload.get("email")
-    role = payload.get("role")
 
     if user_id is None or email is None:
         logger.warning("В токене отсутствуют необходимые данные")

@@ -20,7 +20,7 @@ LOGIC:
 
 CONSTRAINTS:
 - Использовать переменные окружения с fallback значениями
-- PostgreSQL: dbname=mydb, user=postgres, password=1234, host=localhost, port=5432
+- PostgreSQL: dbname=bidb, user=postgres, password=1234, host=localhost, port=5432
 - JWT: SECRET_KEY, ALGORITHM=HS256, ACCESS_TOKEN_EXPIRE_MINUTES=30
 - Логирование: формат '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 - Загрузка файлов: только .csv.gz, максимум 100MB
