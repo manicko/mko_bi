@@ -130,7 +130,7 @@ C:\py_exp\mko_bi
 │   ├── TASK_014_data_api_DONE.md
 │   ├── TASK_015_data_loader_DONE.md
 │   ├── TASK_016_data_processing_DONE.md
-│   ├── TASK_017_data_storage.md
+│   ├── TASK_017_data_storage_DONE.md
 │   ├── TASK_018_dashboard_base.md
 │   ├── TASK_019_chart_components.md
 │   ├── TASK_020_dashboard_impl.md
