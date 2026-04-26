@@ -21,17 +21,18 @@ LOGIC:
 - Создать базовый класс Base = declarative_base()
 - Модель User: id, email (unique), password_hash, role, relationships
 - Модель Dashboard: id, name, config (JSON), created_at
-- Модель Access: id, user_id (FK), dashboard_id (FK), permission_level
-- Настроить связи: User.accesses, Dashboard.accesses
-- Создать функцию get_db() как генератор сессий
-
-CONSTRAINTS:
-- Использовать SQLAlchemy ORM
-- Индексы на email и уникальные ограничения
-- Внешние ключи для связей
-- role: String (admin/editor/viewer)
-- permission_level: String (read/write/admin)
-- created_at: DateTime с default=datetime.utcnow
+    - Модель Access: id, user_id (FK), dashboard_id (FK), permission (view/edit/admin)
+    - Настроить связи: User.accesses, Dashboard.accesses
+    - Создать функцию get_db() как генератор сессий
+    
+    CONSTRAINTS:
+    - Использовать SQLAlchemy ORM
+    - Индексы на email и уникальные ограничения
+    - Внешние ключи для связей
+    - role: UserRoleEnum (admin/editor/viewer)
+    - permission: PermissionEnum (view/edit/admin), с поддержкой "read"/"write" для совместимости
+    - created_at: DateTime с server_default (текущее время БД)
+    - Для совместимости "read" преобразуется в "view", "write" в "edit"
 
 DONE:
 - Engine и SessionLocal созданы для PostgreSQL
@@ -39,3 +40,5 @@ DONE:
 - Модель Dashboard с конфигурацией
 - Модель Access со связями
 - Функция get_db() возвращает сессию
+
+Тесты: нужны только глубоко тестирующие бизнес-логику.

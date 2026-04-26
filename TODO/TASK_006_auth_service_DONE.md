@@ -6,9 +6,9 @@ GOAL: Реализовать бизнес-логику регистрации и
 
 IMPLEMENT:
 
-func: register_user(email: str, password: str, role: str) -> UserRead
-func: authenticate_user(email: str, password: str) -> Optional[UserDB]
-func: login_user(email: str, password: str) -> dict
+func: register_user(email: str, password: str, role: str, db: Session) -> UserRead
+func: authenticate_user(email: str, password: str, db: Session) -> Optional[UserDB]
+func: login_user (реализован в routes)
 
 LOGIC:
 - register_user: валидация email/роли, проверка дублей, хеш пароля, сохранение
@@ -23,6 +23,7 @@ CONSTRAINTS:
 - Проверка уникальности email
 - Хеширование обязательно перед сохранением
 - Возврат UserRead без password_hash
+- Все функции принимают сессию БД (db) как параметр
 
 DONE:
 - Регистрация создает пользователя с захешированным паролем
@@ -30,3 +31,5 @@ DONE:
 - Логин возвращает JWT токен
 - Валидация ошибок работает корректно
 - Тесты покрывают все сценарии
+
+Тесты: нужны только глубоко тестирующие бизнес-логику.

@@ -8,8 +8,8 @@ GOAL: Реализовать проверку прав доступа и зав�
 IMPLEMENT:
 
 func: check_role(user_role: str, required_role: str) -> bool
-func: check_dashboard_access(user_id: int, dashboard_id: int) -> bool
-func: get_current_user(token: str) -> UserDB
+func: check_dashboard_access(user_id: UUID, dashboard_id: UUID, required_permission: str = "read", db: Session | None = None) -> bool
+func: get_current_user(token: str, db: Session | None = None) -> UserDB
 func: require_role(required_role: str)
 
 LOGIC:
@@ -24,7 +24,8 @@ CONSTRAINTS:
 - HTTPException при отсутствии доступа
 - Кэширование пользователя в request state
 - Иерархия: admin может всё, editor может read/write, viewer только read
-- ОбработкаExpiredSignatureError
+- Обработка ExpiredSignatureError
+- check_dashboard_access и get_current_user принимают опциональную сессию БД
 
 DONE:
 - Проверка ролей работает по иерархии
@@ -32,3 +33,5 @@ DONE:
 - JWT декодируется и валидируется
 - FastAPI dependencies готовы
 - Защита API через Depends реализована
+
+Тесты: нужны только глубоко тестирующие бизнес-логику.

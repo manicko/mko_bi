@@ -254,7 +254,7 @@ class TestDecodeToken:
             "user_id": 1,
             "email": "test@example.com",
             "role": "admin",
-            "permissions": ["read", "write"],
+            "permissions": ["view", "edit"],
         }
         token = create_access_token(data)
         decoded = decode_token(token)
@@ -262,7 +262,7 @@ class TestDecodeToken:
         assert decoded["user_id"] == 1
         assert decoded["email"] == "test@example.com"
         assert decoded["role"] == "admin"
-        assert decoded["permissions"] == ["read", "write"]
+        assert decoded["permissions"] == ["view", "edit"]
 
 
 class TestIntegration:

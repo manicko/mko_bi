@@ -451,7 +451,7 @@ def get_dashboard_permissions(
         "can_write": check_dashboard_access(
             user_id=user.id,
             dashboard_id=dashboard_id,
-            required_permission="write",
+            required_permission="edit",
             db=db,
         ),
         "can_admin": check_dashboard_access(

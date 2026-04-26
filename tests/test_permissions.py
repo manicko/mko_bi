@@ -14,7 +14,6 @@ from mko_bi.core.permissions import (
     check_dashboard_access,
     get_current_user,
     require_role,
-    RoleHierarchy,
     ROLE_LEVELS,
     PERMISSION_LEVELS,
     AuthenticationError,
@@ -26,27 +25,24 @@ from mko_bi.models.user import UserDB
 from mko_bi.db.models import user as user_model
 
 
+from mko_bi.models.user_roles import UserRoleEnum
+
+
 class TestRoleHierarchy:
     """Тесты иерархии ролей."""
 
     def test_role_levels_values(self):
         """Проверка значений уровней ролей."""
-        assert ROLE_LEVELS["viewer"] == 1
-        assert ROLE_LEVELS["editor"] == 2
-        assert ROLE_LEVELS["admin"] == 3
-
-    def test_role_hierarchy_enum(self):
-        """Проверка значений перечисления RoleHierarchy."""
-        assert RoleHierarchy.VIEWER.value == 1
-        assert RoleHierarchy.EDITOR.value == 2
-        assert RoleHierarchy.ADMIN.value == 3
+        assert ROLE_LEVELS[UserRoleEnum.viewer] == 1
+        assert ROLE_LEVELS[UserRoleEnum.editor] == 2
+        assert ROLE_LEVELS[UserRoleEnum.admin] == 3
 
     def test_permission_levels(self):
         """Проверка значений PERMISSION_LEVELS."""
         assert "view" in PERMISSION_LEVELS
         assert "edit" in PERMISSION_LEVELS
         assert "admin" in PERMISSION_LEVELS
-        assert "read" in PERMISSION_LEVELS  # "read" добавлен для совместимости
+        assert "read" in PERMISSION_LEVELS
         assert len(PERMISSION_LEVELS) == 4
 
 
@@ -198,7 +194,7 @@ class TestCheckDashboardAccess:
         )
 
         result = check_dashboard_access(
-            user_id=1, dashboard_id=1, required_permission="read", db=mock_db
+            user_id=1, dashboard_id=1, required_permission="view", db=mock_db
         )
 
         assert result is False
@@ -209,11 +205,11 @@ class TestCheckDashboardAccess:
         mock_session = MagicMock()
         mocker.patch("mko_bi.core.permissions.SessionLocal", return_value=mock_session)
         mock_check = mocker.patch.object(
-            AccessRepository, "check_access", return_value="read"
+            AccessRepository, "check_access", return_value="view"
         )
 
         result = check_dashboard_access(
-            user_id=1, dashboard_id=1, required_permission="read", db=None
+            user_id=1, dashboard_id=1, required_permission="view", db=None
         )
 
         assert result is True
@@ -224,10 +220,10 @@ class TestCheckDashboardAccess:
         """Функция должна закрывать созданную сессию."""
         mock_session = MagicMock()
         mocker.patch("mko_bi.core.permissions.SessionLocal", return_value=mock_session)
-        mocker.patch.object(AccessRepository, "check_access", return_value="read")
+        mocker.patch.object(AccessRepository, "check_access", return_value="view")
 
         result = check_dashboard_access(
-            user_id=1, dashboard_id=1, required_permission="read", db=None
+            user_id=1, dashboard_id=1, required_permission="view", db=None
         )
 
         assert result is True

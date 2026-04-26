@@ -31,6 +31,9 @@ def test_db():
     # Переопределяем engine для тестов
     override_engine_for_testing(test_engine)
     
+    # Удаляем все таблицы (на случай, если они уже существуют)
+    Base.metadata.drop_all(bind=test_engine)
+    
     # Создаем все таблицы
     Base.metadata.create_all(bind=test_engine)
     

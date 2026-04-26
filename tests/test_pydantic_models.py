@@ -335,11 +335,11 @@ class TestAuthModels:
         check = AccessCheck(
             user_id="550e8400-e29b-41d4-a716-446655440000",
             dashboard_id="550e8400-e29b-41d4-a716-446655440001",
-            required_permission="read",
+            required_permission="view",
         )
         assert str(check.user_id) == "550e8400-e29b-41d4-a716-446655440000"
         assert str(check.dashboard_id) == "550e8400-e29b-41d4-a716-446655440001"
-        assert check.required_permission == "read"
+        assert check.required_permission == "view"
 
     def test_access_check_default_permission(self):
         """Проверка значения разрешения по умолчанию."""
@@ -356,11 +356,11 @@ class TestAuthModels:
         grant = AccessGrant(
             user_id="550e8400-e29b-41d4-a716-446655440000",
             dashboard_id="550e8400-e29b-41d4-a716-446655440001",
-            permission_level="write",
+            permission_level="edit",
         )
         assert str(grant.user_id) == "550e8400-e29b-41d4-a716-446655440000"
         assert str(grant.dashboard_id) == "550e8400-e29b-41d4-a716-446655440001"
-        assert grant.permission_level == "write"
+        assert grant.permission_level == "edit"
 
     def test_access_grant_default_permission(self):
         """Проверка значения уровня доступа по умолчанию."""

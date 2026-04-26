@@ -1,7 +1,8 @@
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, EmailStr
-from typing import Literal
 from uuid import UUID
+
+from mko_bi.models.user_roles import UserRoleEnum
 
 
 class LoginRequest(BaseModel):
@@ -26,7 +27,7 @@ class RegisterRequest(BaseModel):
 
     email: EmailStr
     password: str
-    role: str = "viewer"
+    role: UserRoleEnum = UserRoleEnum.viewer
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -34,7 +35,7 @@ class RegisterRequest(BaseModel):
             "example": {
                 "email": "user@example.com",
                 "password": "secure_password123",
-                "role": "viewer",
+                "role": UserRoleEnum.viewer,
             }
         },
     )

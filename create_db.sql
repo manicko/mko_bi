@@ -25,6 +25,7 @@ CREATE TABLE dashboards (
     description     TEXT,
     layout_id       UUID REFERENCES layouts(id),
     created_by      UUID REFERENCES users(id),
+    config          JSONB NOT NULL DEFAULT '{}',
     created_at      TIMESTAMP DEFAULT NOW(),
     updated_at      TIMESTAMP DEFAULT NOW()
 );

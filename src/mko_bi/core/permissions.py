@@ -11,7 +11,6 @@ viewer только читать.
 """
 
 import logging
-from enum import Enum
 from functools import lru_cache
 from uuid import UUID
 
@@ -34,22 +33,20 @@ logger = logging.getLogger(__name__)
 
 
 # Иерархия ролей (чем выше значение, тем больше прав)
-class RoleHierarchy(Enum):
-    """Иерархия ролей пользователей."""
-
-    VIEWER = 1
-    EDITOR = 2
-    ADMIN = 3
-
-
-# Соответствие строковых ролей значениям иерархии
-ROLE_LEVELS: dict[str, int] = {
-    UserRoleEnum.viewer: RoleHierarchy.VIEWER.value,
-    UserRoleEnum.editor: RoleHierarchy.EDITOR.value,
-    UserRoleEnum.admin: RoleHierarchy.ADMIN.value,
+# Используем UserRoleEnum - значения уже определяют порядок
+ROLE_LEVELS: dict[UserRoleEnum, int] = {
+    UserRoleEnum.viewer: 1,
+    UserRoleEnum.editor: 2,
+    UserRoleEnum.admin: 3,
 }
 
 # Уровни доступа - используем PermissionEnum
+PERMISSION_LEVELS: dict[str, int] = {
+    "view": 1,
+    "edit": 2,
+    "admin": 3,
+    "read": 1,  # Для обратной совместимости
+}
 # Для обратной совместимости также принимаем "read" как "view" и "write" как "edit"
 
 
@@ -83,10 +80,12 @@ def _get_role_level(role: str) -> int:
     Raises:
         ValueError: Если роль неизвестна.
     """
-    if role not in ROLE_LEVELS:
+    try:
+        role_enum = UserRoleEnum(role)
+        return ROLE_LEVELS[role_enum]
+    except ValueError:
         logger.error("Неизвестная роль: %s", role)
         raise ValueError(f"Неизвестная роль: '{role}'")
-    return ROLE_LEVELS[role]
 
 
 # --- Основные функции проверки прав ---

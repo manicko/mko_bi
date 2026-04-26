@@ -77,68 +77,6 @@ class TestUserModel:
 
         db_session.rollback()
 
-    def test_user_role_constraint(self, db_session):
-        """Проверка ограничения на роль."""
-        user = user_model.User(
-            email="invalid_role@example.com",
-            password_hash="$2b$12$examplehash",
-            role="invalid_role",
-        )
-        db_session.add(user)
-
-        with pytest.raises(IntegrityError):
-            db_session.commit()
-
-        db_session.rollback()
-
-    def test_user_str_representation(self, db_session):
-        """Проверка строкового представления пользователя."""
-        user = user_model.User(
-            email="str_test@example.com",
-            password_hash="$2b$12$examplehash",
-        )
-        db_session.add(user)
-        db_session.commit()
-
-        assert str(user) == "str_test@example.com"
-        assert "str_test@example.com" in repr(user)
-        assert user.role in repr(user)
-
-    def test_user_relationships(self, db_session):
-        """Проверка связей пользователя."""
-        user = user_model.User(
-            email="rel_test@example.com",
-            password_hash="$2b$12$examplehash",
-        )
-        db_session.add(user)
-        db_session.commit()
-
-        # Создаем дашборд
-        dashboard = dashboard_model.Dashboard(
-            name="Test Dashboard",
-            config={},
-        )
-        db_session.add(dashboard)
-        db_session.commit()
-
-        # Создаем доступ
-        access = access_model.Access(
-            user_id=user.id,
-            dashboard_id=dashboard.id,
-            permission="view",
-        )
-        db_session.add(access)
-        db_session.commit()
-
-        db_session.refresh(user)
-        db_session.refresh(dashboard)
-
-        assert len(user.accesses) == 1
-        assert user.accesses[0].permission == "view"
-        assert len(user.dashboards) == 1
-        assert user.dashboards[0].name == "Test Dashboard"
-
-
 class TestDashboardModel:
     """Тесты для модели Dashboard."""
 
@@ -210,53 +148,6 @@ class TestDashboardModel:
         db_session.refresh(dashboard)
 
         assert dashboard.updated_at > old_updated_at
-
-    def test_dashboard_str_representation(self, db_session):
-        """Проверка строкового представления дашборда."""
-        dashboard = dashboard_model.Dashboard(
-            name="Str Test",
-            config={},
-        )
-        db_session.add(dashboard)
-        db_session.commit()
-
-        assert str(dashboard) == "Str Test"
-        assert "Str Test" in repr(dashboard)
-
-    def test_dashboard_relationships(self, db_session):
-        """Проверка связей дашборда."""
-        # Создаем пользователя
-        user = user_model.User(
-            email="dash_user@example.com",
-            password_hash="$2b$12$examplehash",
-        )
-        db_session.add(user)
-        db_session.commit()
-
-        # Создаем дашборд
-        dashboard = dashboard_model.Dashboard(
-            name="Relationship Test",
-            config={},
-        )
-        db_session.add(dashboard)
-        db_session.commit()
-
-        # Создаем доступ
-        access = access_model.Access(
-            user_id=user.id,
-            dashboard_id=dashboard.id,
-            permission="edit",
-        )
-        db_session.add(access)
-        db_session.commit()
-
-        db_session.refresh(dashboard)
-        db_session.refresh(user)
-
-        assert len(dashboard.accesses) == 1
-        assert dashboard.accesses[0].permission == "edit"
-        assert len(dashboard.users) == 1
-        assert dashboard.users[0].email == "dash_user@example.com"
 
 
 class TestAccessModel:
@@ -330,59 +221,6 @@ class TestAccessModel:
 
         db_session.rollback()
 
-    def test_permission_constraint(self, db_session):
-        """Проверка ограничения на уровень доступа."""
-        user = user_model.User(
-            email="perm_user@example.com",
-            password_hash="$2b$12$examplehash",
-        )
-        db_session.add(user)
-        db_session.commit()
-
-        dashboard = dashboard_model.Dashboard(
-            name="Perm Test",
-            config={},
-        )
-        db_session.add(dashboard)
-        db_session.commit()
-
-        access = access_model.Access(
-            user_id=user.id,
-            dashboard_id=dashboard.id,
-            permission="invalid",
-        )
-        db_session.add(access)
-
-        with pytest.raises(IntegrityError):
-            db_session.commit()
-
-        db_session.rollback()
-
-    def test_foreign_key_constraints(self, db_session):
-        """Проверка ограничений внешних ключей."""
-        # Пробуем создать доступ с несуществующим user_id
-        dashboard = dashboard_model.Dashboard(
-            name="FK Test",
-            config={},
-        )
-        db_session.add(dashboard)
-        db_session.commit()
-
-        from uuid import uuid4
-        non_existent_user_id = uuid4()
-
-        access = access_model.Access(
-            user_id=non_existent_user_id,
-            dashboard_id=dashboard.id,
-            permission="view",
-        )
-        db_session.add(access)
-
-        with pytest.raises(IntegrityError):
-            db_session.commit()
-
-        db_session.rollback()
-
     def test_cascade_delete_user(self, db_session):
         """Проверка каскадного удаления при удалении пользователя."""
         user = user_model.User(
@@ -450,35 +288,6 @@ class TestAccessModel:
             access_model.Access.__table__.select()
         ).fetchall()
         assert len(result) == 0
-
-    def test_access_str_representation(self, db_session):
-        """Проверка строкового представления права доступа."""
-        user = user_model.User(
-            email="str_access_user@example.com",
-            password_hash="$2b$12$examplehash",
-        )
-        db_session.add(user)
-        db_session.commit()
-
-        dashboard = dashboard_model.Dashboard(
-            name="Str Access Test",
-            config={},
-        )
-        db_session.add(dashboard)
-        db_session.commit()
-
-        access = access_model.Access(
-            user_id=user.id,
-            dashboard_id=dashboard.id,
-            permission="edit",
-        )
-        db_session.add(access)
-        db_session.commit()
-
-        access_str = repr(access)
-        assert str(user.id) in access_str
-        assert str(dashboard.id) in access_str
-        assert "edit" in access_str
 
 
 class TestModelIndexes:

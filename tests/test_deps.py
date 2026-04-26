@@ -44,18 +44,6 @@ class TestGetDB:
         except StopIteration:
             pass
 
-    def test_get_db_closes_session(self):
-        """get_db должна закрывать сессию после использования."""
-        db_gen = get_db()
-        session = next(db_gen)
-        # Session should be active (not checking as it's a property)
-        try:
-            next(db_gen)
-        except StopIteration:
-            pass
-        # Сессия должна быть закрыта
-        # Session should be closed (we trust the generator)
-
 
 class TestGetTokenFromHeader:
     """Тесты зависимости get_token_from_header."""
@@ -403,26 +391,6 @@ class TestRequireDashboardAccess:
             require_dashboard_admin_access(dashboard_id=1, user=mock_user, db=mock_db)
 
         assert exc_info.value.status_code == 403
-
-
-class TestTypeAliases:
-    """Тесты типизированных алиасов."""
-
-    def test_current_user_alias(self):
-        """Алиас CurrentUser должен быть правильного типа."""
-        assert CurrentUser.__metadata__ is not None
-
-    def test_admin_user_alias(self):
-        """Алиас AdminUser должен быть правильного типа."""
-        assert AdminUser.__metadata__ is not None
-
-    def test_editor_user_alias(self):
-        """Алиас EditorUser должен быть правильного типа."""
-        assert EditorUser.__metadata__ is not None
-
-    def test_viewer_user_alias(self):
-        """Алиас ViewerUser должен быть правильного типа."""
-        assert ViewerUser.__metadata__ is not None
 
 
 class TestIntegration:

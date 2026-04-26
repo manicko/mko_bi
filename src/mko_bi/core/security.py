@@ -123,6 +123,12 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
         True
     """
     to_encode = data.copy()
+    # Конвертируем UUID объекты в строки для JWT сериализации
+    for key, value in to_encode.items():
+        from uuid import UUID
+        if isinstance(value, UUID):
+            to_encode[key] = str(value)
+    
     if expires_delta:
         expire = datetime.now(UTC) + expires_delta
     else:

@@ -15,17 +15,23 @@ class: FilterPanel
 class: DashboardLayout
 
 LOGIC:
-- BarChart: bar chart через Plotly с поддержкой multi-axis
-- LineChart: line chart с YoY линиями
-- FilterPanel: глобальные фильтры (year, category, brand)
-- DashboardLayout: компоновка графиков и фильтров
-
-CONSTRAINTS:
-- Использовать Plotly для графиков
-- Поддержка комбинированных графиков
-- Фильтры применяются ко всем графикам
-- Responsive layout
-- Экспорт в PNG (опционально)
+    - BarChart: bar chart через Plotly с поддержкой multi-axis
+    - LineChart: line chart с YoY линиями
+    - FilterPanel: глобальные фильтры (year, category, brand)
+    - DashboardLayout: компоновка графиков и фильтров
+    
+    LOGIC:
+    - BarChart: bar chart через Plotly с поддержкой multi-axis
+    - LineChart: line chart с YoY линиями
+    - FilterPanel: глобальные фильтры (year, category, brand)
+    - DashboardLayout: компоновка графиков и фильтров
+    
+    CONSTRAINTS:
+    - Использовать Plotly для графиков
+    - Поддержка комбинированных графиков
+    - Фильтры применяются ко всем графикам
+    - Responsive layout
+    - Экспорт в PNG (опционально)
 
 DONE:
 - BarChart рендерит столбчатые диаграммы
@@ -33,3 +39,5 @@ DONE:
 - FilterPanel предоставляет интерфейс фильтрации
 - DashboardLayout компонует элементы
 - Графики интерактивные
+
+Тесты: нужны только глубоко тестирующие бизнес-логику.
