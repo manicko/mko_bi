@@ -13,7 +13,7 @@ router: APIRouter с prefix="/upload"
 @endpoint: GET /upload/status/{task_id}
 
 LOGIC:
-- POST /upload: загрузка .csv.gz файла во временную директорию
+- POST /upload: загрузка .csv.gz файла во временную директорию с использованием platformdirs для путей пользователя
 - POST /upload/{id}/process: запуск пайплайна обработки данных
 - GET /upload/status/{id}: проверка статуса обработки
 - Валидация формата файла и размера
@@ -35,3 +35,4 @@ DONE:
 - Файлы удаляются после обработки
 
 Тесты: нужны только глубоко тестирующие бизнес-логику.
+Примеры файлов для теста загрузки и обработки: C:\py_exp\mko_bi\data\tmp_uploads

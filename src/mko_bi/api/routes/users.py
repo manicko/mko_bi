@@ -1,0 +1,289 @@
+"""Маршруты для управления пользователями.
+
+Этот модуль предоставляет эндпоинты для CRUD операций с пользователями.
+Доступ к большинству операций ограничен и требует аутентификации.
+Операции удаления и просмотра всех пользователей доступны только администраторам.
+"""
+
+import logging
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
+from mko_bi.api.deps import (
+    get_db,
+    require_admin_role,
+    CurrentUser,
+)
+from mko_bi.models.user import UserRead
+from mko_bi.services.user_service import (
+    create_user,
+    get_user_by_id,
+    get_all_users,
+    update_user_role,
+    delete_user,
+)
+
+logger = logging.getLogger(__name__)
+
+router = APIRouter(prefix="/users", tags=["users"])
+
+
+@router.post(
+    "/",
+    response_model=UserRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Создание пользователя",
+    description="Создает нового пользователя. Доступно только администраторам.",
+    dependencies=[Depends(require_admin_role)],
+)
+async def create_user_endpoint(
+    email: str,
+    password: str,
+    role: str,
+    db: Session = Depends(get_db),
+) -> UserRead:
+    """Создает нового пользователя в системе.
+
+    Args:
+        email: Email пользователя. Должен быть валидным и уникальным.
+        password: Пароль пользователя. Будет захеширован перед сохранением.
+        role: Роль пользователя. Допустимые значения: 'admin', 'editor', 'viewer'.
+        _: Пользователь с ролью admin (проверка через зависимость).
+        db: Сессия базы данных.
+
+    Returns:
+        UserRead: Модель созданного пользователя без пароля.
+
+    Raises:
+        HTTPException 403: Если роль недопустима или email уже занят.
+        HTTPException 422: Если данные не прошли валидацию.
+        HTTPException 500: При ошибке базы данных.
+    """
+    logger.info("Создание пользователя: email=%s, role=%s", email, role)
+
+    try:
+        user = create_user(email=email, password=password, role=role, db=db)
+        return user
+    except ValueError as e:
+        logger.warning("Ошибка валидации при создании пользователя: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from e
+    except Exception as e:
+        logger.error("Ошибка при создании пользователя %s: %s", email, e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при создании пользователя",
+        ) from e
+
+
+@router.get(
+    "/",
+    response_model=list[UserRead],
+    status_code=status.HTTP_200_OK,
+    summary="Список всех пользователей",
+    description="Возвращает список всех пользователей. Доступно только администраторам.",
+    dependencies=[Depends(require_admin_role)],
+)
+async def get_users_endpoint(
+    db: Session = Depends(get_db),
+) -> list[UserRead]:
+    """Получает список всех пользователей в системе.
+
+    Args:
+        _: Пользователь с ролью admin (проверка через зависимость).
+        db: Сессия базы данных.
+
+    Returns:
+        list[UserRead]: Список всех пользователей.
+
+    Raises:
+        HTTPException 500: При ошибке базы данных.
+    """
+    logger.info("Получение списка всех пользователей")
+
+    try:
+        users = get_all_users(db=db)
+        logger.info("Получено пользователей: %s", len(users))
+        return users
+    except Exception as e:
+        logger.error("Ошибка при получении списка пользователей: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при получении списка пользователей",
+        ) from e
+
+
+@router.get(
+    "/{user_id}",
+    response_model=UserRead,
+    status_code=status.HTTP_200_OK,
+    summary="Получение пользователя по ID",
+    description="Возвращает данные пользователя по его ID. Пользователь может получить только свои данные, администраторы - любые.",
+)
+async def get_user_endpoint(
+    user_id: UUID,
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
+) -> UserRead:
+    """Получает пользователя по ID.
+
+    Пользователь может получить только свои данные.
+    Администраторы могут получить данные любого пользователя.
+
+    Args:
+        user_id: ID пользователя.
+        current_user: Текущий аутентифицированный пользователь.
+        db: Сессия базы данных.
+
+    Returns:
+        UserRead: Модель пользователя.
+
+    Raises:
+        HTTPException 403: Если пользователь пытается получить чужие данные.
+        HTTPException 404: Если пользователь не найден.
+        HTTPException 500: При ошибке базы данных.
+    """
+    logger.info("Получение пользователя: id=%s, requester_id=%s", user_id, current_user.id)
+
+    # Проверка прав: пользователь может получить только свои данные, админ - любые
+    if current_user.role != "admin" and str(current_user.id) != str(user_id):
+        logger.warning(
+            "Попытка получить чужие данные: requester_id=%s, target_id=%s",
+            current_user.id,
+            user_id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Недостаточно прав для получения данных этого пользователя",
+        )
+
+    try:
+        user = get_user_by_id(user_id=user_id, db=db)
+        if user is None:
+            logger.warning("Пользователь не найден: id=%s", user_id)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Пользователь не найден",
+            )
+        return UserRead.model_validate(user)
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Ошибка при получении пользователя id=%s: %s", user_id, e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при получении пользователя",
+        ) from e
+
+
+@router.put(
+    "/{user_id}",
+    response_model=UserRead,
+    status_code=status.HTTP_200_OK,
+    summary="Обновление роли пользователя",
+    description="Обновляет роль пользователя. Доступно только администраторам.",
+    dependencies=[Depends(require_admin_role)],
+)
+async def update_user_endpoint(
+    user_id: UUID,
+    new_role: str,
+    db: Session = Depends(get_db),
+) -> UserRead:
+    """Обновляет роль пользователя.
+
+    Args:
+        user_id: ID пользователя для обновления.
+        new_role: Новая роль пользователя.
+            Допустимые значения: 'admin', 'editor', 'viewer'.
+        _: Пользователь с ролью admin (проверка через зависимость).
+        db: Сессия базы данных.
+
+    Returns:
+        UserRead: Модель обновленного пользователя.
+
+    Raises:
+        HTTPException 404: Если пользователь не найден.
+        HTTPException 422: Если роль недопустима.
+        HTTPException 500: При ошибке базы данных.
+    """
+    logger.info("Обновление пользователя: id=%s, new_role=%s", user_id, new_role)
+
+    try:
+        updated = update_user_role(user_id=user_id, new_role=new_role, db=db)
+        if updated is None:
+            logger.warning("Пользователь не найден для обновления: id=%s", user_id)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Пользователь не найден",
+            )
+        return UserRead.model_validate(updated)
+    except ValueError as e:
+        logger.warning("Ошибка валидации при обновлении пользователя: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from e
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Ошибка при обновлении пользователя id=%s: %s", user_id, e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при обновлении пользователя",
+        ) from e
+
+
+@router.delete(
+    "/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Удаление пользователя",
+    description="Удаляет пользователя из системы. Доступно только администраторам.",
+    dependencies=[Depends(require_admin_role)],
+)
+async def delete_user_endpoint(
+    user_id: UUID,
+    db: Session = Depends(get_db),
+) -> None:
+    """Удаляет пользователя из системы.
+
+    Args:
+        user_id: ID пользователя для удаления.
+        _: Пользователь с ролью admin (проверка через зависимость).
+        db: Сессия базы данных.
+
+    Returns:
+        None: Возвращает пустой ответ с кодом 204.
+
+    Raises:
+        HTTPException 404: Если пользователь не найден.
+        HTTPException 403: Если попытка удалить администратора при наличии других пользователей.
+        HTTPException 500: При ошибке базы данных.
+    """
+    logger.info("Удаление пользователя: id=%s", user_id)
+
+    try:
+        result = delete_user(user_id=user_id, db=db)
+        if not result:
+            logger.warning("Пользователь не найден для удаления: id=%s", user_id)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Пользователь не найден",
+            )
+    except ValueError as e:
+        logger.warning("Ошибка при удалении пользователя: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        ) from e
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error("Ошибка при удалении пользователя id=%s: %s", user_id, e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при удалении пользователя",
+        ) from e

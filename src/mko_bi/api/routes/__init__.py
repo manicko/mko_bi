@@ -1,5 +1,5 @@
 """Пакет маршрутов API."""
 
-from mko_bi.api.routes import auth
+from mko_bi.api.routes import auth, users, dashboards
 
-__all__ = ["auth"]
+__all__ = ["auth", "users", "dashboards"]

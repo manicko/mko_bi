@@ -5,8 +5,6 @@ C:\py_exp\mko_bi
 │   ├── logs
 │   ├── pgre
 │   └── tmp_uploads
-│       ├── data_1.csv.gz
-│       └── data_2.csv.gz
 ├── DB_STRUCTURE.md
 ├── DBSTR.md
 ├── fix_deps.py
@@ -75,7 +73,7 @@ C:\py_exp\mko_bi
 │       ├── logging_config.py
 │       ├── main.py
 │       ├── models
-│       │   ├── acceess.py
+│       │   ├── access.py
 │       │   ├── auth.py
 │       │   ├── dashboard.py
 │       │   ├── data.py
@@ -99,6 +97,7 @@ C:\py_exp\mko_bi
 ├── tests
 │   ├── conftest.py
 │   ├── test_base_models.py
+│   ├── test_dashboards_api.py
 │   ├── test_deps.py
 │   ├── test_permissions.py
 │   ├── test_pydantic_models.py
@@ -114,8 +113,8 @@ C:\py_exp\mko_bi
 │   ├── TASK_007_user_service.md
 │   ├── TASK_008_dashboard_service.md
 │   ├── TASK_009_permissions_CHECKED.md
-│   ├── TASK_010_auth_api.md
-│   ├── TASK_011_users_api.md
+│   ├── TASK_010_auth_api_DONE.md
+│   ├── TASK_011_users_api_DONE.md
 │   ├── TASK_012_dashboards_api.md
 │   ├── TASK_013_upload_api.md
 │   ├── TASK_014_data_api.md

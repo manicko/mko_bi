@@ -11,6 +11,7 @@ import logging
 from mko_bi.db.models import dashboard as dashboard_model
 from mko_bi.db.repositories.access_repo import AccessRepository
 from mko_bi.db.repositories.dashboard_repo import DashboardRepository
+from sqlalchemy.orm import Session
 from mko_bi.db.session import SessionLocal
 from mko_bi.models.dashboard import (
     DashboardConfig,
@@ -80,7 +81,7 @@ def _validate_config(config: DashboardConfig) -> None:
 
 
 def _validate_dashboard_exists(
-    dashboard_id: int, db: SessionLocal
+    dashboard_id: int, db: Session
 ) -> dashboard_model.Dashboard | None:
     """Проверяет существование дашборда и возвращает его модель.
 
@@ -97,7 +98,7 @@ def _validate_dashboard_exists(
     return dashboard_obj
 
 
-def _check_owner_permission(dashboard_id: int, user_id: int, db: SessionLocal) -> bool:
+def _check_owner_permission(dashboard_id: int, user_id: int, db: Session) -> bool:
     """Проверяет, является ли пользователь владельцем дашборда (admin доступ).
 
     Args:
@@ -121,7 +122,7 @@ def _check_owner_permission(dashboard_id: int, user_id: int, db: SessionLocal) -
 
 
 def create_dashboard(
-    name: str, config: dict, owner_id: int, db: SessionLocal | None = None
+    name: str, config: dict, owner_id: int, db: Session | None = None
 ) -> DashboardRead:
     """Создает новый дашборд с владельцем.
 
@@ -178,7 +179,7 @@ def create_dashboard(
             db=db,
             user_id=owner_id,
             dashboard_id=dashboard_obj.id,
-            permission_level="admin",
+            permission="admin",
         )
         logger.info(
             "Права администратора предоставлены: user_id=%s, dashboard_id=%s",
@@ -212,7 +213,7 @@ def create_dashboard(
 
 
 def get_dashboard(
-    dashboard_id: int, user_id: int, db: SessionLocal | None = None
+    dashboard_id: int, user_id: int, db: Session | None = None
 ) -> DashboardRead | None:
     """Получает дашборд по ID с проверкой доступа.
 
@@ -280,7 +281,7 @@ def get_dashboard(
 
 
 def get_user_dashboards(
-    user_id: int, db: SessionLocal | None = None
+    user_id: int, db: Session | None = None
 ) -> list[DashboardRead]:
     """Получает все дашборды, доступные пользователю.
 
@@ -335,7 +336,7 @@ def get_user_dashboards(
 
 
 def update_dashboard(
-    dashboard_id: int, config: dict, db: SessionLocal | None = None
+    dashboard_id: int, config: dict, db: Session | None = None
 ) -> DashboardRead | None:
     """Обновляет конфигурацию дашборда.
 
@@ -402,7 +403,7 @@ def update_dashboard(
             db.close()
 
 
-def delete_dashboard(dashboard_id: int, db: SessionLocal | None = None) -> bool:
+def delete_dashboard(dashboard_id: int, db: Session | None = None) -> bool:
     """Удаляет дашборд и все связанные права доступа.
 
     Выполняет каскадное удаление дашборда и всех прав доступа к нему.
@@ -450,7 +451,7 @@ def grant_access(
     dashboard_id: int,
     user_id: int,
     permission: str,
-    db: SessionLocal | None = None,
+    db: Session | None = None,
 ) -> bool:
     """Предоставляет пользователю доступ к дашборду.
 
