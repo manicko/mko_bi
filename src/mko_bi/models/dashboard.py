@@ -4,11 +4,13 @@ from pydantic import BaseModel, ConfigDict
 from typing import Literal
 from uuid import UUID
 
+from mko_bi.models.user_roles import GraphTypeEnum
+
 
 class DashboardConfig(BaseModel):
     """Модель конфигурации дашборда."""
 
-    graph_types: list[Literal["bar", "line", "pie", "table"]]
+    graph_types: list[GraphTypeEnum]
     filters: list[dict[str, Any]] | None = None
     aggregations: list[dict[str, Any]] | None = None
     charts: list[dict[str, Any]] | None = None

@@ -42,11 +42,12 @@ class TestRoleHierarchy:
         assert RoleHierarchy.ADMIN.value == 3
 
     def test_permission_levels(self):
-        """Проверка допустимых уровней доступа."""
+        """Проверка значений PERMISSION_LEVELS."""
         assert "view" in PERMISSION_LEVELS
         assert "edit" in PERMISSION_LEVELS
         assert "admin" in PERMISSION_LEVELS
-        assert len(PERMISSION_LEVELS) == 3
+        assert "read" in PERMISSION_LEVELS  # "read" добавлен для совместимости
+        assert len(PERMISSION_LEVELS) == 4
 
 
 class TestCheckRole:

@@ -13,3 +13,11 @@ class PermissionEnum(StrEnum):
     view = "view"
     edit = "edit"
     admin = "admin"
+
+
+class GraphTypeEnum(StrEnum):
+    """Типы графиков для дашбордов."""
+    bar = "bar"
+    line = "line"
+    pie = "pie"
+    table = "table"

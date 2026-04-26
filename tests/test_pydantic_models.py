@@ -70,27 +70,27 @@ class TestUserModels:
             )
 
     def test_user_read_valid(self):
-        """Проверяет создание модели чтения пользователя."""
+        """Проверка создания модели чтения пользователя."""
         user = UserRead(
-            id=1,
+            id="550e8400-e29b-41d4-a716-446655440000",
             email="test@example.com",
             role="admin",
             created_at="2026-04-24T16:02:46+03:00",
         )
-        assert user.id == 1
+        assert str(user.id) == "550e8400-e29b-41d4-a716-446655440000"
         assert user.email == "test@example.com"
         assert user.role == "admin"
 
     def test_user_db_valid(self):
-        """Проверяет создание модели пользователя БД."""
+        """Проверка создания модели пользователя БД."""
         user = UserDB(
-            id=1,
+            id="550e8400-e29b-41d4-a716-446655440000",
             email="test@example.com",
             password_hash="$2b$12$examplehash",
             role="editor",
             created_at="2026-04-24T16:02:46+03:00",
         )
-        assert user.id == 1
+        assert str(user.id) == "550e8400-e29b-41d4-a716-446655440000"
         assert user.password_hash == "$2b$12$examplehash"
         assert user.role == "editor"
 
@@ -169,15 +169,18 @@ class TestDashboardModels:
         assert dashboard.config.graph_types == ["bar", "line"]
 
     def test_dashboard_read_valid(self):
-        """Проверяет создание модели чтения дашборда."""
+        """Проверка создания модели чтения дашборда."""
         dashboard = DashboardRead(
-            id=1,
+            id="550e8400-e29b-41d4-a716-446655440000",
             name="Sales Dashboard",
+            description="Test description",
             config=DashboardConfig(graph_types=["bar"]),
             created_at="2026-04-24T16:02:46+03:00",
+            updated_at="2026-04-24T16:02:46+03:00",
         )
-        assert dashboard.id == 1
+        assert str(dashboard.id) == "550e8400-e29b-41d4-a716-446655440000"
         assert dashboard.name == "Sales Dashboard"
+        assert dashboard.description == "Test description"
         assert dashboard.config.graph_types == ["bar"]
 
     def test_dashboard_update_partial(self):
@@ -313,13 +316,13 @@ class TestAuthModels:
         assert token.token_type == "bearer"
 
     def test_token_data_valid(self):
-        """Проверяет создание валидных данных токена."""
+        """Проверка создания валидных данных токена."""
         token_data = TokenData(
             email="user@example.com",
-            user_id=1,
+            user_id="550e8400-e29b-41d4-a716-446655440000",
         )
         assert token_data.email == "user@example.com"
-        assert token_data.user_id == 1
+        assert str(token_data.user_id) == "550e8400-e29b-41d4-a716-446655440000"
 
     def test_token_data_partial(self):
         """Проверяет создание данных токена с частичными данными."""
@@ -328,39 +331,43 @@ class TestAuthModels:
         assert token_data.user_id is None
 
     def test_access_check_valid(self):
-        """Проверяет создание валидной проверки доступа."""
+        """Проверка создания валидной проверки доступа."""
         check = AccessCheck(
-            user_id=1,
-            dashboard_id=1,
+            user_id="550e8400-e29b-41d4-a716-446655440000",
+            dashboard_id="550e8400-e29b-41d4-a716-446655440001",
             required_permission="read",
         )
-        assert check.user_id == 1
-        assert check.dashboard_id == 1
+        assert str(check.user_id) == "550e8400-e29b-41d4-a716-446655440000"
+        assert str(check.dashboard_id) == "550e8400-e29b-41d4-a716-446655440001"
         assert check.required_permission == "read"
 
     def test_access_check_default_permission(self):
-        """Проверяет значение разрешения по умолчанию."""
+        """Проверка значения разрешения по умолчанию."""
         check = AccessCheck(
-            user_id=1,
-            dashboard_id=1,
+            user_id="550e8400-e29b-41d4-a716-446655440000",
+            dashboard_id="550e8400-e29b-41d4-a716-446655440001",
         )
-        assert check.required_permission == "read"
+        assert str(check.user_id) == "550e8400-e29b-41d4-a716-446655440000"
+        assert str(check.dashboard_id) == "550e8400-e29b-41d4-a716-446655440001"
+        assert check.required_permission == "view"
 
     def test_access_grant_valid(self):
-        """Проверяет создание валидного предоставления доступа."""
+        """Проверка создания валидного предоставления доступа."""
         grant = AccessGrant(
-            user_id=1,
-            dashboard_id=1,
+            user_id="550e8400-e29b-41d4-a716-446655440000",
+            dashboard_id="550e8400-e29b-41d4-a716-446655440001",
             permission_level="write",
         )
-        assert grant.user_id == 1
-        assert grant.dashboard_id == 1
+        assert str(grant.user_id) == "550e8400-e29b-41d4-a716-446655440000"
+        assert str(grant.dashboard_id) == "550e8400-e29b-41d4-a716-446655440001"
         assert grant.permission_level == "write"
 
     def test_access_grant_default_permission(self):
-        """Проверяет значение уровня доступа по умолчанию."""
+        """Проверка значения уровня доступа по умолчанию."""
         grant = AccessGrant(
-            user_id=1,
-            dashboard_id=1,
+            user_id="550e8400-e29b-41d4-a716-446655440000",
+            dashboard_id="550e8400-e29b-41d4-a716-446655440001",
         )
-        assert grant.permission_level == "read"
+        assert str(grant.user_id) == "550e8400-e29b-41d4-a716-446655440000"
+        assert str(grant.dashboard_id) == "550e8400-e29b-41d4-a716-446655440001"
+        assert grant.permission_level == "view"

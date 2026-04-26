@@ -15,7 +15,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 
-from mko_bi.api.deps import get_db
+from mko_bi.api.deps import get_db, get_current_user_dependency
 from mko_bi.core.security import create_access_token, decode_token
 from mko_bi.models.auth import LoginRequest, RegisterRequest, Token, RefreshRequest
 from mko_bi.models.user import UserRead
@@ -362,15 +362,13 @@ async def refresh(
     description="Возвращает данные о текущем аутентифицированном пользователе.",
 )
 async def get_current_user_info(
-    db: Session = Depends(get_db),
-    current_user: UserRead = Depends(),  # Зависимость будет добавлена через require_role
+    current_user: UserRead = Depends(get_current_user_dependency),
 ) -> UserRead:
     """Эндпоинт получения информации о текущем пользователе.
 
     Требует валидный JWT токен в заголовке Authorization.
 
     Args:
-        db: Сессия базы данных.
         current_user: Текущий аутентифицированный пользователь.
 
     Returns:

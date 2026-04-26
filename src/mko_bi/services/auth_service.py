@@ -11,11 +11,12 @@ from mko_bi.core.security import create_access_token, hash_password, verify_pass
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.db.session import Session, SessionLocal
 from mko_bi.models.user import UserRead, UserDB
+from mko_bi.models.user_roles import UserRoleEnum
 
 logger = logging.getLogger(__name__)
 
 
-VALID_ROLES = {"admin", "editor", "viewer"}
+# Допустимые роли берем из UserRoleEnum
 
 # Регулярное выражение для валидации email
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
@@ -30,11 +31,17 @@ def _validate_role(role: str) -> None:
     Raises:
         ValueError: Если роль не входит в список допустимых.
     """
-    if role not in VALID_ROLES:
-        logger.error("Недопустимая роль: %s. Допустимые роли: %s", role, VALID_ROLES)
+    try:
+        UserRoleEnum(role)
+    except ValueError:
+        logger.error(
+            "Недопустимая роль: %s. Допустимые роли: %s",
+            role,
+            [e.value for e in UserRoleEnum],
+        )
         raise ValueError(
             f"Недопустимая роль: '{role}'. "
-            f"Допустимые значения: {', '.join(sorted(VALID_ROLES))}"
+            f"Допустимые значения: {', '.join([e.value for e in UserRoleEnum])}"
         )
 
 

@@ -16,7 +16,7 @@ from functools import lru_cache
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 from sqlalchemy.orm import Session
 
@@ -25,6 +25,7 @@ from mko_bi.db.repositories.access_repo import AccessRepository
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.db.session import SessionLocal
 from mko_bi.models.user import UserDB
+from mko_bi.models.user_roles import PermissionEnum, UserRoleEnum
 
 logger = logging.getLogger(__name__)
 
@@ -43,13 +44,13 @@ class RoleHierarchy(Enum):
 
 # Соответствие строковых ролей значениям иерархии
 ROLE_LEVELS: dict[str, int] = {
-    "viewer": RoleHierarchy.VIEWER.value,
-    "editor": RoleHierarchy.EDITOR.value,
-    "admin": RoleHierarchy.ADMIN.value,
+    UserRoleEnum.viewer: RoleHierarchy.VIEWER.value,
+    UserRoleEnum.editor: RoleHierarchy.EDITOR.value,
+    UserRoleEnum.admin: RoleHierarchy.ADMIN.value,
 }
 
-# Уровни доступа и минимальная роль для каждого
-PERMISSION_LEVELS = {"view", "edit", "admin"}
+# Уровни доступа - используем PermissionEnum
+# Для обратной совместимости также принимаем "read" как "view" и "write" как "edit"
 
 
 # --- Исключения ---
@@ -155,10 +156,19 @@ def check_dashboard_access(
     Raises:
         ValueError: Если передан неизвестный уровень доступа.
     """
-    if required_permission not in PERMISSION_LEVELS:
+    # Нормализуем "read" в "view" и "write" в "edit" для совместимости
+    if required_permission == "read":
+        required_permission = "view"
+    elif required_permission == "write":
+        required_permission = "edit"
+
+    # Проверяем, что уровень доступа корректен
+    try:
+        PermissionEnum(required_permission)
+    except ValueError:
         raise ValueError(
             f"Неизвестный уровень доступа: '{required_permission}'. "
-            f"Допустимые значения: {PERMISSION_LEVELS}"
+            f"Допустимые значения: {[e.value for e in PermissionEnum]}"
         )
 
     local_session = False
@@ -182,10 +192,16 @@ def check_dashboard_access(
             )
             return False
 
-        # Иерархия разрешений: admin > write > read
-        permission_levels = {"read": 1, "write": 2, "admin": 3}
+        # Иерархия разрешений: admin > edit > view
+        # Нормализуем названия для совместимости (read->view, write->edit)
+        perm_map = {"view": "view", "edit": "edit", "admin": "admin"}
+        permission_normalized = perm_map.get(permission, permission)
+        required_normalized = perm_map.get(required_permission, required_permission)
+
+        permission_levels = {"view": 1, "edit": 2, "admin": 3}
         has_access = (
-            permission_levels[permission] >= permission_levels[required_permission]
+            permission_levels[permission_normalized]
+            >= permission_levels[required_normalized]
         )
 
         logger.info(

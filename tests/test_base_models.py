@@ -6,6 +6,7 @@
 
 import pytest
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import select
 from uuid import UUID
 
 from mko_bi.db.models import user as user_model
@@ -496,7 +497,7 @@ class TestModelIndexes:
 
         # Проверяем, что можно найти по email (использует индекс)
         result = db_session.execute(
-            user_model.User.__table__.select().where(
+            select(user_model.User).where(
                 user_model.User.email == "user2@example.com"
             )
         ).scalar_one_or_none()
@@ -517,7 +518,7 @@ class TestModelIndexes:
 
         # Проверяем, что можно найти по имени (использует индекс)
         result = db_session.execute(
-            dashboard_model.Dashboard.__table__.select().where(
+            select(dashboard_model.Dashboard).where(
                 dashboard_model.Dashboard.name == "Dashboard 2"
             )
         ).scalar_one_or_none()

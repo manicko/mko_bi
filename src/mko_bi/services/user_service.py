@@ -12,11 +12,11 @@ from mko_bi.db.models import user as user_model
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.db.session import Session, SessionLocal
 from mko_bi.models.user import UserRead
+from mko_bi.models.user_roles import UserRoleEnum
 
 logger = logging.getLogger(__name__)
 
-# Допустимые роли в системе
-VALID_ROLES = {"admin", "editor", "viewer"}
+# Допустимые роли в системе (берем из UserRoleEnum)
 
 
 def _validate_role(role: str) -> None:
@@ -28,13 +28,17 @@ def _validate_role(role: str) -> None:
     Raises:
         ValueError: Если роль не входит в список допустимых.
     """
-    if role not in VALID_ROLES:
+    try:
+        UserRoleEnum(role)
+    except ValueError:
         logger.error(
-            "Недопустимая роль: '%s'. Допустимые роли: %s", role, sorted(VALID_ROLES)
+            "Недопустимая роль: '%s'. Допустимые роли: %s",
+            role,
+            sorted([e.value for e in UserRoleEnum]),
         )
         raise ValueError(
             f"Недопустимая роль: '{role}'. "
-            f"Допустимые значения: {', '.join(sorted(VALID_ROLES))}"
+            f"Допустимые значения: {', '.join(sorted([e.value for e in UserRoleEnum]))}"
         )
 
 

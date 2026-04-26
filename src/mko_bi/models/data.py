@@ -2,6 +2,8 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict
 from typing import Literal
 
+from mko_bi.models.user_roles import GraphTypeEnum
+
 
 class DataUpload(BaseModel):
     """Модель для загрузки данных."""
@@ -79,7 +81,7 @@ class AggregatedData(BaseModel):
     """Модель агрегированных данных для дашборда."""
 
     dashboard_id: int
-    chart_type: Literal["bar", "line", "pie", "table"]
+    chart_type: GraphTypeEnum
     data: list[dict[str, Any]]
     metadata: dict[str, Any] | None = None
 

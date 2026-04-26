@@ -16,11 +16,11 @@ from mko_bi.models.dashboard import (
     DashboardConfig,
     DashboardRead,
 )
+from mko_bi.models.user_roles import PermissionEnum, GraphTypeEnum
 
 logger = logging.getLogger(__name__)
 
-# Допустимые уровни доступа
-VALID_PERMISSIONS = {"read", "write", "admin"}
+# Допустимые уровни доступа (берем из PermissionEnum)
 
 
 def _validate_permission(permission: str) -> None:
@@ -32,15 +32,24 @@ def _validate_permission(permission: str) -> None:
     Raises:
         ValueError: Если уровень доступа не входит в список допустимых.
     """
-    if permission not in VALID_PERMISSIONS:
+    # Нормализуем "read" -> "view", "write" -> "edit" для совместимости
+    normalized = permission
+    if permission == "read":
+        normalized = "view"
+    elif permission == "write":
+        normalized = "edit"
+    
+    try:
+        PermissionEnum(normalized)
+    except ValueError:
         logger.error(
             "Недопустимый уровень доступа: '%s'. Допустимые: %s",
             permission,
-            sorted(VALID_PERMISSIONS),
+            sorted([e.value for e in PermissionEnum]),
         )
         raise ValueError(
             f"Недопустимый уровень доступа: '{permission}'. "
-            f"Допустимые значения: {', '.join(sorted(VALID_PERMISSIONS))}"
+            f"Допустимые значения: {', '.join(sorted([e.value for e in PermissionEnum]))}"
         )
 
 
@@ -60,11 +69,13 @@ def _validate_config(config: DashboardConfig) -> None:
         )
 
     for graph_type in config.graph_types:
-        if graph_type not in {"bar", "line", "pie", "table"}:
+        try:
+            GraphTypeEnum(graph_type)
+        except ValueError:
             logger.error("Недопустимый тип графика: '%s'", graph_type)
             raise ValueError(
                 f"Недопустимый тип графика: '{graph_type}'. "
-                f"Допустимые значения: bar, line, pie, table"
+                f"Допустимые значения: {', '.join([e.value for e in GraphTypeEnum])}"
             )
 
 
