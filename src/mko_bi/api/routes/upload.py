@@ -16,11 +16,9 @@ from sqlalchemy.orm import Session
 
 from mko_bi.api.deps import (
     get_db,
-    require_editor_role,
     CurrentUser,
 )
 from mko_bi.models.data import (
-    DataUpload,
     UploadResponse,
     ProcessingStatus,
     ProcessingResult,

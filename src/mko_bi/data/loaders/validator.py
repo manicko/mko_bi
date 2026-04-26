@@ -46,8 +46,8 @@ class DataValidator:
         """
         logger.info("Начало валидации данных: %d строк, %d колонок", df.shape[0], df.shape[1])
 
-        errors = []
-        warnings = []
+        errors: list[str] = []
+        warnings: list[str] = []
 
         # Проверка на пустой DataFrame
         if df.shape[0] == 0:
@@ -109,7 +109,7 @@ class DataValidator:
         Returns:
             list[str]: Список ошибок (пустой, если все колонки есть).
         """
-        errors = []
+        errors: list[str] = []
 
         if not self.config.required_columns:
             return errors
@@ -140,8 +140,8 @@ class DataValidator:
         Returns:
             tuple: (ошибки, предупреждения)
         """
-        errors = []
-        warnings = []
+        errors: list[str] = []
+        warnings: list[str] = []
 
         if not self.config.column_types:
             return errors, warnings
@@ -181,7 +181,16 @@ class DataValidator:
 
         return errors, warnings
 
+    def _validate_data_quality(self, df: pl.DataFrame) -> list[str]:
+        """Проверяет качество данных.
 
+        Args:
+            df: DataFrame для проверки.
+
+        Returns:
+            list[str]: Список предупреждений о качестве данных.
+        """
+        warnings = []
 
         # Проверка null-значений в обязательных колонках
         if self.config.required_columns:

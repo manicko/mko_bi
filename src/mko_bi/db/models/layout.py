@@ -3,9 +3,7 @@ from uuid import uuid4, UUID
 
 from sqlalchemy import (
     DateTime,
-    ForeignKey,
     String,
-    Text,
     JSON,
     text,
 )

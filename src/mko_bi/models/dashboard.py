@@ -1,7 +1,6 @@
 from datetime import datetime
 from typing import Any
 from pydantic import BaseModel, ConfigDict
-from typing import Literal
 from uuid import UUID
 
 from mko_bi.models.user_roles import GraphTypeEnum
