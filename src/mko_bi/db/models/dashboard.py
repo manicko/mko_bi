@@ -18,6 +18,8 @@ from mko_bi.db.base import Base
 if TYPE_CHECKING:
     from mko_bi.models.access import DashboardAccess
     from mko_bi.models.layout import Layout
+    from mko_bi.models.graphs import Graph
+    from mko_bi.models.aggregated_data import AggregatedData
 
 
 class Dashboard(Base):
@@ -94,7 +96,23 @@ class Dashboard(Base):
         back_populates="dashboards",
         lazy="selectin",
     )
-    
+
+    # Связь с графиками
+    graphs: Mapped[list["Graph"]] = relationship(
+        "Graph",
+        back_populates="dashboard",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+    # Связь с агрегированными данными
+    aggregated_data: Mapped[list["AggregatedData"]] = relationship(
+        "AggregatedData",
+        back_populates="dashboard",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
     def __repr__(self) -> str:
         return f"<Dashboard id={self.id} name={self.name}>"
     

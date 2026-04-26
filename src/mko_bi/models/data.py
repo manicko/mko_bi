@@ -1,6 +1,5 @@
-from typing import Any, Optional
+from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
-from typing import Literal
 from datetime import datetime
 from uuid import UUID
 
@@ -154,6 +153,58 @@ class AggregatedData(BaseModel):
                     {"category": "B", "revenue": 2000},
                 ],
                 "metadata": {"total": 3000, "count": 2},
+            }
+        },
+    )
+
+
+class DataFilter(BaseModel):
+    """Модель фильтров для агрегированных данных.
+
+    Используется для фильтрации данных по году, категории, бренду и другим параметрам.
+    """
+
+    dashboard_id: UUID
+    filters: dict[str, Any] | None = None
+    year: int | None = None
+    category: str | None = None
+    brand: str | None = None
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "dashboard_id": "550e8400-e29b-41d4-a716-446655440000",
+                "year": 2023,
+                "category": "Electronics",
+                "brand": "Brand A",
+                "filters": {
+                    "region": "North",
+                    "status": "active",
+                },
+            }
+        },
+    )
+
+
+class ChartDataRequest(BaseModel):
+    """Модель запроса данных для конкретных графиков.
+
+    Используется для получения данных только для указанных графиков дашборда.
+    """
+
+    dashboard_id: UUID
+    chart_ids: list[UUID] | None = None
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "dashboard_id": "550e8400-e29b-41d4-a716-446655440000",
+                "chart_ids": [
+                    "550e8400-e29b-41d4-a716-446655440001",
+                    "550e8400-e29b-41d4-a716-446655440002",
+                ],
             }
         },
     )

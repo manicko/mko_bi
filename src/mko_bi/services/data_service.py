@@ -4,18 +4,17 @@
 обработки данных для дашбордов.
 """
 
-import csv
 import gzip
-import io
 import logging
-import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 import polars as pl
+from sqlalchemy import Float, Integer
 from sqlalchemy.orm import Session
+from uuid import UUID
 
 from mko_bi.config import config
 from mko_bi.core.permissions import check_dashboard_access
@@ -26,8 +25,8 @@ from mko_bi.models.data import (
     ProcessingStatus,
     ProcessingResult,
     ProcessingConfig,
+    AggregatedData,
 )
-from mko_bi.models.user_roles import PermissionEnum
 
 logger = logging.getLogger(__name__)
 
@@ -101,7 +100,7 @@ def _save_uploaded_file(filename: str, file_content: bytes) -> Path:
     return file_path
 
 
-def _process_csv_file(file_path: Path, processing_config: Optional[ProcessingConfig] = None) -> dict[str, Any]:
+def _process_csv_file(file_path: Path, processing_config: ProcessingConfig | None = None) -> dict[str, Any]:
     """Обрабатывает CSV файл с использованием Polars.
 
     Читает gzipped CSV файл, применяет трансформации и агрегации.
@@ -328,7 +327,7 @@ def trigger_processing(
     task_id: uuid.UUID,
     dashboard_id: int,
     user_id: int,
-    processing_config: Optional[ProcessingConfig] = None,
+    processing_config: ProcessingConfig | None = None,
     db: Session | None = None,
 ) -> ProcessingStatus:
     """Запускает обработку загруженного файла.
@@ -606,6 +605,420 @@ def get_processing_result(
         raise
     except Exception as e:
         logger.error("Ошибка при получении результата: %s", e)
+        raise
+    finally:
+        if local_session:
+            db.close()
+
+
+def get_dashboard_aggregates(
+    dashboard_id: UUID,
+    user_id: int,
+    db: Session | None = None,
+) -> list[AggregatedData]:
+    """Получает все агрегированные данные для дашборда.
+
+    Возвращает все агрегаты (данные для всех графиков) указанного дашборда.
+    Проверяет права доступа пользователя к дашборду.
+
+    Args:
+        dashboard_id: ID дашборда (UUID).
+        user_id: ID пользователя.
+        db: Опциональная сессия базы данных.
+
+    Returns:
+        list[AggregatedData]: Список агрегированных данных для всех графиков дашборда.
+
+    Raises:
+        ValueError: Если дашборд не найден или у пользователя нет доступа.
+        SQLAlchemyError: При ошибке базы данных.
+    """
+    logger.info(
+        "Получение агрегатов дашборда: dashboard_id=%s, user_id=%s",
+        dashboard_id,
+        user_id,
+    )
+
+    local_session = False
+    if db is None:
+        db = SessionLocal()
+        local_session = True
+
+    try:
+        # Проверка существования дашборда и прав доступа
+        from mko_bi.db.repositories.dashboard_repo import DashboardRepository
+
+        dashboard_obj = DashboardRepository.get(dashboard_id, db)
+        if dashboard_obj is None:
+            raise ValueError(f"Дашборд с id={dashboard_id} не найден")
+
+        # Проверка прав доступа
+        has_access = check_dashboard_access(
+            user_id=user_id,
+            dashboard_id=dashboard_id,
+            required_permission="view",
+            db=db,
+        )
+        if not has_access:
+            raise PermissionError("У вас нет доступа к этому дашборду")
+
+        # Получение всех графиков дашборда
+        from mko_bi.db.models import graphs as graphs_model
+        from mko_bi.db.models import aggregated_data as aggregated_data_model
+
+        graphs = (
+            db.query(graphs_model.Graph)
+            .filter(graphs_model.Graph.dashboard_id == dashboard_id)
+            .all()
+        )
+
+        # Получение агрегированных данных для каждого графика
+        result = []
+        for graph in graphs:
+            aggregates = (
+                db.query(aggregated_data_model.AggregatedData)
+                .filter(aggregated_data_model.AggregatedData.graph_id == graph.id)
+                .all()
+            )
+
+            # Группировка данных по графику
+            graph_data = []
+            for agg in aggregates:
+                graph_data.append(
+                    {
+                        "dims": agg.dims,
+                        "metrics": agg.metrics,
+                    }
+                )
+
+            if graph_data:
+                result.append(
+                    AggregatedData(
+                        dashboard_id=int(dashboard_id),
+                        chart_type=graph.type,
+                        data=graph_data,
+                        metadata={
+                            "graph_id": str(graph.id),
+                            "graph_name": graph.name,
+                            "count": len(graph_data),
+                        },
+                    )
+                )
+
+        logger.info(
+            "Агрегаты получены: dashboard_id=%s, charts_count=%s",
+            dashboard_id,
+            len(result),
+        )
+        return result
+
+    except PermissionError:
+        raise
+    except ValueError:
+        raise
+    except Exception as e:
+        logger.error(
+            "Ошибка при получении агрегатов дашборда id=%s: %s",
+            dashboard_id,
+            e,
+        )
+        raise
+    finally:
+        if local_session:
+            db.close()
+
+
+def get_chart_data(
+    dashboard_id: UUID,
+    user_id: int,
+    chart_ids: list[UUID] | None = None,
+    db: Session | None = None,
+) -> list[AggregatedData]:
+    """Получает данные для конкретных графиков дашборда.
+
+    Если chart_ids не указан, возвращает данные для всех графиков дашборда.
+    Проверяет права доступа пользователя к дашборду.
+
+    Args:
+        dashboard_id: ID дашборда (UUID).
+        user_id: ID пользователя.
+        chart_ids: Опциональный список ID графиков для фильтрации.
+        db: Опциональная сессия базы данных.
+
+    Returns:
+        list[AggregatedData]: Список агрегированных данных для запрошенных графиков.
+
+    Raises:
+        ValueError: Если дашборд или графики не найдены, или у пользователя нет доступа.
+        SQLAlchemyError: При ошибке базы данных.
+    """
+    logger.info(
+        "Получение данных для графиков: dashboard_id=%s, chart_ids=%s, user_id=%s",
+        dashboard_id,
+        chart_ids,
+        user_id,
+    )
+
+    local_session = False
+    if db is None:
+        db = SessionLocal()
+        local_session = True
+
+    try:
+        # Проверка существования дашборда и прав доступа
+        from mko_bi.db.repositories.dashboard_repo import DashboardRepository
+
+        dashboard_obj = DashboardRepository.get(dashboard_id, db)
+        if dashboard_obj is None:
+            raise ValueError(f"Дашборд с id={dashboard_id} не найден")
+
+        # Проверка прав доступа
+        has_access = check_dashboard_access(
+            user_id=user_id,
+            dashboard_id=dashboard_id,
+            required_permission="view",
+            db=db,
+        )
+        if not has_access:
+            raise PermissionError("У вас нет доступа к этому дашборду")
+
+        # Формирование запроса для графиков
+        from mko_bi.db.models import graphs as graphs_model
+        from mko_bi.db.models import aggregated_data as aggregated_data_model
+
+        query = db.query(graphs_model.Graph).filter(
+            graphs_model.Graph.dashboard_id == dashboard_id
+        )
+
+        if chart_ids:
+            query = query.filter(graphs_model.Graph.id.in_(chart_ids))
+
+        graphs = query.all()
+
+        if chart_ids and len(graphs) != len(chart_ids):
+            found_ids = {str(g.id) for g in graphs}
+            missing_ids = [str(cid) for cid in chart_ids if str(cid) not in found_ids]
+            raise ValueError(f"Графики не найдены: {', '.join(missing_ids)}")
+
+        if not graphs:
+            return []
+
+        # Получение агрегированных данных для графиков
+        result = []
+        for graph in graphs:
+            aggregates = (
+                db.query(aggregated_data_model.AggregatedData)
+                .filter(aggregated_data_model.AggregatedData.graph_id == graph.id)
+                .all()
+            )
+
+            graph_data = []
+            for agg in aggregates:
+                graph_data.append(
+                    {
+                        "dims": agg.dims,
+                        "metrics": agg.metrics,
+                    }
+                )
+
+            if graph_data:
+                result.append(
+                    AggregatedData(
+                        dashboard_id=int(dashboard_id),
+                        chart_type=graph.type,
+                        data=graph_data,
+                        metadata={
+                            "graph_id": str(graph.id),
+                            "graph_name": graph.name,
+                            "count": len(graph_data),
+                        },
+                    )
+                )
+
+        logger.info(
+            "Данные для графиков получены: dashboard_id=%s, charts_count=%s",
+            dashboard_id,
+            len(result),
+        )
+        return result
+
+    except PermissionError:
+        raise
+    except ValueError:
+        raise
+    except Exception as e:
+        logger.error(
+            "Ошибка при получении данных для графиков дашборда id=%s: %s",
+            dashboard_id,
+            e,
+        )
+        raise
+    finally:
+        if local_session:
+            db.close()
+
+
+def apply_data_filters(
+    dashboard_id: UUID,
+    user_id: int,
+    filters: dict[str, Any] | None = None,
+    db: Session | None = None,
+) -> list[AggregatedData]:
+    """Применяет фильтры к агрегированным данным дашборда.
+
+    Фильтрует данные по году, категории, бренду и другим параметрам,
+    используя возможности PostgreSQL для фильтрации JSONB данных.
+
+    Args:
+        dashboard_id: ID дашборда (UUID).
+        user_id: ID пользователя.
+        filters: Словарь с параметрами фильтрации.
+        db: Опциональная сессия базы данных.
+
+    Returns:
+        list[AggregatedData]: Отфильтрованные агрегированные данные.
+
+    Raises:
+        ValueError: Если дашборд не найден, у пользователя нет доступа или фильтры некорректны.
+        SQLAlchemyError: При ошибке базы данных.
+    """
+    logger.info(
+        "Применение фильтров: dashboard_id=%s, filters=%s, user_id=%s",
+        dashboard_id,
+        filters,
+        user_id,
+    )
+
+    local_session = False
+    if db is None:
+        db = SessionLocal()
+        local_session = True
+
+    try:
+        # Проверка существования дашборда и прав доступа
+        from mko_bi.db.repositories.dashboard_repo import DashboardRepository
+
+        dashboard_obj = DashboardRepository.get(dashboard_id, db)
+        if dashboard_obj is None:
+            raise ValueError(f"Дашборд с id={dashboard_id} не найден")
+
+        # Проверка прав доступа
+        has_access = check_dashboard_access(
+            user_id=user_id,
+            dashboard_id=dashboard_id,
+            required_permission="view",
+            db=db,
+        )
+        if not has_access:
+            raise PermissionError("У вас нет доступа к этому дашборду")
+
+        from sqlalchemy import and_
+        from mko_bi.db.models import graphs as graphs_model
+        from mko_bi.db.models import aggregated_data as aggregated_data_model
+
+        # Получение всех графиков дашборда
+        graphs = (
+            db.query(graphs_model.Graph)
+            .filter(graphs_model.Graph.dashboard_id == dashboard_id)
+            .all()
+        )
+
+        result = []
+        for graph in graphs:
+            # Формирование условий фильтрации
+            filter_conditions = []
+
+            # Фильтрация по году
+            if filters and "year" in filters and filters["year"] is not None:
+                filter_conditions.append(
+                    aggregated_data_model.AggregatedData.dims["year"].astext.cast(
+                        Integer
+                    )
+                    == filters["year"]
+                )
+
+            # Фильтрация по категории
+            if filters and "category" in filters and filters["category"] is not None:
+                filter_conditions.append(
+                    aggregated_data_model.AggregatedData.dims["category"].astext
+                    == filters["category"]
+                )
+
+            # Фильтрация по бренду
+            if filters and "brand" in filters and filters["brand"] is not None:
+                filter_conditions.append(
+                    aggregated_data_model.AggregatedData.dims["brand"].astext
+                    == filters["brand"]
+                )
+
+            # Дополнительные фильтры из словаря
+            if filters and "filters" in filters and isinstance(filters["filters"], dict):
+                for key, value in filters["filters"].items():
+                    if isinstance(value, str):
+                        filter_conditions.append(
+                            aggregated_data_model.AggregatedData.dims[key].astext
+                            == value
+                        )
+                    elif isinstance(value, (int, float)):
+                        filter_conditions.append(
+                            aggregated_data_model.AggregatedData.dims[key].astext.cast(
+                                Float
+                            )
+                            == value
+                        )
+
+            # Формирование запроса с фильтрами
+            query = db.query(aggregated_data_model.AggregatedData).filter(
+                aggregated_data_model.AggregatedData.graph_id == graph.id
+            )
+
+            if filter_conditions:
+                query = query.filter(and_(*filter_conditions))
+
+            aggregates = query.all()
+
+            # Формирование результата
+            graph_data = []
+            for agg in aggregates:
+                graph_data.append(
+                    {
+                        "dims": agg.dims,
+                        "metrics": agg.metrics,
+                    }
+                )
+
+            if graph_data:
+                result.append(
+                    AggregatedData(
+                        dashboard_id=int(dashboard_id),
+                        chart_type=graph.type,
+                        data=graph_data,
+                        metadata={
+                            "graph_id": str(graph.id),
+                            "graph_name": graph.name,
+                            "count": len(graph_data),
+                            "filters_applied": filters,
+                        },
+                    )
+                )
+
+        logger.info(
+            "Фильтры применены: dashboard_id=%s, filtered_charts=%s",
+            dashboard_id,
+            len(result),
+        )
+        return result
+
+    except PermissionError:
+        raise
+    except ValueError:
+        raise
+    except Exception as e:
+        logger.error(
+            "Ошибка при применении фильтров к дашборду id=%s: %s",
+            dashboard_id,
+            e,
+        )
         raise
     finally:
         if local_session:

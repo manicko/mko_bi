@@ -42,6 +42,7 @@ def create_application() -> FastAPI:
     application.include_router(routes.users.router)
     application.include_router(routes.dashboards.router)
     application.include_router(routes.upload.router)
+    application.include_router(routes.data.router)
 
     @application.get("/", tags=["health"])
     async def root():
