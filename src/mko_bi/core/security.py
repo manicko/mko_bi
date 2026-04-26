@@ -102,7 +102,7 @@ def verify_password(password: str, hash_value: str) -> bool:
         return False
 
 
-def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
+def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
     """Создает JWT токен доступа с указанными данными.
 
     Токен содержит переданные данные и время истечения (exp).

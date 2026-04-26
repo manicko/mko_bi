@@ -5,6 +5,8 @@ C:\py_exp\mko_bi
 │   ├── logs
 │   ├── pgre
 │   └── tmp_uploads
+│       ├── data_1.csv.gz
+│       └── data_2.csv.gz
 ├── DB_STRUCTURE.md
 ├── DBSTR.md
 ├── fix_deps.py
@@ -20,8 +22,7 @@ C:\py_exp\mko_bi
 ├── SPEC.md
 ├── src
 │   ├── data
-│   │   ├── logs
-│   │   └── tmp_uploads
+│   │   └── logs
 │   └── mko_bi
 │       ├── api
 │       │   ├── deps.py
@@ -106,12 +107,12 @@ C:\py_exp\mko_bi
 │   ├── PLAN.md
 │   ├── TASK_001_config_CHECKED.md
 │   ├── TASK_002_base_models_DONE.md
-│   ├── TASK_003_pydantic_models.md.DONE
+│   ├── TASK_003_pydantic_models.md
 │   ├── TASK_004_repositories_DONE.md
 │   ├── TASK_005_security_DONE.md
 │   ├── TASK_006_auth_service_DONE.md
-│   ├── TASK_007_user_service.md.DONE
-│   ├── TASK_008_dashboard_service.md.DONE
+│   ├── TASK_007_user_service.md
+│   ├── TASK_008_dashboard_service.md
 │   ├── TASK_009_permissions_CHECKED.md
 │   ├── TASK_010_auth_api.md
 │   ├── TASK_011_users_api.md
