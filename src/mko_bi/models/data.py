@@ -208,3 +208,79 @@ class ChartDataRequest(BaseModel):
             }
         },
     )
+
+
+class LoaderConfig(BaseModel):
+    """Конфигурация загрузчика CSV данных.
+
+    Используется для настройки параметров загрузки и валидации данных.
+    """
+
+    required_columns: list[str] = Field(
+        default_factory=list,
+        description="Список обязательных колонок",
+    )
+    column_types: dict[str, str] = Field(
+        default_factory=dict,
+        description="Сопоставление колонок с ожидаемыми типами данных",
+    )
+    strict_schema: bool = Field(
+        default=False,
+        description="Проверять ли строгое соответствие схемы",
+    )
+    max_file_size: int = Field(
+        default=100 * 1024 * 1024,
+        description="Максимальный размер файла в байтах",
+        ge=1,
+        le=1024 * 1024 * 1024,  # 1GB max
+    )
+    allowed_file_types: list[str] = Field(
+        default_factory=lambda: [".csv", ".csv.gz"],
+        description="Разрешенные типы файлов",
+    )
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "required_columns": ["date", "category", "revenue"],
+                "column_types": {
+                    "date": "date",
+                    "revenue": "float",
+                    "category": "str",
+                },
+                "strict_schema": False,
+                "max_file_size": 104857600,
+                "allowed_file_types": [".csv", ".csv.gz"],
+            }
+        },
+    )
+
+
+class ValidationResult(BaseModel):
+    """Результат валидации данных.
+
+    Содержит информацию о том, прошли ли данные валидацию,
+    а также список ошибок и предупреждений.
+    """
+
+    is_valid: bool
+    errors: list[str] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    row_count: int = Field(ge=0)
+    column_count: int = Field(ge=0)
+    columns: list[str] = Field(default_factory=list)
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "is_valid": True,
+                "errors": [],
+                "warnings": ["Найдено 5 null-значений в колонке 'category'"],
+                "row_count": 1000,
+                "column_count": 5,
+                "columns": ["date", "category", "revenue", "region", "brand"],
+            }
+        },
+    )

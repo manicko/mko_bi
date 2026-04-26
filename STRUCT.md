@@ -27,6 +27,7 @@ C:\py_exp\mko_bi
 │       │   └── routes
 │       │       ├── auth.py
 │       │       ├── dashboards.py
+│       │       ├── data.py
 │       │       ├── upload.py
 │       │       └── users.py
 │       ├── app.py
@@ -60,7 +61,9 @@ C:\py_exp\mko_bi
 │       │   ├── base.py
 │       │   ├── models
 │       │   │   ├── access.py
+│       │   │   ├── aggregated_data.py
 │       │   │   ├── dashboard.py
+│       │   │   ├── graphs.py
 │       │   │   ├── layout.py
 │       │   │   └── user.py
 │       │   ├── repositories
@@ -98,10 +101,13 @@ C:\py_exp\mko_bi
 │   ├── conftest.py
 │   ├── test_base_models.py
 │   ├── test_dashboards_api.py
+│   ├── test_data_api.py
+│   ├── test_data_loader.py
 │   ├── test_deps.py
 │   ├── test_permissions.py
 │   ├── test_pydantic_models.py
-│   └── test_security.py
+│   ├── test_security.py
+│   └── test_upload_api.py
 ├── TODO
 │   ├── PLAN.md
 │   ├── TASK_001_config_CHECKED.md
@@ -116,8 +122,8 @@ C:\py_exp\mko_bi
 │   ├── TASK_010_auth_api_DONE.md
 │   ├── TASK_011_users_api_DONE.md
 │   ├── TASK_012_dashboards_api.md
-│   ├── TASK_013_upload_api.md
-│   ├── TASK_014_data_api.md
+│   ├── TASK_013_upload_api_DONE.md
+│   ├── TASK_014_data_api_DONE.md
 │   ├── TASK_015_data_loader.md
 │   ├── TASK_016_data_processing.md
 │   ├── TASK_017_data_storage.md
