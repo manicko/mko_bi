@@ -1,33 +1,90 @@
-TASK: Базовая инфраструктура дашбордов
+TASK: Dashboard base infrastructure
 
-FILE: src/mko_bi/dashboards/base.py
-FILE: src/mko_bi/dashboards/registry.py
+FILES:
+- src/mko_bi/dashboards/base.py
+- src/mko_bi/dashboards/registry.py
 
-GOAL: Создать базовый класс и реестр для дашбордов
+GOAL:
+Создать базовый класс дашборда и реестр (factory + registry)
 
 IMPLEMENT:
 
-class: DashboardBase (абстрактный)
-class: DashboardRegistry
+1. base.py
 
-LOGIC:
-- DashboardBase: абстрактные методы render, get_data, apply_filters
-- DashboardRegistry: реестр для регистрации и получения дашбордов
-- Фабрика создания дашбордов по имени
-- Кэширование экземпляров дашбордов
+class: DashboardBase (ABC)
+
+INIT:
+- принимает config: DashboardConfig
+
+ABSTRACT METHODS:
+
+- get_data(self, filters: dict) -> list[dict]
+- apply_filters(self, data: list[dict], filters: dict) -> list[dict]
+- render(self, data: list[dict]) -> dict
 
 CONSTRAINTS:
-- Использовать ABC для абстрактного базового класса
-- Реестр как singleton
-- Методы: render(), get_data(), apply_filters()
-- Поддержка конфигурации через DashboardConfig
-- Исключения для несуществующих дашбордов
+- использовать abc.ABC
+- все методы строго типизированы
+- не использовать глобальные зависимости
+
+---
+
+2. registry.py
+
+class: DashboardRegistry
+
+RESPONSIBILITY:
+- регистрация классов дашбордов
+- создание экземпляров (factory)
+- кэширование
+
+INTERNAL STRUCTURE:
+
+- _registry: dict[str, type[DashboardBase]]
+- _instances: dict[tuple[str, str], DashboardBase]
+
+(ключ кэша = (dashboard_name, config_hash))
+
+PUBLIC METHODS:
+
+- register(name: str, dashboard_cls: type[DashboardBase]) -> None
+- get(name: str, config: DashboardConfig) -> DashboardBase
+- exists(name: str) -> bool
+- clear_cache() -> None
+
+LOGIC:
+
+register:
+- сохраняет класс
+- бросает ValueError если имя уже существует
+
+get:
+- если нет в registry → KeyError
+- генерирует config_hash (например через json.dumps + hash)
+- если есть в _instances → вернуть
+- иначе создать, закэшировать и вернуть
+
+clear_cache:
+- очищает _instances
+
+CONSTRAINTS:
+
+- НЕ использовать глобальный singleton instance
+- использовать module-level instance:
+    registry = DashboardRegistry()
+- регистрация через decorator:
+    @registry.register("sales")
+- не создавать дашборды напрямую вне registry
+- кэш должен учитывать config
+
+ERROR HANDLING:
+
+- KeyError если dashboard не найден
+- ValueError при повторной регистрации
 
 DONE:
-- DashboardBase с абстрактными методами
-- DashboardRegistry работает как singleton
-- Фабрика создает экземпляры
-- Конфигурация передается в дашборды
-- Базовая инфраструктура готова
 
-Тесты: нужны только глубоко тестирующие бизнес-логику.
+- базовый класс работает
+- registry регистрирует классы
+- factory создаёт экземпляры
+- кэширование работает корректно
