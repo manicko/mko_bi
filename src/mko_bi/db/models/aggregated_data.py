@@ -5,6 +5,7 @@ from uuid import UUID
 from sqlalchemy import (
     BigInteger,
     ForeignKey,
+    Integer,
     JSON,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
@@ -23,9 +24,10 @@ class AggregatedData(Base):
     __tablename__ = "aggregated_data"
 
     id: Mapped[int] = mapped_column(
-        BigInteger,
+        Integer,
         primary_key=True,
         autoincrement=True,
+        nullable=False,
     )
 
     dashboard_id: Mapped[UUID] = mapped_column(
