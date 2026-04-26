@@ -1,6 +1,8 @@
-from typing import Any
-from pydantic import BaseModel, ConfigDict
+from typing import Any, Optional
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal
+from datetime import datetime
+from uuid import UUID
 
 from mko_bi.models.user_roles import GraphTypeEnum
 
@@ -18,6 +20,60 @@ class DataUpload(BaseModel):
             "example": {
                 "filename": "data.csv.gz",
                 "dashboard_id": 1,
+            }
+        },
+    )
+
+
+class UploadResponse(BaseModel):
+    """Модель ответа при загрузке файла."""
+
+    task_id: UUID
+    filename: str
+    dashboard_id: int
+    status: str
+    message: str
+    uploaded_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "task_id": "550e8400-e29b-41d4-a716-446655440000",
+                "filename": "data.csv.gz",
+                "dashboard_id": 1,
+                "status": "uploaded",
+                "message": "File uploaded successfully",
+                "uploaded_at": "2026-04-24T16:02:46+03:00",
+            }
+        },
+    )
+
+
+class ProcessingStatus(BaseModel):
+    """Модель статуса обработки."""
+
+    task_id: UUID
+    filename: str
+    dashboard_id: int
+    status: str
+    progress: int = Field(0, ge=0, le=100)
+    message: str | None = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "task_id": "550e8400-e29b-41d4-a716-446655440000",
+                "filename": "data.csv.gz",
+                "dashboard_id": 1,
+                "status": "processing",
+                "progress": 50,
+                "message": "Processing data...",
+                "started_at": "2026-04-24T16:02:46+03:00",
+                "completed_at": None,
             }
         },
     )
@@ -58,6 +114,7 @@ class ProcessingResult(BaseModel):
     """Модель результата обработки данных."""
 
     success: bool
+    task_id: UUID
     dashboard_id: int
     rows_processed: int
     message: str
@@ -68,6 +125,7 @@ class ProcessingResult(BaseModel):
         json_schema_extra={
             "example": {
                 "success": True,
+                "task_id": "550e8400-e29b-41d4-a716-446655440000",
                 "dashboard_id": 1,
                 "rows_processed": 1000,
                 "message": "Data processed successfully",

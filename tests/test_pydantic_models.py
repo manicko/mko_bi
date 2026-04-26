@@ -227,6 +227,10 @@ class TestDataModels:
             aggregations=[{"type": "sum", "field": "revenue", "groupby": "category"}],
             groupby=["category", "region"],
             filters=[{"field": "year", "operator": ">=", "value": 2020}],
+            metrics=[
+                {"name": "total_revenue", "type": "sum", "field": "revenue"},
+                {"name": "avg_sales", "type": "avg", "field": "sales"},
+            ],
         )
         assert len(config.transformations) == 1
         assert len(config.aggregations) == 1
@@ -242,23 +246,33 @@ class TestDataModels:
         """Проверяет создание валидного результата обработки."""
         result = ProcessingResult(
             success=True,
+            task_id="550e8400-e29b-41d4-a716-446655440000",
             dashboard_id=1,
             rows_processed=1000,
             message="Data processed successfully",
             data={"columns": ["category", "revenue"], "rows": 50},
         )
         assert result.success is True
-        assert result.rows_processed == 1000
+        assert str(result.task_id) == "550e8400-e29b-41d4-a716-446655440000"
         assert result.dashboard_id == 1
+        assert result.rows_processed == 1000
+        assert result.message == "Data processed successfully"
+        assert result.data == {"columns": ["category", "revenue"], "rows": 50}
 
     def test_processing_result_without_data(self):
         """Проверяет результат обработки без дополнительных данных."""
         result = ProcessingResult(
             success=True,
+            task_id="550e8400-e29b-41d4-a716-446655440000",
             dashboard_id=1,
             rows_processed=0,
             message="No data to process",
         )
+        assert result.success is True
+        assert str(result.task_id) == "550e8400-e29b-41d4-a716-446655440000"
+        assert result.dashboard_id == 1
+        assert result.rows_processed == 0
+        assert result.message == "No data to process"
         assert result.data is None
 
     def test_aggregated_data_valid(self):
