@@ -138,7 +138,7 @@ C:\py_exp\mko_bi
 │   ├── TASK_018_dashboard_base_DONE.md
 │   ├── TASK_019_chart_components_DONE.md
 │   ├── TASK_020_dashboard_impl.md
-│   ├── TASK_021_main_app.md
+│   ├── TASK_021_main_app_DONE.md
 │   ├── TASK_022_utils.md
 │   ├── TASK_023_tests_models_repos.md
 │   ├── TASK_024_tests_services.md
