@@ -360,7 +360,7 @@ class LineChart(BaseChart):
                         x=list(pct_x),
                         y=list(pct_y),
                         mode="lines+markers",
-                        name=f"Изменение YoY (%)",
+                        name="Изменение YoY (%)",
                         line=dict(
                             color="#ff7f0e",
                             width=2,

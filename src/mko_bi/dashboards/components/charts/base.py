@@ -6,7 +6,6 @@
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any
 
 import plotly.graph_objects as go
 from mko_bi.models.data import ChartConfig, ChartData

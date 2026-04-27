@@ -15,7 +15,7 @@ from typing import Any
 
 import plotly.graph_objects as go
 from mko_bi.models.data import ChartConfig, ChartData
-from mko_bi.models.user_roles import BarmodeEnum, OrientationEnum
+from mko_bi.models.user_roles import OrientationEnum
 
 from .base import BaseChart
 
