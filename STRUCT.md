@@ -141,9 +141,14 @@ C:\py_exp\mko_bi
 │   ├── TASK_019_chart_components_DONE.md
 │   ├── TASK_020_dashboard_impl_DONE.md
 │   ├── TASK_021_main_app_DONE.md
-│   ├── TASK_022_utils.md
+│   ├── TASK_022_utils_DONE.md
 │   ├── TASK_023_tests_models_repos.md
 │   ├── TASK_024_tests_services.md
 │   ├── TASK_025_tests_api.md
-│   └── TASK_026_tests_data_pipeline.md
+│   ├── TASK_026_tests_data_pipeline.md
+│   ├── TASK_027_mdmodel_refactor_plan.md
+│   ├── TASK_028_mdmodel_refactor_plan.md
+│   ├── TASK_029_mdmodel_refactor_plan.md
+│   ├── TASK_030_mdmodel_refactor_plan.md
+│   └── TASK_031_mdmodel_refactor_plan.md
 └── uv.lock
