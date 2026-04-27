@@ -7,14 +7,6 @@ C:\py_exp\mko_bi
 │   └── tmp_uploads
 ├── DB_STRUCTURE.md
 ├── DBSTR.md
-├── fix_deps.py
-├── fix_test2.py
-├── fix_tests.py
-├── IMPLEMENTATION_COMPLETE.md
-├── IMPLEMENTATION_SUMMARY.md
-├── IMPLEMENTATION_SUMMARY_CHART_COMPONENTS.md
-├── IMPLEMENTATION_SUMMARY_DASHBOARD_SERVICE.md
-├── IMPLEMENTATION_SUMMARY_DATA_PROCESSING.md
 ├── nginx
 │   └── nginx.conf
 ├── 'Pydantic TASKS.md'
@@ -100,11 +92,16 @@ C:\py_exp\mko_bi
 │           ├── file_utils.py
 │           └── time_utils.py
 ├── STRUCT.md
-├── TASK_016_SUMMARY.md
 ├── TASK_TEMPLATE.md
 ├── TASKS.md
 ├── tests
 │   ├── conftest.py
+│   ├── services
+│   │   ├── test_access_service.py
+│   │   ├── test_auth_service.py
+│   │   ├── test_dashboard_service.py
+│   │   ├── test_data_service.py
+│   │   └── test_user_service.py
 │   ├── test_base_models.py
 │   ├── test_chart_components.py
 │   ├── test_dashboard_base.py
@@ -153,5 +150,6 @@ C:\py_exp\mko_bi
 │   ├── TASK_029_mdmodel_refactor_plan.md
 │   ├── TASK_030_mdmodel_refactor_plan.md
 │   ├── TASK_031_mdmodel_refactor_plan_DONE.md
-│   └── TASK_033_audit.md
+│   ├── TASK_033_audit.md
+│   └── TASK_037_test_audit.md
 └── uv.lock

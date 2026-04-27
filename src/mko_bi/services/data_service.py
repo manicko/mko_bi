@@ -4,28 +4,27 @@
 обработки данных для дашбордов.
 """
 
-import gzip
 import logging
 import uuid
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+from uuid import UUID
 
 import polars as pl
 from sqlalchemy import Float, Integer
 from sqlalchemy.orm import Session
-from uuid import UUID
 
 from mko_bi.config import config
 from mko_bi.core.permissions import check_dashboard_access
 from mko_bi.db.repositories.dashboard_repo import DashboardRepository
 from mko_bi.db.session import SessionLocal
 from mko_bi.models.data import (
-    UploadResponse,
-    ProcessingStatus,
-    ProcessingResult,
-    ProcessingConfig,
     AggregatedData,
+    ProcessingConfig,
+    ProcessingResult,
+    ProcessingStatus,
+    UploadResponse,
 )
 
 logger = logging.getLogger(__name__)
@@ -100,7 +99,9 @@ def _save_uploaded_file(filename: str, file_content: bytes) -> Path:
     return file_path
 
 
-def _process_csv_file(file_path: Path, processing_config: ProcessingConfig | None = None) -> dict[str, Any]:
+def _process_csv_file(
+    file_path: Path, processing_config: ProcessingConfig | None = None
+) -> dict[str, Any]:
     """Обрабатывает CSV файл с использованием Polars.
 
     Читает gzipped CSV файл, применяет трансформации и агрегации.
@@ -115,12 +116,8 @@ def _process_csv_file(file_path: Path, processing_config: ProcessingConfig | Non
     logger.info("Начало обработки файла: %s", file_path)
 
     # Читаем gzipped CSV
-    with gzip.open(file_path, "rt", encoding="utf-8") as f:
-        # Сначала читаем в pandas, затем конвертируем в polars
-        # (polars может читать CSV напрямую, но для gzipped нужен gzip)
-        import pandas as pd
-        df_pd = pd.read_csv(f)
-        df = pl.from_pandas(df_pd)
+
+    df = pl.read_csv(file_path)
 
     logger.info("Файл прочитан: %d строк, %d колонок", df.shape[0], df.shape[1])
 
@@ -203,7 +200,9 @@ def _process_csv_file(file_path: Path, processing_config: ProcessingConfig | Non
                                     df = df.filter(pl.col(field) < val)
                                 elif op == "$eq":
                                     df = df.filter(pl.col(field) == val)
-                                logger.info("Применена трансформация: %s %s %s", field, op, val)
+                                logger.info(
+                                    "Применена трансформация: %s %s %s", field, op, val
+                                )
 
         result_data["processed_rows"] = df.shape[0]
         result_data["processed_columns"] = df.columns
@@ -300,9 +299,7 @@ def upload_file(
         }
         _task_statuses[task_id] = task_data
 
-        logger.info(
-            "Файл успешно загружен: task_id=%s, filename=%s", task_id, filename
-        )
+        logger.info("Файл успешно загружен: task_id=%s, filename=%s", task_id, filename)
 
         return UploadResponse(
             task_id=task_id,
@@ -386,9 +383,7 @@ def trigger_processing(
             logger.warning(
                 "Невозможно запустить обработку: задача уже %s", task_data["status"]
             )
-            raise ValueError(
-                f"Задача уже находится в статусе '{task_data['status']}'"
-            )
+            raise ValueError(f"Задача уже находится в статусе '{task_data['status']}'")
 
         # Обновление статуса
         task_data["status"] = "processing"
@@ -507,7 +502,9 @@ def get_processing_status(
             )
             raise PermissionError("Недостаточно прав для просмотра статуса")
 
-        logger.info("Статус получен: task_id=%s, status=%s", task_id, task_data["status"])
+        logger.info(
+            "Статус получен: task_id=%s, status=%s", task_id, task_data["status"]
+        )
 
         return ProcessingStatus(
             task_id=task_data["task_id"],
@@ -663,11 +660,14 @@ def get_dashboard_aggregates(
             raise PermissionError("У вас нет доступа к этому дашборду")
 
         # Получение всех графиков дашборда
-        from mko_bi.db.models import graphs as graphs_model
-        from mko_bi.db.models import aggregated_data as aggregated_data_model
+        from mko_bi.db.models import (
+            aggregated_data as aggregated_data_model,
+            graphs as graphs_model,
+        )
 
         graphs = (
-            db.query(graphs_model.Graph)
+            db
+            .query(graphs_model.Graph)
             .filter(graphs_model.Graph.dashboard_id == dashboard_id)
             .all()
         )
@@ -676,7 +676,8 @@ def get_dashboard_aggregates(
         result = []
         for graph in graphs:
             aggregates = (
-                db.query(aggregated_data_model.AggregatedData)
+                db
+                .query(aggregated_data_model.AggregatedData)
                 .filter(aggregated_data_model.AggregatedData.graph_id == graph.id)
                 .all()
             )
@@ -684,12 +685,10 @@ def get_dashboard_aggregates(
             # Группировка данных по графику
             graph_data = []
             for agg in aggregates:
-                graph_data.append(
-                    {
-                        "dims": agg.dims,
-                        "metrics": agg.metrics,
-                    }
-                )
+                graph_data.append({
+                    "dims": agg.dims,
+                    "metrics": agg.metrics,
+                })
 
             if graph_data:
                 result.append(
@@ -783,8 +782,10 @@ def get_chart_data(
             raise PermissionError("У вас нет доступа к этому дашборду")
 
         # Формирование запроса для графиков
-        from mko_bi.db.models import graphs as graphs_model
-        from mko_bi.db.models import aggregated_data as aggregated_data_model
+        from mko_bi.db.models import (
+            aggregated_data as aggregated_data_model,
+            graphs as graphs_model,
+        )
 
         query = db.query(graphs_model.Graph).filter(
             graphs_model.Graph.dashboard_id == dashboard_id
@@ -807,19 +808,18 @@ def get_chart_data(
         result = []
         for graph in graphs:
             aggregates = (
-                db.query(aggregated_data_model.AggregatedData)
+                db
+                .query(aggregated_data_model.AggregatedData)
                 .filter(aggregated_data_model.AggregatedData.graph_id == graph.id)
                 .all()
             )
 
             graph_data = []
             for agg in aggregates:
-                graph_data.append(
-                    {
-                        "dims": agg.dims,
-                        "metrics": agg.metrics,
-                    }
-                )
+                graph_data.append({
+                    "dims": agg.dims,
+                    "metrics": agg.metrics,
+                })
 
             if graph_data:
                 result.append(
@@ -913,12 +913,16 @@ def apply_data_filters(
             raise PermissionError("У вас нет доступа к этому дашборду")
 
         from sqlalchemy import and_
-        from mko_bi.db.models import graphs as graphs_model
-        from mko_bi.db.models import aggregated_data as aggregated_data_model
+
+        from mko_bi.db.models import (
+            aggregated_data as aggregated_data_model,
+            graphs as graphs_model,
+        )
 
         # Получение всех графиков дашборда
         graphs = (
-            db.query(graphs_model.Graph)
+            db
+            .query(graphs_model.Graph)
             .filter(graphs_model.Graph.dashboard_id == dashboard_id)
             .all()
         )
@@ -952,7 +956,11 @@ def apply_data_filters(
                 )
 
             # Дополнительные фильтры из словаря
-            if filters and "filters" in filters and isinstance(filters["filters"], dict):
+            if (
+                filters
+                and "filters" in filters
+                and isinstance(filters["filters"], dict)
+            ):
                 for key, value in filters["filters"].items():
                     if isinstance(value, str):
                         filter_conditions.append(
@@ -980,12 +988,10 @@ def apply_data_filters(
             # Формирование результата
             graph_data = []
             for agg in aggregates:
-                graph_data.append(
-                    {
-                        "dims": agg.dims,
-                        "metrics": agg.metrics,
-                    }
-                )
+                graph_data.append({
+                    "dims": agg.dims,
+                    "metrics": agg.metrics,
+                })
 
             if graph_data:
                 result.append(

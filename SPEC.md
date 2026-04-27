@@ -4,7 +4,7 @@
 
 Веб-приложение для:
 
-* загрузки CSV данных
+* загрузки CSV и CSV.gz данных во временную папку пользователя
 * их обработки
 * хранения агрегатов
 * отображения в дашбордах
@@ -16,7 +16,7 @@
 
 * Backend: **FastAPI**
 * Dashboards: **Dash + Plotly**
-* Data processing: **Polars**
+* Data processing: **Polars** (запрещено использовать pandas)
 * Storage: **PostgreSQL**
 * Validation: **Pydantic**
 * Auth: **JWT + bcrypt**
@@ -88,7 +88,7 @@
 ---
 ## 6. Data Flow
 
-1. Upload CSV
+1. Upload CSV / CSV.gz во временную папку пользователя platformdirs
 2. Parse (Polars)
 3. Transform (LoaderConfig)
 4. Aggregate
@@ -100,7 +100,8 @@
 
 ## 7. Data Upload
 
-* формат: `.csv.gz`
+* формат: `.csv`, `.csv.gz`
+* кодировка `UTF-8`
 * файл:
 
   * загружается
@@ -115,16 +116,14 @@
 * триггер: upload файла
 * pipeline:
 
-  * чтение CSV (Polars)
+  * чтение (Polars)
   * трансформация (по конфигу dashboard)
   * агрегации:
-
     * groupby
     * YoY
     * доли
     * кастомные метрики
 * результат:
-
   * **полный пересчёт**
   * запись в PostgreSQL
 
@@ -134,7 +133,6 @@
 
 * хранится только агрегированное
 * структура:
-
   * отдельные таблицы/схемы per dashboard
 * данные общие (не зависят от пользователя)
 
@@ -153,7 +151,6 @@
 
 * задаются админом (config-driven)
 * каждый дашборд:
-
   * набор графиков
   * отдельная страница
 
@@ -175,7 +172,6 @@
 ## 12. Filters
 
 * глобальные:
-
   * year
   * category
   * brand
