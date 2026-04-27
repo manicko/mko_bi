@@ -43,7 +43,9 @@ C:\py_exp\mko_bi
 │       │   │   ├── charts
 │       │   │   │   ├── bar.py
 │       │   │   │   ├── base.py
-│       │   │   │   └── line.py
+│       │   │   │   ├── line.py
+│       │   │   │   ├── pie.py
+│       │   │   │   └── table.py
 │       │   │   ├── filters.py
 │       │   │   └── layout.py
 │       │   ├── implementations
@@ -137,7 +139,7 @@ C:\py_exp\mko_bi
 │   ├── TASK_017_data_storage_DONE.md
 │   ├── TASK_018_dashboard_base_DONE.md
 │   ├── TASK_019_chart_components_DONE.md
-│   ├── TASK_020_dashboard_impl.md
+│   ├── TASK_020_dashboard_impl_DONE.md
 │   ├── TASK_021_main_app_DONE.md
 │   ├── TASK_022_utils.md
 │   ├── TASK_023_tests_models_repos.md
