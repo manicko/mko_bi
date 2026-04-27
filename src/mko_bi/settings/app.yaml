@@ -20,3 +20,30 @@ upload:
 logging:
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
   level: INFO
+
+charts:
+  default_colors:
+    - "#1f77b4"
+    - "#ff7f0e"
+    - "#2ca02c"
+    - "#d62728"
+    - "#9467bd"
+    - "#8c564b"
+    - "#e377c2"
+    - "#7f7f7f"
+  yoy:
+    current_year_style:
+      line:
+        dash: "solid"
+        width: 3
+    previous_year_style:
+      line:
+        dash: "dash"
+        width: 2
+  layout:
+    template: "plotly_white"
+    margin:
+      l: 50
+      r: 50
+      t: 50
+      b: 50

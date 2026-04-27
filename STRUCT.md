@@ -12,6 +12,7 @@ C:\py_exp\mko_bi
 ├── fix_tests.py
 ├── IMPLEMENTATION_COMPLETE.md
 ├── IMPLEMENTATION_SUMMARY.md
+├── IMPLEMENTATION_SUMMARY_CHART_COMPONENTS.md
 ├── IMPLEMENTATION_SUMMARY_DASHBOARD_SERVICE.md
 ├── IMPLEMENTATION_SUMMARY_DATA_PROCESSING.md
 ├── nginx
@@ -41,7 +42,8 @@ C:\py_exp\mko_bi
 │       │   ├── components
 │       │   │   ├── charts
 │       │   │   │   ├── bar.py
-│       │   │   │   └── dot.py
+│       │   │   │   ├── base.py
+│       │   │   │   └── line.py
 │       │   │   ├── filters.py
 │       │   │   └── layout.py
 │       │   ├── implementations
@@ -102,6 +104,8 @@ C:\py_exp\mko_bi
 ├── tests
 │   ├── conftest.py
 │   ├── test_base_models.py
+│   ├── test_chart_components.py
+│   ├── test_dashboard_base.py
 │   ├── test_dashboards_api.py
 │   ├── test_data_api.py
 │   ├── test_data_loader.py
@@ -131,8 +135,8 @@ C:\py_exp\mko_bi
 │   ├── TASK_015_data_loader_DONE.md
 │   ├── TASK_016_data_processing_DONE.md
 │   ├── TASK_017_data_storage_DONE.md
-│   ├── TASK_018_dashboard_base.md
-│   ├── TASK_019_chart_components.md
+│   ├── TASK_018_dashboard_base_DONE.md
+│   ├── TASK_019_chart_components_DONE.md
 │   ├── TASK_020_dashboard_impl.md
 │   ├── TASK_021_main_app.md
 │   ├── TASK_022_utils.md

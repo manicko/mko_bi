@@ -1,8 +1,11 @@
 from mko_bi.models.data import (
     AggregatedData,
+    ChartConfig,
+    ChartData,
     ChartDataRequest,
     DataFilter,
     DataUpload,
+    FilterState,
     LoaderConfig,
     ProcessingConfig,
     ProcessingResult,
@@ -11,14 +14,28 @@ from mko_bi.models.data import (
     ValidationResult,
 )
 from mko_bi.models.user import UserCreate, UserDB, UserRead, UserUpdate
-from mko_bi.models.user_roles import GraphTypeEnum, PermissionEnum, UserRoleEnum
+from mko_bi.models.user_roles import (
+    BarmodeEnum,
+    GraphTypeEnum,
+    OrientationEnum,
+    PermissionEnum,
+    UserRoleEnum,
+    YoyModeEnum,
+)
 
 __all__ = [
     "AggregatedData",
+    "BarmodeEnum",
+    "ChartConfig",
+    "ChartData",
     "ChartDataRequest",
     "DataFilter",
     "DataUpload",
+    "FilterState",
+    "GraphTypeEnum",
     "LoaderConfig",
+    "OrientationEnum",
+    "PermissionEnum",
     "ProcessingConfig",
     "ProcessingResult",
     "ProcessingStatus",
@@ -28,7 +45,6 @@ __all__ = [
     "UserRead",
     "UserUpdate",
     "UserRoleEnum",
-    "PermissionEnum",
-    "GraphTypeEnum",
     "ValidationResult",
+    "YoyModeEnum",
 ]

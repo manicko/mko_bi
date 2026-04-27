@@ -3,7 +3,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 from uuid import UUID
 
-from mko_bi.models.user_roles import GraphTypeEnum
+from mko_bi.models.user_roles import GraphTypeEnum, BarmodeEnum, OrientationEnum, YoyModeEnum
 
 
 class DataUpload(BaseModel):
@@ -281,6 +281,92 @@ class ValidationResult(BaseModel):
                 "row_count": 1000,
                 "column_count": 5,
                 "columns": ["date", "category", "revenue", "region", "brand"],
+            }
+        },
+    )
+
+
+class ChartData(BaseModel):
+    """Модель данных для графика.
+
+    Содержит список словарей с данными, где каждый словарь
+    представляет одну точку данных с измерениями и метриками.
+    """
+
+    data: list[dict[str, Any]]
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "data": [
+                    {"category": "A", "revenue": 1000, "year": 2023},
+                    {"category": "B", "revenue": 2000, "year": 2023},
+                ]
+            }
+        },
+    )
+
+
+class ChartConfig(BaseModel):
+    """Модель конфигурации графика.
+
+    Определяет параметры визуализации: оси, цвета, режимы отображения
+    и дополнительные настройки макета.
+    """
+
+    x: str
+    color: str | None = None
+    metrics: list[str]
+    orientation: OrientationEnum = OrientationEnum.vertical
+    barmode: BarmodeEnum = BarmodeEnum.group
+    secondary_y: list[str] = Field(default_factory=list)
+    layout: dict[str, Any] = Field(default_factory=dict)
+    yoy: dict[str, Any] | None = Field(
+        default=None,
+        description="Настройки год-к-году сравнения",
+    )
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "x": "category",
+                "color": "year",
+                "metrics": ["revenue", "sales"],
+                "orientation": "v",
+                "barmode": "group",
+                "secondary_y": ["profit"],
+                "layout": {"title": "Sales by Category"},
+                "yoy": {
+                    "enabled": True,
+                    "metric": "revenue",
+                    "mode": "percent",
+                    "year_field": "year",
+                },
+            }
+        },
+    )
+
+
+class FilterState(BaseModel):
+    """Модель состояния фильтров дашборда.
+
+    Хранит текущие значения фильтров в виде словаря,
+    где ключ - имя фильтра, значение - список выбранных значений.
+    """
+
+    filters: dict[str, list[Any]] = Field(default_factory=dict)
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "filters": {
+                    "year": [2023, 2024],
+                    "category": ["Electronics"],
+                    "region": ["North", "South"],
+                }
             }
         },
     )
