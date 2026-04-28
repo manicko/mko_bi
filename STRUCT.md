@@ -80,7 +80,6 @@ C:\py_exp\mko_bi
 │       │   ├── user.py
 │       │   └── user_roles.py
 │       ├── services
-│       │   ├── access_service.py
 │       │   ├── auth_service.py
 │       │   ├── dashboard_service.py
 │       │   ├── data_service.py
@@ -97,7 +96,6 @@ C:\py_exp\mko_bi
 ├── tests
 │   ├── conftest.py
 │   ├── services
-│   │   ├── test_access_service.py
 │   │   ├── test_auth_service.py
 │   │   ├── test_dashboard_service.py
 │   │   ├── test_data_service.py
@@ -148,5 +146,7 @@ C:\py_exp\mko_bi
 │   ├── TASK_030_mdmodel_refactor_plan.md
 │   ├── TASK_031_mdmodel_refactor_plan_DONE.md
 │   ├── TASK_033_audit.md
+│   ├── TASK_034_audit.md
+│   ├── TASK_036_audit_tz.md
 │   └── TASK_037_test_audit.md
 └── uv.lock
