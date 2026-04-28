@@ -128,6 +128,8 @@ def create_dashboard(
 
     Создает дашборд в базе данных и предоставляет владельцу
     права администратора (admin) на управление дашбордом.
+    Операция выполняется в транзакции: если предоставление прав
+    доступа завершается ошибкой, создание дашборда откатывается.
 
     Args:
         name: Название дашборда.
@@ -164,28 +166,30 @@ def create_dashboard(
         local_session = True
 
     try:
-        # Создание дашборда через репозиторий
-        dashboard_obj = DashboardRepository.create(
-            db=db,
-            name=name,
-            config=json.dumps(config),
-        )
-        logger.info(
-            "Дашборд создан: id=%s, name=%s", dashboard_obj.id, dashboard_obj.name
-        )
+        # Создание дашборда и предоставление прав в одной транзакции
+        with db.begin():
+            # Создание дашборда через репозиторий
+            dashboard_obj = DashboardRepository.create(
+                db=db,
+                name=name,
+                config=json.dumps(config),
+            )
+            logger.info(
+                "Дашборд создан: id=%s, name=%s", dashboard_obj.id, dashboard_obj.name
+            )
 
-        # Предоставление прав администратора владельцу
-        AccessRepository.grant_access(
-            db=db,
-            user_id=owner_id,
-            dashboard_id=dashboard_obj.id,
-            permission="admin",
-        )
-        logger.info(
-            "Права администратора предоставлены: user_id=%s, dashboard_id=%s",
-            owner_id,
-            dashboard_obj.id,
-        )
+            # Предоставление прав администратора владельцу
+            AccessRepository.grant_access(
+                db=db,
+                user_id=owner_id,
+                dashboard_id=dashboard_obj.id,
+                permission="admin",
+            )
+            logger.info(
+                "Права администратора предоставлены: user_id=%s, dashboard_id=%s",
+                owner_id,
+                dashboard_obj.id,
+            )
 
         # Преобразование в Pydantic модель
         # Преобразуем config из JSON строки в dict
@@ -198,8 +202,6 @@ def create_dashboard(
         # Валидационные ошибки не требуют отката (транзакция еще не начата)
         raise
     except Exception as e:
-        if local_session:
-            db.rollback()
         logger.error(
             "Ошибка при создании дашборда name=%s, owner_id=%s: %s",
             name,
@@ -453,6 +455,9 @@ def grant_access(
 ) -> bool:
     """Предоставляет пользователю доступ к дашборду.
 
+    Операция выполняется в транзакции: если предоставление прав
+    доступа завершается ошибкой, транзакция откатывается.
+
     Args:
         dashboard_id: Идентификатор дашборда.
         user_id: Идентификатор пользователя.
@@ -483,18 +488,20 @@ def grant_access(
         local_session = True
 
     try:
-        # Проверка существования дашборда
-        dashboard_obj = _validate_dashboard_exists(dashboard_id, db)
-        if dashboard_obj is None:
-            raise ValueError(f"Дашборд с id={dashboard_id} не найден")
+        # Проверка существования дашборда и предоставление доступа в транзакции
+        with db.begin():
+            # Проверка существования дашборда
+            dashboard_obj = _validate_dashboard_exists(dashboard_id, db)
+            if dashboard_obj is None:
+                raise ValueError(f"Дашборд с id={dashboard_id} не найден")
 
-        # Предоставление доступа через репозиторий
-        AccessRepository.grant_access(
-            db=db,
-            user_id=user_id,
-            dashboard_id=dashboard_id,
-            permission_level=permission,
-        )
+            # Предоставление доступа через репозиторий
+            AccessRepository.grant_access(
+                db=db,
+                user_id=user_id,
+                dashboard_id=dashboard_id,
+                permission_level=permission,
+            )
 
         logger.info(
             "Доступ успешно предоставлен: user_id=%s, dashboard_id=%s, permission=%s",
@@ -508,8 +515,6 @@ def grant_access(
     except ValueError:
         raise
     except Exception as e:
-        if local_session:
-            db.rollback()
         logger.error(
             "Ошибка при предоставлении доступа user_id=%s, dashboard_id=%s: %s",
             user_id,

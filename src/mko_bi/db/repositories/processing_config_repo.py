@@ -91,14 +91,13 @@ class ProcessingConfigRepository:
         try:
             config_obj = processing_config_model.ProcessingConfig(**kwargs)
             db.add(config_obj)
-            db.commit()
+            db.flush()
             db.refresh(config_obj)
             logger.info(
                 "Настройки обработки созданы: dashboard_id=%s", config_obj.dashboard_id
             )
             return config_obj
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error("Ошибка при создании настроек обработки: %s", e)
             raise
 
@@ -131,12 +130,11 @@ class ProcessingConfigRepository:
             for key, value in kwargs.items():
                 if hasattr(config_obj, key):
                     setattr(config_obj, key, value)
-            db.commit()
+            db.flush()
             db.refresh(config_obj)
             logger.info("Настройки обработки обновлены: dashboard_id=%s", dashboard_id)
             return config_obj
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error("Ошибка при обновлении настроек обработки dashboard_id=%s: %s", dashboard_id, e)
             raise
 
@@ -164,11 +162,10 @@ class ProcessingConfigRepository:
                 logger.warning("Настройки обработки не найдены для удаления: dashboard_id=%s", dashboard_id)
                 return False
             db.delete(config_obj)
-            db.commit()
+            db.flush()
             logger.info("Настройки обработки удалены: dashboard_id=%s", dashboard_id)
             return True
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error("Ошибка при удалении настроек обработки dashboard_id=%s: %s", dashboard_id, e)
             raise
 

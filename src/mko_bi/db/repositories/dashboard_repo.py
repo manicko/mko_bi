@@ -113,14 +113,13 @@ class DashboardRepository:
         try:
             dashboard_obj = dashboard_model.Dashboard(**kwargs)
             db.add(dashboard_obj)
-            db.commit()
+            db.flush()
             db.refresh(dashboard_obj)
             logger.info(
                 "Дашборд создан: id=%s, name=%s", dashboard_obj.id, dashboard_obj.name
             )
             return dashboard_obj
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error("Ошибка при создании дашборда: %s", e)
             raise
 
@@ -153,12 +152,11 @@ class DashboardRepository:
             for key, value in kwargs.items():
                 if hasattr(dashboard_obj, key):
                     setattr(dashboard_obj, key, value)
-            db.commit()
+            db.flush()
             db.refresh(dashboard_obj)
             logger.info("Дашборд обновлен: id=%s", dashboard_id)
             return dashboard_obj
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error("Ошибка при обновлении дашборда id=%s: %s", dashboard_id, e)
             raise
 
@@ -186,11 +184,10 @@ class DashboardRepository:
                 logger.warning("Дашборд не найден для удаления: id=%s", dashboard_id)
                 return False
             db.delete(dashboard_obj)
-            db.commit()
+            db.flush()
             logger.info("Дашборд удален: id=%s", dashboard_id)
             return True
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error("Ошибка при удалении дашборда id=%s: %s", dashboard_id, e)
             raise
 

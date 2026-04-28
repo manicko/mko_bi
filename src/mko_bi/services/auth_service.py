@@ -86,6 +86,8 @@ def register_user(
 
     Выполняет валидацию email и роли, проверяет уникальность email,
     хеширует пароль и сохраняет пользователя в базе данных.
+    Операция выполняется в транзакции: если любая операция завершается
+    ошибкой, транзакция откатывается.
 
     Args:
         email: Email пользователя. Должен быть валидным и уникальным.
@@ -124,34 +126,34 @@ def register_user(
         local_session = True
 
     try:
-        # Проверка уникальности email
-        _check_email_uniqueness(email, db)
+        # Регистрация пользователя в транзакции
+        with db.begin():
+            # Проверка уникальности email
+            _check_email_uniqueness(email, db)
 
-        # Хеширование пароля
-        password_hash = hash_password(password)
-        logger.info("Password successfully hashed for user: %s", email)
+            # Хеширование пароля
+            password_hash = hash_password(password)
+            logger.info("Password successfully hashed for user: %s", email)
 
-        # Создание пользователя
-        user_obj = UserRepository.create(
-            db=db,
-            email=email,
-            password_hash=password_hash,
-            role=role,
-        )
+            # Создание пользователя
+            user_obj = UserRepository.create(
+                db=db,
+                email=email,
+                password_hash=password_hash,
+                role=role,
+            )
 
-        logger.info(
-            "User successfully registered: id=%s, email=%s, role=%s",
-            user_obj.id,
-            email,
-            role,
-        )
+            logger.info(
+                "User successfully registered: id=%s, email=%s, role=%s",
+                user_obj.id,
+                email,
+                role,
+            )
 
         # Преобразование в Pydantic модель (без password_hash)
         return UserRead.model_validate(user_obj)
 
     except Exception as e:
-        if local_session:
-            db.rollback()
         logger.error("Error during user registration %s: %s", email, e)
         raise
     finally:

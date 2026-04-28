@@ -123,7 +123,7 @@ class ProcessingLogRepository:
         try:
             log_obj = processing_log_model.ProcessingLog(**kwargs)
             db.add(log_obj)
-            db.commit()
+            db.flush()
             db.refresh(log_obj)
             logger.info(
                 "Лог обработки создан: id=%s, status=%s, dashboard_id=%s",
@@ -133,7 +133,6 @@ class ProcessingLogRepository:
             )
             return log_obj
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error("Ошибка при создании лога обработки: %s", e)
             raise
 
@@ -166,12 +165,11 @@ class ProcessingLogRepository:
             for key, value in kwargs.items():
                 if hasattr(log_obj, key):
                     setattr(log_obj, key, value)
-            db.commit()
+            db.flush()
             db.refresh(log_obj)
             logger.info("Лог обработки обновлен: id=%s", log_id)
             return log_obj
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error("Ошибка при обновлении лога обработки id=%s: %s", log_id, e)
             raise
 
@@ -199,11 +197,10 @@ class ProcessingLogRepository:
                 logger.warning("Лог обработки не найден для удаления: id=%s", log_id)
                 return False
             db.delete(log_obj)
-            db.commit()
+            db.flush()
             logger.info("Лог обработки удален: id=%s", log_id)
             return True
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error("Ошибка при удалении лога обработки id=%s: %s", log_id, e)
             raise
 

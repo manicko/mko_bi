@@ -91,7 +91,7 @@ class AggregatedDataRepository:
                 if result.rowcount:
                     inserted_count += 1
 
-            db.commit()
+            db.flush()
             logger.info(
                 "Сохранено %d агрегатов для дашборда %s",
                 inserted_count,
@@ -100,7 +100,6 @@ class AggregatedDataRepository:
             return inserted_count
 
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error(
                 "Ошибка при пакетной вставке агрегатов для дашборда %s: %s",
                 dashboard_id,
@@ -108,7 +107,6 @@ class AggregatedDataRepository:
             )
             raise
         except KeyError as e:
-            db.rollback()
             logger.error(
                 "Некорректный формат данных для дашборда %s: %s",
                 dashboard_id,

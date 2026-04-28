@@ -69,7 +69,7 @@ class AccessRepository:
                 permission=permission,
             )
             db.add(access_obj)
-            db.commit()
+            db.flush()
             db.refresh(access_obj)
             logger.info(
                 "Право доступа предоставлено: user_id=%s, dashboard_id=%s, permission=%s",
@@ -79,7 +79,6 @@ class AccessRepository:
             )
             return access_obj
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error(
                 "Ошибка при предоставлении доступа user_id=%s, dashboard_id=%s: %s",
                 user_id,
@@ -118,7 +117,7 @@ class AccessRepository:
                 )
                 return False
             db.delete(access_obj)
-            db.commit()
+            db.flush()
             logger.info(
                 "Право доступа отозвано: user_id=%s, dashboard_id=%s",
                 user_id,
@@ -126,7 +125,6 @@ class AccessRepository:
             )
             return True
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error(
                 "Ошибка при отзыве доступа user_id=%s, dashboard_id=%s: %s",
                 user_id,

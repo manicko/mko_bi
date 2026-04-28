@@ -95,14 +95,13 @@ class UserRepository:
         try:
             user_obj = user_model.User(**kwargs)
             db.add(user_obj)
-            db.commit()
+            db.flush()
             db.refresh(user_obj)
             logger.info(
                 "Пользователь создан: id=%s, email=%s", user_obj.id, user_obj.email
             )
             return user_obj
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error("Ошибка при создании пользователя: %s", e)
             raise
 
@@ -131,12 +130,11 @@ class UserRepository:
             for key, value in kwargs.items():
                 if hasattr(user_obj, key):
                     setattr(user_obj, key, value)
-            db.commit()
+            db.flush()
             db.refresh(user_obj)
             logger.info("Пользователь обновлен: id=%s", user_id)
             return user_obj
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error("Ошибка при обновлении пользователя id=%s: %s", user_id, e)
             raise
 
@@ -162,11 +160,10 @@ class UserRepository:
                 logger.warning("Пользователь не найден для удаления: id=%s", user_id)
                 return False
             db.delete(user_obj)
-            db.commit()
+            db.flush()
             logger.info("Пользователь удален: id=%s", user_id)
             return True
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error("Ошибка при удалении пользователя id=%s: %s", user_id, e)
             raise
 

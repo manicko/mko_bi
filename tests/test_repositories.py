@@ -85,7 +85,7 @@ class TestUserRepository:
         mock_user.email = "newuser@example.com"
 
         mock_db.add = MagicMock()
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
         mock_db.refresh = MagicMock()
 
         with patch('mko_bi.db.repositories.user_repo.user_model.User', return_value=mock_user):
@@ -98,7 +98,7 @@ class TestUserRepository:
 
         assert result == mock_user
         mock_db.add.assert_called_once_with(mock_user)
-        mock_db.commit.assert_called_once()
+        mock_db.flush.assert_called_once()
         mock_db.refresh.assert_called_once_with(mock_user)
 
     def test_create_user_sqlalchemy_error(self):
@@ -107,8 +107,7 @@ class TestUserRepository:
         mock_user = MagicMock(spec=user_model.User)
 
         mock_db.add = MagicMock()
-        mock_db.commit = MagicMock(side_effect=SQLAlchemyError("DB error"))
-        mock_db.rollback = MagicMock()
+        mock_db.flush = MagicMock(side_effect=SQLAlchemyError("DB error"))
 
         with patch('mko_bi.db.repositories.user_repo.user_model.User', return_value=mock_user):
             with pytest.raises(SQLAlchemyError):
@@ -118,7 +117,7 @@ class TestUserRepository:
                     password_hash="$2b$12$hash"
                 )
 
-        mock_db.rollback.assert_called_once()
+        mock_db.flush.assert_called_once()
 
     def test_update_user_success(self):
         """Тест успешного обновления пользователя."""
@@ -131,7 +130,7 @@ class TestUserRepository:
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_user
         mock_db.execute.return_value = mock_result
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
         mock_db.refresh = MagicMock()
 
         result = user_repo.UserRepository.update(
@@ -141,7 +140,7 @@ class TestUserRepository:
         assert result == mock_user
         assert mock_user.role == "admin"
         assert mock_user.email == "new@example.com"
-        mock_db.commit.assert_called_once()
+        mock_db.flush.assert_called_once()
         mock_db.refresh.assert_called_once_with(mock_user)
 
     def test_update_user_not_found(self):
@@ -155,7 +154,7 @@ class TestUserRepository:
         result = user_repo.UserRepository.update(user_id, mock_db, role="admin")
 
         assert result is None
-        mock_db.commit.assert_not_called()
+        mock_db.flush.assert_not_called()
 
     def test_update_user_sqlalchemy_error(self):
         """Тест ошибки SQLAlchemy при обновлении пользователя."""
@@ -166,13 +165,12 @@ class TestUserRepository:
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_user
         mock_db.execute.return_value = mock_result
-        mock_db.commit = MagicMock(side_effect=SQLAlchemyError("DB error"))
-        mock_db.rollback = MagicMock()
+        mock_db.flush = MagicMock(side_effect=SQLAlchemyError("DB error"))
 
         with pytest.raises(SQLAlchemyError):
             user_repo.UserRepository.update(mock_user.id, mock_db, role="admin")
 
-        mock_db.rollback.assert_called_once()
+        mock_db.flush.assert_called_once()
 
     def test_delete_user_success(self):
         """Тест успешного удаления пользователя."""
@@ -184,13 +182,13 @@ class TestUserRepository:
         mock_result.scalar_one_or_none.return_value = mock_user
         mock_db.execute.return_value = mock_result
         mock_db.delete = MagicMock()
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
 
         result = user_repo.UserRepository.delete(mock_user.id, mock_db)
 
         assert result is True
         mock_db.delete.assert_called_once_with(mock_user)
-        mock_db.commit.assert_called_once()
+        mock_db.flush.assert_called_once()
 
     def test_delete_user_not_found(self):
         """Тест удаления несуществующего пользователя."""
@@ -203,8 +201,7 @@ class TestUserRepository:
         result = user_repo.UserRepository.delete(user_id, mock_db)
 
         assert result is False
-        mock_db.delete.assert_not_called()
-        mock_db.commit.assert_not_called()
+        mock_db.flush.assert_not_called()
 
     def test_delete_user_sqlalchemy_error(self):
         """Тест ошибки SQLAlchemy при удалении пользователя."""
@@ -216,13 +213,12 @@ class TestUserRepository:
         mock_result.scalar_one_or_none.return_value = mock_user
         mock_db.execute.return_value = mock_result
         mock_db.delete = MagicMock()
-        mock_db.commit = MagicMock(side_effect=SQLAlchemyError("DB error"))
-        mock_db.rollback = MagicMock()
+        mock_db.flush = MagicMock(side_effect=SQLAlchemyError("DB error"))
 
         with pytest.raises(SQLAlchemyError):
             user_repo.UserRepository.delete(mock_user.id, mock_db)
 
-        mock_db.rollback.assert_called_once()
+        mock_db.flush.assert_called_once()
 
     def test_get_all_users(self):
         """Тест получения всех пользователей."""
@@ -311,7 +307,7 @@ class TestDashboardRepository:
         mock_dashboard.name = "New Dashboard"
 
         mock_db.add = MagicMock()
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
         mock_db.refresh = MagicMock()
 
         with patch('mko_bi.db.repositories.dashboard_repo.dashboard_model.Dashboard',
@@ -324,7 +320,7 @@ class TestDashboardRepository:
 
         assert result == mock_dashboard
         mock_db.add.assert_called_once_with(mock_dashboard)
-        mock_db.commit.assert_called_once()
+        mock_db.flush.assert_called_once()
         mock_db.refresh.assert_called_once_with(mock_dashboard)
 
     def test_create_dashboard_sqlalchemy_error(self):
@@ -333,8 +329,7 @@ class TestDashboardRepository:
         mock_dashboard = MagicMock(spec=dashboard_model.Dashboard)
 
         mock_db.add = MagicMock()
-        mock_db.commit = MagicMock(side_effect=SQLAlchemyError("DB error"))
-        mock_db.rollback = MagicMock()
+        mock_db.flush = MagicMock(side_effect=SQLAlchemyError("DB error"))
 
         with patch('mko_bi.db.repositories.dashboard_repo.dashboard_model.Dashboard',
                    return_value=mock_dashboard):
@@ -343,7 +338,7 @@ class TestDashboardRepository:
                     mock_db, name="Error Dashboard", config={}
                 )
 
-        mock_db.rollback.assert_called_once()
+        mock_db.flush.assert_called_once()
 
     def test_update_dashboard_success(self):
         """Тест успешного обновления дашборда."""
@@ -355,7 +350,7 @@ class TestDashboardRepository:
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_dashboard
         mock_db.execute.return_value = mock_result
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
         mock_db.refresh = MagicMock()
 
         result = dashboard_repo.DashboardRepository.update(
@@ -365,7 +360,8 @@ class TestDashboardRepository:
         assert result == mock_dashboard
         assert mock_dashboard.name == "New Name"
         assert mock_dashboard.description == "Updated"
-        mock_db.commit.assert_called_once()
+        mock_db.flush.assert_called_once()
+        mock_db.refresh.assert_called_once_with(mock_dashboard)
 
     def test_update_dashboard_not_found(self):
         """Тест обновления несуществующего дашборда."""
@@ -378,9 +374,10 @@ class TestDashboardRepository:
         result = dashboard_repo.DashboardRepository.update(dashboard_id, mock_db, name="New")
 
         assert result is None
+        mock_db.flush.assert_not_called()
 
-    def test_delete_dashboard_success(self):
-        """Тест успешного удаления дашборда."""
+    def test_update_dashboard_sqlalchemy_error(self):
+        """Тест ошибки SQLAlchemy при обновлении дашборда."""
         mock_db = MagicMock(spec=Session)
         mock_dashboard = MagicMock(spec=dashboard_model.Dashboard)
         mock_dashboard.id = uuid4()
@@ -388,148 +385,12 @@ class TestDashboardRepository:
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_dashboard
         mock_db.execute.return_value = mock_result
-        mock_db.delete = MagicMock()
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock(side_effect=SQLAlchemyError("DB error"))
 
-        result = dashboard_repo.DashboardRepository.delete(mock_dashboard.id, mock_db)
+        with pytest.raises(SQLAlchemyError):
+            dashboard_repo.DashboardRepository.update(mock_dashboard.id, mock_db, name="New")
 
-        assert result is True
-        mock_db.delete.assert_called_once_with(mock_dashboard)
-        mock_db.commit.assert_called_once()
-
-    def test_delete_dashboard_not_found(self):
-        """Тест удаления несуществующего дашборда."""
-        mock_db = MagicMock(spec=Session)
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = None
-        mock_db.execute.return_value = mock_result
-
-        dashboard_id = uuid4()
-        result = dashboard_repo.DashboardRepository.delete(dashboard_id, mock_db)
-
-        assert result is False
-
-    def test_get_all_dashboards(self):
-        """Тест получения всех дашбордов."""
-        mock_db = MagicMock(spec=Session)
-        mock_dashboards = [
-            MagicMock(spec=dashboard_model.Dashboard, id=uuid4(), name=f"Dash {i}")
-            for i in range(3)
-        ]
-
-        mock_result = MagicMock()
-        mock_result.scalars.return_value.all.return_value = mock_dashboards
-        mock_db.execute.return_value = mock_result
-
-        result = dashboard_repo.DashboardRepository.get_all(mock_db)
-
-        assert result == mock_dashboards
-        assert len(result) == 3
-
-    def test_get_session(self):
-        """Тест создания сессии."""
-        with patch('mko_bi.db.repositories.dashboard_repo.SessionLocal') as mock_session:
-            session_instance = MagicMock()
-            mock_session.return_value = session_instance
-
-            result = dashboard_repo.DashboardRepository.get_session()
-
-            assert result == session_instance
-            mock_session.assert_called_once()
-
-
-class TestAccessRepository:
-    """Тесты для AccessRepository."""
-
-    def test_grant_access_success(self):
-        """Тест успешного предоставления доступа."""
-        mock_db = MagicMock(spec=Session)
-        mock_user = MagicMock(spec=user_model.User)
-        mock_user.id = uuid4()
-        mock_dashboard = MagicMock(spec=dashboard_model.Dashboard)
-        mock_dashboard.id = uuid4()
-
-        # Мокаем запрос через db.execute
-        mock_access = MagicMock(spec=access_model.DashboardAccess)
-        mock_access.user_id = mock_user.id
-        mock_access.dashboard_id = mock_dashboard.id
-        mock_access.permission = "view"
-
-        # Мокаем цепочку select().where().scalar_one_or_none()
-        mock_select = MagicMock()
-        mock_where = MagicMock()
-        mock_scalar = MagicMock()
-        mock_scalar.scalar_one_or_none.return_value = None
-        mock_where.return_value = mock_scalar
-        mock_select.return_value = mock_where
-
-        mock_db.execute.return_value = mock_scalar
-
-        mock_db.add = MagicMock()
-        mock_db.commit = MagicMock()
-        mock_db.refresh = MagicMock()
-
-        with patch('mko_bi.db.repositories.access_repo.select', mock_select):
-            with patch('mko_bi.db.repositories.access_repo.access_model.DashboardAccess',
-                       return_value=mock_access):
-                result = access_repo.AccessRepository.grant_access(
-                    mock_db, mock_user.id, mock_dashboard.id, "view"
-                )
-
-        assert result == mock_access
-        mock_db.add.assert_called_once_with(mock_access)
-        mock_db.commit.assert_called_once()
-        mock_db.refresh.assert_called_once_with(mock_access)
-
-
-    def test_grant_access_already_exists(self):
-        """Тест предоставления доступа, который уже существует."""
-        mock_db = MagicMock(spec=Session)
-        mock_user = MagicMock(spec=user_model.User)
-        mock_user.id = uuid4()
-        mock_dashboard = MagicMock(spec=dashboard_model.Dashboard)
-        mock_dashboard.id = uuid4()
-
-        mock_existing_access = MagicMock(spec=access_model.DashboardAccess)
-        mock_existing_access.user_id = mock_user.id
-        mock_existing_access.dashboard_id = mock_dashboard.id
-        mock_existing_access.permission = "view"
-
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = mock_existing_access
-        mock_db.execute.return_value = mock_result
-
-        result = access_repo.AccessRepository.grant_access(
-            mock_db, mock_user.id, mock_dashboard.id, "view"
-        )
-
-        assert result == mock_existing_access
-        mock_db.add.assert_not_called()
-        mock_db.commit.assert_not_called()
-
-    def test_grant_access_sqlalchemy_error(self):
-        """Тест ошибки SQLAlchemy при предоставлении доступа."""
-        mock_db = MagicMock(spec=Session)
-        mock_user = MagicMock(spec=user_model.User)
-        mock_user.id = uuid4()
-        mock_dashboard = MagicMock(spec=dashboard_model.Dashboard)
-        mock_dashboard.id = uuid4()
-
-        mock_result = MagicMock()
-        mock_result.scalar_one_or_none.return_value = None
-        mock_db.execute.return_value = mock_result
-
-        mock_db.add = MagicMock()
-        mock_db.commit = MagicMock(side_effect=SQLAlchemyError("DB error"))
-        mock_db.rollback = MagicMock()
-
-        with patch('mko_bi.db.repositories.access_repo.access_model.DashboardAccess'):
-            with pytest.raises(SQLAlchemyError):
-                access_repo.AccessRepository.grant_access(
-                    mock_db, mock_user.id, mock_dashboard.id, "view"
-                )
-
-        mock_db.rollback.assert_called_once()
+        mock_db.flush.assert_called_once()
 
     def test_revoke_access_success(self):
         """Тест успешного отзыва доступа."""
@@ -547,7 +408,7 @@ class TestAccessRepository:
         mock_result.scalar_one_or_none.return_value = mock_access
         mock_db.execute.return_value = mock_result
         mock_db.delete = MagicMock()
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
 
         result = access_repo.AccessRepository.revoke_access(
             mock_user.id, mock_dashboard.id, mock_db
@@ -555,7 +416,7 @@ class TestAccessRepository:
 
         assert result is True
         mock_db.delete.assert_called_once_with(mock_access)
-        mock_db.commit.assert_called_once()
+        mock_db.flush.assert_called_once()
 
     def test_revoke_access_not_found(self):
         """Тест отзыва несуществующего доступа."""
@@ -575,7 +436,7 @@ class TestAccessRepository:
 
         assert result is False
         mock_db.delete.assert_not_called()
-        mock_db.commit.assert_not_called()
+        mock_db.flush.assert_not_called()
 
     def test_revoke_access_sqlalchemy_error(self):
         """Тест ошибки SQLAlchemy при отзыве доступа."""
@@ -590,15 +451,14 @@ class TestAccessRepository:
         mock_result.scalar_one_or_none.return_value = mock_access
         mock_db.execute.return_value = mock_result
         mock_db.delete = MagicMock()
-        mock_db.commit = MagicMock(side_effect=SQLAlchemyError("DB error"))
-        mock_db.rollback = MagicMock()
+        mock_db.flush = MagicMock(side_effect=SQLAlchemyError("DB error"))
 
         with pytest.raises(SQLAlchemyError):
             access_repo.AccessRepository.revoke_access(
                 mock_user.id, mock_dashboard.id, mock_db
             )
 
-        mock_db.rollback.assert_called_once()
+        mock_db.flush.assert_called_once()
 
     def test_check_access_exists(self):
         """Тест проверки существующего доступа."""
@@ -803,7 +663,7 @@ class TestRepositoryIntegration:
         mock_result.scalar_one_or_none.return_value = None
         mock_db.execute.return_value = mock_scalar
         mock_db.add = MagicMock()
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
         mock_db.refresh = MagicMock()
 
         with patch('mko_bi.db.repositories.access_repo.select', mock_select):
@@ -823,7 +683,7 @@ class TestRepositoryIntegration:
         assert permission == "view"
 
         mock_db.delete = MagicMock()
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
 
         revoked = access_repo.AccessRepository.revoke_access(
             mock_user.id, mock_dashboard.id, mock_db

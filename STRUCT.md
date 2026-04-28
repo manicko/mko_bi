@@ -173,6 +173,7 @@ C:\py_exp\mko_bi
 │   ├── TASK_036_audit_tz.md
 │   ├── TASK_036_tz_audit.md
 │   ├── TASK_037_test_audit.md
+│   ├── TASK_037_test_audit1.md
 │   ├── TASK_038_cleanup_files_DONE.md
 │   ├── TASK_039_dash_app_DONE.md
 │   ├── TASK_040_create_missing_tables_DONE.md
@@ -184,7 +185,7 @@ C:\py_exp\mko_bi
 │   ├── TASK_046_processing_configs_api_DONE.md
 │   ├── TASK_047_processing_logs_api_DONE.md
 │   ├── TASK_048_save_aggregated_data_DONE.md
-│   ├── TASK_049_database_transactions.md
+│   ├── TASK_049_database_transactions_DONE.md
 │   ├── TASK_050_refactor_business_logic.md
 │   ├── TASK_051_di_and_interfaces.md
 │   ├── TASK_052_fix_linting_and_types.md
@@ -192,7 +193,6 @@ C:\py_exp\mko_bi
 │   ├── TASK_054_manage_global_state.md
 │   ├── TASK_055_security_enhancements.md
 │   ├── TASK_056_base_classes_and_utils.md
-│   ├── TASK_057_fix_test_syntax.md
 │   ├── TASK_058_integration_tests.md
 │   └── TASK_059_alembic_migrations.md
 └── uv.lock

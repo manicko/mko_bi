@@ -92,7 +92,7 @@ class TestFilterRepository:
         mock_filter.name = "New Filter"
 
         mock_db.add = MagicMock()
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
         mock_db.refresh = MagicMock()
 
         with patch('mko_bi.db.repositories.filter_repo.filter_model.Filter', return_value=mock_filter):
@@ -105,7 +105,7 @@ class TestFilterRepository:
 
         assert result == mock_filter
         mock_db.add.assert_called_once_with(mock_filter)
-        mock_db.commit.assert_called_once()
+        mock_db.flush.assert_called_once()
         mock_db.refresh.assert_called_once_with(mock_filter)
 
     def test_create_filter_sqlalchemy_error(self):
@@ -114,8 +114,7 @@ class TestFilterRepository:
         mock_filter = MagicMock(spec=filter_model.Filter)
 
         mock_db.add = MagicMock()
-        mock_db.commit = MagicMock(side_effect=SQLAlchemyError("DB error"))
-        mock_db.rollback = MagicMock()
+        mock_db.flush = MagicMock(side_effect=SQLAlchemyError("DB error"))
 
         with patch('mko_bi.db.repositories.filter_repo.filter_model.Filter', return_value=mock_filter):
             with pytest.raises(SQLAlchemyError):
@@ -126,7 +125,7 @@ class TestFilterRepository:
                     config={}
                 )
 
-        mock_db.rollback.assert_called_once()
+        mock_db.flush.assert_called_once()
 
     def test_update_filter_success(self):
         """Тест успешного обновления фильтра."""
@@ -139,7 +138,7 @@ class TestFilterRepository:
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_filter
         mock_db.execute.return_value = mock_result
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
         mock_db.refresh = MagicMock()
 
         result = filter_repo.FilterRepository.update(
@@ -149,7 +148,7 @@ class TestFilterRepository:
         assert result == mock_filter
         assert mock_filter.name == "New Name"
         assert mock_filter.type == "multiselect"
-        mock_db.commit.assert_called_once()
+        mock_db.flush.assert_called_once()
         mock_db.refresh.assert_called_once_with(mock_filter)
 
     def test_update_filter_not_found(self):
@@ -175,13 +174,13 @@ class TestFilterRepository:
         mock_result.scalar_one_or_none.return_value = mock_filter
         mock_db.execute.return_value = mock_result
         mock_db.delete = MagicMock()
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
 
         result = filter_repo.FilterRepository.delete(mock_filter.id, mock_db)
 
         assert result is True
         mock_db.delete.assert_called_once_with(mock_filter)
-        mock_db.commit.assert_called_once()
+        mock_db.flush.assert_called_once()
 
     def test_delete_filter_not_found(self):
         """Тест удаления несуществующего фильтра."""
@@ -267,7 +266,7 @@ class TestProcessingConfigRepository:
         mock_config.settings = {"loader": "test"}
 
         mock_db.add = MagicMock()
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
         mock_db.refresh = MagicMock()
 
         with patch('mko_bi.db.repositories.processing_config_repo.processing_config_model.ProcessingConfig', return_value=mock_config):
@@ -279,7 +278,7 @@ class TestProcessingConfigRepository:
 
         assert result == mock_config
         mock_db.add.assert_called_once_with(mock_config)
-        mock_db.commit.assert_called_once()
+        mock_db.flush.assert_called_once()
         mock_db.refresh.assert_called_once_with(mock_config)
 
     def test_create_processing_config_sqlalchemy_error(self):
@@ -288,8 +287,7 @@ class TestProcessingConfigRepository:
         mock_config = MagicMock(spec=processing_config_model.ProcessingConfig)
 
         mock_db.add = MagicMock()
-        mock_db.commit = MagicMock(side_effect=SQLAlchemyError("DB error"))
-        mock_db.rollback = MagicMock()
+        mock_db.flush = MagicMock(side_effect=SQLAlchemyError("DB error"))
 
         with patch('mko_bi.db.repositories.processing_config_repo.processing_config_model.ProcessingConfig', return_value=mock_config):
             with pytest.raises(SQLAlchemyError):
@@ -299,7 +297,7 @@ class TestProcessingConfigRepository:
                     settings={}
                 )
 
-        mock_db.rollback.assert_called_once()
+        mock_db.flush.assert_called_once()
 
     def test_update_processing_config_success(self):
         """Тест успешного обновления настроек обработки."""
@@ -311,7 +309,7 @@ class TestProcessingConfigRepository:
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_config
         mock_db.execute.return_value = mock_result
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
         mock_db.refresh = MagicMock()
 
         result = processing_config_repo.ProcessingConfigRepository.update(
@@ -320,7 +318,7 @@ class TestProcessingConfigRepository:
 
         assert result == mock_config
         assert mock_config.settings == {"loader": "new"}
-        mock_db.commit.assert_called_once()
+        mock_db.flush.assert_called_once()
         mock_db.refresh.assert_called_once_with(mock_config)
 
     def test_update_processing_config_not_found(self):
@@ -346,13 +344,13 @@ class TestProcessingConfigRepository:
         mock_result.scalar_one_or_none.return_value = mock_config
         mock_db.execute.return_value = mock_result
         mock_db.delete = MagicMock()
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
 
         result = processing_config_repo.ProcessingConfigRepository.delete(mock_config.dashboard_id, mock_db)
 
         assert result is True
         mock_db.delete.assert_called_once_with(mock_config)
-        mock_db.commit.assert_called_once()
+        mock_db.flush.assert_called_once()
 
     def test_delete_processing_config_not_found(self):
         """Тест удаления несуществующих настроек обработки."""
@@ -458,7 +456,7 @@ class TestProcessingLogRepository:
         mock_log.status = "started"
 
         mock_db.add = MagicMock()
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
         mock_db.refresh = MagicMock()
 
         with patch('mko_bi.db.repositories.processing_log_repo.processing_log_model.ProcessingLog', return_value=mock_log):
@@ -470,7 +468,7 @@ class TestProcessingLogRepository:
 
         assert result == mock_log
         mock_db.add.assert_called_once_with(mock_log)
-        mock_db.commit.assert_called_once()
+        mock_db.flush.assert_called_once()
         mock_db.refresh.assert_called_once_with(mock_log)
 
     def test_create_processing_log_sqlalchemy_error(self):
@@ -479,8 +477,7 @@ class TestProcessingLogRepository:
         mock_log = MagicMock(spec=processing_log_model.ProcessingLog)
 
         mock_db.add = MagicMock()
-        mock_db.commit = MagicMock(side_effect=SQLAlchemyError("DB error"))
-        mock_db.rollback = MagicMock()
+        mock_db.flush = MagicMock(side_effect=SQLAlchemyError("DB error"))
 
         with patch('mko_bi.db.repositories.processing_log_repo.processing_log_model.ProcessingLog', return_value=mock_log):
             with pytest.raises(SQLAlchemyError):
@@ -490,7 +487,7 @@ class TestProcessingLogRepository:
                     message="Test error"
                 )
 
-        mock_db.rollback.assert_called_once()
+        mock_db.flush.assert_called_once()
 
     def test_update_processing_log_success(self):
         """Тест успешного обновления лога обработки."""
@@ -502,7 +499,7 @@ class TestProcessingLogRepository:
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_log
         mock_db.execute.return_value = mock_result
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
         mock_db.refresh = MagicMock()
 
         result = processing_log_repo.ProcessingLogRepository.update(
@@ -512,7 +509,7 @@ class TestProcessingLogRepository:
         assert result == mock_log
         assert mock_log.status == "success"
         assert mock_log.message == "Completed"
-        mock_db.commit.assert_called_once()
+        mock_db.flush.assert_called_once()
         mock_db.refresh.assert_called_once_with(mock_log)
 
     def test_update_processing_log_not_found(self):
@@ -526,7 +523,7 @@ class TestProcessingLogRepository:
         result = processing_log_repo.ProcessingLogRepository.update(log_id, mock_db, status="success")
 
         assert result is None
-        mock_db.commit.assert_not_called()
+        mock_db.flush.assert_not_called()
 
     def test_delete_processing_log_success(self):
         """Тест успешного удаления лога обработки."""
@@ -538,13 +535,13 @@ class TestProcessingLogRepository:
         mock_result.scalar_one_or_none.return_value = mock_log
         mock_db.execute.return_value = mock_result
         mock_db.delete = MagicMock()
-        mock_db.commit = MagicMock()
+        mock_db.flush = MagicMock()
 
         result = processing_log_repo.ProcessingLogRepository.delete(mock_log.id, mock_db)
 
         assert result is True
         mock_db.delete.assert_called_once_with(mock_log)
-        mock_db.commit.assert_called_once()
+        mock_db.flush.assert_called_once()
 
     def test_delete_processing_log_not_found(self):
         """Тест удаления несуществующего лога обработки."""

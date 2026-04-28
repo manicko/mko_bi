@@ -480,14 +480,15 @@ def trigger_processing(
                                 # результаты группировки в формат агрегатов
                                 pass
                         
-                        # Сохраняем агрегаты через репозиторий
+                        # Сохраняем агрегаты через репозиторий в транзакции
                         if aggregates:
-                            saved_count = AggregatedDataRepository.bulk_insert(
-                                db=db,
-                                dashboard_id=dashboard_id,
-                                aggregates=aggregates,
-                                clear_old=True,
-                            )
+                            with db.begin():
+                                saved_count = AggregatedDataRepository.bulk_insert(
+                                    db=db,
+                                    dashboard_id=dashboard_id,
+                                    aggregates=aggregates,
+                                    clear_old=True,
+                                )
                             logger.info(
                                 "Сохранено %d агрегированных записей для дашборда %s",
                                 saved_count,
@@ -523,19 +524,20 @@ def trigger_processing(
             task_data["message"] = "Processing completed successfully"
             task_data["completed_at"] = datetime.now()
 
-            # Обновляем лог обработки в БД
+            # Обновляем лог обработки в БД в транзакции
             if processing_log:
                 try:
                     from mko_bi.models.processing_logs import ProcessingLogUpdate
                     
-                    log_update = ProcessingLogUpdate(
-                        status="success",
-                        message="Обработка завершена успешно",
-                        finished_at=task_data["completed_at"],
-                    )
-                    ProcessingLogRepository.update(
-                        db, processing_log.id, **log_update.model_dump(exclude_unset=True)
-                    )
+                    with db.begin():
+                        log_update = ProcessingLogUpdate(
+                            status="success",
+                            message="Обработка завершена успешно",
+                            finished_at=task_data["completed_at"],
+                        )
+                        ProcessingLogRepository.update(
+                            db, processing_log.id, **log_update.model_dump(exclude_unset=True)
+                        )
                     logger.info("Лог обработки обновлен в БД: id=%s", processing_log.id)
                 except Exception as e:
                     logger.warning("Не удалось обновить лог обработки в БД: %s", e)
@@ -551,19 +553,20 @@ def trigger_processing(
             task_data["message"] = f"Processing failed: {str(e)}"
             task_data["completed_at"] = datetime.now()
             
-            # Обновляем лог обработки в БД с ошибкой
+            # Обновляем лог обработки в БД с ошибкой в транзакции
             if processing_log:
                 try:
                     from mko_bi.models.processing_logs import ProcessingLogUpdate
                     
-                    log_update = ProcessingLogUpdate(
-                        status="failed",
-                        message=f"Ошибка обработки: {str(e)}",
-                        finished_at=task_data["completed_at"],
-                    )
-                    ProcessingLogRepository.update(
-                        db, processing_log.id, **log_update.model_dump(exclude_unset=True)
-                    )
+                    with db.begin():
+                        log_update = ProcessingLogUpdate(
+                            status="failed",
+                            message=f"Ошибка обработки: {str(e)}",
+                            finished_at=task_data["completed_at"],
+                        )
+                        ProcessingLogRepository.update(
+                            db, processing_log.id, **log_update.model_dump(exclude_unset=True)
+                        )
                     logger.info("Лог обработки обновлен в БД (ошибка): id=%s", processing_log.id)
                 except Exception as log_error:
                     logger.warning("Не удалось обновить лог обработки в БД: %s", log_error)
@@ -1208,7 +1211,8 @@ def save_aggregated_data(
 
     Выполняет пакетную вставку агрегированных данных для дашборда.
     Перед вставкой удаляет старые данные для данного дашборда.
-    Операция выполняется в транзакции.
+    Операция выполняется в транзакции: удаление старых данных и
+    вставка новых выполняются атомарно.
 
     Args:
         dashboard_id: ID дашборда.
@@ -1239,12 +1243,15 @@ def save_aggregated_data(
         local_session = True
 
     try:
-        inserted_count = AggregatedDataRepository.bulk_insert(
-            db=db,
-            dashboard_id=dashboard_id,
-            aggregates=aggregates,
-            clear_old=True,
-        )
+        # Выполняем операцию в транзакции
+        with db.begin():
+            inserted_count = AggregatedDataRepository.bulk_insert(
+                db=db,
+                dashboard_id=dashboard_id,
+                aggregates=aggregates,
+                clear_old=True,
+            )
+        
         logger.info(
             "Агрегированные данные сохранены для дашборда %s: %d записей",
             dashboard_id,

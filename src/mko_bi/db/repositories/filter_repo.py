@@ -120,14 +120,13 @@ class FilterRepository:
         try:
             filter_obj = filter_model.Filter(**kwargs)
             db.add(filter_obj)
-            db.commit()
+            db.flush()
             db.refresh(filter_obj)
             logger.info(
                 "Фильтр создан: id=%s, name=%s", filter_obj.id, filter_obj.name
             )
             return filter_obj
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error("Ошибка при создании фильтра: %s", e)
             raise
 
@@ -160,12 +159,11 @@ class FilterRepository:
             for key, value in kwargs.items():
                 if hasattr(filter_obj, key):
                     setattr(filter_obj, key, value)
-            db.commit()
+            db.flush()
             db.refresh(filter_obj)
             logger.info("Фильтр обновлен: id=%s", filter_id)
             return filter_obj
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error("Ошибка при обновлении фильтра id=%s: %s", filter_id, e)
             raise
 
@@ -193,11 +191,10 @@ class FilterRepository:
                 logger.warning("Фильтр не найден для удаления: id=%s", filter_id)
                 return False
             db.delete(filter_obj)
-            db.commit()
+            db.flush()
             logger.info("Фильтр удален: id=%s", filter_id)
             return True
         except SQLAlchemyError as e:
-            db.rollback()
             logger.error("Ошибка при удалении фильтра id=%s: %s", filter_id, e)
             raise
 
