@@ -22,6 +22,7 @@ C:\py_exp\mko_bi
 │       │       ├── auth.py
 │       │       ├── dashboards.py
 │       │       ├── data.py
+│       │       ├── filters.py
 │       │       ├── upload.py
 │       │       └── users.py
 │       ├── app.py
@@ -93,6 +94,7 @@ C:\py_exp\mko_bi
 │       │   ├── auth_service.py
 │       │   ├── dashboard_service.py
 │       │   ├── data_service.py
+│       │   ├── filter_service.py
 │       │   └── user_service.py
 │       ├── settings
 │       │   └── app.yaml
@@ -169,10 +171,10 @@ C:\py_exp\mko_bi
 │   ├── TASK_039_dash_app_DONE.md
 │   ├── TASK_040_create_missing_tables_DONE.md
 │   ├── TASK_041_add_gin_index_DONE.md
-│   ├── TASK_042_remove_hardcoded_secrets.md
+│   ├── TASK_042_remove_hardcoded_secrets_DONE.md
 │   ├── TASK_043_implement_yoy.md
 │   ├── TASK_044_calculate_shares.md
-│   ├── TASK_045_filters_api.md
+│   ├── TASK_045_filters_api_DONE.md
 │   ├── TASK_046_processing_configs_api.md
 │   ├── TASK_047_processing_logs_api.md
 │   ├── TASK_048_save_aggregated_data.md
