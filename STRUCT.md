@@ -116,37 +116,40 @@ C:\py_exp\mko_bi
 │   ├── test_storage_manager.py
 │   └── test_upload_api.py
 ├── TODO
-│   ├── PLAN.md
-│   ├── TASK_001_config_CHECKED.md
-│   ├── TASK_002_base_models_DONE.md
-│   ├── TASK_003_pydantic_models.md
-│   ├── TASK_004_repositories_DONE.md
-│   ├── TASK_005_security_DONE.md
-│   ├── TASK_006_auth_service_DONE.md
-│   ├── TASK_007_user_service.md
-│   ├── TASK_008_dashboard_service.md
-│   ├── TASK_009_permissions_CHECKED.md
-│   ├── TASK_010_auth_api_DONE.md
-│   ├── TASK_011_users_api_DONE.md
-│   ├── TASK_012_dashboards_api.md
-│   ├── TASK_013_upload_api_DONE.md
-│   ├── TASK_014_data_api_DONE.md
-│   ├── TASK_015_data_loader_DONE.md
-│   ├── TASK_016_data_processing_DONE.md
-│   ├── TASK_017_data_storage_DONE.md
-│   ├── TASK_018_dashboard_base_DONE.md
-│   ├── TASK_019_chart_components_DONE.md
-│   ├── TASK_020_dashboard_impl_DONE.md
-│   ├── TASK_021_main_app_DONE.md
-│   ├── TASK_022_utils_DONE.md
-│   ├── TASK_023_tests_models_repos_DONE.md
-│   ├── TASK_024_tests_services.md
-│   ├── TASK_025_tests_api.md
-│   ├── TASK_026_tests_data_pipeline.md
-│   ├── TASK_030_mdmodel_refactor_plan.md
-│   ├── TASK_031_mdmodel_refactor_plan_DONE.md
+│   ├── old
+│   │   ├── PLAN.md
+│   │   ├── TASK_001_config_CHECKED.md
+│   │   ├── TASK_002_base_models_DONE.md
+│   │   ├── TASK_003_pydantic_models.md
+│   │   ├── TASK_004_repositories_DONE.md
+│   │   ├── TASK_005_security_DONE.md
+│   │   ├── TASK_006_auth_service_DONE.md
+│   │   ├── TASK_007_user_service.md
+│   │   ├── TASK_008_dashboard_service.md
+│   │   ├── TASK_009_permissions_CHECKED.md
+│   │   ├── TASK_010_auth_api_DONE.md
+│   │   ├── TASK_011_users_api_DONE.md
+│   │   ├── TASK_012_dashboards_api.md
+│   │   ├── TASK_013_upload_api_DONE.md
+│   │   ├── TASK_014_data_api_DONE.md
+│   │   ├── TASK_015_data_loader_DONE.md
+│   │   ├── TASK_016_data_processing_DONE.md
+│   │   ├── TASK_017_data_storage_DONE.md
+│   │   ├── TASK_018_dashboard_base_DONE.md
+│   │   ├── TASK_019_chart_components_DONE.md
+│   │   ├── TASK_020_dashboard_impl_DONE.md
+│   │   ├── TASK_021_main_app_DONE.md
+│   │   ├── TASK_022_utils_DONE.md
+│   │   ├── TASK_023_tests_models_repos_DONE.md
+│   │   ├── TASK_024_tests_services.md
+│   │   ├── TASK_025_tests_api.md
+│   │   ├── TASK_026_tests_data_pipeline.md
+│   │   ├── TASK_030_mdmodel_refactor_plan.md
+│   │   └── TASK_031_mdmodel_refactor_plan_DONE.md
+│   ├── TASK_033_analysis_report.md
 │   ├── TASK_033_audit.md
 │   ├── TASK_034_audit.md
 │   ├── TASK_036_audit_tz.md
+│   ├── TASK_036_tz_audit.md
 │   └── TASK_037_test_audit.md
 └── uv.lock
