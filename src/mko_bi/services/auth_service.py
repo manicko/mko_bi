@@ -6,12 +6,14 @@
 
 import logging
 import re
+import time
 
 from mko_bi.core.security import create_access_token, hash_password, verify_password
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.db.session import Session, SessionLocal
 from mko_bi.models.user import UserRead, UserDB
 from mko_bi.models.user_roles import UserRoleEnum
+from mko_bi.services.user_service import get_user_by_id
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +22,43 @@ logger = logging.getLogger(__name__)
 
 # Регулярное выражение для валидации email
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+
+# Rate limiting storage (in-memory, для простоты)
+# В production использовать Redis или аналог
+_login_attempts: dict[str, list[float]] = {}
+
+
+def _check_rate_limit(email: str) -> bool:
+    """Проверяет лимит попыток входа (rate limiting).
+
+    Разрешает максимум 5 попыток входа в течение 60 секунд.
+
+    Args:
+        email: Email пользователя, пытающегося войти.
+
+    Returns:
+        bool: True, если попытка разрешена, False - если лимит превышен.
+    """
+    now = time.time()
+    window = 60  # 60 секунд
+    max_attempts = 5
+
+    if email not in _login_attempts:
+        _login_attempts[email] = []
+
+    # Очищаем старые попытки
+    _login_attempts[email] = [
+        attempt_time
+        for attempt_time in _login_attempts[email]
+        if now - attempt_time < window
+    ]
+
+    if len(_login_attempts[email]) >= max_attempts:
+        logger.warning("Превышен лимит попыток входа для email: %s", email)
+        return False
+
+    _login_attempts[email].append(now)
+    return True
 
 
 def _validate_role(role: str) -> None:
@@ -273,4 +312,61 @@ def login_user(email: str, password: str, db: Session | None = None) -> dict:
         "user_id": user.id,
         "email": user.email,
         "role": user.role,
+    }
+
+
+def refresh_token(user_id: int, email: str, role: str, db: Session | None = None) -> dict:
+    """Обновляет JWT токен доступа для пользователя.
+
+    Создает новый JWT токен доступа на основе данных пользователя.
+    Используется для обновления истекших токенов.
+
+    Args:
+        user_id: ID пользователя.
+        email: Email пользователя.
+        role: Роль пользователя.
+        db: Опциональная сессия базы данных. Если передана, проверяет существование пользователя.
+
+    Returns:
+        dict: Словарь с ключами:
+            - access_token: JWT токен доступа
+            - token_type: Тип токена (обычно "bearer")
+            - user_id: ID пользователя
+            - email: Email пользователя
+            - role: Роль пользователя
+
+    Raises:
+        ValueError: Если пользователь не найден (при переданной сессии).
+
+    Example:
+        >>> result = refresh_token(1, "user@example.com", "viewer")
+        >>> "access_token" in result
+        True
+    """
+    logger.info("Refreshing token for user_id: %s", user_id)
+
+    # Если передана сессия, проверяем существование пользователя
+    if db is not None:
+        user = get_user_by_id(user_id, db)
+        if user is None:
+            logger.warning("User not found during token refresh: %s", user_id)
+            raise ValueError("Пользователь не найден")
+
+    # Создание JWT токена
+    access_token = create_access_token(
+        data={
+            "user_id": user_id,
+            "email": email,
+            "role": role,
+        }
+    )
+
+    logger.info("Token successfully refreshed for user_id: %s", user_id)
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "user_id": user_id,
+        "email": email,
+        "role": role,
     }

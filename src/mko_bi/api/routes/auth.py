@@ -20,11 +20,13 @@ from mko_bi.core.security import create_access_token, decode_token
 from mko_bi.models.auth import LoginRequest, RegisterRequest, Token, RefreshRequest
 from mko_bi.models.user import UserRead
 from mko_bi.services.auth_service import (
-    authenticate_user,
     register_user,
+    login_user,
+    refresh_token,
 )
 
 logger = logging.getLogger(__name__)
+
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -106,25 +108,16 @@ async def login(
             detail="Превышен лимит попыток входа. Попробуйте позже.",
         )
 
-    # Аутентификация
-    user = authenticate_user(login_data.email, login_data.password, db)
-    if user is None:
+    # Аутентификация и получение токена через сервис
+    try:
+        token_data = login_user(login_data.email, login_data.password, db)
+    except ValueError as e:
         logger.warning("Неудачная попытка входа: %s", login_data.email)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверный email или пароль",
+            detail=str(e),
             headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    # Создание токена
-    try:
-        access_token = create_access_token(
-            data={
-                "user_id": user.id,
-                "email": user.email,
-                "role": user.role,
-            }
-        )
+        ) from e
     except Exception as e:
         logger.error("Ошибка создания токена для %s: %s", login_data.email, e)
         raise HTTPException(
@@ -133,7 +126,7 @@ async def login(
         ) from e
 
     logger.info("Пользователь успешно вошел: %s", login_data.email)
-    return Token(access_token=access_token, token_type="bearer")
+    return Token(access_token=token_data["access_token"], token_type="bearer")
 
 
 @router.post(
@@ -167,25 +160,16 @@ async def login_form(
             detail="Превышен лимит попыток входа. Попробуйте позже.",
         )
 
-    # Аутентификация
-    user = authenticate_user(form_data.username, form_data.password, db)
-    if user is None:
+    # Аутентификация и получение токена через сервис
+    try:
+        token_data = login_user(form_data.username, form_data.password, db)
+    except ValueError as e:
         logger.warning("Неудачная попытка входа через форму: %s", form_data.username)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверный email или пароль",
+            detail=str(e),
             headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    # Создание токена
-    try:
-        access_token = create_access_token(
-            data={
-                "user_id": user.id,
-                "email": user.email,
-                "role": user.role,
-            }
-        )
+        ) from e
     except Exception as e:
         logger.error("Ошибка создания токена для %s: %s", form_data.username, e)
         raise HTTPException(
@@ -194,7 +178,7 @@ async def login_form(
         ) from e
 
     logger.info("Пользователь успешно вошел через форму: %s", form_data.username)
-    return Token(access_token=access_token, token_type="bearer")
+    return Token(access_token=token_data["access_token"], token_type="bearer")
 
 
 @router.post(
@@ -313,8 +297,9 @@ async def refresh(
     # Проверяем наличие user_id
     user_id = payload.get("user_id")
     email = payload.get("email")
+    role = payload.get("role")
 
-    if user_id is None or email is None:
+    if user_id is None or email is None or role is None:
         logger.warning("В токене отсутствуют необходимые данные")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -322,27 +307,16 @@ async def refresh(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Проверяем, что пользователь существует
-    from mko_bi.db.repositories.user_repo import UserRepository
-
-    user = UserRepository.get(user_id, db)
-    if user is None:
+    # Обновляем токен через сервис
+    try:
+        token_data = refresh_token(user_id, email, role, db)
+    except ValueError as e:
         logger.warning("Пользователь не найден при обновлении токена: %s", user_id)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Пользователь не найден",
             headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    # Создаем новый токен
-    try:
-        access_token = create_access_token(
-            data={
-                "user_id": user.id,
-                "email": user.email,
-                "role": user.role,
-            }
-        )
+        ) from e
     except Exception as e:
         logger.error("Ошибка создания нового токена для user_id=%s: %s", user_id, e)
         raise HTTPException(
@@ -351,7 +325,7 @@ async def refresh(
         ) from e
 
     logger.info("Токен успешно обновлен для user_id=%s", user_id)
-    return Token(access_token=access_token, token_type="bearer")
+    return Token(access_token=token_data["access_token"], token_type="bearer")
 
 
 @router.get(

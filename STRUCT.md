@@ -186,7 +186,7 @@ C:\py_exp\mko_bi
 │   ├── TASK_047_processing_logs_api_DONE.md
 │   ├── TASK_048_save_aggregated_data_DONE.md
 │   ├── TASK_049_database_transactions_DONE.md
-│   ├── TASK_050_refactor_business_logic.md
+│   ├── TASK_050_refactor_business_logic_DONE.md
 │   ├── TASK_051_di_and_interfaces.md
 │   ├── TASK_052_fix_linting_and_types.md
 │   ├── TASK_053_error_handling.md

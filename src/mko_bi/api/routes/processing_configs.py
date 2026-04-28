@@ -163,10 +163,15 @@ async def update_config_endpoint(
         )
         if config is None:
             # Проверяем, существует ли дашборд
-            from mko_bi.db.repositories.dashboard_repo import DashboardRepository
-            dashboard_exists = DashboardRepository.get(dashboard_id, db) is not None
+            from mko_bi.services.dashboard_service import get_dashboard
             
-            if not dashboard_exists:
+            dashboard = get_dashboard(
+                dashboard_id=dashboard_id,
+                user_id=current_user.id,
+                db=db,
+            )
+            
+            if dashboard is None:
                 logger.warning(
                     "Дашборд не найден: dashboard_id=%s",
                     dashboard_id,
