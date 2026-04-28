@@ -24,6 +24,7 @@ C:\py_exp\mko_bi
 │       │       ├── data.py
 │       │       ├── filters.py
 │       │       ├── processing_configs.py
+│       │       ├── processing_logs.py
 │       │       ├── upload.py
 │       │       └── users.py
 │       ├── app.py
@@ -97,6 +98,7 @@ C:\py_exp\mko_bi
 │       │   ├── data_service.py
 │       │   ├── filter_service.py
 │       │   ├── processing_config_service.py
+│       │   ├── processing_log_service.py
 │       │   └── user_service.py
 │       ├── settings
 │       │   └── app.yaml
@@ -126,6 +128,7 @@ C:\py_exp\mko_bi
 │   ├── test_new_models.py
 │   ├── test_new_repositories.py
 │   ├── test_permissions.py
+│   ├── test_processing_log_service.py
 │   ├── test_pydantic_models.py
 │   ├── test_repositories.py
 │   ├── test_security.py
@@ -178,7 +181,7 @@ C:\py_exp\mko_bi
 │   ├── TASK_044_calculate_shares.md
 │   ├── TASK_045_filters_api_DONE.md
 │   ├── TASK_046_processing_configs_api_DONE.md
-│   ├── TASK_047_processing_logs_api.md
+│   ├── TASK_047_processing_logs_api_DONE.md
 │   ├── TASK_048_save_aggregated_data.md
 │   ├── TASK_049_database_transactions.md
 │   ├── TASK_050_refactor_business_logic.md

@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from mko_bi.config import config
 from mko_bi.core.permissions import check_dashboard_access
 from mko_bi.db.repositories.dashboard_repo import DashboardRepository
+from mko_bi.db.repositories.processing_log_repo import ProcessingLogRepository
 from mko_bi.db.session import SessionLocal
 from mko_bi.models.data import (
     AggregatedData,
@@ -393,6 +394,22 @@ def trigger_processing(
 
         logger.info("Обработка запущена: task_id=%s", task_id)
 
+        # Создаем запись лога обработки в БД
+        processing_log = None
+        try:
+            from mko_bi.models.processing_logs import ProcessingLogCreate
+            
+            log_create = ProcessingLogCreate(
+                dashboard_id=dashboard_id,
+                status="started",
+                message=f"Запуск обработки задачи {task_id}",
+                started_at=task_data["started_at"],
+            )
+            processing_log = ProcessingLogRepository.create(db, **log_create.model_dump())
+            logger.info("Лог обработки создан в БД: id=%s", processing_log.id)
+        except Exception as e:
+            logger.warning("Не удалось создать лог обработки в БД: %s", e)
+
         # Выполнение обработки
         try:
             file_path = Path(task_data["file_path"])
@@ -420,6 +437,23 @@ def trigger_processing(
             task_data["message"] = "Processing completed successfully"
             task_data["completed_at"] = datetime.now()
 
+            # Обновляем лог обработки в БД
+            if processing_log:
+                try:
+                    from mko_bi.models.processing_logs import ProcessingLogUpdate
+                    
+                    log_update = ProcessingLogUpdate(
+                        status="success",
+                        message="Обработка завершена успешно",
+                        finished_at=task_data["completed_at"],
+                    )
+                    ProcessingLogRepository.update(
+                        db, processing_log.id, **log_update.model_dump(exclude_unset=True)
+                    )
+                    logger.info("Лог обработки обновлен в БД: id=%s", processing_log.id)
+                except Exception as e:
+                    logger.warning("Не удалось обновить лог обработки в БД: %s", e)
+
             logger.info(
                 "Обработка завершена: task_id=%s, rows=%d",
                 task_id,
@@ -430,6 +464,24 @@ def trigger_processing(
             task_data["status"] = "failed"
             task_data["message"] = f"Processing failed: {str(e)}"
             task_data["completed_at"] = datetime.now()
+            
+            # Обновляем лог обработки в БД с ошибкой
+            if processing_log:
+                try:
+                    from mko_bi.models.processing_logs import ProcessingLogUpdate
+                    
+                    log_update = ProcessingLogUpdate(
+                        status="failed",
+                        message=f"Ошибка обработки: {str(e)}",
+                        finished_at=task_data["completed_at"],
+                    )
+                    ProcessingLogRepository.update(
+                        db, processing_log.id, **log_update.model_dump(exclude_unset=True)
+                    )
+                    logger.info("Лог обработки обновлен в БД (ошибка): id=%s", processing_log.id)
+                except Exception as log_error:
+                    logger.warning("Не удалось обновить лог обработки в БД: %s", log_error)
+            
             logger.error("Ошибка при обработке файла: task_id=%s, error=%s", task_id, e)
             raise
         finally:

@@ -11,7 +11,7 @@
 """
 
 import logging
-from typing import Annotated
+from typing import Annotated, Generator
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -36,7 +36,7 @@ logger = logging.getLogger(__name__)
 security = HTTPBearer()
 
 
-def get_db():
+def get_db() -> Generator[Session, None, None]:
     """Зависимость для получения сессии базы данных.
 
     Создает новую сессию для каждого запроса и закрывает её после завершения.

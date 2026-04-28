@@ -8,6 +8,7 @@ from mko_bi.api.routes import (
     data,
     filters,
     processing_configs,
+    processing_logs,
 )
 
 __all__ = [
@@ -18,4 +19,5 @@ __all__ = [
     "data",
     "filters",
     "processing_configs",
+    "processing_logs",
 ]

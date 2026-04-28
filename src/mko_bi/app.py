@@ -62,6 +62,7 @@ def create_app() -> FastAPI:
     application.include_router(routes.data.router)
     application.include_router(routes.filters.router)
     application.include_router(routes.processing_configs.router)
+    application.include_router(routes.processing_logs.router)
 
     # Корневой эндпоинт
     @application.get("/", tags=["health"])
