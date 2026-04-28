@@ -39,7 +39,7 @@ def _validate_permission(permission: str) -> None:
         normalized = "view"
     elif permission == "write":
         normalized = "edit"
-    
+
     try:
         PermissionEnum(normalized)
     except ValueError:
@@ -280,9 +280,7 @@ def get_dashboard(
             db.close()
 
 
-def get_user_dashboards(
-    user_id: int, db: Session | None = None
-) -> list[DashboardRead]:
+def get_user_dashboards(user_id: int, db: Session | None = None) -> list[DashboardRead]:
     """Получает все дашборды, доступные пользователю.
 
     Фильтрует дашборды по правам доступа пользователя.

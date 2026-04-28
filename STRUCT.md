@@ -145,9 +145,6 @@ C:\py_exp\mko_bi
 │   ├── TASK_024_tests_services.md
 │   ├── TASK_025_tests_api.md
 │   ├── TASK_026_tests_data_pipeline.md
-│   ├── TASK_027_mdmodel_refactor_plan.md
-│   ├── TASK_028_mdmodel_refactor_plan.md
-│   ├── TASK_029_mdmodel_refactor_plan.md
 │   ├── TASK_030_mdmodel_refactor_plan.md
 │   ├── TASK_031_mdmodel_refactor_plan_DONE.md
 │   ├── TASK_033_audit.md

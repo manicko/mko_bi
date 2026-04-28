@@ -20,13 +20,12 @@
         "@modelcontextprotocol/server-memory"
       ]
     },
-    "filesystem": {
+    "sequentialthinking": {
       "type": "local",
       "command": [
         "npx",
         "-y",
-        "@modelcontextprotocol/server-filesystem",
-        "C:\\Users\\NMatveichev\\AppData\\Local\\kilocode"
+        "@modelcontextprotocol/server-sequential-thinking"
       ]
     }
   }
