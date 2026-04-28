@@ -20,6 +20,24 @@ from mko_bi.models.data import (
     UploadResponse,
     ValidationResult,
 )
+from mko_bi.models.filters import (
+    FilterBase,
+    FilterCreate,
+    FilterRead,
+    FilterUpdate,
+)
+from mko_bi.models.processing_configs import (
+    ProcessingConfigBase,
+    ProcessingConfigCreate,
+    ProcessingConfigRead,
+    ProcessingConfigUpdate,
+)
+from mko_bi.models.processing_logs import (
+    ProcessingLogBase,
+    ProcessingLogCreate,
+    ProcessingLogRead,
+    ProcessingLogUpdate,
+)
 from mko_bi.models.user import UserCreate, UserDB, UserRead, UserUpdate
 from mko_bi.models.user_roles import (
     BarmodeEnum,
@@ -56,6 +74,21 @@ __all__ = [
     "ProcessingStatus",
     "UploadResponse",
     "ValidationResult",
+    # Filters
+    "FilterBase",
+    "FilterCreate",
+    "FilterRead",
+    "FilterUpdate",
+    # Processing Configs
+    "ProcessingConfigBase",
+    "ProcessingConfigCreate",
+    "ProcessingConfigRead",
+    "ProcessingConfigUpdate",
+    # Processing Logs
+    "ProcessingLogBase",
+    "ProcessingLogCreate",
+    "ProcessingLogRead",
+    "ProcessingLogUpdate",
     # Enums
     "BarmodeEnum",
     "GraphTypeEnum",

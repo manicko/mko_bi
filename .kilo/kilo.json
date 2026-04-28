@@ -27,6 +27,18 @@
         "-y",
         "@modelcontextprotocol/server-sequential-thinking"
       ]
+    },
+    "git": {
+      "type": "local",
+      "command": [
+        "npx",
+        "-y",
+        "@modelcontextprotocol/inspector",
+        "uvx",
+        "mcp-server-git",
+        "--repository",
+        "C:\\py_exp\\mko_bi"
+      ]
     }
   }
 }

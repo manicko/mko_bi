@@ -155,7 +155,7 @@ C:\py_exp\mko_bi
 │   ├── TASK_036_tz_audit.md
 │   ├── TASK_037_test_audit.md
 │   ├── TASK_038_cleanup_files_DONE.md
-│   ├── TASK_039_dash_app.md
+│   ├── TASK_039_dash_app_DONE.md
 │   ├── TASK_040_create_missing_tables.md
 │   ├── TASK_041_add_gin_index.md
 │   ├── TASK_042_remove_hardcoded_secrets.md

@@ -15,12 +15,6 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mko_bi.db.base import Base
 
-if TYPE_CHECKING:
-    from mko_bi.models.access import DashboardAccess
-    from mko_bi.models.layout import Layout
-    from mko_bi.models.graphs import Graph
-    from mko_bi.models.aggregated_data import AggregatedData
-
 
 class Dashboard(Base):
     __tablename__ = "dashboards"
@@ -108,6 +102,31 @@ class Dashboard(Base):
     # Связь с агрегированными данными
     aggregated_data: Mapped[list["AggregatedData"]] = relationship(
         "AggregatedData",
+        back_populates="dashboard",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+    # Связь с фильтрами
+    filters: Mapped[list["Filter"]] = relationship(
+        "Filter",
+        secondary="dashboard_filters",
+        back_populates="dashboards",
+        lazy="selectin",
+    )
+
+    # Связь с настройками обработки (один-к-одному)
+    processing_config: Mapped["ProcessingConfig"] = relationship(
+        "ProcessingConfig",
+        back_populates="dashboard",
+        cascade="all, delete-orphan",
+        uselist=False,
+        lazy="selectin",
+    )
+
+    # Связь с логами обработки
+    processing_logs: Mapped[list["ProcessingLog"]] = relationship(
+        "ProcessingLog",
         back_populates="dashboard",
         cascade="all, delete-orphan",
         lazy="selectin",

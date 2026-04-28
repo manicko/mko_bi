@@ -39,3 +39,11 @@ class YoyModeEnum(StrEnum):
     """Режим отображения год-к-году сравнения."""
     absolute = "absolute"
     percent = "percent"
+
+
+class FilterTypeEnum(StrEnum):
+    """Типы фильтров."""
+    select = "select"
+    multiselect = "multiselect"
+    range = "range"
+    date = "date"
