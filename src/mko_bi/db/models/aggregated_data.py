@@ -1,17 +1,33 @@
 """Модель агрегированных данных дашбордов."""
 
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy import (
-    BigInteger,
     ForeignKey,
     Integer,
-    JSON,
 )
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
+from sqlalchemy.engine.interfaces import Dialect
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.types import TypeDecorator
 
 from mko_bi.db.base import Base
+
+
+class JSONBType(TypeDecorator[dict[str, Any]]):
+    """Тип данных JSONB для PostgreSQL, JSON для других БД."""
+    
+    impl = JSONB
+    cache_ok = True
+    
+    def load_dialect_impl(self, dialect: Dialect):
+        if dialect.name == "postgresql":
+            return dialect.type_descriptor(JSONB())
+        else:
+            # Для SQLite и других БД используем обычный JSON
+            from sqlalchemy import JSON
+            return dialect.type_descriptor(JSON())
 
 
 class AggregatedData(Base):
@@ -42,14 +58,14 @@ class AggregatedData(Base):
         nullable=False,
     )
 
-    dims: Mapped[dict] = mapped_column(
-        JSON,
+    dims: Mapped[dict[str, Any]] = mapped_column(
+        JSONBType,
         nullable=False,
         default=dict,
     )
 
-    metrics: Mapped[dict] = mapped_column(
-        JSON,
+    metrics: Mapped[dict[str, Any]] = mapped_column(
+        JSONBType,
         nullable=False,
         default=dict,
     )
