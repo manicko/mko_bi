@@ -1,5 +1,4 @@
 from collections.abc import Generator
-import os
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -8,13 +7,10 @@ from mko_bi.config import config
 from mko_bi.db.base import Base
 
 
-# Проверяем, запущены ли тесты (по переменной окружения)
-if os.environ.get("DB_DRIVER") == "sqlite":
-    # Для тестов используем SQLite in-memory
-    DATABASE_URL = "sqlite:///:memory:"
-else:
-    # Для продакшена используем PostgreSQL
-    DATABASE_URL = config.DATABASE_URL
+# Используем URL из конфигурации
+# Для тестов переменная окружения DB_DRIVER=sqlite и DATABASE_URL=sqlite:///:memory:
+# могут быть установлены перед запуском тестов
+DATABASE_URL = config.DATABASE_URL
 
 # Создаём engine для подключения к базе данных
 # echo=False для отключения логирования SQL-запросов в продакшене
@@ -136,10 +132,6 @@ def init_db() -> None:
         вместо автоматического создания таблиц.
     """
     # noqa: F401 - импорт нужен для регистрации моделей в Base.metadata
-    from mko_bi.db.models import (
-        access, dashboard, filters, graphs, layout, processing_configs,
-        processing_logs, user, aggregated_data,
-    )  # noqa: F401
 
     Base.metadata.create_all(bind=engine)
 
@@ -152,9 +144,5 @@ def drop_db() -> None:
         или при полной переинициализации базы данных.
     """
     # noqa: F401 - импорт нужен для регистрации моделей в Base.metadata
-    from mko_bi.db.models import (
-        access, dashboard, filters, graphs, layout, processing_configs,
-        processing_logs, user, aggregated_data,
-    )  # noqa: F401
 
     Base.metadata.drop_all(bind=engine)

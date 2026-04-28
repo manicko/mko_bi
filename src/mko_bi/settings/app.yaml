@@ -3,8 +3,10 @@ database:
   port: 5432
   dbname: bidb
   user: postgres
-  password: 1234
-  drivername: postgresql
+  # password should be set via environment variable DB_PASSWORD
+  # this is just an example for local development
+  password: "1234"  # CHANGE THIS IN PRODUCTION!
+
 
 jwt:
   secret_key: "your-secret-key-change-in-production-use-env-variable"

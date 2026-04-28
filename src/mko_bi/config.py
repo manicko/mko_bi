@@ -1,18 +1,23 @@
-import os
-from typing import Any
 from pathlib import Path
+from typing import Any
+
+from pydantic import field_validator
+from pydantic_settings import BaseSettings
 
 
-class Config:
-    """Конфигурация приложения с поддержкой переменных окружения и fallback значений."""
+class Settings(BaseSettings):
+    """Конфигурация приложения с использованием pydantic-settings.
+
+    Все секретные ключи являются обязательными переменными окружения.
+    """
 
     # --- Database ---
-    DB_HOST: str = os.getenv("DB_HOST", "localhost")
-    DB_PORT: int = int(os.getenv("DB_PORT", "5432") or "5432")
-    DB_NAME: str = os.getenv("DB_NAME", "bidb")
-    DB_USER: str = os.getenv("DB_USER", "postgres")
-    DB_PASSWORD: str = os.getenv("DB_PASSWORD", "1234")
-    DB_DRIVER: str = os.getenv("DB_DRIVER", "postgresql")
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 5432
+    DB_NAME: str = "bidb"
+    DB_USER: str = "postgres"
+    DB_PASSWORD: str  # Обязательная переменная, нет дефолта
+    DB_DRIVER: str = "postgresql"
 
     @property
     def DATABASE_URL(self) -> str:
@@ -23,37 +28,70 @@ class Config:
         )
 
     # --- JWT ---
-    JWT_SECRET_KEY: str = os.getenv(
-        "JWT_SECRET_KEY",
-        "your-secret-key-change-in-production-use-env-variable",
-    )
-    JWT_ALGORITHM: str = os.getenv("JWT_ALGORITHM", "HS256")
-    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
-        os.getenv("JWT_ACCESS_TOKEN_EXPIRE_MINUTES", "30")
-    )
+    JWT_SECRET_KEY: str  # Обязательная переменная, нет дефолта
+    JWT_ALGORITHM: str = "HS256"
+    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # --- Upload ---
-    UPLOAD_TEMP_DIR: str = os.getenv("UPLOAD_TEMP_DIR", "data/tmp_uploads")
-    ALLOWED_FILE_TYPES: list[str] = [
-        ".csv.gz",
-    ]
-    MAX_FILE_SIZE: int = int(
-        os.getenv("MAX_FILE_SIZE", str(100 * 1024 * 1024))
-    )  # 100MB
+    UPLOAD_TEMP_DIR: str = "data/tmp_uploads"
+    ALLOWED_FILE_TYPES: list[str] = [".csv.gz"]
+    MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 100MB
 
     # --- Logging ---
-    LOG_FORMAT: str = os.getenv(
-        "LOG_FORMAT",
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+    LOG_FORMAT: str = (
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
-    LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
+    LOG_LEVEL: str = "INFO"
 
     # --- App ---
-    APP_NAME: str = os.getenv("APP_NAME", "mko_bi")
-    DEBUG: bool = os.getenv("DEBUG", "false").lower() == "true"
+    APP_NAME: str = "mko_bi"
+    DEBUG: bool = False
 
-    def __init__(self) -> None:
+    # Настройки для pydantic-settings
+    model_config = {
+        "case_sensitive": False,
+        "env_prefix": "",
+        "extra": "ignore",
+    }
+
+    @field_validator("DB_PORT")
+    @classmethod
+    def validate_db_port(cls, v: Any) -> int:
+        """Валидация порта базы данных."""
+        if isinstance(v, str):
+            try:
+                return int(v)
+            except ValueError as err:
+                raise ValueError("DB_PORT должен быть целым числом") from err
+        return v
+
+    @field_validator("JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
+    @classmethod
+    def validate_jwt_expire(cls, v: Any) -> int:
+        """Валидация времени жизни токена."""
+        if isinstance(v, str):
+            try:
+                return int(v)
+            except ValueError as err:
+                raise ValueError(
+                    "JWT_ACCESS_TOKEN_EXPIRE_MINUTES должен быть целым числом"
+                ) from err
+        return v
+
+    @field_validator("MAX_FILE_SIZE")
+    @classmethod
+    def validate_max_file_size(cls, v: Any) -> int:
+        """Валидация максимального размера файла."""
+        if isinstance(v, str):
+            try:
+                return int(v)
+            except ValueError as err:
+                raise ValueError("MAX_FILE_SIZE должен быть целым числом") from err
+        return v
+
+    def __init__(self, **data: Any) -> None:
         """Инициализация конфигурации. Создаёт временную директорию для загрузок."""
+        super().__init__(**data)
         self._ensure_upload_dir()
 
     def _ensure_upload_dir(self) -> None:
@@ -105,4 +143,4 @@ class Config:
 
 
 # Глобальный экземпляр конфигурации
-config = Config()
+config = Settings()

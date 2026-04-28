@@ -4,6 +4,13 @@
 включая настройку базы данных, мокирование и вспомогательные функции.
 """
 
+import os
+
+# Устанавливаем обязательные переменные окружения для тестов
+# (конфигурация pydantic-settings требует эти переменные)
+os.environ.setdefault("DB_PASSWORD", "test_password")
+os.environ.setdefault("JWT_SECRET_KEY", "test_secret_key_change_in_production")
+
 import pytest
 from unittest.mock import MagicMock, patch
 from sqlalchemy.orm import Session

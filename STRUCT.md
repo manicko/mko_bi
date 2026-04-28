@@ -61,12 +61,18 @@ C:\py_exp\mko_bi
 │       │   │   ├── access.py
 │       │   │   ├── aggregated_data.py
 │       │   │   ├── dashboard.py
+│       │   │   ├── filters.py
 │       │   │   ├── graphs.py
 │       │   │   ├── layout.py
+│       │   │   ├── processing_configs.py
+│       │   │   ├── processing_logs.py
 │       │   │   └── user.py
 │       │   ├── repositories
 │       │   │   ├── access_repo.py
 │       │   │   ├── dashboard_repo.py
+│       │   │   ├── filter_repo.py
+│       │   │   ├── processing_config_repo.py
+│       │   │   ├── processing_log_repo.py
 │       │   │   └── user_repo.py
 │       │   └── session.py
 │       ├── Docerfile
@@ -78,6 +84,9 @@ C:\py_exp\mko_bi
 │       │   ├── auth.py
 │       │   ├── dashboard.py
 │       │   ├── data.py
+│       │   ├── filters.py
+│       │   ├── processing_configs.py
+│       │   ├── processing_logs.py
 │       │   ├── user.py
 │       │   └── user_roles.py
 │       ├── services
@@ -110,6 +119,8 @@ C:\py_exp\mko_bi
 │   ├── test_data_processing.py
 │   ├── test_deps.py
 │   ├── test_models.py
+│   ├── test_new_models.py
+│   ├── test_new_repositories.py
 │   ├── test_permissions.py
 │   ├── test_pydantic_models.py
 │   ├── test_repositories.py
@@ -156,8 +167,8 @@ C:\py_exp\mko_bi
 │   ├── TASK_037_test_audit.md
 │   ├── TASK_038_cleanup_files_DONE.md
 │   ├── TASK_039_dash_app_DONE.md
-│   ├── TASK_040_create_missing_tables.md
-│   ├── TASK_041_add_gin_index.md
+│   ├── TASK_040_create_missing_tables_DONE.md
+│   ├── TASK_041_add_gin_index_DONE.md
 │   ├── TASK_042_remove_hardcoded_secrets.md
 │   ├── TASK_043_implement_yoy.md
 │   ├── TASK_044_calculate_shares.md
