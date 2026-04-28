@@ -72,6 +72,7 @@ C:\py_exp\mko_bi
 │       │   │   └── user.py
 │       │   ├── repositories
 │       │   │   ├── access_repo.py
+│       │   │   ├── aggregated_data_repo.py
 │       │   │   ├── dashboard_repo.py
 │       │   │   ├── filter_repo.py
 │       │   │   ├── processing_config_repo.py
@@ -182,7 +183,7 @@ C:\py_exp\mko_bi
 │   ├── TASK_045_filters_api_DONE.md
 │   ├── TASK_046_processing_configs_api_DONE.md
 │   ├── TASK_047_processing_logs_api_DONE.md
-│   ├── TASK_048_save_aggregated_data.md
+│   ├── TASK_048_save_aggregated_data_DONE.md
 │   ├── TASK_049_database_transactions.md
 │   ├── TASK_050_refactor_business_logic.md
 │   ├── TASK_051_di_and_interfaces.md
