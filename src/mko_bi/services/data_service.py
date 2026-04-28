@@ -432,6 +432,10 @@ def trigger_processing(
             task_data["completed_at"] = datetime.now()
             logger.error("Ошибка при обработке файла: task_id=%s, error=%s", task_id, e)
             raise
+        finally:
+            # Очистка файлов задачи после обработки (даже при ошибках)
+            logger.info("Очистка файлов задачи: task_id=%s", task_id)
+            cleanup_task_files(task_id)
 
         return ProcessingStatus(
             task_id=task_data["task_id"],
