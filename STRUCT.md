@@ -97,6 +97,7 @@ C:\py_exp\mko_bi
 │       │   ├── dashboard.py
 │       │   ├── data.py
 │       │   ├── filters.py
+│       │   ├── graph.py
 │       │   ├── processing_configs.py
 │       │   ├── processing_logs.py
 │       │   ├── user.py
@@ -145,10 +146,10 @@ C:\py_exp\mko_bi
 │   └── test_upload_api.py
 ├── TODO
 │   ├── DEV
-│   │   ├── TASK_001_graph_models.md
+│   │   ├── TASK_001_graph_models_DONE.md
 │   │   ├── TASK_002_fix_imports.md
 │   │   ├── TASK_003_fix_test_mocks.md
-│   │   ├── TASK_004_mypy_config.md
+│   │   ├── TASK_004_mypy_config_DONE.md
 │   │   ├── TASK_005_unify_auth_service.md
 │   │   ├── TASK_006_fix_deps_coupling.md
 │   │   ├── TASK_007_create_graph_service.md

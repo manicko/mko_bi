@@ -26,6 +26,12 @@ from mko_bi.models.filters import (
     FilterRead,
     FilterUpdate,
 )
+from mko_bi.models.graph import (
+    GraphBase,
+    GraphCreate,
+    GraphRead,
+    GraphUpdate,
+)
 from mko_bi.models.processing_configs import (
     ProcessingConfigBase,
     ProcessingConfigCreate,
@@ -79,6 +85,11 @@ __all__ = [
     "FilterCreate",
     "FilterRead",
     "FilterUpdate",
+    # Graphs
+    "GraphBase",
+    "GraphCreate",
+    "GraphRead",
+    "GraphUpdate",
     # Processing Configs
     "ProcessingConfigBase",
     "ProcessingConfigCreate",
