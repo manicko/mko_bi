@@ -23,6 +23,7 @@
 * Testing: **pytest**
 * Logging: **Python logging**
 * Env/deps: **uv**
+* temp files - platformdirs
 
 ---
 
@@ -115,7 +116,6 @@
 
 * триггер: upload файла
 * pipeline:
-
   * чтение (Polars)
   * трансформация (по конфигу dashboard)
   * агрегации:

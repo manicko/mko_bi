@@ -1,6 +1,5 @@
 from sqlalchemy import create_engine, text
 from mko_bi.db.base import Base
-from mko_bi.db.models import access, dashboard, user
 
 # Create engine with echo=True to see SQL
 engine = create_engine('sqlite:///./test_database.db', echo=True, future=True, connect_args={'check_same_thread': False})

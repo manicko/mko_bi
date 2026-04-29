@@ -2,15 +2,17 @@
 
 Предоставляет бизнес-логику для регистрации, аутентификации и авторизации
 пользователей в системе BI Dashboard.
-
-Реализует интерфейс IAuthService для внедрения зависимостей.
 """
 
 import logging
 import re
 import time
 
+from sqlalchemy.orm import Session
+
+from mko_bi.core.security import create_access_token, hash_password, verify_password
 from mko_bi.db.repositories.user_repo import UserRepository
+from mko_bi.db.session import get_session
 from mko_bi.interfaces.service_interfaces import IAuthService
 from mko_bi.models.user import UserRead, UserDB
 from mko_bi.models.user_roles import UserRoleEnum
@@ -18,19 +20,9 @@ from mko_bi.models.user_roles import UserRoleEnum
 logger = logging.getLogger(__name__)
 
 
-# Допустимые роли берем из UserRoleEnum
-
-# Регулярное выражение для валидации email
-EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
-
-# Rate limiting storage (in-memory, для простоты)
-# В production использовать Redis или аналог
-_login_attempts: dict[str, list[float]] = {}
-
-
 class AuthService(IAuthService):
     """Сервис аутентификации и регистрации пользователей.
-    
+
     Реализует интерфейс IAuthService.
     """
 
@@ -48,10 +40,7 @@ class AuthService(IAuthService):
         """
         logger.info("Attempting user authentication: %s", email)
 
-        db = get_session().__enter__()
-        local_session = True
-
-        try:
+        with get_session() as db:
             # Поиск пользователя по email
             user_obj = UserRepository.get_by_email(email, db)
 
@@ -69,13 +58,6 @@ class AuthService(IAuthService):
             # Преобразование в Pydantic модель
             user = UserDB.model_validate(user_obj)
             return user.model_dump()
-
-        except Exception as e:
-            logger.error("Error during user authentication %s: %s", email, e)
-            raise
-        finally:
-            if local_session:
-                db.close()
 
     def create_access_token(self, user_id: int, role: UserRoleEnum) -> str:
         """Создает JWT токен доступа для пользователя.
@@ -118,9 +100,7 @@ class AuthService(IAuthService):
         return payload
 
 
-# --- Старые функции для обратной совместимости ---
-
-# Допустимые роли берем из UserRoleEnum
+# Регулярное выражение для валидации email
 
 # Регулярное выражение для валидации email
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
@@ -174,7 +154,7 @@ def _validate_role(role: str) -> None:
     """
     try:
         UserRoleEnum(role)
-    except ValueError:
+    except ValueError as err:
         logger.error(
             "Недопустимая роль: %s. Допустимые роли: %s",
             role,
@@ -183,7 +163,7 @@ def _validate_role(role: str) -> None:
         raise ValueError(
             f"Недопустимая роль: '{role}'. "
             f"Допустимые значения: {', '.join([e.value for e in UserRoleEnum])}"
-        )
+        ) from err
 
 
 def _validate_email_format(email: str) -> str:
@@ -242,15 +222,6 @@ def register_user(
     Raises:
         ValueError: Если email или роль некорректны, либо email уже занят.
         SQLAlchemyError: При ошибке базы данных.
-
-    Example:
-        >>> user = register_user("user@example.com", "secure_password", "viewer")
-        >>> user.email
-        'user@example.com'
-        >>> user.role
-        'viewer'
-        >>> hasattr(user, 'password_hash')
-        False
     """
     logger.info("Starting user registration: email=%s, role=%s", email, role)
 
@@ -261,10 +232,9 @@ def register_user(
     _validate_email_format(email)
 
     # Если сессия не передана, создаем новую
-    local_session = False
     if db is None:
-        db = get_session().__enter__()
-        local_session = True
+        with get_session() as db:
+            return register_user(email, password, role, db)
 
     try:
         # Регистрация пользователя в транзакции
@@ -297,9 +267,6 @@ def register_user(
     except Exception as e:
         logger.error("Error during user registration %s: %s", email, e)
         raise
-    finally:
-        if local_session:
-            db.close()
 
 
 def authenticate_user(
@@ -317,47 +284,30 @@ def authenticate_user(
     Returns:
         UserDB | None: Модель пользователя с хешем пароля, если аутентификация
         успешна, иначе None.
-
-    Example:
-        >>> user = authenticate_user("user@example.com", "correct_password")
-        >>> user is not None
-        True
-        >>> user = authenticate_user("user@example.com", "wrong_password")
-        >>> user is None
-        True
     """
     logger.info("Attempting user authentication: %s", email)
 
     # Если сессия не передана, создаем новую
-    local_session = False
     if db is None:
-        db = get_session().__enter__()
-        local_session = True
+        with get_session() as db:
+            return authenticate_user(email, password, db)
 
-    try:
-        # Поиск пользователя по email
-        user_obj = UserRepository.get_by_email(email, db)
+    # Поиск пользователя по email
+    user_obj = UserRepository.get_by_email(email, db)
 
-        if user_obj is None:
-            logger.warning("User not found during authentication: %s", email)
-            return None
+    if user_obj is None:
+        logger.warning("User not found during authentication: %s", email)
+        return None
 
-        # Проверка пароля
-        if not verify_password(password, user_obj.password_hash):
-            logger.warning("Invalid password for user: %s", email)
-            return None
+    # Проверка пароля
+    if not verify_password(password, user_obj.password_hash):
+        logger.warning("Invalid password for user: %s", email)
+        return None
 
-        logger.info("User successfully authenticated: %s", email)
+    logger.info("User successfully authenticated: %s", email)
 
-        # Преобразование в Pydantic модель
-        return UserDB.model_validate(user_obj)
-
-    except Exception as e:
-        logger.error("Error during user authentication %s: %s", email, e)
-        raise
-    finally:
-        if local_session:
-            db.close()
+    # Преобразование в Pydantic модель
+    return UserDB.model_validate(user_obj)
 
 
 def login_user(email: str, password: str, db: Session | None = None) -> dict:
@@ -380,13 +330,6 @@ def login_user(email: str, password: str, db: Session | None = None) -> dict:
 
     Raises:
         ValueError: Если аутентификация не удалась.
-
-    Example:
-        >>> result = login_user("user@example.com", "correct_password")
-        >>> "access_token" in result
-        True
-        >>> result["token_type"]
-        'bearer'
     """
     logger.info("Attempting user login: %s", email)
 
@@ -419,17 +362,15 @@ def login_user(email: str, password: str, db: Session | None = None) -> dict:
 
 def refresh_token(user_id: int, email: str, role: str, db: Session | None = None) -> dict:
     """Обновляет JWT токен доступа.
-    
+
     Создает новый JWT токен доступа на основе данных пользователя.
-    В текущей реализации используется тот же механизм JWT,
-    что и для создания токена.
-    
+
     Args:
         user_id: ID пользователя.
         email: Email пользователя.
         role: Роль пользователя.
         db: Опциональная сессия базы данных (не используется, но сохранен для совместимости).
-    
+
     Returns:
         dict: Словарь с ключами:
             - access_token: JWT токен доступа
@@ -437,14 +378,9 @@ def refresh_token(user_id: int, email: str, role: str, db: Session | None = None
             - user_id: ID пользователя
             - email: Email пользователя
             - role: Роль пользователя
-    
-    Example:
-        >>> token_data = refresh_token(1, "user@example.com", "viewer")
-        >>> "access_token" in token_data
-        True
     """
     logger.info("Refreshing token for user_id: %s", user_id)
-    
+
     access_token = create_access_token(
         data={
             "user_id": user_id,
@@ -452,9 +388,9 @@ def refresh_token(user_id: int, email: str, role: str, db: Session | None = None
             "role": role,
         }
     )
-    
+
     logger.info("Token refreshed for user_id: %s", user_id)
-    
+
     return {
         "access_token": access_token,
         "token_type": "bearer",

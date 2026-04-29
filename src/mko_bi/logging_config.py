@@ -4,7 +4,6 @@ import os
 from typing import Any
 
 from mko_bi.config import get_config
-from mko_bi.db.session import get_session
 
 
 def setup_logging() -> None:

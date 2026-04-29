@@ -5,7 +5,7 @@
 """
 
 import logging
-from typing import Generic, TypeVar, Type, Any
+from typing import TypeVar, Any
 
 from sqlalchemy.orm import Session
 
@@ -17,8 +17,7 @@ logger = logging.getLogger(__name__)
 ModelType = TypeVar("ModelType")
 RepositoryType = TypeVar("RepositoryType", bound=BaseRepository)
 
-
-class BaseService(Generic[ModelType, RepositoryType]):
+class BaseService[ModelType, RepositoryType]:
     """Базовый сервис с общей логикой.
 
     Generic класс для сервисов. Предоставляет общие методы

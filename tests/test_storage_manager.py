@@ -5,9 +5,7 @@
 """
 
 import pytest
-from uuid import UUID, uuid4
-from sqlalchemy.orm import Session
-from unittest.mock import MagicMock
+from uuid import uuid4
 
 from mko_bi.data.storage.manager import StorageManager
 from mko_bi.db.models import graphs as graphs_model
@@ -451,7 +449,7 @@ class TestUpsertAggregate:
         db_session.refresh(graph)
 
         manager = StorageManager(db_session)
-        inserted = manager.upsert_aggregate(
+        manager.upsert_aggregate(
             dashboard_id=dashboard.id,
             graph_id=graph.id,
             dims={"category": "A"},
@@ -502,7 +500,7 @@ class TestUpsertAggregate:
         )
 
         # Обновляем ту же запись
-        inserted = manager.upsert_aggregate(
+        manager.upsert_aggregate(
             dashboard_id=dashboard.id,
             graph_id=graph.id,
             dims={"category": "A"},

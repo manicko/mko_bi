@@ -5,9 +5,9 @@
 """
 
 import logging
-from typing import Generic, TypeVar, Type, Any
+from typing import TypeVar, Any
 
-from sqlalchemy import select, update, delete
+from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 ModelType = TypeVar("ModelType")
 
 
-class BaseRepository(Generic[ModelType]):
+class BaseRepository[ModelType]:
     """Базовый репозиторий с CRUD операциями.
 
     Generic класс для работы с моделями SQLAlchemy.
@@ -29,7 +29,7 @@ class BaseRepository(Generic[ModelType]):
         model: Класс модели SQLAlchemy.
     """
 
-    def __init__(self, model: Type[ModelType]) -> None:
+    def __init__(self, model: type[ModelType]) -> None:
         """Инициализация репозитория.
 
         Args:

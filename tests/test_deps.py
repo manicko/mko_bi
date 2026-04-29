@@ -5,7 +5,7 @@
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from fastapi import HTTPException
 from jose import ExpiredSignatureError
 from sqlalchemy.orm import Session
@@ -21,10 +21,6 @@ from mko_bi.api.deps import (
     require_dashboard_read_access,
     require_dashboard_write_access,
     require_dashboard_admin_access,
-    CurrentUser,
-    AdminUser,
-    EditorUser,
-    ViewerUser,
 )
 from mko_bi.models.user import UserDB
 from mko_bi.core.permissions import AuthenticationError

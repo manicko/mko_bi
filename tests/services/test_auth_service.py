@@ -6,7 +6,7 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-from uuid import UUID, uuid4
+from uuid import uuid4
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -18,7 +18,6 @@ from mko_bi.services.auth_service import (
     _validate_email_format,
     _check_email_uniqueness,
 )
-from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.models.user import UserRead, UserDB
 from mko_bi.models.user_roles import UserRoleEnum
 
@@ -169,7 +168,7 @@ class TestRegisterUser:
 
     def test_register_user_duplicate_email_raises_error(self, db_session):
         """Попытка регистрации с существующим email должна вызывать ошибку."""
-        with patch('mko_bi.services.auth_service.UserRepository') as mock_repo, \
+        with patch('mko_bi.services.auth_service.UserRepository'), \
              patch('mko_bi.services.auth_service._validate_role'), \
              patch('mko_bi.services.auth_service._validate_email_format'), \
              patch('mko_bi.services.auth_service._check_email_uniqueness',

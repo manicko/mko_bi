@@ -7,7 +7,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from fastapi import HTTPException
-from sqlalchemy.orm import Session
 from uuid import UUID
 
 from mko_bi.api.routes.data import (

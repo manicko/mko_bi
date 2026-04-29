@@ -35,7 +35,7 @@ def _validate_role(role: str) -> None:
     """
     try:
         UserRoleEnum(role)
-    except ValueError:
+    except ValueError as err:
         logger.error(
             "Недопустимая роль: '%s'. Допустимые роли: %s",
             role,
@@ -44,7 +44,7 @@ def _validate_role(role: str) -> None:
         raise ValueError(
             f"Недопустимая роль: '{role}'. "
             f"Допустимые значения: {', '.join(sorted([e.value for e in UserRoleEnum]))}"
-        )
+        ) from err
 
 
 def _validate_user_exists(user_id: int, db: Session) -> user_model.User | None:

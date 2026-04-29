@@ -42,7 +42,7 @@ def _validate_permission(permission: str) -> None:
 
     try:
         PermissionEnum(normalized)
-    except ValueError:
+    except ValueError as err:
         logger.error(
             "Недопустимый уровень доступа: '%s'. Допустимые: %s",
             permission,
@@ -51,7 +51,7 @@ def _validate_permission(permission: str) -> None:
         raise ValueError(
             f"Недопустимый уровень доступа: '{permission}'. "
             f"Допустимые значения: {', '.join(sorted([e.value for e in PermissionEnum]))}"
-        )
+        ) from err
 
 
 def _validate_config(config: DashboardConfig) -> None:
@@ -72,12 +72,12 @@ def _validate_config(config: DashboardConfig) -> None:
     for graph_type in config.graph_types:
         try:
             GraphTypeEnum(graph_type)
-        except ValueError:
+        except ValueError as err:
             logger.error("Недопустимый тип графика: '%s'", graph_type)
             raise ValueError(
                 f"Недопустимый тип графика: '{graph_type}'. "
                 f"Допустимые значения: {', '.join([e.value for e in GraphTypeEnum])}"
-            )
+            ) from err
 
 
 def _validate_dashboard_exists(

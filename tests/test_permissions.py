@@ -5,9 +5,8 @@
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from jose import JWTError
-from sqlalchemy.orm import Session
 
 from mko_bi.core.permissions import (
     check_role,
@@ -17,12 +16,10 @@ from mko_bi.core.permissions import (
     ROLE_LEVELS,
     PERMISSION_LEVELS,
     AuthenticationError,
-    PermissionError,
 )
 from mko_bi.db.repositories.access_repo import AccessRepository
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.models.user import UserDB
-from mko_bi.db.models import user as user_model
 
 
 from mko_bi.models.user_roles import UserRoleEnum

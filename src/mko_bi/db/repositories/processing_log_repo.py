@@ -12,7 +12,6 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from mko_bi.db.models import processing_logs as processing_log_model
-from mko_bi.db.session import get_session
 
 logger = logging.getLogger(__name__)
 

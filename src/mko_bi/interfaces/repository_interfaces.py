@@ -5,7 +5,7 @@
 """
 
 import abc
-from typing import Generic, TypeVar, Any
+from typing import TypeVar, Any
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 T = TypeVar('T')
 
 
-class IRepository(abc.ABC, Generic[T]):
+class IRepository[T](abc.ABC):
     """Базовый интерфейс репозитория."""
 
     @abc.abstractmethod

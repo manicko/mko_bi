@@ -1,10 +1,8 @@
 """Тесты для сервиса логов обработки."""
 
-import pytest
 from unittest.mock import MagicMock, patch
 from uuid import UUID
 from datetime import datetime
-from sqlalchemy.orm import Session
 
 from mko_bi.services.processing_log_service import (
     create_log,

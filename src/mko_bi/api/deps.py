@@ -322,25 +322,25 @@ def get_current_user_dependency(
         logger.debug("Пользователь аутентифицирован: user_id=%s", user.id)
         return user
     except ExpiredSignatureError:
-        logger.warning("Истекший токен")
+        logger.warning("Истёкший токен")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Срок действия токена истек",
+            detail="Срок действия токена истёк",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from None
     except AuthenticationError:
         # AuthenticationError уже залогирована в get_current_user
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Не удалось аутентифицировать пользователя",
             headers={"WWW-Authenticate": "Bearer"},
-        )
+        ) from None
     except Exception as e:
         logger.error("Неожиданная ошибка аутентификации: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Внутренняя ошибка сервера",
-        )
+        ) from e
 
 
 # --- Авторизация (проверка ролей) ---

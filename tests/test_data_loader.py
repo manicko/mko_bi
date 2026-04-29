@@ -4,11 +4,9 @@
 чтения и валидации CSV файлов.
 """
 
-import csv
 import gzip
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import polars as pl
 import pytest

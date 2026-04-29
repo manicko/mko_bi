@@ -113,7 +113,7 @@ class TableChart(BaseChart):
         
         # Формируем ячейки
         cell_values = []
-        for i, col in enumerate(columns):
+        for i, _col in enumerate(columns):
             col_values = [row[i] for row in rows]
             cell_values.append(col_values)
 

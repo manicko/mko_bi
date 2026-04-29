@@ -7,7 +7,7 @@
 
 import json
 import logging
-from typing import TYPE_CHECKING, Any
+from typing import Any
 from uuid import UUID
 
 from mko_bi.db.repositories.processing_config_repo import ProcessingConfigRepository

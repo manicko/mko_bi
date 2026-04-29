@@ -6,41 +6,51 @@ from sqlalchemy.orm import Session, sessionmaker
 from mko_bi.config import get_config
 from mko_bi.db.base import Base
 
+# Cache for engine and SessionLocal
+_engine = None
+_SessionLocal = None
 
-def get_engine():
-    """Создает и возвращает SQLAlchemy engine.
-    
-    Использует конфигурацию из переменных окружения через get_config().
-    
-    Returns:
-        Engine: SQLAlchemy engine для подключения к базе данных.
-    """
-    # Получаем конфигурацию
-    config = get_config()
-    DATABASE_URL = config.DATABASE_URL
-    
-    # Создаём engine для подключения к базе данных
-    # echo=False для отключения логирования SQL-запросов в продакшене
-    # future=True для использования SQLAlchemy 2.0 API
-    if "sqlite" in DATABASE_URL:
-        engine = create_engine(
-            DATABASE_URL,
-            echo=False,
-            future=True,
-            connect_args={"check_same_thread": False},
+
+def _get_engine():
+    """Создает и кеширует SQLAlchemy engine."""
+    global _engine
+    if _engine is None:
+        config = get_config()
+        DATABASE_URL = config.DATABASE_URL
+
+        if "sqlite" in DATABASE_URL:
+            _engine = create_engine(
+                DATABASE_URL,
+                echo=False,
+                future=True,
+                connect_args={"check_same_thread": False},
+            )
+        else:
+            _engine = create_engine(
+                DATABASE_URL,
+                echo=False,
+                future=True,
+                pool_pre_ping=True,
+                pool_size=10,
+                max_overflow=20,
+                pool_timeout=30,
+            )
+    return _engine
+
+
+def _get_SessionLocal():
+    """Создает и кеширует sessionmaker."""
+    global _SessionLocal
+    if _SessionLocal is None:
+        engine = _get_engine()
+        _SessionLocal = sessionmaker(
+            autocommit=False,
+            autoflush=False,
+            bind=engine,
+            expire_on_commit=False,
+            class_=Session,
         )
-    else:
-        engine = create_engine(
-            DATABASE_URL,
-            echo=False,
-            future=True,
-            pool_pre_ping=True,  # Проверка соединений перед использованием
-            pool_size=10,
-            max_overflow=20,
-            pool_timeout=30,
-        )
-    
-    return engine
+    return _SessionLocal
 
 
 def get_session() -> Generator[Session, None, None]:
@@ -58,15 +68,7 @@ def get_session() -> Generator[Session, None, None]:
     Yields:
         Session: Сессия SQLAlchemy для выполнения операций с БД.
     """
-    engine = get_engine()
-    SessionLocal = sessionmaker(
-        autocommit=False,
-        autoflush=False,
-        bind=engine,
-        expire_on_commit=False,
-        class_=Session,
-    )
-    
+    SessionLocal = _get_SessionLocal()
     db: Session = SessionLocal()
     try:
         yield db
@@ -97,29 +99,29 @@ def get_db() -> Generator[Session, None, None]:
 
 def init_db() -> None:
     """Создаёт все таблицы, определённые в моделях.
-    
+
     Выполняет CREATE TABLE для всех моделей, унаследованных от Base,
     если таблицы ещё не существуют.
-    
+
     Note:
         В продакшене предпочтительнее использовать миграции (например, Alembic)
         вместо автоматического создания таблиц.
     """
     # noqa: F401 - импорт нужен для регистрации моделей в Base.metadata
     
-    engine = get_engine()
+    engine = _get_engine()
     Base.metadata.create_all(bind=engine)
 
 
 def drop_db() -> None:
     """Удаляет все таблицы, определённые в моделях.
-    
+
     Warning:
         Операция разрушительная! Использовать только для тестов
         или при полной переинициализации базы данных.
     """
     # noqa: F401 - импорт нужен для регистрации моделей в Base.metadata
     
-    engine = get_engine()
+    engine = _get_engine()
     Base.metadata.drop_all(bind=engine)
 

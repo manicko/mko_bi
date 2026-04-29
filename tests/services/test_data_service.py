@@ -7,12 +7,9 @@
 import pytest
 import uuid
 import gzip
-import json
-import tempfile
-from unittest.mock import MagicMock, patch, mock_open
+from unittest.mock import MagicMock, patch
 from datetime import datetime
 from pathlib import Path
-from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
 from mko_bi.services.data_service import (
@@ -21,23 +18,19 @@ from mko_bi.services.data_service import (
     get_processing_status,
     get_processing_result,
     get_dashboard_aggregates,
-    get_chart_data,
     apply_data_filters,
     cleanup_task_files,
     _validate_file,
     _save_uploaded_file,
     _process_csv_file,
 )
-from mko_bi.db.repositories.dashboard_repo import DashboardRepository
 from mko_bi.db.models import dashboard as dashboard_model
 from mko_bi.models.data import (
     UploadResponse,
     ProcessingStatus,
     ProcessingResult,
-    AggregatedData,
     ProcessingConfig,
 )
-from mko_bi.core.permissions import check_dashboard_access
 
 
 class TestValidateFile:

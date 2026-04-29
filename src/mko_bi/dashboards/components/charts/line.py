@@ -148,8 +148,7 @@ class LineChart(BaseChart):
             return prepared_data
 
         year_field = self.config.yoy["year_field"]
-        metric = self.config.yoy["metric"]
-
+        
         # Группируем по годам
         years_data = {}
         for key, item in prepared_data.items():
@@ -285,7 +284,7 @@ class LineChart(BaseChart):
 
         # Собираем все уникальные года из данных
         all_years = set()
-        for key, item in prepared_data.items():
+        for _key, item in prepared_data.items():
             if year_field in item and isinstance(item[year_field], list):
                 all_years.update(item[year_field])
 
@@ -301,8 +300,8 @@ class LineChart(BaseChart):
         # Собираем данные для текущего года
         current_x = []
         current_y = []
-
-        for key, item in prepared_data.items():
+        
+        for _key, item in prepared_data.items():
             if year_field in item and isinstance(item[year_field], list):
                 # Проверяем, есть ли текущий год в данных для этого X
                 if current_year in item[year_field]:
@@ -311,7 +310,7 @@ class LineChart(BaseChart):
 
         if current_x:
             # Сортируем по X
-            sorted_pairs = sorted(zip(current_x, current_y), key=lambda p: p[0])
+            sorted_pairs = sorted(zip(current_x, current_y, strict=False), key=lambda p: p[0])
             current_x, current_y = zip(*sorted_pairs) if sorted_pairs else ([], [])
 
             trace = go.Scatter(
@@ -331,8 +330,8 @@ class LineChart(BaseChart):
         if previous_year:
             previous_x = []
             previous_y = []
-
-            for key, item in prepared_data.items():
+            
+            for _key, item in prepared_data.items():
                 if year_field in item and isinstance(item[year_field], list):
                     if previous_year in item[year_field]:
                         previous_x.append(item[self.config.x])
@@ -341,19 +340,19 @@ class LineChart(BaseChart):
             if mode == YoyModeEnum.percent and current_x:
                 # Процентное изменение
                 # Создаем словарь для быстрого доступа к текущим значениям
-                current_dict = dict(zip(current_x, current_y))
+                current_dict = dict(zip(current_x, current_y, strict=False))
 
                 pct_x = []
                 pct_y = []
 
-                for px, py in zip(previous_x, previous_y):
+                for px, py in zip(previous_x, previous_y, strict=False):
                     if px in current_dict and py != 0:
                         pct_change = ((current_dict[px] - py) / py) * 100
                         pct_x.append(px)
                         pct_y.append(pct_change)
 
                 if pct_x:
-                    sorted_pairs = sorted(zip(pct_x, pct_y), key=lambda p: p[0])
+                    sorted_pairs = sorted(zip(pct_x, pct_y, strict=False), key=lambda p: p[0])
                     pct_x, pct_y = zip(*sorted_pairs) if sorted_pairs else ([], [])
 
                     trace = go.Scatter(
@@ -372,7 +371,7 @@ class LineChart(BaseChart):
             else:
                 # Абсолютное значение
                 if previous_x:
-                    sorted_pairs = sorted(zip(previous_x, previous_y), key=lambda p: p[0])
+                    sorted_pairs = sorted(zip(previous_x, previous_y, strict=False), key=lambda p: p[0])
                     previous_x, previous_y = zip(*sorted_pairs) if sorted_pairs else ([], [])
 
                     trace = go.Scatter(

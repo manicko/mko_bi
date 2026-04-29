@@ -6,7 +6,7 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-from uuid import UUID, uuid4
+from uuid import uuid4
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -23,7 +23,6 @@ from mko_bi.services.user_service import (
     _check_admin_deletion_allowed,
 )
 from mko_bi.db.models import user as user_model
-from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.models.user import UserRead
 from mko_bi.models.user_roles import UserRoleEnum
 

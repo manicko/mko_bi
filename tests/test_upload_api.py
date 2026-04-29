@@ -8,7 +8,6 @@ import uuid
 from unittest.mock import MagicMock, patch
 from datetime import datetime
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
 
 from mko_bi.api.routes.upload import (
     upload_file_endpoint,

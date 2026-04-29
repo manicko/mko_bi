@@ -6,7 +6,7 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
-from uuid import UUID, uuid4
+from uuid import uuid4
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
@@ -604,7 +604,6 @@ class TestRepositoryIntegration:
 
     def test_processing_config_crud_flow(self, db_session):
         """Тест полного цикла CRUD для настроек обработки."""
-        from mko_bi.db.models import dashboard as dashboard_model
 
         # Создаем дашборд
         dashboard = dashboard_model.Dashboard(

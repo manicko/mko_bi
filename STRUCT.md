@@ -150,7 +150,7 @@ C:\py_exp\mko_bi
 │   │   ├── TASK_051_di_and_interfaces.md
 │   │   ├── TASK_052_fix_linting_and_types.md
 │   │   ├── TASK_053_error_handling.md
-│   │   ├── TASK_054_manage_global_state.md
+│   │   ├── TASK_054_manage_global_state_DONE.md
 │   │   ├── TASK_056_base_classes_and_utils.md
 │   │   ├── TASK_058_integration_tests.md
 │   │   ├── TASK_059_alembic_migrations.md

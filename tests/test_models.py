@@ -8,7 +8,6 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
 from uuid import UUID
-from datetime import datetime
 
 from mko_bi.db.models import user as user_model
 from mko_bi.db.models import dashboard as dashboard_model

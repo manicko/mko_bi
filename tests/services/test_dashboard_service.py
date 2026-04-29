@@ -5,11 +5,8 @@
 """
 
 import pytest
-import json
 from unittest.mock import MagicMock, patch
-from uuid import UUID, uuid4
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
 
 from mko_bi.services.dashboard_service import (
     create_dashboard,
@@ -24,10 +21,8 @@ from mko_bi.services.dashboard_service import (
     _check_owner_permission,
 )
 from mko_bi.db.models import dashboard as dashboard_model
-from mko_bi.db.repositories.dashboard_repo import DashboardRepository
-from mko_bi.db.repositories.access_repo import AccessRepository
-from mko_bi.models.dashboard import DashboardConfig, DashboardRead
-from mko_bi.models.user_roles import PermissionEnum, GraphTypeEnum
+from mko_bi.models.dashboard import DashboardConfig
+from mko_bi.models.user_roles import GraphTypeEnum
 
 
 class TestValidatePermission:

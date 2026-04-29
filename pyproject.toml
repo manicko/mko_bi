@@ -117,15 +117,24 @@ select = [
 # We ignore line length because Black enforces it
 ignore = [
     "E501",
+    "B008",  # FastAPI Depends() in default args is valid pattern
     # optionally ignore import-sort warning which is handled by isort:
-    "I001", # "Import block is un-sorted or un-formatted" if you prefer isort to run
+    "I001",  # "Import block is unsorted or unformatted" if you prefer isort to run
 ]
 
 # Specific ruff.isort-related options (only ruff-supported keys)
 # Note: do NOT set profile here (ruff doesn't accept "profile" key)
 [tool.ruff.lint.isort]
-known-first-party = ["mko_telebot", "settings", "core"]
+known-first-party = ["mko_bi", "settings", "core"]
 combine-as-imports = true
+
+# Per-file ignores for false positives
+[tool.ruff.lint.per-file-ignores]
+"src/mko_bi/db/models/*.py" = ["F821"]  # Forward references in SQLAlchemy models
+"tests/*" = ["E731"]  # Lambda in tests (simplified for testing)
+"src/mko_bi/core/permissions.py" = ["F821"]  # FastAPI Depends(get_db) pattern
+"src/mko_bi/dashboards/components/charts/line.py" = ["B905"]  # zip(*sorted_pairs) unpacking
+"src/mko_bi/interfaces_old/*.py" = ["UP046"]  # Old interfaces, not used
 
 # Ruff formatting section
 [tool.ruff.format]
