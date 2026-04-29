@@ -10,9 +10,9 @@ from uuid import UUID
 from mko_bi.models.user import UserRead
 from mko_bi.models.dashboard import DashboardRead
 from mko_bi.models.graph import GraphRead
-from mko_bi.models.filter import FilterRead
-from mko_bi.models.processing_config import ProcessingConfigRead
-from mko_bi.models.processing_log import ProcessingLogRead
+from mko_bi.models.filters import FilterRead
+from mko_bi.models.processing_configs import ProcessingConfigRead
+from mko_bi.models.processing_logs import ProcessingLogRead
 
 
 class IAuthService(abc.ABC):
