@@ -7,8 +7,6 @@ C:\py_exp\mko_bi
 │   └── tmp_uploads
 ├── DB_STRUCTURE.md
 ├── DBSTR.md
-├── interfaces
-│   └── service_interfaces.py
 ├── nginx
 │   └── nginx.conf
 ├── 'Pydantic TASKS.md'
@@ -147,17 +145,16 @@ C:\py_exp\mko_bi
 │   └── test_upload_api.py
 ├── TODO
 │   ├── DEV
-│   │   ├── TASK_051_di_and_interfaces.md
-│   │   ├── TASK_052_fix_linting_and_types.md
 │   │   ├── TASK_053_error_handling.md
-│   │   ├── TASK_054_manage_global_state_DONE.md
-│   │   ├── TASK_056_base_classes_and_utils.md
 │   │   ├── TASK_058_integration_tests.md
 │   │   ├── TASK_059_alembic_migrations.md
 │   │   ├── TASK_060_implement_yoy.md
 │   │   └── TASK_061_calculate_shares.md
+│   ├── TASK_033_an.md
+│   ├── TASK_033_analysis_report.md
 │   ├── TASK_033_audit.md
 │   ├── TASK_034_audit.md
+│   ├── TASK_036_tz_audit.md
 │   ├── TASK_037_test_audit.md
 │   ├── TASK_037_test_audit1.md
 │   └── TEST
