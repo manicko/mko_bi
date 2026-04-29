@@ -151,7 +151,7 @@ C:\py_exp\mko_bi
 │   │   ├── TASK_003_fix_test_mocks.md
 │   │   ├── TASK_004_mypy_config_DONE.md
 │   │   ├── TASK_005_unify_auth_service_DONE.md
-│   │   ├── TASK_006_fix_deps_coupling.md
+│   │   ├── TASK_006_fix_deps_coupling_DONE.md
 │   │   ├── TASK_007_create_graph_service.md
 │   │   ├── TASK_008_fix_db_sessions.md
 │   │   ├── TASK_009_fix_ruff_errors.md

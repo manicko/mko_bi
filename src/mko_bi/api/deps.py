@@ -11,7 +11,7 @@
 """
 
 import logging
-from typing import Annotated
+from typing import Annotated, Any
 from collections.abc import Generator
 from uuid import UUID
 
@@ -43,19 +43,6 @@ from mko_bi.interfaces import (
     IDataService,
     IProcessingConfigService,
     IProcessingLogService,
-)
-from mko_bi.db.repositories import (
-    UserRepository,
-    DashboardRepository,
-    AccessRepository,
-    AggregatedDataRepository,
-    FilterRepository,
-    ProcessingConfigRepository,
-    ProcessingLogRepository,
-)
-from mko_bi.services import (
-    AuthService,
-    UserService,
 )
 
 logger = logging.getLogger(__name__)
@@ -99,6 +86,7 @@ def get_user_repository(db: Session = Depends(get_db)) -> IUserRepository:
     Returns:
         IUserRepository: Реализация репозитория пользователей.
     """
+    from mko_bi.db.repositories.user_repo import UserRepository
     return UserRepository()
 
 
@@ -111,6 +99,7 @@ def get_dashboard_repository(db: Session = Depends(get_db)) -> IDashboardReposit
     Returns:
         IDashboardRepository: Реализация репозитория дашбордов.
     """
+    from mko_bi.db.repositories.dashboard_repo import DashboardRepository
     return DashboardRepository()
 
 
@@ -123,6 +112,7 @@ def get_access_repository(db: Session = Depends(get_db)) -> IAccessRepository:
     Returns:
         IAccessRepository: Реализация репозитория прав доступа.
     """
+    from mko_bi.db.repositories.access_repo import AccessRepository
     return AccessRepository()
 
 
@@ -135,6 +125,7 @@ def get_aggregated_data_repository(db: Session = Depends(get_db)) -> IAggregated
     Returns:
         IAggregatedDataRepository: Реализация репозитория агрегированных данных.
     """
+    from mko_bi.db.repositories.aggregated_data_repo import AggregatedDataRepository
     return AggregatedDataRepository()
 
 
@@ -147,6 +138,7 @@ def get_filter_repository(db: Session = Depends(get_db)) -> IFilterRepository:
     Returns:
         IFilterRepository: Реализация репозитория фильтров.
     """
+    from mko_bi.db.repositories.filter_repo import FilterRepository
     return FilterRepository()
 
 
@@ -159,6 +151,7 @@ def get_processing_config_repository(db: Session = Depends(get_db)) -> IProcessi
     Returns:
         IProcessingConfigRepository: Реализация репозитория настроек обработки.
     """
+    from mko_bi.db.repositories.processing_config_repo import ProcessingConfigRepository
     return ProcessingConfigRepository()
 
 
@@ -171,6 +164,7 @@ def get_processing_log_repository(db: Session = Depends(get_db)) -> IProcessingL
     Returns:
         IProcessingLogRepository: Реализация репозитория логов обработки.
     """
+    from mko_bi.db.repositories.processing_log_repo import ProcessingLogRepository
     return ProcessingLogRepository()
 
 
@@ -186,6 +180,7 @@ def get_auth_service(db: Session = Depends(get_db)) -> IAuthService:
     Returns:
         IAuthService: Реализация сервиса аутентификации.
     """
+    from mko_bi.services.auth_service import AuthService
     return AuthService()
 
 
@@ -198,6 +193,7 @@ def get_user_service(db: Session = Depends(get_db)) -> IUserService:
     Returns:
         IUserService: Реализация сервиса пользователей.
     """
+    from mko_bi.services.user_service import UserService
     return UserService()
 
 
@@ -629,20 +625,20 @@ def get_dashboard_permissions(
     dashboard_id: UUID,
     user: UserDB = Depends(get_current_user_dependency),
     db: Session = Depends(get_db),
-) -> dict:
+    access_repo: IAccessRepository = Depends(get_access_repository),
+) -> dict[str, Any]:
     """Получает права доступа пользователя к дашборду.
 
     Args:
         dashboard_id: ID дашборда.
         user: Пользователь.
         db: Сессия базы данных.
+        access_repo: Репозиторий доступа.
 
     Returns:
         dict: Словарь с информацией о правах доступа.
     """
-    from mko_bi.db.repositories.access_repo import AccessRepository
-
-    permission = AccessRepository.check_access(
+    permission = access_repo.check_access(
         user_id=user.id,
         dashboard_id=dashboard_id,
         db=db,
