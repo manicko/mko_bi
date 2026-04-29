@@ -9,66 +9,19 @@
 """
 
 import logging
-from typing import Annotated
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
 
-from mko_bi.api.deps import get_db, get_current_user_dependency
-from mko_bi.core.security import create_access_token, decode_token
+from mko_bi.api.deps import get_current_user_dependency, get_auth_service
+from mko_bi.interfaces.service_interfaces import IAuthService
 from mko_bi.models.auth import LoginRequest, RegisterRequest, Token, RefreshRequest
 from mko_bi.models.user import UserRead
-from mko_bi.services.auth_service import (
-    register_user,
-    login_user,
-    refresh_token,
-)
 
 logger = logging.getLogger(__name__)
 
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-
-# Rate limiting storage (in-memory, для простоты)
-# В production использовать Redis или аналог
-_login_attempts: dict[str, list[float]] = {}
-
-
-def _check_rate_limit(email: str) -> bool:
-    """Проверяет лимит попыток входа (rate limiting).
-
-    Разрешает максимум 5 попыток входа в течение 60 секунд.
-
-    Args:
-        email: Email пользователя, пытающегося войти.
-
-    Returns:
-        bool: True, если попытка разрешена, False - если лимит превышен.
-    """
-    import time
-
-    now = time.time()
-    window = 60  # 60 секунд
-    max_attempts = 5
-
-    if email not in _login_attempts:
-        _login_attempts[email] = []
-
-    # Очищаем старые попытки
-    _login_attempts[email] = [
-        attempt_time
-        for attempt_time in _login_attempts[email]
-        if now - attempt_time < window
-    ]
-
-    if len(_login_attempts[email]) >= max_attempts:
-        logger.warning("Превышен лимит попыток входа для email: %s", email)
-        return False
-
-    _login_attempts[email].append(now)
-    return True
 
 
 @router.post(
@@ -80,7 +33,7 @@ def _check_rate_limit(email: str) -> bool:
 )
 async def login(
     login_data: LoginRequest,
-    db: Session = Depends(get_db),
+    auth_service: IAuthService = Depends(get_auth_service),
 ) -> Token:
     """Эндпоинт входа пользователя.
 
@@ -89,28 +42,21 @@ async def login(
 
     Args:
         login_data: Модель с email и паролем.
-        db: Сессия базы данных.
+        auth_service: Сервис аутентификации.
 
     Returns:
         Token: Модель с access_token и token_type.
 
     Raises:
         HTTPException 401: Неверный email или пароль.
-        HTTPException 429: Превышен лимит попыток входа.
         HTTPException 422: Ошибка валидации данных.
     """
     logger.info("Попытка входа пользователя: %s", login_data.email)
 
-    # Проверка rate limiting
-    if not _check_rate_limit(login_data.email):
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Превышен лимит попыток входа. Попробуйте позже.",
-        )
-
-    # Аутентификация и получение токена через сервис
     try:
-        token_data = login_user(login_data.email, login_data.password, db)
+        token_data = auth_service.login_user(
+            login_data.email, login_data.password
+        )
     except ValueError as e:
         logger.warning("Неудачная попытка входа: %s", login_data.email)
         raise HTTPException(
@@ -137,8 +83,8 @@ async def login(
     description="Аутентификация через форму OAuth2.",
 )
 async def login_form(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
-    db: Session = Depends(get_db),
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    auth_service: IAuthService = Depends(get_auth_service),
 ) -> Token:
     """Эндпоинт входа через OAuth2 форму.
 
@@ -146,23 +92,17 @@ async def login_form(
 
     Args:
         form_data: Данные формы OAuth2.
-        db: Сессия базы данных.
+        auth_service: Сервис аутентификации.
 
     Returns:
         Token: Модель с access_token и token_type.
     """
     logger.info("Попытка входа через форму: %s", form_data.username)
 
-    # Проверка rate limiting
-    if not _check_rate_limit(form_data.username):
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-            detail="Превышен лимит попыток входа. Попробуйте позже.",
-        )
-
-    # Аутентификация и получение токена через сервис
     try:
-        token_data = login_user(form_data.username, form_data.password, db)
+        token_data = auth_service.login_user(
+            form_data.username, form_data.password
+        )
     except ValueError as e:
         logger.warning("Неудачная попытка входа через форму: %s", form_data.username)
         raise HTTPException(
@@ -190,7 +130,7 @@ async def login_form(
 )
 async def register(
     register_data: RegisterRequest,
-    db: Session = Depends(get_db),
+    auth_service: IAuthService = Depends(get_auth_service),
 ) -> Token:
     """Эндпоинт регистрации нового пользователя.
 
@@ -199,7 +139,7 @@ async def register(
 
     Args:
         register_data: Модель с данными для регистрации.
-        db: Сессия базы данных.
+        auth_service: Сервис аутентификации.
 
     Returns:
         Token: Модель с access_token и token_type.
@@ -211,12 +151,10 @@ async def register(
     logger.info("Попытка регистрации пользователя: %s", register_data.email)
 
     try:
-        # Регистрация пользователя
-        user = register_user(
+        user = auth_service.register_user(
             email=register_data.email,
             password=register_data.password,
             role=register_data.role,
-            db=db,
         )
     except ValueError as e:
         logger.warning(
@@ -233,15 +171,8 @@ async def register(
             detail="Ошибка регистрации пользователя",
         ) from e
 
-    # Создание токена
     try:
-        access_token = create_access_token(
-            data={
-                "user_id": user.id,
-                "email": user.email,
-                "role": user.role,
-            }
-        )
+        access_token = auth_service.create_access_token(user.id, user.role)
     except Exception as e:
         logger.error(
             "Ошибка создания токена после регистрации %s: %s", register_data.email, e
@@ -264,7 +195,7 @@ async def register(
 )
 async def refresh(
     refresh_data: RefreshRequest,
-    db: Session = Depends(get_db),
+    auth_service: IAuthService = Depends(get_auth_service),
 ) -> Token:
     """Эндпоинт обновления токена.
 
@@ -273,7 +204,7 @@ async def refresh(
 
     Args:
         refresh_data: Модель с refresh токеном.
-        db: Сессия базы данных.
+        auth_service: Сервис аутентификации.
 
     Returns:
         Token: Модель с новым access_token и token_type.
@@ -284,8 +215,7 @@ async def refresh(
     """
     logger.info("Попытка обновления токена")
 
-    # Декодируем токен
-    payload = decode_token(refresh_data.refresh_token)
+    payload = auth_service.verify_token(refresh_data.refresh_token)
     if payload is None:
         logger.warning("Неверный refresh токен")
         raise HTTPException(
@@ -294,7 +224,6 @@ async def refresh(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Проверяем наличие user_id
     user_id = payload.get("user_id")
     email = payload.get("email")
     role = payload.get("role")
@@ -307,9 +236,8 @@ async def refresh(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    # Обновляем токен через сервис
     try:
-        token_data = refresh_token(user_id, email, role, db)
+        token_data = auth_service.refresh_token(user_id, email, role)
     except ValueError as e:
         logger.warning("Пользователь не найден при обновлении токена: %s", user_id)
         raise HTTPException(

@@ -19,18 +19,33 @@ class IAuthService(abc.ABC):
     """Интерфейс сервиса аутентификации."""
 
     @abc.abstractmethod
-    def authenticate_user(self, email: str, password: str) -> str | None:
-        """Аутентифицировать пользователя и вернуть токен."""
+    def register_user(self, email: str, password: str, role: str, db: Any = None) -> UserRead:
+        """Зарегистрировать нового пользователя."""
         pass
 
     @abc.abstractmethod
-    def create_access_token(self, user_id: UUID) -> str:
+    def authenticate_user(self, email: str, password: str, db: Any = None) -> Any | None:
+        """Аутентифицировать пользователя и вернуть данные."""
+        pass
+
+    @abc.abstractmethod
+    def login_user(self, email: str, password: str, db: Any = None) -> dict[str, Any]:
+        """Выполнить вход и вернуть JWT токен."""
+        pass
+
+    @abc.abstractmethod
+    def refresh_token(self, user_id: Any, email: str, role: str, db: Any = None) -> dict[str, Any]:
+        """Обновить JWT токен."""
+        pass
+
+    @abc.abstractmethod
+    def create_access_token(self, user_id: Any, role: Any) -> str:
         """Создать access токен для пользователя."""
         pass
 
     @abc.abstractmethod
-    def decode_token(self, token: str) -> dict[str, Any] | None:
-        """Декодировать токен и вернуть payload."""
+    def verify_token(self, token: str) -> dict[str, Any] | None:
+        """Проверить JWT токен и вернуть данные."""
         pass
 
 

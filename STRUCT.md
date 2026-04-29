@@ -147,10 +147,10 @@ C:\py_exp\mko_bi
 ├── TODO
 │   ├── DEV
 │   │   ├── TASK_001_graph_models_DONE.md
-│   │   ├── TASK_002_fix_imports.md
+│   │   ├── TASK_002_fix_imports_DONE.md
 │   │   ├── TASK_003_fix_test_mocks.md
 │   │   ├── TASK_004_mypy_config_DONE.md
-│   │   ├── TASK_005_unify_auth_service.md
+│   │   ├── TASK_005_unify_auth_service_DONE.md
 │   │   ├── TASK_006_fix_deps_coupling.md
 │   │   ├── TASK_007_create_graph_service.md
 │   │   ├── TASK_008_fix_db_sessions.md

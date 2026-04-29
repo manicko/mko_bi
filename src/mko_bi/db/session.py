@@ -2,6 +2,7 @@ from collections.abc import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
+from contextlib import contextmanager
 
 from mko_bi.config import get_config
 from mko_bi.db.base import Base
@@ -9,6 +10,15 @@ from mko_bi.db.base import Base
 # Cache for engine and SessionLocal
 _engine = None
 _SessionLocal = None
+
+
+def get_engine():
+    """Возвращает SQLAlchemy engine (публичная функция).
+    
+    Returns:
+        Engine: SQLAlchemy engine для работы с базой данных.
+    """
+    return _get_engine()
 
 
 def _get_engine():
@@ -53,6 +63,7 @@ def _get_SessionLocal():
     return _SessionLocal
 
 
+@contextmanager
 def get_session() -> Generator[Session, None, None]:
     """Контекстный менеджер для сессий базы данных.
     

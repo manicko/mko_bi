@@ -198,14 +198,17 @@ class TestFilterRepository:
 
     def test_get_session(self):
         """Тест создания сессии."""
-        # Мокаем get_session из session.py, который используется репозиториями
-        with patch('mko_bi.db.repositories.filter_repo.get_session') as mock_get_session:
+        # Патчим get_session в session.py, который используется репозиториями
+        with patch('mko_bi.db.session.get_session') as mock_get_session:
             session_instance = MagicMock(spec=Session)
-            mock_get_session.return_value = session_instance
+            mock_context = MagicMock()
+            mock_context.__enter__ = MagicMock(return_value=session_instance)
+            mock_context.__exit__ = MagicMock(return_value=False)
+            mock_get_session.return_value = mock_context
 
             result = filter_repo.FilterRepository.get_session()
 
-            assert result == session_instance
+            assert result == mock_context
             mock_get_session.assert_called_once()
 
 
@@ -369,14 +372,17 @@ class TestProcessingConfigRepository:
 
     def test_get_session(self):
         """Тест создания сессии."""
-        # Мокаем get_session из session.py, который используется репозиториями
-        with patch('mko_bi.db.repositories.processing_config_repo.get_session') as mock_get_session:
+        # Патчим get_session в session.py, который используется репозиториями
+        with patch('mko_bi.db.session.get_session') as mock_get_session:
             session_instance = MagicMock(spec=Session)
-            mock_get_session.return_value = session_instance
+            mock_context = MagicMock()
+            mock_context.__enter__ = MagicMock(return_value=session_instance)
+            mock_context.__exit__ = MagicMock(return_value=False)
+            mock_get_session.return_value = mock_context
 
             result = processing_config_repo.ProcessingConfigRepository.get_session()
 
-            assert result == session_instance
+            assert result == mock_context
             mock_get_session.assert_called_once()
 
 
@@ -561,14 +567,17 @@ class TestProcessingLogRepository:
 
     def test_get_session(self):
         """Тест создания сессии."""
-        # Мокаем get_session из session.py, который используется репозиториями
-        with patch('mko_bi.db.repositories.processing_log_repo.get_session') as mock_get_session:
+        # Патчим get_session в session.py, который используется репозиториями
+        with patch('mko_bi.db.session.get_session') as mock_get_session:
             session_instance = MagicMock(spec=Session)
-            mock_get_session.return_value = session_instance
+            mock_context = MagicMock()
+            mock_context.__enter__ = MagicMock(return_value=session_instance)
+            mock_context.__exit__ = MagicMock(return_value=False)
+            mock_get_session.return_value = mock_context
 
             result = processing_log_repo.ProcessingLogRepository.get_session()
 
-            assert result == session_instance
+            assert result == mock_context
             mock_get_session.assert_called_once()
 
 

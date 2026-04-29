@@ -70,9 +70,11 @@ class TestSaveUploadedFile:
         content = b"test data"
         filename = "test.csv.gz"
 
-        with patch('mko_bi.services.data_service.config') as mock_config, \
+        with patch('mko_bi.config.get_config') as mock_get_config, \
              patch('mko_bi.services.data_service.uuid') as mock_uuid:
+            mock_config = MagicMock()
             mock_config.upload_temp_dir = str(tmp_path)
+            mock_get_config.return_value = mock_config
             mock_uuid.uuid4.return_value = uuid.UUID('12345678-1234-5678-1234-567812345678')
 
             result = _save_uploaded_file(filename, content)
@@ -87,9 +89,11 @@ class TestSaveUploadedFile:
         filename = "test.csv.gz"
         upload_dir = tmp_path / "subdir" / "nested"
 
-        with patch('mko_bi.services.data_service.config') as mock_config, \
+        with patch('mko_bi.config.get_config') as mock_get_config, \
              patch('mko_bi.services.data_service.uuid') as mock_uuid:
+            mock_config = MagicMock()
             mock_config.upload_temp_dir = str(upload_dir)
+            mock_get_config.return_value = mock_config
             mock_uuid.uuid4.return_value = uuid.UUID('12345678-1234-5678-1234-567812345678')
 
             result = _save_uploaded_file(filename, content)
@@ -247,14 +251,15 @@ class TestUploadFile:
         """Загрузка файла с автоматическим созданием сессии."""
         content = b"test data"
 
-        with patch('mko_bi.services.data_service.SessionLocal') as mock_session_local, \
+        with patch('mko_bi.db.session.get_session') as mock_get_session, \
              patch('mko_bi.services.data_service.DashboardRepository') as mock_dash_repo, \
              patch('mko_bi.services.data_service.check_dashboard_access') as mock_check_access, \
              patch('mko_bi.services.data_service._validate_file'), \
              patch('mko_bi.services.data_service._save_uploaded_file') as mock_save:
 
             mock_session = MagicMock(spec=Session)
-            mock_session_local.return_value = mock_session
+            mock_get_session.return_value.__enter__ = MagicMock(return_value=mock_session)
+            mock_get_session.return_value.__exit__ = MagicMock(return_value=False)
             mock_dashboard = MagicMock(spec=dashboard_model.Dashboard)
             mock_dash_repo.get.return_value = mock_dashboard
             mock_check_access.return_value = True
@@ -263,8 +268,7 @@ class TestUploadFile:
             result = upload_file("test.csv.gz", content, 1, 2)
 
             assert isinstance(result, UploadResponse)
-            mock_session_local.assert_called_once()
-            mock_session.close.assert_called_once()
+            mock_get_session.assert_called_once()
 
 
 class TestTriggerProcessing:
@@ -276,24 +280,8 @@ class TestTriggerProcessing:
 
         with patch('mko_bi.services.data_service.check_dashboard_access') as mock_check_access, \
              patch('mko_bi.services.data_service._process_csv_file') as mock_process, \
-             patch('mko_bi.services.data_service._task_statuses', {}), \
+             patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo, \
              patch('mko_bi.services.data_service.Path') as mock_path:
-
-            # Создаем задачу
-            from mko_bi.services.data_service import _task_statuses
-            _task_statuses[task_id] = {
-                "task_id": task_id,
-                "filename": "test.csv.gz",
-                "dashboard_id": 1,
-                "status": "uploaded",
-                "progress": 0,
-                "message": "File uploaded",
-                "uploaded_at": datetime.now(),
-                "started_at": None,
-                "completed_at": None,
-                "file_path": "/tmp/test.csv.gz",
-                "user_id": 2,
-            }
 
             mock_check_access.return_value = True
             mock_process.return_value = {
@@ -307,6 +295,15 @@ class TestTriggerProcessing:
             mock_file = MagicMock()
             mock_file.exists.return_value = True
             mock_path.return_value = mock_file
+
+            # Мокаем лог обработки
+            mock_log = MagicMock()
+            mock_log.id = uuid.uuid4()
+            mock_log.status = "uploaded"
+            mock_log.dashboard_id = 1
+            mock_log.message = "Файл test.csv.gz успешно загружен"
+            mock_repo.get_by_dashboard_and_status.return_value = [mock_log]
+            mock_repo.update.return_value = mock_log
 
             result = trigger_processing(task_id, 1, 2, db=db_session)
 
@@ -319,7 +316,9 @@ class TestTriggerProcessing:
 
     def test_trigger_processing_no_task(self, db_session):
         """Запуск обработки несуществующей задачи должен вызывать ошибку."""
-        with patch('mko_bi.services.data_service.check_dashboard_access'):
+        with patch('mko_bi.services.data_service.check_dashboard_access'), \
+             patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo:
+            mock_repo.get_by_dashboard_and_status.return_value = []
             with pytest.raises(ValueError, match="не найдена"):
                 trigger_processing(uuid.uuid4(), 1, 2, db=db_session)
 
@@ -328,14 +327,12 @@ class TestTriggerProcessing:
         task_id = uuid.uuid4()
 
         with patch('mko_bi.services.data_service.check_dashboard_access'), \
-             patch('mko_bi.services.data_service._task_statuses', {}):
+             patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo:
 
-            from mko_bi.services.data_service import _task_statuses
-            _task_statuses[task_id] = {
-                "task_id": task_id,
-                "status": "completed",
-                "dashboard_id": 1,
-            }
+            mock_log = MagicMock()
+            mock_log.status = "success"
+            mock_log.dashboard_id = 1
+            mock_repo.get_by_dashboard_and_status.return_value = [mock_log]
 
             with pytest.raises(ValueError, match="уже находится в статусе"):
                 trigger_processing(task_id, 1, 2, db=db_session)
@@ -345,16 +342,14 @@ class TestTriggerProcessing:
         task_id = uuid.uuid4()
 
         with patch('mko_bi.services.data_service.check_dashboard_access') as mock_check_access, \
-             patch('mko_bi.services.data_service._task_statuses', {}):
-
-            from mko_bi.services.data_service import _task_statuses
-            _task_statuses[task_id] = {
-                "task_id": task_id,
-                "status": "uploaded",
-                "dashboard_id": 1,
-            }
+             patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo:
 
             mock_check_access.return_value = False
+
+            mock_log = MagicMock()
+            mock_log.status = "uploaded"
+            mock_log.dashboard_id = 1
+            mock_repo.get_by_dashboard_and_status.return_value = [mock_log]
 
             with pytest.raises(PermissionError, match="Недостаточно прав"):
                 trigger_processing(task_id, 1, 2, db=db_session)
@@ -364,19 +359,20 @@ class TestTriggerProcessing:
         task_id = uuid.uuid4()
 
         with patch('mko_bi.services.data_service.check_dashboard_access') as mock_check_access, \
-             patch('mko_bi.services.data_service._task_statuses', {}), \
+             patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo, \
              patch('mko_bi.services.data_service.Path') as mock_path:
 
-            from mko_bi.services.data_service import _task_statuses
-            _task_statuses[task_id] = {
-                "task_id": task_id,
-                "status": "uploaded",
-                "dashboard_id": 1,
-                "file_path": "/tmp/nonexistent.csv.gz",
-            }
-
             mock_check_access.return_value = True
-            mock_path.return_value.exists.return_value = False
+
+            mock_log = MagicMock()
+            mock_log.status = "uploaded"
+            mock_log.dashboard_id = 1
+            mock_log.message = "Файл test.csv.gz успешно загружен"
+            mock_repo.get_by_dashboard_and_status.return_value = [mock_log]
+
+            mock_file = MagicMock()
+            mock_file.exists.return_value = False
+            mock_path.return_value = mock_file
 
             with pytest.raises(FileNotFoundError):
                 trigger_processing(task_id, 1, 2, db=db_session)
@@ -385,29 +381,15 @@ class TestTriggerProcessing:
         """Запуск обработки с автоматическим созданием сессии."""
         task_id = uuid.uuid4()
 
-        with patch('mko_bi.services.data_service.SessionLocal') as mock_session_local, \
+        with patch('mko_bi.db.session.get_session') as mock_get_session, \
              patch('mko_bi.services.data_service.check_dashboard_access') as mock_check_access, \
              patch('mko_bi.services.data_service._process_csv_file') as mock_process, \
-             patch('mko_bi.services.data_service._task_statuses', {}), \
+             patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo, \
              patch('mko_bi.services.data_service.Path') as mock_path:
 
             mock_session = MagicMock(spec=Session)
-            mock_session_local.return_value = mock_session
-
-            from mko_bi.services.data_service import _task_statuses
-            _task_statuses[task_id] = {
-                "task_id": task_id,
-                "filename": "test.csv.gz",
-                "dashboard_id": 1,
-                "status": "uploaded",
-                "progress": 0,
-                "message": "File uploaded",
-                "uploaded_at": datetime.now(),
-                "started_at": None,
-                "completed_at": None,
-                "file_path": "/tmp/test.csv.gz",
-                "user_id": 2,
-            }
+            mock_get_session.return_value.__enter__ = MagicMock(return_value=mock_session)
+            mock_get_session.return_value.__exit__ = MagicMock(return_value=False)
 
             mock_check_access.return_value = True
             mock_process.return_value = {
@@ -422,12 +404,19 @@ class TestTriggerProcessing:
             mock_file.exists.return_value = True
             mock_path.return_value = mock_file
 
+            mock_log = MagicMock()
+            mock_log.id = uuid.uuid4()
+            mock_log.status = "uploaded"
+            mock_log.dashboard_id = 1
+            mock_log.message = "Файл test.csv.gz успешно загружен"
+            mock_repo.get_by_dashboard_and_status.return_value = [mock_log]
+            mock_repo.update.return_value = mock_log
+
             result = trigger_processing(task_id, 1, 2)
 
             assert isinstance(result, ProcessingStatus)
             assert result.status == "completed"
-            mock_session_local.assert_called_once()
-            mock_session.close.assert_called_once()
+            mock_get_session.assert_called_once()
 
     def test_trigger_processing_failure(self, db_session):
         """Обработка ошибки при обработке файла."""
@@ -435,26 +424,19 @@ class TestTriggerProcessing:
 
         with patch('mko_bi.services.data_service.check_dashboard_access') as mock_check_access, \
              patch('mko_bi.services.data_service._process_csv_file') as mock_process, \
-             patch('mko_bi.services.data_service._task_statuses', {}), \
+             patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo, \
              patch('mko_bi.services.data_service.Path') as mock_path:
-
-            from mko_bi.services.data_service import _task_statuses
-            _task_statuses[task_id] = {
-                "task_id": task_id,
-                "filename": "test.csv.gz",
-                "dashboard_id": 1,
-                "status": "uploaded",
-                "progress": 0,
-                "message": "File uploaded",
-                "uploaded_at": datetime.now(),
-                "started_at": None,
-                "completed_at": None,
-                "file_path": "/tmp/test.csv.gz",
-                "user_id": 2,
-            }
 
             mock_check_access.return_value = True
             mock_process.side_effect = Exception("Processing error")
+
+            mock_log = MagicMock()
+            mock_log.id = uuid.uuid4()
+            mock_log.status = "uploaded"
+            mock_log.dashboard_id = 1
+            mock_log.message = "Файл test.csv.gz успешно загружен"
+            mock_repo.get_by_dashboard_and_status.return_value = [mock_log]
+            mock_repo.update.return_value = mock_log
 
             mock_file = MagicMock()
             mock_file.exists.return_value = True
@@ -462,9 +444,6 @@ class TestTriggerProcessing:
 
             with pytest.raises(Exception, match="Processing error"):
                 trigger_processing(task_id, 1, 2, db=db_session)
-
-            # Проверяем, что статус изменился на failed
-            # Note: Task is cleaned up in finally block, so it's no longer in _task_statuses
 class TestGetProcessingStatus:
     """Тесты для функции получения статуса обработки."""
 
@@ -473,29 +452,23 @@ class TestGetProcessingStatus:
         task_id = uuid.uuid4()
 
         with patch('mko_bi.services.data_service.check_dashboard_access') as mock_check_access, \
-             patch('mko_bi.services.data_service._task_statuses', {}):
-
-            from mko_bi.services.data_service import _task_statuses
-            _task_statuses[task_id] = {
-                "task_id": task_id,
-                "filename": "test.csv.gz",
-                "dashboard_id": 1,
-                "status": "processing",
-                "progress": 50,
-                "message": "Processing...",
-                "uploaded_at": datetime.now(),
-                "started_at": datetime.now(),
-                "completed_at": None,
-                "user_id": 2,
-            }
+             patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo:
 
             mock_check_access.return_value = True
+
+            mock_log = MagicMock()
+            mock_log.id = uuid.uuid4()
+            mock_log.dashboard_id = 1
+            mock_log.status = "processing"
+            mock_log.message = f"Файл {task_id} успешно загружен"
+            mock_log.started_at = datetime.now()
+            mock_log.finished_at = None
+            mock_repo.get_all.return_value = [mock_log]
 
             result = get_processing_status(task_id, 2, db_session)
 
             assert isinstance(result, ProcessingStatus)
             assert result.status == "processing"
-            assert result.progress == 50
             mock_check_access.assert_called_once_with(
                 user_id=2,
                 dashboard_id=1,
@@ -505,7 +478,9 @@ class TestGetProcessingStatus:
 
     def test_get_processing_status_no_task(self, db_session):
         """Получение статуса несуществующей задачи должно вызывать ошибку."""
-        with patch('mko_bi.services.data_service.check_dashboard_access'):
+        with patch('mko_bi.services.data_service.check_dashboard_access'), \
+             patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo:
+            mock_repo.get_all.return_value = []
             with pytest.raises(ValueError, match="не найдена"):
                 get_processing_status(uuid.uuid4(), 1, db_session)
 
@@ -514,15 +489,13 @@ class TestGetProcessingStatus:
         task_id = uuid.uuid4()
 
         with patch('mko_bi.services.data_service.check_dashboard_access') as mock_check_access, \
-             patch('mko_bi.services.data_service._task_statuses', {}):
-
-            from mko_bi.services.data_service import _task_statuses
-            _task_statuses[task_id] = {
-                "task_id": task_id,
-                "dashboard_id": 1,
-            }
+             patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo:
 
             mock_check_access.return_value = False
+
+            mock_log = MagicMock()
+            mock_log.dashboard_id = 1
+            mock_repo.get_all.return_value = [mock_log]
 
             with pytest.raises(PermissionError, match="Недостаточно прав"):
                 get_processing_status(task_id, 2, db_session)
@@ -531,35 +504,30 @@ class TestGetProcessingStatus:
         """Получение статуса с автоматическим созданием сессии."""
         task_id = uuid.uuid4()
 
-        with patch('mko_bi.services.data_service.SessionLocal') as mock_session_local, \
+        with patch('mko_bi.db.session.get_session') as mock_get_session, \
              patch('mko_bi.services.data_service.check_dashboard_access') as mock_check_access, \
-             patch('mko_bi.services.data_service._task_statuses', {}):
+             patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo:
 
             mock_session = MagicMock(spec=Session)
-            mock_session_local.return_value = mock_session
-
-            from mko_bi.services.data_service import _task_statuses
-            _task_statuses[task_id] = {
-                "task_id": task_id,
-                "filename": "test.csv.gz",
-                "dashboard_id": 1,
-                "status": "completed",
-                "progress": 100,
-                "message": "Done",
-                "uploaded_at": datetime.now(),
-                "started_at": datetime.now(),
-                "completed_at": datetime.now(),
-                "user_id": 2,
-            }
+            mock_get_session.return_value.__enter__ = MagicMock(return_value=mock_session)
+            mock_get_session.return_value.__exit__ = MagicMock(return_value=False)
 
             mock_check_access.return_value = True
+
+            mock_log = MagicMock()
+            mock_log.id = uuid.uuid4()
+            mock_log.dashboard_id = 1
+            mock_log.status = "completed"
+            mock_log.message = f"Файл {task_id} успешно загружен"
+            mock_log.started_at = datetime.now()
+            mock_log.finished_at = datetime.now()
+            mock_repo.get_all.return_value = [mock_log]
 
             result = get_processing_status(task_id, 2)
 
             assert isinstance(result, ProcessingStatus)
             assert result.status == "completed"
-            mock_session_local.assert_called_once()
-            mock_session.close.assert_called_once()
+            mock_get_session.assert_called_once()
 
 
 class TestGetProcessingResult:
@@ -570,36 +538,25 @@ class TestGetProcessingResult:
         task_id = uuid.uuid4()
 
         with patch('mko_bi.services.data_service.check_dashboard_access') as mock_check_access, \
-             patch('mko_bi.services.data_service._task_statuses', {}):
-
-            from mko_bi.services.data_service import _task_statuses
-            _task_statuses[task_id] = {
-                "task_id": task_id,
-                "filename": "test.csv.gz",
-                "dashboard_id": 1,
-                "status": "completed",
-                "progress": 100,
-                "message": "Processing completed successfully",
-                "uploaded_at": datetime.now(),
-                "started_at": datetime.now(),
-                "completed_at": datetime.now(),
-                "user_id": 2,
-                "result": {
-                    "columns": ["category", "value"],
-                    "rows": 100,
-                    "preview": [],
-                    "processed_rows": 100,
-                    "processed_columns": ["category", "value"],
-                },
-            }
+             patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo, \
+             patch('mko_bi.services.data_service.AggregatedDataRepository') as mock_agg_repo:
 
             mock_check_access.return_value = True
+
+            mock_log = MagicMock()
+            mock_log.id = uuid.uuid4()
+            mock_log.dashboard_id = 1
+            mock_log.status = "success"
+            mock_log.message = f"Файл {task_id} успешно загружен"
+            mock_log.started_at = datetime.now()
+            mock_log.finished_at = datetime.now()
+            mock_repo.get_all.return_value = [mock_log]
+            mock_agg_repo.get_by_dashboard.return_value = []
 
             result = get_processing_result(task_id, 2, db_session)
 
             assert isinstance(result, ProcessingResult)
             assert result.success is True
-            assert result.rows_processed == 100
             mock_check_access.assert_called_once_with(
                 user_id=2,
                 dashboard_id=1,
@@ -612,24 +569,23 @@ class TestGetProcessingResult:
         task_id = uuid.uuid4()
 
         with patch('mko_bi.services.data_service.check_dashboard_access') as mock_check_access, \
-             patch('mko_bi.services.data_service._task_statuses', {}):
-
-            from mko_bi.services.data_service import _task_statuses
-            _task_statuses[task_id] = {
-                "task_id": task_id,
-                "dashboard_id": 1,
-                "status": "processing",
-                "user_id": 2,
-            }
+             patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo:
 
             mock_check_access.return_value = True
+
+            mock_log = MagicMock()
+            mock_log.dashboard_id = 1
+            mock_log.status = "processing"
+            mock_repo.get_all.return_value = [mock_log]
 
             with pytest.raises(ValueError, match="не завершена"):
                 get_processing_result(task_id, 2, db_session)
 
     def test_get_processing_result_no_task(self, db_session):
         """Получение результата несуществующей задачи должно вызывать ошибку."""
-        with patch('mko_bi.services.data_service.check_dashboard_access'):
+        with patch('mko_bi.services.data_service.check_dashboard_access'), \
+             patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo:
+            mock_repo.get_all.return_value = []
             with pytest.raises(ValueError, match="не найдена"):
                 get_processing_result(uuid.uuid4(), 1, db_session)
 
@@ -638,17 +594,13 @@ class TestGetProcessingResult:
         task_id = uuid.uuid4()
 
         with patch('mko_bi.services.data_service.check_dashboard_access') as mock_check_access, \
-             patch('mko_bi.services.data_service._task_statuses', {}):
-
-            from mko_bi.services.data_service import _task_statuses
-            _task_statuses[task_id] = {
-                "task_id": task_id,
-                "dashboard_id": 1,
-                "status": "completed",
-                "user_id": 2,
-            }
+             patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo:
 
             mock_check_access.return_value = False
+
+            mock_log = MagicMock()
+            mock_log.dashboard_id = 1
+            mock_repo.get_all.return_value = [mock_log]
 
             with pytest.raises(PermissionError, match="Недостаточно прав"):
                 get_processing_result(task_id, 2, db_session)
@@ -707,67 +659,62 @@ class TestCleanupTaskFiles:
         """Успешная очистка файлов задачи."""
         task_id = uuid.uuid4()
 
-        with patch('mko_bi.services.data_service._task_statuses', {}), \
+        with patch('mko_bi.config.get_config') as mock_get_config, \
              patch('mko_bi.services.data_service.Path') as mock_path:
 
-            from mko_bi.services.data_service import _task_statuses
-            _task_statuses[task_id] = {
-                "task_id": task_id,
-                "file_path": "/tmp/test.csv.gz",
-            }
+            mock_config = MagicMock()
+            mock_config.upload_temp_dir = "/tmp"
+            mock_get_config.return_value = mock_config
 
             mock_file = MagicMock()
             mock_file.exists.return_value = True
             mock_path.return_value = mock_file
+            mock_path.glob.return_value = [mock_file]
 
             cleanup_task_files(task_id)
 
-            assert task_id not in _task_statuses
             mock_file.unlink.assert_called_once()
 
     def test_cleanup_task_files_no_file(self):
         """Очистка задачи без файла."""
         task_id = uuid.uuid4()
 
-        with patch('mko_bi.services.data_service._task_statuses', {}), \
+        with patch('mko_bi.config.get_config') as mock_get_config, \
              patch('mko_bi.services.data_service.Path') as mock_path:
 
-            from mko_bi.services.data_service import _task_statuses
-            _task_statuses[task_id] = {
-                "task_id": task_id,
-            }
+            mock_config = MagicMock()
+            mock_config.upload_temp_dir = "/tmp"
+            mock_get_config.return_value = mock_config
 
             mock_file = MagicMock()
             mock_file.exists.return_value = False
             mock_path.return_value = mock_file
+            mock_path.glob.return_value = []
 
             cleanup_task_files(task_id)
 
-            assert task_id not in _task_statuses
             mock_file.unlink.assert_not_called()
 
     def test_cleanup_task_files_error_on_delete(self):
         """Ошибка при удалении файла не должна прерывать очистку."""
         task_id = uuid.uuid4()
 
-        with patch('mko_bi.services.data_service._task_statuses', {}), \
+        with patch('mko_bi.config.get_config') as mock_get_config, \
              patch('mko_bi.services.data_service.Path') as mock_path, \
              patch('mko_bi.services.data_service.logger') as mock_logger:
 
-            from mko_bi.services.data_service import _task_statuses
-            _task_statuses[task_id] = {
-                "task_id": task_id,
-                "file_path": "/tmp/test.csv.gz",
-            }
+            mock_config = MagicMock()
+            mock_config.upload_temp_dir = "/tmp"
+            mock_get_config.return_value = mock_config
 
             mock_file = MagicMock()
             mock_file.exists.return_value = True
             mock_file.unlink.side_effect = Exception("Delete error")
             mock_path.return_value = mock_file
+            mock_path.glob.return_value = [mock_file]
 
             cleanup_task_files(task_id)
 
-            assert task_id not in _task_statuses
             mock_logger.error.assert_called_once()
 
 
@@ -783,7 +730,7 @@ class TestDataServiceIntegration:
              patch('mko_bi.services.data_service._validate_file'), \
              patch('mko_bi.services.data_service._save_uploaded_file') as mock_save, \
              patch('mko_bi.services.data_service._process_csv_file') as mock_process, \
-             patch('mko_bi.services.data_service._process_csv_file') as mock_process, \
+             patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_log_repo, \
              patch('mko_bi.services.data_service.uuid') as mock_uuid, \
              patch('mko_bi.services.data_service.Path') as mock_path:
 
@@ -792,9 +739,11 @@ class TestDataServiceIntegration:
             mock_check_access.return_value = True
             mock_uuid.uuid4.return_value = uuid.UUID('12345678-1234-5678-1234-567812345678')
             mock_save.return_value = Path("/tmp/test.csv.gz")
+
             mock_file = MagicMock()
             mock_file.exists.return_value = True
             mock_path.return_value = mock_file
+
             mock_process.return_value = {
                 "columns": ["category", "value"],
                 "rows": 2,
@@ -802,6 +751,14 @@ class TestDataServiceIntegration:
                 "processed_rows": 2,
                 "processed_columns": ["category", "value"],
             }
+
+            mock_log = MagicMock()
+            mock_log.id = uuid.uuid4()
+            mock_log.status = "uploaded"
+            mock_log.dashboard_id = 1
+            mock_log.message = "Файл test.csv.gz успешно загружен"
+            mock_log_repo.get_by_dashboard_and_status.return_value = [mock_log]
+            mock_log_repo.update.return_value = mock_log
 
             # Загрузка файла
             upload_result = upload_file(
@@ -816,17 +773,12 @@ class TestDataServiceIntegration:
             assert upload_result.status == "uploaded"
 
             # Запуск обработки
-            from mko_bi.services.data_service import _task_statuses
-            task_id = list(_task_statuses.keys())[0]
-
+            task_id = uuid.UUID('12345678-1234-5678-1234-567812345678')
             process_result = trigger_processing(task_id, 1, 2, db=db_session)
 
             assert isinstance(process_result, ProcessingStatus)
             assert process_result.status == "completed"
             assert process_result.progress == 100
-
-            # Получение результата
-            # Note: Task is cleaned up in finally block, so get_processing_result() will fail
 
 
 

@@ -159,14 +159,17 @@ class TestCreateUser:
         mock_user.role = UserRoleEnum.admin
         mock_user.created_at = "2026-04-27T17:30:00"
 
-        with patch('mko_bi.services.user_service.SessionLocal') as mock_session_local, \
+        with patch('mko_bi.db.session.get_session') as mock_get_session, \
              patch('mko_bi.services.user_service.UserRepository') as mock_repo, \
              patch('mko_bi.services.user_service.hash_password') as mock_hash, \
              patch('mko_bi.services.user_service._validate_role'), \
              patch('mko_bi.services.user_service.UserRepository.get_by_email', return_value=None):
 
             mock_session = MagicMock(spec=Session)
-            mock_session_local.return_value = mock_session
+            mock_context = MagicMock()
+            mock_context.__enter__ = MagicMock(return_value=mock_session)
+            mock_context.__exit__ = MagicMock(return_value=False)
+            mock_get_session.return_value = mock_context
             mock_repo.create.return_value = mock_user
             mock_hash.return_value = "$2b$12$hashedpassword"
 
@@ -174,7 +177,7 @@ class TestCreateUser:
 
             assert isinstance(result, UserRead)
             assert result.email == "autouser@example.com"
-            mock_session_local.assert_called_once()
+            mock_get_session.assert_called_once()
             mock_session.close.assert_called_once()
 
     def test_create_user_database_error_rolls_back(self, db_session):
@@ -213,17 +216,20 @@ class TestGetUserByEmail:
     def test_get_user_by_email_auto_session(self):
         """Получение пользователя с автоматическим созданием сессии."""
         mock_user = MagicMock(spec=user_model.User)
-        with patch('mko_bi.services.user_service.SessionLocal') as mock_session_local, \
+        with patch('mko_bi.db.session.get_session') as mock_get_session, \
              patch('mko_bi.services.user_service.UserRepository') as mock_repo:
 
             mock_session = MagicMock(spec=Session)
-            mock_session_local.return_value = mock_session
+            mock_context = MagicMock()
+            mock_context.__enter__ = MagicMock(return_value=mock_session)
+            mock_context.__exit__ = MagicMock(return_value=False)
+            mock_get_session.return_value = mock_context
             mock_repo.get_by_email.return_value = mock_user
 
             result = get_user_by_email("user@example.com")
 
             assert result == mock_user
-            mock_session_local.assert_called_once()
+            mock_get_session.assert_called_once()
             mock_session.close.assert_called_once()
 
 

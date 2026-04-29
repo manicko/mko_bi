@@ -1,16 +1,17 @@
 """Сервис аутентификации и регистрации пользователей.
 
 Предоставляет бизнес-логику для регистрации, аутентификации и авторизации
-пользователей в системе BI Dashboard.
+пользователей в системе BI Dashboard. Использует классовый подход.
 """
 
 import logging
 import re
 import time
+from typing import Any
 
 from sqlalchemy.orm import Session
 
-from mko_bi.core.security import create_access_token, hash_password, verify_password
+from mko_bi.core.security import create_access_token, hash_password, verify_password, decode_token
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.db.session import get_session
 from mko_bi.interfaces.service_interfaces import IAuthService
@@ -18,89 +19,6 @@ from mko_bi.models.user import UserRead, UserDB
 from mko_bi.models.user_roles import UserRoleEnum
 
 logger = logging.getLogger(__name__)
-
-
-class AuthService(IAuthService):
-    """Сервис аутентификации и регистрации пользователей.
-
-    Реализует интерфейс IAuthService.
-    """
-
-    def authenticate_user(self, email: str, password: str) -> dict[str, any] | None:
-        """Аутентифицирует пользователя по email и паролю.
-
-        Ищет пользователя по email и проверяет соответствие пароля.
-
-        Args:
-            email: Email пользователя.
-            password: Пароль в открытом виде.
-
-        Returns:
-            Dict с данными пользователя или None, если аутентификация не удалась.
-        """
-        logger.info("Attempting user authentication: %s", email)
-
-        with get_session() as db:
-            # Поиск пользователя по email
-            user_obj = UserRepository.get_by_email(email, db)
-
-            if user_obj is None:
-                logger.warning("User not found during authentication: %s", email)
-                return None
-
-            # Проверка пароля
-            if not verify_password(password, user_obj.password_hash):
-                logger.warning("Invalid password for user: %s", email)
-                return None
-
-            logger.info("User successfully authenticated: %s", email)
-
-            # Преобразование в Pydantic модель
-            user = UserDB.model_validate(user_obj)
-            return user.model_dump()
-
-    def create_access_token(self, user_id: int, role: UserRoleEnum) -> str:
-        """Создает JWT токен доступа для пользователя.
-
-        Args:
-            user_id: ID пользователя.
-            role: Роль пользователя.
-
-        Returns:
-            JWT токен доступа.
-        """
-        # Создание JWT токена
-        access_token = create_access_token(
-            data={
-                "user_id": user_id,
-                "role": role,
-            }
-        )
-
-        logger.info("Token created for user_id: %s", user_id)
-        return access_token
-
-    def verify_token(self, token: str) -> dict[str, any] | None:
-        """Проверяет JWT токен и возвращает данные пользователя.
-
-        Args:
-            token: JWT токен для проверки.
-
-        Returns:
-            Dict с данными из токена или None, если токен недействителен.
-        """
-        from mko_bi.core.security import decode_token
-        
-        payload = decode_token(token)
-        if payload is None:
-            logger.warning("Invalid token during verification")
-            return None
-        
-        logger.info("Token verified for user_id: %s", payload.get("user_id"))
-        return payload
-
-
-# Регулярное выражение для валидации email
 
 # Регулярное выражение для валидации email
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
@@ -110,291 +28,302 @@ EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 _login_attempts: dict[str, list[float]] = {}
 
 
-def _check_rate_limit(email: str) -> bool:
-    """Проверяет лимит попыток входа (rate limiting).
+class AuthService(IAuthService):
+    """Сервис аутентификации и регистрации пользователей.
 
-    Разрешает максимум 5 попыток входа в течение 60 секунд.
-
-    Args:
-        email: Email пользователя, пытающегося войти.
-
-    Returns:
-        bool: True, если попытка разрешена, False - если лимит превышен.
+    Реализует интерфейс IAuthService. Использует классовый подход
+    для всех операций аутентификации и регистрации.
     """
-    now = time.time()
-    window = 60  # 60 секунд
-    max_attempts = 5
 
-    if email not in _login_attempts:
-        _login_attempts[email] = []
+    def _check_rate_limit(self, email: str) -> bool:
+        """Проверяет лимит попыток входа (rate limiting).
 
-    # Очищаем старые попытки
-    _login_attempts[email] = [
-        attempt_time
-        for attempt_time in _login_attempts[email]
-        if now - attempt_time < window
-    ]
+        Разрешает максимум 5 попыток входа в течение 60 секунд.
 
-    if len(_login_attempts[email]) >= max_attempts:
-        logger.warning("Превышен лимит попыток входа для email: %s", email)
-        return False
+        Args:
+            email: Email пользователя, пытающегося войти.
 
-    _login_attempts[email].append(now)
-    return True
+        Returns:
+            bool: True, если попытка разрешена, False - если лимит превышен.
+        """
+        now = time.time()
+        window = 60
+        max_attempts = 5
 
+        if email not in _login_attempts:
+            _login_attempts[email] = []
 
-def _validate_role(role: str) -> None:
-    """Проверяет, что роль является допустимой.
+        _login_attempts[email] = [
+            attempt_time
+            for attempt_time in _login_attempts[email]
+            if now - attempt_time < window
+        ]
 
-    Args:
-        role: Роль пользователя для проверки.
+        if len(_login_attempts[email]) >= max_attempts:
+            logger.warning("Превышен лимит попыток входа для email: %s", email)
+            return False
 
-    Raises:
-        ValueError: Если роль не входит в список допустимых.
-    """
-    try:
-        UserRoleEnum(role)
-    except ValueError as err:
-        logger.error(
-            "Недопустимая роль: %s. Допустимые роли: %s",
-            role,
-            [e.value for e in UserRoleEnum],
-        )
-        raise ValueError(
-            f"Недопустимая роль: '{role}'. "
-            f"Допустимые значения: {', '.join([e.value for e in UserRoleEnum])}"
-        ) from err
+        _login_attempts[email].append(now)
+        return True
 
+    def _validate_role(self, role: str) -> None:
+        """Проверяет, что роль является допустимой.
 
-def _validate_email_format(email: str) -> str:
-    """Проверяет формат email с использованием регулярного выражения.
+        Args:
+            role: Роль пользователя для проверки.
 
-    Args:
-        email: Email для проверки.
-
-    Returns:
-        str: Валидный email.
-
-    Raises:
-        ValueError: Если email имеет некорректный формат.
-    """
-    if not EMAIL_REGEX.match(email):
-        logger.error("Некорректный формат email: %s", email)
-        raise ValueError(f"Некорректный формат email: '{email}'")
-    return email
-
-
-def _check_email_uniqueness(email: str, db: Session) -> None:
-    """Проверяет, что email не используется другим пользователем.
-
-    Args:
-        email: Email для проверки уникальности.
-        db: Сессия базы данных.
-
-    Raises:
-        ValueError: Если пользователь с таким email уже существует.
-    """
-    existing_user = UserRepository.get_by_email(email, db)
-    if existing_user is not None:
-        logger.warning("Попытка регистрации с существующим email: %s", email)
-        raise ValueError(f"Пользователь с email '{email}' уже существует")
-
-
-def register_user(
-    email: str, password: str, role: str, db: Session | None = None
-) -> UserRead:
-    """Регистрирует нового пользователя в системе.
-
-    Выполняет валидацию email и роли, проверяет уникальность email,
-    хеширует пароль и сохраняет пользователя в базе данных.
-    Операция выполняется в транзакции: если любая операция завершается
-    ошибкой, транзакция откатывается.
-
-    Args:
-        email: Email пользователя. Должен быть валидным и уникальным.
-        password: Пароль пользователя. Будет захеширован перед сохранением.
-        role: Роль пользователя. Допустимые значения: 'admin', 'editor', 'viewer'.
-        db: Опциональная сессия базы данных. Если не передана, создается новая.
-
-    Returns:
-        UserRead: Модель пользователя без пароля (с id и created_at).
-
-    Raises:
-        ValueError: Если email или роль некорректны, либо email уже занят.
-        SQLAlchemyError: При ошибке базы данных.
-    """
-    logger.info("Starting user registration: email=%s, role=%s", email, role)
-
-    # Валидация роли
-    _validate_role(role)
-
-    # Валидация формата email
-    _validate_email_format(email)
-
-    # Если сессия не передана, создаем новую
-    if db is None:
-        with get_session() as db:
-            return register_user(email, password, role, db)
-
-    try:
-        # Регистрация пользователя в транзакции
-        with db.begin():
-            # Проверка уникальности email
-            _check_email_uniqueness(email, db)
-
-            # Хеширование пароля
-            password_hash = hash_password(password)
-            logger.info("Password successfully hashed for user: %s", email)
-
-            # Создание пользователя
-            user_obj = UserRepository.create(
-                db=db,
-                email=email,
-                password_hash=password_hash,
-                role=role,
-            )
-
-            logger.info(
-                "User successfully registered: id=%s, email=%s, role=%s",
-                user_obj.id,
-                email,
+        Raises:
+            ValueError: Если роль не входит в список допустимых.
+        """
+        try:
+            UserRoleEnum(role)
+        except ValueError as err:
+            logger.error(
+                "Недопустимая роль: %s. Допустимые роли: %s",
                 role,
+                [e.value for e in UserRoleEnum],
             )
+            raise ValueError(
+                f"Недопустимая роль: '{role}'. "
+                f"Допустимые значения: {', '.join([e.value for e in UserRoleEnum])}"
+            ) from err
 
-        # Преобразование в Pydantic модель (без password_hash)
-        return UserRead.model_validate(user_obj)
+    def _validate_email_format(self, email: str) -> str:
+        """Проверяет формат email с использованием регулярного выражения.
 
-    except Exception as e:
-        logger.error("Error during user registration %s: %s", email, e)
-        raise
+        Args:
+            email: Email для проверки.
 
+        Returns:
+            str: Валидный email.
 
-def authenticate_user(
-    email: str, password: str, db: Session | None = None
-) -> UserDB | None:
-    """Аутентифицирует пользователя по email и паролю.
+        Raises:
+            ValueError: Если email имеет некорректный формат.
+        """
+        if not EMAIL_REGEX.match(email):
+            logger.error("Некорректный формат email: %s", email)
+            raise ValueError(f"Некорректный формат email: '{email}'")
+        return email
 
-    Ищет пользователя по email и проверяет соответствие пароля.
+    def _check_email_uniqueness(self, email: str, db: Session) -> None:
+        """Проверяет, что email не используется другим пользователем.
 
-    Args:
-        email: Email пользователя.
-        password: Пароль в открытом виде.
-        db: Опциональная сессия базы данных. Если не передана, создается новая.
+        Args:
+            email: Email для проверки уникальности.
+            db: Сессия базы данных.
 
-    Returns:
-        UserDB | None: Модель пользователя с хешем пароля, если аутентификация
-        успешна, иначе None.
-    """
-    logger.info("Attempting user authentication: %s", email)
+        Raises:
+            ValueError: Если пользователь с таким email уже существует.
+        """
+        existing_user = UserRepository.get_by_email(email, db)
+        if existing_user is not None:
+            logger.warning("Попытка регистрации с существующим email: %s", email)
+            raise ValueError(f"Пользователь с email '{email}' уже существует")
 
-    # Если сессия не передана, создаем новую
-    if db is None:
-        with get_session() as db:
-            return authenticate_user(email, password, db)
+    def register_user(
+        self, email: str, password: str, role: str, db: Session | None = None
+    ) -> UserRead:
+        """Регистрирует нового пользователя в системе.
 
-    # Поиск пользователя по email
-    user_obj = UserRepository.get_by_email(email, db)
+        Выполняет валидацию email и роли, проверяет уникальность email,
+        хеширует пароль и сохраняет пользователя в базе данных.
+        Операция выполняется в транзакции: если любая операция завершается
+        ошибкой, транзакция откатывается.
 
-    if user_obj is None:
-        logger.warning("User not found during authentication: %s", email)
-        return None
+        Args:
+            email: Email пользователя. Должен быть валидным и уникальным.
+            password: Пароль пользователя. Будет захеширован перед сохранением.
+            role: Роль пользователя. Допустимые значения: 'admin', 'editor', 'viewer'.
+            db: Опциональная сессия базы данных. Если не передана, создается новая.
 
-    # Проверка пароля
-    if not verify_password(password, user_obj.password_hash):
-        logger.warning("Invalid password for user: %s", email)
-        return None
+        Returns:
+            UserRead: Модель пользователя без пароля (с id и created_at).
 
-    logger.info("User successfully authenticated: %s", email)
+        Raises:
+            ValueError: Если email или роль некорректны, либо email уже занят.
+            SQLAlchemyError: При ошибке базы данных.
+        """
+        logger.info("Starting user registration: email=%s, role=%s", email, role)
 
-    # Преобразование в Pydantic модель
-    return UserDB.model_validate(user_obj)
+        self._validate_role(role)
+        self._validate_email_format(email)
 
+        if db is None:
+            with get_session() as db:
+                return self.register_user(email, password, role, db)
 
-def login_user(email: str, password: str, db: Session | None = None) -> dict:
-    """Выполняет вход пользователя и возвращает JWT токен.
+        try:
+            with db.begin():
+                self._check_email_uniqueness(email, db)
+                password_hash = hash_password(password)
+                logger.info("Password successfully hashed for user: %s", email)
 
-    Аутентифицирует пользователя и при успехе создает JWT токен доступа.
+                user_obj = UserRepository.create(
+                    db=db,
+                    email=email,
+                    password_hash=password_hash,
+                    role=role,
+                )
 
-    Args:
-        email: Email пользователя.
-        password: Пароль в открытом виде.
-        db: Опциональная сессия базы данных. Если не передана, создается новая.
+                logger.info(
+                    "User successfully registered: id=%s, email=%s, role=%s",
+                    user_obj.id,
+                    email,
+                    role,
+                )
 
-    Returns:
-        dict: Словарь с ключами:
-            - access_token: JWT токен доступа
-            - token_type: Тип токена (обычно "bearer")
-            - user_id: ID пользователя
-            - email: Email пользователя
-            - role: Роль пользователя
+            return UserRead.model_validate(user_obj)
 
-    Raises:
-        ValueError: Если аутентификация не удалась.
-    """
-    logger.info("Attempting user login: %s", email)
+        except Exception as e:
+            logger.error("Error during user registration %s: %s", email, e)
+            raise
 
-    # Аутентификация
-    user = authenticate_user(email, password, db)
+    def authenticate_user(
+        self, email: str, password: str, db: Session | None = None
+    ) -> UserDB | None:
+        """Аутентифицирует пользователя по email и паролю.
 
-    if user is None:
-        logger.warning("Failed login attempt (неверный email или пароль): %s", email)
-        raise ValueError("Неверный email или пароль")
+        Ищет пользователя по email и проверяет соответствие пароля.
 
-    # Создание JWT токена
-    access_token = create_access_token(
-        data={
+        Args:
+            email: Email пользователя.
+            password: Пароль в открытом виде.
+            db: Опциональная сессия базы данных. Если не передана, создается новая.
+
+        Returns:
+            UserDB | None: Модель пользователя с хешем пароля, если аутентификация
+            успешна, иначе None.
+        """
+        logger.info("Attempting user authentication: %s", email)
+
+        if db is None:
+            with get_session() as db:
+                return self.authenticate_user(email, password, db)
+
+        user_obj = UserRepository.get_by_email(email, db)
+
+        if user_obj is None:
+            logger.warning("User not found during authentication: %s", email)
+            return None
+
+        if not verify_password(password, user_obj.password_hash):
+            logger.warning("Invalid password for user: %s", email)
+            return None
+
+        logger.info("User successfully authenticated: %s", email)
+        return UserDB.model_validate(user_obj)
+
+    def login_user(
+        self, email: str, password: str, db: Session | None = None
+    ) -> dict[str, Any]:
+        """Выполняет вход пользователя и возвращает JWT токен.
+
+        Аутентифицирует пользователя и при успехе создает JWT токен доступа.
+
+        Args:
+            email: Email пользователя.
+            password: Пароль в открытом виде.
+            db: Опциональная сессия базы данных. Если не передана, создается новая.
+
+        Returns:
+            dict: Словарь с ключами:
+                - access_token: JWT токен доступа
+                - token_type: Тип токена (обычно "bearer")
+                - user_id: ID пользователя
+                - email: Email пользователя
+                - role: Роль пользователя
+
+        Raises:
+            ValueError: Если аутентификация не удалась.
+        """
+        logger.info("Attempting user login: %s", email)
+
+        user = self.authenticate_user(email, password, db)
+
+        if user is None:
+            logger.warning("Failed login attempt (неверный email или пароль): %s", email)
+            raise ValueError("Неверный email или пароль")
+
+        access_token = self.create_access_token(user.id, user.role)
+
+        logger.info("User successfully logged in: %s", email)
+
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
             "user_id": user.id,
             "email": user.email,
             "role": user.role,
         }
-    )
 
-    logger.info("User successfully logged in: %s", email)
+    def refresh_token(
+        self, user_id: Any, email: str, role: str, db: Session | None = None
+    ) -> dict[str, Any]:
+        """Обновляет JWT токен доступа.
 
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user_id": user.id,
-        "email": user.email,
-        "role": user.role,
-    }
+        Создает новый JWT токен доступа на основе данных пользователя.
 
+        Args:
+            user_id: ID пользователя.
+            email: Email пользователя.
+            role: Роль пользователя.
+            db: Опциональная сессия базы данных (не используется, но сохранен для совместимости).
 
-def refresh_token(user_id: int, email: str, role: str, db: Session | None = None) -> dict:
-    """Обновляет JWT токен доступа.
+        Returns:
+            dict: Словарь с ключами:
+                - access_token: JWT токен доступа
+                - token_type: Тип токена (обычно "bearer")
+                - user_id: ID пользователя
+                - email: Email пользователя
+                - role: Роль пользователя
+        """
+        logger.info("Refreshing token for user_id: %s", user_id)
 
-    Создает новый JWT токен доступа на основе данных пользователя.
+        access_token = self.create_access_token(user_id, role)
 
-    Args:
-        user_id: ID пользователя.
-        email: Email пользователя.
-        role: Роль пользователя.
-        db: Опциональная сессия базы данных (не используется, но сохранен для совместимости).
+        logger.info("Token refreshed for user_id: %s", user_id)
 
-    Returns:
-        dict: Словарь с ключами:
-            - access_token: JWT токен доступа
-            - token_type: Тип токена (обычно "bearer")
-            - user_id: ID пользователя
-            - email: Email пользователя
-            - role: Роль пользователя
-    """
-    logger.info("Refreshing token for user_id: %s", user_id)
-
-    access_token = create_access_token(
-        data={
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
             "user_id": user_id,
             "email": email,
             "role": role,
         }
-    )
 
-    logger.info("Token refreshed for user_id: %s", user_id)
+    def create_access_token(self, user_id: Any, role: Any) -> str:
+        """Создает JWT токен доступа для пользователя.
 
-    return {
-        "access_token": access_token,
-        "token_type": "bearer",
-        "user_id": user_id,
-        "email": email,
-        "role": role,
-    }
+        Args:
+            user_id: ID пользователя.
+            role: Роль пользователя.
+
+        Returns:
+            JWT токен доступа.
+        """
+        access_token = create_access_token(
+            data={
+                "user_id": user_id,
+                "role": role,
+            }
+        )
+
+        logger.info("Token created for user_id: %s", user_id)
+        return access_token  # type: ignore[no-any-return]
+
+    def verify_token(self, token: str) -> dict[str, Any] | None:
+        """Проверяет JWT токен и возвращает данные пользователя.
+
+        Args:
+            token: JWT токен для проверки.
+
+        Returns:
+            Dict с данными из токена или None, если токен недействителен.
+        """
+        payload = decode_token(token)
+        if payload is None:
+            logger.warning("Invalid token during verification")
+            return None
+
+        logger.info("Token verified for user_id: %s", payload.get("user_id"))
+        return payload  # type: ignore[no-any-return]
