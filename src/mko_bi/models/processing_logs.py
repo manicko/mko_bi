@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 from uuid import UUID
 
 from mko_bi.models.user_roles import ProcessingStatusEnum
@@ -8,7 +8,7 @@ from mko_bi.models.user_roles import ProcessingStatusEnum
 class ProcessingLogBase(BaseModel):
     """Базовая модель для логов обработки."""
 
-    dashboard_id: UUID | None = None
+    dashboard_id: int | UUID | None = None
     status: ProcessingStatusEnum
     message: str | None = None
     started_at: datetime | None = None

@@ -155,7 +155,7 @@ C:\py_exp\mko_bi
 │   │   ├── TASK_005_unify_auth_service_DONE.md
 │   │   ├── TASK_006_fix_deps_coupling_DONE.md
 │   │   ├── TASK_007_create_graph_service_DONE.md
-│   │   ├── TASK_008_fix_db_sessions.md
+│   │   ├── TASK_008_fix_db_sessions_DONE.md
 │   │   ├── TASK_009_fix_ruff_errors.md
 │   │   ├── TASK_010_replace_any_types.md
 │   │   ├── TASK_011_remove_dead_code.md
