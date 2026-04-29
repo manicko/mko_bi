@@ -77,6 +77,7 @@ C:\py_exp\mko_bi
 │       │   │   ├── aggregated_data_repo.py
 │       │   │   ├── dashboard_repo.py
 │       │   │   ├── filter_repo.py
+│       │   │   ├── graph_repo.py
 │       │   │   ├── processing_config_repo.py
 │       │   │   ├── processing_log_repo.py
 │       │   │   └── user_repo.py
@@ -107,6 +108,7 @@ C:\py_exp\mko_bi
 │       │   ├── dashboard_service.py
 │       │   ├── data_service.py
 │       │   ├── filter_service.py
+│       │   ├── graph_service.py
 │       │   ├── processing_config_service.py
 │       │   ├── processing_log_service.py
 │       │   └── user_service.py
@@ -152,7 +154,7 @@ C:\py_exp\mko_bi
 │   │   ├── TASK_004_mypy_config_DONE.md
 │   │   ├── TASK_005_unify_auth_service_DONE.md
 │   │   ├── TASK_006_fix_deps_coupling_DONE.md
-│   │   ├── TASK_007_create_graph_service.md
+│   │   ├── TASK_007_create_graph_service_DONE.md
 │   │   ├── TASK_008_fix_db_sessions.md
 │   │   ├── TASK_009_fix_ruff_errors.md
 │   │   ├── TASK_010_replace_any_types.md

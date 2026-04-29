@@ -146,6 +146,24 @@ class IFilterRepository(IRepository):
         pass
 
 
+class IGraphRepository(IRepository):
+    """Интерфейс репозитория графиков."""
+
+    @abc.abstractmethod
+    def get_by_dashboard_id(
+        self, dashboard_id: UUID, db: Session
+    ) -> list[Any]:
+        """Получить графики по ID дашборда."""
+        pass
+
+    @abc.abstractmethod
+    def get_by_name_and_dashboard(
+        self, name: str, dashboard_id: UUID, db: Session
+    ) -> Any | None:
+        """Получить график по имени и ID дашборда."""
+        pass
+
+
 class IProcessingConfigRepository(IRepository):
     """Интерфейс репозитория настроек обработки."""
 
