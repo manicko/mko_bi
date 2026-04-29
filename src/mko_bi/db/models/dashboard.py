@@ -1,6 +1,5 @@
 from datetime import datetime
 from uuid import uuid4, UUID
-from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     DateTime,

@@ -3,7 +3,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 from uuid import UUID
 
-from mko_bi.models.user_roles import GraphTypeEnum, BarmodeEnum, OrientationEnum, YoyModeEnum
+from mko_bi.models.user_roles import GraphTypeEnum, BarmodeEnum, OrientationEnum
 
 
 class DataUpload(BaseModel):

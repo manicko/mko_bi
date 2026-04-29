@@ -5,7 +5,6 @@
 
 import logging
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -52,7 +51,7 @@ def update_log_status(
     db: Session,
     log_id: UUID,
     status_update: ProcessingLogUpdate,
-) -> Optional[ProcessingLogRead]:
+) -> ProcessingLogRead | None:
     """Обновляет статус лога обработки.
 
     Args:
@@ -91,7 +90,7 @@ def update_log_status(
 def get_log(
     db: Session,
     log_id: UUID,
-) -> Optional[ProcessingLogRead]:
+) -> ProcessingLogRead | None:
     """Получает лог обработки по ID.
 
     Args:
@@ -112,10 +111,10 @@ def get_log(
 
 def get_logs(
     db: Session,
-    dashboard_id: Optional[UUID] = None,
-    status: Optional[str] = None,
-    start_date: Optional[datetime] = None,
-    end_date: Optional[datetime] = None,
+    dashboard_id: UUID | None = None,
+    status: str | None = None,
+    start_date: datetime | None = None,
+    end_date: datetime | None = None,
     skip: int = 0,
     limit: int = 100,
 ) -> list[ProcessingLogRead]:

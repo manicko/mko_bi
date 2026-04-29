@@ -7,6 +7,8 @@ C:\py_exp\mko_bi
 │   └── tmp_uploads
 ├── DB_STRUCTURE.md
 ├── DBSTR.md
+├── interfaces
+│   └── service_interfaces.py
 ├── nginx
 │   └── nginx.conf
 ├── 'Pydantic TASKS.md'
@@ -81,6 +83,9 @@ C:\py_exp\mko_bi
 │       │   └── session.py
 │       ├── Docerfile
 │       ├── docker-compose.yml
+│       ├── interfaces_old
+│       │   ├── repository_interfaces.py
+│       │   └── service_interfaces.py
 │       ├── logging_config.py
 │       ├── main.py
 │       ├── models
@@ -136,64 +141,26 @@ C:\py_exp\mko_bi
 │   ├── test_storage_manager.py
 │   └── test_upload_api.py
 ├── TODO
-│   ├── DEV_PLAN.md
-│   ├── old
-│   │   ├── PLAN.md
-│   │   ├── TASK_001_config_CHECKED.md
-│   │   ├── TASK_002_base_models_DONE.md
-│   │   ├── TASK_003_pydantic_models.md
-│   │   ├── TASK_004_repositories_DONE.md
-│   │   ├── TASK_005_security_DONE.md
-│   │   ├── TASK_006_auth_service_DONE.md
-│   │   ├── TASK_007_user_service.md
-│   │   ├── TASK_008_dashboard_service.md
-│   │   ├── TASK_009_permissions_CHECKED.md
-│   │   ├── TASK_010_auth_api_DONE.md
-│   │   ├── TASK_011_users_api_DONE.md
-│   │   ├── TASK_012_dashboards_api.md
-│   │   ├── TASK_013_upload_api_DONE.md
-│   │   ├── TASK_014_data_api_DONE.md
-│   │   ├── TASK_015_data_loader_DONE.md
-│   │   ├── TASK_016_data_processing_DONE.md
-│   │   ├── TASK_017_data_storage_DONE.md
-│   │   ├── TASK_018_dashboard_base_DONE.md
-│   │   ├── TASK_019_chart_components_DONE.md
-│   │   ├── TASK_020_dashboard_impl_DONE.md
-│   │   ├── TASK_021_main_app_DONE.md
-│   │   ├── TASK_022_utils_DONE.md
-│   │   ├── TASK_023_tests_models_repos_DONE.md
-│   │   ├── TASK_024_tests_services.md
-│   │   ├── TASK_025_tests_api.md
-│   │   ├── TASK_026_tests_data_pipeline.md
-│   │   ├── TASK_030_mdmodel_refactor_plan.md
-│   │   └── TASK_031_mdmodel_refactor_plan_DONE.md
-│   ├── TASK_033_analysis_report.md
+│   ├── DEV
+│   │   ├── TASK_051_di_and_interfaces.md
+│   │   ├── TASK_052_fix_linting_and_types.md
+│   │   ├── TASK_053_error_handling.md
+│   │   ├── TASK_054_manage_global_state.md
+│   │   ├── TASK_056_base_classes_and_utils.md
+│   │   ├── TASK_058_integration_tests.md
+│   │   ├── TASK_059_alembic_migrations.md
+│   │   ├── TASK_060_implement_yoy.md
+│   │   └── TASK_061_calculate_shares.md
 │   ├── TASK_033_audit.md
 │   ├── TASK_034_audit.md
 │   ├── TASK_036_audit_tz.md
-│   ├── TASK_036_tz_audit.md
 │   ├── TASK_037_test_audit.md
 │   ├── TASK_037_test_audit1.md
-│   ├── TASK_037_test_audit_report.md
-│   ├── TASK_038_cleanup_files_DONE.md
-│   ├── TASK_039_dash_app_DONE.md
-│   ├── TASK_040_create_missing_tables_DONE.md
-│   ├── TASK_041_add_gin_index_DONE.md
-│   ├── TASK_042_remove_hardcoded_secrets_DONE.md
-│   ├── TASK_043_implement_yoy.md
-│   ├── TASK_044_calculate_shares.md
-│   ├── TASK_045_filters_api_DONE.md
-│   ├── TASK_046_processing_configs_api_DONE.md
-│   ├── TASK_047_processing_logs_api_DONE.md
-│   ├── TASK_048_save_aggregated_data_DONE.md
-│   ├── TASK_049_database_transactions_DONE.md
-│   ├── TASK_050_refactor_business_logic_DONE.md
-│   ├── TASK_051_di_and_interfaces.md
-│   ├── TASK_052_fix_linting_and_types.md
-│   ├── TASK_053_error_handling.md
-│   ├── TASK_054_manage_global_state.md
-│   ├── TASK_055_security_enhancements.md
-│   ├── TASK_056_base_classes_and_utils.md
-│   ├── TASK_058_integration_tests.md
-│   └── TASK_059_alembic_migrations.md
+│   └── TEST
+│       ├── TASK_038_repository_integration_tests.md
+│       ├── TASK_039_security_tests.md
+│       ├── TASK_040_file_upload_edge_cases.md
+│       ├── TASK_041_aggregation_accuracy.md
+│       ├── TASK_042_yoy_accuracy.md
+│       └── TASK_043_rbac_access_control.md
 └── uv.lock

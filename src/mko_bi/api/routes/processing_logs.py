@@ -1,7 +1,6 @@
 """Маршруты для работы с логами обработки."""
 
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -127,19 +126,19 @@ async def update_log_status_endpoint(
     description="Получает список логов обработки с возможностью фильтрации.",
 )
 async def get_logs_endpoint(
-    dashboard_id: Optional[UUID] = Query(
+    dashboard_id: UUID | None = Query(
         None,
         description="Фильтр по ID дашборда",
     ),
-    status: Optional[str] = Query(
+    status: str | None = Query(
         None,
         description="Фильтр по статусу (started, success, failed)",
     ),
-    start_date: Optional[datetime] = Query(
+    start_date: datetime | None = Query(
         None,
         description="Фильтр по начальной дате",
     ),
-    end_date: Optional[datetime] = Query(
+    end_date: datetime | None = Query(
         None,
         description="Фильтр по конечной дате",
     ),

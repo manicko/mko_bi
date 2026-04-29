@@ -2,6 +2,8 @@
 
 Предоставляет бизнес-логику для регистрации, аутентификации и авторизации
 пользователей в системе BI Dashboard.
+
+Реализует интерфейс IAuthService для внедрения зависимостей.
 """
 
 import logging
@@ -11,12 +13,114 @@ import time
 from mko_bi.core.security import create_access_token, hash_password, verify_password
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.db.session import Session, SessionLocal
+from mko_bi.interfaces import IAuthService
 from mko_bi.models.user import UserRead, UserDB
 from mko_bi.models.user_roles import UserRoleEnum
-from mko_bi.services.user_service import get_user_by_id
 
 logger = logging.getLogger(__name__)
 
+
+# Допустимые роли берем из UserRoleEnum
+
+# Регулярное выражение для валидации email
+EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+
+# Rate limiting storage (in-memory, для простоты)
+# В production использовать Redis или аналог
+_login_attempts: dict[str, list[float]] = {}
+
+
+class AuthService(IAuthService):
+    """Сервис аутентификации и регистрации пользователей.
+    
+    Реализует интерфейс IAuthService.
+    """
+
+    def authenticate_user(self, email: str, password: str) -> dict[str, any] | None:
+        """Аутентифицирует пользователя по email и паролю.
+
+        Ищет пользователя по email и проверяет соответствие пароля.
+
+        Args:
+            email: Email пользователя.
+            password: Пароль в открытом виде.
+
+        Returns:
+            Dict с данными пользователя или None, если аутентификация не удалась.
+        """
+        logger.info("Attempting user authentication: %s", email)
+
+        db = SessionLocal()
+        local_session = True
+
+        try:
+            # Поиск пользователя по email
+            user_obj = UserRepository.get_by_email(email, db)
+
+            if user_obj is None:
+                logger.warning("User not found during authentication: %s", email)
+                return None
+
+            # Проверка пароля
+            if not verify_password(password, user_obj.password_hash):
+                logger.warning("Invalid password for user: %s", email)
+                return None
+
+            logger.info("User successfully authenticated: %s", email)
+
+            # Преобразование в Pydantic модель
+            user = UserDB.model_validate(user_obj)
+            return user.model_dump()
+
+        except Exception as e:
+            logger.error("Error during user authentication %s: %s", email, e)
+            raise
+        finally:
+            if local_session:
+                db.close()
+
+    def create_access_token(self, user_id: int, role: UserRoleEnum) -> str:
+        """Создает JWT токен доступа для пользователя.
+
+        Args:
+            user_id: ID пользователя.
+            role: Роль пользователя.
+
+        Returns:
+            JWT токен доступа.
+        """
+        # Создание JWT токена
+        access_token = create_access_token(
+            data={
+                "user_id": user_id,
+                "role": role,
+            }
+        )
+
+        logger.info("Token created for user_id: %s", user_id)
+        return access_token
+
+    def verify_token(self, token: str) -> dict[str, any] | None:
+        """Проверяет JWT токен и возвращает данные пользователя.
+
+        Args:
+            token: JWT токен для проверки.
+
+        Returns:
+            Dict с данными из токена или None, если токен недействителен.
+        """
+        from mko_bi.core.security import decode_token
+        
+        payload = decode_token(token)
+        if payload is None:
+            logger.warning("Invalid token during verification")
+            return None
+        
+        logger.info("Token verified for user_id: %s", payload.get("user_id"))
+        return payload
+
+
+# --- Старые функции для обратной совместимости ---
 
 # Допустимые роли берем из UserRoleEnum
 
@@ -316,17 +420,18 @@ def login_user(email: str, password: str, db: Session | None = None) -> dict:
 
 
 def refresh_token(user_id: int, email: str, role: str, db: Session | None = None) -> dict:
-    """Обновляет JWT токен доступа для пользователя.
-
+    """Обновляет JWT токен доступа.
+    
     Создает новый JWT токен доступа на основе данных пользователя.
-    Используется для обновления истекших токенов.
-
+    В текущей реализации используется тот же механизм JWT,
+    что и для создания токена.
+    
     Args:
         user_id: ID пользователя.
         email: Email пользователя.
         role: Роль пользователя.
-        db: Опциональная сессия базы данных. Если передана, проверяет существование пользователя.
-
+        db: Опциональная сессия базы данных (не используется, но сохранен для совместимости).
+    
     Returns:
         dict: Словарь с ключами:
             - access_token: JWT токен доступа
@@ -334,25 +439,14 @@ def refresh_token(user_id: int, email: str, role: str, db: Session | None = None
             - user_id: ID пользователя
             - email: Email пользователя
             - role: Роль пользователя
-
-    Raises:
-        ValueError: Если пользователь не найден (при переданной сессии).
-
+    
     Example:
-        >>> result = refresh_token(1, "user@example.com", "viewer")
-        >>> "access_token" in result
+        >>> token_data = refresh_token(1, "user@example.com", "viewer")
+        >>> "access_token" in token_data
         True
     """
     logger.info("Refreshing token for user_id: %s", user_id)
-
-    # Если передана сессия, проверяем существование пользователя
-    if db is not None:
-        user = get_user_by_id(user_id, db)
-        if user is None:
-            logger.warning("User not found during token refresh: %s", user_id)
-            raise ValueError("Пользователь не найден")
-
-    # Создание JWT токена
+    
     access_token = create_access_token(
         data={
             "user_id": user_id,
@@ -360,9 +454,9 @@ def refresh_token(user_id: int, email: str, role: str, db: Session | None = None
             "role": role,
         }
     )
-
-    logger.info("Token successfully refreshed for user_id: %s", user_id)
-
+    
+    logger.info("Token refreshed for user_id: %s", user_id)
+    
     return {
         "access_token": access_token,
         "token_type": "bearer",

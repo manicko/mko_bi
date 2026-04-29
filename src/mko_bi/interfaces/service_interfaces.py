@@ -1,13 +1,14 @@
 """Абстрактные интерфейсы для сервисов.
 
 Определяет контракты для всех сервисов в системе.
+Используются для внедрения зависимостей и разрыва циклических импортов.
 """
 
 import abc
 from typing import Any
 from uuid import UUID
 
-from src.mko_bi.models.user_roles import UserRoleEnum
+from mko_bi.models.user_roles import UserRoleEnum
 
 
 class IAuthService(abc.ABC):
@@ -94,46 +95,6 @@ class IDashboardService(abc.ABC):
     @abc.abstractmethod
     def delete_dashboard(self, dashboard_id: UUID) -> bool:
         """Удалить дашборд."""
-        pass
-
-
-class IGraphService(abc.ABC):
-    """Интерфейс сервиса графиков."""
-
-    @abc.abstractmethod
-    def create_graph(
-        self,
-        dashboard_id: UUID,
-        name: str,
-        graph_type: str,
-        config: dict[str, Any]
-    ) -> dict[str, Any]:
-        """Создать новый график."""
-        pass
-
-    @abc.abstractmethod
-    def get_graph_by_id(self, graph_id: UUID) -> dict[str, Any] | None:
-        """Получить график по ID."""
-        pass
-
-    @abc.abstractmethod
-    def get_graph_by_name_and_dashboard(self, name: str, dashboard_id: UUID) -> dict[str, Any] | None:
-        """Получить график по имени и ID дашборда."""
-        pass
-
-    @abc.abstractmethod
-    def get_graphs_by_dashboard(self, dashboard_id: UUID) -> list[dict[str, Any]]:
-        """Получить все графики дашборда."""
-        pass
-
-    @abc.abstractmethod
-    def update_graph(self, graph_id: UUID, config: dict[str, Any]) -> bool:
-        """Обновить график."""
-        pass
-
-    @abc.abstractmethod
-    def delete_graph(self, graph_id: UUID) -> bool:
-        """Удалить график."""
         pass
 
 

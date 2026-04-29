@@ -11,7 +11,8 @@
 """
 
 import logging
-from typing import Annotated, Generator
+from typing import Annotated
+from collections.abc import Generator
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -27,6 +28,35 @@ from mko_bi.core.permissions import (
 )
 from mko_bi.db.session import SessionLocal
 from mko_bi.models.user import UserDB
+from mko_bi.interfaces import (
+    IUserRepository,
+    IDashboardRepository,
+    IAccessRepository,
+    IAggregatedDataRepository,
+    IFilterRepository,
+    IProcessingConfigRepository,
+    IProcessingLogRepository,
+    IAuthService,
+    IUserService,
+    IDashboardService,
+    IFilterService,
+    IDataService,
+    IProcessingConfigService,
+    IProcessingLogService,
+)
+from mko_bi.db.repositories import (
+    UserRepository,
+    DashboardRepository,
+    AccessRepository,
+    AggregatedDataRepository,
+    FilterRepository,
+    ProcessingConfigRepository,
+    ProcessingLogRepository,
+)
+from mko_bi.services import (
+    AuthService,
+    UserService,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -54,6 +84,185 @@ def get_db() -> Generator[Session, None, None]:
         yield db
     finally:
         db.close()
+
+
+# --- Dependency Injection для репозиториев ---
+
+
+def get_user_repository(db: Session = Depends(get_db)) -> IUserRepository:
+    """DI фабрика для получения репозитория пользователей.
+    
+    Args:
+        db: Сессия базы данных.
+        
+    Returns:
+        IUserRepository: Реализация репозитория пользователей.
+    """
+    return UserRepository()
+
+
+def get_dashboard_repository(db: Session = Depends(get_db)) -> IDashboardRepository:
+    """DI фабрика для получения репозитория дашбордов.
+    
+    Args:
+        db: Сессия базы данных.
+        
+    Returns:
+        IDashboardRepository: Реализация репозитория дашбордов.
+    """
+    return DashboardRepository()
+
+
+def get_access_repository(db: Session = Depends(get_db)) -> IAccessRepository:
+    """DI фабрика для получения репозитория прав доступа.
+    
+    Args:
+        db: Сессия базы данных.
+        
+    Returns:
+        IAccessRepository: Реализация репозитория прав доступа.
+    """
+    return AccessRepository()
+
+
+def get_aggregated_data_repository(db: Session = Depends(get_db)) -> IAggregatedDataRepository:
+    """DI фабрика для получения репозитория агрегированных данных.
+    
+    Args:
+        db: Сессия базы данных.
+        
+    Returns:
+        IAggregatedDataRepository: Реализация репозитория агрегированных данных.
+    """
+    return AggregatedDataRepository()
+
+
+def get_filter_repository(db: Session = Depends(get_db)) -> IFilterRepository:
+    """DI фабрика для получения репозитория фильтров.
+    
+    Args:
+        db: Сессия базы данных.
+        
+    Returns:
+        IFilterRepository: Реализация репозитория фильтров.
+    """
+    return FilterRepository()
+
+
+def get_processing_config_repository(db: Session = Depends(get_db)) -> IProcessingConfigRepository:
+    """DI фабрика для получения репозитория настроек обработки.
+    
+    Args:
+        db: Сессия базы данных.
+        
+    Returns:
+        IProcessingConfigRepository: Реализация репозитория настроек обработки.
+    """
+    return ProcessingConfigRepository()
+
+
+def get_processing_log_repository(db: Session = Depends(get_db)) -> IProcessingLogRepository:
+    """DI фабрика для получения репозитория логов обработки.
+    
+    Args:
+        db: Сессия базы данных.
+        
+    Returns:
+        IProcessingLogRepository: Реализация репозитория логов обработки.
+    """
+    return ProcessingLogRepository()
+
+
+# --- Dependency Injection для сервисов ---
+
+
+def get_auth_service(db: Session = Depends(get_db)) -> IAuthService:
+    """DI фабрика для получения сервиса аутентификации.
+    
+    Args:
+        db: Сессия базы данных.
+        
+    Returns:
+        IAuthService: Реализация сервиса аутентификации.
+    """
+    return AuthService()
+
+
+def get_user_service(db: Session = Depends(get_db)) -> IUserService:
+    """DI фабрика для получения сервиса пользователей.
+    
+    Args:
+        db: Сессия базы данных.
+        
+    Returns:
+        IUserService: Реализация сервиса пользователей.
+    """
+    return UserService()
+
+
+def get_dashboard_service(db: Session = Depends(get_db)) -> IDashboardService:
+    """DI фабрика для получения сервиса дашбордов.
+    
+    Args:
+        db: Сессия базы данных.
+        
+    Returns:
+        IDashboardService: Реализация сервиса дашбордов.
+    """
+    from mko_bi.services.dashboard_service import DashboardService
+    return DashboardService()
+
+
+def get_filter_service(db: Session = Depends(get_db)) -> IFilterService:
+    """DI фабрика для получения сервиса фильтров.
+    
+    Args:
+        db: Сессия базы данных.
+        
+    Returns:
+        IFilterService: Реализация сервиса фильтров.
+    """
+    from mko_bi.services.filter_service import FilterService
+    return FilterService()
+
+
+def get_data_service(db: Session = Depends(get_db)) -> IDataService:
+    """DI фабрика для получения сервиса данных.
+    
+    Args:
+        db: Сессия базы данных.
+        
+    Returns:
+        IDataService: Реализация сервиса данных.
+    """
+    from mko_bi.services.data_service import DataService
+    return DataService()
+
+
+def get_processing_config_service(db: Session = Depends(get_db)) -> IProcessingConfigService:
+    """DI фабрика для получения сервиса настроек обработки.
+    
+    Args:
+        db: Сессия базы данных.
+        
+    Returns:
+        IProcessingConfigService: Реализация сервиса настроек обработки.
+    """
+    from mko_bi.services.processing_config_service import ProcessingConfigService
+    return ProcessingConfigService()
+
+
+def get_processing_log_service(db: Session = Depends(get_db)) -> IProcessingLogService:
+    """DI фабрика для получения сервиса логов обработки.
+    
+    Args:
+        db: Сессия базы данных.
+        
+    Returns:
+        IProcessingLogService: Реализация сервиса логов обработки.
+    """
+    from mko_bi.services.processing_log_service import ProcessingLogService
+    return ProcessingLogService()
 
 
 # --- Аутентификация ---
