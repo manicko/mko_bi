@@ -3,21 +3,20 @@
 Предоставляет декораторы для замера времени, повторных попыток,
 логирования и проверки прав доступа.
 """
+# type: ignore[valid-type, name-defined, misc]  # PEP 695 syntax not yet supported by mypy
 
 import functools
 import logging
 import time
 from collections.abc import Callable
-from typing import Any, TypeVar, cast
+from typing import Any, ParamSpec, TypeVar, cast
 
 from mko_bi.models.user_roles import UserRoleEnum
 
 logger = logging.getLogger(__name__)
 
-F = TypeVar("F", bound=Callable[..., Any])
 
-
-def timing(func: F) -> F:
+def timing[P: ParamSpec, T: TypeVar](func: Callable[P, T]) -> Callable[P, T]:
     """Декоратор для замера времени выполнения функции.
 
     Логирует время выполнения функции в миллисекундах.
@@ -35,7 +34,7 @@ def timing(func: F) -> F:
     """
 
     @functools.wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> Any:
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
         start = time.perf_counter()
         result = func(*args, **kwargs)
         elapsed = (time.perf_counter() - start) * 1000
@@ -44,14 +43,14 @@ def timing(func: F) -> F:
         )
         return result
 
-    return cast(F, wrapper)
+    return cast(Callable[P, T], wrapper)
 
 
-def retry(
+def retry[P: ParamSpec, T: TypeVar](
     max_attempts: int = 3,
     delay: float = 1.0,
     exceptions: tuple[type[Exception], ...] = (Exception,),
-) -> Callable[[F], F]:
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Декоратор для повторных попыток при ошибке.
 
     Args:
@@ -69,9 +68,9 @@ def retry(
             pass
     """
 
-    def decorator(func: F) -> F:
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             last_exception = None
             for attempt in range(1, max_attempts + 1):
                 try:
@@ -96,14 +95,14 @@ def retry(
             )
             raise last_exception
 
-        return cast(F, wrapper)
+        return cast(Callable[P, T], wrapper)
 
     return decorator
 
 
-def log_execution(
+def log_execution[P: ParamSpec, T: TypeVar](
     log_args: bool = True, log_result: bool = False
-) -> Callable[[F], F]:
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Декоратор для логирования выполнения функции.
 
     Args:
@@ -119,9 +118,9 @@ def log_execution(
             return data
     """
 
-    def decorator(func: F) -> F:
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             if log_args:
                 logger.info(
                     "Вызов %s с args=%s, kwargs=%s",
@@ -145,12 +144,12 @@ def log_execution(
                 )
                 raise
 
-        return cast(F, wrapper)
+        return cast(Callable[P, T], wrapper)
 
     return decorator
 
 
-def require_role(required_role: str | UserRoleEnum) -> Callable[[F], F]:
+def require_role[P: ParamSpec, T: TypeVar](required_role: str | UserRoleEnum) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Декоратор для проверки роли пользователя.
 
     Args:
@@ -165,9 +164,9 @@ def require_role(required_role: str | UserRoleEnum) -> Callable[[F], F]:
             pass
     """
 
-    def decorator(func: F) -> F:
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             # Ожидаем, что user передается как аргумент или keyword аргумент
             user = kwargs.get("user") or (args[0] if args else None)
 
@@ -202,14 +201,14 @@ def require_role(required_role: str | UserRoleEnum) -> Callable[[F], F]:
 
             return func(*args, **kwargs)
 
-        return cast(F, wrapper)
+        return cast(Callable[P, T], wrapper)
 
     return decorator
 
 
-def error_handler(
+def error_handler[P: ParamSpec, T: TypeVar](
     fallback_value: Any = None, log_error: bool = True
-) -> Callable[[F], F]:
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Декоратор для обработки ошибок с fallback значением.
 
     Args:
@@ -226,9 +225,9 @@ def error_handler(
             pass
     """
 
-    def decorator(func: F) -> F:
+    def decorator(func: Callable[P, T]) -> Callable[P, T]:
         @functools.wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> Any:
+        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
             try:
                 return func(*args, **kwargs)
             except Exception as e:
@@ -238,6 +237,6 @@ def error_handler(
                     )
                 return fallback_value
 
-        return cast(F, wrapper)
+        return cast(Callable[P, T], wrapper)
 
     return decorator

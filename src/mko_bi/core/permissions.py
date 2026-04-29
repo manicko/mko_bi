@@ -24,6 +24,8 @@ from mko_bi.core.security import decode_token
 from mko_bi.db.repositories.access_repo import AccessRepository
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.db.session import get_session
+from mko_bi.models.user import UserDB
+from mko_bi.models.user_roles import PermissionEnum, UserRoleEnum
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -40,8 +42,6 @@ def get_db() -> Generator[Session, None, None]:
         finally:
             # Явное закрытие для гарантии
             db.close()
-from mko_bi.models.user import UserDB
-from mko_bi.models.user_roles import PermissionEnum, UserRoleEnum
 
 logger = logging.getLogger(__name__)
 
@@ -100,9 +100,9 @@ def _get_role_level(role: str) -> int:
     try:
         role_enum = UserRoleEnum(role)
         return ROLE_LEVELS[role_enum]
-    except ValueError:
+    except ValueError as err:
         logger.error("Неизвестная роль: %s", role)
-        raise ValueError(f"Неизвестная роль: '{role}'")
+        raise ValueError(f"Неизвестная роль: '{role}'") from err
 
 
 # --- Основные функции проверки прав ---

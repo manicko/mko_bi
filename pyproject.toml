@@ -121,7 +121,6 @@ ignore = [
     # optionally ignore import-sort warning which is handled by isort:
     "I001",  # "Import block is unsorted or unformatted" if you prefer isort to run
 ]
-
 # Specific ruff.isort-related options (only ruff-supported keys)
 # Note: do NOT set profile here (ruff doesn't accept "profile" key)
 [tool.ruff.lint.isort]
@@ -145,8 +144,10 @@ preview = true
 
 # MyPy config (project-level)
 [tool.mypy]
-# If sources live in package root, mypy_path not needed; if you use src/ layout set mypy_path.
-# mypy_path = "./src"
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
 follow_imports = "silent"
 strict_optional = true
 warn_redundant_casts = true
@@ -155,6 +156,14 @@ disallow_any_generics = true
 check_untyped_defs = true
 no_implicit_reexport = true
 ignore_missing_imports = true
+namespace_packages = false
+mypy_path = "src"
+
+[mypy."mko_bi.*"]
+ignore_missing_imports = true
+
+[tool.mypy."mko_bi.utils.decorators"]
+ignore_errors = true
 
 [tool.pytest.ini_options]
 minversion = "8.0"
@@ -173,7 +182,6 @@ pythonpath = ["src"]
 markers = [
     "slow: marks tests as slow (use -m slow to run)",
 ]
-
 
 [dependency-groups]
 dev = [
