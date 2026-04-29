@@ -12,7 +12,7 @@ from mko_bi.core.security import (
     decode_token,
     _truncate_password,
 )
-from mko_bi.config import config
+from mko_bi.config import get_config
 
 
 class TestTruncatePassword:
@@ -220,9 +220,9 @@ class TestDecodeToken:
         # Создаем токен с правильным ключом
         token = create_access_token({"user_id": 1})
         # Пытаемся декодировать с другим ключом (имитация ошибки)
-        with patch("mko_bi.core.security.config") as mock_config:
-            mock_config.JWT_SECRET_KEY = "wrong_secret"
-            mock_config.JWT_ALGORITHM = "HS256"
+        with patch("mko_bi.core.security.get_config") as mock_get_config:
+            mock_get_config.return_value.JWT_SECRET_KEY = "wrong_secret"
+            mock_get_config.return_value.JWT_ALGORITHM = "HS256"
             result = decode_token(token)
             assert result is None
 
@@ -240,8 +240,8 @@ class TestDecodeToken:
         payload = {"user_id": 1}
         token = jwt.encode(
             payload,
-            config.JWT_SECRET_KEY,
-            algorithm=config.JWT_ALGORITHM,
+            get_config().JWT_SECRET_KEY,
+            algorithm=get_config().JWT_ALGORITHM,
         )
         decoded = decode_token(token)
         assert decoded is not None

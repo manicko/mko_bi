@@ -13,7 +13,7 @@ from pydantic import ValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from mko_bi.api import routes
-from mko_bi.config import config
+from mko_bi.config import get_config
 from mko_bi.logging_config import setup_logging
 
 # Настройка логирования
@@ -30,6 +30,7 @@ def create_app() -> FastAPI:
         FastAPI: Сконфигурированное приложение FastAPI.
     """
     # Создаем приложение
+    config = get_config()
     application = FastAPI(
         title=config.APP_NAME,
         description="BI Dashboard System API",

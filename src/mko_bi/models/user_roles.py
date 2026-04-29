@@ -47,3 +47,13 @@ class FilterTypeEnum(StrEnum):
     multiselect = "multiselect"
     range = "range"
     date = "date"
+
+
+class ProcessingStatusEnum(StrEnum):
+    """Статусы обработки данных."""
+    started = "started"
+    uploaded = "uploaded"
+    processing = "processing"
+    success = "success"
+    failed = "failed"
+    completed = "completed"

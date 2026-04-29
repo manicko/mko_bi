@@ -34,8 +34,12 @@ class TestGetDB:
     """Тесты зависимости get_db."""
 
     def test_get_db_yields_session(self):
-        """get_db должна возвращать сессию."""
+        """get_db должна возвращать генератор сессии."""
         db_gen = get_db()
+        # Проверяем, что это генератор
+        assert hasattr(db_gen, '__iter__')
+        assert hasattr(db_gen, '__next__')
+        # Получаем сессию
         session = next(db_gen)
         assert isinstance(session, Session)
         # Закрываем генератор

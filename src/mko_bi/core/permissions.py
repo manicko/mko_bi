@@ -12,6 +12,7 @@ viewer только читать.
 
 import logging
 from functools import lru_cache
+from collections.abc import Generator
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -22,7 +23,23 @@ from sqlalchemy.orm import Session
 from mko_bi.core.security import decode_token
 from mko_bi.db.repositories.access_repo import AccessRepository
 from mko_bi.db.repositories.user_repo import UserRepository
-from mko_bi.db.session import SessionLocal
+from mko_bi.db.session import get_session
+
+
+def get_db() -> Generator[Session, None, None]:
+    """FastAPI зависимость для получения сессии базы данных.
+    
+    Создает новую сессию для каждого запроса и закрывает её после завершения.
+    
+    Yields:
+        Session: Сессия SQLAlchemy.
+    """
+    with get_session() as db:
+        try:
+            yield db
+        finally:
+            # Явное закрытие для гарантии
+            db.close()
 from mko_bi.models.user import UserDB
 from mko_bi.models.user_roles import PermissionEnum, UserRoleEnum
 
@@ -134,45 +151,36 @@ def check_role(user_role: str, required_role: str) -> bool:
 def check_dashboard_access(
     user_id: UUID,
     dashboard_id: UUID,
-    required_permission: str = "read",
+    required_permission: str = "view",
     db: Session | None = None,
 ) -> bool:
-    """Проверить, есть ли у пользователя доступ к дашборду.
-
-    Проверяет наличие записи в таблице доступа и достаточность
-    уровня разрешения.
+    """Проверяет, есть ли у пользователя доступ к дашборду.
 
     Args:
-        user_id: ID пользователя.
-        dashboard_id: ID дашборда.
-        required_permission: Требуемый уровень доступа (read/write/admin).
-            По умолчанию "read".
+        user_id: Идентификатор пользователя.
+        dashboard_id: Идентификатор дашборда.
+        required_permission: Требуемый уровень доступа (view/edit/admin).
         db: Сессия базы данных. Если не передана, создается новая.
 
     Returns:
-        bool: True, если доступ есть и достаточен, иначе False.
-
-    Raises:
-        ValueError: Если передан неизвестный уровень доступа.
+        True, если доступ есть, иначе False.
     """
-    # Нормализуем "read" в "view" и "write" в "edit" для совместимости
-    if required_permission == "read":
-        required_permission = "view"
-    elif required_permission == "write":
-        required_permission = "edit"
+    logger.info(
+        "Проверка доступа: user_id=%s, dashboard_id=%s, required=%s",
+        user_id,
+        dashboard_id,
+        required_permission,
+    )
 
-    # Проверяем, что уровень доступа корректен
-    try:
-        PermissionEnum(required_permission)
-    except ValueError:
+    # Валидация требуемого разрешения
+    if required_permission not in [e.value for e in PermissionEnum]:
         raise ValueError(
-            f"Неизвестный уровень доступа: '{required_permission}'. "
             f"Допустимые значения: {[e.value for e in PermissionEnum]}"
         )
 
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session()
         local_session = True
 
     try:
@@ -262,7 +270,7 @@ def get_current_user(
     """
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session()
         local_session = True
 
     try:
@@ -305,7 +313,7 @@ security = HTTPBearer()
 
 def get_current_user_dependency(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(SessionLocal),
+    db: Session = Depends(get_db),
 ) -> UserDB:
     """FastAPI зависимость для получения текущего пользователя.
 
@@ -410,7 +418,7 @@ def require_dashboard_access(
     def access_checker(
         dashboard_id: UUID,
         user: UserDB = Depends(get_current_user_dependency),
-        db: Session = Depends(SessionLocal),
+    db: Session = Depends(get_db),
     ) -> UserDB:
         """Проверяет доступ пользователя к дашборду."""
         if not check_dashboard_access(

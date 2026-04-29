@@ -13,7 +13,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from mko_bi.db.models import aggregated_data as aggregated_data_model
 from mko_bi.db.models import graphs as graphs_model
-from mko_bi.db.session import SessionLocal
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -30,7 +30,7 @@ class AggregatedDataRepository:
     @classmethod
     def bulk_insert(
         cls,
-        db: SessionLocal,
+        db: Session,
         dashboard_id: int,
         aggregates: list[dict[str, Any]],
         clear_old: bool = True,
@@ -116,7 +116,7 @@ class AggregatedDataRepository:
 
     @classmethod
     def delete_by_dashboard(
-        cls, db: SessionLocal, dashboard_id: int
+        cls, db: Session, dashboard_id: int
     ) -> int:
         """Удаляет все агрегированные данные для дашборда.
 
@@ -154,7 +154,7 @@ class AggregatedDataRepository:
 
     @classmethod
     def delete_by_graph(
-        cls, db: SessionLocal, graph_id: UUID
+        cls, db: Session, graph_id: UUID
     ) -> int:
         """Удаляет агрегированные данные для конкретного графика.
 
@@ -191,7 +191,7 @@ class AggregatedDataRepository:
 
     @classmethod
     def get_by_graph(
-        cls, db: SessionLocal, graph_id: UUID
+        cls, db: Session, graph_id: UUID
     ) -> list[aggregated_data_model.AggregatedData]:
         """Получает агрегированные данные для конкретного графика.
 
@@ -228,7 +228,7 @@ class AggregatedDataRepository:
 
     @classmethod
     def get_by_dashboard(
-        cls, db: SessionLocal, dashboard_id: int
+        cls, db: Session, dashboard_id: int
     ) -> list[aggregated_data_model.AggregatedData]:
         """Получает все агрегированные данные для дашборда.
 
@@ -267,7 +267,7 @@ class AggregatedDataRepository:
     @classmethod
     def _validate_graphs_exist(
         cls,
-        db: SessionLocal,
+        db: Session,
         graph_ids: set[UUID],
         dashboard_id: int,
     ) -> None:
@@ -299,10 +299,11 @@ class AggregatedDataRepository:
             )
 
     @classmethod
-    def get_session(cls) -> SessionLocal:
+    def get_session(cls) -> Session:
         """Создать и вернуть новую сессию базы данных.
 
         Returns:
-            Новая сессия SessionLocal.
+            Новая сессия.
         """
-        return SessionLocal()
+        from mko_bi.db.session import get_session
+        return get_session()

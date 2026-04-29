@@ -203,24 +203,31 @@ class TestCheckDashboardAccess:
     def test_creates_session_if_none(self, mocker):
         """Функция должна создавать сессию, если она не передана."""
         mock_session = MagicMock()
-        mocker.patch("mko_bi.core.permissions.SessionLocal", return_value=mock_session)
         mock_check = mocker.patch.object(
             AccessRepository, "check_access", return_value="view"
         )
+        # Мокаем get_session, чтобы он возвращал контекстный менеджер с мокнутой сессией
+        mock_session_context = MagicMock()
+        mock_session_context.__enter__ = MagicMock(return_value=mock_session)
+        mock_session_context.__exit__ = MagicMock(return_value=None)
+        mocker.patch("mko_bi.core.permissions.get_session", return_value=mock_session_context)
 
         result = check_dashboard_access(
             user_id=1, dashboard_id=1, required_permission="view", db=None
         )
 
         assert result is True
-        mock_session.close.assert_called_once()
         mock_check.assert_called_once()
 
     def test_closes_session_if_created(self, mocker):
         """Функция должна закрывать созданную сессию."""
         mock_session = MagicMock()
-        mocker.patch("mko_bi.core.permissions.SessionLocal", return_value=mock_session)
         mocker.patch.object(AccessRepository, "check_access", return_value="view")
+        # Мокаем get_session, чтобы он возвращал контекстный менеджер с мокнутой сессией
+        mock_session_context = MagicMock()
+        mock_session_context.__enter__ = MagicMock(return_value=mock_session)
+        mock_session_context.__exit__ = MagicMock(return_value=None)
+        mocker.patch("mko_bi.core.permissions.get_session", return_value=mock_session_context)
 
         result = check_dashboard_access(
             user_id=1, dashboard_id=1, required_permission="view", db=None
@@ -303,7 +310,11 @@ class TestGetCurrentUser:
         mock_session = MagicMock()
         mock_user = MagicMock(spec=UserDB)
 
-        mocker.patch("mko_bi.core.permissions.SessionLocal", return_value=mock_session)
+        # Мокаем get_session, чтобы он возвращал контекстный менеджер с мокнутой сессией
+        mock_session_context = MagicMock()
+        mock_session_context.__enter__ = MagicMock(return_value=mock_session)
+        mock_session_context.__exit__ = MagicMock(return_value=None)
+        mocker.patch("mko_bi.core.permissions.get_session", return_value=mock_session_context)
         mocker.patch(
             "mko_bi.core.permissions._decode_token_cached",
             return_value={"user_id": 1},
@@ -314,6 +325,7 @@ class TestGetCurrentUser:
 
         assert result == mock_user
         mock_session.close.assert_called_once()
+
 
 
 class TestRequireRole:

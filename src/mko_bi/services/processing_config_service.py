@@ -12,14 +12,12 @@ from uuid import UUID
 
 from mko_bi.db.repositories.processing_config_repo import ProcessingConfigRepository
 from mko_bi.core.permissions import check_dashboard_access
-from mko_bi.db.session import SessionLocal
+from sqlalchemy.orm import Session
+from mko_bi.db.session import get_session
 from mko_bi.models.processing_configs import (
     ProcessingConfigRead,
 )
 from mko_bi.models.dashboard import DashboardRead
-
-if TYPE_CHECKING:
-    from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -188,7 +186,7 @@ def create_or_update_config(
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -270,7 +268,7 @@ def get_config(
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -337,7 +335,7 @@ def update_config(
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:

@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from mko_bi.db.models import processing_configs as processing_config_model
-from mko_bi.db.session import SessionLocal
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class ProcessingConfigRepository:
     """
 
     @classmethod
-    def get(cls, dashboard_id: UUID, db: SessionLocal) -> processing_config_model.ProcessingConfig | None:
+    def get(cls, dashboard_id: UUID, db: Session) -> processing_config_model.ProcessingConfig | None:
         """Получить настройки обработки по ID дашборда.
 
         Args:
@@ -54,7 +54,7 @@ class ProcessingConfigRepository:
             raise
 
     @classmethod
-    def get_all(cls, db: SessionLocal) -> list[processing_config_model.ProcessingConfig]:
+    def get_all(cls, db: Session) -> list[processing_config_model.ProcessingConfig]:
         """Получить все настройки обработки.
 
         Args:
@@ -75,7 +75,7 @@ class ProcessingConfigRepository:
             raise
 
     @classmethod
-    def create(cls, db: SessionLocal, **kwargs) -> processing_config_model.ProcessingConfig | None:
+    def create(cls, db: Session, **kwargs) -> processing_config_model.ProcessingConfig | None:
         """Создать новые настройки обработки.
 
         Args:
@@ -103,7 +103,7 @@ class ProcessingConfigRepository:
 
     @classmethod
     def update(
-        cls, dashboard_id: UUID, db: SessionLocal, **kwargs
+        cls, dashboard_id: UUID, db: Session, **kwargs
     ) -> processing_config_model.ProcessingConfig | None:
         """Обновить настройки обработки.
 
@@ -139,7 +139,7 @@ class ProcessingConfigRepository:
             raise
 
     @classmethod
-    def delete(cls, dashboard_id: UUID, db: SessionLocal) -> bool:
+    def delete(cls, dashboard_id: UUID, db: Session) -> bool:
         """Удалить настройки обработки.
 
         Args:
@@ -170,10 +170,11 @@ class ProcessingConfigRepository:
             raise
 
     @classmethod
-    def get_session(cls) -> SessionLocal:
+    def get_session(cls) -> Session:
         """Создать и вернуть новую сессию базы данных.
 
         Returns:
-            Новая сессия SessionLocal.
+            Новая сессия.
         """
-        return SessionLocal()
+        from mko_bi.db.session import get_session
+        return get_session()

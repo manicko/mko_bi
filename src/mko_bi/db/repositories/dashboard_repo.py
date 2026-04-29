@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from mko_bi.db.models import dashboard as dashboard_model
-from mko_bi.db.session import SessionLocal
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ class DashboardRepository:
 
     @classmethod
     def get(
-        cls, dashboard_id: UUID, db: SessionLocal
+        cls, dashboard_id: UUID, db: Session
     ) -> dashboard_model.Dashboard | None:
         """Получить дашборд по ID.
 
@@ -57,7 +57,7 @@ class DashboardRepository:
 
     @classmethod
     def get_by_user(
-        cls, user_id: UUID, db: SessionLocal
+        cls, user_id: UUID, db: Session
     ) -> list[dashboard_model.Dashboard]:
         """Получить все дашборды, доступные пользователю.
 
@@ -97,7 +97,7 @@ class DashboardRepository:
             raise
 
     @classmethod
-    def create(cls, db: SessionLocal, **kwargs) -> dashboard_model.Dashboard | None:
+    def create(cls, db: Session, **kwargs) -> dashboard_model.Dashboard | None:
         """Создать новый дашборд.
 
         Args:
@@ -125,7 +125,7 @@ class DashboardRepository:
 
     @classmethod
     def update(
-        cls, dashboard_id: UUID, db: SessionLocal, **kwargs
+        cls, dashboard_id: UUID, db: Session, **kwargs
     ) -> dashboard_model.Dashboard | None:
         """Обновить данные дашборда.
 
@@ -161,7 +161,7 @@ class DashboardRepository:
             raise
 
     @classmethod
-    def delete(cls, dashboard_id: UUID, db: SessionLocal) -> bool:
+    def delete(cls, dashboard_id: UUID, db: Session) -> bool:
         """Удалить дашборд.
 
         Args:
@@ -192,16 +192,17 @@ class DashboardRepository:
             raise
 
     @classmethod
-    def get_session(cls) -> SessionLocal:
+    def get_session(cls) -> Session:
         """Создать и вернуть новую сессию базы данных.
 
         Returns:
-            Новая сессия SessionLocal.
+            Новая сессия.
         """
-        return SessionLocal()
+        from mko_bi.db.session import get_session
+        return get_session()
 
     @classmethod
-    def get_all(cls, db: SessionLocal) -> list[dashboard_model.Dashboard]:
+    def get_all(cls, db: Session) -> list[dashboard_model.Dashboard]:
         """Получить все дашборды.
 
         Args:

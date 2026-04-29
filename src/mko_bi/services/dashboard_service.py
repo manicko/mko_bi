@@ -12,7 +12,7 @@ from mko_bi.db.models import dashboard as dashboard_model
 from mko_bi.db.repositories.access_repo import AccessRepository
 from mko_bi.db.repositories.dashboard_repo import DashboardRepository
 from sqlalchemy.orm import Session
-from mko_bi.db.session import SessionLocal
+from mko_bi.db.session import get_session
 from mko_bi.models.dashboard import (
     DashboardConfig,
     DashboardRead,
@@ -162,7 +162,7 @@ def create_dashboard(
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -238,7 +238,7 @@ def get_dashboard(
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -302,7 +302,7 @@ def get_user_dashboards(user_id: int, db: Session | None = None) -> list[Dashboa
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -364,7 +364,7 @@ def update_dashboard(
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -423,7 +423,7 @@ def delete_dashboard(dashboard_id: int, db: Session | None = None) -> bool:
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -484,7 +484,7 @@ def grant_access(
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:

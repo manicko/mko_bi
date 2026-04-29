@@ -32,6 +32,8 @@ C:\py_exp\mko_bi
 │       ├── app.py
 │       ├── config.py
 │       ├── core
+│       │   ├── base_repository.py
+│       │   ├── base_service.py
 │       │   ├── permissions.py
 │       │   └── security.py
 │       ├── dash_app.py
@@ -83,6 +85,9 @@ C:\py_exp\mko_bi
 │       │   └── session.py
 │       ├── Docerfile
 │       ├── docker-compose.yml
+│       ├── interfaces
+│       │   ├── repository_interfaces.py
+│       │   └── service_interfaces.py
 │       ├── interfaces_old
 │       │   ├── repository_interfaces.py
 │       │   └── service_interfaces.py
@@ -109,9 +114,11 @@ C:\py_exp\mko_bi
 │       ├── settings
 │       │   └── app.yaml
 │       └── utils
+│           ├── decorators.py
 │           ├── exceptions.py
 │           ├── file_utils.py
-│           └── time_utils.py
+│           ├── time_utils.py
+│           └── validators.py
 ├── STRUCT.md
 ├── TASK_TEMPLATE.md
 ├── TASKS.md
@@ -123,8 +130,6 @@ C:\py_exp\mko_bi
 │   │   ├── test_data_service.py
 │   │   └── test_user_service.py
 │   ├── test_base_models.py
-│   ├── test_chart_components.py
-│   ├── test_dashboard_base.py
 │   ├── test_dashboards_api.py
 │   ├── test_data_api.py
 │   ├── test_data_loader.py
@@ -153,7 +158,6 @@ C:\py_exp\mko_bi
 │   │   └── TASK_061_calculate_shares.md
 │   ├── TASK_033_audit.md
 │   ├── TASK_034_audit.md
-│   ├── TASK_036_audit_tz.md
 │   ├── TASK_037_test_audit.md
 │   ├── TASK_037_test_audit1.md
 │   └── TEST

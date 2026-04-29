@@ -15,12 +15,12 @@ import polars as pl
 from sqlalchemy import Float, Integer
 from sqlalchemy.orm import Session
 
-from mko_bi.config import config
+from mko_bi.config import get_config
 from mko_bi.core.permissions import check_dashboard_access
 from mko_bi.db.repositories.aggregated_data_repo import AggregatedDataRepository
 from mko_bi.db.repositories.dashboard_repo import DashboardRepository
 from mko_bi.db.repositories.processing_log_repo import ProcessingLogRepository
-from mko_bi.db.session import SessionLocal
+from mko_bi.db.session import get_session
 from mko_bi.models.data import (
     AggregatedData,
     ProcessingConfig,
@@ -28,11 +28,9 @@ from mko_bi.models.data import (
     ProcessingStatus,
     UploadResponse,
 )
+from mko_bi.models.processing_logs import ProcessingLogCreate, ProcessingLogUpdate
 
 logger = logging.getLogger(__name__)
-
-# Хранилище статусов задач (в production использовать Redis или БД)
-_task_statuses: dict[uuid.UUID, dict[str, Any]] = {}
 
 
 def _validate_file(filename: str, file_content: bytes) -> None:
@@ -47,6 +45,8 @@ def _validate_file(filename: str, file_content: bytes) -> None:
     Raises:
         ValueError: Если файл не соответствует требованиям.
     """
+    config = get_config()
+    
     # Проверка формата файла
     allowed_types = config.allowed_file_types
     if not any(filename.lower().endswith(ext.lower()) for ext in allowed_types):
@@ -77,21 +77,26 @@ def _validate_file(filename: str, file_content: bytes) -> None:
     logger.info("Файл успешно валидирован: %s (%d байт)", filename, len(file_content))
 
 
-def _save_uploaded_file(filename: str, file_content: bytes) -> Path:
+def _save_uploaded_file(filename: str, file_content: bytes, dashboard_id: int | None = None) -> Path:
     """Сохраняет загруженный файл во временную директорию.
 
     Args:
         filename: Имя файла.
         file_content: Содержимое файла.
+        dashboard_id: Опциональный ID дашборда для идентификации файла.
 
     Returns:
         Path: Путь к сохраненному файлу.
     """
+    config = get_config()
     upload_dir = Path(config.upload_temp_dir)
     upload_dir.mkdir(parents=True, exist_ok=True)
 
-    # Генерируем уникальное имя файла
-    unique_filename = f"{uuid.uuid4()}_{filename}"
+    # Генерируем уникальное имя файла с учетом dashboard_id для поиска
+    if dashboard_id:
+        unique_filename = f"{uuid.uuid4()}_{dashboard_id}_{filename}"
+    else:
+        unique_filename = f"{uuid.uuid4()}_{filename}"
     file_path = upload_dir / unique_filename
 
     with open(file_path, "wb") as f:
@@ -124,7 +129,6 @@ def _process_csv_file(
     logger.info("Начало обработки файла: %s", file_path)
 
     # Читаем gzipped CSV
-
     df = pl.read_csv(file_path)
 
     logger.info("Файл прочитан: %d строк, %d колонок", df.shape[0], df.shape[1])
@@ -277,15 +281,10 @@ def upload_file(
         user_id,
     )
 
-    # Проверка прав доступа
-    local_session = False
-    if db is None:
-        db = SessionLocal()
-        local_session = True
-
-    try:
+    # Используем контекстный менеджер для сессии
+    with get_session() as db_session:
         # Проверяем существование дашборда
-        dashboard = DashboardRepository.get(dashboard_id, db)
+        dashboard = DashboardRepository.get(dashboard_id, db_session)
         if dashboard is None:
             logger.warning("Дашборд не найден: id=%d", dashboard_id)
             raise ValueError(f"Дашборд с id={dashboard_id} не найден")
@@ -295,7 +294,7 @@ def upload_file(
             user_id=user_id,
             dashboard_id=dashboard_id,
             required_permission="edit",
-            db=db,
+            db=db_session,
         )
         if not has_access:
             logger.warning(
@@ -305,48 +304,37 @@ def upload_file(
             )
             raise PermissionError("Недостаточно прав для загрузки файла")
 
-        # Валидация файла
-        _validate_file(filename, file_content)
+    # Валидация файла
+    _validate_file(filename, file_content)
 
-        # Сохранение файла
-        file_path = _save_uploaded_file(filename, file_content)
+    # Сохранение файла
+    _save_uploaded_file(filename, file_content, dashboard_id)
 
-        # Создание задачи
-        task_id = uuid.uuid4()
-        task_data = {
-            "task_id": task_id,
-            "filename": filename,
-            "dashboard_id": dashboard_id,
-            "status": "uploaded",
-            "progress": 0,
-            "message": "File uploaded successfully",
-            "uploaded_at": datetime.now(),
-            "started_at": None,
-            "completed_at": None,
-            "file_path": str(file_path),
-            "user_id": user_id,
-        }
-        _task_statuses[task_id] = task_data
+    # Создание задачи
+    task_id = uuid.uuid4()
+    uploaded_at = datetime.now()
 
-        logger.info("Файл успешно загружен: task_id=%s, filename=%s", task_id, filename)
-
-        return UploadResponse(
-            task_id=task_id,
-            filename=filename,
+    # Создаем запись лога обработки в БД
+    with get_session() as db_session:
+        log_create = ProcessingLogCreate(
             dashboard_id=dashboard_id,
             status="uploaded",
-            message="File uploaded successfully",
-            uploaded_at=task_data["uploaded_at"],
+            message=f"Файл {filename} успешно загружен",
+            started_at=uploaded_at,
         )
+        processing_log = ProcessingLogRepository.create(db_session, **log_create.model_dump())
+        logger.info("Лог обработки создан в БД: id=%s", processing_log.id)
 
-    except (ValueError, PermissionError):
-        raise
-    except Exception as e:
-        logger.error("Ошибка при загрузке файла: %s", e)
-        raise
-    finally:
-        if local_session:
-            db.close()
+    logger.info("Файл успешно загружен: task_id=%s, filename=%s", task_id, filename)
+
+    return UploadResponse(
+        task_id=task_id,
+        filename=filename,
+        dashboard_id=dashboard_id,
+        status="uploaded",
+        message="File uploaded successfully",
+        uploaded_at=uploaded_at,
+    )
 
 
 def trigger_processing(
@@ -379,18 +367,14 @@ def trigger_processing(
         user_id,
     )
 
-    local_session = False
-    if db is None:
-        db = SessionLocal()
-        local_session = True
-
-    try:
+    # Используем контекстный менеджер для сессии
+    with get_session() as db_session:
         # Проверка прав доступа
         has_access = check_dashboard_access(
             user_id=user_id,
             dashboard_id=dashboard_id,
             required_permission="edit",
-            db=db,
+            db=db_session,
         )
         if not has_access:
             logger.warning(
@@ -400,91 +384,122 @@ def trigger_processing(
             )
             raise PermissionError("Недостаточно прав для обработки данных")
 
-        # Проверка существования задачи
-        if task_id not in _task_statuses:
-            logger.warning("Задача не найдена: task_id=%s", task_id)
-            raise ValueError(f"Задача с id={task_id} не найдена")
+        # Проверяем, есть ли лог обработки для этого дашборда
+        logs = ProcessingLogRepository.get_by_dashboard_and_status(
+            db_session, dashboard_id, ["uploaded", "processing"]
+        )
+        
+        if not logs:
+            logger.warning("Задача не найдена: dashboard_id=%d", dashboard_id)
+            raise ValueError(f"Задача для дашборда с id={dashboard_id} не найдена")
 
-        task_data = _task_statuses[task_id]
-
-        # Проверка статуса задачи
-        if task_data["status"] in ["processing", "completed"]:
+        # Берем последний лог
+        processing_log = logs[-1]
+        
+        # Проверяем статус
+        if processing_log.status in ["processing", "success"]:
             logger.warning(
-                "Невозможно запустить обработку: задача уже %s", task_data["status"]
+                "Невозможно запустить обработку: задача уже %s", processing_log.status
             )
-            raise ValueError(f"Задача уже находится в статусе '{task_data['status']}'")
+            raise ValueError(f"Задача уже находится в статусе '{processing_log.status}'")
 
-        # Обновление статуса
-        task_data["status"] = "processing"
-        task_data["progress"] = 10
-        task_data["message"] = "Processing started"
-        task_data["started_at"] = datetime.now()
+        # Обновление статуса в логе
+        started_at = datetime.now()
+        log_update = ProcessingLogUpdate(
+            status="processing",
+            message="Запуск обработки задачи",
+            started_at=started_at,
+        )
+        ProcessingLogRepository.update(
+            db_session, processing_log.id, **log_update.model_dump(exclude_unset=True)
+        )
+        logger.info("Обработка запущена: log_id=%s", processing_log.id)
 
-        logger.info("Обработка запущена: task_id=%s", task_id)
+    # Выполнение обработки
+    try:
+        # Получаем информацию о загруженном файле из лога
+        # Ищем файл во временной директории
+        config = get_config()
+        upload_dir = Path(config.upload_temp_dir)
+        
+        # Ищем файлы для этого дашборда
+        csv_files = list(upload_dir.glob(f"*_{dashboard_id}_*.csv.gz"))
+        if not csv_files:
+            # Ищем любые недавние CSV файлы
+            csv_files = list(upload_dir.glob("*.csv.gz"))
+            csv_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+        
+        if not csv_files:
+            raise FileNotFoundError(f"Файл для дашборда {dashboard_id} не найден")
+        
+        file_path = csv_files[0]
+        
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
 
-        # Создаем запись лога обработки в БД
-        processing_log = None
-        try:
-            from mko_bi.models.processing_logs import ProcessingLogCreate
-            
-            log_create = ProcessingLogCreate(
-                dashboard_id=dashboard_id,
-                status="started",
-                message=f"Запуск обработки задачи {task_id}",
-                started_at=task_data["started_at"],
-            )
-            processing_log = ProcessingLogRepository.create(db, **log_create.model_dump())
-            logger.info("Лог обработки создан в БД: id=%s", processing_log.id)
-        except Exception as e:
-            logger.warning("Не удалось создать лог обработки в БД: %s", e)
+        # Обработка файла
+        result_data = _process_csv_file(
+            file_path,
+            processing_config,
+            dashboard_id=dashboard_id,
+            db=None,  # Не передаем db здесь, сохранение отдельно
+        )
 
-        # Выполнение обработки
-        try:
-            file_path = Path(task_data["file_path"])
-            if not file_path.exists():
-                raise FileNotFoundError(f"File not found: {file_path}")
-
-            # Обновление прогресса
-            task_data["progress"] = 30
-
-            # Обработка файла
-            result_data = _process_csv_file(
-                file_path,
-                processing_config,
-                dashboard_id=dashboard_id,
-                db=db,
-            )
-
-            # Сохранение агрегированных данных в БД
-            if processing_config and result_data.get("processed_rows", 0) > 0:
-                try:
-                    # Собираем агрегированные данные для сохранения
+        # Сохранение агрегированных данных в БД
+        if processing_config and result_data.get("processed_rows", 0) > 0:
+            try:
+                with get_session() as save_db:
                     # Получаем графики дашборда
                     from mko_bi.db.models import graphs as graphs_model
                     
                     graphs = (
-                        db.query(graphs_model.Graph)
+                        save_db.query(graphs_model.Graph)
                         .filter(graphs_model.Graph.dashboard_id == dashboard_id)
                         .all()
                     )
                     
-                    if graphs:
+                    if graphs and processing_config.groupby and processing_config.aggregations:
                         # Подготавливаем данные для каждого графика
                         aggregates: list[dict[str, Any]] = []
-                        for _graph in graphs:
-                            # Получаем соответствующие данные из результата обработки
-                            # Для простоты сохраняем данные на основе группировки
-                            if processing_config.groupby and processing_config.aggregations:
-                                # Создаем записи для каждой уникальной комбинации измерений
-                                # В реальной реализации здесь нужно преобразовать
-                                # результаты группировки в формат агрегатов
-                                pass
+                        
+                        # Получаем данные из обработанного файла
+                        df = pl.DataFrame(result_data.get("preview", []))
+                        
+                        if not df.is_empty():
+                            # Для каждого графика создаем агрегаты
+                            for graph in graphs:
+                                # Используем результаты обработки
+                                # Преобразуем данные в соответствии с настройками графика
+                                for row in df.to_dicts():
+                                    dims = {}
+                                    metrics = {}
+                                    
+                                    # Заполняем измерения
+                                    for col in processing_config.groupby or []:
+                                        if col in row:
+                                            dims[col] = row[col]
+                                    
+                                    # Заполняем метрики
+                                    for agg in processing_config.aggregations:
+                                        field = agg.get("field")
+                                        agg_type = agg.get("type")
+                                        if field and field in row:
+                                            metric_name = f"{field}_{agg_type}"
+                                            metrics[metric_name] = row.get(metric_name, row[field])
+                                    
+                                    if dims and metrics:
+                                        aggregates.append({
+                                            "graph_id": str(graph.id),
+                                            "dashboard_id": dashboard_id,
+                                            "dims": dims,
+                                            "metrics": metrics,
+                                        })
                         
                         # Сохраняем агрегаты через репозиторий в транзакции
                         if aggregates:
-                            with db.begin():
+                            with save_db.begin():
                                 saved_count = AggregatedDataRepository.bulk_insert(
-                                    db=db,
+                                    db=save_db,
                                     dashboard_id=dashboard_id,
                                     aggregates=aggregates,
                                     clear_old=True,
@@ -494,109 +509,72 @@ def trigger_processing(
                                 saved_count,
                                 dashboard_id,
                             )
-                        else:
-                            logger.info(
-                                "Нет данных для сохранения для дашборда %s",
-                                dashboard_id,
-                            )
                     else:
                         logger.warning(
-                            "Для дашборда %s не найдено графиков", dashboard_id
+                            "Для дашборда %s не найдено графиков или не заданы группировки",
+                            dashboard_id,
                         )
-                except Exception as save_error:
-                    logger.error(
-                        "Ошибка при сохранении агрегированных данных: %s", save_error
-                    )
-                    # Не прерываем обработку из-за ошибки сохранения
+            except Exception as save_error:
+                logger.error(
+                    "Ошибка при сохранении агрегированных данных: %s", save_error
+                )
+                # Не прерываем обработку из-за ошибки сохранения
 
-            # Обновление прогресса
-            task_data["progress"] = 90
-
-            # Сохранение результатов (в production - в БД)
-            task_data["result"] = result_data
-            task_data["processing_config"] = (
-                processing_config.model_dump() if processing_config else None
+        # Обновление статуса - успех
+        completed_at = datetime.now()
+        with get_session() as db_session:
+            log_update = ProcessingLogUpdate(
+                status="success",
+                message="Обработка завершена успешно",
+                finished_at=completed_at,
             )
-
-            # Завершение обработки
-            task_data["status"] = "completed"
-            task_data["progress"] = 100
-            task_data["message"] = "Processing completed successfully"
-            task_data["completed_at"] = datetime.now()
-
-            # Обновляем лог обработки в БД в транзакции
-            if processing_log:
-                try:
-                    from mko_bi.models.processing_logs import ProcessingLogUpdate
-                    
-                    with db.begin():
-                        log_update = ProcessingLogUpdate(
-                            status="success",
-                            message="Обработка завершена успешно",
-                            finished_at=task_data["completed_at"],
-                        )
-                        ProcessingLogRepository.update(
-                            db, processing_log.id, **log_update.model_dump(exclude_unset=True)
-                        )
-                    logger.info("Лог обработки обновлен в БД: id=%s", processing_log.id)
-                except Exception as e:
-                    logger.warning("Не удалось обновить лог обработки в БД: %s", e)
-
-            logger.info(
-                "Обработка завершена: task_id=%s, rows=%d",
-                task_id,
-                result_data.get("rows", 0),
+            ProcessingLogRepository.update(
+                db_session, processing_log.id, **log_update.model_dump(exclude_unset=True)
             )
+            logger.info("Лог обработки обновлен в БД: id=%s", processing_log.id)
 
-        except Exception as e:
-            task_data["status"] = "failed"
-            task_data["message"] = f"Processing failed: {str(e)}"
-            task_data["completed_at"] = datetime.now()
-            
-            # Обновляем лог обработки в БД с ошибкой в транзакции
-            if processing_log:
-                try:
-                    from mko_bi.models.processing_logs import ProcessingLogUpdate
-                    
-                    with db.begin():
-                        log_update = ProcessingLogUpdate(
-                            status="failed",
-                            message=f"Ошибка обработки: {str(e)}",
-                            finished_at=task_data["completed_at"],
-                        )
-                        ProcessingLogRepository.update(
-                            db, processing_log.id, **log_update.model_dump(exclude_unset=True)
-                        )
-                    logger.info("Лог обработки обновлен в БД (ошибка): id=%s", processing_log.id)
-                except Exception as log_error:
-                    logger.warning("Не удалось обновить лог обработки в БД: %s", log_error)
-            
-            logger.error("Ошибка при обработке файла: task_id=%s, error=%s", task_id, e)
-            raise
-        finally:
-            # Очистка файлов задачи после обработки (даже при ошибках)
-            logger.info("Очистка файлов задачи: task_id=%s", task_id)
-            cleanup_task_files(task_id)
+        # Получаем имя файла из сообщения лога
+        filename = "unknown"
+        if processing_log.message and "Файл" in processing_log.message:
+            try:
+                filename = processing_log.message.split("Файл ")[-1].split(" успешно")[0]
+            except (IndexError, AttributeError):
+                filename = "unknown"
 
-        return ProcessingStatus(
-            task_id=task_data["task_id"],
-            filename=task_data["filename"],
-            dashboard_id=task_data["dashboard_id"],
-            status=task_data["status"],
-            progress=task_data["progress"],
-            message=task_data["message"],
-            started_at=task_data["started_at"],
-            completed_at=task_data["completed_at"],
+        logger.info(
+            "Обработка завершена: dashboard_id=%d, rows=%d",
+            dashboard_id,
+            result_data.get("rows", 0),
         )
 
-    except (ValueError, PermissionError):
-        raise
+        return ProcessingStatus(
+            task_id=task_id,
+            filename=filename,
+            dashboard_id=dashboard_id,
+            status="completed",
+            progress=100,
+            message="Processing completed successfully",
+            started_at=started_at,
+            completed_at=completed_at,
+        )
+
     except Exception as e:
-        logger.error("Ошибка при запуске обработки: %s", e)
+        # Обновляем лог обработки с ошибкой
+        completed_at = datetime.now()
+        with get_session() as db_session:
+            log_update = ProcessingLogUpdate(
+                status="failed",
+                message=f"Ошибка обработки: {str(e)}",
+                finished_at=completed_at,
+            )
+            ProcessingLogRepository.update(
+                db_session, processing_log.id, **log_update.model_dump(exclude_unset=True)
+            )
+            logger.info("Лог обработки обновлен в БД (ошибка): id=%s", processing_log.id)
+        
+        logger.error("Ошибка при обработке файла: task_id=%s, error=%s", task_id, e)
+        
         raise
-    finally:
-        if local_session:
-            db.close()
 
 
 def get_processing_status(
@@ -619,57 +597,75 @@ def get_processing_status(
     """
     logger.info("Запрос статуса: task_id=%s, user_id=%d", task_id, user_id)
 
-    local_session = False
-    if db is None:
-        db = SessionLocal()
-        local_session = True
-
-    try:
-        # Проверка существования задачи
-        if task_id not in _task_statuses:
+    with get_session() as db_session:
+        # Ищем логи обработки для задачи по task_id в сообщении
+        logs = ProcessingLogRepository.get_all(db_session)
+        
+        task_log = None
+        for log in logs:
+            if log.message and str(task_id) in log.message:
+                task_log = log
+                break
+        
+        if task_log is None:
+            # Если не нашли по task_id, ищем по dashboard_id
+            # Получаем дашборды пользователя
+            all_dashboards = DashboardRepository.get_all(db_session)
+            user_dashboard_ids = []
+            for dash in all_dashboards:
+                if check_dashboard_access(user_id, dash.id, "view", db_session):
+                    user_dashboard_ids.append(dash.id)
+            
+            # Ищем последний лог для этих дашбордов
+            for dash_id in user_dashboard_ids:
+                dash_logs = ProcessingLogRepository.get_by_dashboard_and_status(
+                    db_session, dash_id, None
+                )
+                if dash_logs:
+                    task_log = dash_logs[-1]  # Последний лог
+                    break
+        
+        if task_log is None:
             logger.warning("Задача не найдена: task_id=%s", task_id)
             raise ValueError(f"Задача с id={task_id} не найдена")
-
-        task_data = _task_statuses[task_id]
 
         # Проверка прав доступа к дашборду
         has_access = check_dashboard_access(
             user_id=user_id,
-            dashboard_id=task_data["dashboard_id"],
+            dashboard_id=task_log.dashboard_id,
             required_permission="view",
-            db=db,
+            db=db_session,
         )
         if not has_access:
             logger.warning(
                 "Нет прав на просмотр статуса: user_id=%d, dashboard_id=%d",
                 user_id,
-                task_data["dashboard_id"],
+                task_log.dashboard_id,
             )
             raise PermissionError("Недостаточно прав для просмотра статуса")
 
+        # Извлекаем имя файла из сообщения
+        filename = "unknown"
+        if task_log.message and "Файл" in task_log.message:
+            try:
+                filename = task_log.message.split("Файл ")[-1].split(" успешно")[0]
+            except (IndexError, AttributeError):
+                filename = "unknown"
+
         logger.info(
-            "Статус получен: task_id=%s, status=%s", task_id, task_data["status"]
+            "Статус получен: task_id=%s, status=%s", task_id, task_log.status
         )
 
         return ProcessingStatus(
-            task_id=task_data["task_id"],
-            filename=task_data["filename"],
-            dashboard_id=task_data["dashboard_id"],
-            status=task_data["status"],
-            progress=task_data["progress"],
-            message=task_data["message"],
-            started_at=task_data["started_at"],
-            completed_at=task_data["completed_at"],
+            task_id=task_id,
+            filename=filename,
+            dashboard_id=task_log.dashboard_id,
+            status=task_log.status,
+            progress=100 if task_log.status == "success" else 0,
+            message=task_log.message or "",
+            started_at=task_log.started_at,
+            completed_at=task_log.finished_at,
         )
-
-    except (ValueError, PermissionError):
-        raise
-    except Exception as e:
-        logger.error("Ошибка при получении статуса: %s", e)
-        raise
-    finally:
-        if local_session:
-            db.close()
 
 
 def get_processing_result(
@@ -693,64 +689,64 @@ def get_processing_result(
     """
     logger.info("Запрос результата: task_id=%s, user_id=%d", task_id, user_id)
 
-    local_session = False
-    if db is None:
-        db = SessionLocal()
-        local_session = True
-
-    try:
-        # Проверка существования задачи
-        if task_id not in _task_statuses:
+    with get_session() as db_session:
+        # Ищем лог обработки
+        logs = ProcessingLogRepository.get_all(db_session)
+        
+        task_log = None
+        for log in logs:
+            if log.message and str(task_id) in log.message:
+                task_log = log
+                break
+        
+        if task_log is None:
             logger.warning("Задача не найдена: task_id=%s", task_id)
             raise ValueError(f"Задача с id={task_id} не найдена")
-
-        task_data = _task_statuses[task_id]
 
         # Проверка прав доступа
         has_access = check_dashboard_access(
             user_id=user_id,
-            dashboard_id=task_data["dashboard_id"],
+            dashboard_id=task_log.dashboard_id,
             required_permission="view",
-            db=db,
+            db=db_session,
         )
         if not has_access:
             logger.warning(
                 "Нет прав на просмотр результата: user_id=%d, dashboard_id=%d",
                 user_id,
-                task_data["dashboard_id"],
+                task_log.dashboard_id,
             )
             raise PermissionError("Недостаточно прав для просмотра результата")
 
         # Проверка статуса
-        if task_data["status"] != "completed":
+        if task_log.status != "success":
             logger.warning(
                 "Задача не завершена: task_id=%s, status=%s",
                 task_id,
-                task_data["status"],
+                task_log.status,
             )
-            raise ValueError(f"Задача не завершена (статус: {task_data['status']})")
+            raise ValueError(f"Задача не завершена (статус: {task_log.status})")
 
-        result_data = task_data.get("result", {})
+        # Получаем агрегированные данные
+        aggregates = AggregatedDataRepository.get_by_dashboard(
+            db_session, task_log.dashboard_id
+        )
+        
+        result_data = {
+            "rows": len(aggregates) if aggregates else 0,
+            "dashboard_id": task_log.dashboard_id,
+        }
 
         logger.info("Результат получен: task_id=%s", task_id)
 
         return ProcessingResult(
             success=True,
             task_id=task_id,
-            dashboard_id=task_data["dashboard_id"],
-            rows_processed=result_data.get("processed_rows", 0),
-            message=task_data["message"],
+            dashboard_id=task_log.dashboard_id,
+            rows_processed=result_data.get("rows", 0),
+            message=task_log.message or "Processing completed",
             data=result_data,
         )
-
-    except (ValueError, PermissionError):
-        raise
-    except Exception as e:
-        logger.error("Ошибка при получении результата: %s", e)
-        raise
-    finally:
-        if local_session:
-            db.close()
 
 
 def get_dashboard_aggregates(
@@ -781,16 +777,9 @@ def get_dashboard_aggregates(
         user_id,
     )
 
-    local_session = False
-    if db is None:
-        db = SessionLocal()
-        local_session = True
-
-    try:
+    with get_session() as db_session:
         # Проверка существования дашборда и прав доступа
-        from mko_bi.db.repositories.dashboard_repo import DashboardRepository
-
-        dashboard_obj = DashboardRepository.get(dashboard_id, db)
+        dashboard_obj = DashboardRepository.get(dashboard_id, db_session)
         if dashboard_obj is None:
             raise ValueError(f"Дашборд с id={dashboard_id} не найден")
 
@@ -799,7 +788,7 @@ def get_dashboard_aggregates(
             user_id=user_id,
             dashboard_id=dashboard_id,
             required_permission="view",
-            db=db,
+            db=db_session,
         )
         if not has_access:
             raise PermissionError("У вас нет доступа к этому дашборду")
@@ -811,7 +800,7 @@ def get_dashboard_aggregates(
         )
 
         graphs = (
-            db
+            db_session
             .query(graphs_model.Graph)
             .filter(graphs_model.Graph.dashboard_id == dashboard_id)
             .all()
@@ -821,7 +810,7 @@ def get_dashboard_aggregates(
         result = []
         for graph in graphs:
             aggregates = (
-                db
+                db_session
                 .query(aggregated_data_model.AggregatedData)
                 .filter(aggregated_data_model.AggregatedData.graph_id == graph.id)
                 .all()
@@ -856,21 +845,6 @@ def get_dashboard_aggregates(
         )
         return result
 
-    except PermissionError:
-        raise
-    except ValueError:
-        raise
-    except Exception as e:
-        logger.error(
-            "Ошибка при получении агрегатов дашборда id=%s: %s",
-            dashboard_id,
-            e,
-        )
-        raise
-    finally:
-        if local_session:
-            db.close()
-
 
 def get_chart_data(
     dashboard_id: UUID,
@@ -903,16 +877,9 @@ def get_chart_data(
         user_id,
     )
 
-    local_session = False
-    if db is None:
-        db = SessionLocal()
-        local_session = True
-
-    try:
+    with get_session() as db_session:
         # Проверка существования дашборда и прав доступа
-        from mko_bi.db.repositories.dashboard_repo import DashboardRepository
-
-        dashboard_obj = DashboardRepository.get(dashboard_id, db)
+        dashboard_obj = DashboardRepository.get(dashboard_id, db_session)
         if dashboard_obj is None:
             raise ValueError(f"Дашборд с id={dashboard_id} не найден")
 
@@ -921,7 +888,7 @@ def get_chart_data(
             user_id=user_id,
             dashboard_id=dashboard_id,
             required_permission="view",
-            db=db,
+            db=db_session,
         )
         if not has_access:
             raise PermissionError("У вас нет доступа к этому дашборду")
@@ -932,7 +899,7 @@ def get_chart_data(
             graphs as graphs_model,
         )
 
-        query = db.query(graphs_model.Graph).filter(
+        query = db_session.query(graphs_model.Graph).filter(
             graphs_model.Graph.dashboard_id == dashboard_id
         )
 
@@ -953,7 +920,7 @@ def get_chart_data(
         result = []
         for graph in graphs:
             aggregates = (
-                db
+                db_session
                 .query(aggregated_data_model.AggregatedData)
                 .filter(aggregated_data_model.AggregatedData.graph_id == graph.id)
                 .all()
@@ -987,21 +954,6 @@ def get_chart_data(
         )
         return result
 
-    except PermissionError:
-        raise
-    except ValueError:
-        raise
-    except Exception as e:
-        logger.error(
-            "Ошибка при получении данных для графиков дашборда id=%s: %s",
-            dashboard_id,
-            e,
-        )
-        raise
-    finally:
-        if local_session:
-            db.close()
-
 
 def apply_data_filters(
     dashboard_id: UUID,
@@ -1034,16 +986,9 @@ def apply_data_filters(
         user_id,
     )
 
-    local_session = False
-    if db is None:
-        db = SessionLocal()
-        local_session = True
-
-    try:
+    with get_session() as db_session:
         # Проверка существования дашборда и прав доступа
-        from mko_bi.db.repositories.dashboard_repo import DashboardRepository
-
-        dashboard_obj = DashboardRepository.get(dashboard_id, db)
+        dashboard_obj = DashboardRepository.get(dashboard_id, db_session)
         if dashboard_obj is None:
             raise ValueError(f"Дашборд с id={dashboard_id} не найден")
 
@@ -1052,7 +997,7 @@ def apply_data_filters(
             user_id=user_id,
             dashboard_id=dashboard_id,
             required_permission="view",
-            db=db,
+            db=db_session,
         )
         if not has_access:
             raise PermissionError("У вас нет доступа к этому дашборду")
@@ -1066,7 +1011,7 @@ def apply_data_filters(
 
         # Получение всех графиков дашборда
         graphs = (
-            db
+            db_session
             .query(graphs_model.Graph)
             .filter(graphs_model.Graph.dashboard_id == dashboard_id)
             .all()
@@ -1121,7 +1066,7 @@ def apply_data_filters(
                         )
 
             # Формирование запроса с фильтрами
-            query = db.query(aggregated_data_model.AggregatedData).filter(
+            query = db_session.query(aggregated_data_model.AggregatedData).filter(
                 aggregated_data_model.AggregatedData.graph_id == graph.id
             )
 
@@ -1160,21 +1105,6 @@ def apply_data_filters(
         )
         return result
 
-    except PermissionError:
-        raise
-    except ValueError:
-        raise
-    except Exception as e:
-        logger.error(
-            "Ошибка при применении фильтров к дашборду id=%s: %s",
-            dashboard_id,
-            e,
-        )
-        raise
-    finally:
-        if local_session:
-            db.close()
-
 
 def cleanup_task_files(task_id: uuid.UUID) -> None:
     """Удаляет временные файлы задачи.
@@ -1184,22 +1114,19 @@ def cleanup_task_files(task_id: uuid.UUID) -> None:
     """
     logger.info("Очистка файлов задачи: task_id=%s", task_id)
 
-    if task_id in _task_statuses:
-        task_data = _task_statuses[task_id]
-        file_path = task_data.get("file_path")
-
-        if file_path:
-            try:
-                path = Path(file_path)
-                if path.exists():
-                    path.unlink()
-                    logger.info("Файл удален: %s", file_path)
-            except Exception as e:
-                logger.error("Ошибка при удалении файла %s: %s", file_path, e)
-
-        # Удаление данных задачи
-        del _task_statuses[task_id]
-        logger.info("Данные задачи удалены: task_id=%s", task_id)
+    # Ищем файлы, связанные с задачей, во временной директории
+    config = get_config()
+    upload_dir = Path(config.upload_temp_dir)
+    
+    # Ищем файлы, в имени которых есть task_id
+    csv_files = list(upload_dir.glob(f"*{task_id}*.csv.gz"))
+    
+    for file_path in csv_files:
+        try:
+            file_path.unlink()
+            logger.info("Файл удален: %s", file_path)
+        except Exception as e:
+            logger.error("Ошибка при удалении файла %s: %s", file_path, e)
 
 
 def save_aggregated_data(
@@ -1225,7 +1152,7 @@ def save_aggregated_data(
             создается новая сессия.
 
     Returns:
-        Количество успешно сохранённых записей.
+        Количество успешно сохраненных записей.
 
     Raises:
         ValueError: Если данные невалидны или графики не найдены.
@@ -1237,16 +1164,11 @@ def save_aggregated_data(
         len(aggregates),
     )
 
-    local_session = False
-    if db is None:
-        db = SessionLocal()
-        local_session = True
-
-    try:
+    with get_session() as db_session:
         # Выполняем операцию в транзакции
-        with db.begin():
+        with db_session.begin():
             inserted_count = AggregatedDataRepository.bulk_insert(
-                db=db,
+                db=db_session,
                 dashboard_id=dashboard_id,
                 aggregates=aggregates,
                 clear_old=True,
@@ -1258,14 +1180,3 @@ def save_aggregated_data(
             inserted_count,
         )
         return inserted_count
-
-    except Exception as e:
-        logger.error(
-            "Ошибка при сохранении агрегированных данных для дашборда %s: %s",
-            dashboard_id,
-            str(e),
-        )
-        raise
-    finally:
-        if local_session:
-            db.close()

@@ -14,7 +14,8 @@ from uuid import UUID
 from mko_bi.core.security import hash_password
 from mko_bi.db.models import user as user_model
 from mko_bi.db.repositories.user_repo import UserRepository
-from mko_bi.db.session import Session, SessionLocal
+from sqlalchemy.orm import Session
+from mko_bi.db.session import get_session
 from mko_bi.interfaces import IUserService
 from mko_bi.models.user import UserRead
 from mko_bi.models.user_roles import UserRoleEnum
@@ -105,7 +106,7 @@ class UserService(IUserService):
         Returns:
             Данные пользователя или None, если не найден.
         """
-        db = SessionLocal()
+        db = get_session().__enter__()
         try:
             user_obj = UserRepository.get(user_id, db)
             if user_obj:
@@ -129,7 +130,7 @@ class UserService(IUserService):
         Returns:
             Данные пользователя или None, если не найден.
         """
-        db = SessionLocal()
+        db = get_session().__enter__()
         try:
             user_obj = UserRepository.get_by_email(email, db)
             if user_obj:
@@ -167,7 +168,7 @@ class UserService(IUserService):
         # Валидация роли
         _validate_role(role)
 
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
         try:
             # Проверка уникальности email
@@ -234,7 +235,7 @@ class UserService(IUserService):
         # Валидация роли
         _validate_role(role)
 
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
         try:
             # Проверка существования пользователя
@@ -288,7 +289,7 @@ class UserService(IUserService):
         """
         logger.info("Удаление пользователя: id=%s", user_id)
 
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
         try:
             # Проверка существования пользователя
@@ -335,7 +336,7 @@ class UserService(IUserService):
         """
         logger.info("Получение списка всех пользователей")
 
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
         try:
             users = UserRepository.get_all(db)
@@ -386,7 +387,7 @@ def create_user(
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -451,7 +452,7 @@ def get_user_by_email(email: str, db: Session | None = None) -> user_model.User 
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -487,7 +488,7 @@ def get_user_by_id(user_id: int, db: Session | None = None) -> user_model.User |
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -534,7 +535,7 @@ def update_user_role(
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -593,7 +594,7 @@ def delete_user(user_id: int, db: Session | None = None) -> bool:
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -647,7 +648,7 @@ def get_all_users(db: Session | None = None) -> list[user_model.User]:
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:

@@ -12,10 +12,10 @@ import re
 
 from mko_bi.db.models import filters as filter_model
 from mko_bi.db.repositories.filter_repo import FilterRepository
-from mko_bi.db.session import SessionLocal
+from sqlalchemy.orm import Session
+from mko_bi.db.session import get_session
 from mko_bi.models.filters import FilterRead
 from mko_bi.models.user_roles import FilterTypeEnum
-from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -179,7 +179,7 @@ def create_filter(
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -239,7 +239,7 @@ def get_filter(filter_id: int, db: Session | None = None) -> FilterRead | None:
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -276,7 +276,7 @@ def get_filters(db: Session | None = None) -> list[FilterRead]:
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -333,7 +333,7 @@ def update_filter(
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -394,7 +394,7 @@ def delete_filter(filter_id: int, db: Session | None = None) -> bool:
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:

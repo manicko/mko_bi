@@ -12,7 +12,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from mko_bi.db.models import access as access_model
 from mko_bi.db.models import dashboard as dashboard_model
-from mko_bi.db.session import SessionLocal
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ class AccessRepository:
     @classmethod
     def grant_access(
         cls,
-        db: SessionLocal,
+        db: Session,
         user_id: UUID,
         dashboard_id: UUID,
         permission: str = "view",
@@ -88,7 +88,7 @@ class AccessRepository:
             raise
 
     @classmethod
-    def revoke_access(cls, user_id: UUID, dashboard_id: UUID, db: SessionLocal) -> bool:
+    def revoke_access(cls, user_id: UUID, dashboard_id: UUID, db: Session) -> bool:
         """Отозвать доступ пользователя к дашборду.
 
         Args:
@@ -135,7 +135,7 @@ class AccessRepository:
 
     @classmethod
     def check_access(
-        cls, user_id: UUID, dashboard_id: UUID, db: SessionLocal
+        cls, user_id: UUID, dashboard_id: UUID, db: Session
     ) -> str | None:
         """Проверить уровень доступа пользователя к дашборду.
 
@@ -182,7 +182,7 @@ class AccessRepository:
 
     @classmethod
     def get_user_dashboards(
-        cls, user_id: UUID, db: SessionLocal
+        cls, user_id: UUID, db: Session
     ) -> list[dashboard_model.Dashboard]:
         """Получить все дашборды, доступные пользователю.
 
@@ -220,16 +220,17 @@ class AccessRepository:
             raise
 
     @classmethod
-    def get_session(cls) -> SessionLocal:
+    def get_session(cls) -> Session:
         """Создать и вернуть новую сессию базы данных.
 
         Returns:
-            Новая сессия SessionLocal.
+            Новая сессия.
         """
-        return SessionLocal()
+        from mko_bi.db.session import get_session
+        return get_session()
 
     @classmethod
-    def get_all(cls, db: SessionLocal) -> list[access_model.DashboardAccess]:
+    def get_all(cls, db: Session) -> list[access_model.DashboardAccess]:
         """Получить все права доступа.
 
         Args:

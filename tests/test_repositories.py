@@ -240,14 +240,15 @@ class TestUserRepository:
 
     def test_get_session(self):
         """Тест создания сессии."""
-        with patch('mko_bi.db.repositories.user_repo.SessionLocal') as mock_session:
-            session_instance = MagicMock()
-            mock_session.return_value = session_instance
+        # Мокаем get_session из session.py, который используется репозиториями
+        with patch('mko_bi.db.repositories.user_repo.get_session') as mock_get_session:
+            session_instance = MagicMock(spec=Session)
+            mock_get_session.return_value = session_instance
 
             result = user_repo.UserRepository.get_session()
 
             assert result == session_instance
-            mock_session.assert_called_once()
+            mock_get_session.assert_called_once()
 
 
 class TestDashboardRepository:
@@ -551,14 +552,15 @@ class TestDashboardRepository:
 
     def test_get_session(self):
         """Тест создания сессии."""
-        with patch('mko_bi.db.repositories.access_repo.SessionLocal') as mock_session:
-            session_instance = MagicMock()
-            mock_session.return_value = session_instance
+        # Мокаем get_session из session.py, который используется репозиториями
+        with patch('mko_bi.db.repositories.access_repo.get_session') as mock_get_session:
+            session_instance = MagicMock(spec=Session)
+            mock_get_session.return_value = session_instance
 
             result = access_repo.AccessRepository.get_session()
 
             assert result == session_instance
-            mock_session.assert_called_once()
+            mock_get_session.assert_called_once()
 
 
 class TestRepositoryIntegration:

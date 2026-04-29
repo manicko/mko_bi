@@ -2,12 +2,14 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
+from mko_bi.models.user_roles import ProcessingStatusEnum
+
 
 class ProcessingLogBase(BaseModel):
     """Базовая модель для логов обработки."""
 
     dashboard_id: UUID | None = None
-    status: str
+    status: ProcessingStatusEnum
     message: str | None = None
     started_at: datetime | None = None
     finished_at: datetime | None = None
@@ -35,7 +37,7 @@ class ProcessingLogCreate(ProcessingLogBase):
 class ProcessingLogUpdate(BaseModel):
     """Модель для обновления лога обработки."""
 
-    status: str | None = None
+    status: ProcessingStatusEnum | None = None
     message: str | None = None
     started_at: datetime | None = None
     finished_at: datetime | None = None

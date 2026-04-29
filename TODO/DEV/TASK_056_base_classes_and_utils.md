@@ -45,9 +45,29 @@ CONSTRAINTS:
 
 DONE:
 
-- Базовые классы реализованы
-- Утилиты для валидации
-- Декораторы для повторяющихся паттернов
-- Уменьшено дублирование
-- Улучшена читаемость
+- [x] Создан src/mko_bi/core/base_repository.py с классом BaseRepository (Generic)
+  - CRUD операции: get, get_all, create, update, delete
+  - Фильтрация через filter_by
+  - Пагинация в get_all
+  - Обработка ошибок SQLAlchemy
+- [x] Создан src/mko_bi/core/base_service.py с классом BaseService (Generic)
+  - Репозиторий как зависимость
+  - Общие методы: get_by_id, get_all, create, update, delete
+  - Метод _to_dict для преобразования в словарь
+  - Метод validate_data для переопределения
+- [x] Создан src/mko_bi/utils/validators.py с функциями валидации:
+  - validate_email() - проверка формата email
+  - validate_role() - проверка роли через UserRoleEnum
+  - validate_uuid() - проверка UUID
+  - validate_string() - проверка строк с параметрами min/max length
+  - validate_password() - проверка сложности пароля
+  - raise_if_invalid() - выброс исключения при невыполнении условия
+- [x] Создан src/mko_bi/utils/decorators.py с декораторами:
+  - @timing - замер времени выполнения
+  - @retry - повтор при ошибке с настраиваемыми параметрами
+  - @log_execution - логирование выполнения
+  - @require_role - проверка прав доступа
+  - @error_handler - обработка ошибок с fallback значением
+- [x] Уменьшено дублирование через базовые классы
+- [x] Улучшена читаемость и поддерживаемость кода
 

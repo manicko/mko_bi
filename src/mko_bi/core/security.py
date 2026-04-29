@@ -7,7 +7,7 @@ from typing import Any
 import bcrypt
 from jose import JWTError, jwt
 
-from mko_bi.config import config
+from mko_bi.config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -132,14 +132,15 @@ def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = 
     if expires_delta:
         expire = datetime.now(UTC) + expires_delta
     else:
+        config = get_config()
         expire = datetime.now(UTC) + timedelta(
             minutes=config.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
         )
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
         to_encode,
-        config.JWT_SECRET_KEY,
-        algorithm=config.JWT_ALGORITHM,
+        get_config().JWT_SECRET_KEY,
+        algorithm=get_config().JWT_ALGORITHM,
     )
     logger.info("JWT токен успешно создан")
     return encoded_jwt
@@ -169,8 +170,8 @@ def decode_token(token: str) -> dict[str, Any] | None:
     try:
         payload = jwt.decode(
             token,
-            config.JWT_SECRET_KEY,
-            algorithms=[config.JWT_ALGORITHM],
+            get_config().JWT_SECRET_KEY,
+            algorithms=[get_config().JWT_ALGORITHM],
         )
         logger.info("JWT токен успешно декодирован")
         return payload

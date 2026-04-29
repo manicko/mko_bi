@@ -10,10 +10,8 @@ import logging
 import re
 import time
 
-from mko_bi.core.security import create_access_token, hash_password, verify_password
 from mko_bi.db.repositories.user_repo import UserRepository
-from mko_bi.db.session import Session, SessionLocal
-from mko_bi.interfaces import IAuthService
+from mko_bi.interfaces.service_interfaces import IAuthService
 from mko_bi.models.user import UserRead, UserDB
 from mko_bi.models.user_roles import UserRoleEnum
 
@@ -50,7 +48,7 @@ class AuthService(IAuthService):
         """
         logger.info("Attempting user authentication: %s", email)
 
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
         try:
@@ -265,7 +263,7 @@ def register_user(
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:
@@ -333,7 +331,7 @@ def authenticate_user(
     # Если сессия не передана, создаем новую
     local_session = False
     if db is None:
-        db = SessionLocal()
+        db = get_session().__enter__()
         local_session = True
 
     try:

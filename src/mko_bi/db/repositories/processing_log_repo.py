@@ -9,9 +9,10 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.orm import Session
 
 from mko_bi.db.models import processing_logs as processing_log_model
-from mko_bi.db.session import SessionLocal
+from mko_bi.db.session import get_session
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +26,7 @@ class ProcessingLogRepository:
     """
 
     @classmethod
-    def get(cls, log_id: UUID, db: SessionLocal) -> processing_log_model.ProcessingLog | None:
+    def get(cls, log_id: UUID, db: Session) -> processing_log_model.ProcessingLog | None:
         """Получить лог обработки по ID.
 
         Args:
@@ -55,7 +56,7 @@ class ProcessingLogRepository:
 
     @classmethod
     def get_by_dashboard(
-        cls, dashboard_id: UUID, db: SessionLocal
+        cls, dashboard_id: UUID, db: Session
     ) -> list[processing_log_model.ProcessingLog]:
         """Получить все логи обработки для дашборда.
 
@@ -86,7 +87,57 @@ class ProcessingLogRepository:
             raise
 
     @classmethod
-    def get_all(cls, db: SessionLocal) -> list[processing_log_model.ProcessingLog]:
+    def get_by_dashboard_and_status(
+        cls, db: Session, dashboard_id: UUID | None, statuses: list[str] | None
+    ) -> list[processing_log_model.ProcessingLog]:
+        """Получить логи обработки по дашборду и статусам.
+
+        Args:
+            db: Сессия базы данных.
+            dashboard_id: Идентификатор дашборда (UUID). Если None, ищем по всем дашбордам.
+            statuses: Список статусов для фильтрации. Если None, все статусы.
+
+        Returns:
+            Список логов обработки, соответствующих критериям.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
+        """
+        try:
+            query = select(processing_log_model.ProcessingLog)
+            
+            if dashboard_id is not None:
+                query = query.where(
+                    processing_log_model.ProcessingLog.dashboard_id == dashboard_id
+                )
+            
+            if statuses is not None:
+                query = query.where(
+                    processing_log_model.ProcessingLog.status.in_(statuses)
+                )
+            
+            query = query.order_by(processing_log_model.ProcessingLog.created_at.desc())
+            
+            result = db.execute(query).scalars().all()
+            
+            logger.info(
+                "Получены логи обработки: dashboard_id=%s, statuses=%s, количество: %s",
+                dashboard_id,
+                statuses,
+                len(result),
+            )
+            return result
+        except SQLAlchemyError as e:
+            logger.error(
+                "Ошибка при получении логов обработки: dashboard_id=%s, statuses=%s: %s",
+                dashboard_id,
+                statuses,
+                e,
+            )
+            raise
+
+    @classmethod
+    def get_all(cls, db: Session) -> list[processing_log_model.ProcessingLog]:
         """Получить все логи обработки.
 
         Args:
@@ -107,7 +158,7 @@ class ProcessingLogRepository:
             raise
 
     @classmethod
-    def create(cls, db: SessionLocal, **kwargs) -> processing_log_model.ProcessingLog | None:
+    def create(cls, db: Session, **kwargs) -> processing_log_model.ProcessingLog | None:
         """Создать новый лог обработки.
 
         Args:
@@ -138,7 +189,7 @@ class ProcessingLogRepository:
 
     @classmethod
     def update(
-        cls, log_id: UUID, db: SessionLocal, **kwargs
+        cls, log_id: UUID, db: Session, **kwargs
     ) -> processing_log_model.ProcessingLog | None:
         """Обновить данные лога обработки.
 
@@ -174,7 +225,7 @@ class ProcessingLogRepository:
             raise
 
     @classmethod
-    def delete(cls, log_id: UUID, db: SessionLocal) -> bool:
+    def delete(cls, log_id: UUID, db: Session) -> bool:
         """Удалить лог обработки.
 
         Args:
@@ -203,12 +254,3 @@ class ProcessingLogRepository:
         except SQLAlchemyError as e:
             logger.error("Ошибка при удалении лога обработки id=%s: %s", log_id, e)
             raise
-
-    @classmethod
-    def get_session(cls) -> SessionLocal:
-        """Создать и вернуть новую сессию базы данных.
-
-        Returns:
-            Новая сессия SessionLocal.
-        """
-        return SessionLocal()

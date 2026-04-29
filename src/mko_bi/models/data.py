@@ -3,7 +3,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 from uuid import UUID
 
-from mko_bi.models.user_roles import GraphTypeEnum, BarmodeEnum, OrientationEnum
+from mko_bi.models.user_roles import GraphTypeEnum, BarmodeEnum, OrientationEnum, ProcessingStatusEnum
 
 
 class DataUpload(BaseModel):
@@ -30,7 +30,7 @@ class UploadResponse(BaseModel):
     task_id: UUID
     filename: str
     dashboard_id: int
-    status: str
+    status: ProcessingStatusEnum
     message: str
     uploaded_at: datetime
 
@@ -55,7 +55,7 @@ class ProcessingStatus(BaseModel):
     task_id: UUID
     filename: str
     dashboard_id: int
-    status: str
+    status: ProcessingStatusEnum
     progress: int = Field(0, ge=0, le=100)
     message: str | None = None
     started_at: datetime | None = None

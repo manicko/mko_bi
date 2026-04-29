@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from mko_bi.db.models import user as user_model
-from mko_bi.db.session import SessionLocal
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class UserRepository:
     """
 
     @classmethod
-    def get(cls, user_id: UUID, db: SessionLocal) -> user_model.User | None:
+    def get(cls, user_id: UUID, db: Session) -> user_model.User | None:
         """Получить пользователя по ID.
 
         Args:
@@ -52,7 +52,7 @@ class UserRepository:
             raise
 
     @classmethod
-    def get_by_email(cls, email: str, db: SessionLocal) -> user_model.User | None:
+    def get_by_email(cls, email: str, db: Session) -> user_model.User | None:
         """Получить пользователя по email.
 
         Args:
@@ -79,7 +79,7 @@ class UserRepository:
             raise
 
     @classmethod
-    def create(cls, db: SessionLocal, **kwargs) -> user_model.User | None:
+    def create(cls, db: Session, **kwargs) -> user_model.User | None:
         """Создать нового пользователя.
 
         Args:
@@ -106,7 +106,7 @@ class UserRepository:
             raise
 
     @classmethod
-    def update(cls, user_id: UUID, db: SessionLocal, **kwargs) -> user_model.User | None:
+    def update(cls, user_id: UUID, db: Session, **kwargs) -> user_model.User | None:
         """Обновить данные пользователя.
 
         Args:
@@ -139,7 +139,7 @@ class UserRepository:
             raise
 
     @classmethod
-    def delete(cls, user_id: UUID, db: SessionLocal) -> bool:
+    def delete(cls, user_id: UUID, db: Session) -> bool:
         """Удалить пользователя.
 
         Args:
@@ -168,16 +168,17 @@ class UserRepository:
             raise
 
     @classmethod
-    def get_session(cls) -> SessionLocal:
+    def get_session(cls) -> Session:
         """Создать и вернуть новую сессию базы данных.
 
         Returns:
-            Новая сессия SessionLocal.
+            Новая сессия.
         """
-        return SessionLocal()
+        from mko_bi.db.session import get_session
+        return get_session()
 
     @classmethod
-    def get_all(cls, db: SessionLocal) -> list[user_model.User]:
+    def get_all(cls, db: Session) -> list[user_model.User]:
         """Получить всех пользователей.
 
         Args:

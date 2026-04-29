@@ -26,7 +26,7 @@ from mko_bi.core.permissions import (
     check_role,
     AuthenticationError,
 )
-from mko_bi.db.session import SessionLocal
+from mko_bi.db.session import get_session
 from mko_bi.models.user import UserDB
 from mko_bi.interfaces import (
     IUserRepository,
@@ -79,11 +79,12 @@ def get_db() -> Generator[Session, None, None]:
         async def get_users(db: Session = Depends(get_db)):
             return db.query(User).all()
     """
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    with get_session() as db:
+        try:
+            yield db
+        finally:
+            # Явное закрытие для гарантии
+            db.close()
 
 
 # --- Dependency Injection для репозиториев ---

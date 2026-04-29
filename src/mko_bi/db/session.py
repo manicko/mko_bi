@@ -3,61 +3,62 @@ from collections.abc import Generator
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
 
-from mko_bi.config import config
+from mko_bi.config import get_config
 from mko_bi.db.base import Base
 
 
-# Используем URL из конфигурации
-# Для тестов переменная окружения DB_DRIVER=sqlite и DATABASE_URL=sqlite:///:memory:
-# могут быть установлены перед запуском тестов
-DATABASE_URL = config.DATABASE_URL
-
-# Создаём engine для подключения к базе данных
-# echo=False для отключения логирования SQL-запросов в продакшене
-# future=True для использования SQLAlchemy 2.0 API
-if "sqlite" in DATABASE_URL:
-    engine = create_engine(
-        DATABASE_URL,
-        echo=False,
-        future=True,
-        connect_args={"check_same_thread": False},
-    )
-else:
-    engine = create_engine(
-        DATABASE_URL,
-        echo=False,
-        future=True,
-        pool_pre_ping=True,  # Проверка соединений перед использованием
-        pool_size=10,
-        max_overflow=20,
-        pool_timeout=30,
-    )
-
-
-# SessionLocal для управления сессиями базы данных
-# expire_on_commit=False чтобы объекты оставались доступными после коммита
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-    expire_on_commit=False,
-    class_=Session,
-)
-
-
-# Глобальная переменная для хранения тестового engine
-_test_engine = None
-
-
-def override_engine_for_testing(test_engine):
-    """Переопределяет engine для тестов.
-
-    Args:
-        test_engine: Engine для тестов.
+def get_engine():
+    """Создает и возвращает SQLAlchemy engine.
+    
+    Использует конфигурацию из переменных окружения через get_config().
+    
+    Returns:
+        Engine: SQLAlchemy engine для подключения к базе данных.
     """
-    global _test_engine, engine, SessionLocal
-    _test_engine = test_engine
-    engine = test_engine
+    # Получаем конфигурацию
+    config = get_config()
+    DATABASE_URL = config.DATABASE_URL
+    
+    # Создаём engine для подключения к базе данных
+    # echo=False для отключения логирования SQL-запросов в продакшене
+    # future=True для использования SQLAlchemy 2.0 API
+    if "sqlite" in DATABASE_URL:
+        engine = create_engine(
+            DATABASE_URL,
+            echo=False,
+            future=True,
+            connect_args={"check_same_thread": False},
+        )
+    else:
+        engine = create_engine(
+            DATABASE_URL,
+            echo=False,
+            future=True,
+            pool_pre_ping=True,  # Проверка соединений перед использованием
+            pool_size=10,
+            max_overflow=20,
+            pool_timeout=30,
+        )
+    
+    return engine
+
+
+def get_session() -> Generator[Session, None, None]:
+    """Контекстный менеджер для сессий базы данных.
+    
+    Создает новую сессию и гарантирует её закрытие после использования.
+    Рекомендуется использовать через контекстный менеджер:
+    
+    Example:
+        ```python
+        with get_session() as db:
+            result = db.query(User).all()
+        ```
+    
+    Yields:
+        Session: Сессия SQLAlchemy для выполнения операций с БД.
+    """
+    engine = get_engine()
     SessionLocal = sessionmaker(
         autocommit=False,
         autoflush=False,
@@ -65,55 +66,7 @@ def override_engine_for_testing(test_engine):
         expire_on_commit=False,
         class_=Session,
     )
-
-
-def reset_engine():
-    """Сбрасывает engine к исходному состоянию."""
-    global _test_engine, engine, SessionLocal
-    if _test_engine is not None:
-        if "sqlite" in DATABASE_URL:
-            engine = create_engine(
-                DATABASE_URL,
-                echo=False,
-                future=True,
-                connect_args={"check_same_thread": False},
-            )
-        else:
-            engine = create_engine(
-                DATABASE_URL,
-                echo=False,
-                future=True,
-                pool_pre_ping=True,
-                pool_size=10,
-                max_overflow=20,
-                pool_timeout=30,
-            )
-        SessionLocal = sessionmaker(
-            autocommit=False,
-            autoflush=False,
-            bind=engine,
-            expire_on_commit=False,
-            class_=Session,
-        )
-        _test_engine = None
-
-
-def get_db() -> Generator[Session, None, None]:
-    """Генератор сессий базы данных для использования в зависимостях FastAPI.
-
-    Yields:
-        Session: Сессия SQLAlchemy для выполнения операций с БД.
-
-    Example:
-        ```python
-        @app.get("/users/")
-        def read_users(db: Session = Depends(get_db)):
-            return db.query(User).all()
-        ```
-
-    При выходе из контекста сессия автоматически закрывается,
-    возвращая соединение в пул.
-    """
+    
     db: Session = SessionLocal()
     try:
         yield db
@@ -121,28 +74,52 @@ def get_db() -> Generator[Session, None, None]:
         db.close()
 
 
+def get_db() -> Generator[Session, None, None]:
+    """Генератор сессий базы данных для использования в зависимостях FastAPI.
+    
+    Создает новую сессию и гарантирует её закрытие после использования.
+    Сохранен для обратной совместимости с существующим кодом.
+    Рекомендуется использовать get_session() вместо этого метода.
+    
+    Yields:
+        Session: Сессия SQLAlchemy для выполнения операций с БД.
+    
+    Example:
+        ```python
+        @app.get("/users/")
+        def read_users(db: Session = Depends(get_db)):
+            return db.query(User).all()
+        ```
+    """
+    with get_session() as db:
+        yield db
+
+
 def init_db() -> None:
     """Создаёт все таблицы, определённые в моделях.
-
+    
     Выполняет CREATE TABLE для всех моделей, унаследованных от Base,
     если таблицы ещё не существуют.
-
+    
     Note:
         В продакшене предпочтительнее использовать миграции (например, Alembic)
         вместо автоматического создания таблиц.
     """
     # noqa: F401 - импорт нужен для регистрации моделей в Base.metadata
-
+    
+    engine = get_engine()
     Base.metadata.create_all(bind=engine)
 
 
 def drop_db() -> None:
     """Удаляет все таблицы, определённые в моделях.
-
+    
     Warning:
         Операция разрушительная! Использовать только для тестов
         или при полной переинициализации базы данных.
     """
     # noqa: F401 - импорт нужен для регистрации моделей в Base.metadata
-
+    
+    engine = get_engine()
     Base.metadata.drop_all(bind=engine)
+

@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from mko_bi.db.models import filters as filter_model
-from mko_bi.db.session import SessionLocal
+from sqlalchemy.orm import Session
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class FilterRepository:
     """
 
     @classmethod
-    def get(cls, filter_id: UUID, db: SessionLocal) -> filter_model.Filter | None:
+    def get(cls, filter_id: UUID, db: Session) -> filter_model.Filter | None:
         """Получить фильтр по ID.
 
         Args:
@@ -54,7 +54,7 @@ class FilterRepository:
             raise
 
     @classmethod
-    def get_by_name(cls, name: str, db: SessionLocal) -> filter_model.Filter | None:
+    def get_by_name(cls, name: str, db: Session) -> filter_model.Filter | None:
         """Получить фильтр по имени.
 
         Args:
@@ -83,7 +83,7 @@ class FilterRepository:
             raise
 
     @classmethod
-    def get_all(cls, db: SessionLocal) -> list[filter_model.Filter]:
+    def get_all(cls, db: Session) -> list[filter_model.Filter]:
         """Получить все фильтры.
 
         Args:
@@ -104,7 +104,7 @@ class FilterRepository:
             raise
 
     @classmethod
-    def create(cls, db: SessionLocal, **kwargs) -> filter_model.Filter | None:
+    def create(cls, db: Session, **kwargs) -> filter_model.Filter | None:
         """Создать новый фильтр.
 
         Args:
@@ -132,7 +132,7 @@ class FilterRepository:
 
     @classmethod
     def update(
-        cls, filter_id: UUID, db: SessionLocal, **kwargs
+        cls, filter_id: UUID, db: Session, **kwargs
     ) -> filter_model.Filter | None:
         """Обновить данные фильтра.
 
@@ -168,7 +168,7 @@ class FilterRepository:
             raise
 
     @classmethod
-    def delete(cls, filter_id: UUID, db: SessionLocal) -> bool:
+    def delete(cls, filter_id: UUID, db: Session) -> bool:
         """Удалить фильтр.
 
         Args:
@@ -199,10 +199,11 @@ class FilterRepository:
             raise
 
     @classmethod
-    def get_session(cls) -> SessionLocal:
+    def get_session(cls) -> Session:
         """Создать и вернуть новую сессию базы данных.
 
         Returns:
-            Новая сессия SessionLocal.
+            Новая сессия.
         """
-        return SessionLocal()
+        from mko_bi.db.session import get_session
+        return get_session()

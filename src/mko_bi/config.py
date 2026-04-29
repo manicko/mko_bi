@@ -142,5 +142,21 @@ class Settings(BaseSettings):
         return self.MAX_FILE_SIZE
 
 
-# Глобальный экземпляр конфигурации
-config = Settings()
+# Кэшированный экземпляр конфигурации
+_settings: Settings | None = None
+
+
+def get_config() -> Settings:
+    """Возвращает экземпляр конфигурации.
+    
+    Использует паттерн синглтон с кэшированием для обеспечения
+    единого источника конфигурации в приложении.
+    
+    Returns:
+        Settings: Экземпляр конфигурации.
+    """
+    global _settings
+    if _settings is None:
+        _settings = Settings()
+    return _settings
+
