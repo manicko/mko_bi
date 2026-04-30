@@ -5,6 +5,7 @@
 """
 
 import logging
+from enum import Enum
 from uuid import UUID
 
 from sqlalchemy import select
@@ -171,7 +172,15 @@ class ProcessingLogRepository:
             SQLAlchemyError: При ошибке базы данных.
         """
         try:
-            log_obj = processing_log_model.ProcessingLog(**kwargs)
+            # Convert enum values to their string equivalents for DB storage
+            processed_kwargs = {}
+            for key, value in kwargs.items():
+                if isinstance(value, Enum):
+                    processed_kwargs[key] = value.value
+                else:
+                    processed_kwargs[key] = value
+            
+            log_obj = processing_log_model.ProcessingLog(**processed_kwargs)
             db.add(log_obj)
             db.flush()
             db.refresh(log_obj)
@@ -212,7 +221,16 @@ class ProcessingLogRepository:
             if not log_obj:
                 logger.warning("Лог обработки не найден для обновления: id=%s", log_id)
                 return None
+            
+            # Convert enum values to strings for DB storage
+            processed_kwargs = {}
             for key, value in kwargs.items():
+                if isinstance(value, Enum):
+                    processed_kwargs[key] = value.value
+                else:
+                    processed_kwargs[key] = value
+            
+            for key, value in processed_kwargs.items():
                 if hasattr(log_obj, key):
                     setattr(log_obj, key, value)
             db.flush()

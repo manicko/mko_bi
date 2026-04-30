@@ -159,11 +159,14 @@ ignore_missing_imports = true
 namespace_packages = false
 mypy_path = "src"
 
-[mypy."mko_bi.*"]
+[[tool.mypy.overrides]]
+module = ["mko_bi.*"]
 ignore_missing_imports = true
 
-[tool.mypy."mko_bi.utils.decorators"]
+[[tool.mypy.overrides]]
+module = "mko_bi.utils.decorators"
 ignore_errors = true
+
 
 [tool.pytest.ini_options]
 minversion = "8.0"
