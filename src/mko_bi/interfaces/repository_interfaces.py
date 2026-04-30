@@ -42,11 +42,6 @@ class IRepository[T](abc.ABC):
         """Удалить объект."""
         pass
 
-    @abc.abstractmethod
-    def get_session(self) -> Session:
-        """Получить новую сессию."""
-        pass
-
 
 class IUserRepository(IRepository):
     """Интерфейс репозитория пользователей."""
@@ -127,13 +122,6 @@ class IAggregatedDataRepository(IRepository):
         self, graph_id: UUID, db: Session
     ) -> list[Any]:
         """Получить агрегированные данные по ID графика."""
-        pass
-
-    @abc.abstractmethod
-    def create_bulk(
-        self, db: Session, objects: list[dict[str, Any]]
-    ) -> list[Any]:
-        """Создать несколько записей агрегированных данных."""
         pass
 
 

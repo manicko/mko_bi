@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
 from mko_bi.models.user_roles import ProcessingStatusEnum

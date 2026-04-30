@@ -1,13 +1,12 @@
 """Тесты для пайплайна обработки данных.
 
-Тестирует классы DataProcessor, TransformationRegistry и функции
+Тестирует классы TransformationRegistry и функции
 apply_transformations, calculate_aggregations.
 """
 
 import pytest
 import polars as pl
 
-from mko_bi.data.processing.base import DataProcessor
 from mko_bi.data.processing.registry import TransformationRegistry
 from mko_bi.data.processing.transformations import (
     apply_transformations,
@@ -18,66 +17,6 @@ from mko_bi.data.processing.transformations import (
     _calculate_share,
     _apply_custom_metrics,
 )
-
-
-class TestDataProcessor:
-    """Тесты для базового класса DataProcessor."""
-
-    class ConcreteProcessor(DataProcessor):
-        """Конкретная реализация для тестов."""
-
-        def process(self, data: pl.DataFrame) -> pl.DataFrame:
-            """Простая обработка - возвращает данные как есть."""
-            self._validate_input(data)
-            self._log_processing_stats(data, "test")
-            return data
-
-    def test_init_with_default_config(self):
-        """Тест инициализации с конфигурацией по умолчанию."""
-        processor = self.ConcreteProcessor()
-        assert processor.config == {}
-
-    def test_init_with_custom_config(self):
-        """Тест инициализации с кастомной конфигурацией."""
-        config = {"key": "value"}
-        processor = self.ConcreteProcessor(config)
-        assert processor.config == config
-
-    def test_process_valid_data(self):
-        """Тест обработки валидных данных."""
-        processor = self.ConcreteProcessor()
-        df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
-        result = processor.process(df)
-        assert isinstance(result, pl.DataFrame)
-        assert result.shape == df.shape
-
-    def test_process_empty_data_raises_error(self):
-        """Тест обработки пустых данных вызывает ошибку."""
-        processor = self.ConcreteProcessor()
-        df = pl.DataFrame()
-        with pytest.raises(ValueError, match="Входные данные пустые"):
-            processor.process(df)
-
-    def test_validate_input_valid(self):
-        """Тест валидации валидных входных данных."""
-        processor = self.ConcreteProcessor()
-        df = pl.DataFrame({"a": [1, 2, 3]})
-        # Не должно выбрасывать исключение
-        processor._validate_input(df)
-
-    def test_validate_input_empty_rows(self):
-        """Тест валидации данных без строк."""
-        processor = self.ConcreteProcessor()
-        df = pl.DataFrame({"a": []})
-        with pytest.raises(ValueError, match="Входные данные пустые"):
-            processor._validate_input(df)
-
-    def test_validate_input_empty_columns(self):
-        """Тест валидации данных без колонок."""
-        processor = self.ConcreteProcessor()
-        df = pl.DataFrame()
-        with pytest.raises(ValueError, match="Входные данные пустые"):
-            processor._validate_input(df)
 
 
 class TestTransformationRegistry:

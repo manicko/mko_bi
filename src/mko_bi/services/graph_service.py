@@ -8,6 +8,7 @@ import logging
 from typing import Any
 from uuid import UUID
 
+from mko_bi.db.session import get_session
 from mko_bi.interfaces.repository_interfaces import IGraphRepository
 from mko_bi.interfaces.service_interfaces import IGraphService
 from mko_bi.models.graph import GraphCreate, GraphRead, GraphUpdate
@@ -47,7 +48,7 @@ class GraphService(IGraphService):
         logger.info("Создание графика: name=%s, dashboard_id=%s", data.name, data.dashboard_id)
         self._validate_graph_data(data)
         
-        db = self._repository.get_session()
+        db = get_session().__enter__()
         try:
             graph_obj = self._repository.create(
                 db=db,
@@ -79,7 +80,7 @@ class GraphService(IGraphService):
             GraphRead или None, если не найден.
         """
         logger.info("Получение графика: id=%s", graph_id)
-        db = self._repository.get_session()
+        db = get_session().__enter__()
         try:
             graph_obj = self._repository.get(graph_id, db=db)
             if graph_obj is None:
@@ -113,7 +114,7 @@ class GraphService(IGraphService):
         if data.metrics is not None:
             update_data["metrics"] = data.metrics
         
-        db = self._repository.get_session()
+        db = get_session().__enter__()
         try:
             graph_obj = self._repository.update(graph_id, db=db, **update_data)
             if graph_obj is None:
@@ -139,7 +140,7 @@ class GraphService(IGraphService):
             True, если удаление успешно, False - если не найден.
         """
         logger.info("Удаление графика: id=%s", graph_id)
-        db = self._repository.get_session()
+        db = get_session().__enter__()
         try:
             result: bool = self._repository.delete(graph_id, db=db)
             if result:
@@ -165,7 +166,7 @@ class GraphService(IGraphService):
             Список графиков дашборда.
         """
         logger.info("Получение графиков для дашборда: dashboard_id=%s", dashboard_id)
-        db = self._repository.get_session()
+        db = get_session().__enter__()
         try:
             graph_objs = self._repository.get_by_dashboard_id(dashboard_id, db=db)
             return [self._to_read_model(g) for g in graph_objs]
@@ -224,7 +225,7 @@ class GraphService(IGraphService):
     def get_graph_by_name_and_dashboard(self, name: str, dashboard_id: UUID) -> GraphRead | None:
         """Получить график по имени и ID дашборда (метод интерфейса IGraphService)."""
         logger.info("Получение графика: name=%s, dashboard_id=%s", name, dashboard_id)
-        db = self._repository.get_session()
+        db = get_session().__enter__()
         try:
             graph_obj = self._repository.get_by_name_and_dashboard(name, dashboard_id, db=db)
             if graph_obj is None:

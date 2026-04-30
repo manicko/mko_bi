@@ -253,3 +253,13 @@ class ProcessingLogRepository:
         except SQLAlchemyError as e:
             logger.error("Ошибка при удалении лога обработки id=%s: %s", log_id, e)
             raise
+
+    @classmethod
+    def get_session(cls) -> Session:
+        """Создать и вернуть новую сессию базы данных.
+
+        Returns:
+            Новая сессия.
+        """
+        from mko_bi.db.session import get_session
+        return get_session()

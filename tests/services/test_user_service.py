@@ -159,7 +159,7 @@ class TestCreateUser:
         mock_user.role = UserRoleEnum.admin
         mock_user.created_at = "2026-04-27T17:30:00"
 
-        with patch('mko_bi.db.session.get_session') as mock_get_session, \
+        with patch('mko_bi.services.user_service.get_session') as mock_get_session, \
              patch('mko_bi.services.user_service.UserRepository') as mock_repo, \
              patch('mko_bi.services.user_service.hash_password') as mock_hash, \
              patch('mko_bi.services.user_service._validate_role'), \
@@ -216,7 +216,7 @@ class TestGetUserByEmail:
     def test_get_user_by_email_auto_session(self):
         """Получение пользователя с автоматическим созданием сессии."""
         mock_user = MagicMock(spec=user_model.User)
-        with patch('mko_bi.db.session.get_session') as mock_get_session, \
+        with patch('mko_bi.services.user_service.get_session') as mock_get_session, \
              patch('mko_bi.services.user_service.UserRepository') as mock_repo:
 
             mock_session = MagicMock(spec=Session)

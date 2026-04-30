@@ -251,7 +251,7 @@ class TestUploadFile:
         """Загрузка файла с автоматическим созданием сессии."""
         content = b"test data"
 
-        with patch('mko_bi.db.session.get_session') as mock_get_session, \
+        with patch('mko_bi.services.data_service.get_session') as mock_get_session, \
              patch('mko_bi.services.data_service.DashboardRepository') as mock_dash_repo, \
              patch('mko_bi.services.data_service.check_dashboard_access') as mock_check_access, \
              patch('mko_bi.services.data_service._validate_file'), \
@@ -381,7 +381,7 @@ class TestTriggerProcessing:
         """Запуск обработки с автоматическим созданием сессии."""
         task_id = uuid.uuid4()
 
-        with patch('mko_bi.db.session.get_session') as mock_get_session, \
+        with patch('mko_bi.services.data_service.get_session') as mock_get_session, \
              patch('mko_bi.services.data_service.check_dashboard_access') as mock_check_access, \
              patch('mko_bi.services.data_service._process_csv_file') as mock_process, \
              patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo, \
@@ -504,7 +504,7 @@ class TestGetProcessingStatus:
         """Получение статуса с автоматическим созданием сессии."""
         task_id = uuid.uuid4()
 
-        with patch('mko_bi.db.session.get_session') as mock_get_session, \
+        with patch('mko_bi.services.data_service.get_session') as mock_get_session, \
              patch('mko_bi.services.data_service.check_dashboard_access') as mock_check_access, \
              patch('mko_bi.services.data_service.ProcessingLogRepository') as mock_repo:
 
