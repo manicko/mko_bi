@@ -14,6 +14,7 @@ from uuid import UUID
 import polars as pl
 from sqlalchemy import Float, Integer
 from sqlalchemy.orm import Session
+from werkzeug.utils import secure_filename
 
 from mko_bi.config import get_config
 from mko_bi.core.permissions import check_dashboard_access
@@ -80,6 +81,10 @@ def _validate_file(filename: str, file_content: bytes) -> None:
 def _save_uploaded_file(filename: str, file_content: bytes, dashboard_id: int | None = None) -> Path:
     """Сохраняет загруженный файл во временную директорию.
 
+    Выполняет валидацию пути для защиты от directory traversal атак.
+    Использует secure_filename для очистки имени файла и Path.resolve()
+    для проверки, что путь находится в разрешенной директории.
+
     Args:
         filename: Имя файла.
         file_content: Содержимое файла.
@@ -87,17 +92,31 @@ def _save_uploaded_file(filename: str, file_content: bytes, dashboard_id: int | 
 
     Returns:
         Path: Путь к сохраненному файлу.
+
+    Raises:
+        ValueError: Если путь содержит попытку directory traversal.
     """
     config = get_config()
     upload_dir = Path(config.upload_temp_dir)
     upload_dir.mkdir(parents=True, exist_ok=True)
+    resolved_upload_dir = upload_dir.resolve()
+
+    # Очистка имени файла от недопустимых символов
+    secured_filename = secure_filename(filename)
 
     # Генерируем уникальное имя файла с учетом dashboard_id для поиска
     if dashboard_id:
-        unique_filename = f"{uuid.uuid4()}_{dashboard_id}_{filename}"
+        unique_filename = f"{uuid.uuid4()}_{dashboard_id}_{secured_filename}"
     else:
-        unique_filename = f"{uuid.uuid4()}_{filename}"
+        unique_filename = f"{uuid.uuid4()}_{secured_filename}"
+
     file_path = upload_dir / unique_filename
+
+    # Проверка, что путь находится в разрешенной директории (защита от directory traversal)
+    resolved_file_path = file_path.resolve()
+    if not str(resolved_file_path).startswith(str(resolved_upload_dir)):
+        logger.error("Обнаружена попытка directory traversal: %s", filename)
+        raise ValueError(f"Недопустимый путь к файлу: {filename}")
 
     with open(file_path, "wb") as f:
         f.write(file_content)

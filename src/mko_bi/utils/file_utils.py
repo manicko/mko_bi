@@ -17,6 +17,8 @@ class FileUtils:
     Provides methods for common file operations including upload, save,
     delete, and existence checks using pathlib for safe path handling.
 
+    All operations are restricted to the base_path to prevent directory traversal.
+
     Attributes:
         base_path: Base directory for file operations.
     """
@@ -33,11 +35,34 @@ class FileUtils:
         """
         self.base_path = Path(base_path) if base_path else Path.cwd()
         self.base_path.mkdir(parents=True, exist_ok=True)
+        self._resolved_base_path = self.base_path.resolve()
+
+    def _validate_path(self, file_path: Path) -> Path:
+        """Validate that the path is within the base_path.
+
+        Args:
+            file_path: Path to validate.
+
+        Returns:
+            Path: The resolved file path.
+
+        Raises:
+            HTTPException: If path traversal is detected.
+        """
+        resolved_path = file_path.resolve()
+        if not str(resolved_path).startswith(str(self._resolved_base_path)):
+            logger.error("Directory traversal detected: %s", file_path)
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid file path: access outside base directory is not allowed",
+            )
+        return resolved_path
 
     def upload(self, file_content: bytes, filename: str, subdir: str | None = None) -> Path:
         """Upload and save file content.
 
         Saves file content to the specified location. Creates subdirectory if needed.
+        Validates that the resulting path is within the base directory.
 
         Args:
             file_content: Raw bytes of the file to upload.
@@ -48,7 +73,7 @@ class FileUtils:
             Path: Full path to the saved file.
 
         Raises:
-            HTTPException: If file save fails.
+            HTTPException: If file save fails or path traversal detected.
 
         Example:
             >>> utils = FileUtils("/tmp/uploads")
@@ -61,9 +86,12 @@ class FileUtils:
                 target_dir.mkdir(parents=True, exist_ok=True)
 
             file_path = target_dir / filename
+            self._validate_path(file_path)
             file_path.write_bytes(file_content)
             logger.info("File uploaded successfully: %s", file_path)
             return file_path
+        except HTTPException:
+            raise
         except OSError as e:
             logger.error("Failed to upload file %s: %s", filename, e)
             raise HTTPException(
@@ -75,6 +103,7 @@ class FileUtils:
         """Save content to a file.
 
         Saves text or binary content to the specified file.
+        Validates that the resulting path is within the base directory.
 
         Args:
             content: Content to save (text or bytes).
@@ -85,7 +114,7 @@ class FileUtils:
             Path: Full path to the saved file.
 
         Raises:
-            HTTPException: If file save fails.
+            HTTPException: If file save fails or path traversal detected.
 
         Example:
             >>> utils = FileUtils("/tmp/data")
@@ -98,12 +127,15 @@ class FileUtils:
                 target_dir.mkdir(parents=True, exist_ok=True)
 
             file_path = target_dir / filename
+            self._validate_path(file_path)
             if isinstance(content, str):
                 file_path.write_text(content, encoding="utf-8")
             else:
                 file_path.write_bytes(content)
             logger.info("File saved successfully: %s", file_path)
             return file_path
+        except HTTPException:
+            raise
         except OSError as e:
             logger.error("Failed to save file %s: %s", filename, e)
             raise HTTPException(
@@ -115,6 +147,7 @@ class FileUtils:
         """Delete a file.
 
         Removes the specified file from the filesystem.
+        Validates that the file is within the base directory.
 
         Args:
             filename: Name of the file to delete.
@@ -124,7 +157,7 @@ class FileUtils:
             bool: True if file was deleted, False if file did not exist.
 
         Raises:
-            HTTPException: If deletion fails due to permissions or other errors.
+            HTTPException: If deletion fails or path traversal detected.
 
         Example:
             >>> utils = FileUtils("/tmp/uploads")
@@ -136,12 +169,15 @@ class FileUtils:
                 target_dir = target_dir / subdir
 
             file_path = target_dir / filename
+            self._validate_path(file_path)
             if file_path.exists():
                 file_path.unlink()
                 logger.info("File deleted successfully: %s", file_path)
                 return True
             logger.warning("File not found for deletion: %s", file_path)
             return False
+        except HTTPException:
+            raise
         except OSError as e:
             logger.error("Failed to delete file %s: %s", filename, e)
             raise HTTPException(
@@ -152,12 +188,17 @@ class FileUtils:
     def exists(self, filename: str, subdir: str | None = None) -> bool:
         """Check if a file exists.
 
+        Validates that the path is within the base directory.
+
         Args:
             filename: Name of the file to check.
             subdir: Optional subdirectory under base_path. Defaults to None.
 
         Returns:
             bool: True if file exists, False otherwise.
+
+        Raises:
+            HTTPException: If path traversal detected.
 
         Example:
             >>> utils = FileUtils("/tmp/uploads")
@@ -168,10 +209,13 @@ class FileUtils:
         if subdir:
             target_dir = target_dir / subdir
         file_path = target_dir / filename
+        self._validate_path(file_path)
         return file_path.exists()
 
     def read(self, filename: str, subdir: str | None = None) -> bytes:
         """Read file content as bytes.
+
+        Validates that the file is within the base directory.
 
         Args:
             filename: Name of the file to read.
@@ -181,7 +225,7 @@ class FileUtils:
             bytes: File content.
 
         Raises:
-            HTTPException: If file does not exist or cannot be read.
+            HTTPException: If file does not exist, cannot be read, or path traversal detected.
 
         Example:
             >>> utils = FileUtils("/tmp/uploads")
@@ -193,6 +237,7 @@ class FileUtils:
                 target_dir = target_dir / subdir
 
             file_path = target_dir / filename
+            self._validate_path(file_path)
             if not file_path.exists():
                 raise HTTPException(
                     status_code=404,
@@ -211,6 +256,8 @@ class FileUtils:
     def read_text(self, filename: str, subdir: str | None = None) -> str:
         """Read file content as text.
 
+        Validates that the file is within the base directory.
+
         Args:
             filename: Name of the file to read.
             subdir: Optional subdirectory under base_path. Defaults to None.
@@ -219,7 +266,7 @@ class FileUtils:
             str: File content as text.
 
         Raises:
-            HTTPException: If file does not exist or cannot be read.
+            HTTPException: If file does not exist, cannot be read, or path traversal detected.
 
         Example:
             >>> utils = FileUtils("/tmp/data")
@@ -231,6 +278,7 @@ class FileUtils:
                 target_dir = target_dir / subdir
 
             file_path = target_dir / filename
+            self._validate_path(file_path)
             if not file_path.exists():
                 raise HTTPException(
                     status_code=404,
@@ -249,12 +297,17 @@ class FileUtils:
     def list_files(self, subdir: str | None = None, pattern: str = "*") -> list[Path]:
         """List files in directory.
 
+        Validates that the directory is within the base directory.
+
         Args:
             subdir: Optional subdirectory under base_path. Defaults to None.
             pattern: Glob pattern for filtering files. Defaults to "*".
 
         Returns:
             list[Path]: List of file paths matching the pattern.
+
+        Raises:
+            HTTPException: If path traversal detected.
 
         Example:
             >>> utils = FileUtils("/tmp/uploads")
@@ -263,10 +316,13 @@ class FileUtils:
         target_dir = self.base_path
         if subdir:
             target_dir = target_dir / subdir
+        self._validate_path(target_dir)
         return list(target_dir.glob(pattern))
 
     def get_size(self, filename: str, subdir: str | None = None) -> int:
         """Get file size in bytes.
+
+        Validates that the file is within the base directory.
 
         Args:
             filename: Name of the file.
@@ -276,7 +332,7 @@ class FileUtils:
             int: File size in bytes.
 
         Raises:
-            HTTPException: If file does not exist.
+            HTTPException: If file does not exist or path traversal detected.
 
         Example:
             >>> utils = FileUtils("/tmp/uploads")
@@ -287,6 +343,7 @@ class FileUtils:
             target_dir = target_dir / subdir
 
         file_path = target_dir / filename
+        self._validate_path(file_path)
         if not file_path.exists():
             raise HTTPException(
                 status_code=404,
