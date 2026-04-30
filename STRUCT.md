@@ -31,7 +31,6 @@ C:\py_exp\mko_bi
 │       ├── config.py
 │       ├── core
 │       │   ├── base_repository.py
-│       │   ├── base_service.py
 │       │   ├── permissions.py
 │       │   └── security.py
 │       ├── dash_app.py
@@ -55,7 +54,6 @@ C:\py_exp\mko_bi
 │       │   │   ├── loader.py
 │       │   │   └── validator.py
 │       │   ├── processing
-│       │   │   ├── base.py
 │       │   │   ├── registry.py
 │       │   │   └── transformations.py
 │       │   └── storage
@@ -85,9 +83,6 @@ C:\py_exp\mko_bi
 │       ├── Docerfile
 │       ├── docker-compose.yml
 │       ├── interfaces
-│       │   ├── repository_interfaces.py
-│       │   └── service_interfaces.py
-│       ├── interfaces_old
 │       │   ├── repository_interfaces.py
 │       │   └── service_interfaces.py
 │       ├── logging_config.py
@@ -158,7 +153,7 @@ C:\py_exp\mko_bi
 │   │   ├── TASK_008_fix_db_sessions_DONE.md
 │   │   ├── TASK_009_fix_ruff_errors.md
 │   │   ├── TASK_010_replace_any_types.md
-│   │   ├── TASK_011_remove_dead_code.md
+│   │   ├── TASK_011_remove_dead_code_DONE.md
 │   │   ├── TASK_012_fix_yoy_calculation.md
 │   │   ├── TASK_013_fix_gz_processing.md
 │   │   ├── TASK_014_implement_shares.md

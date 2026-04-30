@@ -106,6 +106,176 @@ def _save_uploaded_file(filename: str, file_content: bytes, dashboard_id: int | 
     return file_path
 
 
+def _get_file_size_mb(file_path: Path) -> float:
+    """Получает размер файла в мегабайтах.
+
+    Args:
+        file_path: Путь к файлу.
+
+    Returns:
+        float: Размер файла в МБ.
+
+    Raises:
+        FileNotFoundError: Если файл не найден.
+    """
+    if not file_path.exists():
+        raise FileNotFoundError(f"File not found: {file_path}")
+    return file_path.stat().st_size / (1024 * 1024)
+
+
+def _read_csv_safe(file_path: Path, file_size_mb: float, lazy_threshold_mb: float | None = None) -> pl.DataFrame:
+    """Безопасно читает CSV файл, выбирая метод в зависимости от размера.
+
+    Для файлов больше lazy_threshold_mb использует lazy evaluation (scan_csv),
+    для остальных - обычное чтение (read_csv).
+
+    Args:
+        file_path: Путь к CSV файлу.
+        file_size_mb: Размер файла в МБ.
+        lazy_threshold_mb: Порог в МБ, после которого используется lazy evaluation.
+            Если None, значение берется из конфигурации.
+
+    Returns:
+        pl.DataFrame: Прочитанный DataFrame.
+    """
+    if lazy_threshold_mb is None:
+        config = get_config()
+        lazy_threshold_mb = config.lazy_threshold_mb
+
+    if file_size_mb > lazy_threshold_mb:
+        logger.info("Используется lazy evaluation для файла %.2f MB", file_size_mb)
+        return pl.scan_csv(file_path).collect()
+    else:
+        logger.info("Используется обычное чтение для файла %.2f MB", file_size_mb)
+        return pl.read_csv(file_path)
+
+
+def _validate_file_size(file_path: Path, max_size_mb: float = 100.0) -> float:
+    """Проверяет размер файла до чтения.
+
+    Args:
+        file_path: Путь к файлу.
+        max_size_mb: Максимальный размер в МБ.
+
+    Returns:
+        float: Размер файла в МБ.
+
+    Raises:
+        ValueError: Если файл слишком большой.
+        FileNotFoundError: Если файл не найден.
+    """
+    file_size_mb = _get_file_size_mb(file_path)
+    max_size_bytes = max_size_mb * 1024 * 1024
+
+    if file_path.stat().st_size > max_size_bytes:
+        raise ValueError(
+            f"File too large: {file_path.stat().st_size} bytes (max: {max_size_bytes} bytes)"
+        )
+
+    logger.info("Размер файла %s: %.2f MB", file_path, file_size_mb)
+    return file_size_mb
+
+
+def _apply_filters(df: pl.DataFrame, filters: list[dict[str, Any]]) -> pl.DataFrame:
+    """Применяет фильтры к DataFrame.
+
+    Args:
+        df: Исходный DataFrame.
+        filters: Список фильтров для применения.
+
+    Returns:
+        pl.DataFrame: Отфильтрованный DataFrame.
+    """
+    for filter_config in filters:
+        field = filter_config.get("field")
+        operator = filter_config.get("operator")
+        value = filter_config.get("value")
+
+        if field and operator and value is not None:
+            if operator == ">=":
+                df = df.filter(pl.col(field) >= value)
+            elif operator == "<=":
+                df = df.filter(pl.col(field) <= value)
+            elif operator == "==":
+                df = df.filter(pl.col(field) == value)
+            elif operator == "!=":
+                df = df.filter(pl.col(field) != value)
+            elif operator == ">":
+                df = df.filter(pl.col(field) > value)
+            elif operator == "<":
+                df = df.filter(pl.col(field) < value)
+            logger.info("Применен фильтр: %s %s %s", field, operator, value)
+    return df
+
+
+def _apply_aggregations(
+    df: pl.DataFrame, groupby: list[str], aggregations: list[dict[str, Any]]
+) -> pl.DataFrame:
+    """Применяет группировку и агрегации к DataFrame.
+
+    Args:
+        df: Исходный DataFrame.
+        groupby: Список колонок для группировки.
+        aggregations: Список агрегаций для применения.
+
+    Returns:
+        pl.DataFrame: Результат группировки и агрегации.
+    """
+    agg_exprs = []
+    for agg in aggregations:
+        agg_type = agg.get("type")
+        field = agg.get("field")
+
+        if field:
+            if agg_type == "sum":
+                agg_exprs.append(pl.col(field).sum().alias(f"{field}_sum"))
+            elif agg_type == "avg":
+                agg_exprs.append(pl.col(field).mean().alias(f"{field}_avg"))
+            elif agg_type == "count":
+                agg_exprs.append(pl.col(field).count().alias(f"{field}_count"))
+            elif agg_type == "min":
+                agg_exprs.append(pl.col(field).min().alias(f"{field}_min"))
+            elif agg_type == "max":
+                agg_exprs.append(pl.col(field).max().alias(f"{field}_max"))
+
+    if agg_exprs:
+        df = df.group_by(groupby).agg(agg_exprs)
+        logger.info("Применена группировка: %s", groupby)
+    return df
+
+
+def _apply_transformations(df: pl.DataFrame, transformations: list[dict[str, Any]]) -> pl.DataFrame:
+    """Применяет трансформации к DataFrame.
+
+    Args:
+        df: Исходный DataFrame.
+        transformations: Список трансформаций для применения.
+
+    Returns:
+        pl.DataFrame: Трансформированный DataFrame.
+    """
+    for transform in transformations:
+        transform_type = transform.get("type")
+        condition = transform.get("condition")
+
+        if transform_type == "filter" and condition:
+            for field, op_value in condition.items():
+                if isinstance(op_value, dict):
+                    for op, val in op_value.items():
+                        if op == "$gte":
+                            df = df.filter(pl.col(field) >= val)
+                        elif op == "$lte":
+                            df = df.filter(pl.col(field) <= val)
+                        elif op == "$gt":
+                            df = df.filter(pl.col(field) > val)
+                        elif op == "$lt":
+                            df = df.filter(pl.col(field) < val)
+                        elif op == "$eq":
+                            df = df.filter(pl.col(field) == val)
+                        logger.info("Применена трансформация: %s %s %s", field, op, val)
+    return df
+
+
 def _process_csv_file(
     file_path: Path,
     processing_config: ProcessingConfig | None = None,
@@ -128,8 +298,13 @@ def _process_csv_file(
     """
     logger.info("Начало обработки файла: %s", file_path)
 
-    # Читаем gzipped CSV
-    df = pl.read_csv(file_path)
+    # Проверка размера файла ДО чтения
+    config = get_config()
+    max_size_mb = config.max_file_size / (1024 * 1024)
+    file_size_mb = _validate_file_size(file_path, max_size_mb)
+
+    # Чтение файла с выбором метода в зависимости от размера
+    df = _read_csv_safe(file_path, file_size_mb)
 
     logger.info("Файл прочитан: %d строк, %d колонок", df.shape[0], df.shape[1])
 
@@ -145,76 +320,17 @@ def _process_csv_file(
 
         # Применяем фильтры
         if processing_config.filters:
-            for filter_config in processing_config.filters:
-                field = filter_config.get("field")
-                operator = filter_config.get("operator")
-                value = filter_config.get("value")
-
-                if field and operator and value is not None:
-                    if operator == ">=":
-                        df = df.filter(pl.col(field) >= value)
-                    elif operator == "<=":
-                        df = df.filter(pl.col(field) <= value)
-                    elif operator == "==":
-                        df = df.filter(pl.col(field) == value)
-                    elif operator == "!=":
-                        df = df.filter(pl.col(field) != value)
-                    elif operator == ">":
-                        df = df.filter(pl.col(field) > value)
-                    elif operator == "<":
-                        df = df.filter(pl.col(field) < value)
-                    logger.info("Применен фильтр: %s %s %s", field, operator, value)
+            df = _apply_filters(df, processing_config.filters)
 
         # Применяем группировку и агрегации
         if processing_config.groupby and processing_config.aggregations:
-            group_cols = processing_config.groupby
-
-            # Собираем агрегации
-            agg_exprs = []
-            for agg in processing_config.aggregations:
-                agg_type = agg.get("type")
-                field = agg.get("field")
-
-                if field:
-                    if agg_type == "sum":
-                        agg_exprs.append(pl.col(field).sum().alias(f"{field}_sum"))
-                    elif agg_type == "avg":
-                        agg_exprs.append(pl.col(field).mean().alias(f"{field}_avg"))
-                    elif agg_type == "count":
-                        agg_exprs.append(pl.col(field).count().alias(f"{field}_count"))
-                    elif agg_type == "min":
-                        agg_exprs.append(pl.col(field).min().alias(f"{field}_min"))
-                    elif agg_type == "max":
-                        agg_exprs.append(pl.col(field).max().alias(f"{field}_max"))
-
-            if agg_exprs:
-                df = df.group_by(group_cols).agg(agg_exprs)
-                logger.info("Применена группировка: %s", group_cols)
+            df = _apply_aggregations(
+                df, processing_config.groupby, processing_config.aggregations
+            )
 
         # Применяем трансформации
         if processing_config.transformations:
-            for transform in processing_config.transformations:
-                transform_type = transform.get("type")
-                condition = transform.get("condition")
-
-                if transform_type == "filter" and condition:
-                    # Простая реализация фильтрации по условию
-                    for field, op_value in condition.items():
-                        if isinstance(op_value, dict):
-                            for op, val in op_value.items():
-                                if op == "$gte":
-                                    df = df.filter(pl.col(field) >= val)
-                                elif op == "$lte":
-                                    df = df.filter(pl.col(field) <= val)
-                                elif op == "$gt":
-                                    df = df.filter(pl.col(field) > val)
-                                elif op == "$lt":
-                                    df = df.filter(pl.col(field) < val)
-                                elif op == "$eq":
-                                    df = df.filter(pl.col(field) == val)
-                                logger.info(
-                                    "Применена трансформация: %s %s %s", field, op, val
-                                )
+            df = _apply_transformations(df, processing_config.transformations)
 
         result_data["processed_rows"] = df.shape[0]
         result_data["processed_columns"] = df.columns
@@ -236,7 +352,7 @@ def _process_csv_file(
                 # Так как мы не знаем конкретные graph_id, сохраняем данные
                 # через общий метод сохранения, который будет вызываться извне
                 pass
-            
+
             # Логируем, что данные готовы для сохранения
             logger.info(
                 "Агрегированные данные готовы для сохранения: %d строк",

@@ -36,6 +36,18 @@ class Settings(BaseSettings):
     UPLOAD_TEMP_DIR: str = "data/tmp_uploads"
     ALLOWED_FILE_TYPES: list[str] = [".csv.gz"]
     MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 100MB
+    LAZY_THRESHOLD_MB: float = 10.0  # Use lazy evaluation for files larger than this
+
+    @field_validator("LAZY_THRESHOLD_MB")
+    @classmethod
+    def validate_lazy_threshold_mb(cls, v: Any) -> float:
+        """Валидация порога для lazy evaluation."""
+        if isinstance(v, str):
+            try:
+                return float(v)
+            except ValueError as err:
+                raise ValueError("LAZY_THRESHOLD_MB должен быть числом с плавающей точкой") from err
+        return v
 
     # --- Logging ---
     LOG_FORMAT: str = (
@@ -135,6 +147,11 @@ class Settings(BaseSettings):
     def allowed_file_types(self) -> list[str]:
         """Алиас для ALLOWED_FILE_TYPES."""
         return self.ALLOWED_FILE_TYPES
+
+    @property
+    def lazy_threshold_mb(self) -> float:
+        """Порог в МБ для использования lazy evaluation."""
+        return self.LAZY_THRESHOLD_MB
 
     @property
     def max_file_size(self) -> int:

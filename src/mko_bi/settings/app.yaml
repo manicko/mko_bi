@@ -18,6 +18,7 @@ upload:
   allowed_file_types:
     - ".csv.gz"
   max_file_size: 104857600  # 100MB in bytes
+  lazy_threshold_mb: 10.0  # Use lazy evaluation for files larger than this
 
 logging:
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
