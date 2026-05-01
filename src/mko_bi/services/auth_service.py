@@ -6,12 +6,12 @@
 
 import logging
 import re
-import time
 from typing import Any
 
 from sqlalchemy.orm import Session
 
-from mko_bi.core.security import create_access_token, hash_password, verify_password, decode_token
+from mko_bi.config import get_redis_client
+from mko_bi.core.security import RateLimiter, create_access_token, hash_password, verify_password, decode_token
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.db.session import get_session
 from mko_bi.interfaces.service_interfaces import IAuthService
@@ -23,10 +23,6 @@ logger = logging.getLogger(__name__)
 # Регулярное выражение для валидации email
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
-# Rate limiting storage (in-memory, для простоты)
-# В production использовать Redis или аналог
-_login_attempts: dict[str, list[float]] = {}
-
 
 class AuthService(IAuthService):
     """Сервис аутентификации и регистрации пользователей.
@@ -35,36 +31,8 @@ class AuthService(IAuthService):
     для всех операций аутентификации и регистрации.
     """
 
-    def _check_rate_limit(self, email: str) -> bool:
-        """Проверяет лимит попыток входа (rate limiting).
-
-        Разрешает максимум 5 попыток входа в течение 60 секунд.
-
-        Args:
-            email: Email пользователя, пытающегося войти.
-
-        Returns:
-            bool: True, если попытка разрешена, False - если лимит превышен.
-        """
-        now = time.time()
-        window = 60
-        max_attempts = 5
-
-        if email not in _login_attempts:
-            _login_attempts[email] = []
-
-        _login_attempts[email] = [
-            attempt_time
-            for attempt_time in _login_attempts[email]
-            if now - attempt_time < window
-        ]
-
-        if len(_login_attempts[email]) >= max_attempts:
-            logger.warning("Превышен лимит попыток входа для email: %s", email)
-            return False
-
-        _login_attempts[email].append(now)
-        return True
+    def __init__(self) -> None:
+        self._rate_limiter = RateLimiter(get_redis_client())
 
     def _validate_role(self, role: str) -> None:
         """Проверяет, что роль является допустимой.
@@ -237,6 +205,9 @@ class AuthService(IAuthService):
             ValueError: Если аутентификация не удалась.
         """
         logger.info("Attempting user login: %s", email)
+
+        if not self._rate_limiter.check_rate_limit(f"rate_limit:{email}", 5, 60):
+            raise ValueError("Превышен лимит попыток входа")
 
         user = self.authenticate_user(email, password, db)
 

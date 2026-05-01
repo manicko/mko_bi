@@ -20,6 +20,12 @@ upload:
   max_file_size: 104857600  # 100MB in bytes
   lazy_threshold_mb: 10.0  # Use lazy evaluation for files larger than this
 
+redis:
+  host: localhost
+  port: 6379
+  db: 0
+  # password: "your-redis-password"  # Uncomment and set if Redis requires auth
+
 logging:
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
   level: INFO

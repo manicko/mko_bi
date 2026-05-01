@@ -7,19 +7,13 @@
 import pytest
 import uuid
 import gzip
-from unittest.mock import MagicMock, patch, PropertyMock
-from datetime import datetime
+from unittest.mock import MagicMock, patch
 from pathlib import Path
 from sqlalchemy.orm import Session
 
 from mko_bi.services.data_service import (
     upload_file,
     trigger_processing,
-    get_processing_status,
-    get_processing_result,
-    get_dashboard_aggregates,
-    apply_data_filters,
-    cleanup_task_files,
     _validate_file,
     _save_uploaded_file,
     _process_csv_file,
@@ -28,7 +22,6 @@ from mko_bi.db.models import dashboard as dashboard_model
 from mko_bi.models.data import (
     UploadResponse,
     ProcessingStatus,
-    ProcessingResult,
     ProcessingConfig,
 )
 

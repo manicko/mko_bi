@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import Any
 
+import redis
 from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
@@ -48,6 +49,12 @@ class Settings(BaseSettings):
             except ValueError as err:
                 raise ValueError("LAZY_THRESHOLD_MB должен быть числом с плавающей точкой") from err
         return v
+
+    # --- Redis ---
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 0
+    REDIS_PASSWORD: str | None = None
 
     # --- Logging ---
     LOG_FORMAT: str = (
@@ -176,4 +183,21 @@ def get_config() -> Settings:
     if _settings is None:
         _settings = Settings()
     return _settings
+
+
+def get_redis_client() -> "redis.Redis":
+    """Возвращает клиент Redis на основе настроек.
+    
+    Returns:
+        redis.Redis: Клиент Redis.
+    """
+    import redis
+    config = get_config()
+    return redis.Redis(
+        host=config.REDIS_HOST,
+        port=config.REDIS_PORT,
+        db=config.REDIS_DB,
+        password=config.REDIS_PASSWORD,
+        decode_responses=True,
+    )
 

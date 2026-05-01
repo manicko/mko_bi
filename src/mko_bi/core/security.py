@@ -5,6 +5,7 @@ from datetime import datetime, timedelta, UTC
 from typing import Any
 
 import bcrypt
+import redis
 from jose import JWTError, jwt
 
 from mko_bi.config import get_config
@@ -15,6 +16,23 @@ logger = logging.getLogger(__name__)
 # Константы
 SALT_ROUNDS: int = 12
 MAX_PASSWORD_LENGTH: int = 72
+
+
+class RateLimiter:
+    def __init__(self, redis_client: redis.Redis) -> None:
+        self._redis = redis_client
+
+    def check_rate_limit(self, key: str, max_attempts: int, ttl: int) -> bool:
+        attempts: str | None = self._redis.get(key)
+        if attempts is not None and int(attempts) >= max_attempts:
+            logger.warning("Rate limit exceeded for key: %s", key)
+            return False
+
+        pipeline = self._redis.pipeline()
+        pipeline.incr(key)
+        pipeline.expire(key, ttl)
+        pipeline.execute()
+        return True
 
 
 def _truncate_password(password: str) -> str:
