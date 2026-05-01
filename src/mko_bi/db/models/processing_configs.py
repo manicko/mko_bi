@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     JSON,
     text,
+    func,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -40,8 +41,8 @@ class ProcessingConfig(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("(datetime('now'))"),
-        onupdate=datetime.utcnow,
+        server_default=text("now()"),
+        onupdate=func.now(),
     )
 
     # Связь с дашбордом

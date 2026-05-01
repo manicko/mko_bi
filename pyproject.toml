@@ -187,6 +187,8 @@ pythonpath = ["src"]
 markers = [
     "slow: marks tests as slow (use -m slow to run)",
 ]
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
 
 [dependency-groups]
 dev = [
@@ -201,4 +203,6 @@ dev = [
     "twine>=5.0.0",
     "flake8>=7.3.0",
     "types-requests>=2.33.0.20260408",
+    "testcontainers[postgres]>=4.0.0",
+    "asyncpg>=0.30.0",
 ]

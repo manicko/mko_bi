@@ -21,14 +21,14 @@ class DataUpload(BaseModel):
 
     file: bytes
     filename: str
-    dashboard_id: int
+    dashboard_id: UUID
 
     model_config = ConfigDict(
         from_attributes=True,
         json_schema_extra={
             "example": {
                 "filename": "data.csv.gz",
-                "dashboard_id": 1,
+                "dashboard_id": "550e8400-e29b-41d4-a716-446655440000",
             }
         },
     )
@@ -39,7 +39,7 @@ class UploadResponse(BaseModel):
 
     task_id: UUID
     filename: str
-    dashboard_id: int
+    dashboard_id: UUID
     status: ProcessingStatusEnum
     message: str
     uploaded_at: datetime
@@ -50,7 +50,7 @@ class UploadResponse(BaseModel):
             "example": {
                 "task_id": "550e8400-e29b-41d4-a716-446655440000",
                 "filename": "data.csv.gz",
-                "dashboard_id": 1,
+                "dashboard_id": "550e8400-e29b-41d4-a716-446655440000",
                 "status": "uploaded",
                 "message": "File uploaded successfully",
                 "uploaded_at": "2026-04-24T16:02:46+03:00",
@@ -64,7 +64,7 @@ class ProcessingStatus(BaseModel):
 
     task_id: UUID
     filename: str
-    dashboard_id: int
+    dashboard_id: UUID
     status: ProcessingStatusEnum
     progress: int = Field(0, ge=0, le=100)
     message: str | None = None
@@ -77,7 +77,7 @@ class ProcessingStatus(BaseModel):
             "example": {
                 "task_id": "550e8400-e29b-41d4-a716-446655440000",
                 "filename": "data.csv.gz",
-                "dashboard_id": 1,
+                "dashboard_id": "550e8400-e29b-41d4-a716-446655440000",
                 "status": "processing",
                 "progress": 50,
                 "message": "Processing data...",
@@ -124,7 +124,7 @@ class ProcessingResult(BaseModel):
 
     success: bool
     task_id: UUID
-    dashboard_id: int
+    dashboard_id: UUID
     rows_processed: int
     message: str
     data: ProcessingResultData | None = None
@@ -135,7 +135,7 @@ class ProcessingResult(BaseModel):
             "example": {
                 "success": True,
                 "task_id": "550e8400-e29b-41d4-a716-446655440000",
-                "dashboard_id": 1,
+                "dashboard_id": "550e8400-e29b-41d4-a716-446655440000",
                 "rows_processed": 1000,
                 "message": "Data processed successfully",
                 "data": {"columns": ["category", "revenue"], "rows": 50},
@@ -147,7 +147,7 @@ class ProcessingResult(BaseModel):
 class AggregatedData(BaseModel):
     """Модель агрегированных данных для дашборда."""
 
-    dashboard_id: int
+    dashboard_id: UUID
     chart_type: GraphTypeEnum
     data: list[AggregatedRecordModel]
     metadata: ChartMetadata | None = None
@@ -156,7 +156,7 @@ class AggregatedData(BaseModel):
         from_attributes=True,
         json_schema_extra={
             "example": {
-                "dashboard_id": 1,
+                "dashboard_id": "550e8400-e29b-41d4-a716-446655440000",
                 "chart_type": "bar",
                 "data": [
                     {"dims": {"category": "A"}, "metrics": {"revenue": 1000}},

@@ -120,6 +120,7 @@ C:\py_exp\mko_bi
 ├── STRUCT.md
 ├── TASK_TEMPLATE.md
 ├── TASKS.md
+├── test_output.txt
 ├── tests
 │   ├── conftest.py
 │   ├── services
@@ -142,15 +143,19 @@ C:\py_exp\mko_bi
 │   ├── test_repositories.py
 │   ├── test_security.py
 │   ├── test_share_calculation.py
+│   ├── test_simple_async.py
 │   ├── test_storage_manager.py
 │   ├── test_upload_api.py
 │   └── test_yoy_calculation.py
 ├── TODO
 │   ├── DEV
 │   │   └── TASK_033_replace_any_types_DONE.md
+│   ├── TASK_001_db_structure_audit.md
+│   ├── TASK_001_db_structure_module_dev.md
 │   ├── TASK_031_audit.md
 │   ├── TASK_033_audit.md
 │   ├── TASK_034_audit.md
+│   ├── TASK_036_test_audit_Arch_report.md
 │   ├── TASK_037_test_audit.md
 │   ├── TASK_037_test_audit1.md
 │   ├── TASK_038_docker_audit.md

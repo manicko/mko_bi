@@ -70,7 +70,7 @@ class Graph(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
-        server_default=text("(datetime('now'))"),
+        server_default=text("now()"),
     )
 
     # Связь с дашбордом

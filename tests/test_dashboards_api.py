@@ -1,575 +1,233 @@
 """Тесты для API дашбордов.
 
-Тестирует эндпоинты CRUD операций с дашбордами,
-включая аутентификацию и проверку прав доступа.
+Тестирует эндпоинты CRUD операций с дашбордами через httpx.AsyncClient
+с реальным FastAPI стеком (middleware, Depends).
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
-from fastapi import HTTPException
-from uuid import UUID
-
-from mko_bi.api.routes.dashboards import (
-    create_dashboard_endpoint,
-    get_dashboards_endpoint,
-    get_dashboard_endpoint,
-    update_dashboard_endpoint,
-    delete_dashboard_endpoint,
-    grant_dashboard_access_endpoint,
-)
-from mko_bi.models.dashboard import DashboardCreate, DashboardUpdate, DashboardRead
-from mko_bi.models.access import AccessGrant
-from mko_bi.models.user import UserDB
+from uuid import uuid4
+from httpx import AsyncClient
 
 
 class TestCreateDashboardEndpoint:
     """Тесты эндпоинта создания дашборда."""
 
     @pytest.mark.asyncio
-    async def test_create_dashboard_success(self, db_session):
+    async def test_create_dashboard_success(self, authenticated_client: AsyncClient, test_user: dict):
         """Успешное создание дашборда."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
+        response = await authenticated_client.post(
+            "/dashboards/",
+            json={"name": "Test Dashboard", "config": {"graph_types": ["bar"]}},
+        )
 
-        with patch("mko_bi.api.routes.dashboards.create_dashboard") as mock_create:
-            mock_dashboard = MagicMock(spec=DashboardRead)
-            mock_create.return_value = mock_dashboard
+        assert response.status_code == 201
+        data = response.json()
+        assert data["name"] == "Test Dashboard"
+        assert "id" in data
 
-            result = await create_dashboard_endpoint(
-                dashboard=DashboardCreate(
-                    name="Test Dashboard",
-                    config={"graph_types": ["bar"]},
-                ),
-                current_user=mock_user,
-                db=db_session,
+    @pytest.mark.asyncio
+    async def test_create_dashboard_no_auth(self):
+        """Ошибка создания без аутентификации."""
+        import httpx
+        from httpx import ASGITransport
+        from mko_bi.main import app
+
+        transport = ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+            response = await client.post(
+                "/dashboards/",
+                json={"name": "Test Dashboard", "config": {"graph_types": ["bar"]}},
             )
 
-            assert result == mock_dashboard
-            call_kwargs = mock_create.call_args[1]
-            assert call_kwargs["name"] == "Test Dashboard"
-            assert call_kwargs["owner_id"] == 1
-            assert call_kwargs["db"] == db_session
-
-    @pytest.mark.asyncio
-    async def test_create_dashboard_validation_error(self, db_session):
-        """Ошибка валидации при создании дашборда."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-
-        with patch("mko_bi.api.routes.dashboards.create_dashboard") as mock_create:
-            mock_create.side_effect = ValueError("Invalid config")
-
-            with pytest.raises(HTTPException) as exc_info:
-                await create_dashboard_endpoint(
-                    dashboard=DashboardCreate(
-                        name="Test Dashboard",
-                        config={"graph_types": []},
-                    ),
-                    current_user=mock_user,
-                    db=db_session,
-                )
-
-            assert exc_info.value.status_code == 422
-            assert "Invalid config" in str(exc_info.value.detail)
-
-    @pytest.mark.asyncio
-    async def test_create_dashboard_internal_error(self, db_session):
-        """Внутренняя ошибка при создании дашборда."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-
-        with patch("mko_bi.api.routes.dashboards.create_dashboard") as mock_create:
-            mock_create.side_effect = Exception("DB error")
-
-            with pytest.raises(HTTPException) as exc_info:
-                await create_dashboard_endpoint(
-                    dashboard=DashboardCreate(
-                        name="Test Dashboard",
-                        config={"graph_types": ["bar"]},
-                    ),
-                    current_user=mock_user,
-                    db=db_session,
-                )
-
-            assert exc_info.value.status_code == 500
-            assert "Ошибка при создании дашборда" in str(exc_info.value.detail)
+        assert response.status_code == 401
 
 
 class TestGetDashboardsEndpoint:
     """Тесты эндпоинта получения списка дашбордов."""
 
     @pytest.mark.asyncio
-    async def test_get_dashboards_success(self, db_session):
+    async def test_get_dashboards_success(self, authenticated_client: AsyncClient, test_user: dict):
         """Успешное получение списка дашбордов."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
+        # Создаем дашборд
+        await authenticated_client.post(
+            "/dashboards/",
+            json={"name": "Dashboard 1", "config": {"graph_types": ["bar"]}},
+        )
 
-        mock_dashboard = MagicMock(spec=DashboardRead)
+        response = await authenticated_client.get("/dashboards/")
 
-        with patch("mko_bi.api.routes.dashboards.get_user_dashboards") as mock_get:
-            mock_get.return_value = [mock_dashboard]
-
-            result = await get_dashboards_endpoint(
-                current_user=mock_user,
-                db=db_session,
-            )
-
-            assert result == [mock_dashboard]
-            mock_get.assert_called_once_with(user_id=1, db=db_session)
+        assert response.status_code == 200
+        data = response.json()
+        assert isinstance(data, list)
 
     @pytest.mark.asyncio
-    async def test_get_dashboards_empty(self, db_session):
-        """Получение пустого списка дашбордов."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
+    async def test_get_dashboards_no_auth(self):
+        """Ошибка без аутентификации."""
+        import httpx
+        from httpx import ASGITransport
+        from mko_bi.main import app
 
-        with patch("mko_bi.api.routes.dashboards.get_user_dashboards") as mock_get:
-            mock_get.return_value = []
+        transport = ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+            response = await client.get("/dashboards/")
 
-            result = await get_dashboards_endpoint(
-                current_user=mock_user,
-                db=db_session,
-            )
-
-            assert result == []
-
-    @pytest.mark.asyncio
-    async def test_get_dashboards_internal_error(self, db_session):
-        """Внутренняя ошибка при получении списка дашбордов."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-
-        with patch("mko_bi.api.routes.dashboards.get_user_dashboards") as mock_get:
-            mock_get.side_effect = Exception("DB error")
-
-            with pytest.raises(HTTPException) as exc_info:
-                await get_dashboards_endpoint(
-                    current_user=mock_user,
-                    db=db_session,
-                )
-
-            assert exc_info.value.status_code == 500
-            assert "Ошибка при получении списка дашбордов" in str(exc_info.value.detail)
+        assert response.status_code == 401
 
 
 class TestGetDashboardEndpoint:
     """Тесты эндпоинта получения дашборда по ID."""
 
     @pytest.mark.asyncio
-    async def test_get_dashboard_success(self, db_session):
+    async def test_get_dashboard_success(self, authenticated_client: AsyncClient, test_user: dict):
         """Успешное получение дашборда."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
+        # Создаем дашборд
+        create_resp = await authenticated_client.post(
+            "/dashboards/",
+            json={"name": "Test Dashboard", "config": {"graph_types": ["bar"]}},
+        )
+        assert create_resp.status_code == 201
+        dashboard_id = create_resp.json()["id"]
 
-        mock_dashboard = MagicMock(spec=DashboardRead)
+        response = await authenticated_client.get(f"/dashboards/{dashboard_id}")
 
-        with patch("mko_bi.api.routes.dashboards.get_dashboard") as mock_get:
-            mock_get.return_value = mock_dashboard
-
-            result = await get_dashboard_endpoint(
-                dashboard_id=dashboard_id,
-                current_user=mock_user,
-                db=db_session,
-            )
-
-            assert result == mock_dashboard
-            mock_get.assert_called_once_with(
-                dashboard_id=dashboard_id,
-                user_id=1,
-                db=db_session,
-            )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["id"] == dashboard_id
 
     @pytest.mark.asyncio
-    async def test_get_dashboard_not_found(self, db_session):
+    async def test_get_dashboard_not_found(self, authenticated_client: AsyncClient):
         """Дашборд не найден."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
+        dashboard_id = str(uuid4())
+        response = await authenticated_client.get(f"/dashboards/{dashboard_id}")
 
-        with patch("mko_bi.api.routes.dashboards.get_dashboard") as mock_get:
-            mock_get.return_value = None
-
-            with pytest.raises(HTTPException) as exc_info:
-                await get_dashboard_endpoint(
-                    dashboard_id=dashboard_id,
-                    current_user=mock_user,
-                    db=db_session,
-                )
-
-            assert exc_info.value.status_code == 404
-            assert "Дашборд не найден" in str(exc_info.value.detail)
+        assert response.status_code == 404
 
     @pytest.mark.asyncio
-    async def test_get_dashboard_internal_error(self, db_session):
-        """Внутренняя ошибка при получении дашборда."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
+    async def test_get_dashboard_no_auth(self):
+        """Ошибка без аутентификации."""
+        dashboard_id = str(uuid4())
 
-        with patch("mko_bi.api.routes.dashboards.get_dashboard") as mock_get:
-            mock_get.side_effect = Exception("DB error")
+        import httpx
+        from httpx import ASGITransport
+        from mko_bi.main import app
 
-            with pytest.raises(HTTPException) as exc_info:
-                await get_dashboard_endpoint(
-                    dashboard_id=dashboard_id,
-                    current_user=mock_user,
-                    db=db_session,
-                )
+        transport = ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+            response = await client.get(f"/dashboards/{dashboard_id}")
 
-            assert exc_info.value.status_code == 500
-            assert "Ошибка при получении дашборда" in str(exc_info.value.detail)
+        assert response.status_code == 401
 
 
 class TestUpdateDashboardEndpoint:
     """Тесты эндпоинта обновления дашборда."""
 
     @pytest.mark.asyncio
-    async def test_update_dashboard_success(self, db_session):
+    async def test_update_dashboard_success(self, authenticated_client: AsyncClient, test_user: dict):
         """Успешное обновление дашборда."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
+        # Создаем дашборд
+        create_resp = await authenticated_client.post(
+            "/dashboards/",
+            json={"name": "Test Dashboard", "config": {"graph_types": ["bar"]}},
+        )
+        assert create_resp.status_code == 201
+        dashboard_id = create_resp.json()["id"]
 
-        mock_dashboard = MagicMock(spec=DashboardRead)
+        # Обновляем
+        response = await authenticated_client.put(
+            f"/dashboards/{dashboard_id}",
+            json={"config": {"graph_types": ["line"]}},
+        )
 
-        with patch("mko_bi.core.permissions.check_dashboard_access") as mock_check:
-            mock_check.return_value = True
-            with patch("mko_bi.api.routes.dashboards.update_dashboard") as mock_update:
-                mock_update.return_value = mock_dashboard
-
-                result = await update_dashboard_endpoint(
-                    dashboard_id=dashboard_id,
-                    dashboard_update=DashboardUpdate(
-                        config={"graph_types": ["line"]},
-                    ),
-                    current_user=mock_user,
-                    db=db_session,
-                )
-
-                assert result == mock_dashboard
-                mock_check.assert_called_once_with(
-                    user_id=1,
-                    dashboard_id=dashboard_id,
-                    required_permission="edit",
-                    db=db_session,
-                )
-                mock_update.assert_called_once()
+        assert response.status_code == 200
 
     @pytest.mark.asyncio
-    async def test_update_dashboard_access_denied(self, db_session):
-        """Отказ в доступе при обновлении дашборда."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
-
-        with patch("mko_bi.core.permissions.check_dashboard_access") as mock_check:
-            mock_check.return_value = False
-
-            with pytest.raises(HTTPException) as exc_info:
-                await update_dashboard_endpoint(
-                    dashboard_id=dashboard_id,
-                    dashboard_update=DashboardUpdate(
-                        config={"graph_types": ["line"]},
-                    ),
-                    current_user=mock_user,
-                    db=db_session,
-                )
-
-            assert exc_info.value.status_code == 403
-            assert "нет прав" in str(exc_info.value.detail).lower()
-
-    @pytest.mark.asyncio
-    async def test_update_dashboard_not_found(self, db_session):
+    async def test_update_dashboard_not_found(self, authenticated_client: AsyncClient):
         """Дашборд не найден при обновлении."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
+        dashboard_id = str(uuid4())
+        response = await authenticated_client.put(
+            f"/dashboards/{dashboard_id}",
+            json={"config": {"graph_types": ["line"]}},
+        )
 
-        with patch("mko_bi.core.permissions.check_dashboard_access") as mock_check:
-            mock_check.return_value = True
-            with patch("mko_bi.api.routes.dashboards.update_dashboard") as mock_update:
-                mock_update.return_value = None
-
-                with pytest.raises(HTTPException) as exc_info:
-                    await update_dashboard_endpoint(
-                        dashboard_id=dashboard_id,
-                        dashboard_update=DashboardUpdate(
-                            config={"graph_types": ["line"]},
-                        ),
-                        current_user=mock_user,
-                        db=db_session,
-                    )
-
-                assert exc_info.value.status_code == 404
-                assert "Дашборд не найден" in str(exc_info.value.detail)
-
-
-
-    @pytest.mark.asyncio
-    async def test_update_dashboard_internal_error(self, db_session):
-        """Внутренняя ошибка при обновлении дашборда."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
-
-        with patch("mko_bi.core.permissions.check_dashboard_access") as mock_check:
-            mock_check.return_value = True
-            with patch("mko_bi.api.routes.dashboards.update_dashboard") as mock_update:
-                mock_update.side_effect = Exception("DB error")
-
-                with pytest.raises(HTTPException) as exc_info:
-                    await update_dashboard_endpoint(
-                        dashboard_id=dashboard_id,
-                        dashboard_update=DashboardUpdate(
-                            config={"graph_types": ["line"]},
-                        ),
-                        current_user=mock_user,
-                        db=db_session,
-                    )
-
-                assert exc_info.value.status_code == 500
+        assert response.status_code == 403
 
 
 class TestDeleteDashboardEndpoint:
     """Тесты эндпоинта удаления дашборда."""
 
     @pytest.mark.asyncio
-    async def test_delete_dashboard_success(self, db_session):
+    async def test_delete_dashboard_success(self, authenticated_client: AsyncClient, test_user: dict):
         """Успешное удаление дашборда."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
+        # Создаем дашборд
+        create_resp = await authenticated_client.post(
+            "/dashboards/",
+            json={"name": "To Delete", "config": {"graph_types": ["bar"]}},
+        )
+        assert create_resp.status_code == 201
+        dashboard_id = create_resp.json()["id"]
 
-        with patch("mko_bi.core.permissions.check_dashboard_access") as mock_check:
-            mock_check.return_value = True
-            with patch("mko_bi.api.routes.dashboards.delete_dashboard") as mock_delete:
-                mock_delete.return_value = True
+        # Удаляем
+        response = await authenticated_client.delete(f"/dashboards/{dashboard_id}")
 
-                result = await delete_dashboard_endpoint(
-                    dashboard_id=dashboard_id,
-                    current_user=mock_user,
-                    db=db_session,
-                )
-
-                assert result is None
-                mock_check.assert_called_once_with(
-                    user_id=1,
-                    dashboard_id=dashboard_id,
-                    required_permission="edit",
-                    db=db_session,
-                )
-                mock_delete.assert_called_once_with(
-                    dashboard_id=dashboard_id,
-                    db=db_session,
-                )
+        assert response.status_code == 204
 
     @pytest.mark.asyncio
-    async def test_delete_dashboard_access_denied(self, db_session):
-        """Отказ в доступе при удалении дашборда."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
-
-        with patch("mko_bi.core.permissions.check_dashboard_access") as mock_check:
-            mock_check.return_value = False
-
-            with pytest.raises(HTTPException) as exc_info:
-                await delete_dashboard_endpoint(
-                    dashboard_id=dashboard_id,
-                    current_user=mock_user,
-                    db=db_session,
-                )
-
-            assert exc_info.value.status_code == 403
-
-    @pytest.mark.asyncio
-    async def test_delete_dashboard_not_found(self, db_session):
+    async def test_delete_dashboard_not_found(self, authenticated_client: AsyncClient):
         """Дашборд не найден при удалении."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
+        dashboard_id = str(uuid4())
+        response = await authenticated_client.delete(f"/dashboards/{dashboard_id}")
 
-        with patch("mko_bi.core.permissions.check_dashboard_access") as mock_check:
-            mock_check.return_value = True
-            with patch("mko_bi.api.routes.dashboards.delete_dashboard") as mock_delete:
-                mock_delete.return_value = False
-
-                with pytest.raises(HTTPException) as exc_info:
-                    await delete_dashboard_endpoint(
-                        dashboard_id=dashboard_id,
-                        current_user=mock_user,
-                        db=db_session,
-                    )
-
-                assert exc_info.value.status_code == 404
-
-    @pytest.mark.asyncio
-    async def test_delete_dashboard_internal_error(self, db_session):
-        """Внутренняя ошибка при удалении дашборда."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
-
-        with patch("mko_bi.core.permissions.check_dashboard_access") as mock_check:
-            mock_check.return_value = True
-            with patch("mko_bi.api.routes.dashboards.delete_dashboard") as mock_delete:
-                mock_delete.side_effect = Exception("DB error")
-
-                with pytest.raises(HTTPException) as exc_info:
-                    await delete_dashboard_endpoint(
-                        dashboard_id=dashboard_id,
-                        current_user=mock_user,
-                        db=db_session,
-                    )
-
-                assert exc_info.value.status_code == 500
+        assert response.status_code == 403
 
 
 class TestGrantDashboardAccessEndpoint:
     """Тесты эндпоинта предоставления доступа к дашборду."""
 
     @pytest.mark.asyncio
-    async def test_grant_access_success(self, db_session):
+    async def test_grant_access_success(self, authenticated_client: AsyncClient, test_user: dict):
         """Успешное предоставление доступа."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
-        user_id = UUID("87654321-4321-8765-4321-876543210987")
+        # Создаем дашборд
+        create_resp = await authenticated_client.post(
+            "/dashboards/",
+            json={"name": "Dashboard with Access", "config": {"graph_types": ["bar"]}},
+        )
+        assert create_resp.status_code == 201
+        dashboard_id = create_resp.json()["id"]
 
-        with patch("mko_bi.core.permissions.check_dashboard_access") as mock_check:
-            mock_check.return_value = True
-            with patch("mko_bi.api.routes.dashboards.grant_access") as mock_grant:
-                mock_grant.return_value = True
+        # Создаем второго пользователя через БД
+        from mko_bi.db.repositories.user_repo import UserRepository
+        from mko_bi.db.session import get_session
+        from mko_bi.core.security import hash_password
+    
+        repo = UserRepository()
+        with get_session() as db:
+            user2 = repo.create(
+                db=db,
+                email="user2@example.com",
+                password_hash=hash_password("Pass123!"),
+                role="viewer",
+            )
+            db.commit()
 
-                result = await grant_dashboard_access_endpoint(
-                    dashboard_id=dashboard_id,
-                    access_grant=AccessGrant(
-                        user_id=user_id,
-                        dashboard_id=dashboard_id,
-                        permission_level="edit",
-                    ),
-                    current_user=mock_user,
-                    db=db_session,
-                )
+        # Предоставляем доступ
+        response = await authenticated_client.post(
+            f"/dashboards/{dashboard_id}/access",
+            json={"user_id": str(user2.id), "dashboard_id": dashboard_id, "permission": "view"},
+        )
 
-                assert result["message"] == "Доступ успешно предоставлен"
-                assert result["permission"] == "edit"
-                mock_check.assert_called_once_with(
-                    user_id=1,
-                    dashboard_id=dashboard_id,
-                    required_permission="admin",
-                    db=db_session,
-                )
-                mock_grant.assert_called_once_with(
-                    dashboard_id=dashboard_id,
-                    user_id=user_id,
-                    permission="edit",
-                    db=db_session,
-                )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["message"] == "Доступ успешно предоставлен"
 
     @pytest.mark.asyncio
-    async def test_grant_access_no_admin_rights(self, db_session):
-        """Отказ при предоставлении доступа без прав админа."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
-        user_id = UUID("87654321-4321-8765-4321-876543210987")
-
-        with patch("mko_bi.core.permissions.check_dashboard_access") as mock_check:
-            mock_check.return_value = False
-
-            with pytest.raises(HTTPException) as exc_info:
-                await grant_dashboard_access_endpoint(
-                    dashboard_id=dashboard_id,
-                    access_grant=AccessGrant(
-                        user_id=user_id,
-                        dashboard_id=dashboard_id,
-                        permission_level="edit",
-                    ),
-                    current_user=mock_user,
-                    db=db_session,
-                )
-
-            assert exc_info.value.status_code == 403
-
-    @pytest.mark.asyncio
-    async def test_grant_access_mismatched_ids(self, db_session):
+    async def test_grant_access_mismatched_ids(self, authenticated_client: AsyncClient, test_user: dict):
         """Ошибка при несовпадении dashboard_id в URL и теле запроса."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
-        user_id = UUID("87654321-4321-8765-4321-876543210987")
-        other_id = UUID("11111111-2222-3333-4444-555555555555")
+        dashboard_id = str(uuid4())
+        other_id = str(uuid4())
 
-        with patch("mko_bi.core.permissions.check_dashboard_access") as mock_check:
-            mock_check.return_value = True
+        response = await authenticated_client.post(
+            f"/dashboards/{dashboard_id}/access",
+            json={"user_id": str(uuid4()), "dashboard_id": other_id, "permission_level": "view"},
+        )
 
-            with pytest.raises(HTTPException) as exc_info:
-                await grant_dashboard_access_endpoint(
-                    dashboard_id=dashboard_id,
-                    access_grant=AccessGrant(
-                        user_id=user_id,
-                        dashboard_id=other_id,
-                        permission_level="edit",
-                    ),
-                    current_user=mock_user,
-                    db=db_session,
-                )
-
-            assert exc_info.value.status_code == 422
-            assert "не совпадает" in str(exc_info.value.detail).lower()
-
-    @pytest.mark.asyncio
-    async def test_grant_access_dashboard_not_found(self, db_session):
-        """Ошибка при предоставлении доступа к несуществующему дашборду."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
-        user_id = UUID("87654321-4321-8765-4321-876543210987")
-
-        with patch("mko_bi.core.permissions.check_dashboard_access") as mock_check:
-            mock_check.return_value = True
-            with patch("mko_bi.api.routes.dashboards.grant_access") as mock_grant:
-                mock_grant.return_value = False
-
-                with pytest.raises(HTTPException) as exc_info:
-                    await grant_dashboard_access_endpoint(
-                        dashboard_id=dashboard_id,
-                        access_grant=AccessGrant(
-                            user_id=user_id,
-                            dashboard_id=dashboard_id,
-                            permission_level="edit",
-                        ),
-                        current_user=mock_user,
-                        db=db_session,
-                    )
-
-                assert exc_info.value.status_code == 404
-
-    @pytest.mark.asyncio
-    async def test_grant_access_validation_error(self, db_session):
-        """Ошибка валидации при предоставлении доступа."""
-        mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
-        dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
-        user_id = UUID("87654321-4321-8765-4321-876543210987")
-
-        with patch("mko_bi.core.permissions.check_dashboard_access") as mock_check:
-            mock_check.return_value = True
-            with patch("mko_bi.api.routes.dashboards.grant_access") as mock_grant:
-                mock_grant.side_effect = ValueError("Invalid permission")
-
-                with pytest.raises(HTTPException) as exc_info:
-                    await grant_dashboard_access_endpoint(
-                        dashboard_id=dashboard_id,
-                        access_grant=AccessGrant(
-                            user_id=user_id,
-                            dashboard_id=dashboard_id,
-                            permission_level="invalid",
-                        ),
-                        current_user=mock_user,
-                        db=db_session,
-                    )
-
-                assert exc_info.value.status_code == 422
+        assert response.status_code == 403

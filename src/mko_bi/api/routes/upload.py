@@ -44,7 +44,7 @@ router = APIRouter(prefix="/upload", tags=["upload"])
     description="Загружает CSV файл для последующей обработки. Доступно только редакторам и администраторам.",
 )
 async def upload_file_endpoint(
-    dashboard_id: int,
+    dashboard_id: UUID,
     background_tasks: BackgroundTasks,
     current_user: CurrentUser,
     file: UploadFile = File(...),
@@ -80,19 +80,14 @@ async def upload_file_endpoint(
     )
 
     try:
-        # Чтение содержимого файла
-        # UploadFile.read() может быть как sync, так и async в зависимости от версии
+        # Чтение содержимого файла (UploadFile.read() is async in FastAPI)
+        file_content = await file.read()
+
+        # Закрываем файл после чтения
         try:
-            file_content = file.read()
-        except TypeError:
-            # Если read() ожидает await, вызываем его как async
-            file_content = await file.read()
-        finally:
-            # Закрываем файл после чтения
-            try:
-                await file.close()
-            except Exception:
-                pass
+            await file.close()
+        except Exception:
+            pass
 
         # Вызов сервиса загрузки
         result = upload_file(
@@ -140,7 +135,7 @@ async def upload_file_endpoint(
 )
 async def process_file_endpoint(
     task_id: UUID,
-    dashboard_id: int,
+    dashboard_id: UUID,
     background_tasks: BackgroundTasks,
     current_user: CurrentUser,
     db: Session = Depends(get_db),

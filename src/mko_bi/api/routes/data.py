@@ -257,10 +257,17 @@ async def apply_filters_endpoint(
 
     except ValueError as e:
         logger.warning("Ошибка при применении фильтров: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=str(e),
-        ) from e
+        # Determine if this is a "not found" error vs validation error
+        if "не найден" in str(e):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=str(e),
+            ) from e
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=str(e),
+            ) from e
     except PermissionError as e:
         logger.warning("Отказано в доступе: %s", e)
         raise HTTPException(

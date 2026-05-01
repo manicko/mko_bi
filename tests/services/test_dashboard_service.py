@@ -6,6 +6,7 @@
 
 import pytest
 from unittest.mock import MagicMock, patch
+from uuid import uuid4
 from sqlalchemy.exc import SQLAlchemyError
 
 from mko_bi.services.dashboard_service import (
@@ -80,56 +81,67 @@ class TestValidateConfig:
 class TestValidateDashboardExists:
     """Тесты для функции проверки существования дашборда."""
 
-    def test_dashboard_exists(self, db_session):
+    def test_dashboard_exists(self):
         """Существующий дашборд должен возвращаться."""
         mock_dashboard = MagicMock(spec=dashboard_model.Dashboard)
+        test_uuid = uuid4()
+        mock_session = MagicMock()
         with patch('mko_bi.services.dashboard_service.DashboardRepository') as mock_repo:
             mock_repo.get.return_value = mock_dashboard
-            result = _validate_dashboard_exists(1, db_session)
+            result = _validate_dashboard_exists(test_uuid, mock_session)
             assert result == mock_dashboard
 
-    def test_dashboard_not_exists(self, db_session):
+    def test_dashboard_not_exists(self):
         """Несуществующий дашборд должен возвращать None."""
+        test_uuid = uuid4()
+        mock_session = MagicMock()
         with patch('mko_bi.services.dashboard_service.DashboardRepository') as mock_repo:
             mock_repo.get.return_value = None
-            result = _validate_dashboard_exists(999, db_session)
+            result = _validate_dashboard_exists(test_uuid, mock_session)
             assert result is None
 
 
 class TestCheckOwnerPermission:
     """Тесты для функции проверки прав владельца."""
 
-    def test_is_owner(self, db_session):
+    def test_is_owner(self):
         """Пользователь с правами admin должен быть владельцем."""
+        test_dashboard_id = uuid4()
+        test_user_id = uuid4()
+        mock_session = MagicMock()
         with patch('mko_bi.services.dashboard_service.AccessRepository') as mock_repo:
             mock_repo.check_access.return_value = "admin"
-            result = _check_owner_permission(1, 2, db_session)
+            result = _check_owner_permission(test_dashboard_id, test_user_id, mock_session)
             assert result is True
 
-    def test_is_not_owner(self, db_session):
+    def test_is_not_owner(self):
         """Пользователь без прав admin не должен быть владельцем."""
+        test_dashboard_id = uuid4()
+        test_user_id = uuid4()
+        mock_session = MagicMock()
         with patch('mko_bi.services.dashboard_service.AccessRepository') as mock_repo:
             mock_repo.check_access.return_value = "view"
-            result = _check_owner_permission(1, 2, db_session)
+            result = _check_owner_permission(test_dashboard_id, test_user_id, mock_session)
             assert result is False
 
-    def test_no_access_not_owner(self, db_session):
+    def test_no_access_not_owner(self):
         """Пользователь без доступа не должен быть владельцем."""
+        test_dashboard_id = uuid4()
+        test_user_id = uuid4()
+        mock_session = MagicMock()
         with patch('mko_bi.services.dashboard_service.AccessRepository') as mock_repo:
             mock_repo.check_access.return_value = None
-            result = _check_owner_permission(1, 2, db_session)
+            result = _check_owner_permission(test_dashboard_id, test_user_id, mock_session)
             assert result is False
 
 
 class TestCreateDashboard:
     """Тесты для функции создания дашборда."""
 
-
-
-
-
-    def test_create_dashboard_invalid_config_raises_error(self, db_session):
+    def test_create_dashboard_invalid_config_raises_error(self):
         """Некорректная конфигурация должна вызывать ошибку."""
+        test_user_id = uuid4()
+        mock_session = MagicMock()
         with patch('mko_bi.services.dashboard_service._validate_config',
                    side_effect=ValueError("Некорректная конфигурация")):
 
@@ -137,12 +149,14 @@ class TestCreateDashboard:
                 create_dashboard(
                     "Test",
                     {"graph_types": []},
-                    1,
-                    db_session
+                    test_user_id,
+                    mock_session
                 )
 
-    def test_create_dashboard_database_error_rolls_back(self, db_session):
+    def test_create_dashboard_database_error_rolls_back(self):
         """Ошибка базы данных должна вызывать откат транзакции."""
+        test_user_id = uuid4()
+        mock_session = MagicMock()
         with patch('mko_bi.services.dashboard_service.DashboardRepository') as mock_dash_repo, \
              patch('mko_bi.services.dashboard_service._validate_config'):
 
@@ -152,28 +166,29 @@ class TestCreateDashboard:
                 create_dashboard(
                     "Test",
                     {"graph_types": ["bar"]},
-                    1,
-                    db_session
+                    test_user_id,
+                    mock_session
                 )
-
-
-
 
 class TestGetDashboard:
     """Тесты для функции получения дашборда."""
 
-
-
-    def test_get_dashboard_not_found(self, db_session):
+    def test_get_dashboard_not_found(self):
         """Несуществующий дашборд должен возвращать None."""
+        test_dashboard_id = uuid4()
+        test_user_id = uuid4()
+        mock_session = MagicMock()
         with patch('mko_bi.services.dashboard_service.DashboardRepository') as mock_dash_repo:
             mock_dash_repo.get.return_value = None
-            result = get_dashboard(999, 1, db_session)
+            result = get_dashboard(test_dashboard_id, test_user_id, mock_session)
             assert result is None
 
-    def test_get_dashboard_no_access(self, db_session):
+    def test_get_dashboard_no_access(self):
         """Дашборд без доступа должен возвращать None."""
         mock_dashboard = MagicMock(spec=dashboard_model.Dashboard)
+        test_dashboard_id = uuid4()
+        test_user_id = uuid4()
+        mock_session = MagicMock()
 
         with patch('mko_bi.services.dashboard_service.DashboardRepository') as mock_dash_repo, \
              patch('mko_bi.services.dashboard_service.AccessRepository') as mock_access_repo:
@@ -181,80 +196,84 @@ class TestGetDashboard:
             mock_dash_repo.get.return_value = mock_dashboard
             mock_access_repo.check_access.return_value = None
 
-            result = get_dashboard(1, 2, db_session)
+            result = get_dashboard(test_dashboard_id, test_user_id, mock_session)
             assert result is None
-
-
 
 
 class TestGetUserDashboards:
     """Тесты для функции получения дашбордов пользователя."""
 
-
-
-    def test_get_user_dashboards_empty(self, db_session):
+    def test_get_user_dashboards_empty(self):
         """При отсутствии дашбордов должен возвращаться пустой список."""
+        test_user_id = uuid4()
+        mock_session = MagicMock()
         with patch('mko_bi.services.dashboard_service.AccessRepository') as mock_access_repo:
             mock_access_repo.get_user_dashboards.return_value = []
-            result = get_user_dashboards(1, db_session)
+            result = get_user_dashboards(test_user_id, mock_session)
             assert result == []
 
 
 class TestUpdateDashboard:
     """Тесты для функции обновления дашборда."""
 
-
-
-    def test_update_dashboard_not_found(self, db_session):
+    def test_update_dashboard_not_found(self):
         """Обновление несуществующего дашборда должно вернуть None."""
+        test_dashboard_id = uuid4()
+        mock_session = MagicMock()
         with patch('mko_bi.services.dashboard_service._validate_config'), \
              patch('mko_bi.services.dashboard_service._validate_dashboard_exists', return_value=None):
 
-            result = update_dashboard(999, {"graph_types": ["bar"]}, db_session)
+            result = update_dashboard(test_dashboard_id, {"graph_types": ["bar"]}, mock_session)
             assert result is None
 
-    def test_update_dashboard_invalid_config_raises_error(self, db_session):
+    def test_update_dashboard_invalid_config_raises_error(self):
         """Некорректная конфигурация должна вызывать ошибку."""
+        test_dashboard_id = uuid4()
+        mock_session = MagicMock()
         with patch('mko_bi.services.dashboard_service._validate_config',
                    side_effect=ValueError("Некорректная конфигурация")):
 
             with pytest.raises(ValueError, match="Некорректная конфигурация"):
-                update_dashboard(1, {"graph_types": []}, db_session)
+                update_dashboard(test_dashboard_id, {"graph_types": []}, mock_session)
 
 
 class TestDeleteDashboard:
     """Тесты для функции удаления дашборда."""
 
-
-
-    def test_delete_dashboard_not_found(self, db_session):
+    def test_delete_dashboard_not_found(self):
         """Удаление несуществующего дашборда должно вернуть False."""
+        test_dashboard_id = uuid4()
+        mock_session = MagicMock()
         with patch('mko_bi.services.dashboard_service.DashboardRepository') as mock_dash_repo:
             mock_dash_repo.delete.return_value = False
-            result = delete_dashboard(999, db_session)
+            result = delete_dashboard(test_dashboard_id, mock_session)
             assert result is False
 
 
 class TestGrantAccess:
     """Тесты для функции предоставления доступа."""
 
-
-
-    def test_grant_access_dashboard_not_found(self, db_session):
+    def test_grant_access_dashboard_not_found(self):
         """Предоставление доступа к несуществующему дашборду должно вызывать ошибку."""
+        test_dashboard_id = uuid4()
+        test_user_id = uuid4()
+        mock_session = MagicMock()
         with patch('mko_bi.services.dashboard_service._validate_permission'), \
              patch('mko_bi.services.dashboard_service._validate_dashboard_exists', return_value=None):
 
             with pytest.raises(ValueError, match="не найден"):
-                grant_access(999, 1, "view", db_session)
+                grant_access(test_dashboard_id, test_user_id, "view", mock_session)
 
-    def test_grant_access_invalid_permission_raises_error(self, db_session):
+    def test_grant_access_invalid_permission_raises_error(self):
         """Недопустимый уровень доступа должен вызывать ошибку."""
+        test_dashboard_id = uuid4()
+        test_user_id = uuid4()
+        mock_session = MagicMock()
         with patch('mko_bi.services.dashboard_service._validate_permission',
                    side_effect=ValueError("Недопустимый уровень доступа")):
 
             with pytest.raises(ValueError, match="Недопустимый уровень доступа"):
-                grant_access(1, 2, "invalid", db_session)
+                grant_access(test_dashboard_id, test_user_id, "invalid", mock_session)
 
 
 class TestDashboardServiceIntegration:
