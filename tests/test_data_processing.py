@@ -17,6 +17,13 @@ from mko_bi.data.processing.transformations import (
     _calculate_share,
     _apply_custom_metrics,
 )
+from mko_bi.models.transformation_configs import (
+    AggregationConfig,
+    CustomMetricConfig,
+    FilterConfig,
+    ShareConfig,
+    YoyConfig,
+)
 
 
 class TestTransformationRegistry:
@@ -109,7 +116,7 @@ class TestApplyTransformations:
 
     def test_apply_filters(self, sample_df):
         """Тест применения фильтров."""
-        filters = [{"column": "year", "operator": "==", "value": 2023}]
+        filters = [FilterConfig(column="year", operator="==", value=2023)]
         result = apply_transformations(sample_df, filters=filters)
         assert result.shape[0] == 3
         assert result["year"].unique().to_list() == [2023]
@@ -117,8 +124,8 @@ class TestApplyTransformations:
     def test_apply_multiple_filters(self, sample_df):
         """Тест применения нескольких фильтров."""
         filters = [
-            {"column": "year", "operator": "==", "value": 2023},
-            {"column": "revenue", "operator": ">", "value": 200},
+            FilterConfig(column="year", operator="==", value=2023),
+            FilterConfig(column="revenue", operator=">", value=200),
         ]
         result = apply_transformations(sample_df, filters=filters)
         assert result.shape[0] == 2
@@ -142,7 +149,7 @@ class TestApplyTransformations:
 
     def test_apply_all_transformations(self, sample_df):
         """Тест применения всех трансформаций."""
-        filters = [{"column": "year", "operator": ">=", "value": 2022}]
+        filters = [FilterConfig(column="year", operator=">=", value=2022)]
         result = apply_transformations(
             sample_df,
             filters=filters,
@@ -176,8 +183,8 @@ class TestCalculateAggregations:
     def test_groupby_aggregations(self, sample_df):
         """Тест группировки с агрегациями."""
         aggregations = [
-            {"column": "revenue", "function": "sum", "alias": "total_revenue"},
-            {"column": "cost", "function": "sum", "alias": "total_cost"},
+            AggregationConfig(column="revenue", function="sum", alias="total_revenue"),
+            AggregationConfig(column="cost", function="sum", alias="total_cost"),
         ]
         result = calculate_aggregations(
             sample_df,
@@ -190,7 +197,7 @@ class TestCalculateAggregations:
 
     def test_sum_aggregation(self, sample_df):
         """Тест суммы."""
-        aggregations = [{"column": "revenue", "function": "sum"}]
+        aggregations = [AggregationConfig(column="revenue", function="sum")]
         result = calculate_aggregations(
             sample_df,
             groupby=["category"],
@@ -203,7 +210,7 @@ class TestCalculateAggregations:
 
     def test_mean_aggregation(self, sample_df):
         """Тест среднего."""
-        aggregations = [{"column": "revenue", "function": "mean"}]
+        aggregations = [AggregationConfig(column="revenue", function="mean")]
         result = calculate_aggregations(
             sample_df,
             groupby=["category"],
@@ -213,7 +220,7 @@ class TestCalculateAggregations:
 
     def test_count_aggregation(self, sample_df):
         """Тест подсчета."""
-        aggregations = [{"column": "revenue", "function": "count"}]
+        aggregations = [AggregationConfig(column="revenue", function="count")]
         result = calculate_aggregations(
             sample_df,
             groupby=["category"],
@@ -226,8 +233,8 @@ class TestCalculateAggregations:
     def test_min_max_aggregation(self, sample_df):
         """Тест минимума и максимума."""
         aggregations = [
-            {"column": "revenue", "function": "min"},
-            {"column": "revenue", "function": "max"},
+            AggregationConfig(column="revenue", function="min"),
+            AggregationConfig(column="revenue", function="max"),
         ]
         result = calculate_aggregations(
             sample_df,
@@ -240,25 +247,27 @@ class TestCalculateAggregations:
     def test_yoy_calculation(self, sample_df):
         """Тест YoY расчета."""
         # Группируем по году и суммируем доход
-        aggregations = [{"column": "revenue", "function": "sum", "alias": "revenue_sum"}]
+        aggregations = [AggregationConfig(column="revenue", function="sum", alias="revenue_sum")]
+        yoy_config = YoyConfig(year_column="year", value_column="revenue_sum", alias="yoy")
         result = calculate_aggregations(
             sample_df,
             groupby=["year"],
             aggregations=aggregations,
-            yoy_config={"year_column": "year", "value_column": "revenue_sum", "alias": "yoy"},
+            yoy_config=yoy_config,
         )
         assert "yoy" in result.columns
-        # Первый год должен быть NaN
+        # Первый год должен быть None
         assert result["yoy"][0] is None
 
     def test_share_calculation(self, sample_df):
         """Тест расчета долей."""
-        aggregations = [{"column": "revenue", "function": "sum", "alias": "revenue_sum"}]
+        aggregations = [AggregationConfig(column="revenue", function="sum", alias="revenue_sum")]
+        share_config = ShareConfig(value_column="revenue_sum", alias="share")
         result = calculate_aggregations(
             sample_df,
             groupby=["category"],
             aggregations=aggregations,
-            share_config={"value_column": "revenue_sum", "alias": "share"},
+            share_config=share_config,
         )
         assert "share" in result.columns
         # Сумма долей должна быть 100%
@@ -268,11 +277,11 @@ class TestCalculateAggregations:
     def test_custom_metrics(self, sample_df):
         """Тест кастомных метрик."""
         aggregations = [
-            {"column": "revenue", "function": "sum", "alias": "revenue_sum"},
-            {"column": "cost", "function": "sum", "alias": "cost_sum"},
+            AggregationConfig(column="revenue", function="sum", alias="revenue_sum"),
+            AggregationConfig(column="cost", function="sum", alias="cost_sum"),
         ]
         custom_metrics = [
-            {"name": "profit", "formula": "revenue_sum - cost_sum"},
+            CustomMetricConfig(name="profit", formula="revenue_sum - cost_sum"),
         ]
         result = calculate_aggregations(
             sample_df,
@@ -289,22 +298,24 @@ class TestCalculateAggregations:
     def test_full_pipeline(self, sample_df):
         """Тест полного пайплайна."""
         # Фильтруем, группируем, агрегируем, считаем YoY и доли
-        filters = [{"column": "revenue", "operator": ">", "value": 0}]
+        filters = [FilterConfig(column="revenue", operator=">", value=0)]
         aggregations = [
-            {"column": "revenue", "function": "sum", "alias": "revenue_sum"},
-            {"column": "cost", "function": "sum", "alias": "cost_sum"},
+            AggregationConfig(column="revenue", function="sum", alias="revenue_sum"),
+            AggregationConfig(column="cost", function="sum", alias="cost_sum"),
         ]
         result = apply_transformations(
             sample_df,
             filters=filters,
             sort_by=["year", "category"],
         )
+        yoy_config = YoyConfig(year_column="year", value_column="revenue_sum")
+        share_config = ShareConfig(value_column="revenue_sum")
         result = calculate_aggregations(
             result,
             groupby=["year"],
             aggregations=aggregations,
-            yoy_config={"year_column": "year", "value_column": "revenue_sum"},
-            share_config={"value_column": "revenue_sum"},
+            yoy_config=yoy_config,
+            share_config=share_config,
         )
         assert result.shape[0] == 2
         assert "revenue_sum" in result.columns
@@ -319,7 +330,7 @@ class TestInternalFunctions:
     def test_apply_filters(self):
         """Тест внутренней функции фильтрации."""
         df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
-        filters = [{"column": "a", "operator": ">", "value": 1}]
+        filters = [FilterConfig(column="a", operator=">", value=1)]
         result = _apply_filters(df, filters)
         assert result.shape[0] == 2
         assert result["a"].to_list() == [2, 3]
@@ -330,7 +341,7 @@ class TestInternalFunctions:
             "cat": ["A", "A", "B", "B"],
             "val": [10, 20, 30, 40],
         })
-        aggregations = [{"column": "val", "function": "sum"}]
+        aggregations = [AggregationConfig(column="val", function="sum")]
         result = _apply_groupby_aggregations(df, ["cat"], aggregations)
         assert result.shape[0] == 2
         assert "val_sum" in result.columns
@@ -341,7 +352,7 @@ class TestInternalFunctions:
             "year": [2022, 2023],
             "value": [100, 150],
         })
-        result = _calculate_yoy(df, "year", "value", "yoy")
+        result = _calculate_yoy(df, year_column="year", value_column="value", alias="yoy")
         assert "yoy" in result.columns
         assert result["yoy"][0] is None
         assert result["yoy"][1] == 50.0  # (150-100)/100 * 100 = 50%
@@ -357,7 +368,7 @@ class TestInternalFunctions:
     def test_apply_custom_metrics(self):
         """Тест внутренней функции кастомных метрик."""
         df = pl.DataFrame({"a": [10, 20], "b": [5, 10]})
-        metrics = [{"name": "sum", "formula": "a + b"}]
+        metrics = [CustomMetricConfig(name="sum", formula="a + b")]
         result = _apply_custom_metrics(df, metrics)
         assert "sum" in result.columns
         assert result["sum"].to_list() == [15, 30]

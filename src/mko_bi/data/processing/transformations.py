@@ -6,16 +6,23 @@
 """
 
 import logging
-from typing import Any
 
 import polars as pl
+
+from mko_bi.models.transformation_configs import (
+    AggregationConfig,
+    CustomMetricConfig,
+    FilterConfig,
+    ShareConfig,
+    YoyConfig,
+)
 
 logger = logging.getLogger(__name__)
 
 
 def apply_transformations(
     df: pl.DataFrame,
-    filters: list[dict[str, Any]] | None = None,
+    filters: list[FilterConfig] | None = None,
     groupby: list[str] | None = None,
     sort_by: list[str] | None = None,
     descending: bool = False,
@@ -29,10 +36,6 @@ def apply_transformations(
     Args:
         df: Исходный DataFrame.
         filters: Список условий фильтрации.
-            Каждое условие - словарь с ключами:
-            - column: имя колонки
-            - operator: оператор (==, !=, >, <, >=, <=)
-            - value: значение для сравнения
         groupby: Список колонок для группировки.
         sort_by: Список колонок для сортировки.
         descending: Сортировать по убыванию.
@@ -40,14 +43,6 @@ def apply_transformations(
 
     Returns:
         pl.DataFrame: Трансформированный DataFrame.
-
-    Examples:
-        >>> df = pl.DataFrame({"a": [1, 2, 3], "b": [4, 5, 6]})
-        >>> result = apply_transformations(
-        ...     df,
-        ...     filters=[{"column": "a", "operator": ">", "value": 1}],
-        ...     sort_by=["b"],
-        ... )
     """
     logger.info("Начало применения трансформаций")
     result = df
@@ -84,7 +79,7 @@ def apply_transformations(
 
 def _apply_filters(
     df: pl.DataFrame,
-    filters: list[dict[str, Any]],
+    filters: list[FilterConfig],
 ) -> pl.DataFrame:
     """Применяет фильтры к DataFrame.
 
@@ -97,9 +92,9 @@ def _apply_filters(
     """
     result = df
     for condition in filters:
-        column = condition["column"]
-        operator = condition["operator"]
-        value = condition["value"]
+        column = condition.column
+        operator = condition.operator
+        value = condition.value
 
         if operator == "==":
             result = result.filter(pl.col(column) == value)
@@ -125,10 +120,10 @@ def _apply_filters(
 def calculate_aggregations(
     df: pl.DataFrame,
     groupby: list[str] | None = None,
-    aggregations: list[dict[str, Any]] | None = None,
-    yoy_config: dict[str, Any] | None = None,
-    share_config: dict[str, Any] | None = None,
-    custom_metrics: list[dict[str, Any]] | None = None,
+    aggregations: list[AggregationConfig] | None = None,
+    yoy_config: YoyConfig | None = None,
+    share_config: ShareConfig | None = None,
+    custom_metrics: list[CustomMetricConfig] | None = None,
 ) -> pl.DataFrame:
     """Выполняет агрегации данных с поддержкой YoY и долей.
 
@@ -136,37 +131,12 @@ def calculate_aggregations(
         df: Исходный DataFrame.
         groupby: Список колонок для группировки.
         aggregations: Список агрегаций.
-            Каждая агрегация - словарь с ключами:
-            - column: имя колонки
-            - function: функция агрегации (sum, mean, count, min, max)
-            - alias: опциональное имя результирующей колонки
         yoy_config: Конфигурация для YoY расчета.
-            - year_column: колонка с годом
-            - value_column: колонка со значением
-            - alias: имя результирующей колонки (по умолчанию: 'yoy')
         share_config: Конфигурация для расчета долей.
-            - value_column: колонка со значением
-            - alias: имя результирующей колонки (по умолчанию: 'share')
         custom_metrics: Список кастомных метрик.
-            Каждая метрика - словарь с ключами:
-            - name: имя метрики
-            - formula: формула расчета (например, "revenue / cost * 100")
 
     Returns:
         pl.DataFrame: DataFrame с агрегированными данными.
-
-    Examples:
-        >>> df = pl.DataFrame({
-        ...     "year": [2022, 2022, 2023, 2023],
-        ...     "category": ["A", "B", "A", "B"],
-        ...     "revenue": [100, 200, 150, 250],
-        ... })
-        >>> result = calculate_aggregations(
-        ...     df,
-        ...     groupby=["year", "category"],
-        ...     aggregations=[{"column": "revenue", "function": "sum"}],
-        ...     yoy_config={"year_column": "year", "value_column": "revenue_sum"},
-        ... )
     """
     logger.info("Начало расчета агрегаций")
     result = df
@@ -183,12 +153,12 @@ def calculate_aggregations(
     # YoY расчет
     if yoy_config:
         logger.debug("YoY расчет: %s", yoy_config)
-        result = _calculate_yoy(result, **yoy_config)
+        result = _calculate_yoy(result, **yoy_config.model_dump())
 
     # Расчет долей
     if share_config:
         logger.debug("Расчет долей: %s", share_config)
-        result = _calculate_share(result, **share_config)
+        result = _calculate_share(result, **share_config.model_dump())
 
     # Кастомные метрики
     if custom_metrics:
@@ -206,7 +176,7 @@ def calculate_aggregations(
 def _apply_groupby_aggregations(
     df: pl.DataFrame,
     groupby: list[str],
-    aggregations: list[dict[str, Any]],
+    aggregations: list[AggregationConfig],
 ) -> pl.DataFrame:
     """Применяет группировку и агрегации.
 
@@ -220,9 +190,9 @@ def _apply_groupby_aggregations(
     """
     agg_exprs = []
     for agg in aggregations:
-        column = agg["column"]
-        function = agg["function"]
-        alias = agg.get("alias", f"{column}_{function}")
+        column = agg.column
+        function = agg.function
+        alias = agg.alias if agg.alias else f"{column}_{function}"
 
         if function == "sum":
             expr = pl.col(column).sum().alias(alias)
@@ -259,35 +229,66 @@ def _apply_groupby_aggregations(
     return result
 
 
-def _calculate_yoy(df: pl.DataFrame, year_column: str, value_column: str, alias: str = "yoy") -> pl.DataFrame:
-    """Вычисляет годовой рост (Year-over-Year).
+def _calculate_yoy(
+    df: pl.DataFrame,
+    year_column: str,
+    value_column: str,
+    group_cols: list[str] | None = None,
+    month_column: str | None = None,
+    alias: str = "yoy",
+    percent_alias: str | None = None,
+) -> pl.DataFrame:
+    """Вычисляет годовой рост (Year-over-Year) с учетом группировки по измерениям.
 
     Args:
         df: Исходный DataFrame.
         year_column: Имя колонки с годом.
         value_column: Имя колонки со значением для сравнения.
-        alias: Имя результирующей колонки.
+        group_cols: Список колонок для группировки (измерения/dims).
+        month_column: Имя колонки с месяцем (опционально).
+        alias: Имя результирующей колонки (процентное изменение).
+        percent_alias: Не используется (оставлено для обратной совместимости).
 
     Returns:
         pl.DataFrame: DataFrame с колонкой YoY.
     """
-    # Сортируем по году для корректного расчета
-    result = df.sort(year_column)
+    # Определяем колонки для сортировки
+    sort_cols = [year_column]
+    if month_column:
+        sort_cols.append(month_column)
+    if group_cols:
+        sort_cols.extend(group_cols)
 
-    # Вычисляем предыдущее значение
-    prev_value = result[value_column].shift(1)
+    # Сортируем данные
+    result = df.sort(sort_cols)
 
-    # Вычисляем YoY как процентное изменение
-    result = result.with_columns(
-        (
+    # Если есть группировка, используем .over() для корректного сдвига внутри групп
+    shift_lag = 12 if month_column else 1
+
+    if group_cols:
+        logger.debug("YoY расчет с группировкой по: %s", group_cols)
+        # Вычисляем предыдущее значение с учетом группировки
+        prev_value = pl.col(value_column).shift(shift_lag).over(group_cols)
+    else:
+        # Без группировки - просто сдвиг
+        logger.debug("YoY расчет без группировки")
+        prev_value = pl.col(value_column).shift(shift_lag)
+
+    # Вычисляем процентное изменение
+    # Используем when-then-otherwise чтобы избежать деления на ноль
+    result = result.with_columns([
+        pl.when(prev_value.is_null() | (prev_value == 0))
+        .then(None)
+        .otherwise(
             (pl.col(value_column) - prev_value) / prev_value * 100
-        ).alias(alias)
-    )
+        )
+        .alias(alias)
+    ])
 
-    # Заменяем бесконечности и NaN на None
-    result = result.with_columns(
-        pl.col(alias).replace([float("inf"), float("-inf")], None)
-    )
+    # Заменяем NaN на None
+    result = result.with_columns([
+        pl.col(alias).fill_nan(None),
+    ])
 
     logger.debug("YoY расчет завершен для колонки '%s'", value_column)
     return result
@@ -320,7 +321,7 @@ def _calculate_share(df: pl.DataFrame, value_column: str, alias: str = "share") 
 
 def _apply_custom_metrics(
     df: pl.DataFrame,
-    custom_metrics: list[dict[str, Any]],
+    custom_metrics: list[CustomMetricConfig],
 ) -> pl.DataFrame:
     """Применяет кастомные метрики на основе формул.
 
@@ -334,8 +335,8 @@ def _apply_custom_metrics(
     result = df
 
     for metric in custom_metrics:
-        name = metric["name"]
-        formula = metric["formula"]
+        name = metric.name
+        formula = metric.formula
 
         try:
             # Простая реализация: заменяем имена колонок на pl.col()
