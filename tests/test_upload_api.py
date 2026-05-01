@@ -5,7 +5,7 @@
 
 import pytest
 import uuid
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, patch, AsyncMock
 from datetime import datetime
 from fastapi import HTTPException, status
 
@@ -35,7 +35,7 @@ class TestUploadFileEndpoint:
 
         mock_file = MagicMock()
         mock_file.filename = "test_data.csv.gz"
-        mock_file.read = MagicMock(return_value=b"col1,col2\n1,2\n3,4")
+        mock_file.read = AsyncMock(return_value=b"col1,col2\n1,2\n3,4")
 
         mock_response = UploadResponse(
             task_id=uuid.uuid4(),
@@ -70,7 +70,7 @@ class TestUploadFileEndpoint:
 
         mock_file = MagicMock()
         mock_file.filename = "test_data.txt"
-        mock_file.read = MagicMock(return_value=b"invalid content")
+        mock_file.read = AsyncMock(return_value=b"invalid content")
 
         with patch("mko_bi.api.routes.upload.upload_file") as mock_upload:
             mock_upload.side_effect = ValueError("Недопустимый формат файла")
@@ -95,7 +95,7 @@ class TestUploadFileEndpoint:
 
         mock_file = MagicMock()
         mock_file.filename = "large_data.csv.gz"
-        mock_file.read = MagicMock(return_value=b"x" * (100 * 1024 * 1024 + 1))
+        mock_file.read = AsyncMock(return_value=b"x" * (100 * 1024 * 1024 + 1))
 
         with patch("mko_bi.api.routes.upload.upload_file") as mock_upload:
             mock_upload.side_effect = ValueError("Превышен максимальный размер")
@@ -119,7 +119,7 @@ class TestUploadFileEndpoint:
 
         mock_file = MagicMock()
         mock_file.filename = "test_data.csv.gz"
-        mock_file.read = MagicMock(return_value=b"col1,col2\n1,2")
+        mock_file.read = AsyncMock(return_value=b"col1,col2\n1,2")
 
         with patch("mko_bi.api.routes.upload.upload_file") as mock_upload:
             mock_upload.side_effect = PermissionError("Недостаточно прав")
@@ -143,7 +143,7 @@ class TestUploadFileEndpoint:
 
         mock_file = MagicMock()
         mock_file.filename = "test_data.csv.gz"
-        mock_file.read = MagicMock(return_value=b"col1,col2\n1,2")
+        mock_file.read = AsyncMock(return_value=b"col1,col2\n1,2")
 
         with patch("mko_bi.api.routes.upload.upload_file") as mock_upload:
             mock_upload.side_effect = ValueError("Дашборд не найден")
@@ -167,7 +167,7 @@ class TestUploadFileEndpoint:
 
         mock_file = MagicMock()
         mock_file.filename = "test_data.csv.gz"
-        mock_file.read = MagicMock(return_value=b"col1,col2\n1,2")
+        mock_file.read = AsyncMock(return_value=b"col1,col2\n1,2")
 
         with patch("mko_bi.api.routes.upload.upload_file") as mock_upload:
             mock_upload.side_effect = Exception("Unexpected error")
@@ -569,7 +569,7 @@ class TestIntegration:
         # 1. Загрузка файла
         mock_file = MagicMock()
         mock_file.filename = "test_data.csv.gz"
-        mock_file.read = MagicMock(return_value=b"category,revenue\nA,100\nB,200")
+        mock_file.read = AsyncMock(return_value=b"category,revenue\nA,100\nB,200")
 
         upload_response = UploadResponse(
             task_id=task_id,
@@ -671,7 +671,7 @@ class TestIntegration:
 
         mock_file = MagicMock()
         mock_file.filename = "test_data.csv.gz"
-        mock_file.read = MagicMock(return_value=b"col1,col2\n1,2")
+        mock_file.read = AsyncMock(return_value=b"col1,col2\n1,2")
 
         with patch("mko_bi.api.routes.upload.upload_file") as mock_upload:
             mock_upload.side_effect = PermissionError("Недостаточно прав")

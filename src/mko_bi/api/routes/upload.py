@@ -87,6 +87,12 @@ async def upload_file_endpoint(
         except TypeError:
             # Если read() ожидает await, вызываем его как async
             file_content = await file.read()
+        finally:
+            # Закрываем файл после чтения
+            try:
+                await file.close()
+            except Exception:
+                pass
 
         # Вызов сервиса загрузки
         result = upload_file(

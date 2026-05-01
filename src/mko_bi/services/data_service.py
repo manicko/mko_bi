@@ -568,6 +568,7 @@ def _trigger_processing_logic(
     logger.info("Обработка запущена: log_id=%s", processing_log.id)
 
     # Выполнение обработки
+    file_path = None
     try:
         # Получаем информацию о загруженном файле из лога
         # Ищем файл во временной директории
@@ -588,6 +589,8 @@ def _trigger_processing_logic(
 
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
+
+        logger.info("Найден файл для обработки: %s", file_path)
 
         # Обработка файла
         result_data = _process_csv_file(
@@ -724,6 +727,14 @@ def _trigger_processing_logic(
         logger.error("Ошибка при обработке файла: task_id=%s, error=%s", task_id, e)
 
         raise
+    finally:
+        # Очистка временного файла
+        if file_path and file_path.exists():
+            try:
+                file_path.unlink()
+                logger.info("Временный файл удален: %s", file_path)
+            except Exception as cleanup_error:
+                logger.error("Ошибка при удалении файла %s: %s", file_path, cleanup_error)
 
 
 def trigger_processing(
