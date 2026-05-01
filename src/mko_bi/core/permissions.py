@@ -13,6 +13,7 @@ viewer только читать.
 import logging
 from functools import lru_cache
 from collections.abc import Generator
+from typing import Any, cast
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -178,11 +179,35 @@ def check_dashboard_access(
             f"Допустимые значения: {[e.value for e in PermissionEnum]}"
         )
 
-    local_session = False
+    # Если сессия не передана, создаем новую через контекстный менеджер
     if db is None:
-        db = get_session()
-        local_session = True
+        with get_session() as session:
+            return _check_access_with_session(
+                user_id, dashboard_id, required_permission, session
+            )
+    else:
+        return _check_access_with_session(
+            user_id, dashboard_id, required_permission, db
+        )
 
+
+def _check_access_with_session(
+    user_id: UUID,
+    dashboard_id: UUID,
+    required_permission: str,
+    db: Session,
+) -> bool:
+    """Внутренняя функция для проверки доступа с использованием сессии.
+
+    Args:
+        user_id: Идентификатор пользователя.
+        dashboard_id: Идентификатор дашборда.
+        required_permission: Требуемый уровень доступа.
+        db: Сессия базы данных.
+
+    Returns:
+        True, если доступ есть, иначе False.
+    """
     try:
         # Получаем уровень доступа пользователя
         permission = AccessRepository.check_access(
@@ -231,22 +256,22 @@ def check_dashboard_access(
             e,
         )
         return False
-    finally:
-        if local_session:
-            db.close()
 
 
 @lru_cache(maxsize=128)
-def _decode_token_cached(token: str) -> dict | None:
+def _decode_token_cached(token: str) -> dict[str, Any] | None:
     """Кэшированное декодирование токена.
 
     Args:
         token: JWT токен.
 
     Returns:
-        dict | None: Декодированные данные токена или None.
+        dict[str, Any] | None: Декодированные данные токена или None.
     """
-    return decode_token(token)
+    result = decode_token(token)
+    if result is None:
+        return None
+    return cast(dict[str, Any], result)
 
 
 def get_current_user(
@@ -268,11 +293,30 @@ def get_current_user(
     Raises:
         AuthenticationError: Если токен недействителен или пользователь не найден.
     """
-    local_session = False
+    # Если сессия не передана, создаем новую через контекстный менеджер
     if db is None:
-        db = get_session()
-        local_session = True
+        with get_session() as session:
+            return _get_current_user_with_session(token, session)
+    else:
+        return _get_current_user_with_session(token, db)
 
+
+def _get_current_user_with_session(
+    token: str,
+    db: Session,
+) -> UserDB:
+    """Внутренняя функция для получения пользователя с использованием сессии.
+
+    Args:
+        token: JWT токен доступа.
+        db: Сессия базы данных.
+
+    Returns:
+        UserDB: Модель пользователя.
+
+    Raises:
+        AuthenticationError: Если токен недействителен или пользователь не найден.
+    """
     try:
         # Декодируем токен (с кэшированием)
         payload = _decode_token_cached(token)
@@ -280,10 +324,12 @@ def get_current_user(
             logger.warning("Недействительный токен")
             raise AuthenticationError("Недействительный токен")
 
-        user_id: UUID = payload.get("user_id")
-        if user_id is None:
+        user_id_raw = payload.get("user_id")
+        if user_id_raw is None:
             logger.warning("В токене отсутствует user_id")
             raise AuthenticationError("Некорректный токен")
+
+        user_id: UUID = UUID(str(user_id_raw))
 
         # Получаем пользователя из базы
         user = UserRepository.get(user_id, db)
@@ -301,9 +347,6 @@ def get_current_user(
         if not isinstance(e, AuthenticationError):
             logger.error("Ошибка при получении пользователя: %s", e)
         raise
-    finally:
-        if local_session:
-            db.close()
 
 
 # --- FastAPI зависимости ---

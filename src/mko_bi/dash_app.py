@@ -4,6 +4,7 @@
 для визуализации данных с использованием Plotly. Приложение интегрируется
 с FastAPI и обеспечивает:
 - Аутентификацию через JWT
+- Проверку валидности JWT токена
 - Список доступных дашбордов
 - Просмотр дашбордов с интерактивными графиками
 - Фильтрацию данных
@@ -17,10 +18,12 @@ Functions:
 """
 
 import logging
+from datetime import datetime, UTC
 from typing import Any, cast
 
 import dash
 import dash_bootstrap_components as dbc
+import jwt
 import requests
 from dash import Dash, Input, Output, State, callback, dcc, html, no_update
 from dash.exceptions import PreventUpdate
@@ -30,6 +33,72 @@ from mko_bi.config import get_config
 
 
 logger = logging.getLogger(__name__)
+
+
+def check_token_validity(token: str) -> bool:
+    """Проверяет валидность JWT токена (без проверки подписи).
+
+    Декодирует токен без проверки подписи и проверяет срок его действия.
+    Используется на стороне клиента (Dash) для проверки необходимости
+    перенаправления на страницу входа.
+
+    Args:
+        token: JWT токен для проверки.
+
+    Returns:
+        bool: True, если токен валиден и не истек, иначе False.
+
+    Example:
+        >>> check_token_validity("valid_token_string")
+        True
+        >>> check_token_validity("expired_token_string")
+        False
+    """
+    try:
+        logger.debug("Проверка валидности JWT токена")
+        payload = jwt.decode(
+            token,
+            options={"verify_signature": False, "verify_exp": True},
+        )
+        exp = payload.get("exp")
+        if exp is None:
+            logger.warning("Токен не содержит поле exp")
+            return False
+        exp_datetime = datetime.fromtimestamp(exp, tz=UTC)
+        now = datetime.now(UTC)
+        is_valid = exp_datetime > now
+        if not is_valid:
+            logger.info("Токен истек (exp: %s, now: %s)", exp_datetime, now)
+        return is_valid
+    except jwt.ExpiredSignatureError:
+        logger.info("Токен истек")
+        return False
+    except jwt.DecodeError as e:
+        logger.warning("Ошибка декодирования токена: %s", e)
+        return False
+    except Exception as e:
+        logger.error("Неизвестная ошибка при проверке токена: %s", e)
+        return False
+
+
+def decode_token_payload(token: str) -> dict[str, Any] | None:
+    """Декодирует полезную нагрузку JWT токена без проверки подписи.
+
+    Args:
+        token: JWT токен.
+
+    Returns:
+        dict[str, Any] | None: Данные токена или None при ошибке.
+    """
+    try:
+        payload: dict[str, Any] = jwt.decode(
+            token,
+            options={"verify_signature": False},
+        )
+        return payload
+    except Exception as e:
+        logger.error("Ошибка декодирования токена: %s", e)
+        return None
 
 
 def create_dash_app(fastapi_app=None, prefix: str = "/dash") -> Dash:
@@ -69,6 +138,11 @@ def create_dash_app(fastapi_app=None, prefix: str = "/dash") -> Dash:
             dcc.Location(id="url", refresh=False),
             dcc.Store(id="auth-token", storage_type="local"),
             dcc.Store(id="current-user", storage_type="local"),
+            dcc.Interval(
+                id="token-check-interval",
+                interval=60 * 1000,  # Проверка каждую минуту
+                n_intervals=0,
+            ),
             html.Div(id="page-content"),
         ],
         className="container-fluid",
@@ -88,13 +162,43 @@ def _register_callbacks(app: Dash) -> None:
         app: Экземпляр Dash приложения.
     """
 
-    @callback(
-        Output("page-content", "children"),
-        Input("url", "pathname"),
-        Input("auth-token", "data"),
-    )
-    def display_page(pathname: str, token: str | None) -> html.Div:
+@callback(
+    Output("url", "pathname", allow_duplicate=True),
+    Input("token-check-interval", "n_intervals"),
+    State("auth-token", "data"),
+    State("url", "pathname"),
+    prevent_initial_call=True,
+)
+def periodic_token_check(
+    n_intervals: int, token: str | None, current_path: str
+) -> str:
+    """Периодически проверяет валидность токена и перенаправляет на login при истечении.
+
+    Args:
+        n_intervals: Количество интервалов (не используется напрямую).
+        token: JWT токен аутентификации.
+        current_path: Текущий путь URL.
+
+    Returns:
+        str: Путь для перенаправления (если токен недействителен).
+    """
+    if not token or not check_token_validity(token):
+        if current_path not in ("/", "/dashboards"):
+            logger.info("Периодическая проверка: токен недействителен, перенаправление на login")
+            return "/"
+    raise PreventUpdate
+
+
+@callback(
+    Output("page-content", "children"),
+    Input("url", "pathname"),
+    Input("auth-token", "data"),
+)
+def display_page(pathname: str, token: str | None) -> html.Div:
         """Определяет, какая страница должна быть отображена.
+
+        Проверяет валидность JWT токена перед отображением защищенных страниц.
+        При истечении токена перенаправляет на страницу входа.
 
         Args:
             pathname: Текущий URL путь.
@@ -108,11 +212,13 @@ def _register_callbacks(app: Dash) -> None:
         if not pathname or pathname == "/":
             return create_login_page()
         elif pathname == "/dashboards":
-            if not token:
+            if not token or not check_token_validity(token):
+                logger.info("Токен недействителен, перенаправление на login")
                 return create_login_page()
             return create_dashboard_list_page()
         elif pathname.startswith("/dashboard/"):
-            if not token:
+            if not token or not check_token_validity(token):
+                logger.info("Токен недействителен, перенаправление на login")
                 return create_login_page()
             dashboard_id = pathname.split("/")[-1]
             return create_dashboard_page(dashboard_id)

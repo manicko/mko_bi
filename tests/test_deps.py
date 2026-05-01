@@ -116,7 +116,7 @@ class TestGetCurrentUserDependency:
             )
 
         assert exc_info.value.status_code == 401
-        assert "истек" in str(exc_info.value.detail).lower()
+        assert "истёк" in str(exc_info.value.detail).lower()
 
     def test_authentication_error(self, mocker):
         """Ошибка аутентификации должна вызывать HTTPException 401."""

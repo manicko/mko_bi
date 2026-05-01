@@ -6,6 +6,7 @@
 
 import pytest
 from unittest.mock import MagicMock
+from uuid import UUID
 from jose import JWTError
 
 from mko_bi.core.permissions import (
@@ -20,7 +21,6 @@ from mko_bi.core.permissions import (
 from mko_bi.db.repositories.access_repo import AccessRepository
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.models.user import UserDB
-
 
 from mko_bi.models.user_roles import UserRoleEnum
 
@@ -173,7 +173,7 @@ class TestCheckDashboardAccess:
         mock_db = MagicMock()
         mock_check = mocker.patch.object(AccessRepository, "check_access")
 
-        with pytest.raises(ValueError, match="Неизвестный уровень доступа"):
+        with pytest.raises(ValueError, match="Допустимые значения"):
             check_dashboard_access(
                 user_id=1,
                 dashboard_id=1,
@@ -217,13 +217,18 @@ class TestCheckDashboardAccess:
         mock_check.assert_called_once()
 
     def test_closes_session_if_created(self, mocker):
-        """Функция должна закрывать созданную сессию."""
+        """Сессия должна закрываться, если она была создана функцией."""
         mock_session = MagicMock()
-        mocker.patch.object(AccessRepository, "check_access", return_value="view")
-        # Мокаем get_session, чтобы он возвращал контекстный менеджер с мокнутой сессией
+        mock_check = mocker.patch.object(
+            AccessRepository, "check_access", return_value="view"
+        )
         mock_session_context = MagicMock()
         mock_session_context.__enter__ = MagicMock(return_value=mock_session)
-        mock_session_context.__exit__ = MagicMock(return_value=None)
+        # Настраиваем __exit__ чтобы он вызывал close() на сессии
+        def exit_side_effect(*args):
+            mock_session.close()
+            return None
+        mock_session_context.__exit__ = MagicMock(side_effect=exit_side_effect)
         mocker.patch("mko_bi.core.permissions.get_session", return_value=mock_session_context)
 
         result = check_dashboard_access(
@@ -240,14 +245,14 @@ class TestGetCurrentUser:
     def test_valid_token(self, mocker):
         """Валидный токен должен возвращать пользователя."""
         mock_user = MagicMock(spec=UserDB)
-        mock_user.id = 1
+        mock_user.id = "550e8400-e29b-41d4-a716-446655440000"
         mock_user.email = "test@example.com"
         mock_user.role = "viewer"
         mock_db = MagicMock()
 
         mock_decode = mocker.patch(
             "mko_bi.core.permissions._decode_token_cached",
-            return_value={"user_id": 1},
+            return_value={"user_id": "550e8400-e29b-41d4-a716-446655440000"},
         )
         mock_get = mocker.patch.object(UserRepository, "get", return_value=mock_user)
 
@@ -255,7 +260,7 @@ class TestGetCurrentUser:
 
         assert result == mock_user
         mock_decode.assert_called_once_with("valid_token")
-        mock_get.assert_called_once_with(1, mock_db)
+        mock_get.assert_called_once_with(UUID("550e8400-e29b-41d4-a716-446655440000"), mock_db)
 
     def test_token_without_user_id(self, mocker):
         """Токен без user_id должен вызывать AuthenticationError."""
@@ -284,7 +289,7 @@ class TestGetCurrentUser:
         mock_db = MagicMock()
         mocker.patch(
             "mko_bi.core.permissions._decode_token_cached",
-            return_value={"user_id": 999},
+            return_value={"user_id": "550e8400-e29b-41d4-a716-446655440999"},
         )
         mocker.patch.object(UserRepository, "get", return_value=None)
 
@@ -306,15 +311,18 @@ class TestGetCurrentUser:
         """Функция должна создавать сессию, если она не передана."""
         mock_session = MagicMock()
         mock_user = MagicMock(spec=UserDB)
-
         # Мокаем get_session, чтобы он возвращал контекстный менеджер с мокнутой сессией
         mock_session_context = MagicMock()
         mock_session_context.__enter__ = MagicMock(return_value=mock_session)
-        mock_session_context.__exit__ = MagicMock(return_value=None)
+        # Настраиваем __exit__ чтобы он вызывал close() на сессии
+        def exit_side_effect(*args):
+            mock_session.close()
+            return None
+        mock_session_context.__exit__ = MagicMock(side_effect=exit_side_effect)
         mocker.patch("mko_bi.core.permissions.get_session", return_value=mock_session_context)
         mocker.patch(
             "mko_bi.core.permissions._decode_token_cached",
-            return_value={"user_id": 1},
+            return_value={"user_id": "550e8400-e29b-41d4-a716-446655440000"},
         )
         mocker.patch.object(UserRepository, "get", return_value=mock_user)
 

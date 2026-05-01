@@ -143,7 +143,7 @@ C:\py_exp\mko_bi
 │   └── test_upload_api.py
 ├── TODO
 │   ├── DEV
-│   │   ├── TASK_027_dash_error_handling.md
+│   │   ├── TASK_027_dash_error_handling_DONE.md
 │   │   ├── TASK_028_jwt_validation_dash.md
 │   │   ├── TASK_029_structured_logging.md
 │   │   ├── TASK_030_fix_yoy_calculation.md
@@ -152,12 +152,8 @@ C:\py_exp\mko_bi
 │   │   ├── TASK_033_replace_any_types.md
 │   │   ├── TASK_034_fix_exception_handling.md
 │   │   └── TASK_35_integration_tests.md
-│   ├── DEV_PLAN.md
-│   ├── TASK_033_an.md
-│   ├── TASK_033_analysis_report.md
 │   ├── TASK_033_audit.md
 │   ├── TASK_034_audit.md
-│   ├── TASK_036_tz_audit.md
 │   ├── TASK_037_test_audit.md
 │   ├── TASK_037_test_audit1.md
 │   └── TEST
