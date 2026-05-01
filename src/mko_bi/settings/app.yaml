@@ -56,3 +56,7 @@ charts:
       r: 50
       t: 50
       b: 50
+
+cors_origins:
+  - "https://example.com"
+  - "https://app.example.com"

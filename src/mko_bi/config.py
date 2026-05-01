@@ -3,7 +3,8 @@ from typing import Any
 
 import redis
 from pydantic import field_validator
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, YamlConfigSettingsSource
+from pydantic_settings.sources import PydanticBaseSettingsSource
 
 
 class Settings(BaseSettings):
@@ -65,6 +66,7 @@ class Settings(BaseSettings):
     # --- App ---
     APP_NAME: str = "mko_bi"
     DEBUG: bool = False
+    cors_origins: list[str] = []
 
     # Настройки для pydantic-settings
     model_config = {
@@ -72,6 +74,23 @@ class Settings(BaseSettings):
         "env_prefix": "",
         "extra": "ignore",
     }
+
+    @classmethod
+    def settings_customise_sources(
+        cls,
+        settings_cls: type[BaseSettings],
+        init_settings: PydanticBaseSettingsSource,
+        env_settings: PydanticBaseSettingsSource,
+        dotenv_settings: PydanticBaseSettingsSource,
+        file_secret_settings: PydanticBaseSettingsSource,
+    ) -> tuple[PydanticBaseSettingsSource, ...]:
+        """Customize settings sources to include YAML config file."""
+        yaml_file_path = Path(__file__).parent / "settings" / "app.yaml"
+        yaml_source = YamlConfigSettingsSource(
+            settings_cls,
+            yaml_file=yaml_file_path,
+        )
+        return (yaml_source, env_settings, init_settings)
 
     @field_validator("DB_PORT")
     @classmethod

@@ -1,6 +1,6 @@
 TASK: исправление обработки ошибок (замена bare except)
 
-FILE: src/mko_bi/services/data_service.py, все файлы
+FILE: все файлы
 
 GOAL: корректная обработка исключений
 

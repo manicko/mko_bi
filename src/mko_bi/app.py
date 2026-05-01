@@ -4,6 +4,7 @@
 экземпляра FastAPI с использованием factory pattern.
 """
 
+import logging
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -18,6 +19,8 @@ from mko_bi.logging_config import setup_logging
 
 # Настройка логирования
 setup_logging()
+
+logger = logging.getLogger(__name__)
 
 
 def create_app() -> FastAPI:
@@ -41,9 +44,10 @@ def create_app() -> FastAPI:
     )
 
     # Настройка CORS middleware
+    logger.info(f"Configuring CORS with allowed origins: {config.cors_origins}")
     application.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],
+        allow_origins=config.cors_origins,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
