@@ -4,8 +4,10 @@
 """
 
 import abc
-from typing import Any
+from datetime import datetime
 from uuid import UUID
+
+from sqlalchemy.orm import Session
 
 from mko_bi.models.user import UserRead
 from mko_bi.models.dashboard import DashboardRead
@@ -13,38 +15,39 @@ from mko_bi.models.graph import GraphRead
 from mko_bi.models.filters import FilterRead
 from mko_bi.models.processing_configs import ProcessingConfigRead
 from mko_bi.models.processing_logs import ProcessingLogRead
+from mko_bi.models.types import TokenData, LoginResponse, AggregatedRecordModel, GraphConfigDict, FilterConfigDict, ProcessingSettingsDict
 
 
 class IAuthService(abc.ABC):
     """Интерфейс сервиса аутентификации."""
 
     @abc.abstractmethod
-    def register_user(self, email: str, password: str, role: str, db: Any = None) -> UserRead:
+    def register_user(self, email: str, password: str, role: str, db: Session | None = None) -> UserRead:
         """Зарегистрировать нового пользователя."""
         pass
 
     @abc.abstractmethod
-    def authenticate_user(self, email: str, password: str, db: Any = None) -> Any | None:
+    def authenticate_user(self, email: str, password: str, db: Session | None = None) -> UserRead | None:
         """Аутентифицировать пользователя и вернуть данные."""
         pass
 
     @abc.abstractmethod
-    def login_user(self, email: str, password: str, db: Any = None) -> dict[str, Any]:
+    def login_user(self, email: str, password: str, db: Session | None = None) -> LoginResponse:
         """Выполнить вход и вернуть JWT токен."""
         pass
 
     @abc.abstractmethod
-    def refresh_token(self, user_id: Any, email: str, role: str, db: Any = None) -> dict[str, Any]:
+    def refresh_token(self, user_id: UUID, email: str, role: str, db: Session | None = None) -> LoginResponse:
         """Обновить JWT токен."""
         pass
 
     @abc.abstractmethod
-    def create_access_token(self, user_id: Any, role: Any) -> str:
+    def create_access_token(self, user_id: UUID, role: str) -> str:
         """Создать access токен для пользователя."""
         pass
 
     @abc.abstractmethod
-    def verify_token(self, token: str) -> dict[str, Any] | None:
+    def verify_token(self, token: str) -> TokenData | None:
         """Проверить JWT токен и вернуть данные."""
         pass
 
@@ -126,7 +129,7 @@ class IGraphService(abc.ABC):
     """Интерфейс сервиса графиков."""
 
     @abc.abstractmethod
-    def create_graph(self, dashboard_id: UUID, name: str, type_: str, config: dict[str, Any], dimensions: dict[str, Any], metrics: dict[str, Any]) -> GraphRead:
+    def create_graph(self, dashboard_id: UUID, name: str, type_: str, config: GraphConfigDict, dimensions: list[str], metrics: list[str]) -> GraphRead:
         """Создать новый график."""
         pass
 
@@ -146,7 +149,7 @@ class IGraphService(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def update_graph(self, graph_id: UUID, name: str | None, type_: str | None, config: dict[str, Any] | None, dimensions: dict[str, Any] | None, metrics: dict[str, Any] | None) -> GraphRead | None:
+    def update_graph(self, graph_id: UUID, name: str | None, type_: str | None, config: GraphConfigDict | None, dimensions: list[str] | None, metrics: list[str] | None) -> GraphRead | None:
         """Обновить график."""
         pass
 
@@ -160,7 +163,7 @@ class IFilterService(abc.ABC):
     """Интерфейс сервиса фильтров."""
 
     @abc.abstractmethod
-    def create_filter(self, name: str, type_: str, config: dict[str, Any]) -> FilterRead:
+    def create_filter(self, name: str, type_: str, config: FilterConfigDict) -> FilterRead:
         """Создать новый фильтр."""
         pass
 
@@ -175,7 +178,7 @@ class IFilterService(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def update_filter(self, filter_id: UUID, name: str | None, type_: str | None, config: dict[str, Any] | None) -> FilterRead | None:
+    def update_filter(self, filter_id: UUID, name: str | None, type_: str | None, config: FilterConfigDict | None) -> FilterRead | None:
         """Обновить фильтр."""
         pass
 
@@ -199,7 +202,7 @@ class IDataService(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def get_aggregated_data(self, dashboard_id: UUID, graph_id: UUID) -> list[dict[str, Any]]:
+    def get_aggregated_data(self, dashboard_id: UUID, graph_id: UUID) -> list[AggregatedRecordModel]:
         """Получить агрегированные данные для графика."""
         pass
 
@@ -218,7 +221,7 @@ class IProcessingConfigService(abc.ABC):
     """Интерфейс сервиса настроек обработки."""
 
     @abc.abstractmethod
-    def create_processing_config(self, dashboard_id: UUID, settings: dict[str, Any]) -> ProcessingConfigRead:
+    def create_processing_config(self, dashboard_id: UUID, settings: ProcessingSettingsDict) -> ProcessingConfigRead:
         """Создать настройки обработки для дашборда."""
         pass
 
@@ -228,7 +231,7 @@ class IProcessingConfigService(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def update_processing_config(self, dashboard_id: UUID, settings: dict[str, Any]) -> ProcessingConfigRead | None:
+    def update_processing_config(self, dashboard_id: UUID, settings: ProcessingSettingsDict) -> ProcessingConfigRead | None:
         """Обновить настройки обработки."""
         pass
 
@@ -257,7 +260,7 @@ class IProcessingLogService(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def update_processing_log(self, log_id: UUID, status: str | None, message: str | None, finished_at: Any | None) -> ProcessingLogRead | None:
+    def update_processing_log(self, log_id: UUID, status: str | None, message: str | None, finished_at: datetime | None) -> ProcessingLogRead | None:
         """Обновить запись лога обработки."""
         pass
 

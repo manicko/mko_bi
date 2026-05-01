@@ -1,9 +1,9 @@
 from datetime import datetime
-from typing import Any
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
 from mko_bi.models.user_roles import FilterTypeEnum
+from mko_bi.models.types import FilterConfigDict
 
 
 class FilterBase(BaseModel):
@@ -11,7 +11,7 @@ class FilterBase(BaseModel):
 
     name: str
     type: FilterTypeEnum
-    config: dict[str, Any]
+    config: FilterConfigDict
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -36,7 +36,7 @@ class FilterUpdate(BaseModel):
 
     name: str | None = None
     type: FilterTypeEnum | None = None
-    config: dict[str, Any] | None = None
+    config: FilterConfigDict | None = None
 
     model_config = ConfigDict(
         from_attributes=True,

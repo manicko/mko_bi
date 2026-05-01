@@ -4,6 +4,16 @@ from datetime import datetime
 from uuid import UUID
 
 from mko_bi.models.user_roles import GraphTypeEnum, BarmodeEnum, OrientationEnum, ProcessingStatusEnum
+from mko_bi.models.types import (
+    AggregatedRecordModel,
+    ChartMetadata,
+    ChartLayoutConfig,
+    YoYConfig,
+    FilterCondition,
+    TransformationConfig,
+    AggregationConfig,
+    ProcessingResultData,
+)
 
 
 class DataUpload(BaseModel):
@@ -81,11 +91,11 @@ class ProcessingStatus(BaseModel):
 class ProcessingConfig(BaseModel):
     """Модель конфигурации обработки данных."""
 
-    transformations: list[dict[str, Any]] | None = None
-    aggregations: list[dict[str, Any]] | None = None
+    transformations: list[TransformationConfig] | None = None
+    aggregations: list[AggregationConfig] | None = None
     groupby: list[str] | None = None
-    filters: list[dict[str, Any]] | None = None
-    metrics: list[dict[str, Any]] | None = None
+    filters: list[FilterCondition] | None = None
+    metrics: list[dict[str, str]] | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -117,7 +127,7 @@ class ProcessingResult(BaseModel):
     dashboard_id: int
     rows_processed: int
     message: str
-    data: dict[str, Any] | None = None
+    data: ProcessingResultData | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -139,8 +149,8 @@ class AggregatedData(BaseModel):
 
     dashboard_id: int
     chart_type: GraphTypeEnum
-    data: list[dict[str, Any]]
-    metadata: dict[str, Any] | None = None
+    data: list[AggregatedRecordModel]
+    metadata: ChartMetadata | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -149,8 +159,8 @@ class AggregatedData(BaseModel):
                 "dashboard_id": 1,
                 "chart_type": "bar",
                 "data": [
-                    {"category": "A", "revenue": 1000},
-                    {"category": "B", "revenue": 2000},
+                    {"dims": {"category": "A"}, "metrics": {"revenue": 1000}},
+                    {"dims": {"category": "B"}, "metrics": {"revenue": 2000}},
                 ],
                 "metadata": {"total": 3000, "count": 2},
             }
@@ -293,7 +303,7 @@ class ChartData(BaseModel):
     представляет одну точку данных с измерениями и метриками.
     """
 
-    data: list[dict[str, Any]]
+    data: list[dict[str, int | float | str]]
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -321,8 +331,8 @@ class ChartConfig(BaseModel):
     orientation: OrientationEnum = OrientationEnum.vertical
     barmode: BarmodeEnum = BarmodeEnum.group
     secondary_y: list[str] = Field(default_factory=list)
-    layout: dict[str, Any] = Field(default_factory=dict)
-    yoy: dict[str, Any] | None = Field(
+    layout: ChartLayoutConfig | None = Field(default=None)
+    yoy: YoYConfig | None = Field(
         default=None,
         description="Настройки год-к-году сравнения",
     )
@@ -356,7 +366,7 @@ class FilterState(BaseModel):
     где ключ - имя фильтра, значение - список выбранных значений.
     """
 
-    filters: dict[str, list[Any]] = Field(default_factory=dict)
+    filters: dict[str, list[int | str]] = Field(default_factory=dict)
 
     model_config = ConfigDict(
         from_attributes=True,

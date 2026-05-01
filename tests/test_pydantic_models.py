@@ -283,8 +283,8 @@ class TestDataModels:
             dashboard_id=1,
             chart_type="bar",
             data=[
-                {"category": "A", "revenue": 1000},
-                {"category": "B", "revenue": 2000},
+                {"dims": {"category": "A"}, "metrics": {"revenue": 1000}},
+                {"dims": {"category": "B"}, "metrics": {"revenue": 2000}},
             ],
             metadata={"total": 3000, "count": 2},
         )

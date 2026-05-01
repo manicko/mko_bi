@@ -1,13 +1,14 @@
 from datetime import datetime
-from typing import Any
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
+
+from mko_bi.models.types import ProcessingSettingsDict
 
 
 class ProcessingConfigBase(BaseModel):
     """Базовая модель для настроек обработки."""
 
-    settings: dict[str, Any]
+    settings: ProcessingSettingsDict
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -32,7 +33,7 @@ class ProcessingConfigCreate(ProcessingConfigBase):
 class ProcessingConfigUpdate(BaseModel):
     """Модель для обновления настроек обработки."""
 
-    settings: dict[str, Any] | None = None
+    settings: ProcessingSettingsDict | None = None
 
     model_config = ConfigDict(
         from_attributes=True,

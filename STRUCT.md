@@ -97,6 +97,7 @@ C:\py_exp\mko_bi
 │       │   ├── processing_configs.py
 │       │   ├── processing_logs.py
 │       │   ├── transformation_configs.py
+│       │   ├── types.py
 │       │   ├── user.py
 │       │   └── user_roles.py
 │       ├── services
@@ -146,14 +147,13 @@ C:\py_exp\mko_bi
 │   └── test_yoy_calculation.py
 ├── TODO
 │   ├── DEV
-│   │   ├── TASK_031_yoy_share_tests_DONE.md
-│   │   ├── TASK_033_replace_any_types.md
-│   │   └── TASK_034_fix_exception_handling.md
+│   │   └── TASK_033_replace_any_types_DONE.md
 │   ├── TASK_031_audit.md
 │   ├── TASK_033_audit.md
 │   ├── TASK_034_audit.md
 │   ├── TASK_037_test_audit.md
 │   ├── TASK_037_test_audit1.md
 │   ├── TASK_038_docker_audit.md
-│   └── TEST
+│   ├── TEST
+│   └── TEST_036_test_audit_arch.md
 └── uv.lock

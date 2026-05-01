@@ -1,9 +1,9 @@
 from datetime import datetime
-from typing import Any
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
 from mko_bi.models.user_roles import GraphTypeEnum
+from mko_bi.models.types import GraphConfigDict
 
 
 class GraphBase(BaseModel):
@@ -12,9 +12,9 @@ class GraphBase(BaseModel):
     name: str
     type: GraphTypeEnum
     dashboard_id: UUID
-    config: dict[str, Any]
-    dimensions: list[Any]
-    metrics: list[Any]
+    config: GraphConfigDict
+    dimensions: list[str]
+    metrics: list[str]
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -42,9 +42,9 @@ class GraphUpdate(BaseModel):
 
     name: str | None = None
     type: GraphTypeEnum | None = None
-    config: dict[str, Any] | None = None
-    dimensions: list[Any] | None = None
-    metrics: list[Any] | None = None
+    config: GraphConfigDict | None = None
+    dimensions: list[str] | None = None
+    metrics: list[str] | None = None
 
     model_config = ConfigDict(
         from_attributes=True,

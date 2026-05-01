@@ -5,7 +5,6 @@
 """
 
 import polars as pl
-import pytest
 
 from mko_bi.data.processing.transformations import _calculate_share
 from mko_bi.models.transformation_configs import ShareConfig

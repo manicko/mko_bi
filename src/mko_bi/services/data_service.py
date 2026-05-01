@@ -31,6 +31,12 @@ from mko_bi.models.data import (
 )
 from mko_bi.models.processing_logs import ProcessingLogCreate, ProcessingLogUpdate
 from mko_bi.models.user_roles import ProcessingStatusEnum
+from mko_bi.models.types import (
+    FilterCondition,
+    ProcessingResultData,
+    TransformationConfig,
+    AggregationConfig,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -196,7 +202,7 @@ def _validate_file_size(file_path: Path, max_size_mb: float = 100.0) -> float:
     return file_size_mb
 
 
-def _apply_filters(df: pl.DataFrame, filters: list[dict[str, Any]]) -> pl.DataFrame:
+def _apply_filters(df: pl.DataFrame, filters: list[FilterCondition]) -> pl.DataFrame:
     """Применяет фильтры к DataFrame.
 
     Args:
@@ -229,7 +235,7 @@ def _apply_filters(df: pl.DataFrame, filters: list[dict[str, Any]]) -> pl.DataFr
 
 
 def _apply_aggregations(
-    df: pl.DataFrame, groupby: list[str], aggregations: list[dict[str, Any]]
+    df: pl.DataFrame, groupby: list[str], aggregations: list[AggregationConfig]
 ) -> pl.DataFrame:
     """Применяет группировку и агрегации к DataFrame.
 
@@ -264,7 +270,7 @@ def _apply_aggregations(
     return df
 
 
-def _apply_transformations(df: pl.DataFrame, transformations: list[dict[str, Any]]) -> pl.DataFrame:
+def _apply_transformations(df: pl.DataFrame, transformations: list[TransformationConfig]) -> pl.DataFrame:
     """Применяет трансформации к DataFrame.
 
     Args:
@@ -301,11 +307,11 @@ def _process_csv_file(
     processing_config: ProcessingConfig | None = None,
     dashboard_id: int | None = None,
     db: Session | None = None,
-) -> dict[str, Any]:
+) -> ProcessingResultData:
     """Обрабатывает CSV файл с использованием Polars.
 
     Читает gzipped CSV файл, применяет трансформации и агрегации.
-    При передаче dashboard_id и db сохраняет агрегированные данные в БД.
+    При передаче dashboard_id и db сохраняет агрегатированные данные в БД.
 
     Args:
         file_path: Путь к файлу.
@@ -314,7 +320,7 @@ def _process_csv_file(
         db: Опциональная сессия базы данных для сохранения агрегатов.
 
     Returns:
-        dict: Результаты обработки.
+        ProcessingResultData: Результаты обработки.
     """
     logger.info("Начало обработки файла: %s", file_path)
 
@@ -328,7 +334,7 @@ def _process_csv_file(
 
     logger.info("Файл прочитан: %d строк, %d колонок", df.shape[0], df.shape[1])
 
-    result_data = {
+    result_data: ProcessingResultData = {
         "columns": df.columns,
         "rows": df.shape[0],
         "preview": df.head(10).to_dicts(),
@@ -362,10 +368,10 @@ def _process_csv_file(
 
     logger.info("Обработка завершена: %d строк", df.shape[0])
 
-    # Сохраняем агрегированные данные в БД, если переданы dashboard_id и db
+    # Сохраняем агрегатированные данные в БД, если переданы dashboard_id и db
     if dashboard_id is not None and db is not None and processing_config:
         try:
-            # Собираем агрегированные данные из результата обработки
+            # Собираем агрегатированные данные из результата обработки
             if processing_config.groupby and processing_config.aggregations:
                 # Преобразуем результаты группировки в формат для сохранения
                 # Для каждого графика в дашборде нужно создать записи
@@ -375,11 +381,11 @@ def _process_csv_file(
 
             # Логируем, что данные готовы для сохранения
             logger.info(
-                "Агрегированные данные готовы для сохранения: %d строк",
+                "Агрегатированные данные готовы для сохранения: %d строк",
                 df.shape[0],
             )
         except Exception as e:
-            logger.warning("Не удалось подготовить агрегированные данные: %s", e)
+            logger.warning("Не удалось подготовить агрегатированные данные: %s", e)
 
     return result_data
 
