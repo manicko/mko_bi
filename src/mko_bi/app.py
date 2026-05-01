@@ -15,7 +15,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from mko_bi.api import routes
 from mko_bi.config import get_config
-from mko_bi.logging_config import setup_logging
+from mko_bi.core.logging_config import setup_logging
 
 # Настройка логирования
 setup_logging()

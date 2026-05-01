@@ -1,3 +1,4 @@
+import json
 import logging
 import logging.config
 import os
@@ -6,11 +7,36 @@ from typing import Any
 from mko_bi.config import get_config
 
 
-def setup_logging() -> None:
-    """Настраивает логирование для приложения.
+class JSONFormatter(logging.Formatter):
+    """JSON форматтер для структурированного логирования."""
 
-    Создаёт конфигурацию логгера с форматом:
-    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    def format(self, record: logging.LogRecord) -> str:
+        """Форматирует запись лога в JSON.
+
+        Args:
+            record: Запись лога.
+
+        Returns:
+            str: JSON строка с полями лога.
+        """
+        log_record: dict[str, Any] = {
+            "timestamp": self.formatTime(record, self.datefmt),
+            "level": record.levelname,
+            "service": "mko_bi",
+            "message": record.getMessage(),
+            "module": record.module,
+            "function": record.funcName,
+        }
+        if record.exc_info:
+            log_record["exception"] = self.formatException(record.exc_info)
+        return json.dumps(log_record)
+
+
+def setup_logging() -> None:
+    """Настраивает структурированное логирование в формате JSON.
+
+    Создаёт конфигурацию логгера с JSON форматом.
+    Настраивает вывод в stdout (для Docker) и файл.
 
     Уровни логирования:
         - INFO: Основные события (запросы, загрузки, обработка)
@@ -18,29 +44,29 @@ def setup_logging() -> None:
         - ERROR: Ошибки
     """
     config = get_config()
-    
+
     logging_config: dict[str, Any] = {
         "version": 1,
         "disable_existing_loggers": False,
         "formatters": {
-            "default": {
-                "format": config.LOG_FORMAT,
+            "json": {
+                "()": JSONFormatter,
                 "datefmt": "%Y-%m-%d %H:%M:%S",
             },
         },
         "handlers": {
             "console": {
                 "()": "logging.StreamHandler",
-                "formatter": "default",
+                "formatter": "json",
                 "level": config.LOG_LEVEL,
                 "stream": "ext://sys.stdout",
             },
             "file": {
                 "()": "logging.handlers.RotatingFileHandler",
-                "filename": "data/logs/app.log",
+                "filename": "data/logs/app.json.log",
                 "maxBytes": 10 * 1024 * 1024,  # 10MB
                 "backupCount": 5,
-                "formatter": "default",
+                "formatter": "json",
                 "level": config.LOG_LEVEL,
                 "encoding": "utf-8",
             },

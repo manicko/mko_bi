@@ -143,8 +143,7 @@ C:\py_exp\mko_bi
 │   └── test_upload_api.py
 ├── TODO
 │   ├── DEV
-│   │   ├── TASK_027_dash_error_handling_DONE.md
-│   │   ├── TASK_028_jwt_validation_dash.md
+│   │   ├── TASK_028_jwt_validation_dash_DONE.md
 │   │   ├── TASK_029_structured_logging.md
 │   │   ├── TASK_030_fix_yoy_calculation.md
 │   │   ├── TASK_031_yoy_share_tests.md
