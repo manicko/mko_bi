@@ -17,13 +17,16 @@ Functions:
 """
 
 import logging
-from typing import Any
+from typing import Any, cast
 
 import dash
 import dash_bootstrap_components as dbc
+import requests
 from dash import Dash, Input, Output, State, callback, dcc, html, no_update
 from dash.exceptions import PreventUpdate
 import plotly.graph_objects as go
+
+from mko_bi.config import get_config
 
 
 logger = logging.getLogger(__name__)
@@ -206,30 +209,69 @@ def login_user(n_clicks: int, email: str, password: str) -> tuple[Any, Any, str,
     logger.info("Попытка входа пользователя: %s", email)
 
     try:
-        # В реальной реализации здесь будет вызов FastAPI эндпоинта
-        # response = requests.post(
-        #     "http://localhost:8000/api/auth/login",
-        #     json={"email": email, "password": password},
-        # )
-        # if response.status_code == 200:
-        #     data = response.json()
-        #     return data["access_token"], data.get("user"), "/dashboards", ""
+        api_base_url = get_config().API_BASE_URL
+        response = requests.post(
+            f"{api_base_url}/auth/login",
+            json={"email": email, "password": password},
+            timeout=10,
+        )
+        response.raise_for_status()
+        data = response.json()
+        token = data["access_token"]
 
-        # Заглушка для демонстрации
+        # Получаем данные пользователя через /auth/me
+        user_response = requests.get(
+            f"{api_base_url}/auth/me",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
+        )
+        user_response.raise_for_status()
+        user_data = user_response.json()
+
         logger.info("Успешный вход пользователя: %s", email)
-        return "demo-jwt-token", {"email": email, "role": "viewer"}, "/dashboards", ""
+        return token, user_data, "/dashboards", ""
 
-    except Exception as e:
-        logger.error("Ошибка входа: %s", e)
-        # no_update is a special sentinel value that Dash uses to indicate no update
-        # It's not compatible with Any, so we cast it
-        from typing import cast
-
+    except requests.HTTPError as e:
+        status_code = response.status_code
+        if status_code == 401:
+            logger.warning("Неудачная попытка входа: %s (401)", email)
+            return (
+                cast(Any, no_update),
+                cast(Any, no_update),
+                cast(Any, no_update),
+                "Неверный email или пароль",
+            )
+        elif status_code == 429:
+            logger.warning("Слишком много попыток входа: %s (429)", email)
+            return (
+                cast(Any, no_update),
+                cast(Any, no_update),
+                cast(Any, no_update),
+                "Слишком много попыток входа",
+            )
+        else:
+            logger.error("Ошибка API при входе %s: %s (код %s)", email, e, status_code)
+            return (
+                cast(Any, no_update),
+                cast(Any, no_update),
+                cast(Any, no_update),
+                f"Ошибка: {status_code}",
+            )
+    except requests.RequestException as e:
+        logger.error("Ошибка сети при входе %s: %s", email, e)
         return (
             cast(Any, no_update),
             cast(Any, no_update),
             cast(Any, no_update),
-            "Неверный email или пароль",
+            "Произошла ошибка соединения",
+        )
+    except Exception as e:
+        logger.error("Неизвестная ошибка входа %s: %s", email, e)
+        return (
+            cast(Any, no_update),
+            cast(Any, no_update),
+            cast(Any, no_update),
+            "Произошла ошибка",
         )
 
 
@@ -277,7 +319,7 @@ def create_dashboard_list_page() -> html.Div:
 def load_dashboards(token: str | None) -> list[dbc.Card]:
     """Загружает список доступных дашбордов.
 
-    Отправляет запрос к FastAPI эндпоинту /api/dashboards и
+    Отправляет запрос к FastAPI эндпоинту /dashboards и
     преобразует результат в карточки Bootstrap.
 
     Args:
@@ -293,30 +335,14 @@ def load_dashboards(token: str | None) -> list[dbc.Card]:
     logger.info("Загрузка списка дашбордов")
 
     try:
-        # В реальной реализации здесь будет вызов FastAPI эндпоинта
-        # headers = {"Authorization": f"Bearer {token}"}
-        # response = requests.get(
-        #     "http://localhost:8000/api/dashboards",
-        #     headers=headers,
-        # )
-        # if response.status_code == 200:
-        #     dashboards = response.json()
-        # else:
-        #     return [html.Div("Ошибка загрузки дашбордов", className="text-danger")]
-
-        # Заглушка для демонстрации
-        dashboards = [
-            {
-                "id": "1",
-                "name": "Sales Dashboard",
-                "description": "Анализ продаж по категориям и регионам",
-            },
-            {
-                "id": "2",
-                "name": "Marketing Dashboard",
-                "description": "Эффективность маркетинговых кампаний",
-            },
-        ]
+        api_base_url = get_config().API_BASE_URL
+        response = requests.get(
+            f"{api_base_url}/dashboards",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10,
+        )
+        response.raise_for_status()
+        dashboards = response.json()
 
         cards = []
         for dashboard in dashboards:
@@ -325,7 +351,7 @@ def load_dashboards(token: str | None) -> list[dbc.Card]:
                     dbc.CardBody([
                         html.H5(dashboard["name"], className="card-title"),
                         html.P(
-                            dashboard["description"],
+                            dashboard.get("description", ""),
                             className="card-text text-muted",
                         ),
                         dbc.Button(
@@ -342,9 +368,16 @@ def load_dashboards(token: str | None) -> list[dbc.Card]:
 
         return cards if cards else [html.Div("Дашборды не найдены")]
 
+    except requests.HTTPError as e:
+        status_code = response.status_code
+        logger.error("Ошибка API при загрузке дашбордов: %s (код %s)", e, status_code)
+        return [html.Div(f"Ошибка загрузки дашбордов: {status_code}", className="text-danger")]
+    except requests.RequestException as e:
+        logger.error("Ошибка сети при загрузке дашбордов: %s", e)
+        return [html.Div("Ошибка соединения с сервером", className="text-danger")]
     except Exception as e:
-        logger.error("Ошибка загрузки дашбордов: %s", e)
-        return [html.Div("Ошибка загрузки дашбордов", className="text-danger")]
+        logger.error("Неизвестная ошибка загрузки дашбордов: %s", e)
+        return [html.Div("Произошла ошибка", className="text-danger")]
 
 
 @callback(
@@ -635,22 +668,6 @@ def apply_dashboard_filters(
 
     # Собираем активные фильтры
     active_filters: dict[str, Any] = {}
-    for value, fid in zip(filter_values, filter_ids, strict=False):
-        if value is not None and value != "":
-            active_filters[fid["field"]] = value
-
-    logger.debug("Активные фильтры: %s", active_filters)
-
-    # В реальной реализации здесь будет вызов API для получения отфильтрованных данных
-    # и обновления графиков
-
-    # Возвращаем текущие графики (в реальной реализации будут обновлены)
-    raise PreventUpdate
-
-    logger.info("Применение фильтров к дашборду")
-
-    # Собираем активные фильтры
-    active_filters = {}
     for value, fid in zip(filter_values, filter_ids, strict=False):
         if value is not None and value != "":
             active_filters[fid["field"]] = value
