@@ -30,6 +30,7 @@ from mko_bi.models.data import (
     UploadResponse,
 )
 from mko_bi.models.processing_logs import ProcessingLogCreate, ProcessingLogUpdate
+from mko_bi.models.user_roles import ProcessingStatusEnum
 
 logger = logging.getLogger(__name__)
 
@@ -430,15 +431,29 @@ def _upload_file_logic(
     _save_uploaded_file(filename, file_content, dashboard_id)
 
     # Создание задачи
-    task_id = uuid.uuid4()
     uploaded_at = datetime.now()
-
+    
     # Создаем запись лога обработки в БД
     log_create = ProcessingLogCreate(
         dashboard_id=dashboard_id,
-        status="uploaded",
+        status=ProcessingStatusEnum.uploaded,
         message=f"Файл {filename} успешно загружен",
         started_at=uploaded_at,
+    )
+    processing_log = ProcessingLogRepository.create(db, **log_create.model_dump())
+    logger.info("Лог обработки создан в БД: id=%s", processing_log.id)
+    
+    task_id = processing_log.id  # Используем ID лога как task_id
+
+    logger.info("Файл успешно загружен: task_id=%s, filename=%s", task_id, filename)
+
+    return UploadResponse(
+        task_id=task_id,
+        filename=filename,
+        dashboard_id=dashboard_id,
+        status=ProcessingStatusEnum.uploaded,
+        message="File uploaded successfully",
+        uploaded_at=uploaded_at,
     )
     processing_log = ProcessingLogRepository.create(db, **log_create.model_dump())
     logger.info("Лог обработки создан в БД: id=%s", processing_log.id)
@@ -538,7 +553,7 @@ def _trigger_processing_logic(
 
     # Проверяем, есть ли лог обработки для этого дашборда
     logs = ProcessingLogRepository.get_by_dashboard_and_status(
-        db, dashboard_id, ["uploaded", "processing"]
+        db, dashboard_id, [ProcessingStatusEnum.uploaded, ProcessingStatusEnum.processing]
     )
 
     if not logs:
@@ -549,7 +564,7 @@ def _trigger_processing_logic(
     processing_log = logs[-1]
 
     # Проверяем статус
-    if processing_log.status in ["processing", "success"]:
+    if processing_log.status in [ProcessingStatusEnum.processing, ProcessingStatusEnum.success]:
         logger.warning(
             "Невозможно запустить обработку: задача уже %s", processing_log.status
         )
@@ -558,7 +573,7 @@ def _trigger_processing_logic(
     # Обновление статуса в логе
     started_at = datetime.now()
     log_update = ProcessingLogUpdate(
-        status="processing",
+        status=ProcessingStatusEnum.processing,
         message="Запуск обработки задачи",
         started_at=started_at,
     )
@@ -649,15 +664,14 @@ def _trigger_processing_logic(
                                         "metrics": metrics,
                                     })
 
-                    # Сохраняем агрегаты через репозиторий в транзакции
+                    # Сохраняем агрегаты через репозиторий
                     if aggregates:
-                        with db.begin():
-                            saved_count = AggregatedDataRepository.bulk_insert(
-                                db=db,
-                                dashboard_id=dashboard_id,
-                                aggregates=aggregates,
-                                clear_old=True,
-                            )
+                        saved_count = AggregatedDataRepository.bulk_insert(
+                            db=db,
+                            dashboard_id=dashboard_id,
+                            aggregates=aggregates,
+                            clear_old=True,
+                        )
                         logger.info(
                             "Сохранено %d агрегированных записей для дашборда %s",
                             saved_count,
@@ -677,7 +691,7 @@ def _trigger_processing_logic(
         # Обновление статуса - успех
         completed_at = datetime.now()
         log_update = ProcessingLogUpdate(
-            status="success",
+            status=ProcessingStatusEnum.success,
             message="Обработка завершена успешно",
             finished_at=completed_at,
         )
@@ -704,7 +718,7 @@ def _trigger_processing_logic(
             task_id=task_id,
             filename=filename,
             dashboard_id=dashboard_id,
-            status="completed",
+            status=ProcessingStatusEnum.completed,
             progress=100,
             message="Processing completed successfully",
             started_at=started_at,
@@ -715,7 +729,7 @@ def _trigger_processing_logic(
         # Обновляем лог обработки с ошибкой
         completed_at = datetime.now()
         log_update = ProcessingLogUpdate(
-            status="failed",
+            status=ProcessingStatusEnum.failed,
             message=f"Ошибка обработки: {str(e)}",
             finished_at=completed_at,
         )
@@ -791,33 +805,8 @@ def _get_processing_status_logic(
     """
     logger.info("Запрос статуса (внутренняя логика): task_id=%s, user_id=%d", task_id, user_id)
 
-    # Ищем логи обработки для задачи по task_id в сообщении
-    logs = ProcessingLogRepository.get_all(db)
-
-    task_log = None
-    for log in logs:
-        if log.message and str(task_id) in log.message:
-            task_log = log
-            break
-
-    if task_log is None:
-        # Если не нашли по task_id, ищем по dashboard_id
-        # Получаем дашборды пользователя
-        all_dashboards = DashboardRepository.get_all(db)
-        user_dashboard_ids = []
-        for dash in all_dashboards:
-            if check_dashboard_access(user_id, dash.id, "view", db):
-                user_dashboard_ids.append(dash.id)
-
-        # Ищем последний лог для этих дашбордов
-        for dash_id in user_dashboard_ids:
-            dash_logs = ProcessingLogRepository.get_by_dashboard_and_status(
-                db, dash_id, None
-            )
-            if dash_logs:
-                task_log = dash_logs[-1]  # Последний лог
-                break
-
+    # Получаем лог напрямую по task_id (является ID лога)
+    task_log = ProcessingLogRepository.get(task_id, db)
     if task_log is None:
         logger.warning("Задача не найдена: task_id=%s", task_id)
         raise ValueError(f"Задача с id={task_id} не найдена")
@@ -853,8 +842,8 @@ def _get_processing_status_logic(
         task_id=task_id,
         filename=filename,
         dashboard_id=task_log.dashboard_id,
-        status=task_log.status,
-        progress=100 if task_log.status == "success" else 0,
+        status=ProcessingStatusEnum(task_log.status),
+        progress=100 if task_log.status == ProcessingStatusEnum.success else 0,
         message=task_log.message or "",
         started_at=task_log.started_at,
         completed_at=task_log.finished_at,
@@ -905,15 +894,8 @@ def _get_processing_result_logic(
     """
     logger.info("Запрос результата (внутренняя логика): task_id=%s, user_id=%d", task_id, user_id)
 
-    # Ищем лог обработки
-    logs = ProcessingLogRepository.get_all(db)
-
-    task_log = None
-    for log in logs:
-        if log.message and str(task_id) in log.message:
-            task_log = log
-            break
-
+    # Получаем лог напрямую по task_id (ID лога)
+    task_log = ProcessingLogRepository.get(task_id, db)
     if task_log is None:
         logger.warning("Задача не найдена: task_id=%s", task_id)
         raise ValueError(f"Задача с id={task_id} не найдена")

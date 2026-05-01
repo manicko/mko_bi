@@ -143,34 +143,17 @@ C:\py_exp\mko_bi
 │   └── test_upload_api.py
 ├── TODO
 │   ├── DEV
-│   │   ├── TASK_001_graph_models_DONE.md
-│   │   ├── TASK_002_fix_imports_DONE.md
-│   │   ├── TASK_003_fix_test_mocks.md
-│   │   ├── TASK_004_mypy_config_DONE.md
-│   │   ├── TASK_005_unify_auth_service_DONE.md
-│   │   ├── TASK_006_fix_deps_coupling_DONE.md
-│   │   ├── TASK_007_create_graph_service_DONE.md
-│   │   ├── TASK_008_fix_db_sessions_DONE.md
-│   │   ├── TASK_009_fix_ruff_errors.md
-│   │   ├── TASK_010_replace_any_types.md
-│   │   ├── TASK_011_remove_dead_code_DONE.md
-│   │   ├── TASK_012_fix_yoy_calculation.md
-│   │   ├── TASK_013_fix_gz_processing_DONE.md
-│   │   ├── TASK_014_implement_shares.md
-│   │   ├── TASK_015_safe_csv_processing_DONE.md
-│   │   ├── TASK_016_path_validation_DONE.md
-│   │   ├── TASK_017_redis_rate_limiting.md
-│   │   ├── TASK_018_cors_production.md
-│   │   ├── TASK_020_fix_exception_handling.md
 │   │   ├── TASK_021_transaction_management.md
-│   │   ├── TASK_022_file_handling_fixes_DONE.md
-│   │   ├── TASK_023_fix_existing_tests.md
-│   │   ├── TASK_024_integration_tests.md
-│   │   ├── TASK_025_yoy_share_tests.md
 │   │   ├── TASK_026_dash_integration.md
 │   │   ├── TASK_027_dash_error_handling.md
 │   │   ├── TASK_028_jwt_validation_dash.md
-│   │   └── TASK_029_structured_logging.md
+│   │   ├── TASK_029_structured_logging.md
+│   │   ├── TASK_030_fix_yoy_calculation.md
+│   │   ├── TASK_031_yoy_share_tests.md
+│   │   ├── TASK_032_implement_shares.md
+│   │   ├── TASK_033_replace_any_types.md
+│   │   ├── TASK_034_fix_exception_handling.md
+│   │   └── TASK_35_integration_tests.md
 │   ├── DEV_PLAN.md
 │   ├── TASK_033_an.md
 │   ├── TASK_033_analysis_report.md

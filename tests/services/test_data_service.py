@@ -81,7 +81,7 @@ class TestSaveUploadedFile:
         filename = "test.csv.gz"
         upload_dir = tmp_path / "subdir" / "nested"
 
-        with patch('mko_bi.config.get_config') as mock_get_config, \
+        with patch('mko_bi.services.data_service.get_config') as mock_get_config, \
              patch('mko_bi.services.data_service.uuid') as mock_uuid:
             mock_config = MagicMock()
             mock_config.upload_temp_dir = str(upload_dir)
@@ -189,7 +189,9 @@ class TestUploadFile:
             mock_dash_repo.get.return_value = mock_dashboard
             mock_check_access.return_value = True
             mock_save.return_value = Path("/tmp/test.csv.gz")
-            mock_repo.create.return_value = MagicMock()
+            mock_log = MagicMock()
+            mock_log.id = uuid.UUID('12345678-1234-5678-1234-567812345678')
+            mock_repo.create.return_value = mock_log
 
             result = upload_file(
                 "test.csv.gz",
@@ -257,7 +259,9 @@ class TestUploadFile:
             mock_dash_repo.get.return_value = mock_dashboard
             mock_check_access.return_value = True
             mock_save.return_value = Path("/tmp/test.csv.gz")
-            mock_repo.create.return_value = MagicMock()
+            mock_log = MagicMock()
+            mock_log.id = uuid.UUID('12345678-1234-5678-1234-567812345678')
+            mock_repo.create.return_value = mock_log
 
             result = upload_file("test.csv.gz", content, 1, 2)
 
