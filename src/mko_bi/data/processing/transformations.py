@@ -16,8 +16,23 @@ from mko_bi.models.transformation_configs import (
     ShareConfig,
     YoyConfig,
 )
+from mko_bi.models.user_roles import AggregationFunctionEnum
 
 logger = logging.getLogger(__name__)
+
+# Маппинг функций агрегации на Polars выражения
+AGG_FUNC_MAP = {
+    AggregationFunctionEnum.sum: lambda col: pl.col(col).sum(),
+    AggregationFunctionEnum.mean: lambda col: pl.col(col).mean(),
+    AggregationFunctionEnum.count: lambda col: pl.col(col).count(),
+    AggregationFunctionEnum.min: lambda col: pl.col(col).min(),
+    AggregationFunctionEnum.max: lambda col: pl.col(col).max(),
+    AggregationFunctionEnum.median: lambda col: pl.col(col).median(),
+    AggregationFunctionEnum.std: lambda col: pl.col(col).std(),
+    AggregationFunctionEnum.var: lambda col: pl.col(col).var(),
+    AggregationFunctionEnum.first: lambda col: pl.col(col).first(),
+    AggregationFunctionEnum.last: lambda col: pl.col(col).last(),
+}
 
 
 def apply_transformations(
@@ -191,33 +206,14 @@ def _apply_groupby_aggregations(
     agg_exprs = []
     for agg in aggregations:
         column = agg.column
-        function = agg.function
-        alias = agg.alias if agg.alias else f"{column}_{function}"
+        func_enum = agg.function
+        alias = agg.alias if agg.alias else f"{column}_{func_enum.value}"
 
-        if function == "sum":
-            expr = pl.col(column).sum().alias(alias)
-        elif function == "mean":
-            expr = pl.col(column).mean().alias(alias)
-        elif function == "count":
-            expr = pl.col(column).count().alias(alias)
-        elif function == "min":
-            expr = pl.col(column).min().alias(alias)
-        elif function == "max":
-            expr = pl.col(column).max().alias(alias)
-        elif function == "median":
-            expr = pl.col(column).median().alias(alias)
-        elif function == "std":
-            expr = pl.col(column).std().alias(alias)
-        elif function == "var":
-            expr = pl.col(column).var().alias(alias)
-        elif function == "first":
-            expr = pl.col(column).first().alias(alias)
-        elif function == "last":
-            expr = pl.col(column).last().alias(alias)
-        else:
-            logger.warning("Неизвестная функция агрегации: %s", function)
+        if func_enum not in AGG_FUNC_MAP:
+            logger.warning("Неизвестная функция агрегации: %s", func_enum)
             continue
 
+        expr = AGG_FUNC_MAP[func_enum](column).alias(alias)
         agg_exprs.append(expr)
 
     result = df.group_by(groupby).agg(agg_exprs)
@@ -294,26 +290,49 @@ def _calculate_yoy(
     return result
 
 
-def _calculate_share(df: pl.DataFrame, value_column: str, alias: str = "share") -> pl.DataFrame:
-    """Вычисляет долю каждого значения от общего.
+def _calculate_share(
+    df: pl.DataFrame,
+    value_column: str,
+    alias: str = "share",
+    group_cols: list[str] | None = None,
+) -> pl.DataFrame:
+    """Вычисляет долю каждого значения от общей суммы по группе.
 
     Args:
         df: Исходный DataFrame.
         value_column: Имя колонки со значением.
         alias: Имя результирующей колонки.
+        group_cols: Список колонок для группировки. Если None, считает долю от общей суммы.
 
     Returns:
         pl.DataFrame: DataFrame с колонкой долей.
     """
-    total = df[value_column].sum()
-
-    if total == 0:
-        logger.warning("Сумма значений равна 0, доли будут равны 0")
-        result = df.with_columns(pl.lit(0.0).alias(alias))
-    else:
-        result = df.with_columns(
-            (pl.col(value_column) / total * 100).alias(alias)
+    if group_cols:
+        logger.debug("Расчет долей с группировкой по: %s", group_cols)
+        # Группируем и считаем сумму по группам
+        total_df = df.group_by(group_cols).agg(
+            pl.col(value_column).sum().alias("total")
         )
+        # Джойним обратно к исходному df
+        result = df.join(total_df, on=group_cols)
+        # Считаем долю, обрабатываем деление на ноль
+        result = result.with_columns(
+            pl.when(pl.col("total") == 0)
+            .then(0.0)
+            .otherwise(pl.col(value_column) / pl.col("total") * 100)
+            .alias(alias)
+        )
+        result = result.drop("total")
+    else:
+        logger.debug("Расчет долей без группировки")
+        total = df[value_column].sum()
+        if total == 0:
+            logger.warning("Сумма значений колонки '%s' равна 0, доли установлены в 0", value_column)
+            result = df.with_columns(pl.lit(0.0).alias(alias))
+        else:
+            result = df.with_columns(
+                (pl.col(value_column) / total * 100).alias(alias)
+            )
 
     logger.debug("Расчет долей завершен для колонки '%s'", value_column)
     return result

@@ -41,6 +41,20 @@ class YoyModeEnum(StrEnum):
     percent = "percent"
 
 
+class AggregationFunctionEnum(StrEnum):
+    """Функции агрегации данных."""
+    sum = "sum"
+    mean = "mean"
+    count = "count"
+    min = "min"
+    max = "max"
+    median = "median"
+    std = "std"
+    var = "var"
+    first = "first"
+    last = "last"
+
+
 class FilterTypeEnum(StrEnum):
     """Типы фильтров."""
     select = "select"

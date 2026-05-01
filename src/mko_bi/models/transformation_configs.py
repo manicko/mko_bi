@@ -6,6 +6,7 @@
 
 from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
+from mko_bi.models.user_roles import AggregationFunctionEnum
 
 
 class FilterConfig(BaseModel):
@@ -31,7 +32,7 @@ class AggregationConfig(BaseModel):
     """Конфигурация агрегации данных."""
 
     column: str
-    function: str
+    function: AggregationFunctionEnum
     alias: str | None = None
 
     model_config = ConfigDict(
@@ -84,6 +85,10 @@ class ShareConfig(BaseModel):
     """Конфигурация расчета долей."""
 
     value_column: str
+    group_cols: list[str] | None = Field(
+        default=None,
+        description="Колонки для группировки при расчете долей",
+    )
     alias: str = Field(default="share", description="Имя колонки с долей")
 
     model_config = ConfigDict(
@@ -91,6 +96,7 @@ class ShareConfig(BaseModel):
         json_schema_extra={
             "example": {
                 "value_column": "revenue",
+                "group_cols": ["year", "month"],
                 "alias": "share",
             }
         },

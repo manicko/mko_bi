@@ -219,7 +219,7 @@ class TestCheckDashboardAccess:
     def test_closes_session_if_created(self, mocker):
         """Сессия должна закрываться, если она была создана функцией."""
         mock_session = MagicMock()
-        mock_check = mocker.patch.object(
+        mocker.patch.object(
             AccessRepository, "check_access", return_value="view"
         )
         mock_session_context = MagicMock()
