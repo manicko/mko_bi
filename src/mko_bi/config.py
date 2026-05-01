@@ -66,6 +66,7 @@ class Settings(BaseSettings):
     # --- App ---
     APP_NAME: str = "mko_bi"
     DEBUG: bool = False
+    API_BASE_URL: str = "http://localhost:8000"
     cors_origins: list[str] = []
 
     # Настройки для pydantic-settings

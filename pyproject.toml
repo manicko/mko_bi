@@ -30,6 +30,7 @@ dependencies = [
     "python-multipart>=0.0.26",
     "pytest-mock>=3.15.1",
     "redis>=7.4.0",
+    "requests>=2.33.1",
 ]
 
 classifiers = [
@@ -199,4 +200,5 @@ dev = [
     "mypy>=1.10.0",
     "twine>=5.0.0",
     "flake8>=7.3.0",
+    "types-requests>=2.33.0.20260408",
 ]

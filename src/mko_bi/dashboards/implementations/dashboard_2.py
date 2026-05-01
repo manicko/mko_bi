@@ -39,13 +39,14 @@ class Dashboard2(DashboardBase):
         _layout: Макет дашборда
     """
 
-    def __init__(self, config: DashboardConfig) -> None:
+    def __init__(self, config: DashboardConfig, token: str | None = None) -> None:
         """Инициализация дашборда 2.
 
         Args:
             config: Конфигурация дашборда
+            token: Опциональный JWT токен для API вызовов
         """
-        super().__init__(config)
+        super().__init__(config, token)
         self._pie_chart: PieChart
         self._table_chart: TableChart
         self._layout = DashboardLayout()
@@ -106,13 +107,8 @@ class Dashboard2(DashboardBase):
     def get_data(self, filters: dict[str, Any]) -> list[dict[str, Any]]:
         """Получение данных для дашборда с применением фильтров.
 
-        Этот метод должен быть реализован для получения данных из
-        источника (база данных, API, файлы и т.д.) с учетом переданных
-        фильтров. В реальной реализации здесь будет вызов
-        DataService или прямой запрос к базе данных.
-
-        В текущей реализации возвращаются примерные данные для
-        демонстрации работы дашборда.
+        Выполняет запрос к API для получения агрегированных данных
+        с учетом переданных фильтров.
 
         Args:
             filters: Словарь фильтров, где ключ - имя фильтра,
@@ -120,41 +116,58 @@ class Dashboard2(DashboardBase):
                      (например: {"brand": "Brand A"})
 
         Returns:
-            Список словарей с данными. Каждый словарь представляет
+            Список словарей с данными. Каждая словарь представляет
             одну запись/точку данных.
 
-        Example:
-            >>> dashboard.get_data({"brand": "Brand A"})
-            [
-                {"brand": "Brand A", "revenue": 100000, "sales": 500},
-                {"brand": "Brand A", "revenue": 120000, "sales": 600},
-                ...
-            ]
+        Raises:
+            ConnectionError: При ошибке соединения с API
+            ValueError: При ошибке API
         """
         logger.info(
             "Получение данных для Dashboard2 с фильтрами: %s",
             filters,
         )
 
-        # Пример данных - в реальной реализации здесь будет запрос к БД или API
-        sample_data = [
-            {"brand": "Brand A", "revenue": 100000, "sales": 500, "category": "Electronics"},
-            {"brand": "Brand B", "revenue": 80000, "sales": 400, "category": "Clothing"},
-            {"brand": "Brand C", "revenue": 60000, "sales": 300, "category": "Food"},
-            {"brand": "Brand A", "revenue": 120000, "sales": 600, "category": "Electronics"},
-            {"brand": "Brand B", "revenue": 90000, "sales": 450, "category": "Clothing"},
-            {"brand": "Brand C", "revenue": 70000, "sales": 350, "category": "Food"},
-        ]
+        try:
+            # Формируем параметры запроса
+            params = {"dashboard_id": str(self.config.title or "2")}
+            if filters:
+                params.update(filters)
 
-        # Применяем фильтры
-        filtered_data = self.apply_filters(sample_data, filters)
+            # Выполняем запрос к API для получения данных с фильтрами
+            response_data = self._make_api_request(
+                endpoint="/data/filter",
+                method="POST",
+                data={
+                    "dashboard_id": str(self.config.title or "2"),
+                    "filters": filters,
+                },
+            )
 
-        logger.info(
-            "Данные получены: %d записей после фильтрации",
-            len(filtered_data),
-        )
+            # Преобразуем ответ API в формат списка словарей
+            result = []
+            for item in response_data:
+                if "data" in item:
+                    for data_point in item["data"]:
+                        dims = data_point.get("dims", {})
+                        metrics = data_point.get("metrics", {})
+                        # Объединяем dims и metrics в одну запись
+                        record = {**dims, **metrics}
+                        result.append(record)
 
-        return filtered_data
+            logger.info(
+                "Данные получены через API: %d записей",
+                len(result),
+            )
+            return result
+
+        except (ConnectionError, ValueError) as e:
+            logger.error("Ошибка при получении данных через API: %s", e)
+            # Fallback to empty list or re-raise as needed
+            raise
+        except Exception as e:
+            logger.error("Неожиданная ошибка при получении данных: %s", e)
+            raise
 
     def apply_filters(self, data: list[dict[str, Any]], filters: dict[str, Any]) -> list[dict[str, Any]]:
         """Применение фильтров к уже полученным данным.
