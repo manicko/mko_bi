@@ -258,33 +258,55 @@ def _calculate_yoy(
     # Сортируем данные
     result = df.sort(sort_cols)
 
-    # Если есть группировка, используем .over() для корректного сдвига внутри групп
-    shift_lag = 12 if month_column else 1
+    if month_column:
+        # Для месячных данных: группируем по месяцу + group_cols
+        # и делаем shift(1) внутри каждой группы
+        logger.debug("YoY расчет с месяцем: %s", month_column)
 
-    if group_cols:
-        logger.debug("YoY расчет с группировкой по: %s", group_cols)
-        # Вычисляем предыдущее значение с учетом группировки
-        prev_value = pl.col(value_column).shift(shift_lag).over(group_cols)
+        shift_group_cols = [month_column]
+        if group_cols:
+            shift_group_cols.extend(group_cols)
+
+        # Получаем предыдущее значение внутри группы
+        result = result.with_columns([
+            pl.col(value_column).shift(1).over(shift_group_cols).alias("__prev_value"),
+            pl.col(year_column).shift(1).over(shift_group_cols).alias("__prev_year"),
+        ])
+
+        # Вычисляем YoY только если год отличается на 1
+        year_diff = pl.col(year_column) - pl.col("__prev_year")
+        prev_value_expr = pl.when(year_diff == 1).then(pl.col("__prev_value")).otherwise(None)
     else:
-        # Без группировки - просто сдвиг
-        logger.debug("YoY расчет без группировки")
-        prev_value = pl.col(value_column).shift(shift_lag)
+        # Стандартный расчет без месяцев
+        shift_lag = 1
+
+        if group_cols:
+            logger.debug("YoY расчет с группировкой по: %s", group_cols)
+            prev_value_expr = pl.col(value_column).shift(shift_lag).over(group_cols)
+        else:
+            logger.debug("YoY расчет без группировки")
+            prev_value_expr = pl.col(value_column).shift(shift_lag)
 
     # Вычисляем процентное изменение
-    # Используем when-then-otherwise чтобы избежать деления на ноль
     result = result.with_columns([
-        pl.when(prev_value.is_null() | (prev_value == 0))
+        pl.when(prev_value_expr.is_null() | (prev_value_expr == 0))
         .then(None)
         .otherwise(
-            (pl.col(value_column) - prev_value) / prev_value * 100
+            (pl.col(value_column) - prev_value_expr) / prev_value_expr * 100
         )
         .alias(alias)
     ])
 
-    # Заменяем NaN на None
+    # Заменяем NaN на None и убираем временные колонки
     result = result.with_columns([
         pl.col(alias).fill_nan(None),
     ])
+
+    # Удаляем временные колонки
+    temp_cols = ["__prev_value", "__prev_year"]
+    for col in temp_cols:
+        if col in result.columns:
+            result = result.drop(col)
 
     logger.debug("YoY расчет завершен для колонки '%s'", value_column)
     return result

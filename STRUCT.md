@@ -140,20 +140,20 @@ C:\py_exp\mko_bi
 │   ├── test_pydantic_models.py
 │   ├── test_repositories.py
 │   ├── test_security.py
+│   ├── test_share_calculation.py
 │   ├── test_storage_manager.py
-│   └── test_upload_api.py
+│   ├── test_upload_api.py
+│   └── test_yoy_calculation.py
 ├── TODO
 │   ├── DEV
-│   │   ├── TASK_030_fix_yoy_calculation_DONE.md
-│   │   ├── TASK_031_yoy_share_tests.md
-│   │   ├── TASK_032_implement_shares.md
+│   │   ├── TASK_031_yoy_share_tests_DONE.md
 │   │   ├── TASK_033_replace_any_types.md
-│   │   ├── TASK_034_fix_exception_handling.md
-│   │   └── TASK_35_integration_tests.md
+│   │   └── TASK_034_fix_exception_handling.md
 │   ├── TASK_031_audit.md
 │   ├── TASK_033_audit.md
 │   ├── TASK_034_audit.md
 │   ├── TASK_037_test_audit.md
 │   ├── TASK_037_test_audit1.md
+│   ├── TASK_038_docker_audit.md
 │   └── TEST
 └── uv.lock
