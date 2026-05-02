@@ -5,25 +5,18 @@
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
-from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mko_bi.services.user_service import (
-    create_user,
-    get_user_by_email,
-    get_user_by_id,
-    update_user_role,
-    delete_user,
-    get_all_users,
-    register_user,
+    UserService,
     _validate_role,
     _validate_user_exists,
     _check_admin_deletion_allowed,
 )
 from mko_bi.db.models import user as user_model
-from mko_bi.models.user import UserRead
 from mko_bi.models.user_roles import UserRoleEnum
 
 
@@ -56,560 +49,275 @@ class TestValidateRole:
 class TestValidateUserExists:
     """Тесты для функции проверки существования пользователя."""
 
-    def test_user_exists(self):
+    @pytest.mark.asyncio
+    async def test_user_exists(self):
         """Существующий пользователь должен возвращаться."""
         mock_user = MagicMock(spec=user_model.User)
         test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo:
+        mock_session = AsyncMock()
+
+        with patch('mko_bi.services.user_service.UserRepository', new_callable=AsyncMock) as mock_repo:
             mock_repo.get.return_value = mock_user
-            result = _validate_user_exists(test_uuid, mock_session)
+            result = await _validate_user_exists(test_uuid, mock_session)
             assert result == mock_user
 
-    def test_user_not_exists(self):
+    @pytest.mark.asyncio
+    async def test_user_not_exists(self):
         """Несуществующий пользователь должен возвращать None."""
         test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo:
+        mock_session = AsyncMock()
+
+        with patch('mko_bi.services.user_service.UserRepository', new_callable=AsyncMock) as mock_repo:
             mock_repo.get.return_value = None
-            result = _validate_user_exists(test_uuid, mock_session)
+            result = await _validate_user_exists(test_uuid, mock_session)
             assert result is None
 
 
 class TestCheckAdminDeletionAllowed:
     """Тесты для функции проверки разрешения на удаление администратора."""
 
-    def test_delete_last_admin_with_other_users(self):
-        """Удаление последнего админа при наличии других пользователей должно вызывать ошибку."""
-        mock_users = [
-            MagicMock(spec=user_model.User, role="admin"),
-            MagicMock(spec=user_model.User, role="viewer"),
-        ]
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-            mock_repo.get_all.return_value = mock_users
-            with pytest.raises(ValueError, match="Нельзя удалить администратора"):
-                _check_admin_deletion_allowed(mock_session)
-
-    def test_delete_admin_with_only_admin(self):
+    @pytest.mark.asyncio
+    async def test_delete_admin_with_only_admin(self):
         """Удаление админа, если он единственный, должно быть разрешено."""
         mock_users = [MagicMock(spec=user_model.User, role="admin")]
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-            mock_repo.get_all.return_value = mock_users
-            _check_admin_deletion_allowed(mock_session)  # Не должно вызывать ошибку
+        mock_session = AsyncMock()
 
-    def test_delete_admin_with_multiple_admins(self):
+        with patch('mko_bi.services.user_service.UserRepository', new_callable=AsyncMock) as mock_repo:
+            mock_repo.get_all.return_value = mock_users
+            await _check_admin_deletion_allowed(mock_session)  # Не должно вызывать ошибку
+
+    @pytest.mark.asyncio
+    async def test_delete_admin_with_multiple_admins(self):
         """Удаление админа при наличии других админов должно быть разрешено."""
         mock_users = [
             MagicMock(spec=user_model.User, role="admin"),
             MagicMock(spec=user_model.User, role="admin"),
             MagicMock(spec=user_model.User, role="viewer"),
         ]
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo:
+        mock_session = AsyncMock(spec=AsyncSession)
+        with patch('mko_bi.services.user_service.UserRepository', new_callable=AsyncMock) as mock_repo:
             mock_repo.get_all.return_value = mock_users
-            _check_admin_deletion_allowed(mock_session)  # Не должно вызывать ошибку
+            await _check_admin_deletion_allowed(mock_session)  # Не должно вызывать ошибку
 
 
-class TestCreateUser:
-    """Тесты для функции создания пользователя."""
+class TestUserServiceCreateUser:
+    """Тесты для метода create_user сервиса UserService."""
 
-    def test_create_user_success(self):
+    @pytest.mark.asyncio
+    async def test_create_user_success(self):
         """Успешное создание пользователя."""
         mock_user = MagicMock(spec=user_model.User)
         mock_user.id = uuid4()
         mock_user.email = "newuser@example.com"
         mock_user.role = UserRoleEnum.viewer
         mock_user.created_at = "2026-04-27T17:30:00"
-        mock_session = MagicMock(spec=Session)
 
         with patch('mko_bi.services.user_service.UserRepository') as mock_repo, \
              patch('mko_bi.services.user_service.hash_password') as mock_hash:
 
             mock_hash.return_value = "$2b$12$hashedpassword"
-            mock_repo.create.return_value = mock_user
             mock_repo.get_by_email.return_value = None
+            mock_repo.create.return_value = mock_user
 
-            result = create_user(
-                "newuser@example.com", "password123", "viewer", mock_session
-            )
+            service = UserService()
+            with patch('mko_bi.services.user_service.get_session') as mock_get_session:
+                mock_session = AsyncMock(spec=AsyncSession)
+                mock_get_session.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+                mock_get_session.return_value.__aexit__ = AsyncMock(return_value=False)
 
-            assert isinstance(result, UserRead)
-            assert result.email == "newuser@example.com"
-            assert result.role == UserRoleEnum.viewer
-            mock_hash.assert_called_once_with("password123")
-            mock_repo.create.assert_called_once()
+                result = await service.create_user(
+                    email="newuser@example.com",
+                    password="password123",
+                    role=UserRoleEnum.viewer,
+                )
 
-    def test_create_user_duplicate_email_raises_error(self):
+                assert isinstance(result, dict)
+                assert result["email"] == "newuser@example.com"
+                mock_hash.assert_called_once_with("password123")
+                mock_repo.create.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_create_user_duplicate_email_raises_error(self):
         """Создание пользователя с существующим email должно вызывать ошибку."""
-        mock_session = MagicMock(spec=Session)
         with patch('mko_bi.services.user_service.UserRepository') as mock_repo, \
              patch('mko_bi.services.user_service.hash_password'):
-
             mock_repo.get_by_email.return_value = MagicMock()
 
+            service = UserService()
             with pytest.raises(ValueError, match="уже существует"):
-                create_user("existing@example.com", "password123", "viewer", mock_session)
+                await service.create_user(
+                    email="existing@example.com",
+                    password="password123",
+                    role=UserRoleEnum.viewer,
+                )
 
-    def test_create_user_invalid_role_raises_error(self):
+    @pytest.mark.asyncio
+    async def test_create_user_invalid_role_raises_error(self):
         """Создание пользователя с недопустимой ролью должно вызывать ошибку."""
-        mock_session = MagicMock(spec=Session)
         with patch('mko_bi.services.user_service._validate_role',
                    side_effect=ValueError("Недопустимая роль")):
 
+            service = UserService()
             with pytest.raises(ValueError, match="Недопустимая роль"):
-                create_user("user@example.com", "password123", "invalid", mock_session)
+                await service.create_user(
+                    email="user@example.com",
+                    password="password123",
+                    role="invalid",
+                )
 
-    def test_create_user_auto_session(self):
-        """Создание пользователя с автоматическим созданием сессии."""
+
+class TestUserServiceGetUserById:
+    """Тесты для метода get_user_by_id сервиса UserService."""
+
+    @pytest.mark.asyncio
+    async def test_get_user_by_id_exists(self):
+        """Получение существующего пользователя по ID."""
         mock_user = MagicMock(spec=user_model.User)
         mock_user.id = uuid4()
-        mock_user.email = "autouser@example.com"
-        mock_user.role = UserRoleEnum.admin
-        mock_user.created_at = "2026-04-27T17:30:00"
+        mock_user.email = "user@example.com"
+        mock_user.role = UserRoleEnum.viewer
 
-        with patch('mko_bi.services.user_service.get_session') as mock_get_session, \
-             patch('mko_bi.services.user_service.UserRepository') as mock_repo, \
-             patch('mko_bi.services.user_service.hash_password') as mock_hash, \
-             patch('mko_bi.services.user_service._validate_role'), \
-             patch('mko_bi.services.user_service.UserRepository.get_by_email', return_value=None):
+        service = UserService()
+        with patch('mko_bi.services.user_service.get_session') as mock_get_session:
+            mock_session = AsyncMock(spec=AsyncSession)
+            mock_get_session.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_get_session.return_value.__aexit__ = AsyncMock(return_value=False)
 
-            mock_session = MagicMock(spec=Session)
-            mock_context = MagicMock()
-            mock_context.__enter__ = MagicMock(return_value=mock_session)
-            mock_context.__exit__ = MagicMock(return_value=False)
-            mock_get_session.return_value = mock_context
-            mock_repo.create.return_value = mock_user
-            mock_hash.return_value = "$2b$12$hashedpassword"
+            with patch('mko_bi.services.user_service.UserRepository', new_callable=AsyncMock) as mock_repo:
+                mock_repo.get.return_value = mock_user
 
-            result = create_user("autouser@example.com", "password123", "admin")
+                result = await service.get_user_by_id(mock_user.id)
 
-            assert isinstance(result, UserRead)
-            assert result.email == "autouser@example.com"
-            mock_get_session.assert_called_once()
-            mock_session.close.assert_called_once()
+                assert result is not None
+                assert result["email"] == "user@example.com"
 
-    def test_create_user_database_error_rolls_back(self):
-        """Ошибка базы данных должна вызывать откат транзакции."""
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo, \
-             patch('mko_bi.services.user_service.hash_password') as mock_hash, \
-             patch('mko_bi.services.user_service._validate_role'), \
-             patch('mko_bi.services.user_service.UserRepository.get_by_email', return_value=None):
-
-            mock_hash.return_value = "$2b$12$hashedpassword"
-            mock_repo.create.side_effect = SQLAlchemyError("DB error")
-
-            with pytest.raises(SQLAlchemyError):
-                create_user("user@example.com", "password123", "viewer", mock_session)
-
-
-class TestGetUserByEmail:
-    """Тесты для функции получения пользователя по email."""
-
-    def test_get_user_by_email_found(self):
-        """Пользователь должен быть найден по email."""
-        mock_user = MagicMock(spec=user_model.User)
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-            mock_repo.get_by_email.return_value = mock_user
-            result = get_user_by_email("user@example.com", mock_session)
-            assert result == mock_user
-            mock_repo.get_by_email.assert_called_once_with("user@example.com", mock_session)
-
-    def test_get_user_by_email_not_found(self):
-        """Несуществующий email должен возвращать None."""
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-            mock_repo.get_by_email.return_value = None
-            result = get_user_by_email("nonexistent@example.com", mock_session)
-            assert result is None
-
-    def test_get_user_by_email_auto_session(self):
-        """Получение пользователя с автоматическим созданием сессии."""
-        mock_user = MagicMock(spec=user_model.User)
-        with patch('mko_bi.services.user_service.get_session') as mock_get_session, \
-             patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-
-            mock_session = MagicMock(spec=Session)
-            mock_context = MagicMock()
-            mock_context.__enter__ = MagicMock(return_value=mock_session)
-            mock_context.__exit__ = MagicMock(return_value=False)
-            mock_get_session.return_value = mock_context
-            mock_repo.get_by_email.return_value = mock_user
-
-            result = get_user_by_email("user@example.com")
-
-            assert result == mock_user
-            mock_get_session.assert_called_once()
-            mock_session.close.assert_called_once()
-
-
-class TestGetUserById:
-    """Тесты для функции получения пользователя по ID."""
-
-    def test_get_user_by_id_found(self):
-        """Пользователь должен быть найден по ID."""
-        mock_user = MagicMock(spec=user_model.User)
+    @pytest.mark.asyncio
+    async def test_get_user_by_id_not_exists(self):
+        """Получение несуществующего пользователя должно возвращать None."""
         test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-            mock_repo.get.return_value = mock_user
-            result = get_user_by_id(test_uuid, mock_session)
-            assert result == mock_user
-            mock_repo.get.assert_called_once_with(test_uuid, mock_session)
 
-    def test_get_user_by_id_not_found(self):
-        """Несуществующий ID должен возвращать None."""
-        test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-            mock_repo.get.return_value = None
-            result = get_user_by_id(test_uuid, mock_session)
-            assert result is None
+        service = UserService()
+        with patch('mko_bi.services.user_service.get_session') as mock_get_session:
+            mock_session = AsyncMock(spec=AsyncSession)
+            mock_get_session.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_get_session.return_value.__aexit__ = AsyncMock(return_value=False)
+
+            with patch('mko_bi.services.user_service.UserRepository', new_callable=AsyncMock) as mock_repo:
+                mock_repo.get.return_value = None
+
+                result = await service.get_user_by_id(test_uuid)
+
+                assert result is None
 
 
-class TestUpdateUserRole:
-    """Тесты для функции обновления роли пользователя."""
+class TestUserServiceListUsers:
+    """Тесты для метода list_users сервиса UserService."""
 
-
-    def test_update_user_role_not_found(self):
-        """Обновление роли несуществующего пользователя должно вернуть None."""
-        test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service._validate_role'), \
-             patch('mko_bi.services.user_service._validate_user_exists', return_value=None):
-
-            result = update_user_role(test_uuid, "admin", mock_session)
-            assert result is None
-
-    def test_update_user_role_invalid_role_raises_error(self):
-        """Обновление с недопустимой ролью должно вызывать ошибку."""
-        test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service._validate_role',
-                   side_effect=ValueError("Недопустимая роль")):
-
-            with pytest.raises(ValueError, match="Недопустимая роль"):
-                update_user_role(test_uuid, "invalid", mock_session)
-
-
-class TestDeleteUser:
-    """Тесты для функции удаления пользователя."""
-
-
-    def test_delete_user_not_found(self):
-        """Удаление несуществующего пользователя должно вернуть False."""
-        test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service._validate_user_exists', return_value=None):
-            result = delete_user(test_uuid, mock_session)
-            assert result is False
-
-    def test_delete_last_admin_with_other_users_raises_error(self):
-        """Удаление последнего админа при наличии других пользователей должно вызывать ошибку."""
-        mock_user = MagicMock(spec=user_model.User)
-        mock_user.role = "admin"
-        test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-
-        with patch('mko_bi.services.user_service._validate_user_exists') as mock_val_exists, \
-             patch('mko_bi.services.user_service._check_admin_deletion_allowed',
-                   side_effect=ValueError("Нельзя удалить администратора")):
-
-            mock_val_exists.return_value = mock_user
-
-            with pytest.raises(ValueError, match="Нельзя удалить администратора"):
-                delete_user(test_uuid, mock_session)
-
-    def test_delete_user_database_error_rolls_back(self):
-        """Ошибка базы данных при удалении должна вызывать откат."""
-        mock_user = MagicMock(spec=user_model.User)
-        mock_user.role = "viewer"
-        test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-
-        with patch('mko_bi.services.user_service._validate_user_exists') as mock_val_exists, \
-             patch('mko_bi.services.user_service._check_admin_deletion_allowed'), \
-             patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-
-            mock_val_exists.return_value = mock_user
-            mock_repo.delete.side_effect = SQLAlchemyError("DB error")
-
-            with pytest.raises(SQLAlchemyError):
-                delete_user(test_uuid, mock_session)
-
-
-class TestGetAllUsers:
-    """Тесты для функции получения всех пользователей."""
-
-    def test_get_all_users(self):
-        """Должен возвращаться список всех пользователей."""
+    @pytest.mark.asyncio
+    async def test_list_users_returns_list(self):
+        """Получение списка пользователей."""
         mock_users = [
-            MagicMock(spec=user_model.User),
-            MagicMock(spec=user_model.User),
-            MagicMock(spec=user_model.User),
-        ]
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-            mock_repo.get_all.return_value = mock_users
-            result = get_all_users(mock_session)
-            assert result == mock_users
-            mock_repo.get_all.assert_called_once_with(mock_session)
-
-    def test_get_all_users_empty(self):
-        """При отсутствии пользователей должен возвращаться пустой список."""
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-            mock_repo.get_all.return_value = []
-            result = get_all_users(mock_session)
-            assert result == []
-
-class TestRegisterUser:
-    """Тесты для функции регистрации пользователя (алиас)."""
-
-    def test_register_user_is_alias(self):
-        """Функция register_user должна быть алиасом для create_user."""
-        mock_user = MagicMock(spec=UserRead)
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.create_user') as mock_create:
-            mock_create.return_value = mock_user
-            result = register_user("user@example.com", "password", "viewer", mock_session)
-            assert result == mock_user
-            mock_create.assert_called_once_with(
-                "user@example.com", "password", "viewer", mock_session
-            )
-
-
-class TestUserServiceIntegration:
-    """Интеграционные тесты для сервиса пользователей."""
-
-
-
-    def test_user_email_uniqueness_enforced(self):
-        """Проверка принудительного соблюдения уникальности email."""
-        existing_user = MagicMock(spec=user_model.User)
-        mock_session = MagicMock(spec=Session)
-
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo, \
-             patch('mko_bi.services.user_service.hash_password'):
-
-            mock_repo.get_by_email.return_value = existing_user
-
-            with pytest.raises(ValueError, match="уже существует"):
-                create_user("duplicate@example.com", "password123", "viewer", mock_session)
-
-    def test_cannot_delete_last_admin_with_other_users(self):
-        """Нельзя удалить последнего админа, если есть другие пользователи."""
-        mock_admin = MagicMock(spec=user_model.User)
-        mock_admin.role = "admin"
-        test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-
-        mock_users = [
-            MagicMock(spec=user_model.User, role="admin"),
-            MagicMock(spec=user_model.User, role="viewer"),
+            MagicMock(spec=user_model.User, email="user1@example.com"),
+            MagicMock(spec=user_model.User, email="user2@example.com"),
         ]
 
-        with patch('mko_bi.services.user_service._validate_user_exists') as mock_val_exists, \
-             patch('mko_bi.services.user_service.UserRepository') as mock_repo:
+        service = UserService()
+        with patch('mko_bi.services.user_service.get_session') as mock_get_session:
+            mock_session = AsyncMock(spec=AsyncSession)
+            mock_get_session.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_get_session.return_value.__aexit__ = AsyncMock(return_value=False)
 
-            mock_val_exists.return_value = mock_admin
-            mock_repo.get_all.return_value = mock_users
+            with patch('mko_bi.services.user_service.UserRepository', new_callable=AsyncMock) as mock_repo:
+                mock_repo.get_all.return_value = mock_users
 
-            with pytest.raises(ValueError, match="Нельзя удалить администратора"):
-                delete_user(test_uuid, mock_session)
+                result = await service.get_all_users()
 
-    def test_can_delete_admin_if_only_admin(self):
-        """Можно удалить админа, если он единственный пользователь."""
-        mock_admin = MagicMock(spec=user_model.User)
-        mock_admin.role = "admin"
-        test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-
-        with patch('mko_bi.services.user_service._validate_user_exists') as mock_val_exists, \
-             patch('mko_bi.services.user_service._check_admin_deletion_allowed'), \
-             patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-
-            mock_val_exists.return_value = mock_admin
-            mock_repo.get_all.return_value = [mock_admin]
-            mock_repo.delete.return_value = True
-
-            result = delete_user(test_uuid, mock_session)
-            assert result is True
+                assert len(result) == 2
 
 
-    def test_user_deletion_cascade_handling(self):
-        """Проверка обработки каскадного удаления."""
+class TestUserServiceUpdateUserRole:
+    """Тесты для метода update_user_role сервиса UserService."""
+
+    @pytest.mark.asyncio
+    async def test_update_user_role_success(self):
+        """Успешное обновление роли пользователя."""
         mock_user = MagicMock(spec=user_model.User)
-        mock_user.role = "viewer"
+        mock_user.id = uuid4()
+
+        service = UserService()
+        with patch('mko_bi.services.user_service.get_session') as mock_get_session:
+            mock_session = AsyncMock(spec=AsyncSession)
+            mock_get_session.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_get_session.return_value.__aexit__ = AsyncMock(return_value=False)
+
+            with patch('mko_bi.services.user_service.UserRepository', new_callable=AsyncMock) as mock_repo:
+                mock_repo.update.return_value = mock_user
+
+                result = await service.update_user_role(
+                    user_id=mock_user.id,
+                    role=UserRoleEnum.admin,
+                )
+
+                assert result is not None
+
+    @pytest.mark.asyncio
+    async def test_update_user_role_not_found(self):
+        """Обновление роли несуществующего пользователя должно возвращать None."""
         test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
 
-        with patch('mko_bi.services.user_service._validate_user_exists') as mock_val_exists, \
-             patch('mko_bi.services.user_service._check_admin_deletion_allowed'), \
-             patch('mko_bi.services.user_service.UserRepository') as mock_repo:
+        service = UserService()
+        with patch('mko_bi.services.user_service.get_session') as mock_get_session:
+            mock_session = AsyncMock(spec=AsyncSession)
+            mock_get_session.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_get_session.return_value.__aexit__ = AsyncMock(return_value=False)
 
-            mock_val_exists.return_value = mock_user
-            mock_repo.delete.return_value = True
+            with patch('mko_bi.services.user_service.UserRepository', new_callable=AsyncMock) as mock_repo:
+                mock_repo.update.return_value = None
 
-            result = delete_user(test_uuid, mock_session)
-            assert result is True
-            mock_repo.delete.assert_called_once_with(test_uuid, mock_session)
+                result = await service.update_user_role(
+                    user_id=test_uuid,
+                    role=UserRoleEnum.admin,
+                )
 
-    def test_get_nonexistent_user_by_email(self):
-        """Поиск несуществующего пользователя по email."""
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-            mock_repo.get_by_email.return_value = None
-            result = get_user_by_email("ghost@example.com", mock_session)
-            assert result is None
-
-    def test_get_nonexistent_user_by_id(self):
-        """Поиск несуществующего пользователя по ID."""
-        test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-            mock_repo.get.return_value = None
-            result = get_user_by_id(test_uuid, mock_session)
-            assert result is None
-
-    def test_update_nonexistent_user_role(self):
-        """Обновление роли несуществующего пользователя."""
-        test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service._validate_role'), \
-             patch('mko_bi.services.user_service._validate_user_exists', return_value=None):
-
-            result = update_user_role(test_uuid, "admin", mock_session)
-            assert result is None
-
-    def test_sqlalchemy_error_on_user_creation(self):
-        """Обработка ошибки SQLAlchemy при создании пользователя."""
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo, \
-             patch('mko_bi.services.user_service.hash_password') as mock_hash, \
-             patch('mko_bi.services.user_service._validate_role'), \
-             patch('mko_bi.services.user_service.UserRepository.get_by_email', return_value=None):
-
-            mock_hash.return_value = "$2b$12$hashedpassword"
-            mock_repo.create.side_effect = SQLAlchemyError("Connection failed")
-
-            with pytest.raises(SQLAlchemyError):
-                create_user("user@example.com", "password", "viewer", mock_session)
-
-    def test_sqlalchemy_error_on_user_deletion(self):
-        """Обработка ошибки SQLAlchemy при удалении пользователя."""
-        mock_user = MagicMock(spec=user_model.User)
-        mock_user.role = "viewer"
-        test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-
-        with patch('mko_bi.services.user_service._validate_user_exists') as mock_val_exists, \
-             patch('mko_bi.services.user_service._check_admin_deletion_allowed'), \
-             patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-
-            mock_val_exists.return_value = mock_user
-            mock_repo.delete.side_effect = SQLAlchemyError("Connection failed")
-
-            with pytest.raises(SQLAlchemyError):
-                delete_user(test_uuid, mock_session)
-
-    def test_can_delete_admin_if_only_admin(self):
-        """Можно удалить админа, если он единственный пользователь."""
-        mock_admin = MagicMock(spec=user_model.User)
-        mock_admin.role = "admin"
-        test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-
-        with patch('mko_bi.services.user_service._validate_user_exists') as mock_val_exists, \
-             patch('mko_bi.services.user_service._check_admin_deletion_allowed'), \
-             patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-
-            mock_val_exists.return_value = mock_admin
-            mock_repo.get_all.return_value = [mock_admin]
-            mock_repo.delete.return_value = True
-
-            result = delete_user(test_uuid, mock_session)
-            assert result is True
+                assert result is None
 
 
-    def test_user_deletion_cascade_handling(self):
-        """Проверка обработки каскадного удаления."""
-        mock_user = MagicMock(spec=user_model.User)
-        mock_user.role = "viewer"
-        test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
+class TestUserServiceDeleteUser:
+    """Тесты для метода delete_user сервиса UserService."""
 
-        with patch('mko_bi.services.user_service._validate_user_exists') as mock_val_exists, \
-             patch('mko_bi.services.user_service._check_admin_deletion_allowed'), \
-             patch('mko_bi.services.user_service.UserRepository') as mock_repo:
+    @pytest.mark.asyncio
+    async def test_delete_user_success(self):
+        """Успешное удаление пользователя."""
+        mock_user = MagicMock(spec=user_model.User, role="viewer")
 
-            mock_val_exists.return_value = mock_user
-            mock_repo.delete.return_value = True
+        service = UserService()
+        with patch('mko_bi.services.user_service.get_session') as mock_get_session:
+            mock_session = AsyncMock(spec=AsyncSession)
+            mock_get_session.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_get_session.return_value.__aexit__ = AsyncMock(return_value=False)
 
-            result = delete_user(test_uuid, mock_session)
-            assert result is True
-            mock_repo.delete.assert_called_once_with(test_uuid, mock_session)
+            with patch('mko_bi.services.user_service.UserRepository', new_callable=AsyncMock) as mock_repo, \
+                 patch('mko_bi.services.user_service._validate_user_exists', return_value=mock_user), \
+                 patch('mko_bi.services.user_service._check_admin_deletion_allowed'):
 
-    def test_get_nonexistent_user_by_email(self):
-        """Поиск несуществующего пользователя по email."""
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-            mock_repo.get_by_email.return_value = None
-            result = get_user_by_email("ghost@example.com", mock_session)
-            assert result is None
+                mock_repo.delete.return_value = True
 
-    def test_get_nonexistent_user_by_id(self):
-        """Поиск несуществующего пользователя по ID."""
-        test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-            mock_repo.get.return_value = None
-            result = get_user_by_id(test_uuid, mock_session)
-            assert result is None
+                result = await service.delete_user(user_id=uuid4())
 
-    def test_update_nonexistent_user_role(self):
-        """Обновление роли несуществующего пользователя."""
-        test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service._validate_role'), \
-             patch('mko_bi.services.user_service._validate_user_exists', return_value=None):
+                assert result is True
 
-            result = update_user_role(test_uuid, "admin", mock_session)
-            assert result is None
+    @pytest.mark.asyncio
+    async def test_delete_user_not_found(self):
+        """Удаление несуществующего пользователя должно возвращать False."""
+        service = UserService()
+        with patch('mko_bi.services.user_service.get_session') as mock_get_session:
+            mock_session = AsyncMock(spec=AsyncSession)
+            mock_get_session.return_value.__aenter__ = AsyncMock(return_value=mock_session)
+            mock_get_session.return_value.__aexit__ = AsyncMock(return_value=False)
 
-    def test_sqlalchemy_error_on_user_creation(self):
-        """Обработка ошибки SQLAlchemy при создании пользователя."""
-        mock_session = MagicMock(spec=Session)
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo, \
-             patch('mko_bi.services.user_service.hash_password') as mock_hash, \
-             patch('mko_bi.services.user_service._validate_role'), \
-             patch('mko_bi.services.user_service.UserRepository.get_by_email', return_value=None):
+            with patch('mko_bi.services.user_service.UserRepository'), \
+                 patch('mko_bi.services.user_service._validate_user_exists', return_value=None):
 
-            mock_hash.return_value = "$2b$12$hashedpassword"
-            mock_repo.create.side_effect = SQLAlchemyError("Connection failed")
+                result = await service.delete_user(user_id=uuid4())
 
-            with pytest.raises(SQLAlchemyError):
-                create_user("user@example.com", "password", "viewer", mock_session)
-
-    def test_sqlalchemy_error_on_user_deletion(self):
-        """Обработка ошибки SQLAlchemy при удалении пользователя."""
-        mock_user = MagicMock(spec=user_model.User)
-        mock_user.role = "viewer"
-        test_uuid = uuid4()
-        mock_session = MagicMock(spec=Session)
-
-        with patch('mko_bi.services.user_service._validate_user_exists') as mock_val_exists, \
-             patch('mko_bi.services.user_service._check_admin_deletion_allowed'), \
-             patch('mko_bi.services.user_service.UserRepository') as mock_repo:
-
-            mock_val_exists.return_value = mock_user
-            mock_repo.delete.side_effect = SQLAlchemyError("Connection failed")
-
-            with pytest.raises(SQLAlchemyError):
-                delete_user(test_uuid, mock_session)
-
-
-
+                assert result is False

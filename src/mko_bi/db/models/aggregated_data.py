@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 """Модель агрегированных данных дашбордов."""
 
-from typing import Any
+from typing import Any, TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import (
@@ -13,6 +15,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import TypeDecorator
 
 from mko_bi.db.base import Base
+
+if TYPE_CHECKING:
+    from mko_bi.db.models.dashboard import Dashboard
+    from mko_bi.db.models.graphs import Graph
 
 
 class JSONBType(TypeDecorator[dict[str, Any]]):
@@ -71,14 +77,14 @@ class AggregatedData(Base):
     )
 
     # Связь с дашбордом
-    dashboard: Mapped["Dashboard"] = relationship(
+    dashboard: Mapped[Dashboard] = relationship(
         "Dashboard",
         back_populates="aggregated_data",
         lazy="selectin",
     )
 
     # Связь с графиком
-    graph: Mapped["Graph"] = relationship(
+    graph: Mapped[Graph] = relationship(
         "Graph",
         back_populates="aggregated_data",
         lazy="selectin",

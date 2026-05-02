@@ -1,4 +1,12 @@
 C:\py_exp\mko_bi
+├── alembic
+│   ├── env.py
+│   ├── README
+│   ├── script.py.mako
+│   └── versions
+│       └── e86f3c8f7324_initial_migration.py
+├── alembic.ini
+├── bidb_schema.sql
 ├── check_tables.py
 ├── create_db.sql
 ├── data
@@ -146,8 +154,24 @@ C:\py_exp\mko_bi
 │   ├── test_simple_async.py
 │   ├── test_storage_manager.py
 │   ├── test_upload_api.py
-│   └── test_yoy_calculation.py
+│   ├── test_yoy_calculation.py
+│   └── tests
 ├── TODO
+│   ├── DATABASES_AUDIT_REPORT_01.md
+│   ├── DATABASES_AUDIT_REPORT_02.md
+│   ├── DATABASES_AUDIT_REPORT_03.md
+│   ├── DB
+│   │   ├── 001_setup_alembic.md
+│   │   ├── 002_async_db_support.md
+│   │   ├── 003_alembic_async_config.md
+│   │   ├── 004_fix_timestamp_timezone.md
+│   │   ├── 005_create_dashboard_filters_table.md
+│   │   ├── 006_fix_json_jsonb_types.md
+│   │   ├── 007_fix_is_active_not_null.md
+│   │   ├── 008_setup_test_database.md
+│   │   ├── 009_add_composite_index.md
+│   │   ├── 010_standardize_index_naming.md
+│   │   └── README.md
 │   ├── DEV
 │   │   └── TASK_033_replace_any_types_DONE.md
 │   ├── TASK_001_db_structure_audit.md

@@ -1,6 +1,5 @@
 """Simple test to debug async connection."""
 
-import pytest
 
 
 async def test_simple_async(async_db_session):

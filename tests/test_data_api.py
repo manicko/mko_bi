@@ -92,7 +92,6 @@ class TestApplyFiltersEndpoint:
             json={"name": "Test Dashboard", "config": {"graph_types": ["bar"]}},
         )
         assert dashboard_resp.status_code == 201
-        valid_dashboard_id = dashboard_resp.json()["id"]
 
         # Test with non-existent dashboard ID
         non_existent_id = str(uuid4())

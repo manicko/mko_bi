@@ -58,7 +58,7 @@ def setup_logging() -> None:
             "console": {
                 "()": "logging.StreamHandler",
                 "formatter": "json",
-                "level": config.LOG_LEVEL,
+                "level": config.logging.level,
                 "stream": "ext://sys.stdout",
             },
             "file": {
@@ -67,34 +67,34 @@ def setup_logging() -> None:
                 "maxBytes": 10 * 1024 * 1024,  # 10MB
                 "backupCount": 5,
                 "formatter": "json",
-                "level": config.LOG_LEVEL,
+                "level": config.logging.level,
                 "encoding": "utf-8",
             },
         },
         "loggers": {
             "mko_bi": {
                 "handlers": ["console", "file"],
-                "level": config.LOG_LEVEL,
+                "level": config.logging.level,
                 "propagate": False,
             },
             "mko_bi.api": {
                 "handlers": ["console", "file"],
-                "level": config.LOG_LEVEL,
+                "level": config.logging.level,
                 "propagate": False,
             },
             "mko_bi.data": {
                 "handlers": ["console", "file"],
-                "level": config.LOG_LEVEL,
+                "level": config.logging.level,
                 "propagate": False,
             },
             "mko_bi.db": {
                 "handlers": ["console", "file"],
-                "level": config.LOG_LEVEL,
+                "level": config.logging.level,
                 "propagate": False,
             },
             "mko_bi.services": {
                 "handlers": ["console", "file"],
-                "level": config.LOG_LEVEL,
+                "level": config.logging.level,
                 "propagate": False,
             },
             "uvicorn": {
@@ -115,7 +115,7 @@ def setup_logging() -> None:
         },
         "root": {
             "handlers": ["console"],
-            "level": config.LOG_LEVEL,
+            "level": config.logging.level,
         },
     }
 

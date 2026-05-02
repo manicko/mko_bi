@@ -9,21 +9,14 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
 
 from mko_bi.api.deps import (
-    get_db,
+    get_user_service,
     require_admin_role,
     CurrentUser,
 )
 from mko_bi.models.user import UserRead
-from mko_bi.services.user_service import (
-    create_user,
-    get_user_by_id,
-    get_all_users,
-    update_user_role,
-    delete_user,
-)
+from mko_bi.services.user_service import UserService
 
 logger = logging.getLogger(__name__)
 
@@ -42,7 +35,7 @@ async def create_user_endpoint(
     email: str,
     password: str,
     role: str,
-    db: Session = Depends(get_db),
+    user_service: UserService = Depends(get_user_service),
 ) -> UserRead:
     """Создает нового пользователя в системе.
 
@@ -51,7 +44,7 @@ async def create_user_endpoint(
         password: Пароль пользователя. Будет захеширован перед сохранением.
         role: Роль пользователя. Допустимые значения: 'admin', 'editor', 'viewer'.
         _: Пользователь с ролью admin (проверка через зависимость).
-        db: Сессия базы данных.
+        user_service: Сервис пользователей.
 
     Returns:
         UserRead: Модель созданного пользователя без пароля.
@@ -64,8 +57,8 @@ async def create_user_endpoint(
     logger.info("Создание пользователя: email=%s, role=%s", email, role)
 
     try:
-        user = create_user(email=email, password=password, role=role, db=db)
-        return user
+        user_data = await user_service.create_user(email=email, password=password, role=role)
+        return UserRead(**user_data)
     except ValueError as e:
         logger.warning("Ошибка валидации при создании пользователя: %s", e)
         raise HTTPException(
@@ -89,13 +82,13 @@ async def create_user_endpoint(
     dependencies=[Depends(require_admin_role)],
 )
 async def get_users_endpoint(
-    db: Session = Depends(get_db),
+    user_service: UserService = Depends(get_user_service),
 ) -> list[UserRead]:
     """Получает список всех пользователей в системе.
 
     Args:
         _: Пользователь с ролью admin (проверка через зависимость).
-        db: Сессия базы данных.
+        user_service: Сервис пользователей.
 
     Returns:
         list[UserRead]: Список всех пользователей.
@@ -106,9 +99,8 @@ async def get_users_endpoint(
     logger.info("Получение списка всех пользователей")
 
     try:
-        users = get_all_users(db=db)
-        logger.info("Получено пользователей: %s", len(users))
-        return users
+        users_data = await user_service.list_users()
+        return [UserRead(**user) for user in users_data]
     except Exception as e:
         logger.error("Ошибка при получении списка пользователей: %s", e)
         raise HTTPException(
@@ -127,7 +119,7 @@ async def get_users_endpoint(
 async def get_user_endpoint(
     user_id: UUID,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    user_service: UserService = Depends(get_user_service),
 ) -> UserRead:
     """Получает пользователя по ID.
 
@@ -137,7 +129,7 @@ async def get_user_endpoint(
     Args:
         user_id: ID пользователя.
         current_user: Текущий аутентифицированный пользователь.
-        db: Сессия базы данных.
+        user_service: Сервис пользователей.
 
     Returns:
         UserRead: Модель пользователя.
@@ -162,14 +154,14 @@ async def get_user_endpoint(
         )
 
     try:
-        user = get_user_by_id(user_id=user_id, db=db)
-        if user is None:
+        user_data = await user_service.get_user_by_id(user_id=user_id)
+        if user_data is None:
             logger.warning("Пользователь не найден: id=%s", user_id)
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Пользователь не найден",
             )
-        return UserRead.model_validate(user)
+        return UserRead(**user_data)
     except HTTPException:
         raise
     except Exception as e:
@@ -191,16 +183,16 @@ async def get_user_endpoint(
 async def update_user_endpoint(
     user_id: UUID,
     new_role: str,
-    db: Session = Depends(get_db),
+    user_service: UserService = Depends(get_user_service),
 ) -> UserRead:
-    """Обновляет роль пользователя.
+    """обновляет роль пользователя.
 
     Args:
         user_id: ID пользователя для обновления.
         new_role: Новая роль пользователя.
             Допустимые значения: 'admin', 'editor', 'viewer'.
         _: Пользователь с ролью admin (проверка через зависимость).
-        db: Сессия базы данных.
+        user_service: Сервис пользователей.
 
     Returns:
         UserRead: Модель обновленного пользователя.
@@ -213,14 +205,14 @@ async def update_user_endpoint(
     logger.info("Обновление пользователя: id=%s, new_role=%s", user_id, new_role)
 
     try:
-        updated = update_user_role(user_id=user_id, new_role=new_role, db=db)
+        updated = await user_service.update_user_role(user_id=user_id, role=new_role)
         if updated is None:
             logger.warning("Пользователь не найден для обновления: id=%s", user_id)
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Пользователь не найден",
             )
-        return UserRead.model_validate(updated)
+        return UserRead(**updated)
     except ValueError as e:
         logger.warning("Ошибка валидации при обновлении пользователя: %s", e)
         raise HTTPException(
@@ -246,14 +238,14 @@ async def update_user_endpoint(
 )
 async def delete_user_endpoint(
     user_id: UUID,
-    db: Session = Depends(get_db),
+    user_service: UserService = Depends(get_user_service),
 ) -> None:
     """Удаляет пользователя из системы.
 
     Args:
         user_id: ID пользователя для удаления.
         _: Пользователь с ролью admin (проверка через зависимость).
-        db: Сессия базы данных.
+        user_service: Сервис пользователей.
 
     Returns:
         None: Возвращает пустой ответ с кодом 204.
@@ -266,7 +258,7 @@ async def delete_user_endpoint(
     logger.info("Удаление пользователя: id=%s", user_id)
 
     try:
-        result = delete_user(user_id=user_id, db=db)
+        result = await user_service.delete_user(user_id=user_id)
         if not result:
             logger.warning("Пользователь не найден для удаления: id=%s", user_id)
             raise HTTPException(

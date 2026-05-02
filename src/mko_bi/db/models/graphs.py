@@ -1,7 +1,10 @@
+from __future__ import annotations
+
 """Модель определений графиков дашбордов."""
 
 from datetime import datetime
 from uuid import uuid4, UUID
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     DateTime,
@@ -15,6 +18,10 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mko_bi.db.base import Base
+
+if TYPE_CHECKING:
+    from mko_bi.db.models.dashboard import Dashboard
+    from mko_bi.db.models.aggregated_data import AggregatedData
 
 
 class Graph(Base):
@@ -49,19 +56,19 @@ class Graph(Base):
         nullable=False,
     )
 
-    config: Mapped[dict] = mapped_column(
+    config: Mapped[dict[str, object]] = mapped_column(
         JSON,
         nullable=False,
         default=dict,
     )
 
-    dimensions: Mapped[list] = mapped_column(
+    dimensions: Mapped[list[object]] = mapped_column(
         JSON,
         nullable=False,
         default=list,
     )
 
-    metrics: Mapped[list] = mapped_column(
+    metrics: Mapped[list[object]] = mapped_column(
         JSON,
         nullable=False,
         default=list,
@@ -74,14 +81,14 @@ class Graph(Base):
     )
 
     # Связь с дашбордом
-    dashboard: Mapped["Dashboard"] = relationship(
+    dashboard: Mapped[Dashboard] = relationship(
         "Dashboard",
         back_populates="graphs",
         lazy="selectin",
     )
 
     # Связь с агрегированными данными
-    aggregated_data: Mapped[list["AggregatedData"]] = relationship(
+    aggregated_data: Mapped[list[AggregatedData]] = relationship(
         "AggregatedData",
         back_populates="graph",
         cascade="all, delete-orphan",

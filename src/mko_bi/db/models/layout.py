@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from datetime import datetime
 from uuid import uuid4, UUID
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     DateTime,
@@ -11,6 +14,9 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mko_bi.db.base import Base
+
+if TYPE_CHECKING:
+    from mko_bi.db.models.dashboard import Dashboard
 
 
 class Layout(Base):
@@ -35,7 +41,7 @@ class Layout(Base):
         unique=True,
     )
     
-    definition: Mapped[dict] = mapped_column(
+    definition: Mapped[dict[str, object]] = mapped_column(
         JSON,
         nullable=False,
         default=dict,
@@ -48,7 +54,7 @@ class Layout(Base):
     )
     
     # Связь с дашбордами
-    dashboards: Mapped[list["Dashboard"]] = relationship(
+    dashboards: Mapped[list[Dashboard]] = relationship(
         "Dashboard",
         back_populates="layout",
         lazy="selectin",

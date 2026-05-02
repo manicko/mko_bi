@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from mko_bi.db.models import user as user_model
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -25,12 +25,12 @@ class UserRepository:
     """
 
     @classmethod
-    def get(cls, user_id: UUID, db: Session) -> user_model.User | None:
+    async def get(cls, user_id: UUID, db: AsyncSession) -> user_model.User | None:
         """Получить пользователя по ID.
 
         Args:
             user_id: Идентификатор пользователя (UUID).
-            db: Сессия базы данных.
+            db: Асинхронная сессия базы данных.
 
         Returns:
             Модель пользователя или None, если не найден.
@@ -39,25 +39,26 @@ class UserRepository:
             SQLAlchemyError: При ошибке базы данных.
         """
         try:
-            result = db.execute(
+            result = await db.execute(
                 select(user_model.User).where(user_model.User.id == user_id)
-            ).scalar_one_or_none()
-            if result:
+            )
+            user = result.scalar_one_or_none()
+            if user:
                 logger.info("Пользователь получен: id=%s", user_id)
             else:
                 logger.warning("Пользователь не найден: id=%s", user_id)
-            return result
+            return user
         except SQLAlchemyError as e:
             logger.error("Ошибка при получении пользователя id=%s: %s", user_id, e)
             raise
 
     @classmethod
-    def get_by_email(cls, email: str, db: Session) -> user_model.User | None:
+    async def get_by_email(cls, email: str, db: AsyncSession) -> user_model.User | None:
         """Получить пользователя по email.
 
         Args:
             email: Email пользователя.
-            db: Сессия базы данных.
+            db: Асинхронная сессия базы данных.
 
         Returns:
             Модель пользователя или None, если не найден.
@@ -66,24 +67,25 @@ class UserRepository:
             SQLAlchemyError: При ошибке базы данных.
         """
         try:
-            result = db.execute(
+            result = await db.execute(
                 select(user_model.User).where(user_model.User.email == email)
-            ).scalar_one_or_none()
-            if result:
+            )
+            user = result.scalar_one_or_none()
+            if user:
                 logger.info("Пользователь получен по email: %s", email)
             else:
                 logger.warning("Пользователь не найден по email: %s", email)
-            return result
+            return user
         except SQLAlchemyError as e:
             logger.error("Ошибка при получении пользователя email=%s: %s", email, e)
             raise
 
     @classmethod
-    def create(cls, db: Session, **kwargs) -> user_model.User | None:
+    async def create(cls, db: AsyncSession, **kwargs) -> user_model.User | None:
         """Создать нового пользователя.
 
         Args:
-            db: Сессия базы данных.
+            db: Асинхронная сессия базы данных.
             **kwargs: Параметры пользователя (email, password_hash, role).
 
         Returns:
@@ -95,8 +97,8 @@ class UserRepository:
         try:
             user_obj = user_model.User(**kwargs)
             db.add(user_obj)
-            db.flush()
-            db.refresh(user_obj)
+            await db.flush()
+            await db.refresh(user_obj)
             logger.info(
                 "Пользователь создан: id=%s, email=%s", user_obj.id, user_obj.email
             )
@@ -106,12 +108,12 @@ class UserRepository:
             raise
 
     @classmethod
-    def update(cls, user_id: UUID, db: Session, **kwargs) -> user_model.User | None:
+    async def update(cls, user_id: UUID, db: AsyncSession, **kwargs) -> user_model.User | None:
         """Обновить данные пользователя.
 
         Args:
             user_id: Идентификатор пользователя (UUID).
-            db: Сессия базы данных.
+            db: Асинхронная сессия базы данных.
             **kwargs: Поля для обновления.
 
         Returns:
@@ -121,17 +123,18 @@ class UserRepository:
             SQLAlchemyError: При ошибке базы данных.
         """
         try:
-            user_obj = db.execute(
+            result = await db.execute(
                 select(user_model.User).where(user_model.User.id == user_id)
-            ).scalar_one_or_none()
+            )
+            user_obj = result.scalar_one_or_none()
             if not user_obj:
                 logger.warning("Пользователь не найден для обновления: id=%s", user_id)
                 return None
             for key, value in kwargs.items():
                 if hasattr(user_obj, key):
                     setattr(user_obj, key, value)
-            db.flush()
-            db.refresh(user_obj)
+            await db.flush()
+            await db.refresh(user_obj)
             logger.info("Пользователь обновлен: id=%s", user_id)
             return user_obj
         except SQLAlchemyError as e:
@@ -139,12 +142,12 @@ class UserRepository:
             raise
 
     @classmethod
-    def delete(cls, user_id: UUID, db: Session) -> bool:
+    async def delete(cls, user_id: UUID, db: AsyncSession) -> bool:
         """Удалить пользователя.
 
         Args:
             user_id: Идентификатор пользователя (UUID).
-            db: Сессия базы данных.
+            db: Асинхронная сессия базы данных.
 
         Returns:
             True, если удаление успешно, False - если пользователь не найден.
@@ -153,14 +156,15 @@ class UserRepository:
             SQLAlchemyError: При ошибке базы данных.
         """
         try:
-            user_obj = db.execute(
+            result = await db.execute(
                 select(user_model.User).where(user_model.User.id == user_id)
-            ).scalar_one_or_none()
+            )
+            user_obj = result.scalar_one_or_none()
             if not user_obj:
                 logger.warning("Пользователь не найден для удаления: id=%s", user_id)
                 return False
-            db.delete(user_obj)
-            db.flush()
+            await db.delete(user_obj)
+            await db.flush()
             logger.info("Пользователь удален: id=%s", user_id)
             return True
         except SQLAlchemyError as e:
@@ -168,21 +172,11 @@ class UserRepository:
             raise
 
     @classmethod
-    def get_session(cls) -> Session:
-        """Создать и вернуть новую сессию базы данных.
-
-        Returns:
-            Новая сессия.
-        """
-        from mko_bi.db.session import get_session
-        return get_session()
-
-    @classmethod
-    def get_all(cls, db: Session) -> list[user_model.User]:
+    async def get_all(cls, db: AsyncSession) -> list[user_model.User]:
         """Получить всех пользователей.
 
         Args:
-            db: Сессия базы данных.
+            db: Асинхронная сессия базы данных.
 
         Returns:
             Список всех пользователей.
@@ -191,9 +185,10 @@ class UserRepository:
             SQLAlchemyError: При ошибке базы данных.
         """
         try:
-            result = db.execute(select(user_model.User)).scalars().all()
-            logger.info("Получен список пользователей, количество: %s", len(result))
-            return result
+            result = await db.execute(select(user_model.User))
+            users = list(result.scalars().all())
+            logger.info("Получен список пользователей, количество: %s", len(users))
+            return users
         except SQLAlchemyError as e:
             logger.error("Ошибка при получении списка пользователей: %s", e)
             raise

@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from mko_bi.db.models import dashboard as dashboard_model
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -25,14 +25,14 @@ class DashboardRepository:
     """
 
     @classmethod
-    def get(
-        cls, dashboard_id: UUID, db: Session
+    async def get(
+        cls, dashboard_id: UUID, db: AsyncSession
     ) -> dashboard_model.Dashboard | None:
         """Получить дашборд по ID.
 
         Args:
             dashboard_id: Идентификатор дашборда (UUID).
-            db: Сессия базы данных.
+            db: Асинхронная сессия базы данных.
 
         Returns:
             Модель дашборда или None, если не найден.
@@ -41,29 +41,30 @@ class DashboardRepository:
             SQLAlchemyError: При ошибке базы данных.
         """
         try:
-            result = db.execute(
+            result = await db.execute(
                 select(dashboard_model.Dashboard).where(
                     dashboard_model.Dashboard.id == dashboard_id
                 )
-            ).scalar_one_or_none()
-            if result:
+            )
+            dashboard = result.scalar_one_or_none()
+            if dashboard:
                 logger.info("Дашборд получен: id=%s", dashboard_id)
             else:
                 logger.warning("Дашборд не найден: id=%s", dashboard_id)
-            return result
+            return dashboard
         except SQLAlchemyError as e:
             logger.error("Ошибка при получении дашборда id=%s: %s", dashboard_id, e)
             raise
 
     @classmethod
-    def get_by_user(
-        cls, user_id: UUID, db: Session
+    async def get_by_user(
+        cls, user_id: UUID, db: AsyncSession
     ) -> list[dashboard_model.Dashboard]:
         """Получить все дашборды, доступные пользователю.
 
         Args:
             user_id: Идентификатор пользователя (UUID).
-            db: Сессия базы данных.
+            db: Асинхронная сессия базы данных.
 
         Returns:
             Список дашбордов, доступных пользователю.
@@ -74,22 +75,18 @@ class DashboardRepository:
         try:
             from mko_bi.db.models import access as access_model
 
-            result = (
-                db
-                .execute(
-                    select(dashboard_model.Dashboard)
-                    .join(access_model.DashboardAccess)
-                    .where(access_model.DashboardAccess.user_id == user_id)
-                )
-                .scalars()
-                .all()
+            result = await db.execute(
+                select(dashboard_model.Dashboard)
+                .join(access_model.DashboardAccess)
+                .where(access_model.DashboardAccess.user_id == user_id)
             )
+            dashboards = list(result.scalars().all())
             logger.info(
                 "Получены дашборды для пользователя id=%s, количество: %s",
                 user_id,
-                len(result),
+                len(dashboards),
             )
-            return result
+            return dashboards
         except SQLAlchemyError as e:
             logger.error(
                 "Ошибка при получении дашбордов для пользователя id=%s: %s", user_id, e
@@ -97,11 +94,11 @@ class DashboardRepository:
             raise
 
     @classmethod
-    def create(cls, db: Session, **kwargs) -> dashboard_model.Dashboard | None:
+    async def create(cls, db: AsyncSession, **kwargs) -> dashboard_model.Dashboard | None:
         """Создать новый дашборд.
 
         Args:
-            db: Сессия базы данных.
+            db: Асинхронная сессия базы данных.
             **kwargs: Параметры дашборда (name, config).
 
         Returns:
@@ -113,8 +110,8 @@ class DashboardRepository:
         try:
             dashboard_obj = dashboard_model.Dashboard(**kwargs)
             db.add(dashboard_obj)
-            db.flush()
-            db.refresh(dashboard_obj)
+            await db.flush()
+            await db.refresh(dashboard_obj)
             logger.info(
                 "Дашборд создан: id=%s, name=%s", dashboard_obj.id, dashboard_obj.name
             )
@@ -124,14 +121,14 @@ class DashboardRepository:
             raise
 
     @classmethod
-    def update(
-        cls, dashboard_id: UUID, db: Session, **kwargs
+    async def update(
+        cls, dashboard_id: UUID, db: AsyncSession, **kwargs
     ) -> dashboard_model.Dashboard | None:
         """Обновить данные дашборда.
 
         Args:
             dashboard_id: Идентификатор дашборда (UUID).
-            db: Сессия базы данных.
+            db: Асинхронная сессия базы данных.
             **kwargs: Поля для обновления.
 
         Returns:
@@ -141,19 +138,20 @@ class DashboardRepository:
             SQLAlchemyError: При ошибке базы данных.
         """
         try:
-            dashboard_obj = db.execute(
+            result = await db.execute(
                 select(dashboard_model.Dashboard).where(
                     dashboard_model.Dashboard.id == dashboard_id
                 )
-            ).scalar_one_or_none()
+            )
+            dashboard_obj = result.scalar_one_or_none()
             if not dashboard_obj:
                 logger.warning("Дашборд не найден для обновления: id=%s", dashboard_id)
                 return None
             for key, value in kwargs.items():
                 if hasattr(dashboard_obj, key):
                     setattr(dashboard_obj, key, value)
-            db.flush()
-            db.refresh(dashboard_obj)
+            await db.flush()
+            await db.refresh(dashboard_obj)
             logger.info("Дашборд обновлен: id=%s", dashboard_id)
             return dashboard_obj
         except SQLAlchemyError as e:
@@ -161,12 +159,12 @@ class DashboardRepository:
             raise
 
     @classmethod
-    def delete(cls, dashboard_id: UUID, db: Session) -> bool:
+    async def delete(cls, dashboard_id: UUID, db: AsyncSession) -> bool:
         """Удалить дашборд.
 
         Args:
             dashboard_id: Идентификатор дашборда (UUID).
-            db: Сессия базы данных.
+            db: Асинхронная сессия базы данных.
 
         Returns:
             True, если удаление успешно, False - если дашборд не найден.
@@ -175,16 +173,17 @@ class DashboardRepository:
             SQLAlchemyError: При ошибке базы данных.
         """
         try:
-            dashboard_obj = db.execute(
+            result = await db.execute(
                 select(dashboard_model.Dashboard).where(
                     dashboard_model.Dashboard.id == dashboard_id
                 )
-            ).scalar_one_or_none()
+            )
+            dashboard_obj = result.scalar_one_or_none()
             if not dashboard_obj:
                 logger.warning("Дашборд не найден для удаления: id=%s", dashboard_id)
                 return False
-            db.delete(dashboard_obj)
-            db.flush()
+            await db.delete(dashboard_obj)
+            await db.flush()
             logger.info("Дашборд удален: id=%s", dashboard_id)
             return True
         except SQLAlchemyError as e:
@@ -192,21 +191,11 @@ class DashboardRepository:
             raise
 
     @classmethod
-    def get_session(cls) -> Session:
-        """Создать и вернуть новую сессию базы данных.
-
-        Returns:
-            Новая сессия.
-        """
-        from mko_bi.db.session import get_session
-        return get_session()
-
-    @classmethod
-    def get_all(cls, db: Session) -> list[dashboard_model.Dashboard]:
+    async def get_all(cls, db: AsyncSession) -> list[dashboard_model.Dashboard]:
         """Получить все дашборды.
 
         Args:
-            db: Сессия базы данных.
+            db: Асинхронная сессия базы данных.
 
         Returns:
             Список всех дашбордов.
@@ -215,9 +204,10 @@ class DashboardRepository:
             SQLAlchemyError: При ошибке базы данных.
         """
         try:
-            result = db.execute(select(dashboard_model.Dashboard)).scalars().all()
-            logger.info("Получен список дашбордов, количество: %s", len(result))
-            return result
+            result = await db.execute(select(dashboard_model.Dashboard))
+            dashboards = list(result.scalars().all())
+            logger.info("Получен список дашбордов, количество: %s", len(dashboards))
+            return dashboards
         except SQLAlchemyError as e:
             logger.error("Ошибка при получении списка дашбордов: %s", e)
             raise

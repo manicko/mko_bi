@@ -8,7 +8,7 @@ import logging
 import re
 from typing import Any
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mko_bi.config import get_redis_client
 from mko_bi.core.security import RateLimiter, create_access_token, hash_password, verify_password, decode_token
@@ -73,23 +73,23 @@ class AuthService(IAuthService):
             raise ValueError(f"Некорректный формат email: '{email}'")
         return email
 
-    def _check_email_uniqueness(self, email: str, db: Session) -> None:
+    async def _check_email_uniqueness(self, email: str, db: AsyncSession) -> None:
         """Проверяет, что email не используется другим пользователем.
 
         Args:
             email: Email для проверки уникальности.
-            db: Сессия базы данных.
+            db: Асинхронная сессия базы данных.
 
         Raises:
             ValueError: Если пользователь с таким email уже существует.
         """
-        existing_user = UserRepository.get_by_email(email, db)
+        existing_user = await UserRepository.get_by_email(email, db)
         if existing_user is not None:
             logger.warning("Попытка регистрации с существующим email: %s", email)
             raise ValueError(f"Пользователь с email '{email}' уже существует")
 
-    def register_user(
-        self, email: str, password: str, role: str, db: Session | None = None
+    async def register_user(
+        self, email: str, password: str, role: str, db: AsyncSession | None = None
     ) -> UserRead:
         """Регистрирует нового пользователя в системе.
 
@@ -117,16 +117,16 @@ class AuthService(IAuthService):
         self._validate_email_format(email)
 
         if db is None:
-            with get_session() as db:
-                return self.register_user(email, password, role, db)
+            async with get_session() as db:
+                return await self.register_user(email, password, role, db)
 
         try:
-            with db.begin():
-                self._check_email_uniqueness(email, db)
+            async with db.begin():
+                await self._check_email_uniqueness(email, db)
                 password_hash = hash_password(password)
                 logger.info("Password successfully hashed for user: %s", email)
 
-                user_obj = UserRepository.create(
+                user_obj = await UserRepository.create(
                     db=db,
                     email=email,
                     password_hash=password_hash,
@@ -146,8 +146,8 @@ class AuthService(IAuthService):
             logger.error("Error during user registration %s: %s", email, e)
             raise
 
-    def authenticate_user(
-        self, email: str, password: str, db: Session | None = None
+    async def authenticate_user(
+        self, email: str, password: str, db: AsyncSession | None = None
     ) -> UserDB | None:
         """Аутентифицирует пользователя по email и паролю.
 
@@ -165,10 +165,10 @@ class AuthService(IAuthService):
         logger.info("Attempting user authentication: %s", email)
 
         if db is None:
-            with get_session() as db:
-                return self.authenticate_user(email, password, db)
+            async with get_session() as db:
+                return await self.authenticate_user(email, password, db)
 
-        user_obj = UserRepository.get_by_email(email, db)
+        user_obj = await UserRepository.get_by_email(email, db)
 
         if user_obj is None:
             logger.warning("User not found during authentication: %s", email)
@@ -181,8 +181,8 @@ class AuthService(IAuthService):
         logger.info("User successfully authenticated: %s", email)
         return UserDB.model_validate(user_obj)
 
-    def login_user(
-        self, email: str, password: str, db: Session | None = None
+    async def login_user(
+        self, email: str, password: str, db: AsyncSession | None = None
     ) -> dict[str, Any]:
         """Выполняет вход пользователя и возвращает JWT токен.
 
@@ -209,7 +209,7 @@ class AuthService(IAuthService):
         if not self._rate_limiter.check_rate_limit(f"rate_limit:{email}", 5, 60):
             raise ValueError("Превышен лимит попыток входа")
 
-        user = self.authenticate_user(email, password, db)
+        user = await self.authenticate_user(email, password, db)
 
         if user is None:
             logger.warning("Failed login attempt (неверный email или пароль): %s", email)
@@ -227,8 +227,8 @@ class AuthService(IAuthService):
             "role": user.role,
         }
 
-    def refresh_token(
-        self, user_id: Any, email: str, role: str, db: Session | None = None
+    async def refresh_token(
+        self, user_id: Any, email: str, role: str, db: AsyncSession | None = None
     ) -> dict[str, Any]:
         """Обновляет JWT токен доступа.
 

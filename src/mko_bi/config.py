@@ -2,9 +2,93 @@ from pathlib import Path
 from typing import Any
 
 import redis
-from pydantic import field_validator
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
 from pydantic_settings.sources import PydanticBaseSettingsSource
+from pydantic import BaseModel, PostgresDsn
+
+
+class DatabaseSettings(BaseModel):
+    """Настройки подключения к базе данных."""
+    
+    host: str = "localhost"
+    port: int = 5432
+    dbname: str = "bidb"
+    user: str = "postgres"
+    password: str  # Обязательная переменная, нет дефолта
+    
+    @property
+    def database_url(self) -> PostgresDsn:
+        """Формирует URL для подключения к PostgreSQL."""
+        return PostgresDsn.build(
+            scheme="postgresql",
+            username=self.user,
+            password=self.password,
+            host=self.host,
+            port=self.port,
+            path=f"/{self.dbname}",
+        )
+
+
+class JWTSettings(BaseModel):
+    """Настройки JWT аутентификации."""
+    
+    secret_key: str  # Обязательная переменная, нет дефолта
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+
+
+class RedisSettings(BaseModel):
+    """Настройки Redis."""
+    
+    host: str = "localhost"
+    port: int = 6379
+    db: int = 0
+    password: str | None = None
+
+
+class UploadSettings(BaseModel):
+    """Настройки загрузки файлов."""
+    
+    temp_dir: str = "data/tmp_uploads"
+    allowed_file_types: list[str] = [".csv.gz"]
+    max_file_size: int = 100 * 1024 * 1024  # 100MB
+    lazy_threshold_mb: float = 10.0
+
+
+class LoggingSettings(BaseModel):
+    """Настройки логирования."""
+    
+    format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    level: str = "INFO"
+
+
+class ChartsSettings(BaseModel):
+    """Настройки графиков."""
+    
+    default_colors: list[str] = [
+        "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728",
+        "#9467bd", "#8c564b", "#e377c2", "#7f7f7f",
+    ]
+    
+    class YOYSettings(BaseModel):
+        """Настройки сравнения год-к-году."""
+        
+        class CurrentYearStyle(BaseModel):
+            line: dict = {"dash": "solid", "width": 3}
+        
+        class PreviousYearStyle(BaseModel):
+            line: dict = {"dash": "dash", "width": 2}
+        
+        current_year_style: CurrentYearStyle = CurrentYearStyle()
+        previous_year_style: PreviousYearStyle = PreviousYearStyle()
+    
+    yoy: YOYSettings = YOYSettings()
+    
+    class LayoutSettings(BaseModel):
+        template: str = "plotly_white"
+        margin: dict = {"l": 50, "r": 50, "t": 50, "b": 50}
+    
+    layout: LayoutSettings = LayoutSettings()
 
 
 class Settings(BaseSettings):
@@ -14,59 +98,27 @@ class Settings(BaseSettings):
     """
 
     # --- Database ---
-    DB_HOST: str = "localhost"
-    DB_PORT: int = 5432
-    DB_NAME: str = "bidb"
-    DB_USER: str = "postgres"
-    DB_PASSWORD: str  # Обязательная переменная, нет дефолта
-    DB_DRIVER: str = "postgresql"
-
-    @property
-    def DATABASE_URL(self) -> str:
-        """Формирует URL для подключения к PostgreSQL."""
-        return (
-            f"{self.DB_DRIVER}://{self.DB_USER}:{self.DB_PASSWORD}"
-            f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
-        )
+    database: DatabaseSettings
 
     # --- JWT ---
-    JWT_SECRET_KEY: str  # Обязательная переменная, нет дефолта
-    JWT_ALGORITHM: str = "HS256"
-    JWT_ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    jwt: JWTSettings
 
     # --- Upload ---
-    UPLOAD_TEMP_DIR: str = "data/tmp_uploads"
-    ALLOWED_FILE_TYPES: list[str] = [".csv.gz"]
-    MAX_FILE_SIZE: int = 100 * 1024 * 1024  # 100MB
-    LAZY_THRESHOLD_MB: float = 10.0  # Use lazy evaluation for files larger than this
-
-    @field_validator("LAZY_THRESHOLD_MB")
-    @classmethod
-    def validate_lazy_threshold_mb(cls, v: Any) -> float:
-        """Валидация порога для lazy evaluation."""
-        if isinstance(v, str):
-            try:
-                return float(v)
-            except ValueError as err:
-                raise ValueError("LAZY_THRESHOLD_MB должен быть числом с плавающей точкой") from err
-        return v
+    upload: UploadSettings
 
     # --- Redis ---
-    REDIS_HOST: str = "localhost"
-    REDIS_PORT: int = 6379
-    REDIS_DB: int = 0
-    REDIS_PASSWORD: str | None = None
+    redis: RedisSettings
 
     # --- Logging ---
-    LOG_FORMAT: str = (
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
-    LOG_LEVEL: str = "INFO"
+    logging: LoggingSettings
+
+    # --- Charts ---
+    charts: ChartsSettings
 
     # --- App ---
-    APP_NAME: str = "mko_bi"
-    DEBUG: bool = False
-    API_BASE_URL: str = "http://localhost:8000"
+    app_name: str = "mko_bi"
+    debug: bool = False
+    api_base_url: str = "http://localhost:8000"
     cors_origins: list[str] = []
 
     # Настройки для pydantic-settings
@@ -93,50 +145,45 @@ class Settings(BaseSettings):
         )
         return (yaml_source, env_settings, init_settings)
 
-    @field_validator("DB_PORT")
-    @classmethod
-    def validate_db_port(cls, v: Any) -> int:
-        """Валидация порта базы данных."""
-        if isinstance(v, str):
-            try:
-                return int(v)
-            except ValueError as err:
-                raise ValueError("DB_PORT должен быть целым числом") from err
-        return v
+    @property
+    def DATABASE_URL(self) -> str:
+        """Формирует URL для подключения к PostgreSQL."""
+        return str(self.database.database_url)
 
-    @field_validator("JWT_ACCESS_TOKEN_EXPIRE_MINUTES")
-    @classmethod
-    def validate_jwt_expire(cls, v: Any) -> int:
-        """Валидация времени жизни токена."""
-        if isinstance(v, str):
-            try:
-                return int(v)
-            except ValueError as err:
-                raise ValueError(
-                    "JWT_ACCESS_TOKEN_EXPIRE_MINUTES должен быть целым числом"
-                ) from err
-        return v
+    @property
+    def database_url(self) -> str:
+        """Алиас для DATABASE_URL."""
+        return self.DATABASE_URL
 
-    @field_validator("MAX_FILE_SIZE")
-    @classmethod
-    def validate_max_file_size(cls, v: Any) -> int:
-        """Валидация максимального размера файла."""
-        if isinstance(v, str):
-            try:
-                return int(v)
-            except ValueError as err:
-                raise ValueError("MAX_FILE_SIZE должен быть целым числом") from err
-        return v
+    @property
+    def jwt_secret_key(self) -> str:
+        """Алиас для JWT_SECRET_KEY."""
+        return self.jwt.secret_key
 
-    def __init__(self, **data: Any) -> None:
-        """Инициализация конфигурации. Создаёт временную директорию для загрузок."""
-        super().__init__(**data)
-        self._ensure_upload_dir()
+    @property
+    def jwt_algorithm(self) -> str:
+        """Алиас для JWT_ALGORITHM."""
+        return self.jwt.algorithm
 
-    def _ensure_upload_dir(self) -> None:
-        """Создаёт директорию для временных файлов загрузок, если её нет."""
-        upload_path = Path(self.UPLOAD_TEMP_DIR)
-        upload_path.mkdir(parents=True, exist_ok=True)
+    @property
+    def upload_temp_dir(self) -> str:
+        """Алиас для UPLOAD_TEMP_DIR."""
+        return self.upload.temp_dir
+
+    @property
+    def allowed_file_types(self) -> list[str]:
+        """Алиас для ALLOWED_FILE_TYPES."""
+        return self.upload.allowed_file_types
+
+    @property
+    def lazy_threshold_mb(self) -> float:
+        """Порог в МБ для использования lazy evaluation."""
+        return self.upload.lazy_threshold_mb
+
+    @property
+    def max_file_size(self) -> int:
+        """Алиас для MAX_FILE_SIZE."""
+        return self.upload.max_file_size
 
     def get(self, key: str, default: Any = None) -> Any:
         """Получить значение конфигурации по ключу.
@@ -150,40 +197,15 @@ class Settings(BaseSettings):
         """
         return getattr(self, key, default)
 
-    @property
-    def database_url(self) -> str:
-        """Алиас для DATABASE_URL."""
-        return self.DATABASE_URL
+    def __init__(self, **data: Any) -> None:
+        """Инициализация конфигурации. Создаёт временную директорию для загрузок."""
+        super().__init__(**data)
+        self._ensure_upload_dir()
 
-    @property
-    def jwt_secret_key(self) -> str:
-        """Алиас для JWT_SECRET_KEY."""
-        return self.JWT_SECRET_KEY
-
-    @property
-    def jwt_algorithm(self) -> str:
-        """Алиас для JWT_ALGORITHM."""
-        return self.JWT_ALGORITHM
-
-    @property
-    def upload_temp_dir(self) -> str:
-        """Алиас для UPLOAD_TEMP_DIR."""
-        return self.UPLOAD_TEMP_DIR
-
-    @property
-    def allowed_file_types(self) -> list[str]:
-        """Алиас для ALLOWED_FILE_TYPES."""
-        return self.ALLOWED_FILE_TYPES
-
-    @property
-    def lazy_threshold_mb(self) -> float:
-        """Порог в МБ для использования lazy evaluation."""
-        return self.LAZY_THRESHOLD_MB
-
-    @property
-    def max_file_size(self) -> int:
-        """Алиас для MAX_FILE_SIZE."""
-        return self.MAX_FILE_SIZE
+    def _ensure_upload_dir(self) -> None:
+        """Создаёт директорию для временных файлов загрузок, если её нет."""
+        upload_path = Path(self.upload.temp_dir)
+        upload_path.mkdir(parents=True, exist_ok=True)
 
 
 # Кэшированный экземпляр конфигурации
@@ -214,10 +236,9 @@ def get_redis_client() -> "redis.Redis":
     import redis
     config = get_config()
     return redis.Redis(
-        host=config.REDIS_HOST,
-        port=config.REDIS_PORT,
-        db=config.REDIS_DB,
-        password=config.REDIS_PASSWORD,
+        host=config.redis.host,
+        port=config.redis.port,
+        db=config.redis.db,
+        password=config.redis.password,
         decode_responses=True,
     )
-

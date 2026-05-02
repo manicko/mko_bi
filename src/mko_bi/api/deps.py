@@ -12,13 +12,13 @@
 
 import logging
 from typing import Annotated, Any
-from collections.abc import Generator
+from collections.abc import AsyncGenerator
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import ExpiredSignatureError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mko_bi.core.permissions import (
     get_current_user,
@@ -26,7 +26,7 @@ from mko_bi.core.permissions import (
     check_role,
     AuthenticationError,
 )
-from mko_bi.db.session import get_session
+from mko_bi.db.session import get_db
 from mko_bi.models.user import UserDB
 from mko_bi.interfaces import (
     IUserRepository,
@@ -53,35 +53,32 @@ logger = logging.getLogger(__name__)
 security = HTTPBearer()
 
 
-def get_db() -> Generator[Session, None, None]:
-    """Зависимость для получения сессии базы данных.
+async def get_db_dependency() -> AsyncGenerator[AsyncSession, None]:
+    """Зависимость для получения асинхронной сессии базы данных.
 
     Создает новую сессию для каждого запроса и закрывает её после завершения.
 
     Yields:
-        Session: Сессия SQLAlchemy.
+        AsyncSession: Асинхронная сессия SQLAlchemy.
 
     Example:
         @app.get("/users/")
-        async def get_users(db: Session = Depends(get_db)):
-            return db.query(User).all()
+        async def get_users(db: AsyncSession = Depends(get_db_dependency)):
+            result = await db.execute(select(User))
+            return result.scalars().all()
     """
-    with get_session() as db:
-        try:
-            yield db
-        finally:
-            # Явное закрытие для гарантии
-            db.close()
+    async with get_db() as db:
+        yield db
 
 
 # --- Dependency Injection для репозиториев ---
 
 
-def get_user_repository(db: Session = Depends(get_db)) -> IUserRepository:
+def get_user_repository(db: AsyncSession = Depends(get_db_dependency)) -> IUserRepository:
     """DI фабрика для получения репозитория пользователей.
     
     Args:
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
         
     Returns:
         IUserRepository: Реализация репозитория пользователей.
@@ -90,11 +87,11 @@ def get_user_repository(db: Session = Depends(get_db)) -> IUserRepository:
     return UserRepository()
 
 
-def get_dashboard_repository(db: Session = Depends(get_db)) -> IDashboardRepository:
+def get_dashboard_repository(db: AsyncSession = Depends(get_db_dependency)) -> IDashboardRepository:
     """DI фабрика для получения репозитория дашбордов.
     
     Args:
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
         
     Returns:
         IDashboardRepository: Реализация репозитория дашбордов.
@@ -103,11 +100,11 @@ def get_dashboard_repository(db: Session = Depends(get_db)) -> IDashboardReposit
     return DashboardRepository()
 
 
-def get_access_repository(db: Session = Depends(get_db)) -> IAccessRepository:
+def get_access_repository(db: AsyncSession = Depends(get_db_dependency)) -> IAccessRepository:
     """DI фабрика для получения репозитория прав доступа.
     
     Args:
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
         
     Returns:
         IAccessRepository: Реализация репозитория прав доступа.
@@ -116,11 +113,11 @@ def get_access_repository(db: Session = Depends(get_db)) -> IAccessRepository:
     return AccessRepository()
 
 
-def get_aggregated_data_repository(db: Session = Depends(get_db)) -> IAggregatedDataRepository:
+def get_aggregated_data_repository(db: AsyncSession = Depends(get_db_dependency)) -> IAggregatedDataRepository:
     """DI фабрика для получения репозитория агрегированных данных.
     
     Args:
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
         
     Returns:
         IAggregatedDataRepository: Реализация репозитория агрегированных данных.
@@ -129,11 +126,11 @@ def get_aggregated_data_repository(db: Session = Depends(get_db)) -> IAggregated
     return AggregatedDataRepository()
 
 
-def get_filter_repository(db: Session = Depends(get_db)) -> IFilterRepository:
+def get_filter_repository(db: AsyncSession = Depends(get_db_dependency)) -> IFilterRepository:
     """DI фабрика для получения репозитория фильтров.
     
     Args:
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
         
     Returns:
         IFilterRepository: Реализация репозитория фильтров.
@@ -142,11 +139,11 @@ def get_filter_repository(db: Session = Depends(get_db)) -> IFilterRepository:
     return FilterRepository()
 
 
-def get_processing_config_repository(db: Session = Depends(get_db)) -> IProcessingConfigRepository:
+def get_processing_config_repository(db: AsyncSession = Depends(get_db_dependency)) -> IProcessingConfigRepository:
     """DI фабрика для получения репозитория настроек обработки.
     
     Args:
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
         
     Returns:
         IProcessingConfigRepository: Реализация репозитория настроек обработки.
@@ -155,11 +152,11 @@ def get_processing_config_repository(db: Session = Depends(get_db)) -> IProcessi
     return ProcessingConfigRepository()
 
 
-def get_processing_log_repository(db: Session = Depends(get_db)) -> IProcessingLogRepository:
+def get_processing_log_repository(db: AsyncSession = Depends(get_db_dependency)) -> IProcessingLogRepository:
     """DI фабрика для получения репозитория логов обработки.
     
     Args:
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
         
     Returns:
         IProcessingLogRepository: Реализация репозитория логов обработки.
@@ -171,11 +168,11 @@ def get_processing_log_repository(db: Session = Depends(get_db)) -> IProcessingL
 # --- Dependency Injection для сервисов ---
 
 
-def get_auth_service(db: Session = Depends(get_db)) -> IAuthService:
+def get_auth_service(db: AsyncSession = Depends(get_db_dependency)) -> IAuthService:
     """DI фабрика для получения сервиса аутентификации.
     
     Args:
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
         
     Returns:
         IAuthService: Реализация сервиса аутентификации.
@@ -184,11 +181,11 @@ def get_auth_service(db: Session = Depends(get_db)) -> IAuthService:
     return AuthService()
 
 
-def get_user_service(db: Session = Depends(get_db)) -> IUserService:
+def get_user_service(db: AsyncSession = Depends(get_db_dependency)) -> IUserService:
     """DI фабрика для получения сервиса пользователей.
     
     Args:
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
         
     Returns:
         IUserService: Реализация сервиса пользователей.
@@ -197,11 +194,11 @@ def get_user_service(db: Session = Depends(get_db)) -> IUserService:
     return UserService()
 
 
-def get_dashboard_service(db: Session = Depends(get_db)) -> IDashboardService:
+def get_dashboard_service(db: AsyncSession = Depends(get_db_dependency)) -> IDashboardService:
     """DI фабрика для получения сервиса дашбордов.
     
     Args:
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
         
     Returns:
         IDashboardService: Реализация сервиса дашбордов.
@@ -210,11 +207,11 @@ def get_dashboard_service(db: Session = Depends(get_db)) -> IDashboardService:
     return DashboardService()
 
 
-def get_filter_service(db: Session = Depends(get_db)) -> IFilterService:
+def get_filter_service(db: AsyncSession = Depends(get_db_dependency)) -> IFilterService:
     """DI фабрика для получения сервиса фильтров.
     
     Args:
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
         
     Returns:
         IFilterService: Реализация сервиса фильтров.
@@ -223,11 +220,11 @@ def get_filter_service(db: Session = Depends(get_db)) -> IFilterService:
     return FilterService()
 
 
-def get_data_service(db: Session = Depends(get_db)) -> IDataService:
+def get_data_service(db: AsyncSession = Depends(get_db_dependency)) -> IDataService:
     """DI фабрика для получения сервиса данных.
     
     Args:
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
         
     Returns:
         IDataService: Реализация сервиса данных.
@@ -236,11 +233,11 @@ def get_data_service(db: Session = Depends(get_db)) -> IDataService:
     return DataService()
 
 
-def get_processing_config_service(db: Session = Depends(get_db)) -> IProcessingConfigService:
+def get_processing_config_service(db: AsyncSession = Depends(get_db_dependency)) -> IProcessingConfigService:
     """DI фабрика для получения сервиса настроек обработки.
     
     Args:
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
         
     Returns:
         IProcessingConfigService: Реализация сервиса настроек обработки.
@@ -249,11 +246,11 @@ def get_processing_config_service(db: Session = Depends(get_db)) -> IProcessingC
     return ProcessingConfigService()
 
 
-def get_processing_log_service(db: Session = Depends(get_db)) -> IProcessingLogService:
+def get_processing_log_service(db: AsyncSession = Depends(get_db_dependency)) -> IProcessingLogService:
     """DI фабрика для получения сервиса логов обработки.
     
     Args:
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
         
     Returns:
         IProcessingLogService: Реализация сервиса логов обработки.
@@ -289,9 +286,9 @@ def get_token_from_header(
     return credentials.credentials
 
 
-def get_current_user_dependency(
+async def get_current_user_dependency(
     token: str = Depends(get_token_from_header),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> UserDB:
     """Получает текущего аутентифицированного пользователя.
 
@@ -300,7 +297,7 @@ def get_current_user_dependency(
 
     Args:
         token: JWT токен доступа.
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         UserDB: Модель аутентифицированного пользователя.
@@ -480,17 +477,17 @@ def require_role_dependency(required_role: str):
 # --- Проверка доступа к дашбордам ---
 
 
-def require_dashboard_read_access(
+async def require_dashboard_read_access(
     dashboard_id: UUID,
     user: UserDB = Depends(get_current_user_dependency),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> UserDB:
     """Требует права на чтение дашборда.
 
     Args:
         dashboard_id: ID дашборда (извлекается из пути).
         user: Пользователь (получается через get_current_user_dependency).
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         UserDB: Пользователь, если у него есть доступ.
@@ -524,17 +521,17 @@ def require_dashboard_read_access(
     return user
 
 
-def require_dashboard_write_access(
+async def require_dashboard_write_access(
     dashboard_id: UUID,
     user: UserDB = Depends(get_current_user_dependency),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> UserDB:
     """Требует права на запись (редактирование) дашборда.
 
     Args:
         dashboard_id: ID дашборда (извлекается из пути).
         user: Пользователь (получается через get_current_user_dependency).
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         UserDB: Пользователь, если у него есть права на запись.
@@ -568,17 +565,17 @@ def require_dashboard_write_access(
     return user
 
 
-def require_dashboard_admin_access(
+async def require_dashboard_admin_access(
     dashboard_id: UUID,
     user: UserDB = Depends(get_current_user_dependency),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> UserDB:
     """Требует права на администрирование дашборда.
 
     Args:
         dashboard_id: ID дашборда (извлекается из пути).
         user: Пользователь (получается через get_current_user_dependency).
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         UserDB: Пользователь, если у него есть права на администрирование.
@@ -621,10 +618,10 @@ EditorUser = Annotated[UserDB, Depends(require_editor_role)]
 ViewerUser = Annotated[UserDB, Depends(require_viewer_role)]
 
 
-def get_dashboard_permissions(
+async def get_dashboard_permissions(
     dashboard_id: UUID,
     user: UserDB = Depends(get_current_user_dependency),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
     access_repo: IAccessRepository = Depends(get_access_repository),
 ) -> dict[str, Any]:
     """Получает права доступа пользователя к дашборду.
@@ -632,7 +629,7 @@ def get_dashboard_permissions(
     Args:
         dashboard_id: ID дашборда.
         user: Пользователь.
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
         access_repo: Репозиторий доступа.
 
     Returns:

@@ -3,6 +3,8 @@
 Предоставляет бизнес-логику для CRUD операций с дашбордами.
 Все операции выполняются через DashboardRepository и AccessRepository
 с валидацией, проверкой прав и логированием.
+
+Реализует интерфейс IDashboardService для внедрения зависимостей.
 """
 
 import json
@@ -11,8 +13,8 @@ import logging
 from mko_bi.db.models import dashboard as dashboard_model
 from mko_bi.db.repositories.access_repo import AccessRepository
 from mko_bi.db.repositories.dashboard_repo import DashboardRepository
-from sqlalchemy.orm import Session
 from mko_bi.db.session import get_session
+from sqlalchemy.ext.asyncio import AsyncSession
 from mko_bi.models.dashboard import (
     DashboardConfig,
     DashboardRead,
@@ -61,7 +63,7 @@ def _validate_config(config: DashboardConfig) -> None:
         config: Конфигурация дашборда для проверки.
 
     Raises:
-        ValueError: Если конфигурация некорректна.
+        ValueError: Если конфигурация некорректна. 
     """
     if not config.graph_types:
         logger.error("Конфигурация дашборда не содержит типов графиков")
@@ -80,36 +82,36 @@ def _validate_config(config: DashboardConfig) -> None:
             ) from err
 
 
-def _validate_dashboard_exists(
-    dashboard_id: int, db: Session
+async def _validate_dashboard_exists(
+    dashboard_id: int, db: AsyncSession
 ) -> dashboard_model.Dashboard | None:
     """Проверяет существование дашборда и возвращает его модель.
 
     Args:
-        dashboard_id: Идентификатор дашборда.
-        db: Сессия базы данных.
+        dashboard_id: Идентификатор дашборда. 
+        db: Асинхронная сессия базы данных. 
 
     Returns:
-        Модель дашборда или None, если не найден.
+        Модель дашборда или None, если не найден. 
     """
-    dashboard_obj = DashboardRepository.get(dashboard_id, db)
+    dashboard_obj = await DashboardRepository.get(dashboard_id, db)
     if dashboard_obj is None:
         logger.warning("Дашборд не найден: id=%s", dashboard_id)
     return dashboard_obj
 
 
-def _check_owner_permission(dashboard_id: int, user_id: int, db: Session) -> bool:
+async def _check_owner_permission(dashboard_id: int, user_id: int, db: AsyncSession) -> bool:
     """Проверяет, является ли пользователь владельцем дашборда (admin доступ).
 
     Args:
-        dashboard_id: Идентификатор дашборда.
-        user_id: Идентификатор пользователя.
-        db: Сессия базы данных.
+        dashboard_id: Идентификатор дашборда. 
+        user_id: Идентификатор пользователя. 
+        db: Асинхронная сессия базы данных. 
 
     Returns:
-        True, если пользователь является владельцем (admin), иначе False.
+        True, если пользователь является владельцем (admin), иначе False. 
     """
-    permission = AccessRepository.check_access(user_id, dashboard_id, db)
+    permission = await AccessRepository.check_access(user_id, dashboard_id, db)
     is_owner = permission == "admin"
     if not is_owner:
         logger.warning(
@@ -121,28 +123,28 @@ def _check_owner_permission(dashboard_id: int, user_id: int, db: Session) -> boo
     return is_owner
 
 
-def create_dashboard(
-    name: str, config: dict, owner_id: int, db: Session | None = None
+async def create_dashboard(
+    name: str, config: dict, owner_id: int, db: AsyncSession | None = None
 ) -> DashboardRead:
     """Создает новый дашборд с владельцем.
 
     Создает дашборд в базе данных и предоставляет владельцу
-    права администратора (admin) на управление дашбордом.
-    Операция выполняется в транзакции: если предоставление прав
-    доступа завершается ошибкой, создание дашборда откатывается.
+    права администратора (admin) на управление дашбордом. 
+    Операция выполняется в транзакции: если предоставление прав 
+    доступа завершается ошибкой, создание дашборда откатывается. 
 
     Args:
-        name: Название дашборда.
-        config: Конфигурация дашборда в формате JSON-совместимого dict.
-        owner_id: Идентификатор пользователя-владельца.
-        db: Опциональная сессия базы данных. Если не передана, создается новая.
+        name: Название дашборда. 
+        config: Конфигурация дашборда в формате JSON-совместимого dict. 
+        owner_id: Идентификатор пользователя-владельца. 
+        db: Опциональная сессия базы данных. Если не передана, создается новая. 
 
     Returns:
-        DashboardRead: Модель созданного дашборда.
+        DashboardRead: Модель созданного дашборда. 
 
     Raises:
-        ValueError: Если конфигурация некорректна.
-        SQLAlchemyError: При ошибке базы данных.
+        ValueError: Если конфигурация некорректна. 
+        SQLAlchemyError: При ошибке базы данных. 
 
     Example:
         >>> dashboard = create_dashboard(
@@ -161,19 +163,19 @@ def create_dashboard(
 
     # Если сессия не передана, создаем новую
     if db is None:
-        with get_session() as db:
-            return _create_dashboard_with_session(name, config_obj, owner_id, db)
+        async with get_session() as db:
+            return await _create_dashboard_with_session(name, config_obj, owner_id, db)
     else:
-        return _create_dashboard_with_session(name, config_obj, owner_id, db)
+        return await _create_dashboard_with_session(name, config_obj, owner_id, db)
 
 
-def _create_dashboard_with_session(
-    name: str, config_obj: DashboardConfig, owner_id: int, db: Session
+async def _create_dashboard_with_session(
+    name: str, config_obj: DashboardConfig, owner_id: int, db: AsyncSession
 ) -> DashboardRead:
     """Внутренняя функция для создания дашборда с использованием сессии."""
     try:
         # Создание дашборда через репозиторий
-        dashboard_obj = DashboardRepository.create(
+        dashboard_obj = await DashboardRepository.create(
             db=db,
             name=name,
             config=json.dumps(config_obj.model_dump()),
@@ -183,7 +185,7 @@ def _create_dashboard_with_session(
         )
 
         # Предоставление прав администратора владельцу
-        AccessRepository.grant_access(
+        await AccessRepository.grant_access(
             db=db,
             user_id=owner_id,
             dashboard_id=dashboard_obj.id,
@@ -196,7 +198,7 @@ def _create_dashboard_with_session(
         )
         
         # Commit the transaction
-        db.commit()
+        await db.commit()
         logger.info("Транзакция коммичена для дашборда id=%s", dashboard_obj.id)
 
         # Преобразование в Pydantic модель
@@ -210,15 +212,7 @@ def _create_dashboard_with_session(
         # Валидационные ошибки не требуют отката (транзакция еще не начата)
         raise
     except Exception as e:
-        db.rollback()
-        logger.error(
-            "Ошибка при создании дашборда name=%s, owner_id=%s: %s",
-            name,
-            owner_id,
-            e,
-        )
-        raise
-    except Exception as e:
+        await db.rollback()
         logger.error(
             "Ошибка при создании дашборда name=%s, owner_id=%s: %s",
             name,
@@ -228,146 +222,133 @@ def _create_dashboard_with_session(
         raise
 
 
-def get_dashboard(
-    dashboard_id: int, user_id: int, db: Session | None = None
+async def get_dashboard(
+    dashboard_id: int, user_id: int, db: AsyncSession | None = None
 ) -> DashboardRead | None:
     """Получает дашборд по ID с проверкой доступа.
 
-    Проверяет, есть ли у пользователя доступ к дашборду,
-    и возвращает его данные только в случае наличия прав.
+    Проверяет, есть ли у пользователя доступ к дашборду, 
+    и возвращает его данные только в случае наличия прав. 
 
     Args:
-        dashboard_id: Идентификатор дашборда.
-        user_id: Идентификатор пользователя, запрашивающего доступ.
-        db: Опциональная сессия базы данных. Если не передана, создается новая.
+        dashboard_id: Идентификатор дашборда. 
+        user_id: Идентификатор пользователя, запрашивающего доступ. 
+        db: Опциональная сессия базы данных. Если не передана, создается новая. 
 
     Returns:
-        DashboardRead: Модель дашборда, если доступ разрешен, иначе None.
+        DashboardRead: Модель дашборда, если доступ разрешен, иначе None. 
 
     Raises:
-        SQLAlchemyError: При ошибке базы данных.
+        SQLAlchemyError: При ошибке базы данных. 
     """
     logger.info("Запрос дашборда: dashboard_id=%s, user_id=%s", dashboard_id, user_id)
 
     # Если сессия не передана, создаем новую
-    local_session = False
     if db is None:
-        db = get_session().__enter__()
-        local_session = True
+        async with get_session() as db:
+            return await _get_dashboard_with_session(dashboard_id, user_id, db)
+    else:
+        return await _get_dashboard_with_session(dashboard_id, user_id, db)
 
-    try:
-        # Проверка существования дашборда
-        dashboard_obj = _validate_dashboard_exists(dashboard_id, db)
-        if dashboard_obj is None:
-            return None
 
-        # Проверка доступа пользователя
-        permission = AccessRepository.check_access(user_id, dashboard_id, db)
-        if permission is None:
-            logger.warning(
-                "Отказ в доступе: user_id=%s, dashboard_id=%s", user_id, dashboard_id
-            )
-            return None
+async def _get_dashboard_with_session(
+    dashboard_id: int, user_id: int, db: AsyncSession
+) -> DashboardRead | None:
+    """Внутренняя функция для получения дашборда с использованием сессии."""
+    # Проверка существования дашборда
+    dashboard_obj = await _validate_dashboard_exists(dashboard_id, db)
+    if dashboard_obj is None:
+        return None
 
-        logger.info(
-            "Дашборд предоставлен: id=%s, user_id=%s, permission=%s",
-            dashboard_id,
-            user_id,
-            permission,
+    # Проверка доступа пользователя
+    permission = await AccessRepository.check_access(user_id, dashboard_id, db)
+    if permission is None:
+        logger.warning(
+            "Отказ в доступе: user_id=%s, dashboard_id=%s", user_id, dashboard_id
         )
+        return None
 
-        # Преобразование в Pydantic модель
-        # Преобразуем config из JSON строки в dict
-        dashboard_dict = dashboard_obj.__dict__.copy()
-        if isinstance(dashboard_dict.get("config"), str):
-            dashboard_dict["config"] = json.loads(dashboard_dict["config"])
-        return DashboardRead.model_validate(dashboard_dict)
+    logger.info(
+        "Дашборд предоставлен: id=%s, user_id=%s, permission=%s",
+        dashboard_id,
+        user_id,
+        permission,
+    )
 
-    except Exception as e:
-        logger.error(
-            "Ошибка при получении дашборда id=%s, user_id=%s: %s",
-            dashboard_id,
-            user_id,
-            e,
-        )
-        raise
-    finally:
-        if local_session:
-            db.close()
+    # Преобразование в Pydantic модель
+    # Преобразуем config из JSON строки в dict
+    dashboard_dict = dashboard_obj.__dict__.copy()
+    if isinstance(dashboard_dict.get("config"), str):
+        dashboard_dict["config"] = json.loads(dashboard_dict["config"])
+    return DashboardRead.model_validate(dashboard_dict)
 
 
-def get_user_dashboards(user_id: int, db: Session | None = None) -> list[DashboardRead]:
+async def get_user_dashboards(user_id: int, db: AsyncSession | None = None) -> list[DashboardRead]:
     """Получает все дашборды, доступные пользователю.
 
-    Фильтрует дашборды по правам доступа пользователя.
+    Фильтрует дашборды по правам доступа пользователя. 
 
     Args:
-        user_id: Идентификатор пользователя.
-        db: Опциональная сессия базы данных. Если не передана, создается новая.
+        user_id: Идентификатор пользователя. 
+        db: Опциональная сессия базы данных. Если не передана, создается новая. 
 
     Returns:
-        List[DashboardRead]: Список моделей дашбордов, доступных пользователю.
+        List[DashboardRead]: Список моделей дашбордов, доступных пользователю. 
 
     Raises:
-        SQLAlchemyError: При ошибке базы данных.
+        SQLAlchemyError: При ошибке базы данных. 
     """
     logger.info("Получение дашбордов для пользователя: user_id=%s", user_id)
 
     # Если сессия не передана, создаем новую
-    local_session = False
     if db is None:
-        db = get_session().__enter__()
-        local_session = True
-
-    try:
-        # Получение дашбордов через репозиторий
-        dashboard_objs = AccessRepository.get_user_dashboards(user_id, db)
-
-        # Преобразование в Pydantic модели
-        dashboards = []
-        for d in dashboard_objs:
-            d_dict = d.__dict__.copy()
-            if isinstance(d_dict.get("config"), str):
-                d_dict["config"] = json.loads(d_dict["config"])
-            dashboards.append(DashboardRead.model_validate(d_dict))
-
-        logger.info(
-            "Получено дашбордов для пользователя id=%s: %s",
-            user_id,
-            len(dashboards),
-        )
-
-        return dashboards
-
-    except Exception as e:
-        logger.error(
-            "Ошибка при получении дашбордов пользователя id=%s: %s", user_id, e
-        )
-        raise
-    finally:
-        if local_session:
-            db.close()
+        async with get_session() as db:
+            return await _get_user_dashboards_with_session(user_id, db)
+    else:
+        return await _get_user_dashboards_with_session(user_id, db)
 
 
-def update_dashboard(
-    dashboard_id: int, config: dict, db: Session | None = None
+async def _get_user_dashboards_with_session(user_id: int, db: AsyncSession) -> list[DashboardRead]:
+    """Внутренняя функция для получения дашбордов пользователя."""
+    # Получение дашбордов через репозиторий
+    dashboard_objs = await AccessRepository.get_user_dashboards(user_id, db)
+
+    # Преобразование в Pydantic модели
+    dashboards = []
+    for d in dashboard_objs:
+        d_dict = d.__dict__.copy()
+        if isinstance(d_dict.get("config"), str):
+            d_dict["config"] = json.loads(d_dict["config"])
+        dashboards.append(DashboardRead.model_validate(d_dict))
+
+    logger.info(
+        "Получено дашбордов для пользователя id=%s: %s",
+        user_id,
+        len(dashboards),
+    )
+
+    return dashboards
+
+
+async def update_dashboard(
+    dashboard_id: int, config: dict, db: AsyncSession | None = None
 ) -> DashboardRead | None:
     """Обновляет конфигурацию дашборда.
 
-    Проверяет права доступа и обновляет конфигурацию дашборда.
-    Только владелец (admin) может обновлять дашборд.
+    Проверяет права доступа и обновляет конфигурацию дашборда. 
+    Только владелец (admin) может обновлять дашборд. 
 
     Args:
-        dashboard_id: Идентификатор дашборда.
-        config: Новая конфигурация дашборда в формате JSON-совместимого dict.
-        db: Опциональная сессия базы данных. Если не передана, создается новая.
+        dashboard_id: Идентификатор дашборда. 
+        config: Новая конфигурация дашборда в формате JSON-совместимого dict. 
+        db: Опциональная сессия базы данных. Если не передана, создается новая. 
 
     Returns:
-        DashboardRead: Обновленная модель дашборда, или None если не найден.
+        DashboardRead: Обновленная модель дашборда, или None если не найден. 
 
     Raises:
-        ValueError: Если конфигурация некорректна.
-        SQLAlchemyError: При ошибке базы данных.
+        ValueError: Если конфигурация некорректна. 
+        SQLAlchemyError: При ошибке базы данных. 
     """
     logger.info("Обновление дашборда: dashboard_id=%s", dashboard_id)
 
@@ -376,114 +357,102 @@ def update_dashboard(
     _validate_config(config_obj)
 
     # Если сессия не передана, создаем новую
-    local_session = False
     if db is None:
-        db = get_session().__enter__()
-        local_session = True
-
-    try:
-        # Проверка существования дашборда
-        dashboard_obj = _validate_dashboard_exists(dashboard_id, db)
-        if dashboard_obj is None:
-            return None
-
-        # Обновление через репозиторий
-        updated = DashboardRepository.update(
-            db=db,
-            dashboard_id=dashboard_id,
-            config=json.dumps(config),
-        )
-
-        if updated:
-            logger.info("Дашборд обновлен: id=%s", dashboard_id)
-            # Преобразуем config из JSON строки в dict
-            updated_dict = updated.__dict__.copy()
-            if isinstance(updated_dict.get("config"), str):
-                updated_dict["config"] = json.loads(updated_dict["config"])
-            return DashboardRead.model_validate(updated_dict)
-        else:
-            logger.warning("Не удалось обновить дашборд: id=%s", dashboard_id)
-            return None
-
-    except ValueError:
-        raise
-    except Exception as e:
-        if local_session:
-            db.rollback()
-        logger.error("Ошибка при обновлении дашборда id=%s: %s", dashboard_id, e)
-        raise
-    finally:
-        if local_session:
-            db.close()
+        async with get_session() as db:
+            return await _update_dashboard_with_session(dashboard_id, config_obj, db)
+    else:
+        return await _update_dashboard_with_session(dashboard_id, config_obj, db)
 
 
-def delete_dashboard(dashboard_id: int, db: Session | None = None) -> bool:
+async def _update_dashboard_with_session(
+    dashboard_id: int, config_obj: DashboardConfig, db: AsyncSession
+) -> DashboardRead | None:
+    """Внутренняя функция для обновления дашборда с использованием сессии."""
+    # Проверка существования дашборда
+    dashboard_obj = await _validate_dashboard_exists(dashboard_id, db)
+    if dashboard_obj is None:
+        return None
+
+    # Обновление через репозиторий
+    updated = await DashboardRepository.update(
+        db=db,
+        dashboard_id=dashboard_id,
+        config=json.dumps(config_obj.model_dump()),
+    )
+
+    if updated:
+        logger.info("Дашборд обновлен: id=%s", dashboard_id)
+        # Преобразуем config из JSON строки в dict
+        updated_dict = updated.__dict__.copy()
+        if isinstance(updated_dict.get("config"), str):
+            updated_dict["config"] = json.loads(updated_dict["config"])
+        return DashboardRead.model_validate(updated_dict)
+    else:
+        logger.warning("Не удалось обновить дашборд: id=%s", dashboard_id)
+        return None
+
+
+async def delete_dashboard(dashboard_id: int, db: AsyncSession | None = None) -> bool:
     """Удаляет дашборд и все связанные права доступа.
 
-    Выполняет каскадное удаление дашборда и всех прав доступа к нему.
+    Выполняет каскадное удаление дашборда и всех прав доступа к нему. 
 
     Args:
-        dashboard_id: Идентификатор дашборда для удаления.
-        db: Опциональная сессия базы данных. Если не передана, создается новая.
+        dashboard_id: Идентификатор дашборда для удаления. 
+        db: Опциональная сессия базы данных. Если не передана, создается новая. 
 
     Returns:
-        bool: True, если удаление успешно, False - если дашборд не найден.
+        bool: True, если удаление успешно, False - если дашборд не найден. 
 
     Raises:
-        SQLAlchemyError: При ошибке базы данных.
+        SQLAlchemyError: При ошибке базы данных. 
     """
     logger.info("Удаление дашборда: dashboard_id=%s", dashboard_id)
 
     # Если сессия не передана, создаем новую
-    local_session = False
     if db is None:
-        db = get_session().__enter__()
-        local_session = True
-
-    try:
-        # Удаление через репозиторий (каскадное удаление прав доступа)
-        result = DashboardRepository.delete(dashboard_id, db)
-
-        if result:
-            logger.info("Дашборд успешно удален: id=%s", dashboard_id)
-        else:
-            logger.warning("Дашборд не найден для удаления: id=%s", dashboard_id)
-
-        return result
-
-    except Exception as e:
-        if local_session:
-            db.rollback()
-        logger.error("Ошибка при удалении дашборда id=%s: %s", dashboard_id, e)
-        raise
-    finally:
-        if local_session:
-            db.close()
+        async with get_session() as db:
+            return await _delete_dashboard_with_session(dashboard_id, db)
+    else:
+        return await _delete_dashboard_with_session(dashboard_id, db)
 
 
-def grant_access(
+async def _delete_dashboard_with_session(dashboard_id: int, db: AsyncSession) -> bool:
+    """Внутренняя функция для удаления дашборда с использованием сессии."""
+    # Удаление через репозиторий (каскадное удаление прав доступа)
+    result = await DashboardRepository.delete(dashboard_id, db)
+
+    if result:
+        logger.info("Дашборд успешно удален: id=%s", dashboard_id)
+    else:
+        logger.warning("Дашборд не найден для удаления: id=%s", dashboard_id)
+
+    return bool(result)
+
+
+async def grant_access(
     dashboard_id: int,
     user_id: int,
     permission: str,
-    db: Session | None = None,
+    db: AsyncSession | None = None,
 ) -> bool:
     """Предоставляет пользователю доступ к дашборду.
 
-    Операция выполняется в транзакции: если предоставление прав
-    доступа завершается ошибкой, транзакция откатывается.
+    Операция выполняется в транзакции: если предоставление прав 
+    доступа завершается ошибкой, транзакция откатывается. 
 
     Args:
-        dashboard_id: Идентификатор дашборда.
-        user_id: Идентификатор пользователя.
-        permission: Уровень доступа (read/write/admin).
-        db: Опциональная сессия базы данных. Если не передана, создается новая.
+        dashboard_id: Идентификатор дашборда. 
+        user_id: Идентификатор пользователя. 
+        permission: Уровень доступа (read/write/admin). 
+        db: Опциональная сессия базы данных. Если не передана, создается новая. 
 
     Returns:
-        bool: True, если доступ успешно предоставлен.
+        bool: True, если доступ успешно предоставлен. 
 
     Raises:
-        ValueError: Если уровень доступа некорректен.
-        SQLAlchemyError: При ошибке базы данных.
+        ValueError: Если уровень доступа некорректен. 
+        SQLAlchemyError: При ошибке базы данных. 
     """
     logger.info(
         "Предоставление доступа: dashboard_id=%s, user_id=%s, permission=%s",
@@ -496,48 +465,38 @@ def grant_access(
     _validate_permission(permission)
 
     # Если сессия не передана, создаем новую
-    local_session = False
     if db is None:
-        db = get_session().__enter__()
-        local_session = True
+        async with get_session() as db:
+            return await _grant_access_with_session(dashboard_id, user_id, permission, db)
+    else:
+        return await _grant_access_with_session(dashboard_id, user_id, permission, db)
 
-    try:
-        # Проверка существования дашборда
-        dashboard_obj = _validate_dashboard_exists(dashboard_id, db)
-        if dashboard_obj is None:
-            raise ValueError(f"Дашборд с id={dashboard_id} не найден")
 
-        # Предоставление доступа через репозиторий
-        AccessRepository.grant_access(
-            db=db,
-            user_id=user_id,
-            dashboard_id=dashboard_id,
-            permission=permission,
-        )
+async def _grant_access_with_session(
+    dashboard_id: int, user_id: int, permission: str, db: AsyncSession
+) -> bool:
+    """Внутренняя функция для предоставления доступа с использованием сессии."""
+    # Проверка существования дашборда
+    dashboard_obj = await _validate_dashboard_exists(dashboard_id, db)
+    if dashboard_obj is None:
+        raise ValueError(f"Дашборд с id={dashboard_id} не найден")
 
-        # Commit if we own the session
-        if local_session:
-            db.commit()
+    # Предоставление доступа через репозиторий
+    await AccessRepository.grant_access(
+        db=db,
+        user_id=user_id,
+        dashboard_id=dashboard_id,
+        permission=permission,
+    )
 
-        logger.info(
-            "Доступ успешно предоставлен: user_id=%s, dashboard_id=%s, permission=%s",
-            user_id,
-            dashboard_id,
-            permission,
-        )
+    # Commit if we own the session
+    await db.commit()
 
-        return True
+    logger.info(
+        "Доступ успешно предоставлен: user_id=%s, dashboard_id=%s, permission=%s",
+        user_id,
+        dashboard_id,
+        permission,
+    )
 
-    except ValueError:
-        raise
-    except Exception as e:
-        logger.error(
-            "Ошибка при предоставлении доступа user_id=%s, dashboard_id=%s: %s",
-            user_id,
-            dashboard_id,
-            e,
-        )
-        raise
-    finally:
-        if local_session:
-            db.close()
+    return True

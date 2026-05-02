@@ -9,9 +9,9 @@ from collections.abc import Generator, AsyncGenerator
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy import create_engine
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
 # Устанавливаем обязательные переменные окружения ДО импорта любых модулей mko_bi
 os.environ.setdefault("DB_PASSWORD", "1234")
@@ -25,10 +25,11 @@ from mko_bi.db.base import Base
 from mko_bi.main import app
 from mko_bi.core.security import hash_password, create_access_token
 from mko_bi.db.repositories.user_repo import UserRepository
-from mko_bi.models.user import UserCreate
 
 # Тестовая БД PostgreSQL (синхронная)
 TEST_DB_URL = "postgresql://postgres:1234@localhost:5432/bidb_test"
+# Тестовая БД PostgreSQL (асинхронная)
+TEST_ASYNC_DB_URL = "postgresql+asyncpg://postgres:1234@localhost:5432/bidb_test"
 
 
 @pytest.fixture(scope="session")
@@ -61,18 +62,40 @@ def db_session(test_engine) -> Generator:
         session.close()
 
 
-@pytest.fixture(autouse=True)
-def clean_db(db_session):
-    """Очищает данные после каждого теста."""
-    yield
-    # Удаляем все данные после теста
-    from mko_bi.db.models.access import DashboardAccess
-    from mko_bi.db.models.dashboard import Dashboard
-    from mko_bi.db.models.user import User
-    db_session.execute(DashboardAccess.__table__.delete())
-    db_session.execute(Dashboard.__table__.delete())
-    db_session.execute(User.__table__.delete())
-    db_session.commit()
+@pytest.fixture(scope="session")
+def async_test_engine():
+    """Фикстура для создания асинхронного тестового движка БД (PostgreSQL)."""
+    engine = create_async_engine(
+        TEST_ASYNC_DB_URL,
+        echo=False,
+        pool_pre_ping=True,
+    )
+    return engine
+
+
+@pytest.fixture(scope="session")
+async def async_session_maker(async_test_engine):
+    """Фикстура для создания асинхронной фабрики сессий."""
+    async_session = async_sessionmaker(
+        async_test_engine, class_=AsyncSession, expire_on_commit=False
+    )
+    return async_session
+
+
+@pytest.fixture(scope="function")
+async def async_db_session(async_test_engine, async_session_maker) -> AsyncGenerator[AsyncSession, None]:
+    """Фикстура для создания асинхронной сессии БД для тестов."""
+    # Создаем таблицы
+    async with async_test_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    
+    async with async_session_maker() as session:
+        try:
+            yield session
+        finally:
+            # Удаляем все данные после теста
+            async with async_test_engine.begin() as conn:
+                await conn.run_sync(Base.metadata.drop_all)
 
 
 @pytest.fixture

@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 from datetime import datetime
 from uuid import uuid4, UUID
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     DateTime,
@@ -14,6 +17,16 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mko_bi.db.base import Base
+
+if TYPE_CHECKING:
+    from mko_bi.db.models.access import DashboardAccess
+    from mko_bi.db.models.user import UserBase
+    from mko_bi.db.models.layout import Layout
+    from mko_bi.db.models.graphs import Graph
+    from mko_bi.db.models.aggregated_data import AggregatedData
+    from mko_bi.db.models.filters import Filter
+    from mko_bi.db.models.processing_configs import ProcessingConfig
+    from mko_bi.db.models.processing_logs import ProcessingLog
 
 
 class Dashboard(Base):
@@ -49,7 +62,7 @@ class Dashboard(Base):
         nullable=True,
     )
     
-    config: Mapped[dict] = mapped_column(
+    config: Mapped[dict[str, object]] = mapped_column(
         JSON,
         nullable=False,
         default=dict,
@@ -69,7 +82,7 @@ class Dashboard(Base):
     )
     
     # Связь с правами доступа
-    accesses: Mapped[list["DashboardAccess"]] = relationship(
+    accesses: Mapped[list[DashboardAccess]] = relationship(
         "DashboardAccess",
         back_populates="dashboard",
         cascade="all, delete-orphan",
@@ -77,7 +90,7 @@ class Dashboard(Base):
     )
     
     # Связь с пользователями через таблицу доступа
-    users: Mapped[list["UserBase"]] = relationship(
+    users: Mapped[list[UserBase]] = relationship(
         "User",
         secondary="dashboard_access",
         back_populates="dashboards",
@@ -85,14 +98,14 @@ class Dashboard(Base):
     )
     
     # Связь с layout
-    layout: Mapped["Layout"] = relationship(
+    layout: Mapped[Layout] = relationship(
         "Layout",
         back_populates="dashboards",
         lazy="selectin",
     )
 
     # Связь с графиками
-    graphs: Mapped[list["Graph"]] = relationship(
+    graphs: Mapped[list[Graph]] = relationship(
         "Graph",
         back_populates="dashboard",
         cascade="all, delete-orphan",
@@ -100,7 +113,7 @@ class Dashboard(Base):
     )
 
     # Связь с агрегированными данными
-    aggregated_data: Mapped[list["AggregatedData"]] = relationship(
+    aggregated_data: Mapped[list[AggregatedData]] = relationship(
         "AggregatedData",
         back_populates="dashboard",
         cascade="all, delete-orphan",
@@ -108,7 +121,7 @@ class Dashboard(Base):
     )
 
     # Связь с фильтрами
-    filters: Mapped[list["Filter"]] = relationship(
+    filters: Mapped[list[Filter]] = relationship(
         "Filter",
         secondary="dashboard_filters",
         back_populates="dashboards",
@@ -116,7 +129,7 @@ class Dashboard(Base):
     )
 
     # Связь с настройками обработки (один-к-одному)
-    processing_config: Mapped["ProcessingConfig"] = relationship(
+    processing_config: Mapped[ProcessingConfig] = relationship(
         "ProcessingConfig",
         back_populates="dashboard",
         cascade="all, delete-orphan",
@@ -125,7 +138,7 @@ class Dashboard(Base):
     )
 
     # Связь с логами обработки
-    processing_logs: Mapped[list["ProcessingLog"]] = relationship(
+    processing_logs: Mapped[list[ProcessingLog]] = relationship(
         "ProcessingLog",
         back_populates="dashboard",
         cascade="all, delete-orphan",

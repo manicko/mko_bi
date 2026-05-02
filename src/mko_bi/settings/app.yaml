@@ -57,9 +57,6 @@ charts:
       t: 50
       b: 50
 
-api:
-  base_url: "http://localhost:8000"
-
 cors_origins:
   - "https://example.com"
   - "https://app.example.com"

@@ -35,10 +35,10 @@ def create_app() -> FastAPI:
     # Создаем приложение
     config = get_config()
     application = FastAPI(
-        title=config.APP_NAME,
+        title=config.app_name,
         description="BI Dashboard System API",
         version="1.0.0",
-        debug=config.DEBUG,
+        debug=config.debug,
         docs_url="/docs",
         redoc_url="/redoc",
     )
