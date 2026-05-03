@@ -7,6 +7,7 @@ from uuid import uuid4, UUID
 from sqlalchemy import (
     Column,
     DateTime,
+    Enum,
     ForeignKey,
     Index,
     JSON,
@@ -18,6 +19,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mko_bi.db.base import Base
+from mko_bi.models.user_roles import FilterTypeEnum
 
 
 class Filter(Base):
@@ -42,8 +44,8 @@ class Filter(Base):
         unique=True,
     )
 
-    type: Mapped[str] = mapped_column(
-        String(50),
+    type: Mapped[FilterTypeEnum] = mapped_column(
+        Enum(FilterTypeEnum, name="filter_type"),
         nullable=False,
     )
 
@@ -68,7 +70,7 @@ class Filter(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<Filter id={self.id} name={self.name} type={self.type}>"
+        return f"<Filter id={self.id} name={self.name} type={self.type.value}>"
 
     def __str__(self) -> str:
         return self.name

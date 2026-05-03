@@ -8,9 +8,10 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     DateTime,
+    Enum,
     ForeignKey,
-    String,
     JSON,
+    String,
     text,
     UniqueConstraint,
 )
@@ -18,6 +19,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mko_bi.db.base import Base
+from mko_bi.models.user_roles import GraphTypeEnum
 
 if TYPE_CHECKING:
     from mko_bi.db.models.dashboard import Dashboard
@@ -51,8 +53,8 @@ class Graph(Base):
         nullable=False,
     )
 
-    type: Mapped[str] = mapped_column(
-        String(50),
+    type: Mapped[GraphTypeEnum] = mapped_column(
+        Enum(GraphTypeEnum, name="graph_type"),
         nullable=False,
     )
 
@@ -62,13 +64,13 @@ class Graph(Base):
         default=dict,
     )
 
-    dimensions: Mapped[list[object]] = mapped_column(
+    dimensions: Mapped[list[str]] = mapped_column(
         JSON,
         nullable=False,
         default=list,
     )
 
-    metrics: Mapped[list[object]] = mapped_column(
+    metrics: Mapped[list[str]] = mapped_column(
         JSON,
         nullable=False,
         default=list,
@@ -101,7 +103,7 @@ class Graph(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<Graph id={self.id} name={self.name} type={self.type}>"
+        return f"<Graph id={self.id} name={self.name} type={self.type.value}>"
 
     def __str__(self) -> str:
-        return f"{self.name} ({self.type})"
+        return f"{self.name} ({self.type.value})"

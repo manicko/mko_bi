@@ -1,13 +1,11 @@
 """Тесты для репозиториев (UserRepository, DashboardRepository, AccessRepository)."""
 
-import pytest
 from unittest.mock import MagicMock, AsyncMock, patch
 from uuid import uuid4
 
-from mko_bi.db.repositories import user_repo, dashboard_repo, access_repo
+from mko_bi.db.repositories import user_repo, dashboard_repo
 from mko_b_i.db.models import user as user_model
 from mko_b_i.db.models import dashboard as dashboard_model
-from mko_b_i.db.models import access as access_model
 
 
 class TestUserRepository:

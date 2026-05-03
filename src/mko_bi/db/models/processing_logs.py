@@ -5,6 +5,7 @@ from uuid import uuid4, UUID
 
 from sqlalchemy import (
     DateTime,
+    Enum,
     ForeignKey,
     String,
     text,
@@ -13,6 +14,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mko_bi.db.base import Base
+from mko_bi.models.user_roles import ProcessingStatusEnum
 
 
 class ProcessingLog(Base):
@@ -37,8 +39,8 @@ class ProcessingLog(Base):
         nullable=True,
     )
 
-    status: Mapped[str] = mapped_column(
-        String(50),
+    status: Mapped[ProcessingStatusEnum] = mapped_column(
+        Enum(ProcessingStatusEnum, name="processing_status"),
         nullable=False,
     )
 
@@ -65,7 +67,7 @@ class ProcessingLog(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<ProcessingLog id={self.id} status={self.status}>"
+        return f"<ProcessingLog id={self.id} status={self.status.value}>"
 
     def __str__(self) -> str:
-        return f"ProcessingLog {self.id} - {self.status}"
+        return f"ProcessingLog {self.id} - {self.status.value}"

@@ -162,7 +162,7 @@ C:\py_exp\mko_bi
 │   ├── DATABASES_AUDIT_REPORT_03.md
 │   ├── DB
 │   │   ├── 001_setup_alembic.md
-│   │   ├── 002_async_db_support.md
+│   │   ├── 002_async_db_support_DONE.md
 │   │   ├── 003_alembic_async_config.md
 │   │   ├── 004_fix_timestamp_timezone.md
 │   │   ├── 005_create_dashboard_filters_table.md
