@@ -4,7 +4,9 @@ C:\py_exp\mko_bi
 │   ├── README
 │   ├── script.py.mako
 │   └── versions
+│       ├── 2aa835fe1fac_add_composite_index_on_aggregated_data.py
 │       ├── 57f43a5c499d_change_json_to_jsonb_for_postgresql.py
+│       ├── 840a99edb818_standardize_index_naming.py
 │       └── e86f3c8f7324_initial_migration.py
 ├── alembic.ini
 ├── bidb_schema.sql
@@ -90,8 +92,6 @@ C:\py_exp\mko_bi
 │       │   │   ├── processing_log_repo.py
 │       │   │   └── user_repo.py
 │       │   └── session.py
-│       ├── Docerfile
-│       ├── docker-compose.yml
 │       ├── interfaces
 │       │   ├── repository_interfaces.py
 │       │   └── service_interfaces.py
@@ -130,6 +130,7 @@ C:\py_exp\mko_bi
 ├── TASK_TEMPLATE.md
 ├── TASKS.md
 ├── test_output.txt
+├── test_results.txt
 ├── tests
 │   ├── conftest.py
 │   ├── services
@@ -159,15 +160,6 @@ C:\py_exp\mko_bi
 │   └── tests
 ├── TODO
 │   ├── DB
-│   │   ├── 001_setup_alembic.md
-│   │   ├── 002_async_db_support_DONE.md
-│   │   ├── 003_alembic_async_config_DONE.md
-│   │   ├── 004_fix_timestamp_timezone_DONE.md
-│   │   ├── 005_create_dashboard_filters_table_DONE.md
-│   │   ├── 006_fix_json_jsonb_types_DONE.md
-│   │   ├── 007_fix_is_active_not_null.md
-│   │   ├── 008_setup_test_database.md
-│   │   ├── 009_add_composite_index.md
 │   │   ├── 010_standardize_index_naming.md
 │   │   └── README.md
 │   ├── DEV
