@@ -8,7 +8,7 @@ IMPLEMENT:
 
 1. Создать базу bidb_test:
    - set "PGPASSWORD=1234" & psql -h localhost -p 5432 -U postgres -c "CREATE DATABASE bidb_test;"
-2. Обновить conftest.py:
+2. Обновить conftest.py и тесты на использование созданной базы:
    - Использовать async engine (asyncpg) для тестов
    - Настроить применение миграций Alembic перед тестами (вместо create_all)
    - Обновить clean_db fixture для очистки всех таблиц
