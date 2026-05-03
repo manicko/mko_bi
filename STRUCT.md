@@ -94,7 +94,8 @@ C:\py_exp\mko_bi
 │       │   │   ├── processing_config_repo.py
 │       │   │   ├── processing_log_repo.py
 │       │   │   └── user_repo.py
-│       │   └── session.py
+│       │   ├── session.py
+│       │   └── starter.py
 │       ├── interfaces
 │       │   ├── repository_interfaces.py
 │       │   └── service_interfaces.py
@@ -146,6 +147,7 @@ C:\py_exp\mko_bi
 │   ├── test_data_api.py
 │   ├── test_data_loader.py
 │   ├── test_data_processing.py
+│   ├── test_db_starter.py
 │   ├── test_deps.py
 │   ├── test_models.py
 │   ├── test_new_models.py
@@ -165,7 +167,8 @@ C:\py_exp\mko_bi
 │   ├── DB
 │   ├── DEV
 │   │   ├── TASK_DB_REPRODUCER-01.md
-│   │   └── TASK_DB_REPRODUCER-02.md
+│   │   ├── TASK_DB_REPRODUCER-02.md
+│   │   └── TASK_DB_REPRODUCER_MAIN.md
 │   ├── TASK_001_db_structure_audit.md
 │   ├── TASK_001_db_structure_module_dev.md
 │   ├── TASK_031_audit.md
