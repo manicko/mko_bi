@@ -24,7 +24,9 @@
 * Logging: **Python logging**
 * Env/deps: **uv**
 * temp files - platformdirs
-
+* SQLAlchemy (async)
+* alembic для миграций
+* asyncpg драйвер
 ---
 
 ## 3. Core Entities
@@ -85,9 +87,17 @@
 * auth → JWT
 * все API защищены
 
-
 ---
-## 6. Data Flow
+## 6. Security & ограничения
+
+* Для upload endpoints должен использоваться rate limiting
+* Необходимо ограничение максимального размера загружаемых CSV-файлов
+* Обязательна проверка MIME-type загружаемых файлов (`text/csv`, `application/gzip`)
+* Все SQL-запросы должны выполняться через parameterized queries (SQLAlchemy ORM/Core)
+* Запрещено формирование SQL через string interpolation
+* Временные файлы должны удаляться после обработки
+---
+## 7. Data Flow
 
 1. Upload CSV / CSV.gz во временную папку пользователя platformdirs
 2. Parse (Polars)
@@ -99,7 +109,7 @@
 
 ---
 
-## 7. Data Upload
+## 8. Data Upload
 
 * формат: `.csv`, `.csv.gz`
 * кодировка `UTF-8`
@@ -112,7 +122,7 @@
 
 ---
 
-## 8. Data Processing
+## 9. Data Processing
 
 * триггер: upload файла
 * pipeline:
@@ -129,17 +139,17 @@
 
 ---
 
-## 9. Data Storage
+## 10. Data Storage
 
 * хранится только агрегированное
 * структура:
-  * отдельные таблицы/схемы per dashboard
+   единая таблица с данными графиков всех дашбордов с ипользованием JSONB 
 * данные общие (не зависят от пользователя)
 
 ---
 
 
-## 10. Dashboard Layer (Dash)
+## 11. Dashboard Layer (Dash)
 
 * читает агрегаты из backend/API
 * строит графики через Plotly
@@ -147,7 +157,7 @@
 
 ---
 
-## 11. Dashboards
+## 12. Dashboards
 
 * задаются админом (config-driven)
 * каждый дашборд:
@@ -169,7 +179,7 @@
 
 ---
 
-## 12. Filters
+## 13. Filters
 
 * глобальные:
   * year
@@ -180,7 +190,7 @@
 
 ---
 
-## 13. API Responsibilities (FastAPI)
+## 14. API Responsibilities (FastAPI)
 
 * auth (login)
 * users CRUD (admin only)
@@ -192,16 +202,16 @@
 
 ---
 
-## 14. Access Control
+## 15. Access Control
 
 * проверка на каждом запросе
 * пользователь видит только свои dashboards
 
 ---
 
-## 15. Database Schema (PostgreSQL)
+## 16. Database Schema (PostgreSQL)
 
-### 15.1 Core Tables
+### 16.1 Core Tables
 
 #### `users` - Пользователи системы
 ```sql
@@ -315,6 +325,7 @@ aggregated_data (
     metrics         JSONB NOT NULL   -- значения метрик
 );
 ```
+
 - 1 строка = 1 точка графика
 - `dims`: ключ-значение для фильтров и осей
 - `metrics`: ключ-значение для отображения
@@ -331,16 +342,19 @@ processing_logs (
 );
 ```
 
-### 15.2 Indexes
+### 16.2 Indexes
 ```sql
 CREATE INDEX idx_agg_graph_id ON aggregated_data(graph_id);
 CREATE INDEX idx_agg_dashboard_id ON aggregated_data(dashboard_id);
 CREATE INDEX idx_agg_dims_gin ON aggregated_data USING GIN (dims);
 CREATE INDEX idx_access_user ON dashboard_access(user_id);
 CREATE INDEX idx_access_dashboard ON dashboard_access(dashboard_id);
+-- Для graphs (частый запрос всех графиков дашборда)
+CREATE INDEX idx_graphs_dashboard ON graphs(dashboard_id);
+
 ```
 
-### 15.3 Data Principles
+### 16.3 Data Principles
 - **Гибкость**: JSONB для dims/metrics — поддержка любых данных без миграций
 - **Производительность**: GIN индекс для фильтрации по dims
 - **Безопасность**: ON DELETE CASCADE для связанных данных
@@ -348,7 +362,7 @@ CREATE INDEX idx_access_dashboard ON dashboard_access(dashboard_id);
 
 ---
 
-## 16. Dashboard Layer (Dash)
+## 17. Dashboard Layer (Dash)
 
 * читает агрегаты из backend/API
 * строит графики через Plotly
@@ -356,15 +370,64 @@ CREATE INDEX idx_access_dashboard ON dashboard_access(dashboard_id);
 
 ---
 
-## 17. UI (минимум)
+## 18. UI (минимум)
 
 * login page
 * dashboard list
 * dashboard page (graphs + filters)
 
 ---
+## 19. Архитектура интеграции Dash + FastAPI
 
-## 18. Logging
+Dash встроен внутрь FastAPI-приложения.
+
+### Архитектура
+
+* FastAPI является основной точкой входа приложения
+* Dash подключается как встроенное sub-application
+* Аутентификация и проверка доступов выполняются только через FastAPI
+* Dash не обращается к PostgreSQL напрямую
+* Dash получает данные через внутренний service layer / API FastAPI
+
+---
+
+### Deployment
+
+* Единое приложение
+* Единый слой подключения к PostgreSQL
+* Единая система аутентификации
+* Один backend-сервис для API и Dash
+
+---
+
+### Поток работы
+
+```text
+Browser
+   ↓
+FastAPI
+   ├── REST API
+   ├── Auth / JWT
+   ├── Upload API
+   ├── Data API
+   └── Embedded Dash
+           ↓
+      Service Layer
+           ↓
+      PostgreSQL
+```
+
+---
+
+### Основные принципы
+
+1. Вся бизнес-логика находится в FastAPI/service layer
+2. Dash отвечает только за UI и визуализацию
+3. Проверка прав доступа выполняется до получения данных
+4. Dash не содержит собственной логики аутентификации
+5. Все запросы к данным проходят через backend-сервис
+
+## 20. Logging
 
 логируются:
 
@@ -381,7 +444,7 @@ CREATE INDEX idx_access_dashboard ON dashboard_access(dashboard_id);
 
 ---
 
-## 19. Testing
+## 21. Testing
 
 * pytest
 * покрытие:
