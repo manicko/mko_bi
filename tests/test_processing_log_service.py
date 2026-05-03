@@ -21,7 +21,7 @@ from mko_bi.db.models.processing_logs import ProcessingLog as ProcessingLogModel
 class TestCreateLog:
     """Тесты для функции create_log."""
 
-    def test_create_log_success(self, db_session):
+    async def test_create_log_success(self, async_db_session):
         """Успешное создание лога обработки."""
         log_create = ProcessingLogCreate(
             dashboard_id=UUID("12345678-1234-5678-1234-567812345678"),
@@ -40,7 +40,7 @@ class TestCreateLog:
             mock_log.finished_at = None
             mock_repo.create.return_value = mock_log
 
-            result = create_log(db_session, log_create)
+            result = create_log(async_db_session, log_create)
 
             assert isinstance(result, ProcessingLogRead)
             assert result.id == mock_log.id
@@ -49,7 +49,7 @@ class TestCreateLog:
             assert result.message == log_create.message
             mock_repo.create.assert_called_once()
 
-    def test_create_log_without_dashboard(self, db_session):
+    async def test_create_log_without_dashboard(self, async_db_session):
         """Создание лога обработки без привязки к дашборду."""
         log_create = ProcessingLogCreate(
             status="started",
@@ -66,7 +66,7 @@ class TestCreateLog:
             mock_log.finished_at = None
             mock_repo.create.return_value = mock_log
 
-            result = create_log(db_session, log_create)
+            result = create_log(async_db_session, log_create)
 
             assert isinstance(result, ProcessingLogRead)
             assert result.dashboard_id is None
@@ -76,7 +76,7 @@ class TestCreateLog:
 class TestUpdateLogStatus:
     """Тесты для функции update_log_status."""
 
-    def test_update_log_status_success(self, db_session):
+    async def test_update_log_status_success(self, async_db_session):
         """Успешное обновление статуса лога."""
         log_id = UUID("12345678-1234-5678-1234-567812345678")
         status_update = ProcessingLogUpdate(
@@ -95,14 +95,14 @@ class TestUpdateLogStatus:
             mock_log.finished_at = status_update.finished_at
             mock_repo.update.return_value = mock_log
 
-            result = update_log_status(db_session, log_id, status_update)
+            result = update_log_status(async_db_session, log_id, status_update)
 
             assert isinstance(result, ProcessingLogRead)
             assert result.id == log_id
             assert result.status == "success"
             mock_repo.update.assert_called_once()
 
-    def test_update_log_status_not_found(self, db_session):
+    async def test_update_log_status_not_found(self, async_db_session):
         """Обновление несуществующего лога."""
         log_id = UUID("12345678-1234-5678-1234-567812345678")
         status_update = ProcessingLogUpdate(status="success")
@@ -110,12 +110,12 @@ class TestUpdateLogStatus:
         with patch('mko_bi.services.processing_log_service.ProcessingLogRepository') as mock_repo:
             mock_repo.update.return_value = None
 
-            result = update_log_status(db_session, log_id, status_update)
+            result = update_log_status(async_db_session, log_id, status_update)
 
             assert result is None
             mock_repo.update.assert_called_once()
 
-    def test_update_log_status_auto_finished_at(self, db_session):
+    async def test_update_log_status_auto_finished_at(self, async_db_session):
         """Автоматическое заполнение finished_at при успехе/ошибке."""
         log_id = UUID("12345678-1234-5678-1234-567812345678")
         status_update = ProcessingLogUpdate(status="success")
@@ -134,7 +134,7 @@ class TestUpdateLogStatus:
             mock_log.finished_at = mock_now
             mock_repo.update.return_value = mock_log
 
-            result = update_log_status(db_session, log_id, status_update)
+            result = update_log_status(async_db_session, log_id, status_update)
 
             assert result.finished_at == mock_now
             # Проверяем, что finished_at был передан в update
@@ -146,7 +146,7 @@ class TestUpdateLogStatus:
 class TestGetLog:
     """Тесты для функции get_log."""
 
-    def test_get_log_success(self, db_session):
+    async def test_get_log_success(self, async_db_session):
         """Успешное получение лога."""
         log_id = UUID("12345678-1234-5678-1234-567812345678")
 
@@ -160,29 +160,29 @@ class TestGetLog:
             mock_log.finished_at = None
             mock_repo.get.return_value = mock_log
 
-            result = get_log(db_session, log_id)
+            result = get_log(async_db_session, log_id)
 
             assert isinstance(result, ProcessingLogRead)
             assert result.id == log_id
-            mock_repo.get.assert_called_once_with(db_session, log_id)
+            mock_repo.get.assert_called_once_with(async_db_session, log_id)
 
-    def test_get_log_not_found(self, db_session):
+    async def test_get_log_not_found(self, async_db_session):
         """Получение несуществующего лога."""
         log_id = UUID("12345678-1234-5678-1234-567812345678")
 
         with patch('mko_bi.services.processing_log_service.ProcessingLogRepository') as mock_repo:
             mock_repo.get.return_value = None
 
-            result = get_log(db_session, log_id)
+            result = get_log(async_db_session, log_id)
 
             assert result is None
-            mock_repo.get.assert_called_once_with(db_session, log_id)
+            mock_repo.get.assert_called_once_with(async_db_session, log_id)
 
 
 class TestGetLogs:
     """Тесты для функции get_logs."""
 
-    def test_get_logs_with_filters(self, db_session):
+    async def test_get_logs_with_filters(self, async_db_session):
         """Получение логов с фильтрацией."""
         dashboard_id = UUID("12345678-1234-5678-1234-567812345678")
 
@@ -208,7 +208,7 @@ class TestGetLogs:
             mock_repo.get_all.return_value = mock_logs
 
             result = get_logs(
-                db_session,
+                async_db_session,
                 dashboard_id=dashboard_id,
                 status="success",
                 skip=0,
@@ -218,9 +218,9 @@ class TestGetLogs:
             assert len(result) == 1
             assert result[0].dashboard_id == dashboard_id
             assert result[0].status == "success"
-            mock_repo.get_all.assert_called_once_with(db_session)
+            mock_repo.get_all.assert_called_once_with(async_db_session)
 
-    def test_get_logs_without_filters(self, db_session):
+    async def test_get_logs_without_filters(self, async_db_session):
         """Получение всех логов без фильтрации."""
         with patch('mko_bi.services.processing_log_service.ProcessingLogRepository') as mock_repo:
             mock_logs = [
@@ -238,7 +238,7 @@ class TestGetLogs:
             
             mock_repo.get_all.return_value = mock_logs
 
-            result = get_logs(db_session, skip=0, limit=10)
+            result = get_logs(async_db_session, skip=0, limit=10)
 
             assert len(result) == 3
-            mock_repo.get_all.assert_called_once_with(db_session)
+            mock_repo.get_all.assert_called_once_with(async_db_session)

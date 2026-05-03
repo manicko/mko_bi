@@ -15,22 +15,22 @@ from mko_bi.db.models import aggregated_data as aggregated_data_model
 class TestStorageManagerInit:
     """Тесты для инициализации StorageManager."""
 
-    def test_init_with_db_session(self, db_session):
+    async def test_init_with_async_db_session(self, async_db_session):
         """Тест инициализации с сессией базы данных."""
-        manager = StorageManager(db_session)
-        assert manager.db == db_session
+        manager = StorageManager(async_db_session)
+        assert manager.db == async_db_session
 
-    def test_init_stores_db_reference(self, db_session):
+    async def test_init_stores_db_reference(self, async_db_session):
         """Тест сохранения ссылки на сессию базы данных."""
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
         assert hasattr(manager, 'db')
-        assert manager.db is db_session
+        assert manager.db is async_db_session
 
 
 class TestSaveAggregates:
     """Тесты для метода save_aggregates."""
 
-    def test_save_single_aggregate(self, db_session):
+    async def test_save_single_aggregate(self, async_db_session):
         """Тест сохранения одного агрегата."""
         # Создаем дашборд и график
         from mko_bi.db.models import dashboard as dashboard_model
@@ -39,9 +39,9 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
         graph = graphs_model.Graph(
             dashboard_id=dashboard.id,
@@ -51,12 +51,12 @@ class TestSaveAggregates:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        db_session.add(graph)
-        db_session.commit()
-        db_session.refresh(graph)
+        await async_db_session.add(graph)
+        await async_db_session.commit()
+        await async_db_session.refresh(graph)
 
         # Создаем StorageManager и сохраняем агрегат
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
         aggregates = [
             {
                 "graph_id": graph.id,
@@ -68,7 +68,7 @@ class TestSaveAggregates:
         saved = manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
         assert saved == 1
 
-    def test_save_multiple_aggregates(self, db_session):
+    async def test_save_multiple_aggregates(self, async_db_session):
         """Тест сохранения нескольких агрегатов."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -76,9 +76,9 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
         graph = graphs_model.Graph(
             dashboard_id=dashboard.id,
@@ -88,11 +88,11 @@ class TestSaveAggregates:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        db_session.add(graph)
-        db_session.commit()
-        db_session.refresh(graph)
+        await async_db_session.add(graph)
+        await async_db_session.commit()
+        await async_db_session.refresh(graph)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
         aggregates = [
             {
                 "graph_id": graph.id,
@@ -114,7 +114,7 @@ class TestSaveAggregates:
         saved = manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
         assert saved == 3
 
-    def test_save_aggregates_multiple_graphs(self, db_session):
+    async def test_save_aggregates_multiple_graphs(self, async_db_session):
         """Тест сохранения агрегатов для нескольких графиков."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -122,9 +122,9 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar", "line"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
         graph1 = graphs_model.Graph(
             dashboard_id=dashboard.id,
@@ -142,12 +142,12 @@ class TestSaveAggregates:
             dimensions=["year"],
             metrics=["sales"],
         )
-        db_session.add_all([graph1, graph2])
-        db_session.commit()
-        db_session.refresh(graph1)
-        db_session.refresh(graph2)
+        async_db_session.add_all([graph1, graph2])
+        await async_db_session.commit()
+        await async_db_session.refresh(graph1)
+        await async_db_session.refresh(graph2)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
         aggregates = [
             {
                 "graph_id": graph1.id,
@@ -164,7 +164,7 @@ class TestSaveAggregates:
         saved = manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
         assert saved == 2
 
-    def test_save_empty_aggregates(self, db_session):
+    async def test_save_empty_aggregates(self, async_db_session):
         """Тест сохранения пустого списка агрегатов."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -172,14 +172,14 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
         saved = manager.save_aggregates(dashboard.id, [], clear_old=True)
         assert saved == 0
 
-    def test_save_aggregates_with_clear_old(self, db_session):
+    async def test_save_aggregates_with_clear_old(self, async_db_session):
         """Тест сохранения с очисткой старых данных."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -187,9 +187,9 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
         graph = graphs_model.Graph(
             dashboard_id=dashboard.id,
@@ -199,11 +199,11 @@ class TestSaveAggregates:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        db_session.add(graph)
-        db_session.commit()
-        db_session.refresh(graph)
+        await async_db_session.add(graph)
+        await async_db_session.commit()
+        await async_db_session.refresh(graph)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
 
         # Сохраняем первые данные
         aggregates1 = [
@@ -217,7 +217,7 @@ class TestSaveAggregates:
         assert saved1 == 1
 
         # Проверяем, что данные сохранены
-        query = db_session.query(aggregated_data_model.AggregatedData).filter(
+        query = async_db_session.query(aggregated_data_model.AggregatedData).filter(
             aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
         )
         assert query.count() == 1
@@ -239,7 +239,7 @@ class TestSaveAggregates:
         assert agg.dims == {"category": "B"}
         assert agg.metrics == {"revenue": 2000}
 
-    def test_save_aggregates_without_clear_old(self, db_session):
+    async def test_save_aggregates_without_clear_old(self, async_db_session):
         """Тест сохранения без очистки старых данных."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -247,9 +247,9 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
         graph = graphs_model.Graph(
             dashboard_id=dashboard.id,
@@ -259,11 +259,11 @@ class TestSaveAggregates:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        db_session.add(graph)
-        db_session.commit()
-        db_session.refresh(graph)
+        await async_db_session.add(graph)
+        await async_db_session.commit()
+        await async_db_session.refresh(graph)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
 
         # Сохраняем первые данные
         aggregates1 = [
@@ -288,12 +288,12 @@ class TestSaveAggregates:
         assert saved2 == 1
 
         # Проверяем, что обе записи сохранены
-        query = db_session.query(aggregated_data_model.AggregatedData).filter(
+        query = async_db_session.query(aggregated_data_model.AggregatedData).filter(
             aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
         )
         assert query.count() == 2
 
-    def test_save_aggregates_upsert(self, db_session):
+    async def test_save_aggregates_upsert(self, async_db_session):
         """Тест обновления существующих данных (upsert)."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -301,9 +301,9 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
         graph = graphs_model.Graph(
             dashboard_id=dashboard.id,
@@ -313,11 +313,11 @@ class TestSaveAggregates:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        db_session.add(graph)
-        db_session.commit()
-        db_session.refresh(graph)
+        await async_db_session.add(graph)
+        await async_db_session.commit()
+        await async_db_session.refresh(graph)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
 
         # Сохраняем первые данные
         aggregates1 = [
@@ -342,7 +342,7 @@ class TestSaveAggregates:
         assert saved2 == 1
 
         # Проверяем, что данные обновлены
-        query = db_session.query(aggregated_data_model.AggregatedData).filter(
+        query = async_db_session.query(aggregated_data_model.AggregatedData).filter(
             aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
         )
         assert query.count() == 1
@@ -350,7 +350,7 @@ class TestSaveAggregates:
         assert agg.dims == {"category": "A"}
         assert agg.metrics == {"revenue": 1500}
 
-    def test_save_aggregates_invalid_data(self, db_session):
+    async def test_save_aggregates_invalid_data(self, async_db_session):
         """Тест сохранения с невалидными данными."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -358,10 +358,10 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
         aggregates = [
             {
                 "graph_id": uuid4(),
@@ -373,7 +373,7 @@ class TestSaveAggregates:
         with pytest.raises(ValueError, match="dims должен быть словарем"):
             manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
 
-    def test_save_aggregates_missing_fields(self, db_session):
+    async def test_save_aggregates_missing_fields(self, async_db_session):
         """Тест сохранения с отсутствующими обязательными полями."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -381,10 +381,10 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
         aggregates = [
             {
                 "graph_id": uuid4(),
@@ -396,7 +396,7 @@ class TestSaveAggregates:
         with pytest.raises(ValueError, match="не содержит обязательное поле"):
             manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
 
-    def test_save_aggregates_nonexistent_graph(self, db_session):
+    async def test_save_aggregates_nonexistent_graph(self, async_db_session):
         """Тест сохранения для несуществующего графика."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -404,11 +404,11 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
         aggregates = [
             {
                 "graph_id": uuid4(),  # Несуществующий график
@@ -424,7 +424,7 @@ class TestSaveAggregates:
 class TestUpsertAggregate:
     """Тесты для метода upsert_aggregate."""
 
-    def test_upsert_new_aggregate(self, db_session):
+    async def test_upsert_new_aggregate(self, async_db_session):
         """Тест вставки нового агрегата."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -432,9 +432,9 @@ class TestUpsertAggregate:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
         graph = graphs_model.Graph(
             dashboard_id=dashboard.id,
@@ -444,11 +444,11 @@ class TestUpsertAggregate:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        db_session.add(graph)
-        db_session.commit()
-        db_session.refresh(graph)
+        await async_db_session.add(graph)
+        await async_db_session.commit()
+        await async_db_session.refresh(graph)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
         manager.upsert_aggregate(
             dashboard_id=dashboard.id,
             graph_id=graph.id,
@@ -457,7 +457,7 @@ class TestUpsertAggregate:
         )
 
         # Проверяем, что запись была вставлена
-        query = db_session.query(aggregated_data_model.AggregatedData).filter(
+        query = async_db_session.query(aggregated_data_model.AggregatedData).filter(
             aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
         )
         assert query.count() == 1
@@ -465,7 +465,7 @@ class TestUpsertAggregate:
         assert agg.dims == {"category": "A"}
         assert agg.metrics == {"revenue": 1000}
 
-    def test_upsert_existing_aggregate(self, db_session):
+    async def test_upsert_existing_aggregate(self, async_db_session):
         """Тест обновления существующего агрегата."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -473,9 +473,9 @@ class TestUpsertAggregate:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
         graph = graphs_model.Graph(
             dashboard_id=dashboard.id,
@@ -485,11 +485,11 @@ class TestUpsertAggregate:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        db_session.add(graph)
-        db_session.commit()
-        db_session.refresh(graph)
+        await async_db_session.add(graph)
+        await async_db_session.commit()
+        await async_db_session.refresh(graph)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
 
         # Вставляем первую запись
         manager.upsert_aggregate(
@@ -508,14 +508,14 @@ class TestUpsertAggregate:
         )
 
         # Проверяем, что данные обновлены
-        query = db_session.query(aggregated_data_model.AggregatedData).filter(
+        query = async_db_session.query(aggregated_data_model.AggregatedData).filter(
             aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
         )
         assert query.count() == 1
         agg = query.first()
         assert agg.metrics == {"revenue": 1500}
 
-    def test_upsert_invalid_data(self, db_session):
+    async def test_upsert_invalid_data(self, async_db_session):
         """Тест upsert с невалидными данными."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -523,9 +523,9 @@ class TestUpsertAggregate:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
         graph = graphs_model.Graph(
             dashboard_id=dashboard.id,
@@ -535,11 +535,11 @@ class TestUpsertAggregate:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        db_session.add(graph)
-        db_session.commit()
-        db_session.refresh(graph)
+        await async_db_session.add(graph)
+        await async_db_session.commit()
+        await async_db_session.refresh(graph)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
 
         with pytest.raises(ValueError, match="dims и metrics должны быть словарями"):
             manager.upsert_aggregate(
@@ -549,7 +549,7 @@ class TestUpsertAggregate:
                 metrics={"revenue": 1000},
             )
 
-    def test_upsert_nonexistent_graph(self, db_session):
+    async def test_upsert_nonexistent_graph(self, async_db_session):
         """Тест upsert для несуществующего графика."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -557,11 +557,11 @@ class TestUpsertAggregate:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
 
         with pytest.raises(ValueError, match="Графики не найдены"):
             manager.upsert_aggregate(
@@ -575,7 +575,7 @@ class TestUpsertAggregate:
 class TestClearData:
     """Тесты для методов очистки данных."""
 
-    def test_clear_dashboard_data(self, db_session):
+    async def test_clear_dashboard_data(self, async_db_session):
         """Тест очистки всех данных дашборда."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -583,9 +583,9 @@ class TestClearData:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
         graph = graphs_model.Graph(
             dashboard_id=dashboard.id,
@@ -595,11 +595,11 @@ class TestClearData:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        db_session.add(graph)
-        db_session.commit()
-        db_session.refresh(graph)
+        await async_db_session.add(graph)
+        await async_db_session.commit()
+        await async_db_session.refresh(graph)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
 
         # Добавляем данные
         aggregates = [
@@ -617,7 +617,7 @@ class TestClearData:
         manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
 
         # Проверяем, что данные есть
-        query = db_session.query(aggregated_data_model.AggregatedData).filter(
+        query = async_db_session.query(aggregated_data_model.AggregatedData).filter(
             aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
         )
         assert query.count() == 2
@@ -629,7 +629,7 @@ class TestClearData:
         # Проверяем, что данных больше нет
         assert query.count() == 0
 
-    def test_clear_graph_data(self, db_session):
+    async def test_clear_graph_data(self, async_db_session):
         """Тест очистки данных конкретного графика."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -637,9 +637,9 @@ class TestClearData:
             name="Test Dashboard",
             config={"graph_types": ["bar", "line"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
         graph1 = graphs_model.Graph(
             dashboard_id=dashboard.id,
@@ -657,12 +657,12 @@ class TestClearData:
             dimensions=["year"],
             metrics=["sales"],
         )
-        db_session.add_all([graph1, graph2])
-        db_session.commit()
-        db_session.refresh(graph1)
-        db_session.refresh(graph2)
+        async_db_session.add_all([graph1, graph2])
+        await async_db_session.commit()
+        await async_db_session.refresh(graph1)
+        await async_db_session.refresh(graph2)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
 
         # Добавляем данные для обоих графиков
         aggregates = [
@@ -680,7 +680,7 @@ class TestClearData:
         manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
 
         # Проверяем, что данные есть
-        query = db_session.query(aggregated_data_model.AggregatedData).filter(
+        query = async_db_session.query(aggregated_data_model.AggregatedData).filter(
             aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
         )
         assert query.count() == 2
@@ -694,7 +694,7 @@ class TestClearData:
         agg = query.first()
         assert agg.graph_id == graph2.id
 
-    def test_clear_nonexistent_data(self, db_session):
+    async def test_clear_nonexistent_data(self, async_db_session):
         """Тест очистки данных для дашборда без данных."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -702,11 +702,11 @@ class TestClearData:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
         deleted = manager.clear_dashboard_data(dashboard.id)
         assert deleted == 0
 
@@ -714,7 +714,7 @@ class TestClearData:
 class TestGetAggregates:
     """Тесты для метода get_aggregates."""
 
-    def test_get_all_aggregates(self, db_session):
+    async def test_get_all_aggregates(self, async_db_session):
         """Тест получения всех агрегатов дашборда."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -722,9 +722,9 @@ class TestGetAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
         graph = graphs_model.Graph(
             dashboard_id=dashboard.id,
@@ -734,11 +734,11 @@ class TestGetAggregates:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        db_session.add(graph)
-        db_session.commit()
-        db_session.refresh(graph)
+        await async_db_session.add(graph)
+        await async_db_session.commit()
+        await async_db_session.refresh(graph)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
 
         # Добавляем данные
         aggregates = [
@@ -763,7 +763,7 @@ class TestGetAggregates:
         categories = {agg["dims"]["category"] for agg in result}
         assert categories == {"A", "B"}
 
-    def test_get_aggregates_for_graph(self, db_session):
+    async def test_get_aggregates_for_graph(self, async_db_session):
         """Тест получения агрегатов для конкретного графика."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -771,9 +771,9 @@ class TestGetAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar", "line"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
         graph1 = graphs_model.Graph(
             dashboard_id=dashboard.id,
@@ -791,12 +791,12 @@ class TestGetAggregates:
             dimensions=["year"],
             metrics=["sales"],
         )
-        db_session.add_all([graph1, graph2])
-        db_session.commit()
-        db_session.refresh(graph1)
-        db_session.refresh(graph2)
+        async_db_session.add_all([graph1, graph2])
+        await async_db_session.commit()
+        await async_db_session.refresh(graph1)
+        await async_db_session.refresh(graph2)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
 
         # Добавляем данные для обоих графиков
         aggregates = [
@@ -819,7 +819,7 @@ class TestGetAggregates:
         assert result[0]["graph_id"] == graph1.id
         assert result[0]["dims"] == {"category": "A"}
 
-    def test_get_aggregates_empty(self, db_session):
+    async def test_get_aggregates_empty(self, async_db_session):
         """Тест получения агрегатов для пустого дашборда."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -827,11 +827,11 @@ class TestGetAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
         result = manager.get_aggregates(dashboard.id)
         assert result == []
 
@@ -839,7 +839,7 @@ class TestGetAggregates:
 class TestStorageManagerIntegration:
     """Интеграционные тесты для StorageManager."""
 
-    def test_full_save_and_retrieve_flow(self, db_session):
+    async def test_full_save_and_retrieve_flow(self, async_db_session):
         """Тест полного цикла: сохранение и получение данных."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -848,9 +848,9 @@ class TestStorageManagerIntegration:
             name="Test Dashboard",
             config={"graph_types": ["bar", "line"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
         graph1 = graphs_model.Graph(
             dashboard_id=dashboard.id,
@@ -868,12 +868,12 @@ class TestStorageManagerIntegration:
             dimensions=["year"],
             metrics=["sales"],
         )
-        db_session.add_all([graph1, graph2])
-        db_session.commit()
-        db_session.refresh(graph1)
-        db_session.refresh(graph2)
+        async_db_session.add_all([graph1, graph2])
+        await async_db_session.commit()
+        await async_db_session.refresh(graph1)
+        await async_db_session.refresh(graph2)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
 
         # Сохраняем агрегированные данные
         aggregates = [
@@ -949,7 +949,7 @@ class TestStorageManagerIntegration:
         all_aggregates = manager.get_aggregates(dashboard.id)
         assert all_aggregates == []
 
-    def test_batch_insert_performance(self, db_session):
+    async def test_batch_insert_performance(self, async_db_session):
         """Тест пакетной вставки большого количества данных."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -957,9 +957,9 @@ class TestStorageManagerIntegration:
             name="Performance Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
         graph = graphs_model.Graph(
             dashboard_id=dashboard.id,
@@ -969,11 +969,11 @@ class TestStorageManagerIntegration:
             dimensions=["category"],
             metrics=["value"],
         )
-        db_session.add(graph)
-        db_session.commit()
-        db_session.refresh(graph)
+        await async_db_session.add(graph)
+        await async_db_session.commit()
+        await async_db_session.refresh(graph)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
 
         # Создаем много записей
         num_records = 100
@@ -999,7 +999,7 @@ class TestStorageManagerIntegration:
         expected_values = {i * 100 for i in range(num_records)}
         assert values == expected_values
 
-    def test_transaction_rollback_on_error(self, db_session):
+    async def test_transaction_rollback_on_error(self, async_db_session):
         """Тест отката транзакции при ошибке."""
         from mko_bi.db.models import dashboard as dashboard_model
         
@@ -1007,9 +1007,9 @@ class TestStorageManagerIntegration:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        db_session.add(dashboard)
-        db_session.commit()
-        db_session.refresh(dashboard)
+        await async_db_session.add(dashboard)
+        await async_db_session.commit()
+        await async_db_session.refresh(dashboard)
 
         graph = graphs_model.Graph(
             dashboard_id=dashboard.id,
@@ -1019,11 +1019,11 @@ class TestStorageManagerIntegration:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        db_session.add(graph)
-        db_session.commit()
-        db_session.refresh(graph)
+        await async_db_session.add(graph)
+        await async_db_session.commit()
+        await async_db_session.refresh(graph)
 
-        manager = StorageManager(db_session)
+        manager = StorageManager(async_db_session)
 
         # Сначала сохраняем валидные данные
         valid_aggregates = [
