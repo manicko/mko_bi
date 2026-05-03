@@ -7,10 +7,9 @@ from typing import TYPE_CHECKING
 from sqlalchemy import (
     DateTime,
     String,
-    JSON,
     text,
 )
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mko_bi.db.base import Base
@@ -42,7 +41,7 @@ class Layout(Base):
     )
     
     definition: Mapped[dict[str, object]] = mapped_column(
-        JSON,
+        JSONB,
         nullable=False,
         default=dict,
     )

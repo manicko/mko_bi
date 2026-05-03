@@ -1,6 +1,7 @@
 """Common fixtures for tests."""
 
 import os
+import subprocess
 from uuid import uuid4
 
 import pytest
@@ -12,19 +13,21 @@ from sqlalchemy.ext.asyncio import (
 )
 
 # Set required environment variables BEFORE importing any mko_bi modules
-os.environ.setdefault("DB_PASSWORD", "1234")
+# DATABASE_URL is used by alembic/env.py
+os.environ.setdefault("DATABASE_URL", "postgresql://postgres:1234@localhost:5432/bidb_test")
 os.environ.setdefault("JWT_SECRET_KEY", "test_secret_key_change_in_production")
-os.environ.setdefault("DB_HOST", "localhost")
-os.environ.setdefault("DB_PORT", "5432")
-os.environ.setdefault("DB_NAME", "bidb_test")
-os.environ.setdefault("DB_USER", "postgres")
 
 from mko_bi.main import app
 from mko_bi.core.security import hash_password, create_access_token
 from mko_bi.db.repositories.user_repo import UserRepository
 
 # Test PostgreSQL database (async)
-TEST_ASYNC_DB_URL = "postgresql+asyncpg://postgres:1234@localhost:5432/bidb_test"
+# Use DATABASE_URL from environment, convert to asyncpg format
+_db_url = os.environ.get("DATABASE_URL", "postgresql://postgres:1234@localhost:5432/bidb_test")
+if _db_url.startswith("postgresql://"):
+    TEST_ASYNC_DB_URL = _db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+else:
+    TEST_ASYNC_DB_URL = _db_url
 
 # Import models for metadata registration
 from mko_bi.db.models import (  # noqa: E402, F401
@@ -42,8 +45,17 @@ from mko_bi.db.models import (  # noqa: E402, F401
 
 def pytest_sessionstart(session):
     """Setup before test session starts."""
-    # Migrations assumed to be already applied
-    pass
+    # Run alembic migrations to ensure test DB has correct schema
+    # The migration uses IF NOT EXISTS for idempotency
+    result = subprocess.run(
+        ["uv", "run", "alembic", "upgrade", "head"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"Failed to apply migrations: {result.stderr}\n{result.stdout}"
+        )
 
 
 @pytest.fixture(scope="session")
@@ -80,6 +92,10 @@ async def async_db_session(async_test_engine, async_session_maker):
         if table_names:
             tables_sql = ", ".join(f'"{table}"' for table in table_names)
             await conn.execute(text(f"TRUNCATE TABLE {tables_sql} CASCADE"))
+            # Reset sequences after TRUNCATE
+            await conn.execute(text(
+                "ALTER SEQUENCE IF EXISTS aggregated_data_id_seq RESTART WITH 1"
+            ))
 
 
 @pytest.fixture

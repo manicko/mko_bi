@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from logging.config import fileConfig
 
 from sqlalchemy import Connection, pool
@@ -32,13 +33,17 @@ from mko_bi.db.base import Base  # noqa: E402
 
 target_metadata = Base.metadata
 
-# Get database URL from app config
-from mko_bi.config import get_config  # noqa: E402
-app_config = get_config()
-db_url = app_config.DATABASE_URL
-if db_url.startswith("postgresql://"):
+# Get database URL from environment or app config
+db_url = os.environ.get("DATABASE_URL")
+if db_url is None:
+    from mko_bi.config import get_config
+    app_config = get_config()
+    db_url = app_config.DATABASE_URL
+
+if db_url and db_url.startswith("postgresql://"):
     db_url = db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
-config.set_main_option("sqlalchemy.url", db_url)
+if db_url:
+    config.set_main_option("sqlalchemy.url", db_url)
 
 logger = logging.getLogger("alembic.env")
 

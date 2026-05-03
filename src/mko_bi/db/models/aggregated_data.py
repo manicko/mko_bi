@@ -7,7 +7,7 @@ from uuid import UUID
 
 from sqlalchemy import (
     ForeignKey,
-    Integer,
+    BigInteger,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.engine.interfaces import Dialect
@@ -46,7 +46,7 @@ class AggregatedData(Base):
     __tablename__ = "aggregated_data"
 
     id: Mapped[int] = mapped_column(
-        Integer,
+        BigInteger,
         primary_key=True,
         autoincrement=True,
         nullable=False,
