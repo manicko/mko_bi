@@ -1,7 +1,7 @@
 # Техническое задание на модуль воспроизведения структуры базы данных
 
 ## 1. Имя и расположение модуля
-Модуль должен располагаться по пути: `src/db/starter.py`
+Модуль должен располагаться по пути: `src/mko_bi/db/starter.py`
 Модуль должен быть вызван из `main.py` в событии `lifespan` (startup).
 
 ## 2. Функциональные требования
@@ -107,12 +107,14 @@
 ```python
 from src.db.starter import init_db
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Инициализация БД при старте
     await init_db()
     yield
     # Здесь можно добавить очистку при shutdown, если потребуется
+
 
 app = FastAPI(lifespan=lifespan)
 ```
