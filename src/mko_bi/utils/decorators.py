@@ -3,7 +3,6 @@
 Предоставляет декораторы для замера времени, повторных попыток,
 логирования и проверки прав доступа.
 """
-# type: ignore[valid-type, name-defined, misc]  # PEP 695 syntax not yet supported by mypy
 
 import functools
 import logging
@@ -15,8 +14,11 @@ from mko_bi.models.user_roles import UserRoleEnum
 
 logger = logging.getLogger(__name__)
 
+P = ParamSpec("P")
+T = TypeVar("T")
 
-def timing[P: ParamSpec, T: TypeVar](func: Callable[P, T]) -> Callable[P, T]:
+
+def timing(func: Callable[P, T]) -> Callable[P, T]:
     """Декоратор для замера времени выполнения функции.
 
     Логирует время выполнения функции в миллисекундах.
@@ -34,7 +36,7 @@ def timing[P: ParamSpec, T: TypeVar](func: Callable[P, T]) -> Callable[P, T]:
     """
 
     @functools.wraps(func)
-    def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+    def wrapper(*args: Any, **kwargs: Any) -> T:
         start = time.perf_counter()
         result = func(*args, **kwargs)
         elapsed = (time.perf_counter() - start) * 1000
@@ -46,7 +48,7 @@ def timing[P: ParamSpec, T: TypeVar](func: Callable[P, T]) -> Callable[P, T]:
     return cast(Callable[P, T], wrapper)
 
 
-def retry[P: ParamSpec, T: TypeVar](
+def retry(
     max_attempts: int = 3,
     delay: float = 1.0,
     exceptions: tuple[type[Exception], ...] = (Exception,),
@@ -70,8 +72,8 @@ def retry[P: ParamSpec, T: TypeVar](
 
     def decorator(func: Callable[P, T]) -> Callable[P, T]:
         @functools.wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
-            last_exception = None
+        def wrapper(*args: Any, **kwargs: Any) -> T:
+            last_exception: Exception | None = None
             for attempt in range(1, max_attempts + 1):
                 try:
                     return func(*args, **kwargs)
@@ -93,14 +95,16 @@ def retry[P: ParamSpec, T: TypeVar](
                 func.__name__,
                 last_exception,
             )
-            raise last_exception
+            if last_exception:
+                raise last_exception
+            raise RuntimeError("All attempts failed but no exception was captured")
 
         return cast(Callable[P, T], wrapper)
 
     return decorator
 
 
-def log_execution[P: ParamSpec, T: TypeVar](
+def log_execution(
     log_args: bool = True, log_result: bool = False
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Декоратор для логирования выполнения функции.
@@ -120,7 +124,7 @@ def log_execution[P: ParamSpec, T: TypeVar](
 
     def decorator(func: Callable[P, T]) -> Callable[P, T]:
         @functools.wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+        def wrapper(*args: Any, **kwargs: Any) -> T:
             if log_args:
                 logger.info(
                     "Вызов %s с args=%s, kwargs=%s",
@@ -149,7 +153,7 @@ def log_execution[P: ParamSpec, T: TypeVar](
     return decorator
 
 
-def require_role[P: ParamSpec, T: TypeVar](required_role: str | UserRoleEnum) -> Callable[[Callable[P, T]], Callable[P, T]]:
+def require_role(required_role: str | UserRoleEnum) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Декоратор для проверки роли пользователя.
 
     Args:
@@ -166,7 +170,7 @@ def require_role[P: ParamSpec, T: TypeVar](required_role: str | UserRoleEnum) ->
 
     def decorator(func: Callable[P, T]) -> Callable[P, T]:
         @functools.wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+        def wrapper(*args: Any, **kwargs: Any) -> T:
             # Ожидаем, что user передается как аргумент или keyword аргумент
             user = kwargs.get("user") or (args[0] if args else None)
 
@@ -206,8 +210,8 @@ def require_role[P: ParamSpec, T: TypeVar](required_role: str | UserRoleEnum) ->
     return decorator
 
 
-def error_handler[P: ParamSpec, T: TypeVar](
-    fallback_value: Any = None, log_error: bool = True
+def error_handler(
+    fallback_value: T | None = None, log_error: bool = True
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Декоратор для обработки ошибок с fallback значением.
 
@@ -227,7 +231,7 @@ def error_handler[P: ParamSpec, T: TypeVar](
 
     def decorator(func: Callable[P, T]) -> Callable[P, T]:
         @functools.wraps(func)
-        def wrapper(*args: P.args, **kwargs: P.kwargs) -> T:
+        def wrapper(*args: Any, **kwargs: Any) -> T:
             try:
                 return func(*args, **kwargs)
             except Exception as e:
@@ -235,7 +239,9 @@ def error_handler[P: ParamSpec, T: TypeVar](
                     logger.error(
                         "Ошибка в %s: %s", func.__name__, e, exc_info=True
                     )
-                return fallback_value
+                if fallback_value is not None:
+                    return fallback_value
+                raise
 
         return cast(Callable[P, T], wrapper)
 

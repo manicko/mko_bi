@@ -216,10 +216,10 @@ class TestDataModels:
         upload = DataUpload(
             file=b"test,data\n1,2",
             filename="data.csv.gz",
-            dashboard_id=1,
+            dashboard_id="550e8400-e29b-41d4-a716-446655440000",
         )
         assert upload.filename == "data.csv.gz"
-        assert upload.dashboard_id == 1
+        assert str(upload.dashboard_id) == "550e8400-e29b-41d4-a716-446655440000"
         assert upload.file == b"test,data\n1,2"
 
     def test_processing_config_valid(self):
@@ -249,14 +249,14 @@ class TestDataModels:
         result = ProcessingResult(
             success=True,
             task_id="550e8400-e29b-41d4-a716-446655440000",
-            dashboard_id=1,
+            dashboard_id="550e8400-e29b-41d4-a716-446655440000",
             rows_processed=1000,
             message="Data processed successfully",
             data={"columns": ["category", "revenue"], "rows": 50},
         )
         assert result.success is True
         assert str(result.task_id) == "550e8400-e29b-41d4-a716-446655440000"
-        assert result.dashboard_id == 1
+        assert str(result.dashboard_id) == "550e8400-e29b-41d4-a716-446655440000"
         assert result.rows_processed == 1000
         assert result.message == "Data processed successfully"
         assert result.data == {"columns": ["category", "revenue"], "rows": 50}
@@ -266,13 +266,13 @@ class TestDataModels:
         result = ProcessingResult(
             success=True,
             task_id="550e8400-e29b-41d4-a716-446655440000",
-            dashboard_id=1,
+            dashboard_id="550e8400-e29b-41d4-a716-446655440000",
             rows_processed=0,
             message="No data to process",
         )
         assert result.success is True
         assert str(result.task_id) == "550e8400-e29b-41d4-a716-446655440000"
-        assert result.dashboard_id == 1
+        assert str(result.dashboard_id) == "550e8400-e29b-41d4-a716-446655440000"
         assert result.rows_processed == 0
         assert result.message == "No data to process"
         assert result.data is None
@@ -280,7 +280,7 @@ class TestDataModels:
     def test_aggregated_data_valid(self):
         """Проверяет создание валидных агрегированных данных."""
         data = AggregatedData(
-            dashboard_id=1,
+            dashboard_id="550e8400-e29b-41d4-a716-446655440000",
             chart_type="bar",
             data=[
                 {"dims": {"category": "A"}, "metrics": {"revenue": 1000}},
@@ -288,7 +288,7 @@ class TestDataModels:
             ],
             metadata={"total": 3000, "count": 2},
         )
-        assert data.dashboard_id == 1
+        assert str(data.dashboard_id) == "550e8400-e29b-41d4-a716-446655440000"
         assert data.chart_type == "bar"
         assert len(data.data) == 2
 

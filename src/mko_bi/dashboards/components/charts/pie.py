@@ -70,7 +70,7 @@ class PieChart(BaseChart):
             Словарь с ключами (строковое представление измерений)
             и суммированными значениями метрик
         """
-        grouped = {}
+        grouped: dict[str, float] = {}
         metric = self.config.metrics[0]
 
         for item in data.data:

@@ -130,7 +130,7 @@ async def get_logs_endpoint(
         None,
         description="Фильтр по ID дашборда",
     ),
-    status: str | None = Query(
+    status_filter: str | None = Query(
         None,
         description="Фильтр по статусу (started, success, failed)",
     ),
@@ -176,10 +176,10 @@ async def get_logs_endpoint(
             )
 
     try:
-        logs = processing_log_service.get_logs(
+        logs: list[ProcessingLogRead] = processing_log_service.get_logs(
             db,
             dashboard_id=dashboard_id,
-            status=status,
+            status=status_filter,
             start_date=start_date,
             end_date=end_date,
             skip=skip,

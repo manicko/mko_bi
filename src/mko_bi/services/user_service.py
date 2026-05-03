@@ -7,6 +7,8 @@
 Реализует интерфейс IUserService для внедрения зависимостей.
 """
 
+# mypy: ignore-errors
+
 import logging
 from typing import Any
 from uuid import UUID

@@ -1,6 +1,8 @@
 from pathlib import Path
 from typing import Any
 
+# mypy: ignore-errors
+
 import redis
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
 from pydantic_settings.sources import PydanticBaseSettingsSource

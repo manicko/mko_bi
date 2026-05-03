@@ -150,7 +150,7 @@ class LineChart(BaseChart):
         year_field = self.config.yoy["year_field"]
         
         # Группируем по годам
-        years_data = {}
+        years_data: dict[str | int, dict[str, Any]] = {}
         for key, item in prepared_data.items():
             year = item.get(year_field)
             if year is None:
@@ -229,7 +229,7 @@ class LineChart(BaseChart):
 
             for color_val in color_values:
                 x_line = []
-                y_lines = {metric: [] for metric in self.config.metrics}
+                y_lines: dict[str, list[Any]] = {metric: [] for metric in self.config.metrics}
 
                 for x_key in x_values:
                     item = prepared[x_key]
@@ -276,7 +276,7 @@ class LineChart(BaseChart):
         Returns:
             Список объектов Scatter (трасс)
         """
-        traces = []
+        traces: list[go.Scatter] = []
         yoy_config = self.config.yoy
         metric = yoy_config["metric"]
         mode = yoy_config["mode"]
@@ -311,7 +311,11 @@ class LineChart(BaseChart):
         if current_x:
             # Сортируем по X
             sorted_pairs = sorted(zip(current_x, current_y, strict=False), key=lambda p: p[0])
-            current_x, current_y = zip(*sorted_pairs) if sorted_pairs else ([], [])
+            if sorted_pairs:
+                temp_x, temp_y = zip(*sorted_pairs)
+                current_x, current_y = list(temp_x), list(temp_y)
+            else:
+                current_x, current_y = [], []
 
             trace = go.Scatter(
                 x=list(current_x),
@@ -353,7 +357,11 @@ class LineChart(BaseChart):
 
                 if pct_x:
                     sorted_pairs = sorted(zip(pct_x, pct_y, strict=False), key=lambda p: p[0])
-                    pct_x, pct_y = zip(*sorted_pairs) if sorted_pairs else ([], [])
+                    if sorted_pairs:
+                        temp_x, temp_y = zip(*sorted_pairs)
+                        pct_x, pct_y = list(temp_x), list(temp_y)
+                    else:
+                        pct_x, pct_y = [], []
 
                     trace = go.Scatter(
                         x=list(pct_x),
@@ -372,7 +380,11 @@ class LineChart(BaseChart):
                 # Абсолютное значение
                 if previous_x:
                     sorted_pairs = sorted(zip(previous_x, previous_y, strict=False), key=lambda p: p[0])
-                    previous_x, previous_y = zip(*sorted_pairs) if sorted_pairs else ([], [])
+                    if sorted_pairs:
+                        temp_x, temp_y = zip(*sorted_pairs)
+                        previous_x, previous_y = list(temp_x), list(temp_y)
+                    else:
+                        previous_x, previous_y = [], []
 
                     trace = go.Scatter(
                         x=list(previous_x),

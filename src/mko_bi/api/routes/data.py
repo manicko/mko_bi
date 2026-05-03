@@ -73,7 +73,7 @@ async def get_dashboard_aggregates_endpoint(
 
     try:
         # Вызов сервиса получения агрегатов
-        result = get_dashboard_aggregates(
+        result: list[AggregatedData] = get_dashboard_aggregates(
             dashboard_id=dashboard_id,
             user_id=current_user.id,
             db=db,
@@ -152,7 +152,7 @@ async def get_dashboard_charts_endpoint(
 
     try:
         # Вызов сервиса получения данных для графиков
-        result = get_chart_data(
+        result: list[AggregatedData] = get_chart_data(
             dashboard_id=dashboard_id,
             user_id=current_user.id,
             chart_ids=chart_ids,
@@ -241,7 +241,7 @@ async def apply_filters_endpoint(
             all_filters.update(filter_request.filters)
 
         # Вызов сервиса применения фильтров
-        result = apply_data_filters(
+        result: list[AggregatedData] = apply_data_filters(
             dashboard_id=filter_request.dashboard_id,
             user_id=current_user.id,
             filters=all_filters,

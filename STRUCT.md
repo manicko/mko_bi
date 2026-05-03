@@ -160,7 +160,7 @@ C:\py_exp\mko_bi
 │   └── tests
 ├── TODO
 │   ├── DB
-│   │   ├── 010_standardize_index_naming.md
+│   │   ├── 010_standardize_index_naming_DONE.md
 │   │   └── README.md
 │   ├── DEV
 │   │   └── TASK_033_replace_any_types_DONE.md

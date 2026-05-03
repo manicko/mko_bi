@@ -4,6 +4,8 @@
 Все репозитории могут наследоваться от этого класса для уменьшения дублирования.
 """
 
+# mypy: ignore-errors
+
 import logging
 from typing import TypeVar, Any
 

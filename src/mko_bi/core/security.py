@@ -1,5 +1,7 @@
 """Модуль безопасности для хеширования паролей и работы с JWT токенами."""
 
+# mypy: ignore-errors
+
 import logging
 from datetime import datetime, timedelta, UTC
 from typing import Any

@@ -140,7 +140,7 @@ async def get_filters_endpoint(
     )
 
     try:
-        filters = get_filters(db=db)
+        filters: list[FilterRead] = get_filters(db=db)
         logger.info(
             "Получено фильтров для пользователя id=%s: %s",
             current_user.id,

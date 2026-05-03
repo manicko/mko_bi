@@ -404,7 +404,7 @@ def delete_filter(filter_id: int, db: Session | None = None) -> bool:
             return False
 
         # Удаление через репозиторий
-        result = FilterRepository.delete(filter_id, db)
+        result: bool = FilterRepository.delete(filter_id, db)
 
         if result:
             logger.info("Фильтр успешно удален: id=%s", filter_id)

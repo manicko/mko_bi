@@ -100,7 +100,7 @@ def _check_write_permission(
     Returns:
         True, если у пользователя есть права на запись.
     """
-    has_access = check_dashboard_access(
+    has_access: bool = check_dashboard_access(
         user_id=user_id,
         dashboard_id=dashboard_id,
         required_permission="edit",
@@ -130,7 +130,7 @@ def _check_read_permission(
     Returns:
         True, если у пользователя есть права на чтение.
     """
-    has_access = check_dashboard_access(
+    has_access: bool = check_dashboard_access(
         user_id=user_id,
         dashboard_id=dashboard_id,
         required_permission="view",

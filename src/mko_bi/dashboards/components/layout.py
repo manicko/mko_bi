@@ -119,9 +119,9 @@ class DashboardLayout:
         Returns:
             Объект dbc.Row с фильтрами
         """
-        filter_content = []
+        filter_content: list[Any] = []
 
-        if hasattr(self.filter_panel, "filters"):
+        if self.filter_panel is not None and hasattr(self.filter_panel, "filters") and self.filter_panel.filters:
             for filter_config in self.filter_panel.filters:
                 field = filter_config["field"]
                 filter_type = filter_config["type"]
@@ -234,7 +234,7 @@ class DashboardLayout:
             Список объектов dbc.Row
         """
         rows = []
-        current_row_components = []
+        current_row_components: list[dict[str, Any]] = []
         current_width = 0
 
         for component_config in self.components:

@@ -7,6 +7,8 @@
 Реализует интерфейс IDashboardService для внедрения зависимостей.
 """
 
+from typing import Any
+
 import json
 import logging
 
@@ -112,7 +114,7 @@ async def _check_owner_permission(dashboard_id: int, user_id: int, db: AsyncSess
         True, если пользователь является владельцем (admin), иначе False. 
     """
     permission = await AccessRepository.check_access(user_id, dashboard_id, db)
-    is_owner = permission == "admin"
+    is_owner: bool = permission == "admin"
     if not is_owner:
         logger.warning(
             "Пользователь id=%s не является владельцем дашборда id=%s (permission=%s)",
@@ -124,7 +126,7 @@ async def _check_owner_permission(dashboard_id: int, user_id: int, db: AsyncSess
 
 
 async def create_dashboard(
-    name: str, config: dict, owner_id: int, db: AsyncSession | None = None
+    name: str, config: dict[str, Any], owner_id: int, db: AsyncSession | None = None
 ) -> DashboardRead:
     """Создает новый дашборд с владельцем.
 
@@ -331,7 +333,7 @@ async def _get_user_dashboards_with_session(user_id: int, db: AsyncSession) -> l
 
 
 async def update_dashboard(
-    dashboard_id: int, config: dict, db: AsyncSession | None = None
+    dashboard_id: int, config: dict[str, Any], db: AsyncSession | None = None
 ) -> DashboardRead | None:
     """Обновляет конфигурацию дашборда.
 

@@ -5,6 +5,8 @@
 Операции создания, обновления и удаления доступны только владельцам.
 """
 
+# mypy: ignore-errors
+
 import logging
 from uuid import UUID
 

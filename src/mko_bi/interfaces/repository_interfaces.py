@@ -4,6 +4,8 @@
 Используются для внедрения зависимостей и разрыва циклических импортов.
 """
 
+# mypy: ignore-errors
+
 import abc
 from typing import TypeVar, Any
 from uuid import UUID

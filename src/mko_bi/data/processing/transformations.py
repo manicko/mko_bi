@@ -22,11 +22,11 @@ logger = logging.getLogger(__name__)
 
 # Маппинг функций агрегации на Polars выражения
 AGG_FUNC_MAP = {
-    AggregationFunctionEnum.sum: lambda col: pl.col(col).sum(),
+    AggregationFunctionEnum.sum_val: lambda col: pl.col(col).sum(),
     AggregationFunctionEnum.mean: lambda col: pl.col(col).mean(),
     AggregationFunctionEnum.count: lambda col: pl.col(col).count(),
-    AggregationFunctionEnum.min: lambda col: pl.col(col).min(),
-    AggregationFunctionEnum.max: lambda col: pl.col(col).max(),
+    AggregationFunctionEnum.min_val: lambda col: pl.col(col).min(),
+    AggregationFunctionEnum.max_val: lambda col: pl.col(col).max(),
     AggregationFunctionEnum.median: lambda col: pl.col(col).median(),
     AggregationFunctionEnum.std: lambda col: pl.col(col).std(),
     AggregationFunctionEnum.var: lambda col: pl.col(col).var(),

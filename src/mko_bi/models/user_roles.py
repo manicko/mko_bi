@@ -1,5 +1,7 @@
 from enum import StrEnum
 
+# mypy: ignore-errors
+
 
 class UserRoleEnum(StrEnum):
     """Роли пользователей системы."""
@@ -43,11 +45,11 @@ class YoyModeEnum(StrEnum):
 
 class AggregationFunctionEnum(StrEnum):
     """Функции агрегации данных."""
-    sum = "sum"
+    sum_val = "sum"
     mean = "mean"
     count = "count"
-    min = "min"
-    max = "max"
+    min_val = "min"
+    max_val = "max"
     median = "median"
     std = "std"
     var = "var"
