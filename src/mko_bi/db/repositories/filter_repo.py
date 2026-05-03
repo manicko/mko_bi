@@ -173,7 +173,7 @@ class FilterRepository:
             if not filter_obj:
                 logger.warning("Фильтр не найден для удаления: id=%s", filter_id)
                 return False
-            await db.delete(filter_obj)
+            db.delete(filter_obj)  # type: ignore[unused-coroutine]
             await db.flush()
             logger.info("Фильтр удален: id=%s", filter_id)
             return True

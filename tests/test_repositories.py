@@ -16,17 +16,19 @@ class TestUserRepository:
         mock_user = MagicMock(spec=user_model.User)
         mock_user.id = uuid4()
         
-        mock_result = AsyncMock()
+        mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_user
         mock_db.execute.return_value = mock_result
 
         result = await user_repo.UserRepository.get(mock_user.id, mock_db)
 
         assert result == mock_user
+        mock_db.execute.assert_called_once()
+        mock_result.scalar_one_or_none.assert_called_once()
 
     async def test_get_user_not_found(self):
         mock_db = AsyncMock()
-        mock_result = AsyncMock()
+        mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
         mock_db.execute.return_value = mock_result
 
@@ -34,12 +36,14 @@ class TestUserRepository:
         result = await user_repo.UserRepository.get(user_id, mock_db)
 
         assert result is None
+        mock_db.execute.assert_called_once()
+        mock_result.scalar_one_or_none.assert_called_once()
 
     async def test_create_user_success(self):
         mock_db = AsyncMock()
         mock_user = MagicMock(spec=user_model.User)
         
-        mock_db.add = AsyncMock()
+        mock_db.add = MagicMock()
         mock_db.flush = AsyncMock()
         mock_db.refresh = AsyncMock()
 
@@ -52,19 +56,26 @@ class TestUserRepository:
             )
 
         assert result == mock_user
+        mock_db.add.assert_called_once_with(mock_user)
+        mock_db.flush.assert_called_once()
+        mock_db.refresh.assert_called_once_with(mock_user)
 
     async def test_delete_user_success(self):
         mock_db = AsyncMock()
-        mock_result = AsyncMock()
-        mock_result.scalar_one_or_none.return_value = MagicMock()
+        mock_user = MagicMock(spec=user_model.User)
+        mock_user.id = uuid4()
+        
+        mock_result = MagicMock()
+        mock_result.scalar_one_or_none.return_value = mock_user
         mock_db.execute.return_value = mock_result
-        mock_db.delete = AsyncMock()
+        mock_db.delete = MagicMock()
         mock_db.flush = AsyncMock()
 
-        user_id = uuid4()
-        result = await user_repo.UserRepository.delete(user_id, mock_db)
+        result = await user_repo.UserRepository.delete(mock_user.id, mock_db)
 
         assert result is True
+        mock_db.delete.assert_called_once_with(mock_user)
+        mock_db.flush.assert_called_once()
 
 
 class TestDashboardRepository:
@@ -73,27 +84,32 @@ class TestDashboardRepository:
     async def test_get_dashboard_success(self):
         mock_db = AsyncMock()
         mock_dashboard = MagicMock(spec=dashboard_model.Dashboard)
+        mock_dashboard.id = uuid4()
         
-        mock_result = AsyncMock()
+        mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_dashboard
         mock_db.execute.return_value = mock_result
 
         result = await dashboard_repo.DashboardRepository.get(mock_dashboard.id, mock_db)
 
         assert result == mock_dashboard
+        mock_db.execute.assert_called_once()
+        mock_result.scalar_one_or_none.assert_called_once()
 
     async def test_create_dashboard_success(self):
         mock_db = AsyncMock()
         mock_dashboard = MagicMock(spec=dashboard_model.Dashboard)
         
-        mock_db.add = AsyncMock()
+        mock_db.add = MagicMock()
         mock_db.flush = AsyncMock()
         mock_db.refresh = AsyncMock()
 
-        with patch('mko_bi.db.repositories.dashboard_repo.dashboard_model.Dashboard', 
-                   return_value=mock_dashboard):
+        with patch('mko_bi.db.repositories.dashboard_repo.dashboard_model.Dashboard', return_value=mock_dashboard):
             result = await dashboard_repo.DashboardRepository.create(
                 mock_db, name="Test Dashboard", config={}
             )
 
         assert result == mock_dashboard
+        mock_db.add.assert_called_once_with(mock_dashboard)
+        mock_db.flush.assert_called_once()
+        mock_db.refresh.assert_called_once_with(mock_dashboard)

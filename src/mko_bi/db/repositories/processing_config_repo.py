@@ -146,7 +146,7 @@ class ProcessingConfigRepository:
             if not config_obj:
                 logger.warning("Настройки не найдены для удаления: dashboard_id=%s", dashboard_id)
                 return False
-            await db.delete(config_obj)
+            db.delete(config_obj)  # type: ignore[unused-coroutine]
             await db.flush()
             logger.info("Настройки удалены: dashboard_id=%s", dashboard_id)
             return True

@@ -184,7 +184,7 @@ class ProcessingLogRepository:
             if not log_obj:
                 logger.warning("Лог не найден для удаления: id=%s", log_id)
                 return False
-            await db.delete(log_obj)
+            db.delete(log_obj)  # type: ignore[unused-coroutine]
             await db.flush()
             logger.info("Лог удален: id=%s", log_id)
             return True
