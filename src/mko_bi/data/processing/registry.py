@@ -5,7 +5,7 @@
 """
 
 import logging
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 from collections.abc import Callable
 
 import polars as pl
@@ -100,7 +100,7 @@ class TransformationRegistry:
             result.shape[0],
             result.shape[1],
         )
-        return result
+        return cast(pl.DataFrame, result)
 
     def list_transformations(self) -> list[str]:
         """Возвращает список всех зарегистрированных трансформаций.

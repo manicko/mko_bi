@@ -18,7 +18,7 @@ P = ParamSpec("P")
 T = TypeVar("T")
 
 
-def timing(func: Callable[P, T]) -> Callable[P, T]:
+def timing(func: Callable[P, T]) -> Callable[P, T]:  # noqa: UP047
     """Декоратор для замера времени выполнения функции.
 
     Логирует время выполнения функции в миллисекундах.
@@ -210,7 +210,7 @@ def require_role(required_role: str | UserRoleEnum) -> Callable[[Callable[P, T]]
     return decorator
 
 
-def error_handler(
+def error_handler(  # noqa: UP047
     fallback_value: T | None = None, log_error: bool = True
 ) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Декоратор для обработки ошибок с fallback значением.

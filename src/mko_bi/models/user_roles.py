@@ -73,3 +73,11 @@ class ProcessingStatusEnum(StrEnum):
     success = "success"
     failed = "failed"
     completed = "completed"
+
+
+class EnvironmentEnum(StrEnum):
+    """Окружения приложения."""
+    PRODUCTION = "production"
+    STAGING = "staging"
+    DEVELOPMENT = "development"
+    TEST = "test"

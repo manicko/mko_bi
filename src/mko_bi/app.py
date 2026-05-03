@@ -5,6 +5,7 @@
 """
 
 import logging
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
@@ -16,11 +17,25 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from mko_bi.api import routes
 from mko_bi.config import get_config
 from mko_bi.core.logging_config import setup_logging
+from mko_bi.db.starter import DatabaseStarter
 
 # Настройка логирования
 setup_logging()
 
 logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Жизненный цикл приложения."""
+    starter = DatabaseStarter()
+    try:
+        await starter.startup()
+    except Exception as e:
+        logger.error(f"Failed to initialize database: {e}")
+        raise
+    yield
+    await starter.shutdown()
 
 
 def create_app() -> FastAPI:
@@ -41,6 +56,7 @@ def create_app() -> FastAPI:
         debug=config.debug,
         docs_url="/docs",
         redoc_url="/redoc",
+        lifespan=lifespan,
     )
 
     # Настройка CORS middleware
