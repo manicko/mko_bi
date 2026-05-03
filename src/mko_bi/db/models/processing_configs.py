@@ -7,11 +7,10 @@ from uuid import UUID
 from sqlalchemy import (
     DateTime,
     ForeignKey,
-    JSON,
     text,
     func,
 )
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mko_bi.db.base import Base
@@ -33,7 +32,7 @@ class ProcessingConfig(Base):
     )
 
     settings: Mapped[dict[str, Any]] = mapped_column(
-        JSON,
+        JSONB,
         nullable=False,
         default=dict,
     )

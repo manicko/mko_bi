@@ -25,7 +25,7 @@ class DatabaseSettings(BaseModel):
             password=self.password,
             host=self.host,
             port=self.port,
-            path=f"/{self.dbname}",
+            path=self.dbname,
         )
 
 

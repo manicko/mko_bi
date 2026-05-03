@@ -4,6 +4,7 @@ C:\py_exp\mko_bi
 │   ├── README
 │   ├── script.py.mako
 │   └── versions
+│       ├── 57f43a5c499d_change_json_to_jsonb_for_postgresql.py
 │       └── e86f3c8f7324_initial_migration.py
 ├── alembic.ini
 ├── bidb_schema.sql
@@ -157,16 +158,13 @@ C:\py_exp\mko_bi
 │   ├── test_yoy_calculation.py
 │   └── tests
 ├── TODO
-│   ├── DATABASES_AUDIT_REPORT_01.md
-│   ├── DATABASES_AUDIT_REPORT_02.md
-│   ├── DATABASES_AUDIT_REPORT_03.md
 │   ├── DB
 │   │   ├── 001_setup_alembic.md
 │   │   ├── 002_async_db_support_DONE.md
 │   │   ├── 003_alembic_async_config_DONE.md
 │   │   ├── 004_fix_timestamp_timezone_DONE.md
-│   │   ├── 005_create_dashboard_filters_table.md
-│   │   ├── 006_fix_json_jsonb_types.md
+│   │   ├── 005_create_dashboard_filters_table_DONE.md
+│   │   ├── 006_fix_json_jsonb_types_DONE.md
 │   │   ├── 007_fix_is_active_not_null.md
 │   │   ├── 008_setup_test_database.md
 │   │   ├── 009_add_composite_index.md
@@ -178,8 +176,7 @@ C:\py_exp\mko_bi
 │   ├── TASK_001_db_structure_module_dev.md
 │   ├── TASK_031_audit.md
 │   ├── TASK_033_audit.md
-│   ├── TASK_034_audit.md
-│   ├── TASK_036_test_audit_Arch_report.md
+│   ├── TASK_034_audit_old.md
 │   ├── TASK_037_test_audit.md
 │   ├── TASK_037_test_audit1.md
 │   ├── TASK_038_docker_audit.md
