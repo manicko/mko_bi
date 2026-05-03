@@ -5,9 +5,11 @@ C:\py_exp\mko_bi
 │   ├── script.py.mako
 │   └── versions
 │       ├── 2aa835fe1fac_add_composite_index_on_aggregated_data.py
+│       ├── 3f7a1b2c9d0e_add_processing_logs_dashboard_id_index.py
 │       ├── 57f43a5c499d_change_json_to_jsonb_for_postgresql.py
 │       ├── 840a99edb818_standardize_index_naming.py
-│       └── e86f3c8f7324_initial_migration.py
+│       ├── 7130ecb0388c_true_initial_migration.py
+│       └── e86f3c8f7324_schema_adjustments.py
 ├── alembic.ini
 ├── bidb_schema.sql
 ├── check_tables.py
@@ -160,8 +162,6 @@ C:\py_exp\mko_bi
 │   └── tests
 ├── TODO
 │   ├── DB
-│   │   ├── 010_standardize_index_naming_DONE.md
-│   │   └── README.md
 │   ├── DEV
 │   │   └── TASK_033_replace_any_types_DONE.md
 │   ├── TASK_001_db_structure_audit.md
