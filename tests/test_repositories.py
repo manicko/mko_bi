@@ -4,8 +4,8 @@ from unittest.mock import MagicMock, AsyncMock, patch
 from uuid import uuid4
 
 from mko_bi.db.repositories import user_repo, dashboard_repo
-from mko_b_i.db.models import user as user_model
-from mko_b_i.db.models import dashboard as dashboard_model
+from mko_bi.db.models import user as user_model
+from mko_bi.db.models import dashboard as dashboard_model
 
 
 class TestUserRepository:
@@ -43,7 +43,7 @@ class TestUserRepository:
         mock_db.flush = AsyncMock()
         mock_db.refresh = AsyncMock()
 
-        with patch('mko_b_i.db.repositories.user_repo.user_model.User', return_value=mock_user):
+        with patch('mko_bi.db.repositories.user_repo.user_model.User', return_value=mock_user):
             result = await user_repo.UserRepository.create(
                 mock_db,
                 email="test@example.com",
@@ -90,7 +90,7 @@ class TestDashboardRepository:
         mock_db.flush = AsyncMock()
         mock_db.refresh = AsyncMock()
 
-        with patch('mko_b_i.db.repositories.dashboard_repo.dashboard_model.Dashboard', 
+        with patch('mko_bi.db.repositories.dashboard_repo.dashboard_model.Dashboard', 
                    return_value=mock_dashboard):
             result = await dashboard_repo.DashboardRepository.create(
                 mock_db, name="Test Dashboard", config={}

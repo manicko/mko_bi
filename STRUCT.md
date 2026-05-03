@@ -163,7 +163,7 @@ C:\py_exp\mko_bi
 │   ├── DB
 │   │   ├── 001_setup_alembic.md
 │   │   ├── 002_async_db_support_DONE.md
-│   │   ├── 003_alembic_async_config.md
+│   │   ├── 003_alembic_async_config_DONE.md
 │   │   ├── 004_fix_timestamp_timezone.md
 │   │   ├── 005_create_dashboard_filters_table.md
 │   │   ├── 006_fix_json_jsonb_types.md
