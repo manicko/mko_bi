@@ -211,5 +211,5 @@ dev = [
     "twine>=5.0.0",
     "flake8>=7.3.0",
     "types-requests>=2.33.0.20260408",
-    "testcontainers[postgres]>=4.0.0",
+    "testcontainers[postgres,redis]>=4.0.0",
 ]

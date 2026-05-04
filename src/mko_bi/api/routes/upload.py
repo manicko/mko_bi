@@ -109,6 +109,12 @@ async def upload_file_endpoint(
 
     except ValueError as e:
         logger.warning("Ошибка валидации при загрузке: %s", e)
+        # Check if it's a rate limit error
+        if "лимит" in str(e).lower() or "rate limit" in str(e).lower():
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=str(e),
+            ) from e
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),

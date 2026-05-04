@@ -1,7 +1,6 @@
 """Common fixtures for tests."""
 
 import os
-import subprocess
 from uuid import uuid4
 
 import pytest
@@ -20,6 +19,8 @@ os.environ["DATABASE__DBNAME"] = "bidb_test"
 os.environ["DATABASE__USER"] = "postgres"
 os.environ["DATABASE__PASSWORD"] = "1234"
 os.environ["JWT__SECRET_KEY"] = "test_secret_key_change_in_production"
+os.environ["REDIS__HOST"] = "localhost"
+os.environ["REDIS__PORT"] = "6379"
 
 from mko_bi.main import app
 from mko_bi.core.security import hash_password, create_access_token
@@ -43,6 +44,60 @@ from mko_bi.db.models import (  # noqa: E402, F401
     ProcessingLog,
     User,
 )
+
+
+# Mock Redis for rate limiter tests
+class MockRedis:
+    """Mock Redis client for testing rate limiter without real Redis."""
+
+    def __init__(self):
+        self._data = {}
+
+    def get(self, key):
+        return self._data.get(key)
+
+    def pipeline(self):
+        return self
+
+    def incr(self, key):
+        val = int(self._data.get(key, 0)) + 1
+        self._data[key] = str(val)
+        return val
+
+    def expire(self, key, ttl):
+        pass
+
+    def execute(self):
+        pass
+
+    def close(self):
+        pass
+
+
+@pytest.fixture(autouse=True)
+def mock_redis(monkeypatch):
+    """Mock Redis client for all tests to avoid requiring real Redis."""
+    from mko_bi.core.security import RateLimiter
+
+    mock_redis_client = MockRedis()
+
+    # Patch get_redis_client to return mock
+    import mko_bi.config as config_module
+    def mock_get_redis_client():
+        return mock_redis_client
+    monkeypatch.setattr(config_module, "get_redis_client", mock_get_redis_client)
+
+    # Patch the rate limiter instances in data_service
+    import mko_bi.services.data_service as data_service_module
+    data_service_module._upload_rate_limiter = RateLimiter(mock_redis_client)
+
+    # Patch auth service rate limiter
+    import mko_bi.services.auth_service as auth_service_module
+    original_init = auth_service_module.AuthService.__init__
+    def patched_init(self, *args, **kwargs):
+        original_init(self, *args, **kwargs)
+        self._rate_limiter = RateLimiter(mock_redis_client)
+    monkeypatch.setattr(auth_service_module.AuthService, "__init__", patched_init)
 
 
 def pytest_sessionstart(session):

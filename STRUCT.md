@@ -9,8 +9,11 @@ C:\py_exp\mko_bi
 │       ├── 57f43a5c499d_change_json_to_jsonb_for_postgresql.py
 │       ├── 840a99edb818_standardize_index_naming.py
 │       ├── 7130ecb0388c_true_initial_migration.py
-│       └── e86f3c8f7324_schema_adjustments.py
+│       ├── a1b2c3d4e5f6_add_config_to_dashboards.py
+│       ├── e86f3c8f7324_schema_adjustments.py
+│       └── f3d4e5f6a7b8_add_missing_processing_status_values.py
 ├── alembic.ini
+├── best_llm_models.md
 ├── bidb_schema.sql
 ├── check_tables.py
 ├── create_db.sql
@@ -20,6 +23,11 @@ C:\py_exp\mko_bi
 │   └── tmp_uploads
 ├── DB_STRUCTURE.md
 ├── DBSTR.md
+├── fix_all_async.py
+├── fix_all_patterns.py
+├── fix_models_script.py
+├── fix_new_models.py
+├── fix_test_models.py
 ├── nginx
 │   └── nginx.conf
 ├── 'Pydantic TASKS.md'
@@ -132,9 +140,6 @@ C:\py_exp\mko_bi
 │           └── validators.py
 ├── STRUCT.md
 ├── TASK_TEMPLATE.md
-├── TASKS.md
-├── test_output.txt
-├── test_results.txt
 ├── tests
 │   ├── conftest.py
 │   ├── services
@@ -167,18 +172,19 @@ C:\py_exp\mko_bi
 │   ├── DB
 │   ├── DEV
 │   │   ├── TASK_001_sync_async_unification.md
-│   │   ├── TASK_002_transactions.md
-│   │   ├── TASK_003_mime_validation.md
+│   │   ├── TASK_002_transactions_DONE.md
+│   │   ├── TASK_003_mime_validation_DONE.md
 │   │   ├── TASK_004_rate_limiting.md
 │   │   ├── TASK_005_dash_mount.md
 │   │   ├── TASK_006_dash_auth.md
 │   │   ├── TASK_007_dash_real_data.md
 │   │   ├── TASK_008_transform_pipeline.md
 │   │   ├── TASK_009_csv_loader.md
-│   │   ├── TASK_010_dead_code_cleanup.md
 │   │   ├── TASK_011_file_cleanup.md
 │   │   ├── TASK_012_multi_axis.md
-│   │   └── TASK_013_layouts.md
+│   │   ├── TASK_013_layouts.md
+│   │   ├── TASK_051_di_and_interfaces.md
+│   │   └── TASK_XXX_fix_migrations_enum_mismatch.md
 │   ├── DEV_REPORT_01.md
 │   ├── DONE
 │   │   └── TASK_DB_REPRODUCER_MAIN.md

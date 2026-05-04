@@ -16,8 +16,9 @@ from sqlalchemy import Float, Integer
 from sqlalchemy.ext.asyncio import AsyncSession
 from werkzeug.utils import secure_filename
 
-from mko_bi.config import get_config
+from mko_bi.config import get_config, get_redis_client
 from mko_bi.core.permissions import check_dashboard_access
+from mko_bi.core.security import RateLimiter
 from mko_bi.db.repositories.aggregated_data_repo import AggregatedDataRepository
 from mko_bi.db.repositories.dashboard_repo import DashboardRepository
 from mko_bi.db.repositories.processing_log_repo import ProcessingLogRepository
@@ -42,6 +43,24 @@ from mko_bi.models.types import (
 )
 
 logger = logging.getLogger(__name__)
+
+# Rate limiter for upload endpoints
+_upload_rate_limiter = RateLimiter(get_redis_client())
+_UPLOAD_RATE_LIMIT = 10  # requests
+_UPLOAD_RATE_PERIOD = 60  # seconds (1 minute)
+
+
+def _get_rate_limit_key_for_upload(user_id: int, dashboard_id: UUID) -> str:
+    """Generate rate limit key for upload endpoint.
+
+    Args:
+        user_id: ID of the user making the request.
+        dashboard_id: ID of the dashboard.
+
+    Returns:
+        str: Rate limit key.
+    """
+    return f"rate_limit:upload:{user_id}:{dashboard_id}"
 
 
 def _validate_mime_type(content_type: str | None) -> None:
@@ -428,6 +447,18 @@ async def _upload_file_logic(
     Returns:
         UploadResponse: Модель с информацией о загрузке.
     """
+    # Check rate limit for upload
+    rate_limit_key = _get_rate_limit_key_for_upload(user_id, dashboard_id)
+    if not _upload_rate_limiter.check_rate_limit(
+        rate_limit_key, _UPLOAD_RATE_LIMIT, _UPLOAD_RATE_PERIOD
+    ):
+        logger.warning(
+            "Rate limit exceeded for upload: user_id=%d, dashboard_id=%s",
+            user_id,
+            dashboard_id,
+        )
+        raise ValueError("Превышен лимит запросов на загрузку. Попробуйте позже.")
+
     # Проверяем существование дашборда
     dashboard = await DashboardRepository.get(dashboard_id, db)
     if dashboard is None:

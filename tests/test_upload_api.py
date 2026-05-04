@@ -83,6 +83,40 @@ class TestUploadFileEndpoint:
 
         assert response.status_code == 401
 
+    @pytest.mark.asyncio
+    async def test_upload_rate_limit_exceeded(self, authenticated_client: AsyncClient, test_user: dict, monkeypatch):
+        """Проверка срабатывания rate limiting при превышении лимита."""
+        import mko_bi.services.data_service as data_service_module
+
+        # Mock the rate limiter to simulate limit exceeded
+        def mock_check_rate_limit(key, max_attempts, ttl):
+            # Simulate rate limit exceeded
+            return False
+
+        monkeypatch.setattr(
+            data_service_module._upload_rate_limiter, "check_rate_limit", mock_check_rate_limit
+        )
+
+        # Create dashboard
+        dashboard_resp = await authenticated_client.post(
+            "/dashboards/",
+            json={"name": "Test Dashboard Rate Limit", "config": {"graph_types": ["bar"]}},
+        )
+        assert dashboard_resp.status_code == 201
+        dashboard_id = dashboard_resp.json()["id"]
+
+        # Try to upload - should get 429
+        csv_content = b"col1,col2\n1,2\n3,4"
+        gzipped_content = gzip.compress(csv_content)
+        files = {"file": ("test_data.csv.gz", gzipped_content, "application/gzip")}
+        response = await authenticated_client.post(
+            f"/upload/{dashboard_id}",
+            files=files,
+        )
+
+        assert response.status_code == 429
+        assert "лимит" in response.json()["detail"].lower() or "rate limit" in response.json()["detail"].lower()
+
 
 class TestGetStatusEndpoint:
     """Тесты эндпоинта получения статуса."""
