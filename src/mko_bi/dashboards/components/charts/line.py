@@ -239,12 +239,15 @@ class LineChart(BaseChart):
                             y_lines[metric].append(item["metrics"][metric])
 
                 for metric in self.config.metrics:
+                    # Определяем ось Y
+                    yaxis = "y2" if metric in self.config.secondary_y else "y"
                     trace = go.Scatter(
                         x=x_line,
                         y=y_lines[metric],
                         mode="lines+markers",
                         name=f"{color_val} - {metric}",
                         legendgroup=color_val,
+                        yaxis=yaxis,
                     )
                     traces.append(trace)
         else:
@@ -253,11 +256,14 @@ class LineChart(BaseChart):
                 x_line = [prepared[k][self.config.x] for k in x_values]
                 y_line = [prepared[k]["metrics"][metric] for k in x_values]
 
+                # Определяем ось Y
+                yaxis = "y2" if metric in self.config.secondary_y else "y"
                 trace = go.Scatter(
                     x=x_line,
                     y=y_line,
                     mode="lines+markers",
                     name=metric,
+                    yaxis=yaxis,
                 )
                 traces.append(trace)
 
@@ -420,6 +426,15 @@ class LineChart(BaseChart):
         # Настройка осей
         fig.update_xaxes(title_text=self.config.x)
         fig.update_yaxes(title_text="Значение", side="left", showgrid=True)
+
+        # Если есть secondary_y, настраиваем вторую ось Y
+        if self.config.secondary_y:
+            fig.update_yaxes(
+                title_text="Значение (вторичная)",
+                side="right",
+                overlaying="y",
+                showgrid=False,
+            )
 
         # Если есть YoY в процентах, добавляем вторую ось Y
         if self.config.yoy and self.config.yoy.get("enabled"):

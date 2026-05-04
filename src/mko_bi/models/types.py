@@ -137,6 +137,7 @@ class GraphConfigDict(TypedDict, total=False):
     title: str | None
     layout: ChartLayoutConfig | None
     yoy: YoYConfig | None
+    secondary_y: list[str] | None
 
 
 # ==================== Filter Config Types ====================
@@ -246,6 +247,7 @@ class GraphConfigModel(BaseModel):
     title: str | None = None
     layout: ChartLayoutConfig | None = None
     yoy: YoYConfig | None = None
+    secondary_y: list[str] | None = None
 
     model_config = {"extra": "allow"}
 
