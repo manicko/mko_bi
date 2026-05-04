@@ -19,6 +19,7 @@ from werkzeug.utils import secure_filename
 from mko_bi.config import get_config, get_redis_client
 from mko_bi.core.permissions import check_dashboard_access
 from mko_bi.core.security import RateLimiter
+from mko_bi.data.loaders.loader import CSVLoader
 from mko_bi.db.repositories.aggregated_data_repo import AggregatedDataRepository
 from mko_bi.db.repositories.dashboard_repo import DashboardRepository
 from mko_bi.db.repositories.processing_log_repo import ProcessingLogRepository
@@ -188,76 +189,6 @@ def _save_uploaded_file(filename: str, file_content: bytes, dashboard_id: UUID |
     return file_path
 
 
-def _get_file_size_mb(file_path: Path) -> float:
-    """Получает размер файла в мегабайтах.
-
-    Args:
-        file_path: Путь к файлу.
-
-    Returns:
-        float: Размер файла в МБ.
-
-    Raises:
-        FileNotFoundError: Если файл не найден.
-    """
-    if not file_path.exists():
-        raise FileNotFoundError(f"File not found: {file_path}")
-    return file_path.stat().st_size / (1024 * 1024)
-
-
-def _read_csv_safe(file_path: Path, file_size_mb: float, lazy_threshold_mb: float | None = None) -> pl.DataFrame:
-    """Безопасно читает CSV файл, выбирая метод в зависимости от размера.
-
-    Для файлов больше lazy_threshold_mb использует lazy evaluation (scan_csv),
-    для остальных - обычное чтение (read_csv).
-
-    Args:
-        file_path: Путь к CSV файлу.
-        file_size_mb: Размер файла в МБ.
-        lazy_threshold_mb: Порог в МБ, после которого используется lazy evaluation.
-            Если None, значение берется из конфигурации.
-
-    Returns:
-        pl.DataFrame: Прочитанный DataFrame.
-    """
-    if lazy_threshold_mb is None:
-        config = get_config()
-        lazy_threshold_mb = config.lazy_threshold_mb
-
-    if file_size_mb > lazy_threshold_mb:
-        logger.info("Используется lazy evaluation для файла %.2f MB", file_size_mb)
-        return pl.scan_csv(file_path).collect()
-    else:
-        logger.info("Используется обычное чтение для файла %.2f MB", file_size_mb)
-        return pl.read_csv(file_path)
-
-
-def _validate_file_size(file_path: Path, max_size_mb: float = 100.0) -> float:
-    """Проверяет размер файла до чтения.
-
-    Args:
-        file_path: Путь к файлу.
-        max_size_mb: Максимальный размер в МБ.
-
-    Returns:
-        float: Размер файла в МБ.
-
-    Raises:
-        ValueError: Если файл слишком большой.
-        FileNotFoundError: Если файл не найден.
-    """
-    file_size_mb = _get_file_size_mb(file_path)
-    max_size_bytes = max_size_mb * 1024 * 1024
-
-    if file_path.stat().st_size > max_size_bytes:
-        raise ValueError(
-            f"File too large: {file_path.stat().st_size} bytes (max: {max_size_bytes} bytes)"
-        )
-
-    logger.info("Размер файла %s: %.2f MB", file_path, file_size_mb)
-    return file_size_mb
-
-
 async def _process_csv_file(
     file_path: Path,
     processing_config: ProcessingConfig | None = None,
@@ -266,8 +197,8 @@ async def _process_csv_file(
 ) -> ProcessingResultData:
     """Обрабатывает CSV файл с использованием Polars.
 
-    Читает gzipped CSV файл, применяет трансформации и агрегации.
-    При передаче dashboard_id и db сохраняет агрегатированные данные в БД.
+    Читает gzipped CSV файл через CSVLoader, применяет трансформации и агрегации.
+    При передаче dashboard_id и db сохраняет агрегированные данные в БД.
 
     Args:
         file_path: Путь к файлу.
@@ -280,13 +211,9 @@ async def _process_csv_file(
     """
     logger.info("Начало обработки файла: %s", file_path)
 
-    # Проверка размера файла ДО чтения
-    config = get_config()
-    max_size_mb = config.max_file_size / (1024 * 1024)
-    file_size_mb = _validate_file_size(file_path, max_size_mb)
-
-    # Чтение файла с выбором метода в зависимости от размера
-    df = _read_csv_safe(file_path, file_size_mb)
+    # Чтение файла через CSVLoader (с поддержкой lazy loading)
+    loader = CSVLoader()
+    df = loader.load_csv(file_path)
 
     logger.info("Файл прочитан: %d строк, %d колонок", df.shape[0], df.shape[1])
 

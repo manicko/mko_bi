@@ -8,6 +8,8 @@ from pydantic_settings import BaseSettings, YamlConfigSettingsSource
 from pydantic_settings.sources import PydanticBaseSettingsSource
 from pydantic import BaseModel, PostgresDsn
 
+from mko_bi.models.user_roles import FileExtensionEnum
+
 
 class DatabaseSettings(BaseModel):
     """Настройки подключения к базе данных."""
@@ -52,7 +54,7 @@ class UploadSettings(BaseModel):
     """Настройки загрузки файлов."""
     
     temp_dir: str = "data/tmp_uploads"
-    allowed_file_types: list[str] = [".csv.gz", ".csv"]
+    allowed_file_types: list[FileExtensionEnum] = [FileExtensionEnum.CSV_GZ, FileExtensionEnum.CSV]
     max_file_size: int = 100 * 1024 * 1024  # 100MB
     lazy_threshold_mb: float = 10.0
 

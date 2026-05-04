@@ -224,24 +224,28 @@ class TestDataModels:
 
     def test_processing_config_valid(self):
         """Проверяет создание валидной конфигурации обработки."""
-        config = ProcessingConfig(
-            transformations=[{"type": "filter", "condition": {"year": {"$gte": 2020}}}],
-            aggregations=[{"type": "sum", "field": "revenue", "groupby": "category"}],
-            groupby=["category", "region"],
-            filters=[{"field": "year", "operator": ">=", "value": 2020}],
-            metrics=[
-                {"name": "total_revenue", "type": "sum", "field": "revenue"},
-                {"name": "avg_sales", "type": "avg", "field": "sales"},
-            ],
+        from mko_bi.models.transformation_configs import (
+            AggregationConfig,
+            FilterConfig,
         )
-        assert len(config.transformations) == 1
+        from mko_bi.models.user_roles import (
+            AggregationFunctionEnum,
+            FilterOperatorEnum,
+        )
+        
+        config = ProcessingConfig(
+            filters=[FilterConfig(column="year", operator=FilterOperatorEnum.GTE, value=2020)],
+            aggregations=[AggregationConfig(column="revenue", function=AggregationFunctionEnum.sum_val, alias="total_revenue")],
+            groupby=["category", "region"],
+        )
+        assert len(config.filters) == 1
         assert len(config.aggregations) == 1
         assert config.groupby == ["category", "region"]
 
     def test_processing_config_minimal(self):
         """Проверяет создание минимальной конфигурации обработки."""
         config = ProcessingConfig()
-        assert config.transformations is None
+        assert config.filters is None
         assert config.aggregations is None
 
     def test_processing_result_valid(self):

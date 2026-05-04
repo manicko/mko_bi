@@ -11,6 +11,7 @@ from typing import Any
 
 import polars as pl
 
+from mko_bi.config import get_config
 from mko_bi.models.data import LoaderConfig
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ class CSVLoader:
 
     Отвечает за чтение CSV файлов (включая сжатые .csv.gz),
     проверку структуры данных и преобразование типов.
+    Поддерживает lazy loading для больших файлов.
 
     Attributes:
         config: Конфигурация загрузчика.
@@ -35,30 +37,62 @@ class CSVLoader:
         self.config = config or LoaderConfig()
         logger.debug("CSVLoader инициализирован с config=%s", self.config)
 
-    def load(self, file_path: Path) -> pl.DataFrame:
-        """Загружает CSV файл и возвращает DataFrame.
+    def load_csv(
+        self,
+        file_path: Path,
+        lazy_threshold_mb: float | None = None,
+    ) -> pl.DataFrame:
+        """Загружает CSV файл с поддержкой lazy loading для больших файлов.
 
-        Читает CSV файл (поддерживает .csv.gz), применяет
-        преобразования типов данных согласно конфигурации.
+        Читает CSV файл (поддерживает .csv и .csv.gz).
+        Для файлов больше lazy_threshold_mb использует lazy evaluation.
+        Выполняет валидацию размера файла.
 
         Args:
             file_path: Путь к CSV файлу.
+            lazy_threshold_mb: Порог в МБ для lazy loading.
+                Если None, берется из конфигурации приложения.
 
         Returns:
             pl.DataFrame: Загруженные данные.
 
         Raises:
             FileNotFoundError: Если файл не существует.
-            ValueError: Если файл не может быть прочитан.
+            ValueError: Если файл слишком большой или не может быть прочитан.
         """
-        logger.info("Загрузка файла: %s", file_path)
+        logger.info("Загрузка CSV файла: %s", file_path)
 
         if not file_path.exists():
             logger.error("Файл не найден: %s", file_path)
             raise FileNotFoundError(f"Файл не найден: {file_path}")
 
+        # Валидация размера файла
+        self._validate_file_size(file_path)
+
+        # Определение порога для lazy loading
+        if lazy_threshold_mb is None:
+            app_config = get_config()
+            lazy_threshold_mb = app_config.lazy_threshold_mb
+
+        file_size_mb = self._get_file_size_mb(file_path)
+
+        # Чтение файла
         try:
-            df = self._read_csv(file_path)
+            if file_size_mb > lazy_threshold_mb:
+                logger.info(
+                    "Используется lazy evaluation для файла %.2f MB (порог: %.2f MB)",
+                    file_size_mb,
+                    lazy_threshold_mb,
+                )
+                df = self._read_csv_lazy(file_path)
+            else:
+                logger.info(
+                    "Используется обычное чтение для файла %.2f MB (порог: %.2f MB)",
+                    file_size_mb,
+                    lazy_threshold_mb,
+                )
+                df = self._read_csv(file_path)
+
             logger.info(
                 "Файл прочитан: %d строк, %d колонок",
                 df.shape[0],
@@ -78,6 +112,95 @@ class CSVLoader:
         except Exception as e:
             logger.error("Ошибка при загрузке файла %s: %s", file_path, e)
             raise ValueError(f"Не удалось загрузить файл {file_path}: {e}") from e
+
+    def load(self, file_path: Path) -> pl.DataFrame:
+        """Загружает CSV файл и возвращает DataFrame.
+
+        Читает CSV файл (поддерживает .csv.gz), применяет
+        преобразования типов данных согласно конфигурации.
+
+        Args:
+            file_path: Путь к CSV файлу.
+
+        Returns:
+            pl.DataFrame: Загруженные данные.
+
+        Raises:
+            FileNotFoundError: Если файл не существует.
+            ValueError: Если файл не может быть прочитан.
+        """
+        return self.load_csv(file_path)
+
+    def _read_csv_lazy(self, file_path: Path) -> pl.DataFrame:
+        """Читает CSV файл с использованием lazy evaluation.
+
+        Args:
+            file_path: Путь к CSV файлу.
+
+        Returns:
+            pl.DataFrame: Прочитанные данные.
+        """
+        try:
+            if file_path.suffix == ".gz" or file_path.name.endswith(".csv.gz"):
+                logger.debug("Чтение gzipped CSV файла (lazy): %s", file_path)
+                return pl.scan_csv(file_path).collect()
+            else:
+                logger.debug("Чтение обычного CSV файла (lazy): %s", file_path)
+                return pl.scan_csv(file_path).collect()
+        except Exception as e:
+            logger.error("Ошибка чтения CSV файла (lazy) %s: %s", file_path, e)
+            raise
+
+    def _get_file_size_mb(self, file_path: Path) -> float:
+        """Получает размер файла в мегабайтах.
+
+        Args:
+            file_path: Путь к файлу.
+
+        Returns:
+            float: Размер файла в МБ.
+
+        Raises:
+            FileNotFoundError: Если файл не найден.
+        """
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+        return file_path.stat().st_size / (1024 * 1024)
+
+    def _validate_file_size(self, file_path: Path, max_size_mb: float | None = None) -> float:
+        """Проверяет размер файла.
+
+        Args:
+            file_path: Путь к файлу.
+            max_size_mb: Максимальный размер в МБ.
+                Если None, берется из конфигурации загрузчика.
+
+        Returns:
+            float: Размер файла в МБ.
+
+        Raises:
+            ValueError: Если файл слишком большой.
+            FileNotFoundError: Если файл не найден.
+        """
+        file_size_mb = self._get_file_size_mb(file_path)
+
+        if max_size_mb is None:
+            max_size_mb = self.config.max_file_size / (1024 * 1024)
+
+        if file_size_mb > max_size_mb:
+            logger.error(
+                "Файл превышает максимальный размер: %s (%.2f > %.2f MB)",
+                file_path,
+                file_size_mb,
+                max_size_mb,
+            )
+            raise ValueError(
+                f"File too large: {file_path.stat().st_size} bytes "
+                f"(max: {int(max_size_mb * 1024 * 1024)} bytes)"
+            )
+
+        logger.info("Размер файла %s: %.2f MB", file_path, file_size_mb)
+        return file_size_mb
 
     def _read_csv(self, file_path: Path) -> pl.DataFrame:
         """Читает CSV файл (поддерживает gzip сжатие).
