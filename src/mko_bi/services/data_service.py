@@ -13,7 +13,7 @@ from uuid import UUID
 
 import polars as pl
 from sqlalchemy import Float, Integer
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from werkzeug.utils import secure_filename
 
 from mko_bi.config import get_config
@@ -302,11 +302,11 @@ def _apply_transformations(df: pl.DataFrame, transformations: list[Transformatio
     return df
 
 
-def _process_csv_file(
+async def _process_csv_file(
     file_path: Path,
     processing_config: ProcessingConfig | None = None,
     dashboard_id: int | None = None,
-    db: Session | None = None,
+    db: AsyncSession | None = None,
 ) -> ProcessingResultData:
     """Обрабатывает CSV файл с использованием Polars.
 
@@ -390,12 +390,12 @@ def _process_csv_file(
     return result_data
 
 
-def _upload_file_logic(
+async def _upload_file_logic(
     filename: str,
     file_content: bytes,
     dashboard_id: int,
     user_id: int,
-    db: Session,
+    db: AsyncSession,
 ) -> UploadResponse:
     """Внутренняя логика загрузки файла с использованием переданной сессии.
 
@@ -404,23 +404,62 @@ def _upload_file_logic(
         file_content: Содержимое файла в байтах.
         dashboard_id: ID дашборда.
         user_id: ID пользователя, загружающего файл.
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         UploadResponse: Модель с информацией о загрузке.
     """
     # Проверяем существование дашборда
-    dashboard = DashboardRepository.get(dashboard_id, db)
+    dashboard = await DashboardRepository.get(dashboard_id, db)
     if dashboard is None:
         logger.warning("Дашборд не найден: id=%d", dashboard_id)
         raise ValueError(f"Дашборд с id={dashboard_id} не найден")
 
     # Проверяем права на запись (editor или admin)
-    has_access = check_dashboard_access(
+    has_access = await check_dashboard_access(
         user_id=user_id,
         dashboard_id=dashboard_id,
         required_permission="edit",
         db=db,
+    )
+    if not has_access:
+        logger.warning(
+            "Нет прав на загрузку: user_id=%d, dashboard_id=%d",
+            user_id,
+            dashboard_id,
+        )
+        raise PermissionError("Недостаточно прав для загрузки файла")
+
+    # Валидация файла
+    _validate_file(filename, file_content)
+
+    # Сохранение файла
+    _save_uploaded_file(filename, file_content, dashboard_id)
+
+    # Создание задачи
+    uploaded_at = datetime.now()
+    
+    # Создаем запись лога обработки в БД
+    log_create = ProcessingLogCreate(
+        dashboard_id=dashboard_id,
+        status=ProcessingStatusEnum.uploaded,
+        message=f"Файл {filename} успешно загружен",
+        started_at=uploaded_at,
+    )
+    processing_log = await ProcessingLogRepository.create(db, **log_create.model_dump())
+    logger.info("Лог обработки создан в БД: id=%s", processing_log.id)
+    
+    task_id = processing_log.id  # Используем ID лога как task_id
+
+    logger.info("Файл успешно загружен: task_id=%s, filename=%s", task_id, filename)
+
+    return UploadResponse(
+        task_id=task_id,
+        filename=filename,
+        dashboard_id=dashboard_id,
+        status=ProcessingStatusEnum.uploaded,
+        message="File uploaded successfully",
+        uploaded_at=uploaded_at,
     )
     if not has_access:
         logger.warning(
@@ -476,12 +515,12 @@ def _upload_file_logic(
     )
 
 
-def upload_file(
+async def upload_file(
     filename: str,
     file_content: bytes,
     dashboard_id: int,
     user_id: int,
-    db: Session | None = None,
+    db: AsyncSession | None = None,
 ) -> UploadResponse:
     """Загружает файл для дашборда.
 
@@ -493,7 +532,7 @@ def upload_file(
         file_content: Содержимое файла в байтах.
         dashboard_id: ID дашборда.
         user_id: ID пользователя, загружающего файл.
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         UploadResponse: Модель с информацией о загрузке.
@@ -510,18 +549,18 @@ def upload_file(
     )
 
     if db is not None:
-        return _upload_file_logic(filename, file_content, dashboard_id, user_id, db)
+        return await _upload_file_logic(filename, file_content, dashboard_id, user_id, db)
 
-    with get_session() as db_session:
-        return _upload_file_logic(filename, file_content, dashboard_id, user_id, db_session)
+    async with get_session() as db_session:
+        return await _upload_file_logic(filename, file_content, dashboard_id, user_id, db_session)
 
 
-def _trigger_processing_logic(
+async def _trigger_processing_logic(
     task_id: uuid.UUID,
     dashboard_id: int,
     user_id: int,
     processing_config: ProcessingConfig | None,
-    db: Session,
+    db: AsyncSession,
 ) -> ProcessingStatus:
     """Внутренняя логика запуска обработки с использованием переданной сессии.
 
@@ -530,7 +569,7 @@ def _trigger_processing_logic(
         dashboard_id: ID дашборда.
         user_id: ID пользователя.
         processing_config: Конфигурация обработки.
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         ProcessingStatus: Статус обработки.
@@ -543,7 +582,7 @@ def _trigger_processing_logic(
     )
 
     # Проверка прав доступа
-    has_access = check_dashboard_access(
+    has_access = await check_dashboard_access(
         user_id=user_id,
         dashboard_id=dashboard_id,
         required_permission="edit",
@@ -558,7 +597,7 @@ def _trigger_processing_logic(
         raise PermissionError("Недостаточно прав для обработки данных")
 
     # Проверяем, есть ли лог обработки для этого дашборда
-    logs = ProcessingLogRepository.get_by_dashboard_and_status(
+    logs = await ProcessingLogRepository.get_by_dashboard_and_status(
         db, dashboard_id, [ProcessingStatusEnum.uploaded, ProcessingStatusEnum.processing]
     )
 
@@ -583,7 +622,7 @@ def _trigger_processing_logic(
         message="Запуск обработки задачи",
         started_at=started_at,
     )
-    ProcessingLogRepository.update(
+    await ProcessingLogRepository.update(
         db, processing_log.id, **log_update.model_dump(exclude_unset=True)
     )
     logger.info("Обработка запущена: log_id=%s", processing_log.id)
@@ -614,7 +653,7 @@ def _trigger_processing_logic(
         logger.info("Найден файл для обработки: %s", file_path)
 
         # Обработка файла
-        result_data = _process_csv_file(
+        result_data = await _process_csv_file(
             file_path,
             processing_config,
             dashboard_id=dashboard_id,
@@ -625,13 +664,16 @@ def _trigger_processing_logic(
         if processing_config and result_data.get("processed_rows", 0) > 0:
             try:
                 # Получаем графики дашборда
+                from sqlalchemy import select
                 from mko_bi.db.models import graphs as graphs_model
 
                 graphs = (
-                    db.query(graphs_model.Graph)
-                    .filter(graphs_model.Graph.dashboard_id == dashboard_id)
-                    .all()
-                )
+                    await db.execute(
+                        select(graphs_model.Graph).where(
+                            graphs_model.Graph.dashboard_id == dashboard_id
+                        )
+                    )
+                ).scalars().all()
 
                 if graphs and processing_config.groupby and processing_config.aggregations:
                     # Подготавливаем данные для каждого графика
@@ -672,7 +714,7 @@ def _trigger_processing_logic(
 
                     # Сохраняем агрегаты через репозиторий
                     if aggregates:
-                        saved_count = AggregatedDataRepository.bulk_insert(
+                        saved_count = await AggregatedDataRepository.bulk_insert(
                             db=db,
                             dashboard_id=dashboard_id,
                             aggregates=aggregates,
@@ -701,7 +743,7 @@ def _trigger_processing_logic(
             message="Обработка завершена успешно",
             finished_at=completed_at,
         )
-        ProcessingLogRepository.update(
+        await ProcessingLogRepository.update(
             db, processing_log.id, **log_update.model_dump(exclude_unset=True)
         )
         logger.info("Лог обработки обновлен в БД: id=%s", processing_log.id)
@@ -739,7 +781,7 @@ def _trigger_processing_logic(
             message=f"Ошибка обработки: {str(e)}",
             finished_at=completed_at,
         )
-        ProcessingLogRepository.update(
+        await ProcessingLogRepository.update(
             db, processing_log.id, **log_update.model_dump(exclude_unset=True)
         )
         logger.info("Лог обработки обновлен в БД (ошибка): id=%s", processing_log.id)
@@ -762,7 +804,7 @@ def trigger_processing(
     dashboard_id: int,
     user_id: int,
     processing_config: ProcessingConfig | None = None,
-    db: Session | None = None,
+    db: AsyncSession | None = None,
 ) -> ProcessingStatus:
     """Запускает обработку загруженного файла.
 
@@ -794,17 +836,17 @@ def trigger_processing(
         return _trigger_processing_logic(task_id, dashboard_id, user_id, processing_config, db_session)
 
 
-def _get_processing_status_logic(
+async def _get_processing_status_logic(
     task_id: uuid.UUID,
     user_id: int,
-    db: Session,
+    db: AsyncSession,
 ) -> ProcessingStatus:
     """Внутренняя логика получения статуса обработки с использованием переданной сессии.
 
     Args:
         task_id: ID задачи.
         user_id: ID пользователя (для проверки прав).
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         ProcessingStatus: Статус обработки.
@@ -812,13 +854,13 @@ def _get_processing_status_logic(
     logger.info("Запрос статуса (внутренняя логика): task_id=%s, user_id=%d", task_id, user_id)
 
     # Получаем лог напрямую по task_id (является ID лога)
-    task_log = ProcessingLogRepository.get(task_id, db)
+    task_log = await ProcessingLogRepository.get(task_id, db)
     if task_log is None:
         logger.warning("Задача не найдена: task_id=%s", task_id)
         raise ValueError(f"Задача с id={task_id} не найдена")
 
     # Проверка прав доступа к дашборду
-    has_access = check_dashboard_access(
+    has_access = await check_dashboard_access(
         user_id=user_id,
         dashboard_id=task_log.dashboard_id,
         required_permission="view",
@@ -856,17 +898,17 @@ def _get_processing_status_logic(
     )
 
 
-def get_processing_status(
+async def get_processing_status(
     task_id: uuid.UUID,
     user_id: int,
-    db: Session | None = None,
+    db: AsyncSession | None = None,
 ) -> ProcessingStatus:
     """Получает статус обработки.
 
     Args:
         task_id: ID задачи.
         user_id: ID пользователя (для проверки прав).
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         ProcessingStatus: Статус обработки.
@@ -877,23 +919,23 @@ def get_processing_status(
     logger.info("Запрос статуса: task_id=%s, user_id=%d", task_id, user_id)
 
     if db is not None:
-        return _get_processing_status_logic(task_id, user_id, db)
+        return await _get_processing_status_logic(task_id, user_id, db)
 
-    with get_session() as db_session:
-        return _get_processing_status_logic(task_id, user_id, db_session)
+    async with get_session() as db_session:
+        return await _get_processing_status_logic(task_id, user_id, db_session)
 
 
-def _get_processing_result_logic(
+async def _get_processing_result_logic(
     task_id: uuid.UUID,
     user_id: int,
-    db: Session,
+    db: AsyncSession,
 ) -> ProcessingResult:
     """Внутренняя логика получения результата обработки с использованием переданной сессии.
 
     Args:
         task_id: ID задачи.
         user_id: ID пользователя.
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         ProcessingResult: Результат обработки.
@@ -901,13 +943,13 @@ def _get_processing_result_logic(
     logger.info("Запрос результата (внутренняя логика): task_id=%s, user_id=%d", task_id, user_id)
 
     # Получаем лог напрямую по task_id (ID лога)
-    task_log = ProcessingLogRepository.get(task_id, db)
+    task_log = await ProcessingLogRepository.get(task_id, db)
     if task_log is None:
         logger.warning("Задача не найдена: task_id=%s", task_id)
         raise ValueError(f"Задача с id={task_id} не найдена")
 
     # Проверка прав доступа
-    has_access = check_dashboard_access(
+    has_access = await check_dashboard_access(
         user_id=user_id,
         dashboard_id=task_log.dashboard_id,
         required_permission="view",
@@ -931,7 +973,7 @@ def _get_processing_result_logic(
         raise ValueError(f"Задача не завершена (статус: {task_log.status})")
 
     # Получаем агрегированные данные
-    aggregates = AggregatedDataRepository.get_by_dashboard(
+    aggregates = await AggregatedDataRepository.get_by_dashboard(
         db, task_log.dashboard_id
     )
 
@@ -952,17 +994,17 @@ def _get_processing_result_logic(
     )
 
 
-def get_processing_result(
+async def get_processing_result(
     task_id: uuid.UUID,
     user_id: int,
-    db: Session | None = None,
+    db: AsyncSession | None = None,
 ) -> ProcessingResult:
     """Получает результат обработки.
 
     Args:
         task_id: ID задачи.
         user_id: ID пользователя.
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         ProcessingResult: Результат обработки.
@@ -974,23 +1016,23 @@ def get_processing_result(
     logger.info("Запрос результата: task_id=%s, user_id=%d", task_id, user_id)
 
     if db is not None:
-        return _get_processing_result_logic(task_id, user_id, db)
+        return await _get_processing_result_logic(task_id, user_id, db)
 
-    with get_session() as db_session:
-        return _get_processing_result_logic(task_id, user_id, db_session)
+    async with get_session() as db_session:
+        return await _get_processing_result_logic(task_id, user_id, db_session)
 
 
-def _get_dashboard_aggregates_logic(
+async def _get_dashboard_aggregates_logic(
     dashboard_id: UUID,
     user_id: int,
-    db: Session,
+    db: AsyncSession,
 ) -> list[AggregatedData]:
     """Внутренняя логика получения агрегатов дашборда с использованием переданной сессии.
 
     Args:
         dashboard_id: ID дашборда (UUID).
         user_id: ID пользователя.
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         list[AggregatedData]: Список агрегированных данных для всех графиков дашборда.
@@ -1002,12 +1044,12 @@ def _get_dashboard_aggregates_logic(
     )
 
     # Проверка существования дашборда и прав доступа
-    dashboard_obj = DashboardRepository.get(dashboard_id, db)
+    dashboard_obj = await DashboardRepository.get(dashboard_id, db)
     if dashboard_obj is None:
         raise ValueError(f"Дашборд с id={dashboard_id} не найден")
 
     # Проверка прав доступа
-    has_access = check_dashboard_access(
+    has_access = await check_dashboard_access(
         user_id=user_id,
         dashboard_id=dashboard_id,
         required_permission="view",
@@ -1017,25 +1059,30 @@ def _get_dashboard_aggregates_logic(
         raise PermissionError("У вас нет доступа к этому дашборду")
 
     # Получение всех графиков дашборда
+    from sqlalchemy import select
     from mko_bi.db.models import (
         aggregated_data as aggregated_data_model,
         graphs as graphs_model,
     )
 
     graphs = (
-        db.query(graphs_model.Graph)
-        .filter(graphs_model.Graph.dashboard_id == dashboard_id)
-        .all()
-    )
+        await db.execute(
+            select(graphs_model.Graph).where(
+                graphs_model.Graph.dashboard_id == dashboard_id
+            )
+        )
+    ).scalars().all()
 
     # Получение агрегированных данных для каждого графика
     result = []
     for graph in graphs:
         aggregates = (
-            db.query(aggregated_data_model.AggregatedData)
-            .filter(aggregated_data_model.AggregatedData.graph_id == graph.id)
-            .all()
-        )
+            await db.execute(
+                select(aggregated_data_model.AggregatedData).where(
+                    aggregated_data_model.AggregatedData.graph_id == graph.id
+                )
+            )
+        ).scalars().all()
 
         # Группировка данных по графику
         graph_data = []
@@ -1067,10 +1114,10 @@ def _get_dashboard_aggregates_logic(
     return result
 
 
-def get_dashboard_aggregates(
+async def get_dashboard_aggregates(
     dashboard_id: UUID,
     user_id: int,
-    db: Session | None = None,
+    db: AsyncSession | None = None,
 ) -> list[AggregatedData]:
     """Получает все агрегированные данные для дашборда.
 
@@ -1080,7 +1127,7 @@ def get_dashboard_aggregates(
     Args:
         dashboard_id: ID дашборда (UUID).
         user_id: ID пользователя.
-        db: Опциональная сессия базы данных.
+        db: Опциональная асинхронная сессия базы данных.
 
     Returns:
         list[AggregatedData]: Список агрегированных данных для всех графиков дашборда.
@@ -1096,17 +1143,17 @@ def get_dashboard_aggregates(
     )
 
     if db is not None:
-        return _get_dashboard_aggregates_logic(dashboard_id, user_id, db)
+        return await _get_dashboard_aggregates_logic(dashboard_id, user_id, db)
 
-    with get_session() as db_session:
-        return _get_dashboard_aggregates_logic(dashboard_id, user_id, db_session)
+    async with get_session() as db_session:
+        return await _get_dashboard_aggregates_logic(dashboard_id, user_id, db_session)
 
 
-def _get_chart_data_logic(
+async def _get_chart_data_logic(
     dashboard_id: UUID,
     user_id: int,
     chart_ids: list[UUID] | None,
-    db: Session,
+    db: AsyncSession,
 ) -> list[AggregatedData]:
     """Внутренняя логика получения данных для графиков с использованием переданной сессии.
 
@@ -1114,7 +1161,7 @@ def _get_chart_data_logic(
         dashboard_id: ID дашборда (UUID).
         user_id: ID пользователя.
         chart_ids: Опциональный список ID графиков для фильтрации.
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         list[AggregatedData]: Список агрегированных данных для запрошенных графиков.
@@ -1127,12 +1174,12 @@ def _get_chart_data_logic(
     )
 
     # Проверка существования дашборда и прав доступа
-    dashboard_obj = DashboardRepository.get(dashboard_id, db)
+    dashboard_obj = await DashboardRepository.get(dashboard_id, db)
     if dashboard_obj is None:
         raise ValueError(f"Дашборд с id={dashboard_id} не найден")
 
     # Проверка прав доступа
-    has_access = check_dashboard_access(
+    has_access = await check_dashboard_access(
         user_id=user_id,
         dashboard_id=dashboard_id,
         required_permission="view",
@@ -1142,19 +1189,20 @@ def _get_chart_data_logic(
         raise PermissionError("У вас нет доступа к этому дашборду")
 
     # Формирование запроса для графиков
+    from sqlalchemy import select
     from mko_bi.db.models import (
         aggregated_data as aggregated_data_model,
         graphs as graphs_model,
     )
 
-    query = db.query(graphs_model.Graph).filter(
+    query = select(graphs_model.Graph).where(
         graphs_model.Graph.dashboard_id == dashboard_id
     )
 
     if chart_ids:
-        query = query.filter(graphs_model.Graph.id.in_(chart_ids))
+        query = query.where(graphs_model.Graph.id.in_(chart_ids))
 
-    graphs = query.all()
+    graphs = list((await db.execute(query)).scalars().all())
 
     if chart_ids and len(graphs) != len(chart_ids):
         found_ids = {str(g.id) for g in graphs}
@@ -1168,10 +1216,12 @@ def _get_chart_data_logic(
     result = []
     for graph in graphs:
         aggregates = (
-            db.query(aggregated_data_model.AggregatedData)
-            .filter(aggregated_data_model.AggregatedData.graph_id == graph.id)
-            .all()
-        )
+            await db.execute(
+                select(aggregated_data_model.AggregatedData).where(
+                    aggregated_data_model.AggregatedData.graph_id == graph.id
+                )
+            )
+        ).scalars().all()
 
         graph_data = []
         for agg in aggregates:
@@ -1202,11 +1252,11 @@ def _get_chart_data_logic(
     return result
 
 
-def get_chart_data(
+async def get_chart_data(
     dashboard_id: UUID,
     user_id: int,
     chart_ids: list[UUID] | None = None,
-    db: Session | None = None,
+    db: AsyncSession | None = None,
 ) -> list[AggregatedData]:
     """Получает данные для конкретных графиков дашборда.
 
@@ -1217,7 +1267,7 @@ def get_chart_data(
         dashboard_id: ID дашборда (UUID).
         user_id: ID пользователя.
         chart_ids: Опциональный список ID графиков для фильтрации.
-        db: Опциональная сессия базы данных.
+        db: Опциональная асинхронная сессия базы данных.
 
     Returns:
         list[AggregatedData]: Список агрегированных данных для запрошенных графиков.
@@ -1234,17 +1284,17 @@ def get_chart_data(
     )
 
     if db is not None:
-        return _get_chart_data_logic(dashboard_id, user_id, chart_ids, db)
+        return await _get_chart_data_logic(dashboard_id, user_id, chart_ids, db)
 
-    with get_session() as db_session:
-        return _get_chart_data_logic(dashboard_id, user_id, chart_ids, db_session)
+    async with get_session() as db_session:
+        return await _get_chart_data_logic(dashboard_id, user_id, chart_ids, db_session)
 
 
-def _apply_data_filters_logic(
+async def _apply_data_filters_logic(
     dashboard_id: UUID,
     user_id: int,
     filters: dict[str, Any] | None,
-    db: Session,
+    db: AsyncSession,
 ) -> list[AggregatedData]:
     """Внутренняя логика применения фильтров с использованием переданной сессии.
 
@@ -1252,7 +1302,7 @@ def _apply_data_filters_logic(
         dashboard_id: ID дашборда (UUID).
         user_id: ID пользователя.
         filters: Словарь с параметрами фильтрации.
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         list[AggregatedData]: Отфильтрованные агрегированные данные.
@@ -1265,12 +1315,12 @@ def _apply_data_filters_logic(
     )
 
     # Проверка существования дашборда и прав доступа
-    dashboard_obj = DashboardRepository.get(dashboard_id, db)
+    dashboard_obj = await DashboardRepository.get(dashboard_id, db)
     if dashboard_obj is None:
         raise ValueError(f"Дашборд с id={dashboard_id} не найден")
 
     # Проверка прав доступа
-    has_access = check_dashboard_access(
+    has_access = await check_dashboard_access(
         user_id=user_id,
         dashboard_id=dashboard_id,
         required_permission="view",
@@ -1279,7 +1329,7 @@ def _apply_data_filters_logic(
     if not has_access:
         raise PermissionError("У вас нет доступа к этому дашборду")
 
-    from sqlalchemy import and_
+    from sqlalchemy import and_, select
 
     from mko_bi.db.models import (
         aggregated_data as aggregated_data_model,
@@ -1288,10 +1338,12 @@ def _apply_data_filters_logic(
 
     # Получение всех графиков дашборда
     graphs = (
-        db.query(graphs_model.Graph)
-        .filter(graphs_model.Graph.dashboard_id == dashboard_id)
-        .all()
-    )
+        await db.execute(
+            select(graphs_model.Graph).where(
+                graphs_model.Graph.dashboard_id == dashboard_id
+            )
+        )
+    ).scalars().all()
 
     result = []
     for graph in graphs:
@@ -1342,14 +1394,14 @@ def _apply_data_filters_logic(
                     )
 
         # Формирование запроса с фильтрами
-        query = db.query(aggregated_data_model.AggregatedData).filter(
+        query = select(aggregated_data_model.AggregatedData).where(
             aggregated_data_model.AggregatedData.graph_id == graph.id
         )
 
         if filter_conditions:
-            query = query.filter(and_(*filter_conditions))
+            query = query.where(and_(*filter_conditions))
 
-        aggregates = query.all()
+        aggregates = list((await db.execute(query)).scalars().all())
 
         # Формирование результата
         graph_data = []
@@ -1382,11 +1434,11 @@ def _apply_data_filters_logic(
     return result
 
 
-def apply_data_filters(
+async def apply_data_filters(
     dashboard_id: UUID,
     user_id: int,
     filters: dict[str, Any] | None = None,
-    db: Session | None = None,
+    db: AsyncSession | None = None,
 ) -> list[AggregatedData]:
     """Применяет фильтры к агрегированным данным дашборда.
 
@@ -1397,7 +1449,7 @@ def apply_data_filters(
         dashboard_id: ID дашборда (UUID).
         user_id: ID пользователя.
         filters: Словарь с параметрами фильтрации.
-        db: Опциональная сессия базы данных.
+        db: Опциональная асинхронная сессия базы данных.
 
     Returns:
         list[AggregatedData]: Отфильтрованные агрегированные данные.
@@ -1414,10 +1466,10 @@ def apply_data_filters(
     )
 
     if db is not None:
-        return _apply_data_filters_logic(dashboard_id, user_id, filters, db)
+        return await _apply_data_filters_logic(dashboard_id, user_id, filters, db)
 
-    with get_session() as db_session:
-        return _apply_data_filters_logic(dashboard_id, user_id, filters, db_session)
+    async with get_session() as db_session:
+        return await _apply_data_filters_logic(dashboard_id, user_id, filters, db_session)
 
 
 def cleanup_task_files(task_id: uuid.UUID) -> None:
@@ -1443,17 +1495,17 @@ def cleanup_task_files(task_id: uuid.UUID) -> None:
             logger.error("Ошибка при удалении файла %s: %s", file_path, e)
 
 
-def _save_aggregated_data_logic(
+async def _save_aggregated_data_logic(
     dashboard_id: int,
     aggregates: list[dict[str, Any]],
-    db: Session,
+    db: AsyncSession,
 ) -> int:
     """Внутренняя логика сохранения агрегированных данных с использованием переданной сессии.
 
     Args:
         dashboard_id: ID дашборда.
         aggregates: Список агрегированных данных для сохранения.
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         Количество успешно сохраненных записей.
@@ -1465,13 +1517,12 @@ def _save_aggregated_data_logic(
     )
 
     # Выполняем операцию в транзакции
-    with db.begin():
-        inserted_count: int = AggregatedDataRepository.bulk_insert(
-            db=db,
-            dashboard_id=dashboard_id,
-            aggregates=aggregates,
-            clear_old=True,
-        )
+    inserted_count: int = await AggregatedDataRepository.bulk_insert(
+        db=db,
+        dashboard_id=dashboard_id,
+        aggregates=aggregates,
+        clear_old=True,
+    )
 
     logger.info(
         "Агрегированные данные сохранены для дашборда %s: %d записей",
@@ -1481,10 +1532,10 @@ def _save_aggregated_data_logic(
     return inserted_count
 
 
-def save_aggregated_data(
+async def save_aggregated_data(
     dashboard_id: int,
     aggregates: list[dict[str, Any]],
-    db: Session | None = None,
+    db: AsyncSession | None = None,
 ) -> int:
     """Сохраняет агрегированные данные в базу данных.
 
@@ -1500,7 +1551,7 @@ def save_aggregated_data(
             - graph_id: UUID графика
             - dims: dict[str, Any] значения измерений
             - metrics: dict[str, Any] значения метрик
-        db: Опциональная сессия базы данных. Если не передана,
+        db: Опциональная асинхронная сессия базы данных. Если не передана,
             создается новая сессия.
 
     Returns:
@@ -1517,7 +1568,7 @@ def save_aggregated_data(
     )
 
     if db is not None:
-        return _save_aggregated_data_logic(dashboard_id, aggregates, db)
+        return await _save_aggregated_data_logic(dashboard_id, aggregates, db)
 
-    with get_session() as db_session:
-        return _save_aggregated_data_logic(dashboard_id, aggregates, db_session)
+    async with get_session() as db_session:
+        return await _save_aggregated_data_logic(dashboard_id, aggregates, db_session)

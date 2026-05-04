@@ -28,7 +28,7 @@ class TestUserModel:
             role="viewer",
             is_active=True,
         )
-        await async_db_session.add(user)
+        async_db_session.add(user)
         await async_db_session.commit()
         await async_db_session.refresh(user)
 
@@ -44,7 +44,7 @@ class TestUserModel:
             email="test2@example.com",
             password_hash="$2b$12$examplehash",
         )
-        await async_db_session.add(user)
+        async_db_session.add(user)
         await async_db_session.commit()
 
         assert user.role == "viewer"
@@ -55,7 +55,7 @@ class TestUserModel:
             email="test3@example.com",
             password_hash="$2b$12$examplehash",
         )
-        await async_db_session.add(user)
+        async_db_session.add(user)
         await async_db_session.commit()
 
         assert user.is_active is True
@@ -66,14 +66,14 @@ class TestUserModel:
             email="duplicate@example.com",
             password_hash="$2b$12$examplehash",
         )
-        await async_db_session.add(user1)
+        async_db_session.add(user1)
         await async_db_session.commit()
 
         user2 = user_model.User(
             email="duplicate@example.com",
             password_hash="$2b$12$examplehash2",
         )
-        await async_db_session.add(user2)
+        async_db_session.add(user2)
 
         with pytest.raises(IntegrityError):
             await async_db_session.commit()
@@ -88,10 +88,11 @@ class TestUserModel:
                 password_hash="$2b$12$examplehash",
                 role=role,
             )
-            await async_db_session.add(user)
+            async_db_session.add(user)
         await async_db_session.commit()
 
-        users = await async_db_session.execute(select(user_model.User)).scalars().all()
+        result = await async_db_session.execute(select(user_model.User))
+        users = result.scalars().all()
         assert len(users) == 3
 
     async def test_user_repr(self, async_db_session):
@@ -101,7 +102,7 @@ class TestUserModel:
             password_hash="$2b$12$examplehash",
             role="admin",
         )
-        await async_db_session.add(user)
+        async_db_session.add(user)
         await async_db_session.commit()
         await async_db_session.refresh(user)
 
@@ -116,7 +117,7 @@ class TestUserModel:
             email="str_test@example.com",
             password_hash="$2b$12$examplehash",
         )
-        await async_db_session.add(user)
+        async_db_session.add(user)
         await async_db_session.commit()
         await async_db_session.refresh(user)
 
@@ -133,7 +134,7 @@ class TestDashboardModel:
             description="Test description",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -149,7 +150,7 @@ class TestDashboardModel:
             name="Default Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         assert dashboard.description is None
@@ -162,14 +163,14 @@ class TestDashboardModel:
             name="Same Name",
             config={},
         )
-        await async_db_session.add(dashboard1)
+        async_db_session.add(dashboard1)
         await async_db_session.commit()
 
         dashboard2 = dashboard_model.Dashboard(
             name="Same Name",
             config={},
         )
-        await async_db_session.add(dashboard2)
+        async_db_session.add(dashboard2)
 
         with pytest.raises(IntegrityError):
             await async_db_session.commit()
@@ -182,7 +183,7 @@ class TestDashboardModel:
             name="Update Test",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -201,7 +202,7 @@ class TestDashboardModel:
             name="Repr Test",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -215,7 +216,7 @@ class TestDashboardModel:
             name="Str Test Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -231,14 +232,14 @@ class TestAccessModel:
             email="access_user@example.com",
             password_hash="$2b$12$examplehash",
         )
-        await async_db_session.add(user)
+        async_db_session.add(user)
         await async_db_session.commit()
 
         dashboard = dashboard_model.Dashboard(
             name="Access Test Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         access = access_model.DashboardAccess(
@@ -246,7 +247,7 @@ class TestAccessModel:
             dashboard_id=dashboard.id,
             permission="view",
         )
-        await async_db_session.add(access)
+        async_db_session.add(access)
         await async_db_session.commit()
         await async_db_session.refresh(access)
 
@@ -260,14 +261,14 @@ class TestAccessModel:
             email="composite_user@example.com",
             password_hash="$2b$12$examplehash",
         )
-        await async_db_session.add(user)
+        async_db_session.add(user)
         await async_db_session.commit()
 
         dashboard = dashboard_model.Dashboard(
             name="Composite Test",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         access1 = access_model.DashboardAccess(
@@ -275,7 +276,7 @@ class TestAccessModel:
             dashboard_id=dashboard.id,
             permission="view",
         )
-        await async_db_session.add(access1)
+        async_db_session.add(access1)
         await async_db_session.commit()
 
         access2 = access_model.DashboardAccess(
@@ -283,7 +284,7 @@ class TestAccessModel:
             dashboard_id=dashboard.id,
             permission="edit",
         )
-        await async_db_session.add(access2)
+        async_db_session.add(access2)
 
         with pytest.raises(IntegrityError):
             await async_db_session.commit()
@@ -296,34 +297,34 @@ class TestAccessModel:
             email="perm_user1@example.com",
             password_hash="$2b$12$examplehash",
         )
-        await async_db_session.add(user1)
+        async_db_session.add(user1)
         user2 = user_model.User(
             email="perm_user2@example.com",
             password_hash="$2b$12$examplehash",
         )
-        await async_db_session.add(user2)
+        async_db_session.add(user2)
         user3 = user_model.User(
             email="perm_user3@example.com",
             password_hash="$2b$12$examplehash",
         )
-        await async_db_session.add(user3)
+        async_db_session.add(user3)
         await async_db_session.commit()
 
         dashboard1 = dashboard_model.Dashboard(
             name="Perm Test 1",
             config={},
         )
-        await async_db_session.add(dashboard1)
+        async_db_session.add(dashboard1)
         dashboard2 = dashboard_model.Dashboard(
             name="Perm Test 2",
             config={},
         )
-        await async_db_session.add(dashboard2)
+        async_db_session.add(dashboard2)
         dashboard3 = dashboard_model.Dashboard(
             name="Perm Test 3",
             config={},
         )
-        await async_db_session.add(dashboard3)
+        async_db_session.add(dashboard3)
         await async_db_session.commit()
 
         permissions = ["view", "edit", "admin"]
@@ -333,12 +334,13 @@ class TestAccessModel:
                 dashboard_id=[dashboard1, dashboard2, dashboard3][i].id,
                 permission=permission,
             )
-            await async_db_session.add(access)
+            async_db_session.add(access)
         await async_db_session.commit()
 
         accesses = await async_db_session.execute(
             select(access_model.DashboardAccess)
-        ).scalars().all()
+        )
+        accesses = accesses.scalars().all()
         assert len(accesses) == 3
 
     async def test_cascade_delete_user(self, async_db_session):
@@ -347,14 +349,14 @@ class TestAccessModel:
             email="cascade_user@example.com",
             password_hash="$2b$12$examplehash",
         )
-        await async_db_session.add(user)
+        async_db_session.add(user)
         await async_db_session.commit()
 
         dashboard = dashboard_model.Dashboard(
-            name="Cascade Test",
+            name="Cascade Dash Test",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         access = access_model.DashboardAccess(
@@ -362,7 +364,7 @@ class TestAccessModel:
             dashboard_id=dashboard.id,
             permission="view",
         )
-        await async_db_session.add(access)
+        async_db_session.add(access)
         await async_db_session.commit()
 
         # Удаляем пользователя
@@ -372,7 +374,8 @@ class TestAccessModel:
         # Проверяем, что доступ тоже удален
         result = await async_db_session.execute(
             select(access_model.DashboardAccess)
-        ).fetchall()
+        )
+        result = result.fetchall()
         assert len(result) == 0
 
     async def test_cascade_delete_dashboard(self, async_db_session):
@@ -381,14 +384,14 @@ class TestAccessModel:
             email="cascade_dash_user@example.com",
             password_hash="$2b$12$examplehash",
         )
-        await async_db_session.add(user)
+        async_db_session.add(user)
         await async_db_session.commit()
 
         dashboard = dashboard_model.Dashboard(
             name="Cascade Dash Test",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         access = access_model.DashboardAccess(
@@ -396,7 +399,7 @@ class TestAccessModel:
             dashboard_id=dashboard.id,
             permission="view",
         )
-        await async_db_session.add(access)
+        async_db_session.add(access)
         await async_db_session.commit()
 
         # Удаляем дашборд
@@ -406,7 +409,8 @@ class TestAccessModel:
         # Проверяем, что доступ тоже удален
         result = await async_db_session.execute(
             select(access_model.DashboardAccess)
-        ).fetchall()
+        )
+        result = result.fetchall()
         assert len(result) == 0
 
     async def test_access_repr(self, async_db_session):
@@ -415,14 +419,14 @@ class TestAccessModel:
             email="repr_user@example.com",
             password_hash="$2b$12$examplehash",
         )
-        await async_db_session.add(user)
+        async_db_session.add(user)
         await async_db_session.commit()
 
         dashboard = dashboard_model.Dashboard(
             name="Repr Dash",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         access = access_model.DashboardAccess(
@@ -430,7 +434,7 @@ class TestAccessModel:
             dashboard_id=dashboard.id,
             permission="edit",
         )
-        await async_db_session.add(access)
+        async_db_session.add(access)
         await async_db_session.commit()
         await async_db_session.refresh(access)
 
@@ -449,7 +453,7 @@ class TestUserDashboardRelationship:
             email="rel_user@example.com",
             password_hash="$2b$12$examplehash",
         )
-        await async_db_session.add(user)
+        async_db_session.add(user)
         await async_db_session.commit()
 
         dashboard1 = dashboard_model.Dashboard(
@@ -479,7 +483,8 @@ class TestUserDashboardRelationship:
         # Проверяем, что у пользователя есть доступ к дашбордам
         result = await async_db_session.execute(
             select(user_model.User).where(user_model.User.id == user.id)
-        ).scalar_one()
+        )
+        result = result.scalar_one()
         assert len(result.dashboards) == 2
         dashboard_names = {d.name for d in result.dashboards}
         assert "Dash 1" in dashboard_names
@@ -502,7 +507,7 @@ class TestUserDashboardRelationship:
             name="Shared Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         access1 = access_model.DashboardAccess(
@@ -523,7 +528,8 @@ class TestUserDashboardRelationship:
             select(dashboard_model.Dashboard).where(
                 dashboard_model.Dashboard.id == dashboard.id
             )
-        ).scalar_one()
+        )
+        result = result.scalar_one()
         assert len(result.users) == 2
         user_emails = {u.email for u in result.users}
         assert "user1@example.com" in user_emails
@@ -539,7 +545,7 @@ class TestDashboardGraphRelationship:
             name="Graph Test Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         graph1 = graph_model.Graph(
@@ -566,7 +572,8 @@ class TestDashboardGraphRelationship:
             select(dashboard_model.Dashboard).where(
                 dashboard_model.Dashboard.id == dashboard.id
             )
-        ).scalar_one()
+        )
+        result = result.scalar_one()
         assert len(result.graphs) == 2
         graph_names = {g.name for g in result.graphs}
         assert "Graph 1" in graph_names
@@ -578,7 +585,7 @@ class TestDashboardGraphRelationship:
             name="Cascade Graph Test",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         graph = graph_model.Graph(
@@ -589,7 +596,7 @@ class TestDashboardGraphRelationship:
             dimensions=["x"],
             metrics=["y"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
 
         # Удаляем дашборд
@@ -599,7 +606,8 @@ class TestDashboardGraphRelationship:
         # Проверяем, что график тоже удален
         result = await async_db_session.execute(
             select(graph_model.Graph)
-        ).fetchall()
+        )
+        result = result.fetchall()
         assert len(result) == 0
 
 
@@ -612,7 +620,7 @@ class TestGraphModel:
             name="Graph Parent Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         graph = graph_model.Graph(
@@ -623,7 +631,7 @@ class TestGraphModel:
             dimensions=["category", "year"],
             metrics=["sales", "profit"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
         await async_db_session.refresh(graph)
 
@@ -641,7 +649,7 @@ class TestGraphModel:
             name="Type Constraint Test",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         # Допустимые типы должны работать
@@ -654,12 +662,13 @@ class TestGraphModel:
                 dimensions=[],
                 metrics=[],
             )
-            await async_db_session.add(graph)
+            async_db_session.add(graph)
         await async_db_session.commit()
 
-        graphs = await async_db_session.execute(
+        result = await async_db_session.execute(
             select(graph_model.Graph)
-        ).scalars().all()
+        )
+        graphs = result.scalars().all()
         assert len(graphs) == 4
 
     async def test_unique_dashboard_name_constraint(self, async_db_session):
@@ -668,7 +677,7 @@ class TestGraphModel:
             name="Unique Name Test",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         graph1 = graph_model.Graph(
@@ -679,7 +688,7 @@ class TestGraphModel:
             dimensions=[],
             metrics=[],
         )
-        await async_db_session.add(graph1)
+        async_db_session.add(graph1)
         await async_db_session.commit()
 
         graph2 = graph_model.Graph(
@@ -690,7 +699,7 @@ class TestGraphModel:
             dimensions=[],
             metrics=[],
         )
-        await async_db_session.add(graph2)
+        async_db_session.add(graph2)
 
         with pytest.raises(IntegrityError):
             await async_db_session.commit()
@@ -711,7 +720,7 @@ class TestGraphModel:
             dimensions=[],
             metrics=[],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         # В SQLite FK могут быть отключены, поэтому это может не вызвать ошибку
         # Но мы все равно тестируем логику
         try:
@@ -725,7 +734,7 @@ class TestGraphModel:
             name="Repr Graph Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         graph = graph_model.Graph(
@@ -736,7 +745,7 @@ class TestGraphModel:
             dimensions=["cat"],
             metrics=["val"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
         await async_db_session.refresh(graph)
 
@@ -757,7 +766,7 @@ class TestLayoutModel:
                 "filters": [{"field": "year", "type": "select"}],
             },
         )
-        await async_db_session.add(layout)
+        async_db_session.add(layout)
         await async_db_session.commit()
         await async_db_session.refresh(layout)
 
@@ -774,7 +783,7 @@ class TestLayoutModel:
         layout = layout_model.Layout(
             name="Default Layout",
         )
-        await async_db_session.add(layout)
+        async_db_session.add(layout)
         await async_db_session.commit()
 
         assert layout.definition == {}
@@ -786,14 +795,14 @@ class TestLayoutModel:
             name="Same Layout Name",
             definition={},
         )
-        await async_db_session.add(layout1)
+        async_db_session.add(layout1)
         await async_db_session.commit()
 
         layout2 = layout_model.Layout(
             name="Same Layout Name",
             definition={"grid": []},
         )
-        await async_db_session.add(layout2)
+        async_db_session.add(layout2)
 
         with pytest.raises(IntegrityError):
             await async_db_session.commit()
@@ -806,7 +815,7 @@ class TestLayoutModel:
             name="Shared Layout",
             definition={"grid": []},
         )
-        await async_db_session.add(layout)
+        async_db_session.add(layout)
         await async_db_session.commit()
 
         dashboard1 = dashboard_model.Dashboard(
@@ -827,7 +836,8 @@ class TestLayoutModel:
             select(layout_model.Layout).where(
                 layout_model.Layout.id == layout.id
             )
-        ).scalar_one()
+        )
+        result = result.scalar_one()
         assert len(result.dashboards) == 2
         dashboard_names = {d.name for d in result.dashboards}
         assert "Dash with Layout 1" in dashboard_names
@@ -839,7 +849,7 @@ class TestLayoutModel:
             name="To Be Deleted Layout",
             definition={"grid": []},
         )
-        await async_db_session.add(layout)
+        async_db_session.add(layout)
         await async_db_session.commit()
 
         dashboard = dashboard_model.Dashboard(
@@ -847,7 +857,7 @@ class TestLayoutModel:
             layout_id=layout.id,
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         # Удаляем layout
@@ -859,7 +869,8 @@ class TestLayoutModel:
             select(dashboard_model.Dashboard).where(
                 dashboard_model.Dashboard.id == dashboard.id
             )
-        ).scalar_one()
+        )
+        result = result.scalar_one()
         assert result.layout_id is None
 
     async def test_layout_repr(self, async_db_session):
@@ -868,7 +879,7 @@ class TestLayoutModel:
             name="Repr Layout",
             definition={"grid": []},
         )
-        await async_db_session.add(layout)
+        async_db_session.add(layout)
         await async_db_session.commit()
         await async_db_session.refresh(layout)
 
@@ -885,7 +896,7 @@ class TestAggregatedDataModel:
             name="Agg Data Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         graph = graph_model.Graph(
@@ -896,7 +907,7 @@ class TestAggregatedDataModel:
             dimensions=["category"],
             metrics=["value"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
 
         agg_data = aggregated_data_model.AggregatedData(
@@ -905,7 +916,7 @@ class TestAggregatedDataModel:
             dims={"category": "A", "year": 2023},
             metrics={"value": 100, "count": 10},
         )
-        await async_db_session.add(agg_data)
+        async_db_session.add(agg_data)
         await async_db_session.commit()
         await async_db_session.refresh(agg_data)
 
@@ -920,7 +931,7 @@ class TestAggregatedDataModel:
             name="Agg Rel Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         graph = graph_model.Graph(
@@ -931,7 +942,7 @@ class TestAggregatedDataModel:
             dimensions=["x"],
             metrics=["y"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
 
         agg_data = aggregated_data_model.AggregatedData(
@@ -940,7 +951,7 @@ class TestAggregatedDataModel:
             dims={"x": "test"},
             metrics={"y": 42},
         )
-        await async_db_session.add(agg_data)
+        async_db_session.add(agg_data)
         await async_db_session.commit()
 
         # Проверяем связи
@@ -948,7 +959,8 @@ class TestAggregatedDataModel:
             select(aggregated_data_model.AggregatedData).where(
                 aggregated_data_model.AggregatedData.id == agg_data.id
             )
-        ).scalar_one()
+        )
+        result = result.scalar_one()
         assert result.dashboard.id == dashboard.id
         assert result.graph.id == graph.id
 
@@ -958,7 +970,7 @@ class TestAggregatedDataModel:
             name="Cascade Agg Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         graph = graph_model.Graph(
@@ -969,7 +981,7 @@ class TestAggregatedDataModel:
             dimensions=["x"],
             metrics=["y"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
 
         agg_data = aggregated_data_model.AggregatedData(
@@ -978,7 +990,7 @@ class TestAggregatedDataModel:
             dims={"x": "test"},
             metrics={"y": 42},
         )
-        await async_db_session.add(agg_data)
+        async_db_session.add(agg_data)
         await async_db_session.commit()
 
         # Удаляем дашборд
@@ -988,7 +1000,8 @@ class TestAggregatedDataModel:
         # Проверяем, что агрегированные данные тоже удалены
         result = await async_db_session.execute(
             select(aggregated_data_model.AggregatedData)
-        ).fetchall()
+        )
+        result = result.fetchall()
         assert len(result) == 0
 
     async def test_aggregated_data_cascade_delete_graph(self, async_db_session):
@@ -997,7 +1010,7 @@ class TestAggregatedDataModel:
             name="Cascade Graph Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         graph = graph_model.Graph(
@@ -1008,7 +1021,7 @@ class TestAggregatedDataModel:
             dimensions=["x"],
             metrics=["y"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
 
         agg_data = aggregated_data_model.AggregatedData(
@@ -1017,7 +1030,7 @@ class TestAggregatedDataModel:
             dims={"x": "test"},
             metrics={"y": 42},
         )
-        await async_db_session.add(agg_data)
+        async_db_session.add(agg_data)
         await async_db_session.commit()
 
         # Удаляем график
@@ -1027,7 +1040,8 @@ class TestAggregatedDataModel:
         # Проверяем, что агрегированные данные тоже удалены
         result = await async_db_session.execute(
             select(aggregated_data_model.AggregatedData)
-        ).fetchall()
+        )
+        result = result.fetchall()
         assert len(result) == 0
 
 
@@ -1044,7 +1058,7 @@ class TestModelIndexes:
                 email=f"user{i}@example.com",
                 password_hash="$2b$12$examplehash",
             )
-            await async_db_session.add(user)
+            async_db_session.add(user)
         await async_db_session.commit()
 
         # Проверяем, что можно найти по email (использует индекс)
@@ -1052,7 +1066,8 @@ class TestModelIndexes:
             select(user_model.User).where(
                 user_model.User.email == "user2@example.com"
             )
-        ).scalar_one_or_none()
+        )
+        result = result.scalar_one_or_none()
 
         assert result is not None
         assert result.email == "user2@example.com"
@@ -1065,7 +1080,7 @@ class TestModelIndexes:
                 name=f"Dashboard {i}",
                 config={},
             )
-            await async_db_session.add(dashboard)
+            async_db_session.add(dashboard)
         await async_db_session.commit()
 
         # Проверяем, что можно найти по имени (использует индекс)
@@ -1073,7 +1088,8 @@ class TestModelIndexes:
             select(dashboard_model.Dashboard).where(
                 dashboard_model.Dashboard.name == "Dashboard 2"
             )
-        ).scalar_one_or_none()
+        )
+        result = result.scalar_one_or_none()
 
         assert result is not None
         assert result.name == "Dashboard 2"
@@ -1084,14 +1100,14 @@ class TestModelIndexes:
             email="index_user@example.com",
             password_hash="$2b$12$examplehash",
         )
-        await async_db_session.add(user)
+        async_db_session.add(user)
         await async_db_session.commit()
 
         dashboard = dashboard_model.Dashboard(
             name="Index Test Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         access = access_model.DashboardAccess(
@@ -1099,7 +1115,7 @@ class TestModelIndexes:
             dashboard_id=dashboard.id,
             permission="view",
         )
-        await async_db_session.add(access)
+        async_db_session.add(access)
         await async_db_session.commit()
 
         # Проверяем, что можно найти по составному ключу
@@ -1108,7 +1124,8 @@ class TestModelIndexes:
                 access_model.DashboardAccess.user_id == user.id,
                 access_model.DashboardAccess.dashboard_id == dashboard.id,
             )
-        ).scalar_one_or_none()
+        )
+        result = result.scalar_one_or_none()
 
         assert result is not None
         assert result.permission == "view"

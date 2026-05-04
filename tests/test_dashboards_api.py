@@ -200,14 +200,14 @@ class TestGrantDashboardAccessEndpoint:
         from mko_bi.core.security import hash_password
     
         repo = UserRepository()
-        with get_session() as db:
-            user2 = repo.create(
+        async with get_session() as db:
+            user2 = await repo.create(
                 db=db,
                 email="user2@example.com",
                 password_hash=hash_password("Pass123!"),
                 role="viewer",
             )
-            db.commit()
+            await db.commit()
 
         # Предоставляем доступ
         response = await authenticated_client.post(

@@ -26,7 +26,7 @@ from mko_bi.core.permissions import (
     check_role,
     AuthenticationError,
 )
-from mko_bi.db.session import get_db
+from mko_bi.db.session import get_db, get_session
 from mko_bi.models.user import UserDB
 from mko_bi.interfaces import (
     IUserRepository,
@@ -67,7 +67,7 @@ async def get_db_dependency() -> AsyncGenerator[AsyncSession, None]:
             result = await db.execute(select(User))
             return result.scalars().all()
     """
-    async with get_db() as db:
+    async with get_session() as db:
         yield db
 
 
@@ -311,7 +311,7 @@ async def get_current_user_dependency(
             return user
     """
     try:
-        user = get_current_user(token, db)
+        user = await get_current_user(token, db)
         logger.debug("Пользователь аутентифицирован: user_id=%s", user.id)
         return user
     except ExpiredSignatureError:
@@ -503,7 +503,7 @@ async def require_dashboard_read_access(
         ):
             return {"message": "Dashboard data"}
     """
-    if not check_dashboard_access(
+    if not await check_dashboard_access(
         user_id=user.id,
         dashboard_id=dashboard_id,
         required_permission="view",
@@ -547,7 +547,7 @@ async def require_dashboard_write_access(
         ):
             return {"message": "Update allowed"}
     """
-    if not check_dashboard_access(
+    if not await check_dashboard_access(
         user_id=user.id,
         dashboard_id=dashboard_id,
         required_permission="edit",
@@ -591,7 +591,7 @@ async def require_dashboard_admin_access(
         ):
             return {"message": "Delete allowed"}
     """
-    if not check_dashboard_access(
+    if not await check_dashboard_access(
         user_id=user.id,
         dashboard_id=dashboard_id,
         required_permission="admin",

@@ -19,16 +19,54 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     """Upgrade schema."""
     # Rename UNIQUE constraints (these also rename the underlying indexes)
-    op.execute("ALTER TABLE users RENAME CONSTRAINT users_email_key TO idx_users_email")
-    op.execute("ALTER TABLE layouts RENAME CONSTRAINT layouts_name_key TO idx_layouts_name")
-    op.execute("ALTER TABLE dashboards RENAME CONSTRAINT dashboards_name_key TO idx_dashboards_name")
-    op.execute("ALTER TABLE graphs RENAME CONSTRAINT uq_graph_dashboard_name TO idx_graphs_dashboard_name")
-    op.execute("ALTER TABLE filters RENAME CONSTRAINT filters_name_key TO idx_filters_name")
+    # Use try-except to handle case where constraint doesn't exist
+    try:
+        op.execute("ALTER TABLE users RENAME CONSTRAINT users_email_key TO idx_users_email")
+    except Exception:
+        pass  # Constraint might not exist or already renamed
+    
+    try:
+        op.execute("ALTER TABLE layouts RENAME CONSTRAINT layouts_name_key TO idx_layouts_name")
+    except Exception:
+        pass
+    
+    try:
+        op.execute("ALTER TABLE dashboards RENAME CONSTRAINT dashboards_name_key TO idx_dashboards_name")
+    except Exception:
+        pass
+    
+    try:
+        op.execute("ALTER TABLE graphs RENAME CONSTRAINT uq_graph_dashboard_name TO idx_graphs_dashboard_name")
+    except Exception:
+        pass
+    
+    try:
+        op.execute("ALTER TABLE filters RENAME CONSTRAINT filters_name_key TO idx_filters_name")
+    except Exception:
+        pass
 
-    # Rename regular indexes
-    op.execute("ALTER INDEX ix_users_role RENAME TO idx_users_role")
-    op.execute("ALTER INDEX idx_access_dashboard RENAME TO idx_dashboard_access_dashboard")
-    op.execute("ALTER INDEX idx_dashboard_filter RENAME TO idx_dashboard_filters_dashboard_filter")
+    # Rename regular indexes (check if old name exists first)
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'ix_users_role' AND relkind = 'i') THEN
+                EXECUTE 'ALTER INDEX ix_users_role RENAME TO idx_users_role';
+            END IF;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_access_dashboard' AND relkind = 'i') THEN
+                EXECUTE 'ALTER INDEX idx_access_dashboard RENAME TO idx_dashboard_access_dashboard';
+            END IF;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_dashboard_filter' AND relkind = 'i') THEN
+                EXECUTE 'ALTER INDEX idx_dashboard_filter RENAME TO idx_dashboard_filters_dashboard_filter';
+            END IF;
+        END $$;
+    """)
 
     # Create missing index on dashboard_access(user_id) and rename
     op.create_index('idx_dashboard_access_user', 'dashboard_access', ['user_id'], unique=False)
@@ -52,13 +90,43 @@ def downgrade() -> None:
     op.drop_index('idx_dashboard_access_user', table_name='dashboard_access')
 
     # Rename regular indexes back
-    op.execute("ALTER INDEX idx_dashboard_filters_dashboard_filter RENAME TO idx_dashboard_filter")
-    op.execute("ALTER INDEX idx_dashboard_access_dashboard RENAME TO idx_access_dashboard")
-    op.execute("ALTER INDEX idx_users_role RENAME TO ix_users_role")
+    try:
+        op.execute("ALTER INDEX idx_dashboard_filters_dashboard_filter RENAME TO idx_dashboard_filter")
+    except Exception:
+        pass
+    
+    try:
+        op.execute("ALTER INDEX idx_dashboard_access_dashboard RENAME TO idx_access_dashboard")
+    except Exception:
+        pass
+    
+    try:
+        op.execute("ALTER INDEX idx_users_role RENAME TO ix_users_role")
+    except Exception:
+        pass
 
     # Rename UNIQUE constraints back
-    op.execute("ALTER TABLE filters RENAME CONSTRAINT idx_filters_name TO filters_name_key")
-    op.execute("ALTER TABLE graphs RENAME CONSTRAINT idx_graphs_dashboard_name TO uq_graph_dashboard_name")
-    op.execute("ALTER TABLE dashboards RENAME CONSTRAINT idx_dashboards_name TO dashboards_name_key")
-    op.execute("ALTER TABLE layouts RENAME CONSTRAINT idx_layouts_name TO layouts_name_key")
-    op.execute("ALTER TABLE users RENAME CONSTRAINT idx_users_email TO users_email_key")
+    try:
+        op.execute("ALTER TABLE filters RENAME CONSTRAINT idx_filters_name TO filters_name_key")
+    except Exception:
+        pass
+    
+    try:
+        op.execute("ALTER TABLE graphs RENAME CONSTRAINT idx_graphs_dashboard_name TO uq_graph_dashboard_name")
+    except Exception:
+        pass
+    
+    try:
+        op.execute("ALTER TABLE dashboards RENAME CONSTRAINT idx_dashboards_name TO dashboards_name_key")
+    except Exception:
+        pass
+    
+    try:
+        op.execute("ALTER TABLE layouts RENAME CONSTRAINT idx_layouts_name TO layouts_name_key")
+    except Exception:
+        pass
+    
+    try:
+        op.execute("ALTER TABLE users RENAME CONSTRAINT idx_users_email TO users_email_key")
+    except Exception:
+        pass

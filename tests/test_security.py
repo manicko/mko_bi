@@ -239,8 +239,8 @@ class TestDecodeToken:
         payload = {"user_id": 1}
         token = jwt.encode(
             payload,
-            get_config().JWT_SECRET_KEY,
-            algorithm=get_config().JWT_ALGORITHM,
+            get_config().jwt_secret_key,
+            algorithm=get_config().jwt_algorithm,
         )
         decoded = decode_token(token)
         assert decoded is not None

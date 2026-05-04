@@ -154,13 +154,13 @@ def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = 
     else:
         config = get_config()
         expire = datetime.now(UTC) + timedelta(
-            minutes=config.JWT_ACCESS_TOKEN_EXPIRE_MINUTES
+            minutes=config.jwt.access_token_expire_minutes
         )
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(
         to_encode,
-        get_config().JWT_SECRET_KEY,
-        algorithm=get_config().JWT_ALGORITHM,
+        get_config().jwt.secret_key,
+        algorithm=get_config().jwt.algorithm,
     )
     logger.info("JWT токен успешно создан")
     return encoded_jwt
@@ -190,8 +190,8 @@ def decode_token(token: str) -> dict[str, Any] | None:
     try:
         payload = jwt.decode(
             token,
-            get_config().JWT_SECRET_KEY,
-            algorithms=[get_config().JWT_ALGORITHM],
+            get_config().jwt.secret_key,
+            algorithms=[get_config().jwt.algorithm],
         )
         logger.info("JWT токен успешно декодирован")
         return payload

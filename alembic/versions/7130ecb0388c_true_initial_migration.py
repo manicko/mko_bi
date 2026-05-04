@@ -34,7 +34,7 @@ def upgrade() -> None:
                 CREATE TYPE filter_type AS ENUM ('select', 'multiselect', 'range', 'date');
             END IF;
             IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'processing_status') THEN
-                CREATE TYPE processing_status AS ENUM ('started', 'success', 'failed');
+                CREATE TYPE processing_status AS ENUM ('started', 'uploaded', 'processing', 'success', 'failed', 'completed');
             END IF;
         END $$;
     """)

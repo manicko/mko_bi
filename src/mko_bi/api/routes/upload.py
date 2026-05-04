@@ -12,7 +12,7 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File, BackgroundTasks
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mko_bi.api.deps import (
     get_db,
@@ -48,7 +48,7 @@ async def upload_file_endpoint(
     background_tasks: BackgroundTasks,
     current_user: CurrentUser,
     file: UploadFile = File(...),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> UploadResponse:
     """Загружает файл для дашборда.
 
@@ -90,7 +90,7 @@ async def upload_file_endpoint(
             pass
 
         # Вызов сервиса загрузки
-        result = upload_file(
+        result = await upload_file(
             filename=file.filename,
             file_content=file_content,
             dashboard_id=dashboard_id,
@@ -138,7 +138,7 @@ async def process_file_endpoint(
     dashboard_id: UUID,
     background_tasks: BackgroundTasks,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
     config: ProcessingConfig | None = None,
 ) -> ProcessingStatus:
     """Запускает обработку загруженного файла.
@@ -173,7 +173,7 @@ async def process_file_endpoint(
 
     try:
         # Вызов сервиса обработки
-        result = trigger_processing(
+        result = await trigger_processing(
             task_id=task_id,
             dashboard_id=dashboard_id,
             user_id=current_user.id,
@@ -219,7 +219,7 @@ async def process_file_endpoint(
 async def get_status_endpoint(
     task_id: UUID,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> ProcessingStatus:
     """Получает текущий статус обработки файла.
 
@@ -244,7 +244,7 @@ async def get_status_endpoint(
 
     try:
         # Вызов сервиса получения статуса
-        result = get_processing_status(
+        result = await get_processing_status(
             task_id=task_id,
             user_id=current_user.id,
             db=db,
@@ -288,7 +288,7 @@ async def get_status_endpoint(
 async def get_result_endpoint(
     task_id: UUID,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> ProcessingResult:
     """Получает результат обработки файла.
 
@@ -313,7 +313,7 @@ async def get_result_endpoint(
 
     try:
         # Вызов сервиса получения результата
-        result = get_processing_result(
+        result = await get_processing_result(
             task_id=task_id,
             user_id=current_user.id,
             db=db,

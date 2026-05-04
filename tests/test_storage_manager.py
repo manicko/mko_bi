@@ -7,6 +7,8 @@
 import pytest
 from uuid import uuid4
 
+from sqlalchemy import select, func
+
 from mko_bi.data.storage.manager import StorageManager
 from mko_bi.db.models import graphs as graphs_model
 from mko_bi.db.models import aggregated_data as aggregated_data_model
@@ -32,14 +34,13 @@ class TestSaveAggregates:
 
     async def test_save_single_aggregate(self, async_db_session):
         """Тест сохранения одного агрегата."""
-        # Создаем дашборд и график
         from mko_bi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -51,11 +52,10 @@ class TestSaveAggregates:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
         await async_db_session.refresh(graph)
 
-        # Создаем StorageManager и сохраняем агрегат
         manager = StorageManager(async_db_session)
         aggregates = [
             {
@@ -65,7 +65,7 @@ class TestSaveAggregates:
             }
         ]
 
-        saved = manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
+        saved = await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
         assert saved == 1
 
     async def test_save_multiple_aggregates(self, async_db_session):
@@ -76,7 +76,7 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -88,7 +88,7 @@ class TestSaveAggregates:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
         await async_db_session.refresh(graph)
 
@@ -111,7 +111,7 @@ class TestSaveAggregates:
             },
         ]
 
-        saved = manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
+        saved = await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
         assert saved == 3
 
     async def test_save_aggregates_multiple_graphs(self, async_db_session):
@@ -122,7 +122,7 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar", "line"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -161,7 +161,7 @@ class TestSaveAggregates:
             },
         ]
 
-        saved = manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
+        saved = await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
         assert saved == 2
 
     async def test_save_empty_aggregates(self, async_db_session):
@@ -172,11 +172,11 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         manager = StorageManager(async_db_session)
-        saved = manager.save_aggregates(dashboard.id, [], clear_old=True)
+        saved = await manager.save_aggregates(dashboard.id, [], clear_old=True)
         assert saved == 0
 
     async def test_save_aggregates_with_clear_old(self, async_db_session):
@@ -187,7 +187,7 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -199,7 +199,7 @@ class TestSaveAggregates:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
         await async_db_session.refresh(graph)
 
@@ -213,14 +213,17 @@ class TestSaveAggregates:
                 "metrics": {"revenue": 1000},
             }
         ]
-        saved1 = manager.save_aggregates(dashboard.id, aggregates1, clear_old=True)
+        saved1 = await manager.save_aggregates(dashboard.id, aggregates1, clear_old=True)
         assert saved1 == 1
 
         # Проверяем, что данные сохранены
-        query = async_db_session.query(aggregated_data_model.AggregatedData).filter(
-            aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+        result = await async_db_session.execute(
+            select(func.count()).select_from(aggregated_data_model.AggregatedData).where(
+                aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+            )
         )
-        assert query.count() == 1
+        count = result.scalar()
+        assert count == 1
 
         # Сохраняем новые данные с очисткой старых
         aggregates2 = [
@@ -230,14 +233,19 @@ class TestSaveAggregates:
                 "metrics": {"revenue": 2000},
             }
         ]
-        saved2 = manager.save_aggregates(dashboard.id, aggregates2, clear_old=True)
+        saved2 = await manager.save_aggregates(dashboard.id, aggregates2, clear_old=True)
         assert saved2 == 1
 
         # Проверяем, что старые данные удалены, а новые добавлены
-        assert query.count() == 1
-        agg = query.first()
-        assert agg.dims == {"category": "B"}
-        assert agg.metrics == {"revenue": 2000}
+        result = await async_db_session.execute(
+            select(aggregated_data_model.AggregatedData).where(
+                aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+            )
+        )
+        rows = result.scalars().all()
+        assert len(rows) == 1
+        assert rows[0].dims == {"category": "B"}
+        assert rows[0].metrics == {"revenue": 2000}
 
     async def test_save_aggregates_without_clear_old(self, async_db_session):
         """Тест сохранения без очистки старых данных."""
@@ -247,7 +255,7 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -259,7 +267,7 @@ class TestSaveAggregates:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
         await async_db_session.refresh(graph)
 
@@ -273,7 +281,7 @@ class TestSaveAggregates:
                 "metrics": {"revenue": 1000},
             }
         ]
-        saved1 = manager.save_aggregates(dashboard.id, aggregates1, clear_old=False)
+        saved1 = await manager.save_aggregates(dashboard.id, aggregates1, clear_old=False)
         assert saved1 == 1
 
         # Сохраняем новые данные без очистки
@@ -284,14 +292,17 @@ class TestSaveAggregates:
                 "metrics": {"revenue": 2000},
             }
         ]
-        saved2 = manager.save_aggregates(dashboard.id, aggregates2, clear_old=False)
+        saved2 = await manager.save_aggregates(dashboard.id, aggregates2, clear_old=False)
         assert saved2 == 1
 
         # Проверяем, что обе записи сохранены
-        query = async_db_session.query(aggregated_data_model.AggregatedData).filter(
-            aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+        result = await async_db_session.execute(
+            select(func.count()).select_from(aggregated_data_model.AggregatedData).where(
+                aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+            )
         )
-        assert query.count() == 2
+        count = result.scalar()
+        assert count == 2
 
     async def test_save_aggregates_upsert(self, async_db_session):
         """Тест обновления существующих данных (upsert)."""
@@ -301,7 +312,7 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -313,7 +324,7 @@ class TestSaveAggregates:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
         await async_db_session.refresh(graph)
 
@@ -327,7 +338,7 @@ class TestSaveAggregates:
                 "metrics": {"revenue": 1000},
             }
         ]
-        saved1 = manager.save_aggregates(dashboard.id, aggregates1, clear_old=True)
+        saved1 = await manager.save_aggregates(dashboard.id, aggregates1, clear_old=True)
         assert saved1 == 1
 
         # Обновляем те же данные (такие же dims)
@@ -338,17 +349,19 @@ class TestSaveAggregates:
                 "metrics": {"revenue": 1500},  # Изменили метрику
             }
         ]
-        saved2 = manager.save_aggregates(dashboard.id, aggregates2, clear_old=False)
+        saved2 = await manager.save_aggregates(dashboard.id, aggregates2, clear_old=False)
         assert saved2 == 1
 
         # Проверяем, что данные обновлены
-        query = async_db_session.query(aggregated_data_model.AggregatedData).filter(
-            aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+        result = await async_db_session.execute(
+            select(aggregated_data_model.AggregatedData).where(
+                aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+            )
         )
-        assert query.count() == 1
-        agg = query.first()
-        assert agg.dims == {"category": "A"}
-        assert agg.metrics == {"revenue": 1500}
+        rows = result.scalars().all()
+        assert len(rows) == 1
+        assert rows[0].dims == {"category": "A"}
+        assert rows[0].metrics == {"revenue": 1500}
 
     async def test_save_aggregates_invalid_data(self, async_db_session):
         """Тест сохранения с невалидными данными."""
@@ -358,7 +371,7 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         manager = StorageManager(async_db_session)
@@ -371,7 +384,7 @@ class TestSaveAggregates:
         ]
 
         with pytest.raises(ValueError, match="dims должен быть словарем"):
-            manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
+            await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
 
     async def test_save_aggregates_missing_fields(self, async_db_session):
         """Тест сохранения с отсутствующими обязательными полями."""
@@ -381,7 +394,7 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         manager = StorageManager(async_db_session)
@@ -394,7 +407,7 @@ class TestSaveAggregates:
         ]
 
         with pytest.raises(ValueError, match="не содержит обязательное поле"):
-            manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
+            await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
 
     async def test_save_aggregates_nonexistent_graph(self, async_db_session):
         """Тест сохранения для несуществующего графика."""
@@ -404,7 +417,7 @@ class TestSaveAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -418,7 +431,7 @@ class TestSaveAggregates:
         ]
 
         with pytest.raises(ValueError, match="Графики не найдены"):
-            manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
+            await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
 
 
 class TestUpsertAggregate:
@@ -432,7 +445,7 @@ class TestUpsertAggregate:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -444,12 +457,12 @@ class TestUpsertAggregate:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
         await async_db_session.refresh(graph)
 
         manager = StorageManager(async_db_session)
-        manager.upsert_aggregate(
+        await manager.upsert_aggregate(
             dashboard_id=dashboard.id,
             graph_id=graph.id,
             dims={"category": "A"},
@@ -457,11 +470,20 @@ class TestUpsertAggregate:
         )
 
         # Проверяем, что запись была вставлена
-        query = async_db_session.query(aggregated_data_model.AggregatedData).filter(
-            aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+        result = await async_db_session.execute(
+            select(func.count()).select_from(aggregated_data_model.AggregatedData).where(
+                aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+            )
         )
-        assert query.count() == 1
-        agg = query.first()
+        count = result.scalar()
+        assert count == 1
+        
+        result = await async_db_session.execute(
+            select(aggregated_data_model.AggregatedData).where(
+                aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+            )
+        )
+        agg = result.scalar_one()
         assert agg.dims == {"category": "A"}
         assert agg.metrics == {"revenue": 1000}
 
@@ -473,7 +495,7 @@ class TestUpsertAggregate:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -485,14 +507,14 @@ class TestUpsertAggregate:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
         await async_db_session.refresh(graph)
 
         manager = StorageManager(async_db_session)
 
         # Вставляем первую запись
-        manager.upsert_aggregate(
+        await manager.upsert_aggregate(
             dashboard_id=dashboard.id,
             graph_id=graph.id,
             dims={"category": "A"},
@@ -500,7 +522,7 @@ class TestUpsertAggregate:
         )
 
         # Обновляем ту же запись
-        manager.upsert_aggregate(
+        await manager.upsert_aggregate(
             dashboard_id=dashboard.id,
             graph_id=graph.id,
             dims={"category": "A"},
@@ -508,11 +530,20 @@ class TestUpsertAggregate:
         )
 
         # Проверяем, что данные обновлены
-        query = async_db_session.query(aggregated_data_model.AggregatedData).filter(
-            aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+        result = await async_db_session.execute(
+            select(func.count()).select_from(aggregated_data_model.AggregatedData).where(
+                aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+            )
         )
-        assert query.count() == 1
-        agg = query.first()
+        count = result.scalar()
+        assert count == 1
+        
+        result = await async_db_session.execute(
+            select(aggregated_data_model.AggregatedData).where(
+                aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+            )
+        )
+        agg = result.scalar_one()
         assert agg.metrics == {"revenue": 1500}
 
     async def test_upsert_invalid_data(self, async_db_session):
@@ -523,7 +554,7 @@ class TestUpsertAggregate:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -535,14 +566,14 @@ class TestUpsertAggregate:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
         await async_db_session.refresh(graph)
 
         manager = StorageManager(async_db_session)
 
         with pytest.raises(ValueError, match="dims и metrics должны быть словарями"):
-            manager.upsert_aggregate(
+            await manager.upsert_aggregate(
                 dashboard_id=dashboard.id,
                 graph_id=graph.id,
                 dims="not a dict",
@@ -557,14 +588,14 @@ class TestUpsertAggregate:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
         manager = StorageManager(async_db_session)
 
         with pytest.raises(ValueError, match="Графики не найдены"):
-            manager.upsert_aggregate(
+            await manager.upsert_aggregate(
                 dashboard_id=dashboard.id,
                 graph_id=uuid4(),
                 dims={"category": "A"},
@@ -583,7 +614,7 @@ class TestClearData:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -595,7 +626,7 @@ class TestClearData:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
         await async_db_session.refresh(graph)
 
@@ -614,20 +645,29 @@ class TestClearData:
                 "metrics": {"revenue": 2000},
             },
         ]
-        manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
+        await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
 
         # Проверяем, что данные есть
-        query = async_db_session.query(aggregated_data_model.AggregatedData).filter(
-            aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+        result = await async_db_session.execute(
+            select(func.count()).select_from(aggregated_data_model.AggregatedData).where(
+                aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+            )
         )
-        assert query.count() == 2
+        count = result.scalar()
+        assert count == 2
 
         # Очищаем данные
-        deleted = manager.clear_dashboard_data(dashboard.id)
+        deleted = await manager.clear_dashboard_data(dashboard.id)
         assert deleted == 2
 
         # Проверяем, что данных больше нет
-        assert query.count() == 0
+        result = await async_db_session.execute(
+            select(func.count()).select_from(aggregated_data_model.AggregatedData).where(
+                aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+            )
+        )
+        count = result.scalar()
+        assert count == 0
 
     async def test_clear_graph_data(self, async_db_session):
         """Тест очистки данных конкретного графика."""
@@ -637,7 +677,7 @@ class TestClearData:
             name="Test Dashboard",
             config={"graph_types": ["bar", "line"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -677,21 +717,36 @@ class TestClearData:
                 "metrics": {"sales": 5000},
             },
         ]
-        manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
+        await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
 
         # Проверяем, что данные есть
-        query = async_db_session.query(aggregated_data_model.AggregatedData).filter(
-            aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+        result = await async_db_session.execute(
+            select(func.count()).select_from(aggregated_data_model.AggregatedData).where(
+                aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+            )
         )
-        assert query.count() == 2
+        count = result.scalar()
+        assert count == 2
 
         # Очищаем данные только для graph1
-        deleted = manager.clear_graph_data(dashboard.id, graph1.id)
+        deleted = await manager.clear_graph_data(dashboard.id, graph1.id)
         assert deleted == 1
 
         # Проверяем, что остались только данные для graph2
-        assert query.count() == 1
-        agg = query.first()
+        result = await async_db_session.execute(
+            select(func.count()).select_from(aggregated_data_model.AggregatedData).where(
+                aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+            )
+        )
+        count = result.scalar()
+        assert count == 1
+        
+        result = await async_db_session.execute(
+            select(aggregated_data_model.AggregatedData).where(
+                aggregated_data_model.AggregatedData.dashboard_id == dashboard.id
+            )
+        )
+        agg = result.scalar_one()
         assert agg.graph_id == graph2.id
 
     async def test_clear_nonexistent_data(self, async_db_session):
@@ -702,12 +757,12 @@ class TestClearData:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
         manager = StorageManager(async_db_session)
-        deleted = manager.clear_dashboard_data(dashboard.id)
+        deleted = await manager.clear_dashboard_data(dashboard.id)
         assert deleted == 0
 
 
@@ -722,7 +777,7 @@ class TestGetAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -734,7 +789,7 @@ class TestGetAggregates:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
         await async_db_session.refresh(graph)
 
@@ -753,10 +808,10 @@ class TestGetAggregates:
                 "metrics": {"revenue": 2000},
             },
         ]
-        manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
+        await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
 
         # Получаем агрегаты
-        result = manager.get_aggregates(dashboard.id)
+        result = await manager.get_aggregates(dashboard.id)
         assert len(result) == 2
 
         # Проверяем данные
@@ -771,7 +826,7 @@ class TestGetAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar", "line"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -811,10 +866,10 @@ class TestGetAggregates:
                 "metrics": {"sales": 5000},
             },
         ]
-        manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
+        await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
 
         # Получаем агрегаты только для graph1
-        result = manager.get_aggregates(dashboard.id, graph1.id)
+        result = await manager.get_aggregates(dashboard.id, graph1.id)
         assert len(result) == 1
         assert result[0]["graph_id"] == graph1.id
         assert result[0]["dims"] == {"category": "A"}
@@ -827,12 +882,12 @@ class TestGetAggregates:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
         manager = StorageManager(async_db_session)
-        result = manager.get_aggregates(dashboard.id)
+        result = await manager.get_aggregates(dashboard.id)
         assert result == []
 
 
@@ -848,7 +903,7 @@ class TestStorageManagerIntegration:
             name="Test Dashboard",
             config={"graph_types": ["bar", "line"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -899,18 +954,18 @@ class TestStorageManagerIntegration:
             },
         ]
 
-        saved = manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
+        saved = await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
         assert saved == 4
 
         # Получаем все агрегаты
-        all_aggregates = manager.get_aggregates(dashboard.id)
+        all_aggregates = await manager.get_aggregates(dashboard.id)
         assert len(all_aggregates) == 4
 
         # Получаем агрегаты для конкретного графика
-        graph1_aggregates = manager.get_aggregates(dashboard.id, graph1.id)
+        graph1_aggregates = await manager.get_aggregates(dashboard.id, graph1.id)
         assert len(graph1_aggregates) == 2
 
-        graph2_aggregates = manager.get_aggregates(dashboard.id, graph2.id)
+        graph2_aggregates = await manager.get_aggregates(dashboard.id, graph2.id)
         assert len(graph2_aggregates) == 2
 
         # Проверяем данные
@@ -929,13 +984,13 @@ class TestStorageManagerIntegration:
             },
         ]
 
-        saved = manager.save_aggregates(
+        saved = await manager.save_aggregates(
             dashboard.id, updated_aggregates, clear_old=False
         )
         assert saved == 1
 
         # Проверяем, что данные обновились
-        graph1_aggregates = manager.get_aggregates(dashboard.id, graph1.id)
+        graph1_aggregates = await manager.get_aggregates(dashboard.id, graph1.id)
         electronics_agg = next(
             agg for agg in graph1_aggregates if agg["dims"]["category"] == "Electronics"
         )
@@ -943,10 +998,10 @@ class TestStorageManagerIntegration:
         assert electronics_agg["metrics"]["count"] == 60
 
         # Очищаем данные и проверяем
-        deleted = manager.clear_dashboard_data(dashboard.id)
+        deleted = await manager.clear_dashboard_data(dashboard.id)
         assert deleted == 4  # Было 3 записи (2 для graph1 после обновления, 2 для graph2)
 
-        all_aggregates = manager.get_aggregates(dashboard.id)
+        all_aggregates = await manager.get_aggregates(dashboard.id)
         assert all_aggregates == []
 
     async def test_batch_insert_performance(self, async_db_session):
@@ -957,7 +1012,7 @@ class TestStorageManagerIntegration:
             name="Performance Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -969,7 +1024,7 @@ class TestStorageManagerIntegration:
             dimensions=["category"],
             metrics=["value"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
         await async_db_session.refresh(graph)
 
@@ -987,11 +1042,11 @@ class TestStorageManagerIntegration:
         ]
 
         # Сохраняем все записи
-        saved = manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
+        saved = await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
         assert saved == num_records
 
         # Проверяем, что все записи сохранены
-        all_aggregates = manager.get_aggregates(dashboard.id)
+        all_aggregates = await manager.get_aggregates(dashboard.id)
         assert len(all_aggregates) == num_records
 
         # Проверяем, что данные корректны
@@ -1007,7 +1062,7 @@ class TestStorageManagerIntegration:
             name="Test Dashboard",
             config={"graph_types": ["bar"]},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -1019,7 +1074,7 @@ class TestStorageManagerIntegration:
             dimensions=["category"],
             metrics=["revenue"],
         )
-        await async_db_session.add(graph)
+        async_db_session.add(graph)
         await async_db_session.commit()
         await async_db_session.refresh(graph)
 
@@ -1033,7 +1088,7 @@ class TestStorageManagerIntegration:
                 "metrics": {"revenue": 1000},
             }
         ]
-        saved = manager.save_aggregates(dashboard.id, valid_aggregates, clear_old=True)
+        saved = await manager.save_aggregates(dashboard.id, valid_aggregates, clear_old=True)
         assert saved == 1
 
         # Пытаемся сохранить данные с несуществующим графиком
@@ -1047,9 +1102,9 @@ class TestStorageManagerIntegration:
         ]
 
         with pytest.raises(ValueError):
-            manager.save_aggregates(dashboard.id, invalid_aggregates, clear_old=False)
+            await manager.save_aggregates(dashboard.id, invalid_aggregates, clear_old=False)
 
         # Проверяем, что валидные данные остались нетронутыми
-        all_aggregates = manager.get_aggregates(dashboard.id)
+        all_aggregates = await manager.get_aggregates(dashboard.id)
         assert len(all_aggregates) == 1
         assert all_aggregates[0]["dims"] == {"category": "A"}

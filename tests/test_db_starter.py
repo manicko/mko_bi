@@ -232,9 +232,5 @@ class TestDatabaseStarterUtilityMethods:
 
 
 class TestDatabaseStarterIntegration:
-    """Интеграционные тесты (требуют реальной БД)."""
-
-    @pytest.mark.skip(reason="Требует реальную БД")
-    async def test_full_startup_flow(self):
-        """Полный цикл startup."""
-        pass
+    """Integration tests (require real DB)."""
+    pass

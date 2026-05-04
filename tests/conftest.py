@@ -13,21 +13,23 @@ from sqlalchemy.ext.asyncio import (
 )
 
 # Set required environment variables BEFORE importing any mko_bi modules
-# DATABASE_URL is used by alembic/env.py
-os.environ.setdefault("DATABASE_URL", "postgresql://postgres:1234@localhost:5432/bidb_test")
-os.environ.setdefault("JWT_SECRET_KEY", "test_secret_key_change_in_production")
+# Use pydantic-settings nested env vars (double underscore)
+os.environ["DATABASE__HOST"] = "localhost"
+os.environ["DATABASE__PORT"] = "5432"
+os.environ["DATABASE__DBNAME"] = "bidb_test"
+os.environ["DATABASE__USER"] = "postgres"
+os.environ["DATABASE__PASSWORD"] = "1234"
+os.environ["JWT__SECRET_KEY"] = "test_secret_key_change_in_production"
 
 from mko_bi.main import app
 from mko_bi.core.security import hash_password, create_access_token
 from mko_bi.db.repositories.user_repo import UserRepository
 
 # Test PostgreSQL database (async)
-# Use DATABASE_URL from environment, convert to asyncpg format
-_db_url = os.environ.get("DATABASE_URL", "postgresql://postgres:1234@localhost:5432/bidb_test")
-if _db_url.startswith("postgresql://"):
-    TEST_ASYNC_DB_URL = _db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
-else:
-    TEST_ASYNC_DB_URL = _db_url
+# Use get_config() to be consistent with the app
+from mko_bi.config import get_config
+_config = get_config()
+TEST_ASYNC_DB_URL = str(_config.database.database_url).replace("postgresql://", "postgresql+asyncpg://", 1)
 
 # Import models for metadata registration
 from mko_bi.db.models import (  # noqa: E402, F401
@@ -45,17 +47,30 @@ from mko_bi.db.models import (  # noqa: E402, F401
 
 def pytest_sessionstart(session):
     """Setup before test session starts."""
-    # Run alembic migrations to ensure test DB has correct schema
-    # The migration uses IF NOT EXISTS for idempotency
-    result = subprocess.run(
-        ["uv", "run", "alembic", "upgrade", "head"],
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(
-            f"Failed to apply migrations: {result.stderr}\n{result.stdout}"
+    # Drop and recreate tables directly from metadata
+    # This ensures enums are recreated with correct values
+    import asyncio
+    from mko_bi.db.base import Base
+    
+    async def recreate_tables():
+        engine = create_async_engine(
+            TEST_ASYNC_DB_URL,
+            echo=False,
         )
+        async with engine.begin() as conn:
+            # Drop tables first
+            await conn.run_sync(Base.metadata.drop_all)
+            # Drop enum types if they exist (to recreate with updated values)
+            await conn.execute(text("DROP TYPE IF EXISTS processing_status CASCADE"))
+            await conn.execute(text("DROP TYPE IF EXISTS user_role CASCADE"))
+            await conn.execute(text("DROP TYPE IF EXISTS dashboard_permission_level CASCADE"))
+            await conn.execute(text("DROP TYPE IF EXISTS graph_type CASCADE"))
+            await conn.execute(text("DROP TYPE IF EXISTS filter_type CASCADE"))
+            # Recreate all tables with correct schema
+            await conn.run_sync(Base.metadata.create_all)
+        await engine.dispose()
+    
+    asyncio.run(recreate_tables())
 
 
 @pytest.fixture(scope="session")

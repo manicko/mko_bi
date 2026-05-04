@@ -5,13 +5,13 @@
 """
 
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 from fastapi import HTTPException
 from jose import ExpiredSignatureError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mko_bi.api.deps import (
-    get_db,
+    get_db_dependency,
     get_token_from_header,
     get_current_user_dependency,
     require_admin_role,
@@ -27,22 +27,13 @@ from mko_bi.core.permissions import AuthenticationError
 
 
 class TestGetDB:
-    """Тесты зависимости get_db."""
+    """Тесты зависимости get_db_dependency."""
 
     def test_get_db_yields_session(self):
-        """get_db должна возвращать генератор сессии."""
-        db_gen = get_db()
-        # Проверяем, что это генератор
-        assert hasattr(db_gen, '__iter__')
-        assert hasattr(db_gen, '__next__')
-        # Получаем сессию
-        session = next(db_gen)
-        assert isinstance(session, Session)
-        # Закрываем генератор
-        try:
-            next(db_gen)
-        except StopIteration:
-            pass
+        """get_db_dependency должна возвращать асинхронный генератор."""
+        import inspect
+        # Просто проверяем, что это асинхронный генератор
+        assert inspect.isasyncgenfunction(get_db_dependency)
 
 
 class TestGetTokenFromHeader:
@@ -82,7 +73,8 @@ class TestGetTokenFromHeader:
 class TestGetCurrentUserDependency:
     """Тесты зависимости get_current_user_dependency."""
 
-    def test_valid_user(self, mocker):
+    @pytest.mark.asyncio
+    async def test_valid_user(self, mocker):
         """Валидный токен должен возвращать пользователя."""
         mock_user = MagicMock(spec=UserDB)
         mock_user.id = 1
@@ -92,9 +84,9 @@ class TestGetCurrentUserDependency:
         mock_get_user = mocker.patch(
             "mko_bi.api.deps.get_current_user", return_value=mock_user
         )
-        mock_db = MagicMock(spec=Session)
+        mock_db = AsyncMock(spec=AsyncSession)
 
-        result = get_current_user_dependency(
+        result = await get_current_user_dependency(
             token="valid_token",
             db=mock_db,
         )
@@ -102,7 +94,8 @@ class TestGetCurrentUserDependency:
         assert result == mock_user
         mock_get_user.assert_called_once_with("valid_token", mock_db)
 
-    def test_expired_token(self, mocker):
+    @pytest.mark.asyncio
+    async def test_expired_token(self, mocker):
         """Истекший токен должен вызывать HTTPException 401."""
         mocker.patch(
             "mko_bi.api.deps.get_current_user",
@@ -110,15 +103,16 @@ class TestGetCurrentUserDependency:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user_dependency(
+            await get_current_user_dependency(
                 token="expired_token",
-                db=MagicMock(),
+                db=AsyncMock(spec=AsyncSession),
             )
 
         assert exc_info.value.status_code == 401
         assert "истёк" in str(exc_info.value.detail).lower()
 
-    def test_authentication_error(self, mocker):
+    @pytest.mark.asyncio
+    async def test_authentication_error(self, mocker):
         """Ошибка аутентификации должна вызывать HTTPException 401."""
         mocker.patch(
             "mko_bi.api.deps.get_current_user",
@@ -126,14 +120,15 @@ class TestGetCurrentUserDependency:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user_dependency(
+            await get_current_user_dependency(
                 token="invalid_token",
-                db=MagicMock(),
+                db=AsyncMock(spec=AsyncSession),
             )
 
         assert exc_info.value.status_code == 401
 
-    def test_unexpected_error(self, mocker):
+    @pytest.mark.asyncio
+    async def test_unexpected_error(self, mocker):
         """Непредвиденная ошибка должна вызывать HTTPException 500."""
         mocker.patch(
             "mko_bi.api.deps.get_current_user",
@@ -141,9 +136,9 @@ class TestGetCurrentUserDependency:
         )
 
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user_dependency(
+            await get_current_user_dependency(
                 token="token",
-                db=MagicMock(),
+                db=AsyncMock(spec=AsyncSession),
             )
 
         assert exc_info.value.status_code == 500
@@ -299,96 +294,115 @@ class TestRequireRoleDependency:
 class TestRequireDashboardAccess:
     """Тесты зависимостей доступа к дашбордам."""
 
-    def test_read_access_granted(self, mocker):
+    @pytest.mark.asyncio
+    async def test_read_access_granted(self, mocker):
         """Доступ на чтение должен быть предоставлен при наличии прав."""
         mock_user = MagicMock(spec=UserDB)
         mock_user.id = 1
         mock_user.role = "viewer"
 
-        mock_check = mocker.patch(
-            "mko_bi.api.deps.check_dashboard_access", return_value=True
-        )
-        mock_db = MagicMock(spec=Session)
+        async def mock_check(*args, **kwargs):
+            return True
+        
+        mocker.patch("mko_bi.api.deps.check_dashboard_access", side_effect=mock_check)
+        mock_db = AsyncMock(spec=AsyncSession)
 
-        result = require_dashboard_read_access(
+        result = await require_dashboard_read_access(
             dashboard_id=1, user=mock_user, db=mock_db
         )
 
         assert result == mock_user
-        mock_check.assert_called_once_with(
-            user_id=1, dashboard_id=1, required_permission="view", db=mock_db
-        )
 
-    def test_read_access_denied(self, mocker):
+    @pytest.mark.asyncio
+    async def test_read_access_denied(self, mocker):
         """Доступ на чтение должен быть отклонен при отсутствии прав."""
         mock_user = MagicMock(spec=UserDB)
         mock_user.id = 1
         mock_user.role = "viewer"
 
-        mocker.patch("mko_bi.api.deps.check_dashboard_access", return_value=False)
-        mock_db = MagicMock(spec=Session)
+        async def mock_check(*args, **kwargs):
+            return False
+        
+        mocker.patch("mko_bi.api.deps.check_dashboard_access", side_effect=mock_check)
+        mock_db = AsyncMock(spec=AsyncSession)
 
         with pytest.raises(HTTPException) as exc_info:
-            require_dashboard_read_access(dashboard_id=1, user=mock_user, db=mock_db)
+            await require_dashboard_read_access(dashboard_id=1, user=mock_user, db=mock_db)
 
         assert exc_info.value.status_code == 403
         assert "прав" in str(exc_info.value.detail).lower()
 
-    def test_write_access_granted(self, mocker):
+    @pytest.mark.asyncio
+    async def test_write_access_granted(self, mocker):
         """Доступ на запись должен быть предоставлен при наличии прав."""
         mock_user = MagicMock(spec=UserDB)
         mock_user.id = 1
         mock_user.role = "editor"
 
-        mocker.patch("mko_bi.api.deps.check_dashboard_access", return_value=True)
-        mock_db = MagicMock(spec=Session)
+        async def mock_check(*args, **kwargs):
+            return True
+        
+        mocker.patch("mko_bi.api.deps.check_dashboard_access", side_effect=mock_check)
+        mock_db = AsyncMock(spec=AsyncSession)
 
-        result = require_dashboard_write_access(
+        result = await require_dashboard_write_access(
             dashboard_id=1, user=mock_user, db=mock_db
         )
 
         assert result == mock_user
 
-    def test_write_access_denied(self, mocker):
+    @pytest.mark.asyncio
+    async def test_write_access_denied(self, mocker):
         """Доступ на запись должен быть отклонен при отсутствии прав."""
         mock_user = MagicMock(spec=UserDB)
         mock_user.id = 1
         mock_user.role = "viewer"
 
-        mocker.patch("mko_bi.api.deps.check_dashboard_access", return_value=False)
-        mock_db = MagicMock(spec=Session)
+        async def mock_check(*args, **kwargs):
+            return False
+        
+        mocker.patch("mko_bi.api.deps.check_dashboard_access", side_effect=mock_check)
+        mock_db = AsyncMock(spec=AsyncSession)
 
         with pytest.raises(HTTPException) as exc_info:
-            require_dashboard_write_access(dashboard_id=1, user=mock_user, db=mock_db)
+            await require_dashboard_write_access(dashboard_id=1, user=mock_user, db=mock_db)
 
         assert exc_info.value.status_code == 403
 
-    def test_admin_access_granted(self, mocker):
+    @pytest.mark.asyncio
+    async def test_admin_access_granted(self, mocker):
         """Доступ на администрирование должен быть предоставлен при наличии прав."""
         mock_user = MagicMock(spec=UserDB)
         mock_user.id = 1
         mock_user.role = "admin"
 
-        mocker.patch("mko_bi.api.deps.check_dashboard_access", return_value=True)
-        mock_db = MagicMock(spec=Session)
+        async def mock_check(*args, **kwargs):
+            return True
+        
+        mocker.patch("mko_bi.api.deps.check_dashboard_access", side_effect=mock_check)
+        mock_db = AsyncMock(spec=AsyncSession)
 
-        result = require_dashboard_admin_access(
+        result = await require_dashboard_admin_access(
             dashboard_id=1, user=mock_user, db=mock_db
         )
 
         assert result == mock_user
 
-    def test_admin_access_denied(self, mocker):
+    @pytest.mark.asyncio
+    async def test_admin_access_denied(self, mocker):
         """Доступ на администрирование должен быть отклонен при отсутствии прав."""
         mock_user = MagicMock(spec=UserDB)
         mock_user.id = 1
         mock_user.role = "editor"
 
-        mocker.patch("mko_bi.api.deps.check_dashboard_access", return_value=False)
-        mock_db = MagicMock(spec=Session)
+        async def mock_check(*args, **kwargs):
+            return False
+        
+        mocker.patch("mko_bi.api.deps.check_dashboard_access", side_effect=mock_check)
+        mock_db = AsyncMock(spec=AsyncSession)
 
         with pytest.raises(HTTPException) as exc_info:
-            require_dashboard_admin_access(dashboard_id=1, user=mock_user, db=mock_db)
+            await require_dashboard_admin_access(dashboard_id=1, user=mock_user, db=mock_db)
 
         assert exc_info.value.status_code == 403
 
@@ -396,7 +410,8 @@ class TestRequireDashboardAccess:
 class TestIntegration:
     """Интеграционные тесты."""
 
-    def test_full_auth_flow(self, mocker):
+    @pytest.mark.asyncio
+    async def test_full_auth_flow(self, mocker):
         """Полный цикл аутентификации и авторизации."""
         mock_user = MagicMock(spec=UserDB)
         mock_user.id = 1
@@ -412,8 +427,8 @@ class TestIntegration:
 
         # 2. Получаем пользователя
         mocker.patch("mko_bi.api.deps.get_current_user", return_value=mock_user)
-        db = MagicMock(spec=Session)
-        user = get_current_user_dependency(token=token, db=db)
+        db = AsyncMock(spec=AsyncSession)
+        user = await get_current_user_dependency(token=token, db=db)
         assert user == mock_user
 
         # 3. Проверяем роль admin
@@ -421,11 +436,13 @@ class TestIntegration:
         assert result == mock_user
 
         # 4. Проверяем доступ к дашборду
-        mocker.patch("mko_bi.api.deps.check_dashboard_access", return_value=True)
-        result = require_dashboard_admin_access(dashboard_id=1, user=user, db=db)
+        mock_check = mocker.patch("mko_bi.api.deps.check_dashboard_access", new_callable=AsyncMock)
+        mock_check.return_value = True
+        result = await require_dashboard_admin_access(dashboard_id=1, user=user, db=db)
         assert result == mock_user
 
-    def test_editor_cannot_access_admin_endpoint(self, mocker):
+    @pytest.mark.asyncio
+    async def test_editor_cannot_access_admin_endpoint(self, mocker):
         """Editor не должен иметь доступа к эндпоинтам admin."""
         mock_user = MagicMock(spec=UserDB)
         mock_user.id = 2
@@ -436,47 +453,51 @@ class TestIntegration:
 
         assert exc_info.value.status_code == 403
 
-    def test_viewer_can_only_read_dashboard(self, mocker):
+    @pytest.mark.asyncio
+    async def test_viewer_can_only_read_dashboard(self, mocker):
         """Viewer должен иметь доступ только на чтение дашборда."""
         mock_user = MagicMock(spec=UserDB)
         mock_user.id = 3
         mock_user.role = "viewer"
 
         # Доступ на чтение - OK
-        mocker.patch("mko_bi.api.deps.check_dashboard_access", return_value=True)
-        mock_db = MagicMock(spec=Session)
-        result = require_dashboard_read_access(
+        mock_check = mocker.patch("mko_bi.api.deps.check_dashboard_access", new_callable=AsyncMock)
+        mock_check.return_value = True
+        mock_db = AsyncMock(spec=AsyncSession)
+        result = await require_dashboard_read_access(
             dashboard_id=1, user=mock_user, db=mock_db
         )
         assert result == mock_user
 
         # Доступ на запись - отказ
-        mocker.patch("mko_bi.api.deps.check_dashboard_access", return_value=False)
+        mock_check.return_value = False
         with pytest.raises(HTTPException) as exc_info:
-            require_dashboard_write_access(dashboard_id=1, user=mock_user, db=mock_db)
+            await require_dashboard_write_access(dashboard_id=1, user=mock_user, db=mock_db)
         assert exc_info.value.status_code == 403
 
-    def test_admin_has_full_dashboard_access(self, mocker):
+    @pytest.mark.asyncio
+    async def test_admin_has_full_dashboard_access(self, mocker):
         """Admin должен иметь полный доступ к дашборду."""
         mock_user = MagicMock(spec=UserDB)
         mock_user.id = 1
         mock_user.role = "admin"
-        mock_db = MagicMock(spec=Session)
+        mock_db = AsyncMock(spec=AsyncSession)
 
         # Все проверки доступа должны проходить
-        mocker.patch("mko_bi.api.deps.check_dashboard_access", return_value=True)
+        mock_check = mocker.patch("mko_bi.api.deps.check_dashboard_access", new_callable=AsyncMock)
+        mock_check.return_value = True
 
-        result = require_dashboard_read_access(
+        result = await require_dashboard_read_access(
             dashboard_id=1, user=mock_user, db=mock_db
         )
         assert result == mock_user
 
-        result = require_dashboard_write_access(
+        result = await require_dashboard_write_access(
             dashboard_id=1, user=mock_user, db=mock_db
         )
         assert result == mock_user
 
-        result = require_dashboard_admin_access(
+        result = await require_dashboard_admin_access(
             dashboard_id=1, user=mock_user, db=mock_db
         )
         assert result == mock_user

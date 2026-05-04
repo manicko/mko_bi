@@ -74,7 +74,7 @@ async def create_dashboard_endpoint(
     )
 
     try:
-        result = create_dashboard(
+        result = await create_dashboard(
             name=dashboard.name,
             config=dashboard.config.model_dump(),
             owner_id=current_user.id,
@@ -128,7 +128,7 @@ async def get_dashboards_endpoint(
     )
 
     try:
-        dashboards = get_user_dashboards(user_id=current_user.id, db=db)
+        dashboards = await get_user_dashboards(user_id=current_user.id, db=db)
         logger.info(
             "Получено дашбордов для пользователя id=%s: %s",
             current_user.id,
@@ -182,7 +182,7 @@ async def get_dashboard_endpoint(
     )
 
     try:
-        dashboard = get_dashboard(
+        dashboard = await get_dashboard(
             dashboard_id=dashboard_id,
             user_id=current_user.id,
             db=db,
@@ -254,8 +254,8 @@ async def update_dashboard_endpoint(
     try:
         # Проверяем доступ на запись (требуется роль admin для этого дашборда)
         from mko_bi.core.permissions import check_dashboard_access
-
-        if not check_dashboard_access(
+        
+        if not await check_dashboard_access(
             user_id=current_user.id,
             dashboard_id=dashboard_id,
             required_permission="edit",
@@ -270,8 +270,8 @@ async def update_dashboard_endpoint(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="У вас нет прав на обновление этого дашборда",
             )
-
-        updated = update_dashboard(
+        
+        updated = await update_dashboard(
             dashboard_id=dashboard_id,
             config=dashboard_update.config.model_dump() if dashboard_update.config else None,
             db=db,
@@ -335,7 +335,7 @@ async def delete_dashboard_endpoint(
         # Проверяем доступ на запись (требуется роль admin для этого дашборда)
         from mko_bi.core.permissions import check_dashboard_access
 
-        if not check_dashboard_access(
+        if not await check_dashboard_access(
             user_id=current_user.id,
             dashboard_id=dashboard_id,
             required_permission="edit",
@@ -350,8 +350,8 @@ async def delete_dashboard_endpoint(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="У вас нет прав на удаление этого дашборда",
             )
-
-        result = delete_dashboard(dashboard_id=dashboard_id, db=db)
+        
+        result = await delete_dashboard(dashboard_id=dashboard_id, db=db)
         if not result:
             logger.warning("Дашборд не найден для удаления: id=%s", dashboard_id)
             raise HTTPException(
@@ -411,7 +411,7 @@ async def grant_dashboard_access_endpoint(
         # Проверяем, что текущий пользователь имеет права на управление доступом
         from mko_bi.core.permissions import check_dashboard_access
 
-        if not check_dashboard_access(
+        if not await check_dashboard_access(
             user_id=current_user.id,
             dashboard_id=dashboard_id,
             required_permission="admin",
@@ -426,7 +426,7 @@ async def grant_dashboard_access_endpoint(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="У вас нет прав на управление доступом к этому дашборду",
             )
-
+        
         # Проверяем, что dashboard_id из пути совпадает с dashboard_id в теле запроса
         if str(access_grant.dashboard_id) != str(dashboard_id):
             logger.warning(
@@ -438,8 +438,8 @@ async def grant_dashboard_access_endpoint(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="dashboard_id в теле запроса не совпадает с dashboard_id в URL",
             )
-
-        result = grant_access(
+        
+        result = await grant_access(
             dashboard_id=dashboard_id,
             user_id=access_grant.user_id,
             permission=access_grant.permission_level,

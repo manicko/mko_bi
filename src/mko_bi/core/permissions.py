@@ -12,14 +12,14 @@ viewer только читать.
 
 import logging
 from functools import lru_cache
-from collections.abc import Generator
+from collections.abc import AsyncGenerator
 from typing import Any, cast
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mko_bi.core.security import decode_token
 from mko_bi.db.repositories.access_repo import AccessRepository
@@ -29,20 +29,20 @@ from mko_bi.models.user import UserDB
 from mko_bi.models.user_roles import PermissionEnum, UserRoleEnum
 
 
-def get_db() -> Generator[Session, None, None]:
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """FastAPI зависимость для получения сессии базы данных.
     
-    Создает новую сессию для каждого запроса и закрывает её после завершения.
+    Создает новую асинхронную сессию для каждого запроса и закрывает её после завершения.
     
     Yields:
-        Session: Сессия SQLAlchemy.
+        AsyncSession: Асинхронная сессия SQLAlchemy.
     """
-    with get_session() as db:
+    async with get_session() as db:
         try:
             yield db
         finally:
             # Явное закрытие для гарантии
-            db.close()
+            await db.close()
 
 logger = logging.getLogger(__name__)
 
@@ -149,11 +149,11 @@ def check_role(user_role: str, required_role: str) -> bool:
         return False
 
 
-def check_dashboard_access(
+async def check_dashboard_access(
     user_id: UUID,
     dashboard_id: UUID,
     required_permission: str = "view",
-    db: Session | None = None,
+    db: AsyncSession | None = None,
 ) -> bool:
     """Проверяет, есть ли у пользователя доступ к дашборду.
 
@@ -161,7 +161,7 @@ def check_dashboard_access(
         user_id: Идентификатор пользователя.
         dashboard_id: Идентификатор дашборда.
         required_permission: Требуемый уровень доступа (view/edit/admin).
-        db: Сессия базы данных. Если не передана, создается новая.
+        db: Асинхронная сессия базы данных. Если не передана, создается новая.
 
     Returns:
         True, если доступ есть, иначе False.
@@ -181,21 +181,21 @@ def check_dashboard_access(
 
     # Если сессия не передана, создаем новую через контекстный менеджер
     if db is None:
-        with get_session() as session:
-            return _check_access_with_session(
+        async with get_session() as session:
+            return await _check_access_with_session(
                 user_id, dashboard_id, required_permission, session
             )
     else:
-        return _check_access_with_session(
+        return await _check_access_with_session(
             user_id, dashboard_id, required_permission, db
         )
 
 
-def _check_access_with_session(
+async def _check_access_with_session(
     user_id: UUID,
     dashboard_id: UUID,
     required_permission: str,
-    db: Session,
+    db: AsyncSession,
 ) -> bool:
     """Внутренняя функция для проверки доступа с использованием сессии.
 
@@ -203,14 +203,14 @@ def _check_access_with_session(
         user_id: Идентификатор пользователя.
         dashboard_id: Идентификатор дашборда.
         required_permission: Требуемый уровень доступа.
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         True, если доступ есть, иначе False.
     """
     try:
         # Получаем уровень доступа пользователя
-        permission = AccessRepository.check_access(
+        permission = await AccessRepository.check_access(
             user_id=user_id,
             dashboard_id=dashboard_id,
             db=db,
@@ -274,9 +274,9 @@ def _decode_token_cached(token: str) -> dict[str, Any] | None:
     return cast(dict[str, Any], result)
 
 
-def get_current_user(
+async def get_current_user(
     token: str,
-    db: Session | None = None,
+    db: AsyncSession | None = None,
 ) -> UserDB:
     """Получить текущего пользователя по токену.
 
@@ -285,7 +285,7 @@ def get_current_user(
 
     Args:
         token: JWT токен доступа.
-        db: Сессия базы данных. Если не передана, создается новая.
+        db: Асинхронная сессия базы данных. Если не передана, создается новая.
 
     Returns:
         UserDB: Модель пользователя с данными из базы.
@@ -295,21 +295,21 @@ def get_current_user(
     """
     # Если сессия не передана, создаем новую через контекстный менеджер
     if db is None:
-        with get_session() as session:
-            return _get_current_user_with_session(token, session)
+        async with get_session() as session:
+            return await _get_current_user_with_session(token, session)
     else:
-        return _get_current_user_with_session(token, db)
+        return await _get_current_user_with_session(token, db)
 
 
-def _get_current_user_with_session(
+async def _get_current_user_with_session(
     token: str,
-    db: Session,
+    db: AsyncSession,
 ) -> UserDB:
     """Внутренняя функция для получения пользователя с использованием сессии.
 
     Args:
         token: JWT токен доступа.
-        db: Сессия базы данных.
+        db: Асинхронная сессия базы данных.
 
     Returns:
         UserDB: Модель пользователя.
@@ -332,7 +332,7 @@ def _get_current_user_with_session(
         user_id: UUID = UUID(str(user_id_raw))
 
         # Получаем пользователя из базы
-        user = UserRepository.get(user_id, db)
+        user = await UserRepository.get(user_id, db)
         if user is None:
             logger.warning("Пользователь не найден: user_id=%s", user_id)
             raise AuthenticationError("Пользователь не найден")
@@ -356,7 +356,7 @@ security = HTTPBearer()
 
 def get_current_user_dependency(
     credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> UserDB:
     """FastAPI зависимость для получения текущего пользователя.
 
@@ -458,13 +458,13 @@ def require_dashboard_access(
             return {"message": "Dashboard data"}
     """
 
-    def access_checker(
+    async def access_checker(
         dashboard_id: UUID,
         user: UserDB = Depends(get_current_user_dependency),
-    db: Session = Depends(get_db),
+        db: AsyncSession = Depends(get_db),
     ) -> UserDB:
         """Проверяет доступ пользователя к дашборду."""
-        if not check_dashboard_access(
+        if not await check_dashboard_access(
             user_id=user.id,
             dashboard_id=dashboard_id,
             required_permission=required_permission,

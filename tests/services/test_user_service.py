@@ -112,7 +112,7 @@ class TestUserServiceCreateUser:
         mock_user.role = UserRoleEnum.viewer
         mock_user.created_at = "2026-04-27T17:30:00"
 
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo, \
+        with patch('mko_bi.services.user_service.UserRepository', new_callable=AsyncMock) as mock_repo, \
              patch('mko_bi.services.user_service.hash_password') as mock_hash:
 
             mock_hash.return_value = "$2b$12$hashedpassword"
@@ -139,7 +139,7 @@ class TestUserServiceCreateUser:
     @pytest.mark.asyncio
     async def test_create_user_duplicate_email_raises_error(self):
         """Создание пользователя с существующим email должно вызывать ошибку."""
-        with patch('mko_bi.services.user_service.UserRepository') as mock_repo, \
+        with patch('mko_bi.services.user_service.UserRepository', new_callable=AsyncMock) as mock_repo, \
              patch('mko_bi.services.user_service.hash_password'):
             mock_repo.get_by_email.return_value = MagicMock()
 
@@ -217,8 +217,8 @@ class TestUserServiceListUsers:
     async def test_list_users_returns_list(self):
         """Получение списка пользователей."""
         mock_users = [
-            MagicMock(spec=user_model.User, email="user1@example.com"),
-            MagicMock(spec=user_model.User, email="user2@example.com"),
+            MagicMock(spec=user_model.User, id=uuid4(), email="user1@example.com", role=UserRoleEnum.viewer),
+            MagicMock(spec=user_model.User, id=uuid4(), email="user2@example.com", role=UserRoleEnum.editor),
         ]
 
         service = UserService()
@@ -262,7 +262,7 @@ class TestUserServiceUpdateUserRole:
 
     @pytest.mark.asyncio
     async def test_update_user_role_not_found(self):
-        """Обновление роли несуществующего пользователя должно возвращать None."""
+        """Обновление роли несуществующего пользователя должно возвращать False."""
         test_uuid = uuid4()
 
         service = UserService()
@@ -272,6 +272,7 @@ class TestUserServiceUpdateUserRole:
             mock_get_session.return_value.__aexit__ = AsyncMock(return_value=False)
 
             with patch('mko_bi.services.user_service.UserRepository', new_callable=AsyncMock) as mock_repo:
+                mock_repo.get.return_value = None
                 mock_repo.update.return_value = None
 
                 result = await service.update_user_role(
@@ -279,7 +280,7 @@ class TestUserServiceUpdateUserRole:
                     role=UserRoleEnum.admin,
                 )
 
-                assert result is None
+                assert result is False
 
 
 class TestUserServiceDeleteUser:

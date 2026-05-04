@@ -14,7 +14,7 @@ from sqlalchemy.engine import Result
 
 
 if TYPE_CHECKING:
-    from sqlalchemy.orm import Session
+    from sqlalchemy.ext.asyncio import AsyncSession
 
 logger = logging.getLogger(__name__)
 
@@ -28,22 +28,22 @@ class StorageManager:
     и работает в рамках транзакций.
 
     Attributes:
-        db: Сессия SQLAlchemy для работы с базой данных.
+        db: Асинхронная сессия SQLAlchemy для работы с базой данных.
     """
 
     CHUNK_SIZE: int = 1000
     """Размер чанка для пакетных операций."""
 
-    def __init__(self, db: "Session") -> None:
+    def __init__(self, db: "AsyncSession") -> None:
         """Инициализация менеджера хранения.
 
         Args:
-            db: Сессия SQLAlchemy для выполнения операций с БД.
+            db: Асинхронная сессия SQLAlchemy для выполнения операций с БД.
         """
         self.db = db
-        logger.debug("StorageManager инициализирован с сессией БД")
+        logger.debug("StorageManager инициализирован с асинхронной сессией БД")
 
-    def save_aggregates(
+    async def save_aggregates(
         self,
         dashboard_id: UUID,
         aggregates: list[dict[str, Any]],
@@ -86,12 +86,12 @@ class StorageManager:
 
         # Проверка существования графиков
         graph_ids = {agg["graph_id"] for agg in aggregates}
-        self._validate_graphs_exist(graph_ids, dashboard_id)
+        await self._validate_graphs_exist(graph_ids, dashboard_id)
 
         try:
             # Удаляем старые данные если требуется
             if clear_old:
-                deleted = self._clear_dashboard_data_internal(dashboard_id)
+                deleted = await self._clear_dashboard_data_internal(dashboard_id)
                 logger.info(
                     "Удалено %d старых записей для дашборда %s",
                     deleted,
@@ -103,14 +103,14 @@ class StorageManager:
 
             if clear_old:
                 # Простая вставка, если старые данные удалены
-                inserted_count = self._batch_insert_aggregates(
+                inserted_count = await self._batch_insert_aggregates(
                     dashboard_id,
                     aggregates,
                     AggregatedData,
                 )
             else:
                 # Upsert: обновляем существующие, вставляем новые
-                inserted_count = self._upsert_aggregates_batch(
+                inserted_count = await self._upsert_aggregates_batch(
                     dashboard_id,
                     aggregates,
                     AggregatedData,
@@ -129,10 +129,10 @@ class StorageManager:
                 dashboard_id,
                 str(e),
             )
-            self.db.rollback()
+            await self.db.rollback()
             raise
 
-    def upsert_aggregate(
+    async def upsert_aggregate(
         self,
         dashboard_id: UUID,
         graph_id: UUID,
@@ -163,7 +163,7 @@ class StorageManager:
 
         from mko_bi.db.models import graphs as graphs_model
 
-        graph = self.db.get(graphs_model.Graph, graph_id)
+        graph = await self.db.get(graphs_model.Graph, graph_id)
         if not graph:
             raise ValueError("Графики не найдены")
 
@@ -174,7 +174,7 @@ class StorageManager:
             from mko_bi.db.models.aggregated_data import AggregatedData
 
             # Ищем существующую запись
-            existing = self.db.execute(
+            result = await self.db.execute(
                 select(AggregatedData).where(
                     and_(
                         AggregatedData.dashboard_id == dashboard_id,
@@ -182,11 +182,12 @@ class StorageManager:
                         AggregatedData.dims == dims,
                     )
                 )
-            ).scalar_one_or_none()
+            )
+            existing = result.scalar_one_or_none()
 
             if existing:
                 # Обновляем существующую запись
-                self.db.execute(
+                await self.db.execute(
                     update(AggregatedData)
                     .where(AggregatedData.id == existing.id)
                     .values(metrics=metrics)
@@ -199,7 +200,7 @@ class StorageManager:
                 return False
 
             # Вставляем новую запись
-            self.db.execute(
+            await self.db.execute(
                 insert(AggregatedData).values(
                     dashboard_id=dashboard_id,
                     graph_id=graph_id,
@@ -220,10 +221,10 @@ class StorageManager:
                 graph_id,
                 str(e),
             )
-            self.db.rollback()
+            await self.db.rollback()
             raise
 
-    def clear_dashboard_data(self, dashboard_id: UUID) -> int:
+    async def clear_dashboard_data(self, dashboard_id: UUID) -> int:
         """Удаляет все агрегированные данные для дашборда.
 
         Args:
@@ -236,7 +237,7 @@ class StorageManager:
             SQLAlchemyError: При ошибках работы с базой данных.
         """
         try:
-            deleted = self._clear_dashboard_data_internal(dashboard_id)
+            deleted = await self._clear_dashboard_data_internal(dashboard_id)
             logger.info(
                 "Удалено %d записей для дашборда %s",
                 deleted,
@@ -249,10 +250,10 @@ class StorageManager:
                 dashboard_id,
                 str(e),
             )
-            self.db.rollback()
+            await self.db.rollback()
             raise
 
-    def clear_graph_data(self, dashboard_id: UUID, graph_id: UUID) -> int:
+    async def clear_graph_data(self, dashboard_id: UUID, graph_id: UUID) -> int:
         """Удаляет агрегированные данные для конкретного графика дашборда.
 
         Args:
@@ -268,7 +269,7 @@ class StorageManager:
         try:
             from mko_bi.db.models.aggregated_data import AggregatedData
 
-            result: Result[Any] = self.db.execute(
+            result: Result[Any] = await self.db.execute(
                 delete(AggregatedData).where(
                     and_(
                         AggregatedData.dashboard_id == dashboard_id,
@@ -292,10 +293,10 @@ class StorageManager:
                 dashboard_id,
                 str(e),
             )
-            self.db.rollback()
+            await self.db.rollback()
             raise
 
-    def get_aggregates(
+    async def get_aggregates(
         self,
         dashboard_id: UUID,
         graph_id: UUID | None = None,
@@ -326,7 +327,7 @@ class StorageManager:
             if graph_id:
                 query = query.where(AggregatedData.graph_id == graph_id)
 
-            result = self.db.execute(query)
+            result = await self.db.execute(query)
             aggregates = [
                 {
                     "id": row.id,
@@ -345,18 +346,18 @@ class StorageManager:
             )
             raise
 
-    def _clear_dashboard_data_internal(self, dashboard_id: UUID) -> int:
+    async def _clear_dashboard_data_internal(self, dashboard_id: UUID) -> int:
         """Внутренний метод удаления данных дашборда.
-
+        
         Args:
             dashboard_id: Идентификатор дашборда.
-
+        
         Returns:
             Количество удалённых записей.
         """
         from mko_bi.db.models.aggregated_data import AggregatedData
-
-        result: Result[Any] = self.db.execute(
+        
+        result: Result[Any] = await self.db.execute(
             delete(AggregatedData).where(
                 AggregatedData.dashboard_id == dashboard_id
             )
@@ -364,7 +365,7 @@ class StorageManager:
         # В SQLAlchemy 2.0 rowcount может быть None для некоторых операций
         return result.rowcount if result.rowcount is not None else 0  # type: ignore[attr-defined]
 
-    def _batch_insert_aggregates(
+    async def _batch_insert_aggregates(
         self,
         dashboard_id: UUID,
         aggregates: list[dict[str, Any]],
@@ -403,12 +404,12 @@ class StorageManager:
 
             # Добавляем объекты в сессию
             self.db.add_all(objects)
-            self.db.flush()
+            await self.db.flush()
             total_inserted += len(objects)
 
         return total_inserted
 
-    def _upsert_aggregates_batch(
+    async def _upsert_aggregates_batch(
         self,
         dashboard_id: UUID,
         aggregates: list[dict[str, Any]],
@@ -434,7 +435,7 @@ class StorageManager:
 
         for agg in aggregates:
             # Ищем существующую запись
-            existing = self.db.execute(
+            result = await self.db.execute(
                 select(AggregatedData).where(
                     and_(
                         AggregatedData.dashboard_id == dashboard_id,
@@ -442,18 +443,19 @@ class StorageManager:
                         AggregatedData.dims == agg["dims"],
                     )
                 )
-            ).scalar_one_or_none()
+            )
+            existing = result.scalar_one_or_none()
 
             if existing:
                 # Обновляем существующую запись
-                self.db.execute(
+                await self.db.execute(
                     update(AggregatedData)
                     .where(AggregatedData.id == existing.id)
                     .values(metrics=agg["metrics"])
                 )
             else:
                 # Вставляем новую запись
-                self.db.execute(
+                await self.db.execute(
                     insert(AggregatedData).values(
                         dashboard_id=dashboard_id,
                         graph_id=agg["graph_id"],
@@ -492,7 +494,7 @@ class StorageManager:
             if not isinstance(agg["metrics"], dict):
                 raise ValueError("metrics должен быть словарем")
 
-    def _validate_graphs_exist(
+    async def _validate_graphs_exist(
         self,
         graph_ids: set[UUID],
         dashboard_id: UUID,
@@ -508,14 +510,15 @@ class StorageManager:
         """
         from mko_bi.db.models import graphs as graphs_model
 
-        found_graphs = self.db.execute(
+        result = await self.db.execute(
             select(graphs_model.Graph.id).where(
                 and_(
                     graphs_model.Graph.id.in_(list(graph_ids)),
                     graphs_model.Graph.dashboard_id == dashboard_id,
                 )
             )
-        ).scalars().all()
+        )
+        found_graphs = result.scalars().all()
 
         found_ids = set(found_graphs)
         missing_ids = graph_ids - found_ids

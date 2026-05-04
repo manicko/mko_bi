@@ -26,7 +26,7 @@ class TestFilterModel:
             type="select",
             config={"field": "year", "source": "dims", "multi": False},
         )
-        await async_db_session.add(filter_obj)
+        async_db_session.add(filter_obj)
         await async_db_session.commit()
         await async_db_session.refresh(filter_obj)
 
@@ -43,7 +43,7 @@ class TestFilterModel:
             type="multiselect",
             config={},
         )
-        await async_db_session.add(filter_obj)
+        async_db_session.add(filter_obj)
         await async_db_session.commit()
 
         assert filter_obj.config == {}
@@ -56,7 +56,7 @@ class TestFilterModel:
             type="select",
             config={},
         )
-        await async_db_session.add(filter1)
+        async_db_session.add(filter1)
         await async_db_session.commit()
 
         filter2 = filter_model.Filter(
@@ -64,7 +64,7 @@ class TestFilterModel:
             type="multiselect",
             config={},
         )
-        await async_db_session.add(filter2)
+        async_db_session.add(filter2)
 
         with pytest.raises(IntegrityError):
             await async_db_session.commit()
@@ -79,10 +79,11 @@ class TestFilterModel:
                 type=filter_type,
                 config={},
             )
-            await async_db_session.add(filter_obj)
+            async_db_session.add(filter_obj)
         await async_db_session.commit()
 
-        filters = await async_db_session.execute(select(filter_model.Filter)).scalars().all()
+        result = await async_db_session.execute(select(filter_model.Filter))
+        filters = result.scalars().all()
         assert len(filters) == 4
 
     async def test_filter_repr(self, async_db_session):
@@ -92,7 +93,7 @@ class TestFilterModel:
             type="select",
             config={},
         )
-        await async_db_session.add(filter_obj)
+        async_db_session.add(filter_obj)
         await async_db_session.commit()
         await async_db_session.refresh(filter_obj)
 
@@ -108,7 +109,7 @@ class TestFilterModel:
             type="select",
             config={},
         )
-        await async_db_session.add(filter_obj)
+        async_db_session.add(filter_obj)
         await async_db_session.commit()
         await async_db_session.refresh(filter_obj)
 
@@ -121,13 +122,13 @@ class TestFilterModel:
             type="select",
             config={},
         )
-        await async_db_session.add(filter_obj)
+        async_db_session.add(filter_obj)
 
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(filter_obj)
         await async_db_session.refresh(dashboard)
@@ -141,9 +142,10 @@ class TestFilterModel:
             select(filter_model.Filter).where(
                 filter_model.Filter.id == filter_obj.id
             )
-        ).scalar_one()
-        assert len(result.dashboards) == 1
-        assert result.dashboards[0].name == "Test Dashboard"
+        )
+        filters = result.scalar_one()
+        assert len(filters.dashboards) == 1
+        assert filters.dashboards[0].name == "Test Dashboard"
 
 
 class TestProcessingConfigModel:
@@ -155,7 +157,7 @@ class TestProcessingConfigModel:
             name="Test Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         config = processing_config_model.ProcessingConfig(
@@ -166,7 +168,7 @@ class TestProcessingConfigModel:
                 "timezone": "UTC",
             },
         )
-        await async_db_session.add(config)
+        async_db_session.add(config)
         await async_db_session.commit()
         await async_db_session.refresh(config)
 
@@ -184,14 +186,14 @@ class TestProcessingConfigModel:
             name="Test Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         config = processing_config_model.ProcessingConfig(
             dashboard_id=dashboard.id,
             settings={},
         )
-        await async_db_session.add(config)
+        async_db_session.add(config)
         await async_db_session.commit()
 
         assert config.settings == {}
@@ -203,21 +205,21 @@ class TestProcessingConfigModel:
             name="Test Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         config1 = processing_config_model.ProcessingConfig(
             dashboard_id=dashboard.id,
             settings={"loader": "loader1"},
         )
-        await async_db_session.add(config1)
+        async_db_session.add(config1)
         await async_db_session.commit()
 
         config2 = processing_config_model.ProcessingConfig(
             dashboard_id=dashboard.id,
             settings={"loader": "loader2"},
         )
-        await async_db_session.add(config2)
+        async_db_session.add(config2)
 
         with pytest.raises(IntegrityError):
             await async_db_session.commit()
@@ -230,14 +232,14 @@ class TestProcessingConfigModel:
             name="Test Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         config = processing_config_model.ProcessingConfig(
             dashboard_id=dashboard.id,
             settings={"loader": "sales_loader"},
         )
-        await async_db_session.add(config)
+        async_db_session.add(config)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -250,14 +252,14 @@ class TestProcessingConfigModel:
             name="Test Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         config = processing_config_model.ProcessingConfig(
             dashboard_id=dashboard.id,
             settings={},
         )
-        await async_db_session.add(config)
+        async_db_session.add(config)
         await async_db_session.commit()
         await async_db_session.refresh(config)
 
@@ -270,14 +272,14 @@ class TestProcessingConfigModel:
             name="Test Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         config = processing_config_model.ProcessingConfig(
             dashboard_id=dashboard.id,
             settings={},
         )
-        await async_db_session.add(config)
+        async_db_session.add(config)
         await async_db_session.commit()
         await async_db_session.refresh(config)
 
@@ -290,14 +292,14 @@ class TestProcessingConfigModel:
             name="Test Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         config = processing_config_model.ProcessingConfig(
             dashboard_id=dashboard.id,
             settings={"loader": "sales_loader"},
         )
-        await async_db_session.add(config)
+        async_db_session.add(config)
         await async_db_session.commit()
 
         # Удаляем дашборд
@@ -307,7 +309,8 @@ class TestProcessingConfigModel:
         # Проверяем, что настройки тоже удалены
         result = await async_db_session.execute(
             select(processing_config_model.ProcessingConfig)
-        ).fetchall()
+        )
+        result = result.fetchall()
         assert len(result) == 0
 
 
@@ -320,7 +323,7 @@ class TestProcessingLogModel:
             status="started",
             message="Processing started",
         )
-        await async_db_session.add(log)
+        async_db_session.add(log)
         await async_db_session.commit()
         await async_db_session.refresh(log)
 
@@ -338,7 +341,7 @@ class TestProcessingLogModel:
             name="Test Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         log = processing_log_model.ProcessingLog(
@@ -348,7 +351,7 @@ class TestProcessingLogModel:
             started_at=datetime.now(),
             finished_at=datetime.now(),
         )
-        await async_db_session.add(log)
+        async_db_session.add(log)
         await async_db_session.commit()
         await async_db_session.refresh(log)
 
@@ -362,7 +365,7 @@ class TestProcessingLogModel:
         log = processing_log_model.ProcessingLog(
             status="started",
         )
-        await async_db_session.add(log)
+        async_db_session.add(log)
         await async_db_session.commit()
 
         assert log.message is None
@@ -374,12 +377,13 @@ class TestProcessingLogModel:
             log = processing_log_model.ProcessingLog(
                 status=status,
             )
-            await async_db_session.add(log)
+            async_db_session.add(log)
         await async_db_session.commit()
 
-        logs = await async_db_session.execute(
+        result = await async_db_session.execute(
             select(processing_log_model.ProcessingLog)
-        ).scalars().all()
+        )
+        logs = result.scalars().all()
         assert len(logs) == 3
 
     async def test_processing_log_dashboard_relationship(self, async_db_session):
@@ -388,7 +392,7 @@ class TestProcessingLogModel:
             name="Test Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
 
         log = processing_log_model.ProcessingLog(
@@ -396,7 +400,7 @@ class TestProcessingLogModel:
             status="success",
             message="Processing completed",
         )
-        await async_db_session.add(log)
+        async_db_session.add(log)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -408,7 +412,7 @@ class TestProcessingLogModel:
         log = processing_log_model.ProcessingLog(
             status="success",
         )
-        await async_db_session.add(log)
+        async_db_session.add(log)
         await async_db_session.commit()
         await async_db_session.refresh(log)
 
@@ -421,51 +425,12 @@ class TestProcessingLogModel:
         log = processing_log_model.ProcessingLog(
             status="success",
         )
-        await async_db_session.add(log)
+        async_db_session.add(log)
         await async_db_session.commit()
         await async_db_session.refresh(log)
 
         assert "ProcessingLog" in str(log)
         assert "success" in str(log)
-
-    @pytest.mark.skip(reason="SQLite may not enforce foreign key constraints properly")
-    async def test_cascade_set_null_dashboard(self, async_db_session):
-        """Проверка SET NULL при удалении дашборда."""
-        dashboard = dashboard_model.Dashboard(
-            name="Test Dashboard",
-            config={},
-        )
-        await async_db_session.add(dashboard)
-        await async_db_session.commit()
-        await async_db_session.refresh(dashboard)
-
-        log = processing_log_model.ProcessingLog(
-            dashboard_id=dashboard.id,
-            status="success",
-            message="Processing completed",
-        )
-        await async_db_session.add(log)
-        await async_db_session.commit()
-        await async_db_session.refresh(log)
-
-        log_id = log.id
-
-        # Удаляем дашборд
-        await async_db_session.delete(dashboard)
-        await async_db_session.commit()
-        
-        # Проверяем, что dashboard_id стал NULL
-        result = await async_db_session.execute(
-            select(processing_log_model.ProcessingLog).where(
-                processing_log_model.ProcessingLog.id == log_id
-            )
-        ).scalar_one_or_none()
-        
-        # SQLite may not enforce foreign key constraints in tests
-        # In production with PostgreSQL, SET NULL should work
-        if result is not None:
-            assert result.dashboard_id is None
-
 
 class TestModelRelationships:
     """Тесты для связей между новыми моделями и существующими."""
@@ -476,7 +441,7 @@ class TestModelRelationships:
             name="Full Dashboard",
             config={},
         )
-        await async_db_session.add(dashboard)
+        async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
 
@@ -486,7 +451,7 @@ class TestModelRelationships:
             type="select",
             config={},
         )
-        await async_db_session.add(filter_obj)
+        async_db_session.add(filter_obj)
         await async_db_session.commit()
         await async_db_session.refresh(filter_obj)
 
@@ -497,7 +462,7 @@ class TestModelRelationships:
             dashboard_id=dashboard.id,
             settings={"loader": "test"},
         )
-        await async_db_session.add(config)
+        async_db_session.add(config)
 
         # Добавляем лог обработки
         log = processing_log_model.ProcessingLog(
@@ -505,7 +470,7 @@ class TestModelRelationships:
             status="success",
             message="Test",
         )
-        await async_db_session.add(log)
+        async_db_session.add(log)
 
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
