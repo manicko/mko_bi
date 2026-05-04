@@ -23,6 +23,10 @@ from mko_bi.db.repositories.aggregated_data_repo import AggregatedDataRepository
 from mko_bi.db.repositories.dashboard_repo import DashboardRepository
 from mko_bi.db.repositories.processing_log_repo import ProcessingLogRepository
 from mko_bi.db.session import get_session
+from mko_bi.data.processing.transformations import (
+    apply_transformations,
+    calculate_aggregations,
+)
 from mko_bi.models.data import (
     AggregatedData,
     ProcessingConfig,
@@ -36,10 +40,7 @@ from mko_bi.models.user_roles import (
     ProcessingStatusEnum,
 )
 from mko_bi.models.types import (
-    FilterCondition,
     ProcessingResultData,
-    TransformationConfig,
-    AggregationConfig,
 )
 
 logger = logging.getLogger(__name__)
@@ -111,7 +112,7 @@ def _validate_file(filename: str, file_content: bytes, content_type: str | None 
     config = get_config()
 
     # 2. Проверка формата файла
-    allowed_extensions = config.allowed_file_types
+    allowed_extensions = [ext.value for ext in config.allowed_file_types]
     if not any(filename.lower().endswith(ext.lower()) for ext in allowed_extensions):
         logger.error(
             "Недопустимый формат файла: %s. Допустимые: %s",
@@ -257,106 +258,6 @@ def _validate_file_size(file_path: Path, max_size_mb: float = 100.0) -> float:
     return file_size_mb
 
 
-def _apply_filters(df: pl.DataFrame, filters: list[FilterCondition]) -> pl.DataFrame:
-    """Применяет фильтры к DataFrame.
-
-    Args:
-        df: Исходный DataFrame.
-        filters: Список фильтров для применения.
-
-    Returns:
-        pl.DataFrame: Отфильтрованный DataFrame.
-    """
-    for filter_config in filters:
-        field = filter_config.get("field")
-        operator = filter_config.get("operator")
-        value = filter_config.get("value")
-
-        if field and operator and value is not None:
-            if operator == ">=":
-                df = df.filter(pl.col(field) >= value)
-            elif operator == "<=":
-                df = df.filter(pl.col(field) <= value)
-            elif operator == "==":
-                df = df.filter(pl.col(field) == value)
-            elif operator == "!=":
-                df = df.filter(pl.col(field) != value)
-            elif operator == ">":
-                df = df.filter(pl.col(field) > value)
-            elif operator == "<":
-                df = df.filter(pl.col(field) < value)
-            logger.info("Применен фильтр: %s %s %s", field, operator, value)
-    return df
-
-
-def _apply_aggregations(
-    df: pl.DataFrame, groupby: list[str], aggregations: list[AggregationConfig]
-) -> pl.DataFrame:
-    """Применяет группировку и агрегации к DataFrame.
-
-    Args:
-        df: Исходный DataFrame.
-        groupby: Список колонок для группировки.
-        aggregations: Список агрегаций для применения.
-
-    Returns:
-        pl.DataFrame: Результат группировки и агрегации.
-    """
-    agg_exprs = []
-    for agg in aggregations:
-        agg_type = agg.get("type")
-        field = agg.get("field")
-
-        if field:
-            if agg_type == "sum":
-                agg_exprs.append(pl.col(field).sum().alias(f"{field}_sum"))
-            elif agg_type == "avg":
-                agg_exprs.append(pl.col(field).mean().alias(f"{field}_avg"))
-            elif agg_type == "count":
-                agg_exprs.append(pl.col(field).count().alias(f"{field}_count"))
-            elif agg_type == "min":
-                agg_exprs.append(pl.col(field).min().alias(f"{field}_min"))
-            elif agg_type == "max":
-                agg_exprs.append(pl.col(field).max().alias(f"{field}_max"))
-
-    if agg_exprs:
-        df = df.group_by(groupby).agg(agg_exprs)
-        logger.info("Применена группировка: %s", groupby)
-    return df
-
-
-def _apply_transformations(df: pl.DataFrame, transformations: list[TransformationConfig]) -> pl.DataFrame:
-    """Применяет трансформации к DataFrame.
-
-    Args:
-        df: Исходный DataFrame.
-        transformations: Список трансформаций для применения.
-
-    Returns:
-        pl.DataFrame: Трансформированный DataFrame.
-    """
-    for transform in transformations:
-        transform_type = transform.get("type")
-        condition = transform.get("condition")
-
-        if transform_type == "filter" and condition:
-            for field, op_value in condition.items():
-                if isinstance(op_value, dict):
-                    for op, val in op_value.items():
-                        if op == "$gte":
-                            df = df.filter(pl.col(field) >= val)
-                        elif op == "$lte":
-                            df = df.filter(pl.col(field) <= val)
-                        elif op == "$gt":
-                            df = df.filter(pl.col(field) > val)
-                        elif op == "$lt":
-                            df = df.filter(pl.col(field) < val)
-                        elif op == "$eq":
-                            df = df.filter(pl.col(field) == val)
-                        logger.info("Применена трансформация: %s %s %s", field, op, val)
-    return df
-
-
 async def _process_csv_file(
     file_path: Path,
     processing_config: ProcessingConfig | None = None,
@@ -399,19 +300,31 @@ async def _process_csv_file(
     if processing_config:
         logger.info("Применение конфигурации обработки")
 
-        # Применяем фильтры
-        if processing_config.filters:
-            df = _apply_filters(df, processing_config.filters)
+        # Применяем трансформации (фильтры, сортировка, лимит, базовая группировка)
+        df = apply_transformations(
+            df,
+            filters=processing_config.filters,
+            groupby=processing_config.groupby if not processing_config.aggregations else None,
+            sort_by=processing_config.sort_by,
+            descending=processing_config.descending,
+            limit=processing_config.limit,
+        )
 
-        # Применяем группировку и агрегации
-        if processing_config.groupby and processing_config.aggregations:
-            df = _apply_aggregations(
-                df, processing_config.groupby, processing_config.aggregations
+        # Применяем агрегации, YoY, доли, кастомные метрики
+        if (
+            processing_config.aggregations
+            or processing_config.yoy_config
+            or processing_config.share_config
+            or processing_config.custom_metrics
+        ):
+            df = calculate_aggregations(
+                df,
+                groupby=processing_config.groupby,
+                aggregations=processing_config.aggregations,
+                yoy_config=processing_config.yoy_config,
+                share_config=processing_config.share_config,
+                custom_metrics=processing_config.custom_metrics,
             )
-
-        # Применяем трансформации
-        if processing_config.transformations:
-            df = _apply_transformations(df, processing_config.transformations)
 
         result_data["processed_rows"] = df.shape[0]
         result_data["processed_columns"] = df.columns

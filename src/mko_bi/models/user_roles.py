@@ -57,6 +57,16 @@ class AggregationFunctionEnum(StrEnum):
     last = "last"
 
 
+class FilterOperatorEnum(StrEnum):
+    """Операторы для фильтрации данных."""
+    EQ = "=="
+    NE = "!="
+    GT = ">"
+    LT = "<"
+    GTE = ">="
+    LTE = "<="
+
+
 class FilterTypeEnum(StrEnum):
     """Типы фильтров."""
     select = "select"

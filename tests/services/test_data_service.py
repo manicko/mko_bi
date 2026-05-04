@@ -4,16 +4,23 @@ Tests the business logic for file upload, processing, and status tracking.
 """
 
 import gzip
-from pathlib import Path
 
 import pytest
 
 from mko_bi.services.data_service import (
-    _validate_file,
     _process_csv_file,
+    _validate_file,
 )
 from mko_bi.models.data import (
     ProcessingConfig,
+)
+from mko_bi.models.transformation_configs import (
+    AggregationConfig,
+    FilterConfig,
+)
+from mko_bi.models.user_roles import (
+    AggregationFunctionEnum,
+    FilterOperatorEnum,
 )
 
 
@@ -83,7 +90,7 @@ A,150,2024
         f.write(csv_content)
 
     config = ProcessingConfig(
-        filters=[{"field": "year", "operator": ">=", "value": 2024}]
+        filters=[FilterConfig(column="year", operator=FilterOperatorEnum.GTE, value=2024)]
     )
 
     result = await _process_csv_file(file_path, config)
@@ -104,7 +111,7 @@ A,150,2024
 
     config = ProcessingConfig(
         groupby=["category"],
-        aggregations=[{"type": "sum", "field": "value"}]
+        aggregations=[AggregationConfig(column="value", function=AggregationFunctionEnum.sum_val)]
     )
 
     result = await _process_csv_file(file_path, config)

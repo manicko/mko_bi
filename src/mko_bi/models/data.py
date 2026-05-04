@@ -3,15 +3,18 @@ from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 from uuid import UUID
 
-from mko_bi.models.user_roles import GraphTypeEnum, BarmodeEnum, OrientationEnum, ProcessingStatusEnum
+from mko_bi.models.user_roles import FileExtensionEnum, GraphTypeEnum, BarmodeEnum, OrientationEnum, ProcessingStatusEnum
+from mko_bi.models.transformation_configs import (
+    AggregationConfig,
+    CustomMetricConfig,
+    FilterConfig,
+    ShareConfig,
+    YoyConfig,
+)
 from mko_bi.models.types import (
     AggregatedRecordModel,
     ChartMetadata,
     ChartLayoutConfig,
-    YoYConfig,
-    FilterCondition,
-    TransformationConfig,
-    AggregationConfig,
     ProcessingResultData,
 )
 
@@ -91,28 +94,39 @@ class ProcessingStatus(BaseModel):
 class ProcessingConfig(BaseModel):
     """Модель конфигурации обработки данных."""
 
-    transformations: list[TransformationConfig] | None = None
-    aggregations: list[AggregationConfig] | None = None
+    filters: list[FilterConfig] | None = None
     groupby: list[str] | None = None
-    filters: list[FilterCondition] | None = None
+    aggregations: list[AggregationConfig] | None = None
+    sort_by: list[str] | None = None
+    descending: bool = False
+    limit: int | None = None
+    yoy_config: YoyConfig | None = None
+    share_config: ShareConfig | None = None
+    custom_metrics: list[CustomMetricConfig] | None = None
     metrics: list[dict[str, str]] | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
         json_schema_extra={
             "example": {
-                "transformations": [
-                    {"type": "filter", "condition": {"year": {"$gte": 2020}}}
-                ],
-                "aggregations": [
-                    {"type": "sum", "field": "revenue", "groupby": "category"},
-                    {"type": "avg", "field": "sales", "groupby": "region"},
+                "filters": [
+                    {"column": "year", "operator": ">=", "value": 2020}
                 ],
                 "groupby": ["category", "region"],
-                "filters": [{"field": "year", "operator": ">=", "value": 2020}],
-                "metrics": [
-                    {"name": "total_revenue", "type": "sum", "field": "revenue"},
-                    {"name": "avg_sales", "type": "avg", "field": "sales"},
+                "aggregations": [
+                    {"column": "revenue", "function": "sum", "alias": "total_revenue"}
+                ],
+                "sort_by": ["year"],
+                "descending": False,
+                "yoy_config": {
+                    "year_column": "year",
+                    "value_column": "revenue_sum",
+                },
+                "share_config": {
+                    "value_column": "revenue_sum",
+                },
+                "custom_metrics": [
+                    {"name": "profit", "formula": "revenue - cost"}
                 ],
             }
         },
@@ -244,8 +258,8 @@ class LoaderConfig(BaseModel):
         ge=1,
         le=1024 * 1024 * 1024,  # 1GB max
     )
-    allowed_file_types: list[str] = Field(
-        default_factory=lambda: [".csv", ".csv.gz"],
+    allowed_file_types: list[FileExtensionEnum] = Field(
+        default_factory=lambda: [FileExtensionEnum.CSV, FileExtensionEnum.CSV_GZ],
         description="Разрешенные типы файлов",
     )
 
@@ -332,7 +346,7 @@ class ChartConfig(BaseModel):
     barmode: BarmodeEnum = BarmodeEnum.group
     secondary_y: list[str] = Field(default_factory=list)
     layout: ChartLayoutConfig | None = Field(default=None)
-    yoy: YoYConfig | None = Field(
+    yoy: YoyConfig | None = Field(
         default=None,
         description="Настройки год-к-году сравнения",
     )

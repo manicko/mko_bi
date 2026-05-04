@@ -6,14 +6,14 @@
 
 from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
-from mko_bi.models.user_roles import AggregationFunctionEnum
+from mko_bi.models.user_roles import AggregationFunctionEnum, FilterOperatorEnum
 
 
 class FilterConfig(BaseModel):
     """Конфигурация фильтрации данных."""
 
     column: str
-    operator: str
+    operator: FilterOperatorEnum
     value: Any
 
     model_config = ConfigDict(
