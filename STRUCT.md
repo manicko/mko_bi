@@ -18,6 +18,7 @@ C:\py_exp\mko_bi
 ├── create_db.sql
 ├── data
 │   ├── logs
+│   │   └── app.json.log.1
 │   ├── pgre
 │   └── tmp_uploads
 ├── DB_STRUCTURE.md
@@ -27,6 +28,8 @@ C:\py_exp\mko_bi
 ├── fix_models_script.py
 ├── fix_new_models.py
 ├── fix_test_models.py
+├── instructions
+│   └── RUN.md
 ├── nginx
 │   └── nginx.conf
 ├── 'Pydantic TASKS.md'
@@ -171,16 +174,14 @@ C:\py_exp\mko_bi
 │   ├── DB
 │   ├── DEV
 │   │   ├── TASK_001_sync_async_unification.md
-│   │   ├── TASK_005_dash_mount.md
-│   │   ├── TASK_006_dash_auth.md
+│   │   ├── TASK_006_dash_auth_DONE.md
 │   │   ├── TASK_007_dash_real_data.md
 │   │   ├── TASK_008_transform_pipeline.md
 │   │   ├── TASK_009_csv_loader.md
 │   │   ├── TASK_011_file_cleanup.md
 │   │   ├── TASK_012_multi_axis.md
 │   │   ├── TASK_013_layouts.md
-│   │   ├── TASK_051_di_and_interfaces.md
-│   │   └── TASK_XXX_fix_migrations_enum_mismatch_DONE.md
+│   │   └── TASK_051_di_and_interfaces.md
 │   ├── DONE
 │   │   └── TASK_DB_REPRODUCER_MAIN.md
 │   ├── TASK_001_db_structure_audit.md

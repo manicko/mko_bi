@@ -107,6 +107,74 @@ def validate_jwt_token(token: str) -> dict[str, Any] | None:
         return None
 
 
+def fetch_dashboard_data(
+    dashboard_id: str, token: str, filters: dict[str, Any] | None = None
+) -> list[dict[str, Any]] | None:
+    """Получает данные дашборда через API.
+
+    Args:
+        dashboard_id: Идентификатор дашборда.
+        token: JWT токен для авторизации.
+        filters: Опциональные фильтры для применения.
+
+    Returns:
+        dict[str, Any] | None: Данные дашборда или None при ошибке.
+    """
+    try:
+        api_base_url = get_config().API_BASE_URL
+        headers = {"Authorization": f"Bearer {token}"}
+
+        if filters:
+            # Применяем фильтры через POST запрос
+            filter_request = {"dashboard_id": dashboard_id, "filters": filters}
+            response = requests.post(
+                f"{api_base_url}/data/filter",
+                headers=headers,
+                json=filter_request,
+                timeout=30,
+            )
+        else:
+            # Получаем все данные дашборда
+            response = requests.get(
+                f"{api_base_url}/data/{dashboard_id}",
+                headers=headers,
+                timeout=30,
+            )
+
+        response.raise_for_status()
+        data: dict[str, Any] | list[dict[str, Any]] = response.json()
+        logger.info(
+            "Данные дашборда %s получены: %d записей",
+            dashboard_id,
+            len(data) if isinstance(data, list) else 0,
+        )
+        return cast(list[dict[str, Any]] | None, data)
+
+    except requests.HTTPError as e:
+        status_code = response.status_code if 'response' in locals() else 0
+        logger.error(
+            "Ошибка HTTP при получении данных дашборда %s: %s (код %s)",
+            dashboard_id,
+            e,
+            status_code,
+        )
+        return None
+    except requests.RequestException as e:
+        logger.error(
+            "Ошибка сети при получении данных дашборда %s: %s",
+            dashboard_id,
+            e,
+        )
+        return None
+    except Exception as e:
+        logger.error(
+            "Неизвестная ошибка при получении данных дашборда %s: %s",
+            dashboard_id,
+            e,
+        )
+        return None
+
+
 def create_dash_app(fastapi_app=None, prefix: str = "/dash") -> Dash:
     """Создает и конфигурирует Dash приложение.
 
@@ -613,67 +681,78 @@ def load_dashboard_data(
     logger.info("Загрузка дашборда: %s", dashboard_id)
 
     try:
-        # В реальной реализации здесь будет вызов FastAPI эндпоинта
-        # headers = {"Authorization": f"Bearer {token}"}
-        # response = requests.get(
-        #     f"http://localhost:8000/api/dashboards/{dashboard_id}",
-        #     headers=headers,
-        # )
-        # if response.status_code == 200:
-        #     dashboard = response.json()
-        # else:
-        #     return "Ошибка", "Не удалось загрузить дашборд", "", ""
+        # Получаем данные дашборда через API
+        api_base_url = get_config().API_BASE_URL
+        headers = {"Authorization": f"Bearer {token}"}
 
-        # Заглушка для демонстрации
-        dashboard: dict[str, Any] = {
-            "id": dashboard_id,
-            "name": f"Дашборд {dashboard_id}",
-            "description": "Пример дашборда с графиками",
-            "config": {
-                "graph_types": ["bar", "line"],
-                "charts": [
-                    {
-                        "type": "bar",
-                        "x": "category",
-                        "metrics": ["revenue"],
-                        "title": "Доход по категориям",
-                    },
-                    {
-                        "type": "line",
-                        "x": "month",
-                        "metrics": ["sales"],
-                        "title": "Динамика продаж",
-                    },
-                ],
-            },
-        }
+        # Запрос конфигурации дашборда
+        dashboard_response = requests.get(
+            f"{api_base_url}/dashboards/{dashboard_id}",
+            headers=headers,
+            timeout=10,
+        )
+        dashboard_response.raise_for_status()
+        dashboard = dashboard_response.json()
 
-        title = dashboard["name"]
-        description = dashboard["description"]
+        title = dashboard.get("name", f"Дашборд {dashboard_id}")
+        description = dashboard.get("description", "")
+
+        # Получаем агрегированные данные для графиков
+        chart_data = fetch_dashboard_data(dashboard_id, token)
 
         # Создаем панель фильтров
-        filters = create_filter_panel(dashboard_id)
+        filters = create_filter_panel(dashboard_id, token)
 
-        # Создаем графики
-        charts = create_charts(dashboard["config"]["charts"], dashboard_id, token)
+        # Создаем графики с реальными данными
+        charts = create_charts_with_data(dashboard_id, chart_data, token)
 
         return title, description, filters, html.Div(charts)
 
+    except requests.HTTPError as e:
+        status_code = e.response.status_code if hasattr(e, 'response') else 0
+        logger.error(
+            "Ошибка API при загрузке дашборда %s: %s (код %s)",
+            dashboard_id,
+            e,
+            status_code,
+        )
+        return (
+            "Ошибка",
+            f"Не удалось загрузить дашборд (код {status_code})",
+            html.Div(""),
+            html.Div(""),
+        )
     except Exception as e:
         logger.error("Ошибка загрузки дашборда %s: %s", dashboard_id, e)
         return "Ошибка", str(e), html.Div(""), html.Div("")
 
 
-def create_filter_panel(dashboard_id: str) -> html.Div:
+def create_filter_panel(dashboard_id: str, token: str | None = None) -> html.Div:
     """Создает панель фильтров для дашборда.
+
+    Динамически получает доступные значения фильтров из данных.
 
     Args:
         dashboard_id: Идентификатор дашборда.
+        token: JWT токен аутентификации.
 
     Returns:
         html.Div: Компонент панели фильтров.
     """
     logger.debug("Создание панели фильтров для дашборда: %s", dashboard_id)
+
+    # Получаем данные дашборда для извлечения доступных значений фильтров
+    available_filters = _get_available_filter_values(dashboard_id, token)
+
+    year_options = [{"label": str(y), "value": y} for y in available_filters.get("years", [2023, 2024])]
+    category_options = [{"label": c, "value": c} for c in available_filters.get("categories", [])]
+    brand_options = [{"label": b, "value": b} for b in available_filters.get("brands", [])]
+
+    # Если нет данных, используем пустые списки
+    if not category_options:
+        category_options = [{"label": "Нет данных", "value": "", "disabled": True}]
+    if not brand_options:
+        brand_options = [{"label": "Нет данных", "value": "", "disabled": True}]
 
     return html.Div(
         [
@@ -684,12 +763,10 @@ def create_filter_panel(dashboard_id: str) -> html.Div:
                         dbc.Label("Год"),
                         dcc.Dropdown(
                             id={"type": "dashboard-filter", "field": "year"},
-                            options=[
-                                {"label": "2023", "value": 2023},
-                                {"label": "2024", "value": 2024},
-                            ],
+                            options=year_options,
                             placeholder="Выберите год",
                             clearable=True,
+                            multi=False,
                         ),
                     ],
                     md=4,
@@ -700,13 +777,10 @@ def create_filter_panel(dashboard_id: str) -> html.Div:
                         dbc.Label("Категория"),
                         dcc.Dropdown(
                             id={"type": "dashboard-filter", "field": "category"},
-                            options=[
-                                {"label": "Электроника", "value": "electronics"},
-                                {"label": "Одежда", "value": "clothing"},
-                                {"label": "Продукты", "value": "food"},
-                            ],
+                            options=category_options,
                             placeholder="Выберите категорию",
                             clearable=True,
+                            multi=True,
                         ),
                     ],
                     md=4,
@@ -717,12 +791,10 @@ def create_filter_panel(dashboard_id: str) -> html.Div:
                         dbc.Label("Бренд"),
                         dcc.Dropdown(
                             id={"type": "dashboard-filter", "field": "brand"},
-                            options=[
-                                {"label": "Brand A", "value": "brand_a"},
-                                {"label": "Brand B", "value": "brand_b"},
-                            ],
+                            options=brand_options,
                             placeholder="Выберите бренд",
                             clearable=True,
+                            multi=True,
                         ),
                     ],
                     md=4,
@@ -733,16 +805,77 @@ def create_filter_panel(dashboard_id: str) -> html.Div:
                 "Применить фильтры",
                 id={"type": "apply-filters", "dashboard": dashboard_id},
                 color="primary",
-                className="mt-2",
+                className="mt-2 me-2",
             ),
             dbc.Button(
                 "Сбросить фильтры",
                 id={"type": "reset-filters", "dashboard": dashboard_id},
                 color="secondary",
-                className="mt-2 ms-2",
+                className="mt-2",
             ),
         ],
     )
+
+
+def _get_available_filter_values(dashboard_id: str, token: str | None) -> dict[str, list[str | int]]:
+    """Получает доступные значения для фильтров из данных.
+
+    Args:
+        dashboard_id: Идентификатор дашборда.
+        token: JWT токен.
+
+    Returns:
+        dict[str, list[str | int]]: Словарь с доступными значениями фильтров.
+    """
+    result: dict[str, list[str | int]] = {"years": [], "categories": [], "brands": []}
+
+    if not token:
+        return result
+
+    try:
+        api_base_url = get_config().API_BASE_URL
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # Получаем данные дашборда
+        response = requests.get(
+            f"{api_base_url}/data/{dashboard_id}",
+            headers=headers,
+            timeout=10,
+        )
+        response.raise_for_status()
+        data = response.json()
+
+        # Извлекаем уникальные значения из dims
+        years_set = set()
+        categories_set = set()
+        brands_set = set()
+
+        if isinstance(data, list):
+            for chart_data in data:
+                for item in chart_data.get("data", []):
+                    dims = item.get("dims", {})
+                    if "year" in dims:
+                        years_set.add(dims["year"])
+                    if "category" in dims:
+                        categories_set.add(dims["category"])
+                    if "brand" in dims:
+                        brands_set.add(dims["brand"])
+
+        result["years"] = sorted(list(years_set)) if years_set else [2023, 2024]
+        result["categories"] = sorted(list(categories_set))
+        result["brands"] = sorted(list(brands_set))
+
+        logger.info(
+            "Получены значения фильтров: years=%s, categories=%d, brands=%d",
+            result["years"],
+            len(result["categories"]),
+            len(result["brands"]),
+        )
+
+    except Exception as e:
+        logger.error("Ошибка получения значений фильтров: %s", e)
+
+    return result
 
 
 @callback(
@@ -771,7 +904,7 @@ def apply_dashboard_filters(
         token: JWT токен аутентификации.
 
     Returns:
-        List[go.Figure]: Обновленные графики.
+        list[go.Figure]: Обновленные графики.
     """
     if not n_clicks or not token or not dashboard_data:
         raise PreventUpdate
@@ -786,107 +919,135 @@ def apply_dashboard_filters(
 
     logger.debug("Активные фильтры: %s", active_filters)
 
-    # В реальной реализации здесь будет вызов API для получения отфильтрованных данных
-    # и обновления графиков
+    # Получаем ID дашборда
+    dashboard_id = str(dashboard_data.get("id", ""))
+    if not dashboard_id:
+        logger.warning("ID дашборда не найден в dashboard-config")
+        raise PreventUpdate
 
-    # Возвращаем текущие графики (в реальной реализации будут обновлены)
-    raise PreventUpdate
+    # Получаем данные с применением фильтров через API
+    filtered_data = fetch_dashboard_data(dashboard_id, token, active_filters)
+
+    if not filtered_data:
+        logger.warning("Не удалось получить данные с фильтрами")
+        raise PreventUpdate
+
+    # Создаем обновленные графики
+    figures: list[go.Figure] = []
+    if isinstance(filtered_data, list):
+        for i, chart_item in enumerate(filtered_data):
+            chart_type = chart_item.get("chart_type", "bar")
+            data = chart_item.get("data", [])
+            metadata = chart_item.get("metadata", {})
+            title = metadata.get("graph_name", f"График {i + 1}")
+
+            fig = render_graph_from_data(chart_type, data, title)
+            figures.append(fig)
+
+    if not figures:
+        logger.warning("Не удалось создать графики с фильтрами")
+        raise PreventUpdate
+
+    logger.info("Графики успешно обновлены с применением фильтров")
+    return figures
 
 
-def create_charts(
-    chart_configs: list[dict[str, Any]], dashboard_id: str, token: str
-) -> list[dbc.Col]:
-    """Создает компоненты графиков для дашборда.
+@callback(
+    Output({"type": "dashboard-filter", "field": dash.ALL}, "value"),
+    Input({"type": "reset-filters", "dashboard": dash.ALL}, "n_clicks"),
+    prevent_initial_call=True,
+)
+def reset_dashboard_filters(
+    n_clicks: list[int] | None,
+) -> list[None]:
+    """Сбрасывает все фильтры дашборда.
 
     Args:
-        chart_configs: Конфигурации графиков.
+        n_clicks: Количество кликов по кнопкам сброса.
+
+    Returns:
+        list[None]: Список None для сброса всех значений фильтров.
+    """
+    if not n_clicks:
+        raise PreventUpdate
+
+    logger.info("Сброс фильтров дашборда")
+    # Возвращаем пустые значения для всех фильтров
+    return [None for _ in n_clicks]
+
+
+def create_charts_with_data(
+    dashboard_id: str, chart_data: list[dict[str, Any]] | None, token: str
+) -> list[dbc.Col]:
+    """Создает компоненты графиков на основе реальных данных.
+
+    Args:
         dashboard_id: Идентификатор дашборда.
+        chart_data: Данные графиков от API.
         token: JWT токен аутентификации.
 
     Returns:
-        List[dbc.Col]: Список колонок с графиками.
+        list[dbc.Col]: Список колонок с графиками.
     """
     logger.info("Создание графиков для дашборда: %s", dashboard_id)
 
-    charts = []
-    for i, config in enumerate(chart_configs):
-        chart = render_graph(config, dashboard_id, token)
-        col = dbc.Col(
-            dbc.Card(
-                [
-                    dbc.CardHeader(config.get("title", f"График {i + 1}")),
-                    dbc.CardBody([dcc.Graph(figure=chart)]),
-                ],
+    charts: list[dbc.Col] = []
+    if not chart_data:
+        return [dbc.Col(html.P("Нет данных для отображения", className="text-muted"))]
+
+    # chart_data - это список объектов AggregatedData
+    if isinstance(chart_data, list):
+        for i, chart_item in enumerate(chart_data):
+            chart_type = chart_item.get("chart_type", "bar")
+            data = chart_item.get("data", [])
+            metadata = chart_item.get("metadata", {})
+            title = metadata.get("graph_name", f"График {i + 1}")
+
+            # Создаем график на основе типа
+            fig = render_graph_from_data(chart_type, data, title)
+
+            col = dbc.Col(
+                dbc.Card(
+                    [
+                        dbc.CardHeader(title),
+                        dbc.CardBody([dcc.Graph(figure=fig, id={"type": "dashboard-chart", "index": i})]),
+                    ],
+                    className="mb-4",
+                ),
+                md=6,
                 className="mb-4",
-            ),
-            md=6,
-            className="mb-4",
-        )
-        charts.append(col)
+            )
+            charts.append(col)
 
-    return charts
+    return charts if charts else [dbc.Col(html.P("Нет данных для отображения", className="text-muted"))]
 
 
-def render_graph(config: dict[str, Any], dashboard_id: str, token: str) -> go.Figure:
-    """Рендерит график через Plotly.
-
-    Создает график на основе конфигурации и данных от API.
-    Поддерживает типы: bar, line, pie, table.
+def render_graph_from_data(chart_type: str, data: list[dict[str, Any]], title: str) -> go.Figure:
+    """Рендерит график на основе реальных данных.
 
     Args:
-        config: Конфигурация графика.
-        dashboard_id: Идентификатор дашборда.
-        token: JWT токен аутентификации.
+        chart_type: Тип графика (bar, line, pie, table).
+        data: Данные для графика.
+        title: Заголовок графика.
 
     Returns:
         go.Figure: Объект фигуры Plotly.
-
-    Example:
-        >>> config = {
-        ...     "type": "bar",
-        ...     "x": "category",
-        ...     "metrics": ["revenue"],
-        ...     "title": "Доход по категориям"
-        ... }
-        >>> fig = render_graph(config, "1", "token")
     """
-    logger.info(
-        "Рендеринг графика: тип=%s, дашборд=%s",
-        config.get("type"),
-        dashboard_id,
-    )
+    logger.info("Рендеринг графика типа %s", chart_type)
 
     try:
-        # В реальной реализации здесь будет вызов API для получения данных
-        # headers = {"Authorization": f"Bearer {token}"}
-        # response = requests.get(
-        #     f"http://localhost:8000/api/dashboards/{dashboard_id}/data",
-        #     headers=headers,
-        #     params={"chart_type": config.get("type")},
-        # )
-        # if response.status_code == 200:
-        #     data = response.json()
-        # else:
-        #     return _create_error_figure("Ошибка загрузки данных")
-
-        # Заглушка: генерация примерных данных
-        chart_type = config.get("type", "bar")
-        x_field = config.get("x", "category")
-        metrics = config.get("metrics", ["value"])
-        title = config.get("title", "График")
-
         if chart_type == "bar":
-            fig = _create_bar_chart(x_field, metrics, title)
+            fig = _create_bar_chart_from_data(data, title)
         elif chart_type == "line":
-            fig = _create_line_chart(x_field, metrics, title)
+            fig = _create_line_chart_from_data(data, title)
         elif chart_type == "pie":
-            fig = _create_pie_chart(x_field, metrics, title)
+            fig = _create_pie_chart_from_data(data, title)
         elif chart_type == "table":
-            fig = _create_table_chart(x_field, metrics, title)
+            fig = _create_table_chart_from_data(data, title)
         else:
             fig = _create_error_figure(f"Неизвестный тип графика: {chart_type}")
 
-        logger.debug("График успешно создан: %s", chart_type)
+        logger.debug("График %s успешно создан", chart_type)
         return fig
 
     except Exception as e:
@@ -894,87 +1055,129 @@ def render_graph(config: dict[str, Any], dashboard_id: str, token: str) -> go.Fi
         return _create_error_figure(f"Ошибка: {str(e)}")
 
 
-def _create_bar_chart(x_field: str, metrics: list[str], title: str) -> go.Figure:
-    """Создает столбчатую диаграмму.
+def _create_bar_chart_from_data(data: list[dict[str, Any]], title: str) -> go.Figure:
+    """Создает столбчатую диаграмму на основе реальных данных.
 
     Args:
-        x_field: Поле для оси X.
-        metrics: Список метрик.
+        data: Список записей с dims и metrics.
         title: Заголовок графика.
 
     Returns:
         go.Figure: Объект фигуры Plotly.
     """
-    # Примерные данные
-    categories = ["A", "B", "C", "D"]
-    values = [100, 150, 120, 180]
+    if not data:
+        return _create_error_figure("Нет данных для отображения")
+
+    # Извлекаем данные
+    categories = []
+    values = []
+    metric_name = "value"
+
+    # Берем первую метрику из первой записи для названия
+    if data and isinstance(data[0].get("metrics"), dict):
+        metric_keys = list(data[0]["metrics"].keys())
+        if metric_keys:
+            metric_name = metric_keys[0]
+
+    for item in data:
+        dims = item.get("dims", {})
+        metrics = item.get("metrics", {})
+        categories.append(dims.get("category", dims.get("x", "Unknown")))
+        values.append(metrics.get(metric_name, 0))
 
     fig = go.Figure()
     fig.add_trace(
         go.Bar(
             x=categories,
             y=values,
-            name=metrics[0] if metrics else "value",
+            name=metric_name,
             marker_color="#1f77b4",
         )
     )
     fig.update_layout(
         title=title,
-        xaxis_title=x_field,
-        yaxis_title="Значение",
+        xaxis_title="Категория",
+        yaxis_title=metric_name,
         template="plotly_white",
     )
     return fig
 
 
-def _create_line_chart(x_field: str, metrics: list[str], title: str) -> go.Figure:
-    """Создает линейный график.
+def _create_line_chart_from_data(data: list[dict[str, Any]], title: str) -> go.Figure:
+    """Создает линейный график на основе реальных данных.
 
     Args:
-        x_field: Поле для оси X.
-        metrics: Список метрик.
+        data: Список записей с dims и metrics.
         title: Заголовок графика.
 
     Returns:
         go.Figure: Объект фигуры Plotly.
     """
-    # Примерные данные
-    months = ["Янв", "Фев", "Мар", "Апр", "Май", "Июн"]
-    values = [100, 120, 140, 130, 160, 180]
+    if not data:
+        return _create_error_figure("Нет данных для отображения")
+
+    # Извлекаем данные
+    x_values = []
+    y_values = []
+    metric_name = "value"
+
+    if data and isinstance(data[0].get("metrics"), dict):
+        metric_keys = list(data[0]["metrics"].keys())
+        if metric_keys:
+            metric_name = metric_keys[0]
+
+    for item in data:
+        dims = item.get("dims", {})
+        metrics = item.get("metrics", {})
+        x_values.append(dims.get("month", dims.get("x", "Unknown")))
+        y_values.append(metrics.get(metric_name, 0))
 
     fig = go.Figure()
     fig.add_trace(
         go.Scatter(
-            x=months,
-            y=values,
+            x=x_values,
+            y=y_values,
             mode="lines+markers",
-            name=metrics[0] if metrics else "value",
+            name=metric_name,
             line=dict(color="#1f77b4", width=2),
         )
     )
     fig.update_layout(
         title=title,
-        xaxis_title=x_field,
-        yaxis_title="Значение",
+        xaxis_title="Период",
+        yaxis_title=metric_name,
         template="plotly_white",
     )
     return fig
 
 
-def _create_pie_chart(x_field: str, metrics: list[str], title: str) -> go.Figure:
-    """Создает круговую диаграмму.
+def _create_pie_chart_from_data(data: list[dict[str, Any]], title: str) -> go.Figure:
+    """Создает круговую диаграмму на основе реальных данных.
 
     Args:
-        x_field: Поле для меток.
-        metrics: Список метрик.
+        data: Список записей с dims и metrics.
         title: Заголовок графика.
 
     Returns:
         go.Figure: Объект фигуры Plotly.
     """
-    # Примерные данные
-    labels = ["Категория A", "Категория B", "Категория C", "Категория D"]
-    values = [30, 25, 20, 25]
+    if not data:
+        return _create_error_figure("Нет данных для отображения")
+
+    labels = []
+    values = []
+    metric_name = "value"
+
+    if data and isinstance(data[0].get("metrics"), dict):
+        metric_keys = list(data[0]["metrics"].keys())
+        if metric_keys:
+            metric_name = metric_keys[0]
+
+    for item in data:
+        dims = item.get("dims", {})
+        metrics = item.get("metrics", {})
+        labels.append(dims.get("category", dims.get("x", "Unknown")))
+        values.append(metrics.get(metric_name, 0))
 
     fig = go.Figure()
     fig.add_trace(
@@ -992,38 +1195,52 @@ def _create_pie_chart(x_field: str, metrics: list[str], title: str) -> go.Figure
     return fig
 
 
-def _create_table_chart(x_field: str, metrics: list[str], title: str) -> go.Figure:
-    """Создает таблицу.
+def _create_table_chart_from_data(data: list[dict[str, Any]], title: str) -> go.Figure:
+    """Создает таблицу на основе реальных данных.
 
     Args:
-        x_field: Поле для строк.
-        metrics: Список метрик.
+        data: Список записей с dims и metrics.
         title: Заголовок графика.
 
     Returns:
         go.Figure: Объект фигуры Plotly.
     """
-    # Примерные данные
-    data = [
-        {"category": "A", "revenue": 1000, "sales": 500},
-        {"category": "B", "revenue": 2000, "sales": 800},
-        {"category": "C", "revenue": 1500, "sales": 600},
-    ]
+    if not data:
+        return _create_error_figure("Нет данных для отображения")
+
+    # Собираем все уникальные поля
+    all_dims = set()
+    all_metrics = set()
+    for item in data:
+        all_dims.update(item.get("dims", {}).keys())
+        all_metrics.update(item.get("metrics", {}).keys())
+
+    # Формируем заголовки
+    headers = list(all_dims) + list(all_metrics)
+
+    # Формируем данные для таблицы
+    table_data = []
+    for item in data:
+        row = []
+        for h in headers:
+            if h in item.get("dims", {}):
+                row.append(item["dims"][h])
+            elif h in item.get("metrics", {}):
+                row.append(item["metrics"][h])
+            else:
+                row.append("")
+        table_data.append(row)
 
     fig = go.Figure()
     fig.add_trace(
         go.Table(
             header=dict(
-                values=["Категория", "Доход", "Продажи"],
+                values=headers,
                 fill_color="paleturquoise",
                 align="left",
             ),
             cells=dict(
-                values=[
-                    [row["category"] for row in data],
-                    [row["revenue"] for row in data],
-                    [row["sales"] for row in data],
-                ],
+                values=[list(col) for col in zip(*table_data, strict=False)],
                 fill_color="lavender",
                 align="left",
             ),
