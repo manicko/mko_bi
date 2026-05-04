@@ -1,0 +1,56 @@
+TASK: Удаление мертвого кода и исправление типов
+
+FILE: src/mko_bi/services/data_service.py
+
+GOAL: Очистка мертвого кода (dead code) и исправление несоответствия типов dashboard_id
+
+IMPLEMENT:
+
+func: удаление дублирования и исправление типов
+
+LOGIC:
+
+1. Удалить мертвый код (дублирование):
+   - Строки 464-476 в data_service.py дублируют 440-456
+   - Удалить повторный блок возврата UploadResponse (он никогда не выполнится)
+
+2. Удалить/реализовать `pass` в `_process_csv_file` (строка 380):
+   - Если логика не нужна - удалить весь блок
+   - Если нужна - реализовать
+
+3. Исправить тип `dashboard_id`:
+   - В data_service.py параметры используют `int | None`
+   - В моделях dashboard_id - `UUID`
+   - Привести к единому типу (UUID согласно моделям БД)
+
+4. Проверить все использования dashboard_id в data_service.py:
+```
+# Было:
+dashboard_id: int | None = None
+
+# Стало:
+dashboard_id: UUID | None = None
+```
+
+5. Обновить вызовы функций с dashboard_id для соответствия типу UUID
+
+CONSTRAINTS:
+
+- Независимая задача (можно выполнять параллельно с другими)
+- Не ломать существующие API endpoints
+- Использовать UUID для consistency с БД схемой
+- Удалять только ТОЧНО мертвый код (проверить что он не вызывается)
+
+DONE:
+
+- Дублирование строк 464-476 удалено
+- `pass` в `_process_csv_file` обработан (удален или реализован)
+- Тип `dashboard_id` исправлен на UUID во всем файле
+- Компиляция проходит без ошибок типизации
+- `uv run mypy src/` проходит
+- `uv run pytest` проходит
+
+TEST:
+
+uv run mypy src/
+uv run pytest tests/services/test_data_service.py -v
