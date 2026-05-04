@@ -1,12 +1,22 @@
+# Environment: development, staging, production, test
+env: development
+
+# Database migrations
+auto_migrate: true
+migration_script_path: "alembic"
+alembic_ini_path: "alembic.ini"
+
+# Test database (optional)
+# test_database_url: "postgresql+asyncpg://postgres:1234@localhost:5432/bidb_test"
+recreate_test_db: false
+
 database:
   host: localhost
   port: 5432
   dbname: bidb
   user: postgres
-  # password should be set via environment variable DB_PASSWORD
-  # this is just an example for local development
+  # password: set via environment variable DB_PASSWORD or here
   password: "1234"  # CHANGE THIS IN PRODUCTION!
-
 
 jwt:
   secret_key: "your-secret-key-change-in-production-use-env-variable"

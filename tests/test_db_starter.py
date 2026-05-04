@@ -63,36 +63,64 @@ class TestDatabaseStarterConfig:
 
 
 class TestDatabaseStarterLoadConfig:
-    """Тесты загрузки конфигурации из переменных окружения."""
+    """Тесты загрузки конфигурации из YAML (Settings)."""
 
-    def test_load_from_env_development(self, monkeypatch):
-        """Тест загрузки окружения development."""
-        monkeypatch.setenv("ENV", "development")
-        monkeypatch.setenv("MAIN_DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/testdb")
+    def test_load_from_settings_development(self, monkeypatch):
+        """Тест загрузки окружения development из настроек."""
+        monkeypatch.setattr("mko_bi.db.starter.get_config", lambda: MagicMock(
+            env="development",
+            DATABASE_URL="postgresql+asyncpg://test:test@localhost:5432/testdb",
+            test_database_url=None,
+            auto_migrate=False,
+            migration_script_path="alembic",
+            alembic_ini_path="alembic.ini",
+            recreate_test_db=False,
+        ))
         starter = DatabaseStarter()
         assert starter._config.env == EnvironmentEnum.DEVELOPMENT
         assert starter._config.auto_migrate is True  # auto for dev
 
-    def test_load_from_env_production(self, monkeypatch):
-        """Тест загрузки окружения production."""
-        monkeypatch.setenv("ENV", "production")
-        monkeypatch.setenv("MAIN_DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/proddb")
+    def test_load_from_settings_production(self, monkeypatch):
+        """Тест загрузки окружения production из настроек."""
+        monkeypatch.setattr("mko_bi.db.starter.get_config", lambda: MagicMock(
+            env="production",
+            DATABASE_URL="postgresql+asyncpg://test:test@localhost:5432/proddb",
+            test_database_url=None,
+            auto_migrate=False,
+            migration_script_path="alembic",
+            alembic_ini_path="alembic.ini",
+            recreate_test_db=False,
+        ))
         starter = DatabaseStarter()
         assert starter._config.env == EnvironmentEnum.PRODUCTION
         assert starter._config.auto_migrate is False  # no auto for prod
 
-    def test_load_from_env_test(self, monkeypatch):
-        """Тест загрузки окружения test."""
-        monkeypatch.setenv("ENV", "test")
-        monkeypatch.setenv("MAIN_DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/testdb")
-        monkeypatch.setenv("TEST_DATABASE_URL", "postgresql+asyncpg://test:test@localhost:5432/testdb_test")
+    def test_load_from_settings_test(self, monkeypatch):
+        """Тест загрузки окружения test из настроек."""
+        monkeypatch.setattr("mko_bi.db.starter.get_config", lambda: MagicMock(
+            env="test",
+            DATABASE_URL="postgresql+asyncpg://test:test@localhost:5432/testdb",
+            test_database_url="postgresql+asyncpg://test:test@localhost:5432/testdb_test",
+            auto_migrate=False,
+            migration_script_path="alembic",
+            alembic_ini_path="alembic.ini",
+            recreate_test_db=False,
+        ))
         starter = DatabaseStarter()
         assert starter._config.env == EnvironmentEnum.TEST
         assert starter._config.auto_migrate is True  # auto for test
 
     def test_load_unknown_env(self, monkeypatch):
         """Тест загрузки неизвестного окружения."""
-        monkeypatch.setenv("ENV", "unknown")
+        monkeypatch.setattr("mko_bi.db.starter.get_config", lambda: MagicMock(
+            env="unknown",
+            DATABASE_URL="postgresql+asyncpg://test:test@localhost:5432/testdb",
+            test_database_url=None,
+            auto_migrate=False,
+            migration_script_path="alembic",
+            alembic_ini_path="alembic.ini",
+            recreate_test_db=False,
+        ))
         starter = DatabaseStarter()
         assert starter._config.env == EnvironmentEnum.DEVELOPMENT  # default
 

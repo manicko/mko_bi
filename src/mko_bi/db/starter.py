@@ -5,7 +5,6 @@
 """
 
 import logging
-import os
 from asyncio import to_thread
 
 from sqlalchemy import text
@@ -14,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from alembic import command
 from alembic.config import Config
 
+from mko_bi.config import get_config
 from mko_bi.models.user_roles import EnvironmentEnum
 
 logger = logging.getLogger(__name__)
@@ -57,31 +57,32 @@ class DatabaseStarter:
         self._engine: AsyncEngine | None = None
 
     def _load_config(self) -> DatabaseStarterConfig:
-        """Загрузка конфигурации из переменных окружения."""
-        env_str = os.environ.get("ENV", "development")
+        """Загрузка конфигурации из Settings (YAML)."""
+        settings = get_config()
+
+        # Определяем окружение из настроек
         try:
-            env = EnvironmentEnum(env_str)
+            env = EnvironmentEnum(settings.env)
         except ValueError:
-            logger.warning(f"Unknown ENV value: {env_str}, defaulting to development")
+            logger.warning(f"Unknown ENV value: {settings.env}, defaulting to development")
             env = EnvironmentEnum.DEVELOPMENT
 
-        main_db_url = os.environ.get("MAIN_DATABASE_URL")
-        test_db_url = os.environ.get("TEST_DATABASE_URL")
-        auto_migrate_str = os.environ.get("AUTO_MIGRATE", "").lower()
-        auto_migrate = auto_migrate_str in ("true", "1", "yes")
+        # Получаем URL из settings (yaml/config)
+        main_db_url = settings.DATABASE_URL
+        test_db_url = settings.test_database_url
 
-        # В development по умолчанию auto_migrate=true
-        if env == EnvironmentEnum.DEVELOPMENT and auto_migrate_str == "":
+        # Auto migrate: из настроек или по умолчанию для dev/test
+        auto_migrate = settings.auto_migrate
+
+        if env == EnvironmentEnum.DEVELOPMENT and not settings.auto_migrate:
             auto_migrate = True
 
-        # В test по умолчанию auto_migrate=true
-        if env == EnvironmentEnum.TEST and auto_migrate_str == "":
+        if env == EnvironmentEnum.TEST and not settings.auto_migrate:
             auto_migrate = True
 
-        migration_script_path = os.environ.get("MIGRATION_SCRIPT_PATH", "alembic")
-        alembic_ini_path = os.environ.get("ALEMBIC_INI_PATH", "alembic.ini")
-        recreate_test_db_str = os.environ.get("RECREATE_TEST_DB", "").lower()
-        recreate_test_db = recreate_test_db_str in ("true", "1", "yes")
+        migration_script_path = settings.migration_script_path
+        alembic_ini_path = settings.alembic_ini_path
+        recreate_test_db = settings.recreate_test_db
 
         return DatabaseStarterConfig(
             env=env,

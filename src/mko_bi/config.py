@@ -7,6 +7,7 @@ import redis
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
 from pydantic_settings.sources import PydanticBaseSettingsSource
 from pydantic import BaseModel, PostgresDsn
+from mko_bi.models.user_roles import EnvironmentEnum
 
 
 class DatabaseSettings(BaseModel):
@@ -96,7 +97,7 @@ class ChartsSettings(BaseModel):
 class Settings(BaseSettings):
     """Конфигурация приложения с использованием pydantic-settings.
 
-    Все секретные ключи являются обязательными переменными окружения.
+    Все настройки загружаются из YAML файла.
     """
 
     # --- Database ---
@@ -122,6 +123,16 @@ class Settings(BaseSettings):
     debug: bool = False
     api_base_url: str = "http://localhost:8000"
     cors_origins: list[str] = []
+
+    # --- Environment ---
+    env: str = "development"
+
+    # --- Database Migrations ---
+    auto_migrate: bool = False
+    migration_script_path: str = "alembic"
+    alembic_ini_path: str = "alembic.ini"
+    test_database_url: str | None = None
+    recreate_test_db: bool = False
 
     # Настройки для pydantic-settings
     model_config = {
