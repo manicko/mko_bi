@@ -97,6 +97,16 @@
 * Запрещено формирование SQL через string interpolation
 * Временные файлы должны удаляться после обработки
 ---
+## 6.1 Configuration & Secrets Management
+
+* Конфигурация загружается из нескольких источников (приоритет: env vars > Docker secrets > .env > YAML > defaults)
+* Секреты (DB password, JWT key) хранятся в переменных окружения: `DATABASE__PASSWORD`, `JWT__SECRET_KEY`
+* Поддержка Docker secrets через `_FILE` суффикс: `DATABASE__PASSWORD_FILE=/run/secrets/db_password`
+* Поддержка `.env` файла для разработки (pydantic-settings)
+* `app.yaml` содержит только нечувствительные настройки (хосты, порты, пути)
+* Формат вложенных переменных: `DATABASE__HOST`, `DATABASE__PORT` (double underscore)
+
+---
 ## 7. Data Flow
 
 1. Upload CSV / CSV.gz во временную папку пользователя platformdirs

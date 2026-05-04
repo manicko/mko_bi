@@ -7,7 +7,7 @@ migration_script_path: "alembic"
 alembic_ini_path: "alembic.ini"
 
 # Test database (optional)
-# test_database_url: "postgresql+asyncpg://postgres:1234@localhost:5432/bidb_test"
+# test_database_url: "postgresql+asyncpg://postgres:${DB_PASSWORD}@localhost:5432/bidb_test"
 recreate_test_db: false
 
 database:
@@ -15,11 +15,12 @@ database:
   port: 5432
   dbname: bidb
   user: postgres
-  # password: set via environment variable DB_PASSWORD or here
-  password: "1234"  # CHANGE THIS IN PRODUCTION!
+  # Password must be set via environment variable DB__PASSWORD
+  # Or use Docker secrets: set DB__PASSWORD_FILE=/run/secrets/db_password
 
 jwt:
-  secret_key: "your-secret-key-change-in-production-use-env-variable"
+  # Secret key must be set via environment variable JWT__SECRET_KEY
+  # Or use Docker secrets: set JWT__SECRET_KEY_FILE=/run/secrets/jwt_secret
   algorithm: HS256
   access_token_expire_minutes: 30
 
@@ -35,7 +36,8 @@ redis:
   host: localhost
   port: 6379
   db: 0
-  # password: "your-redis-password"  # Uncomment and set if Redis requires auth
+  # Password must be set via environment variable REDIS__PASSWORD
+  # Or use Docker secrets: set REDIS__PASSWORD_FILE=/run/secrets/redis_password
 
 logging:
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"

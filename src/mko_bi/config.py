@@ -3,12 +3,70 @@ from typing import Any
 
 # mypy: ignore-errors
 
+import logging
 import redis
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
 from pydantic_settings.sources import PydanticBaseSettingsSource
 from pydantic import BaseModel, PostgresDsn
 
 from mko_bi.models.user_roles import FileExtensionEnum
+
+logger = logging.getLogger(__name__)
+
+
+class SecretsFileSource(PydanticBaseSettingsSource):
+    """Custom settings source for reading Docker secrets from files.
+    
+    Supports environment variables like DATABASE__PASSWORD_FILE that point to
+    files containing the actual secret values (Docker secrets pattern).
+    """
+    
+    def get_field_value(self, field_name: str, field_info: Any) -> Any:
+        """Read secret from file for a specific field."""
+        return None  # Not used - we override __call__ instead
+    
+    def __call__(self) -> dict[str, Any]:
+        """Read secrets from file-based environment variables."""
+        import os
+        
+        result: dict[str, Any] = {}
+        
+        # Look for environment variables ending with _FILE
+        for env_var_name in list(os.environ.keys()):
+            if env_var_name.endswith("_FILE"):
+                # Get the base env var name (without _FILE suffix)
+                base_env_var = env_var_name[:-5]  # Remove "_FILE"
+                file_path_str = os.environ[env_var_name]
+                file_path = Path(file_path_str)
+                
+                if file_path.exists():
+                    try:
+                        secret_value = file_path.read_text().strip()
+                        # Convert DATABASE__PASSWORD to nested dict structure
+                        _set_nested_value(result, base_env_var, secret_value)
+                        logger.debug(f"Loaded secret for {base_env_var} from {file_path}")
+                    except OSError as e:
+                        logger.warning(f"Failed to read secret file {file_path}: {e}")
+        
+        return result
+
+
+def _set_nested_value(data: dict[str, Any], key: str, value: Any) -> None:
+    """Set a nested value in a dict using __ as separator.
+    
+    Example: _set_nested_value({}, "DATABASE__PASSWORD", "secret") 
+             -> {"database": {"password": "secret"}}
+    """
+    parts = key.lower().split("__")
+    current = data
+    for part in parts[:-1]:
+        if part not in current:
+            current[part] = {}
+        current = current[part]
+    current[parts[-1]] = value
+    
+    def __repr__(self) -> str:
+        return "SecretsFileSource()"
 
 
 class DatabaseSettings(BaseModel):
@@ -139,6 +197,7 @@ class Settings(BaseSettings):
     model_config = {
         "case_sensitive": False,
         "env_prefix": "",
+        "env_nested_delimiter": "__",
         "extra": "ignore",
     }
 
@@ -151,13 +210,25 @@ class Settings(BaseSettings):
         dotenv_settings: PydanticBaseSettingsSource,
         file_secret_settings: PydanticBaseSettingsSource,
     ) -> tuple[PydanticBaseSettingsSource, ...]:
-        """Customize settings sources to include YAML config file."""
+        """Customize settings sources with correct priority order.
+        
+        Priority (highest to lowest):
+        1. Environment variables (DB__PASSWORD, JWT__SECRET_KEY, etc.)
+        2. Docker secrets files (DB__PASSWORD_FILE -> /run/secrets/db_password)
+        3. .env file (for development convenience)
+        4. YAML config file (app.yaml)
+        5. Default values from code
+        
+        Note: Last source in tuple has HIGHEST priority in pydantic-settings.
+        """
         yaml_file_path = Path(__file__).parent / "settings" / "app.yaml"
         yaml_source = YamlConfigSettingsSource(
             settings_cls,
             yaml_file=yaml_file_path,
         )
-        return (yaml_source, env_settings, init_settings)
+        secrets_source = SecretsFileSource(settings_cls)
+        # Last source has highest priority
+        return (init_settings, yaml_source, dotenv_settings, secrets_source, env_settings)
 
     @property
     def DATABASE_URL(self) -> str:
@@ -212,9 +283,21 @@ class Settings(BaseSettings):
         return getattr(self, key, default)
 
     def __init__(self, **data: Any) -> None:
-        """Инициализация конфигурации. Создаёт временную директорию для загрузок."""
+        """Initialize configuration and log settings (without secrets)."""
         super().__init__(**data)
+        self._log_initialization()
         self._ensure_upload_dir()
+    
+    def _log_initialization(self) -> None:
+        """Log configuration initialization without exposing secrets."""
+        logger.info(
+            "Configuration loaded: env=%s, database_host=%s, redis_host=%s",
+            self.env,
+            self.database.host,
+            self.redis.host,
+        )
+        if self.debug:
+            logger.debug("Debug mode is enabled")
 
     def _ensure_upload_dir(self) -> None:
         """Создаёт директорию для временных файлов загрузок, если её нет."""

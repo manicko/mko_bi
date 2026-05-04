@@ -58,6 +58,7 @@ C:\py_exp\mko_bi
 │       ├── dashboards
 │       │   ├── base.py
 │       │   ├── components
+│       │   │   ├── buttons.py
 │       │   │   ├── charts
 │       │   │   │   ├── bar.py
 │       │   │   │   ├── base.py
@@ -112,11 +113,13 @@ C:\py_exp\mko_bi
 │       │   ├── auth.py
 │       │   ├── dashboard.py
 │       │   ├── data.py
+│       │   ├── enums.py
 │       │   ├── filters.py
 │       │   ├── graph.py
 │       │   ├── layout.py
 │       │   ├── processing_configs.py
 │       │   ├── processing_logs.py
+│       │   ├── style.py
 │       │   ├── transformation_configs.py
 │       │   ├── types.py
 │       │   ├── user.py
@@ -132,7 +135,8 @@ C:\py_exp\mko_bi
 │       │   ├── processing_log_service.py
 │       │   └── user_service.py
 │       ├── settings
-│       │   └── app.yaml
+│       │   ├── app.yaml
+│       │   └── README.md
 │       └── utils
 │           ├── decorators.py
 │           ├── exceptions.py
@@ -184,11 +188,11 @@ C:\py_exp\mko_bi
 │   │   └── TEST_036_test_audit_arch.md
 │   ├── DB
 │   ├── DEV
-│   │   ├── TASK_001_sync_async_unification.md
-│   │   ├── TASK_014_dash_modern_component_architecture.md
-│   │   └── TASK_052_secrets_management.md
+│   │   └── TASK_001_sync_async_unification.md
 │   ├── DONE
+│   │   ├── TASK_014_dash_modern_component_architecture_DONE.md
 │   │   ├── TASK_051_di_and_interfaces.md
+│   │   ├── TASK_052_secrets_management_DONE.md
 │   │   └── TASK_DB_REPRODUCER_MAIN.md
 │   └── TEST
 └── uv.lock
