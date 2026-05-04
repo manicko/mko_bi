@@ -81,3 +81,26 @@ class EnvironmentEnum(StrEnum):
     STAGING = "staging"
     DEVELOPMENT = "development"
     TEST = "test"
+
+
+class MimeTypeEnum(StrEnum):
+    """Разрешенные MIME-типы для загружаемых файлов."""
+    TEXT_CSV = "text/csv"
+    APPLICATION_GZIP = "application/gzip"
+    APPLICATION_X_GZIP = "application/x-gzip"
+
+    @classmethod
+    def allowed_values(cls) -> list[str]:
+        """Возвращает список разрешенных MIME-типов."""
+        return [member.value for member in cls]
+
+
+class FileExtensionEnum(StrEnum):
+    """Разрешенные расширения файлов."""
+    CSV_GZ = ".csv.gz"
+    CSV = ".csv"
+
+    @classmethod
+    def allowed_values(cls) -> list[str]:
+        """Возвращает список разрешенных расширений."""
+        return [member.value for member in cls]

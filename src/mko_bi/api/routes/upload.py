@@ -93,6 +93,7 @@ async def upload_file_endpoint(
         result = await upload_file(
             filename=file.filename,
             file_content=file_content,
+            content_type=file.content_type,
             dashboard_id=dashboard_id,
             user_id=current_user.id,
             db=db,

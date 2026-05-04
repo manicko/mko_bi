@@ -30,7 +30,10 @@ from mko_bi.models.data import (
     UploadResponse,
 )
 from mko_bi.models.processing_logs import ProcessingLogCreate, ProcessingLogUpdate
-from mko_bi.models.user_roles import ProcessingStatusEnum
+from mko_bi.models.user_roles import (
+    MimeTypeEnum,
+    ProcessingStatusEnum,
+)
 from mko_bi.models.types import (
     FilterCondition,
     ProcessingResultData,
@@ -41,31 +44,64 @@ from mko_bi.models.types import (
 logger = logging.getLogger(__name__)
 
 
-def _validate_file(filename: str, file_content: bytes) -> None:
+def _validate_mime_type(content_type: str | None) -> None:
+    """Валидирует MIME-type загружаемого файла.
+
+    Проверяет, что MIME-type файла входит в список разрешенных
+    (text/csv, application/gzip, application/x-gzip).
+
+    Args:
+        content_type: MIME-type файла из заголовков запроса.
+
+    Raises:
+        ValueError: Если MIME-type не разрешен.
+    """
+    if content_type is None:
+        logger.warning("MIME-type не указан, пропускаем проверку")
+        return
+
+    allowed_mime_types = MimeTypeEnum.allowed_values()
+
+    if content_type not in allowed_mime_types:
+        logger.error(
+            "Недопустимый MIME-type: %s. Допустимые: %s",
+            content_type,
+            allowed_mime_types,
+        )
+        raise ValueError(f"Недопустимый MIME-type: {content_type}")
+
+    logger.info("MIME-type успешно проверен: %s", content_type)
+
+
+def _validate_file(filename: str, file_content: bytes, content_type: str | None = None) -> None:
     """Валидирует загружаемый файл.
 
-    Проверяет формат файла (.csv.gz) и размер (не более 100MB).
+    Проверяет MIME-type и формат файла (.csv.gz) и размер (не более 100MB).
 
     Args:
         filename: Имя загружаемого файла.
         file_content: Содержимое файла в байтах.
+        content_type: MIME-type файла из заголовков.
 
     Raises:
         ValueError: Если файл не соответствует требованиям.
     """
+    # 1. Проверка MIME-type (ДОЛЖНО быть первым согласно SPEC.md п.6)
+    _validate_mime_type(content_type)
+
     config = get_config()
-    
-    # Проверка формата файла
-    allowed_types = config.allowed_file_types
-    if not any(filename.lower().endswith(ext.lower()) for ext in allowed_types):
+
+    # 2. Проверка формата файла
+    allowed_extensions = config.allowed_file_types
+    if not any(filename.lower().endswith(ext.lower()) for ext in allowed_extensions):
         logger.error(
             "Недопустимый формат файла: %s. Допустимые: %s",
             filename,
-            allowed_types,
+            allowed_extensions,
         )
         raise ValueError(
             f"Недопустимый формат файла: '{filename}'. "
-            f"Допустимые форматы: {', '.join(allowed_types)}"
+            f"Допустимые форматы: {', '.join(allowed_extensions)}"
         )
 
     # Проверка размера файла
@@ -374,6 +410,7 @@ async def _process_csv_file(
 async def _upload_file_logic(
     filename: str,
     file_content: bytes,
+    content_type: str | None,
     dashboard_id: UUID,
     user_id: int,
     db: AsyncSession,
@@ -383,6 +420,7 @@ async def _upload_file_logic(
     Args:
         filename: Имя загружаемого файла.
         file_content: Содержимое файла в байтах.
+        content_type: MIME-type файла из заголовков запроса.
         dashboard_id: ID дашборда.
         user_id: ID пользователя, загружающего файл.
         db: Асинхронная сессия базы данных.
@@ -411,8 +449,8 @@ async def _upload_file_logic(
         )
         raise PermissionError("Недостаточно прав для загрузки файла")
 
-    # Валидация файла
-    _validate_file(filename, file_content)
+    # Валидация файла (включая MIME-type)
+    _validate_file(filename, file_content, content_type)
 
     # Сохранение файла
     _save_uploaded_file(filename, file_content, dashboard_id)
@@ -447,18 +485,20 @@ async def _upload_file_logic(
 async def upload_file(
     filename: str,
     file_content: bytes,
+    content_type: str | None,
     dashboard_id: UUID,
     user_id: int,
     db: AsyncSession | None = None,
 ) -> UploadResponse:
     """Загружает файл для дашборда.
 
-    Валидирует файл, сохраняет его во временную директорию и создает
-    запись о задаче обработки.
+    Валидирует файл (включая MIME-type), сохраняет его во временную директорию
+    и создает запись о задаче обработки.
 
     Args:
         filename: Имя загружаемого файла.
         file_content: Содержимое файла в байтах.
+        content_type: MIME-type файла из заголовков запроса.
         dashboard_id: ID дашборда.
         user_id: ID пользователя, загружающего файл.
         db: Асинхронная сессия базы данных.
@@ -471,18 +511,19 @@ async def upload_file(
         PermissionError: Если у пользователя нет прав на загрузку.
     """
     logger.info(
-        "Начало загрузки файла: filename=%s, dashboard_id=%d, user_id=%d",
+        "Начало загрузки файла: filename=%s, content_type=%s, dashboard_id=%d, user_id=%d",
         filename,
+        content_type,
         dashboard_id,
         user_id,
     )
 
     if db is not None:
-        return await _upload_file_logic(filename, file_content, dashboard_id, user_id, db)
+        return await _upload_file_logic(filename, file_content, content_type, dashboard_id, user_id, db)
 
     async with get_session() as db_session:
         async with db_session.begin():
-            return await _upload_file_logic(filename, file_content, dashboard_id, user_id, db_session)
+            return await _upload_file_logic(filename, file_content, content_type, dashboard_id, user_id, db_session)
 
 
 async def _trigger_processing_logic(

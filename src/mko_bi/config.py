@@ -52,7 +52,7 @@ class UploadSettings(BaseModel):
     """Настройки загрузки файлов."""
     
     temp_dir: str = "data/tmp_uploads"
-    allowed_file_types: list[str] = [".csv.gz"]
+    allowed_file_types: list[str] = [".csv.gz", ".csv"]
     max_file_size: int = 100 * 1024 * 1024  # 100MB
     lazy_threshold_mb: float = 10.0
 
