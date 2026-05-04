@@ -69,7 +69,7 @@ class TestFilterModel:
         with pytest.raises(IntegrityError):
             await async_db_session.commit()
 
-        async_db_session.rollback()
+        await async_db_session.rollback()
 
     async def test_filter_type_values(self, async_db_session):
         """Проверка допустимых значений типа фильтра."""
@@ -224,7 +224,7 @@ class TestProcessingConfigModel:
         with pytest.raises(IntegrityError):
             await async_db_session.commit()
 
-        async_db_session.rollback()
+        await async_db_session.rollback()
 
     async def test_processing_config_dashboard_relationship(self, async_db_session):
         """Проверка связи настроек обработки с дашбордом."""

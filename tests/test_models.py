@@ -289,7 +289,7 @@ class TestAccessModel:
         with pytest.raises(IntegrityError):
             await async_db_session.commit()
 
-        async_db_session.rollback()
+        await async_db_session.rollback()
 
     async def test_permission_enum_values(self, async_db_session):
         """Проверка допустимых значений уровня доступа."""
@@ -704,7 +704,7 @@ class TestGraphModel:
         with pytest.raises(IntegrityError):
             await async_db_session.commit()
 
-        async_db_session.rollback()
+        await async_db_session.rollback()
 
     async def test_graph_foreign_key_constraint(self, async_db_session):
         """Проверка ограничения внешнего ключа для графика."""
@@ -726,7 +726,7 @@ class TestGraphModel:
         try:
             await async_db_session.commit()
         except IntegrityError:
-            async_db_session.rollback()
+            await async_db_session.rollback()
 
     async def test_graph_repr(self, async_db_session):
         """Проверка строкового представления графика."""

@@ -459,4 +459,69 @@ FastAPI
 
 ---
 
+## 22. Component Architecture (Dash)
+
+### Styling Framework
+* **dash-bootstrap-components** (Bootstrap 5) для всех UI компонентов
+* Использовать `dbc.Container`, `dbc.Row`, `dbc.Col`, `dbc.Card` для layout
+* Темизация через Bootstrap темы (DARKLY, FLATLY и др.)
+
+### Component Types (StrEnum)
+Все типы компонентов определяются через `StrEnum` в `src/mko_bi/models/enums.py`:
+
+```python
+class ButtonVariant(StrEnum):
+    PRIMARY = "primary"
+    SECONDARY = "secondary"
+    SUCCESS = "success"
+    DANGER = "danger"
+
+class FilterType(StrEnum):
+    SELECT = "select"
+    MULTISELECT = "multiselect"
+    RANGE = "range"
+    DATE = "date"
+
+class GraphType(StrEnum):
+    BAR = "bar"
+    LINE = "line"
+    PIE = "pie"
+    TABLE = "table"
+```
+
+### Pydantic Models for Styling
+Конфигурация компонентов через Pydantic модели в `src/mko_bi/models/style.py`:
+
+```python
+class ComponentStyle(BaseModel):
+    """Базовая модель стилей компонента."""
+    width: int = 12
+    height: int | None = None
+    className: str = ""
+    shadow: bool = True
+```
+
+### Архитектурные требования
+* Маленькие функции (< 20 строк)
+* Декомпозиция: каждый компонент = отдельный модуль
+* Логирование всех операций рендеринга
+* Использование `StrEnum` вместо констант-строк
+* Pydantic модели для валидации конфигов
+
+### Структура компонентов
+```
+src/mko_bi/dashboards/components/
+├── charts/
+│   ├── base.py          # абстрактный базовый класс
+│   ├── bar.py           # график bar (маленький модуль)
+│   ├── line.py          # график line
+│   ├── pie.py           # график pie
+│   └── table.py         # таблица
+├── filters.py           # FilterPanel (декомпозированный)
+├── layout.py            # DashboardLayout
+└── buttons.py           # кнопки (новый модуль)
+```
+
+---
+
 

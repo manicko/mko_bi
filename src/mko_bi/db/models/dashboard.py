@@ -86,6 +86,7 @@ class Dashboard(Base):
         back_populates="dashboard",
         cascade="all, delete-orphan",
         lazy="selectin",
+        overlaps="dashboards",
     )
     
     # Связь с пользователями через таблицу доступа
@@ -94,6 +95,7 @@ class Dashboard(Base):
         secondary="dashboard_access",
         back_populates="dashboards",
         lazy="selectin",
+        overlaps="accesses,user",
     )
     
     # Связь с layout

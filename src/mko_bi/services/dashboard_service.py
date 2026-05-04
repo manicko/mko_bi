@@ -349,7 +349,10 @@ async def _get_user_dashboards_with_session(user_id: int, db: AsyncSession) -> l
 
 
 async def update_dashboard(
-    dashboard_id: int, update_data: DashboardUpdate, db: AsyncSession | None = None
+    dashboard_id: int,
+    update_data: dict | DashboardUpdate | None = None,
+    config: dict | None = None,
+    db: AsyncSession | None = None
 ) -> DashboardRead | None:
     """Обновляет конфигурацию дашборда.
 
@@ -370,9 +373,31 @@ async def update_dashboard(
     """
     logger.info("Обновление дашборда: dashboard_id=%s", dashboard_id)
 
+    # Handle config parameter if provided
+    if config is not None:
+        if update_data is None:
+            update_data = {'config': config}
+        elif isinstance(update_data, dict):
+            update_data['config'] = config
+        else:
+            update_data = update_data.model_dump(exclude_unset=True)
+            update_data['config'] = config
+
+    if not update_data:
+        logger.warning("Нет данных для обновления дашборда: dashboard_id=%s", dashboard_id)
+        return None
+
     # Валидация конфигурации если она предоставлена
-    if update_data.config:
-        _validate_config(update_data.config)
+    config_to_validate = None
+    if update_data:
+        if isinstance(update_data, dict):
+            config_to_validate = update_data.get('config')
+        else:
+            config_to_validate = update_data.config
+    if config_to_validate:
+        if isinstance(config_to_validate, dict):
+            config_to_validate = DashboardConfig(**config_to_validate)
+        _validate_config(config_to_validate)
 
     # Если сессия не передана, создаем новую
     if db is None:
@@ -383,7 +408,7 @@ async def update_dashboard(
 
 
 async def _update_dashboard_with_session(
-    dashboard_id: int, update_data: DashboardUpdate, db: AsyncSession
+    dashboard_id: int, update_data: dict | DashboardUpdate, db: AsyncSession
 ) -> DashboardRead | None:
     """Внутренняя функция для обновления дашборда с использованием сессии."""
     # Проверка существования дашборда
@@ -393,19 +418,33 @@ async def _update_dashboard_with_session(
 
     # Подготовка данных для обновления
     update_kwargs = {}
-    if update_data.config is not None:
-        update_kwargs["config"] = json.dumps(update_data.config.model_dump())
-    if update_data.name is not None:
-        update_kwargs["name"] = update_data.name
-    if update_data.description is not None:
-        update_kwargs["description"] = update_data.description
-    if update_data.layout_id is not None:
+    # Extract fields from update_data (dict or DashboardUpdate)
+    if isinstance(update_data, dict):
+        config = update_data.get('config')
+        name = update_data.get('name')
+        description = update_data.get('description')
+        layout_id = update_data.get('layout_id')
+    else:
+        config = update_data.config
+        name = update_data.name
+        description = update_data.description
+        layout_id = update_data.layout_id
+
+    if config is not None:
+        if isinstance(config, dict):
+            config = DashboardConfig(**config)
+        update_kwargs["config"] = json.dumps(config.model_dump())
+    if name is not None:
+        update_kwargs["name"] = name
+    if description is not None:
+        update_kwargs["description"] = description
+    if layout_id is not None:
         # Проверка существования layout если указан
-        layout = await LayoutRepository.get(update_data.layout_id, db)
+        layout = await LayoutRepository.get(layout_id, db)
         if not layout:
-            logger.error("Layout не найден: id=%s", update_data.layout_id)
-            raise ValueError(f"Layout с id={update_data.layout_id} не найден")
-        update_kwargs["layout_id"] = update_data.layout_id
+            logger.error("Layout не найден: id=%s", layout_id)
+            raise ValueError(f"Layout с id={layout_id} не найден")
+        update_kwargs["layout_id"] = layout_id
 
     # Обновление через репозиторий
     updated = await DashboardRepository.update(

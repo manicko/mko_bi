@@ -1,7 +1,5 @@
 """Модуль безопасности для хеширования паролей и работы с JWT токенами."""
 
-# mypy: ignore-errors
-
 import logging
 from datetime import datetime, timedelta, UTC
 from typing import Any
@@ -25,8 +23,8 @@ class RateLimiter:
         self._redis = redis_client
 
     def check_rate_limit(self, key: str, max_attempts: int, ttl: int) -> bool:
-        attempts: str | None = self._redis.get(key)
-        if attempts is not None and int(attempts) >= max_attempts:
+        attempts = self._redis.get(key)
+        if attempts is not None and int(str(attempts)) >= max_attempts:
             logger.warning("Rate limit exceeded for key: %s", key)
             return False
 
@@ -157,7 +155,7 @@ def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = 
             minutes=config.jwt.access_token_expire_minutes
         )
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(
+    encoded_jwt: str = jwt.encode(
         to_encode,
         get_config().jwt.secret_key,
         algorithm=get_config().jwt.algorithm,
@@ -188,7 +186,7 @@ def decode_token(token: str) -> dict[str, Any] | None:
         True
     """
     try:
-        payload = jwt.decode(
+        payload: dict[str, Any] = jwt.decode(
             token,
             get_config().jwt.secret_key,
             algorithms=[get_config().jwt.algorithm],

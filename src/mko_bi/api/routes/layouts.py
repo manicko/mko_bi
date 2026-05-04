@@ -4,21 +4,20 @@
 Доступ к операциям ограничен и требует аутентификации.
 """
 
-# mypy: ignore-errors
-
 import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from mko_bi.api.deps import (
-    get_db,
+from mko_b_i.api.deps import (
+    get_db_dependency,
     CurrentUser,
 )
 from mko_b_i.models.layout import (
     LayoutRead,
     LayoutUpdate,
+    LayoutCreate,
 )
 from mko_b_i.services.layout_service import (
     create_layout,
@@ -43,18 +42,18 @@ router = APIRouter(prefix="/layouts", tags=["layouts"])
 async def create_layout_endpoint(
     layout: LayoutCreate,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> LayoutRead:
     """Создает новый layout.
-
+    
     Args:
         layout: Модель с данными для создания layout-а.
         current_user: Текущий аутентифицированный пользователь.
         db: Сессия базы данных.
-
+    
     Returns:
         LayoutRead: Модель созданного layout-а.
-
+    
     Raises:
         HTTPException 403: Если у пользователя нет прав администратора.
         HTTPException 422: Если данные не прошли валидацию.
@@ -112,17 +111,17 @@ async def create_layout_endpoint(
 )
 async def get_layouts_endpoint(
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> list[LayoutRead]:
     """Получает список всех layout-ов.
-
+    
     Args:
         current_user: Текущий аутентифицированный пользователь.
         db: Сессия базы данных.
-
+    
     Returns:
         list[LayoutRead]: Список моделей layout-ов.
-
+    
     Raises:
         HTTPException 500: При ошибке базы данных.
     """
@@ -150,18 +149,18 @@ async def get_layouts_endpoint(
 async def get_layout_endpoint(
     layout_id: UUID,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> LayoutRead:
     """Получает layout по ID.
-
+    
     Args:
         layout_id: ID layout-а.
         current_user: Текущий аутентифицированный пользователь.
         db: Сессия базы данных.
-
+    
     Returns:
         LayoutRead: Модель layout-а.
-
+    
     Raises:
         HTTPException 404: Если layout не найден.
         HTTPException 500: При ошибке базы данных.
@@ -198,21 +197,21 @@ async def update_layout_endpoint(
     layout_id: UUID,
     layout_update: LayoutUpdate,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> LayoutRead:
     """Обновляет layout.
-
+    
     Доступно только администраторам.
-
+    
     Args:
         layout_id: ID layout-а для обновления.
         layout_update: Модель с новыми данными.
         current_user: Текущий аутентифицированный пользователь.
         db: Сессия базы данных.
-
+    
     Returns:
         LayoutRead: Модель обновленного layout-а.
-
+    
     Raises:
         HTTPException 403: Если у пользователя нет прав администратора.
         HTTPException 404: Если layout не найден.
@@ -275,17 +274,17 @@ async def update_layout_endpoint(
 async def delete_layout_endpoint(
     layout_id: UUID,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> None:
     """Удаляет layout.
-
+    
     Доступно только администраторам.
-
+    
     Args:
         layout_id: ID layout-а для удаления.
         current_user: Текущий аутентифицированный пользователь.
         db: Сессия базы данных.
-
+    
     Raises:
         HTTPException 403: Если у пользователя нет прав администратора.
         HTTPException 404: Если layout не найден.

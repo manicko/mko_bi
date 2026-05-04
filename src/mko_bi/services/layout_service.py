@@ -9,17 +9,18 @@
 
 import logging
 from uuid import UUID
+from typing import Any
 
 from mko_bi.db.repositories.layout_repo import LayoutRepository
 from mko_bi.db.session import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
-from mko_b_i.models.layout import LayoutRead, LayoutUpdate
+from mko_bi.models.layout import LayoutRead, LayoutUpdate
 
 logger = logging.getLogger(__name__)
 
 
 async def create_layout(
-    name: str, definition: dict, db: AsyncSession | None = None
+    name: str, definition: dict[str, Any], db: AsyncSession | None = None
 ) -> LayoutRead:
     """Создает новый layout.
 
@@ -46,7 +47,7 @@ async def create_layout(
 
 
 async def _create_layout_with_session(
-    name: str, definition: dict, db: AsyncSession
+    name: str, definition: dict[str, Any], db: AsyncSession
 ) -> LayoutRead:
     """Внутренняя функция для создания layout с использованием сессии."""
     existing = await LayoutRepository.get_by_name(name, db)
@@ -202,7 +203,7 @@ async def delete_layout(layout_id: UUID, db: AsyncSession | None = None) -> bool
 async def _delete_layout_with_session(layout_id: UUID, db: AsyncSession) -> bool:
     """Внутренняя функция для удаления layout с использованием сессии."""
     try:
-        result = await LayoutRepository.delete(layout_id, db)
+        result: bool = await LayoutRepository.delete(layout_id, db)
         if result:
             await db.commit()
             logger.info("Layout успешно удален: id=%s", layout_id)

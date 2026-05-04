@@ -73,6 +73,7 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
         lazy="selectin",
+        overlaps="users",
     )
 
     # Связь с дашбордами через таблицу доступа
@@ -81,6 +82,7 @@ class User(Base):
         secondary="dashboard_access",
         back_populates="users",
         lazy="selectin",
+        overlaps="accesses,dashboard",
     )
 
     def __repr__(self) -> str:

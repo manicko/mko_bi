@@ -1,6 +1,4 @@
-from enum import StrEnum
-
-# mypy: ignore-errors
+from enum import Enum, StrEnum
 
 
 class UserRoleEnum(StrEnum):
@@ -43,7 +41,7 @@ class YoyModeEnum(StrEnum):
     percent = "percent"
 
 
-class AggregationFunctionEnum(StrEnum):
+class AggregationFunctionEnum(Enum):
     """Функции агрегации данных."""
     sum_val = "sum"
     mean = "mean"
@@ -55,6 +53,9 @@ class AggregationFunctionEnum(StrEnum):
     var = "var"
     first = "first"
     last = "last"
+
+    def __str__(self) -> str:
+        return str(self.value)
 
 
 class FilterOperatorEnum(StrEnum):
