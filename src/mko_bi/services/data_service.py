@@ -419,7 +419,7 @@ async def _upload_file_logic(
 
     # Создание задачи
     uploaded_at = datetime.now()
-    
+
     # Создаем запись лога обработки в БД
     log_create = ProcessingLogCreate(
         dashboard_id=dashboard_id,
@@ -429,7 +429,7 @@ async def _upload_file_logic(
     )
     processing_log = await ProcessingLogRepository.create(db, **log_create.model_dump())
     logger.info("Лог обработки создан в БД: id=%s", processing_log.id)
-    
+
     task_id = processing_log.id  # Используем ID лога как task_id
 
     logger.info("Файл успешно загружен: task_id=%s, filename=%s", task_id, filename)
@@ -481,7 +481,8 @@ async def upload_file(
         return await _upload_file_logic(filename, file_content, dashboard_id, user_id, db)
 
     async with get_session() as db_session:
-        return await _upload_file_logic(filename, file_content, dashboard_id, user_id, db_session)
+        async with db_session.begin():
+            return await _upload_file_logic(filename, file_content, dashboard_id, user_id, db_session)
 
 
 async def _trigger_processing_logic(
@@ -544,7 +545,7 @@ async def _trigger_processing_logic(
         )
         raise ValueError(f"Задача уже находится в статусе '{processing_log.status}'")
 
-    # Обновление статуса в логе
+    # Обновление статуса в логе (до начала обработки)
     started_at = datetime.now()
     log_update = ProcessingLogUpdate(
         status=ProcessingStatusEnum.processing,
@@ -556,8 +557,9 @@ async def _trigger_processing_logic(
     )
     logger.info("Обработка запущена: log_id=%s", processing_log.id)
 
-    # Выполнение обработки
+    # Выполнение обработки файла (ВНЕ транзакции - это долгая операция)
     file_path = None
+    result_data = None
     try:
         # Получаем информацию о загруженном файле из лога
         # Ищем файл во временной директории
@@ -590,80 +592,77 @@ async def _trigger_processing_logic(
         )
 
         # Сохранение агрегированных данных в БД
+        # Транзакция должна быть максимально короткой
+        # Если сессия передана из API, транзакция уже начата
+        # Если сервис создал новую сессию, транзакция начата в вызывающем коде
         if processing_config and result_data.get("processed_rows", 0) > 0:
-            try:
-                # Получаем графики дашборда
-                from sqlalchemy import select
-                from mko_bi.db.models import graphs as graphs_model
+            # Получаем графики дашборда
+            from sqlalchemy import select
+            from mko_bi.db.models import graphs as graphs_model
 
-                graphs = (
-                    await db.execute(
-                        select(graphs_model.Graph).where(
-                            graphs_model.Graph.dashboard_id == dashboard_id
-                        )
+            graphs = (
+                await db.execute(
+                    select(graphs_model.Graph).where(
+                        graphs_model.Graph.dashboard_id == dashboard_id
                     )
-                ).scalars().all()
+                )
+            ).scalars().all()
 
-                if graphs and processing_config.groupby and processing_config.aggregations:
-                    # Подготавливаем данные для каждого графика
-                    aggregates: list[dict[str, Any]] = []
+            if graphs and processing_config.groupby and processing_config.aggregations:
+                # Подготавливаем данные для каждого графика
+                aggregates: list[dict[str, Any]] = []
 
-                    # Получаем данные из обработанного файла
-                    df = pl.DataFrame(result_data.get("preview", []))
+                # Получаем данные из обработанного файла
+                df = pl.DataFrame(result_data.get("preview", []))
 
-                    if not df.is_empty():
-                        # Для каждого графика создаем агрегаты
-                        for graph in graphs:
-                            # Используем результаты обработки
-                            # Преобразуем данные в соответствии с настройками графика
-                            for row in df.to_dicts():
-                                dims = {}
-                                metrics = {}
+                if not df.is_empty():
+                    # Для каждого графика создаем агрегаты
+                    for graph in graphs:
+                        # Используем результаты обработки
+                        # Преобразуем данные в соответствии с настройками графика
+                        for row in df.to_dicts():
+                            dims = {}
+                            metrics = {}
 
-                                # Заполняем измерения
-                                for col in processing_config.groupby or []:
-                                    if col in row:
-                                        dims[col] = row[col]
+                            # Заполняем измерения
+                            for col in processing_config.groupby or []:
+                                if col in row:
+                                    dims[col] = row[col]
 
-                                # Заполняем метрики
-                                for agg in processing_config.aggregations:
-                                    field = agg.get("field")
-                                    agg_type = agg.get("type")
-                                    if field and field in row:
-                                        metric_name = f"{field}_{agg_type}"
-                                        metrics[metric_name] = row.get(metric_name, row[field])
+                            # Заполняем метрики
+                            for agg in processing_config.aggregations:
+                                field = agg.get("field")
+                                agg_type = agg.get("type")
+                                if field and field in row:
+                                    metric_name = f"{field}_{agg_type}"
+                                    metrics[metric_name] = row.get(metric_name, row[field])
 
-                                if dims and metrics:
-                                    aggregates.append({
-                                        "graph_id": str(graph.id),
-                                        "dashboard_id": dashboard_id,
-                                        "dims": dims,
-                                        "metrics": metrics,
-                                    })
+                            if dims and metrics:
+                                aggregates.append({
+                                    "graph_id": str(graph.id),
+                                    "dashboard_id": dashboard_id,
+                                    "dims": dims,
+                                    "metrics": metrics,
+                                })
 
-                    # Сохраняем агрегаты через репозиторий
-                    if aggregates:
-                        saved_count = await AggregatedDataRepository.bulk_insert(
-                            db=db,
-                            dashboard_id=dashboard_id,
-                            aggregates=aggregates,
-                            clear_old=True,
-                        )
-                        logger.info(
-                            "Сохранено %d агрегированных записей для дашборда %s",
-                            saved_count,
-                            dashboard_id,
-                        )
-                else:
-                    logger.warning(
-                        "Для дашборда %s не найдено графиков или не заданы группировки",
+                # Сохраняем агрегаты через репозиторий
+                if aggregates:
+                    saved_count = await AggregatedDataRepository.bulk_insert(
+                        db=db,
+                        dashboard_id=dashboard_id,
+                        aggregates=aggregates,
+                        clear_old=True,
+                    )
+                    logger.info(
+                        "Сохранено %d агрегированных записей для дашборда %s",
+                        saved_count,
                         dashboard_id,
                     )
-            except Exception as save_error:
-                logger.error(
-                    "Ошибка при сохранении агрегированных данных: %s", save_error
+            else:
+                logger.warning(
+                    "Для дашборда %s не найдено графиков или не заданы группировки",
+                    dashboard_id,
                 )
-                # Не прерываем обработку из-за ошибки сохранения
 
         # Обновление статуса - успех
         completed_at = datetime.now()
@@ -714,10 +713,9 @@ async def _trigger_processing_logic(
             db, processing_log.id, **log_update.model_dump(exclude_unset=True)
         )
         logger.info("Лог обработки обновлен в БД (ошибка): id=%s", processing_log.id)
-
         logger.error("Ошибка при обработке файла: task_id=%s, error=%s", task_id, e)
-
         raise
+
     finally:
         # Очистка временного файла
         if file_path and file_path.exists():
@@ -728,7 +726,7 @@ async def _trigger_processing_logic(
                 logger.error("Ошибка при удалении файла %s: %s", file_path, cleanup_error)
 
 
-def trigger_processing(
+async def trigger_processing(
     task_id: uuid.UUID,
     dashboard_id: UUID,
     user_id: int,
@@ -759,10 +757,11 @@ def trigger_processing(
     )
 
     if db is not None:
-        return _trigger_processing_logic(task_id, dashboard_id, user_id, processing_config, db)
+        return await _trigger_processing_logic(task_id, dashboard_id, user_id, processing_config, db)
 
-    with get_session() as db_session:
-        return _trigger_processing_logic(task_id, dashboard_id, user_id, processing_config, db_session)
+    async with get_session() as db_session:
+        async with db_session.begin():
+            return await _trigger_processing_logic(task_id, dashboard_id, user_id, processing_config, db_session)
 
 
 async def _get_processing_status_logic(
