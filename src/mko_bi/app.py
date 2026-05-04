@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from asgiref.wsgi import WsgiToAsgi
 from pydantic import ValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -18,6 +19,7 @@ from mko_bi.api import routes
 from mko_bi.config import get_config
 from mko_bi.core.logging_config import setup_logging
 from mko_bi.db.starter import DatabaseStarter
+from mko_bi.dash_app import create_dash_app
 
 # Настройка логирования
 setup_logging()
@@ -84,6 +86,12 @@ def create_app() -> FastAPI:
     application.include_router(routes.filters.router)
     application.include_router(routes.processing_configs.router)
     application.include_router(routes.processing_logs.router)
+
+    # Создание и монтирование Dash приложения
+    logger.info("Mounting Dash application at /dashboards")
+    dash_app = create_dash_app(prefix="/dashboards/")
+    asgi_dash = WsgiToAsgi(dash_app.server)
+    application.mount("/dashboards", asgi_dash)
 
     # Корневой эндпоинт
     @application.get("/", tags=["health"])

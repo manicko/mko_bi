@@ -32,6 +32,8 @@ dependencies = [
     "requests>=2.33.1",
     "alembic>=1.18.4",
     "asyncpg>=0.30.0",
+    "asgiref>=3.11.1",
+    "pyjwt>=2.12.1",
 ]
 
 classifiers = [
