@@ -101,31 +101,43 @@ def mock_redis(monkeypatch):
 
 
 def pytest_sessionstart(session):
-    """Setup before test session starts."""
-    # Drop and recreate tables directly from metadata
-    # This ensures enums are recreated with correct values
+    """Setup before test session starts using Alembic migrations."""
     import asyncio
+    import subprocess
     from mko_bi.db.base import Base
-    
-    async def recreate_tables():
+
+    async def run_migrations():
+        # Drop all tables and enums to start with clean state
         engine = create_async_engine(
             TEST_ASYNC_DB_URL,
             echo=False,
         )
         async with engine.begin() as conn:
-            # Drop tables first
+            # Drop all tables
             await conn.run_sync(Base.metadata.drop_all)
-            # Drop enum types if they exist (to recreate with updated values)
+            # Drop alembic_version table if exists
+            await conn.execute(text("DROP TABLE IF EXISTS alembic_version"))
+            # Drop enum types
             await conn.execute(text("DROP TYPE IF EXISTS processing_status CASCADE"))
             await conn.execute(text("DROP TYPE IF EXISTS user_role CASCADE"))
             await conn.execute(text("DROP TYPE IF EXISTS dashboard_permission_level CASCADE"))
             await conn.execute(text("DROP TYPE IF EXISTS graph_type CASCADE"))
             await conn.execute(text("DROP TYPE IF EXISTS filter_type CASCADE"))
-            # Recreate all tables with correct schema
-            await conn.run_sync(Base.metadata.create_all)
         await engine.dispose()
-    
-    asyncio.run(recreate_tables())
+
+    asyncio.run(run_migrations())
+
+    # Run alembic migrations using subprocess to avoid event loop conflicts
+    sync_db_url = TEST_ASYNC_DB_URL.replace("postgresql+asyncpg://", "postgresql://")
+    result = subprocess.run(
+        ["uv", "run", "alembic", "-x", f"sqlalchemy.url={sync_db_url}", "upgrade", "head"],
+        cwd="C:\\py_exp\\mko_bi",
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        print(f"Alembic upgrade failed: {result.stderr}")
+        raise RuntimeError(f"Alembic upgrade failed: {result.stderr}")
 
 
 @pytest.fixture(scope="session")

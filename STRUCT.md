@@ -10,8 +10,7 @@ C:\py_exp\mko_bi
 │       ├── 840a99edb818_standardize_index_naming.py
 │       ├── 7130ecb0388c_true_initial_migration.py
 │       ├── a1b2c3d4e5f6_add_config_to_dashboards.py
-│       ├── e86f3c8f7324_schema_adjustments.py
-│       └── f3d4e5f6a7b8_add_missing_processing_status_values.py
+│       └── e86f3c8f7324_schema_adjustments.py
 ├── alembic.ini
 ├── best_llm_models.md
 ├── bidb_schema.sql
@@ -172,9 +171,6 @@ C:\py_exp\mko_bi
 │   ├── DB
 │   ├── DEV
 │   │   ├── TASK_001_sync_async_unification.md
-│   │   ├── TASK_002_transactions_DONE.md
-│   │   ├── TASK_003_mime_validation_DONE.md
-│   │   ├── TASK_004_rate_limiting.md
 │   │   ├── TASK_005_dash_mount.md
 │   │   ├── TASK_006_dash_auth.md
 │   │   ├── TASK_007_dash_real_data.md
@@ -184,8 +180,7 @@ C:\py_exp\mko_bi
 │   │   ├── TASK_012_multi_axis.md
 │   │   ├── TASK_013_layouts.md
 │   │   ├── TASK_051_di_and_interfaces.md
-│   │   └── TASK_XXX_fix_migrations_enum_mismatch.md
-│   ├── DEV_REPORT_01.md
+│   │   └── TASK_XXX_fix_migrations_enum_mismatch_DONE.md
 │   ├── DONE
 │   │   └── TASK_DB_REPRODUCER_MAIN.md
 │   ├── TASK_001_db_structure_audit.md

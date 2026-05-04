@@ -19,31 +19,46 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     """Upgrade schema."""
     # Rename UNIQUE constraints (these also rename the underlying indexes)
-    # Use try-except to handle case where constraint doesn't exist
-    try:
-        op.execute("ALTER TABLE users RENAME CONSTRAINT users_email_key TO idx_users_email")
-    except Exception:
-        pass  # Constraint might not exist or already renamed
+    # Use DO block for idempotency
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_email_key') THEN
+                ALTER TABLE users RENAME CONSTRAINT users_email_key TO idx_users_email;
+            END IF;
+        END $$;
+    """)
     
-    try:
-        op.execute("ALTER TABLE layouts RENAME CONSTRAINT layouts_name_key TO idx_layouts_name")
-    except Exception:
-        pass
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'layouts_name_key') THEN
+                ALTER TABLE layouts RENAME CONSTRAINT layouts_name_key TO idx_layouts_name;
+            END IF;
+        END $$;
+    """)
     
-    try:
-        op.execute("ALTER TABLE dashboards RENAME CONSTRAINT dashboards_name_key TO idx_dashboards_name")
-    except Exception:
-        pass
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'dashboards_name_key') THEN
+                ALTER TABLE dashboards RENAME CONSTRAINT dashboards_name_key TO idx_dashboards_name;
+            END IF;
+        END $$;
+    """)
     
-    try:
-        op.execute("ALTER TABLE graphs RENAME CONSTRAINT uq_graph_dashboard_name TO idx_graphs_dashboard_name")
-    except Exception:
-        pass
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_graph_dashboard_name') THEN
+                ALTER TABLE graphs RENAME CONSTRAINT uq_graph_dashboard_name TO idx_graphs_dashboard_name;
+            END IF;
+        END $$;
+    """)
     
-    try:
-        op.execute("ALTER TABLE filters RENAME CONSTRAINT filters_name_key TO idx_filters_name")
-    except Exception:
-        pass
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'filters_name_key') THEN
+                ALTER TABLE filters RENAME CONSTRAINT filters_name_key TO idx_filters_name;
+            END IF;
+        END $$;
+    """)
 
     # Rename regular indexes (check if old name exists first)
     op.execute("""
@@ -68,14 +83,38 @@ def upgrade() -> None:
         END $$;
     """)
 
-    # Create missing index on dashboard_access(user_id) and rename
-    op.create_index('idx_dashboard_access_user', 'dashboard_access', ['user_id'], unique=False)
+    # Create missing index on dashboard_access(user_id) if not exists
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_dashboard_access_user' AND relkind = 'i') THEN
+                CREATE INDEX idx_dashboard_access_user ON dashboard_access(user_id);
+            END IF;
+        END $$;
+    """)
 
     # Handle aggregated_data indexes - drop composite and create standard ones
     op.execute("DROP INDEX IF EXISTS idx_agg_dashboard_graph")
-    op.create_index('idx_aggregated_data_dashboard_id', 'aggregated_data', ['dashboard_id'], unique=False)
-    op.create_index('idx_aggregated_data_graph_id', 'aggregated_data', ['graph_id'], unique=False)
-    op.create_index('idx_aggregated_data_dims_gin', 'aggregated_data', ['dims'], unique=False, postgresql_using='gin')
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_aggregated_data_dashboard_id' AND relkind = 'i') THEN
+                CREATE INDEX idx_aggregated_data_dashboard_id ON aggregated_data(dashboard_id);
+            END IF;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_aggregated_data_graph_id' AND relkind = 'i') THEN
+                CREATE INDEX idx_aggregated_data_graph_id ON aggregated_data(graph_id);
+            END IF;
+        END $$;
+    """)
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_aggregated_data_dims_gin' AND relkind = 'i') THEN
+                CREATE INDEX idx_aggregated_data_dims_gin ON aggregated_data USING GIN (dims);
+            END IF;
+        END $$;
+    """)
 
 
 def downgrade() -> None:

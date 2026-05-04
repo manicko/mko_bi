@@ -334,11 +334,11 @@ aggregated_data (
 ```sql
 processing_logs (
     id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    dashboard_id    UUID REFERENCES dashboards(id),
-    status          TEXT NOT NULL CHECK (status IN ('started', 'success', 'failed')),
+    dashboard_id    UUID REFERENCES dashboards(id) ON DELETE SET NULL,
+    status          TEXT NOT NULL CHECK (status IN ('started', 'uploaded', 'processing', 'success', 'failed', 'completed')),
     message         TEXT,
-    started_at      TIMESTAMP,
-    finished_at     TIMESTAMP
+    started_at      TIMESTAMPTZ,
+    finished_at     TIMESTAMPTZ
 );
 ```
 
@@ -426,6 +426,10 @@ FastAPI
 3. Проверка прав доступа выполняется до получения данных
 4. Dash не содержит собственной логики аутентификации
 5. Все запросы к данным проходят через backend-сервис
+
+### Database Initialization
+
+При старте приложения FastAPI выполняется автоматическая проверка и инициализация схемы БД через модуль `DatabaseStarter` (lifespan). Миграции применяются согласно окружению (`ENV`) с соблюдением production-ограничений.
 
 ## 20. Logging
 

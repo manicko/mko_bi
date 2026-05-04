@@ -26,7 +26,7 @@ from mko_bi.core.permissions import (
     check_role,
     AuthenticationError,
 )
-from mko_bi.db.session import get_db, get_session
+from mko_bi.db.session import get_db, get_session  # noqa: F401 - re-exported for backwards compatibility
 from mko_bi.models.user import UserDB
 from mko_bi.interfaces import (
     IUserRepository,
