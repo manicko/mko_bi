@@ -23,11 +23,6 @@ C:\py_exp\mko_bi
 │   └── tmp_uploads
 ├── DB_STRUCTURE.md
 ├── DBSTR.md
-├── fix_all_async.py
-├── fix_all_patterns.py
-├── fix_models_script.py
-├── fix_new_models.py
-├── fix_test_models.py
 ├── instructions
 │   └── RUN.md
 ├── nginx
@@ -47,6 +42,7 @@ C:\py_exp\mko_bi
 │       │       ├── dashboards.py
 │       │       ├── data.py
 │       │       ├── filters.py
+│       │       ├── layouts.py
 │       │       ├── processing_configs.py
 │       │       ├── processing_logs.py
 │       │       ├── upload.py
@@ -101,6 +97,7 @@ C:\py_exp\mko_bi
 │       │   │   ├── dashboard_repo.py
 │       │   │   ├── filter_repo.py
 │       │   │   ├── graph_repo.py
+│       │   │   ├── layout_repo.py
 │       │   │   ├── processing_config_repo.py
 │       │   │   ├── processing_log_repo.py
 │       │   │   └── user_repo.py
@@ -117,6 +114,7 @@ C:\py_exp\mko_bi
 │       │   ├── data.py
 │       │   ├── filters.py
 │       │   ├── graph.py
+│       │   ├── layout.py
 │       │   ├── processing_configs.py
 │       │   ├── processing_logs.py
 │       │   ├── transformation_configs.py
@@ -129,6 +127,7 @@ C:\py_exp\mko_bi
 │       │   ├── data_service.py
 │       │   ├── filter_service.py
 │       │   ├── graph_service.py
+│       │   ├── layout_service.py
 │       │   ├── processing_config_service.py
 │       │   ├── processing_log_service.py
 │       │   └── user_service.py
@@ -186,14 +185,10 @@ C:\py_exp\mko_bi
 │   ├── DB
 │   ├── DEV
 │   │   ├── TASK_001_sync_async_unification.md
-│   │   ├── TASK_007_dash_real_data_DONE.md
-│   │   ├── TASK_008_transform_pipeline_DONE.md
-│   │   ├── TASK_009_csv_loader_DONE.md
-│   │   ├── TASK_011_file_cleanup.md
-│   │   ├── TASK_012_multi_axis.md
-│   │   ├── TASK_013_layouts.md
-│   │   └── TASK_051_di_and_interfaces.md
+│   │   ├── TASK_014_dash_modern_component_architecture.md
+│   │   └── TASK_052_secrets_management.md
 │   ├── DONE
+│   │   ├── TASK_051_di_and_interfaces.md
 │   │   └── TASK_DB_REPRODUCER_MAIN.md
 │   └── TEST
 └── uv.lock

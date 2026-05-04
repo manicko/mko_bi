@@ -14,17 +14,9 @@ import logging
 from typing import Any
 
 from mko_bi.models.data import FilterState
+from mko_bi.models.enums import FilterType
 
 logger = logging.getLogger(__name__)
-
-
-class FilterType:
-    """Типы фильтров."""
-
-    SELECT = "select"
-    MULTISELECT = "multiselect"
-    RANGE = "range"
-    DATE = "date"
 
 
 class FilterPanel:
@@ -59,7 +51,7 @@ class FilterPanel:
     def add_filter(
         self,
         field: str,
-        filter_type: str,
+        filter_type: FilterType | str,
         label: str | None = None,
         options: list[Any] | None = None,
         **kwargs: Any,
@@ -76,17 +68,14 @@ class FilterPanel:
         Raises:
             ValueError: Если тип фильтра некорректен
         """
-        if filter_type not in [
-            FilterType.SELECT,
-            FilterType.MULTISELECT,
-            FilterType.RANGE,
-            FilterType.DATE,
-        ]:
+        filter_type_str = filter_type.value if isinstance(filter_type, FilterType) else filter_type
+        valid_types = [ft.value for ft in FilterType]
+        if filter_type_str not in valid_types:
             raise ValueError(f"Некорректный тип фильтра: {filter_type}")
 
-        filter_config = {
+        filter_config: dict[str, Any] = {
             "field": field,
-            "type": filter_type,
+            "type": filter_type_str,
             "label": label or field,
             **kwargs,
         }
@@ -95,7 +84,7 @@ class FilterPanel:
             filter_config["options"] = options
 
         self.filters.append(filter_config)
-        logger.debug("Добавлен фильтр: %s (тип: %s)", field, filter_type)
+        logger.debug("Добавлен фильтр: %s (тип: %s)", field, filter_type_str)
 
     def remove_filter(self, field: str) -> bool:
         """Удаление фильтра.
@@ -112,7 +101,6 @@ class FilterPanel:
         removed = len(self.filters) < initial_count
         if removed:
             logger.debug("Удален фильтр: %s", field)
-            # Удаляем значение из состояния
             if field in self.state.filters:
                 del self.state.filters[field]
 
@@ -145,7 +133,6 @@ class FilterPanel:
             Объект FilterState с текущими значениями фильтров
         """
         if inputs is not None:
-            # Обновляем состояние из входных данных
             for field, value in inputs.items():
                 if any(f["field"] == field for f in self.filters):
                     self.state.filters[field] = value
@@ -220,28 +207,103 @@ class FilterPanel:
         Returns:
             Отфильтрованные данные
         """
-        if filter_type == FilterType.SELECT:
-            return [item for item in data if item.get(field) == value]
+        logger.debug("Применение фильтра '%s' (тип: %s)", field, filter_type)
 
-        elif filter_type == FilterType.MULTISELECT:
-            if not isinstance(value, list):
-                value = [value]
-            return [item for item in data if item.get(field) in value]
-
-        elif filter_type == FilterType.RANGE:
-            if isinstance(value, (list, tuple)) and len(value) == 2:
-                min_val, max_val = value
-                return [
-                    item
-                    for item in data
-                    if min_val <= item.get(field, float("-inf")) <= max_val
-                ]
-
-        elif filter_type == FilterType.DATE:
-            # Для дат применяем точное совпадение
-            return [item for item in data if item.get(field) == value]
+        if filter_type == FilterType.SELECT.value:
+            return self._apply_select_filter(data, field, value)
+        elif filter_type == FilterType.MULTISELECT.value:
+            return self._apply_multiselect_filter(data, field, value)
+        elif filter_type == FilterType.RANGE.value:
+            return self._apply_range_filter(data, field, value)
+        elif filter_type == FilterType.DATE.value:
+            return self._apply_date_filter(data, field, value)
 
         return data
+
+    def _apply_select_filter(
+        self,
+        data: list[dict[str, Any]],
+        field: str,
+        value: Any,
+    ) -> list[dict[str, Any]]:
+        """Применение фильтра типа select.
+
+        Args:
+            data: Список данных
+            field: Поле для фильтрации
+            value: Значение для выбора
+
+        Returns:
+            Отфильтрованные данные
+        """
+        logger.debug("Фильтр select: %s = %s", field, value)
+        return [item for item in data if item.get(field) == value]
+
+    def _apply_multiselect_filter(
+        self,
+        data: list[dict[str, Any]],
+        field: str,
+        value: Any,
+    ) -> list[dict[str, Any]]:
+        """Применение фильтра типа multiselect.
+
+        Args:
+            data: Список данных
+            field: Поле для фильтрации
+            value: Список значений для выбора
+
+        Returns:
+            Отфильтрованные данные
+        """
+        if not isinstance(value, list):
+            value = [value]
+        logger.debug("Фильтр multiselect: %s in %s", field, value)
+        return [item for item in data if item.get(field) in value]
+
+    def _apply_range_filter(
+        self,
+        data: list[dict[str, Any]],
+        field: str,
+        value: Any,
+    ) -> list[dict[str, Any]]:
+        """Применение фильтра типа range.
+
+        Args:
+            data: Список данных
+            field: Поле для фильтрации
+            value: Кортеж (min_val, max_val)
+
+        Returns:
+            Отфильтрованные данные
+        """
+        if isinstance(value, (list, tuple)) and len(value) == 2:
+            min_val, max_val = value
+            logger.debug("Фильтр range: %s [%s, %s]", field, min_val, max_val)
+            return [
+                item
+                for item in data
+                if min_val <= item.get(field, float("-inf")) <= max_val
+            ]
+        return data
+
+    def _apply_date_filter(
+        self,
+        data: list[dict[str, Any]],
+        field: str,
+        value: Any,
+    ) -> list[dict[str, Any]]:
+        """Применение фильтра типа date.
+
+        Args:
+            data: Список данных
+            field: Поле для фильтрации
+            value: Дата для фильтрации
+
+        Returns:
+            Отфильтрованные данные
+        """
+        logger.debug("Фильтр date: %s = %s", field, value)
+        return [item for item in data if item.get(field) == value]
 
     def reset(self) -> None:
         """Сброс всех значений фильтров."""

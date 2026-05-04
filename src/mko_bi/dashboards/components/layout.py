@@ -14,7 +14,9 @@ from typing import Any
 
 import dash_bootstrap_components as dbc
 from dash import html
+
 from mko_bi.models.data import FilterState
+from mko_bi.models.enums import FilterType
 
 logger = logging.getLogger(__name__)
 
@@ -65,7 +67,7 @@ class DashboardLayout:
         if not 1 <= width <= 12:
             raise ValueError("Ширина должна быть в диапазоне 1-12")
 
-        component_config = {
+        component_config: dict[str, Any] = {
             "component": component,
             "title": title,
             "width": width,
@@ -92,12 +94,10 @@ class DashboardLayout:
         """
         rows = []
 
-        # Строка с фильтрами (если есть)
         if self.filter_panel:
             filter_row = self._create_filter_row(filter_state)
             rows.append(filter_row)
 
-        # Строки с компонентами
         if self.components:
             component_rows = self._create_component_rows()
             rows.extend(component_rows)
@@ -127,7 +127,6 @@ class DashboardLayout:
                 filter_type = filter_config["type"]
                 label = filter_config.get("label", field)
 
-                # Создаем элемент управления в зависимости от типа
                 control = self._create_filter_control(
                     field, filter_type, filter_config, filter_state
                 )
@@ -150,10 +149,10 @@ class DashboardLayout:
         return dbc.Row(
             dbc.Col(
                 dbc.Card(
-                dbc.CardBody([
-                    html.H3("Фильтры", className="mb-3"),
-                    dbc.Row(filter_content, className="g-3"),
-                ]),
+                    dbc.CardBody([
+                        html.H3("Фильтры", className="mb-3"),
+                        dbc.Row(filter_content, className="g-3"),
+                    ]),
                     className="shadow-sm",
                 ),
                 width=12,
@@ -179,50 +178,154 @@ class DashboardLayout:
         Returns:
             Элемент управления Dash/Bootstrap
         """
-        # Получаем текущее значение
-        current_value = None
-        if filter_state and field in filter_state.filters:
-            current_value = filter_state.filters[field]
+        logger.debug("Создание контрола фильтра: %s (тип: %s)", field, filter_type)
+        current_value = self._get_current_filter_value(field, filter_state)
+        common_props = self._get_common_control_props(field, current_value)
 
-        common_props = {
+        if filter_type == FilterType.SELECT.value:
+            return self._create_select_control(filter_config, common_props)
+        elif filter_type == FilterType.MULTISELECT.value:
+            return self._create_multiselect_control(filter_config, common_props)
+        elif filter_type == FilterType.RANGE.value:
+            return self._create_range_control(common_props)
+        elif filter_type == FilterType.DATE.value:
+            return self._create_date_control(common_props)
+
+        return self._create_text_control(common_props)
+
+    def _get_current_filter_value(
+        self,
+        field: str,
+        filter_state: FilterState | None,
+    ) -> Any:
+        """Получение текущего значения фильтра.
+
+        Args:
+            field: Имя поля
+            filter_state: Состояние фильтров
+
+        Returns:
+            Текущее значение или None
+        """
+        if filter_state and field in filter_state.filters:
+            return filter_state.filters[field]
+        return None
+
+    def _get_common_control_props(
+        self,
+        field: str,
+        current_value: Any,
+    ) -> dict[str, Any]:
+        """Создание общих свойств для элементов управления.
+
+        Args:
+            field: Имя поля
+            current_value: Текущее значение
+
+        Returns:
+            Словарь свойств
+        """
+        return {
             "id": {"type": "filter", "field": field},
             "value": current_value,
         }
 
-        if filter_type == "select":
-            options = filter_config.get("options", [])
-            return dbc.Select(
-                options=[{"label": str(o), "value": o} for o in options],
-                **common_props,
-            )
+    def _create_select_control(
+        self,
+        filter_config: dict[str, Any],
+        common_props: dict[str, Any],
+    ) -> dbc.Select:
+        """Создание контрола выпадающего списка.
 
-        elif filter_type == "multiselect":
-            options = filter_config.get("options", [])
-            # In newer versions of dash-bootstrap-components, Select doesn't support multiple
-            # Use a regular Select for now (single selection)
-            return dbc.Select(
-                options=[{"label": str(o), "value": o} for o in options],
-                **common_props,
-            )
+        Args:
+            filter_config: Конфигурация фильтра
+            common_props: Общие свойства
 
-        elif filter_type == "range":
-            return dbc.Input(
-                type="text",
-                placeholder="min, max",
-                **common_props,
-            )
+        Returns:
+            Элемент dbc.Select
+        """
+        options = filter_config.get("options", [])
+        logger.debug("Создание select контрола с %d опциями", len(options))
+        return dbc.Select(
+            options=[{"label": str(o), "value": o} for o in options],
+            **common_props,
+        )
 
-        elif filter_type == "date":
-            return dbc.Input(
-                type="date",
-                **common_props,
-            )
+    def _create_multiselect_control(
+        self,
+        filter_config: dict[str, Any],
+        common_props: dict[str, Any],
+    ) -> dbc.Select:
+        """Создание контрола множественного выбора.
 
-        else:
-            return dbc.Input(
-                type="text",
-                **common_props,
-            )
+        Args:
+            filter_config: Конфигурация фильтра
+            common_props: Общие свойства
+
+        Returns:
+            Элемент dbc.Select
+        """
+        options = filter_config.get("options", [])
+        logger.debug("Создание multiselect контрола с %d опциями", len(options))
+        return dbc.Select(
+            options=[{"label": str(o), "value": o} for o in options],
+            **common_props,
+        )
+
+    def _create_range_control(
+        self,
+        common_props: dict[str, Any],
+    ) -> dbc.Input:
+        """Создание контрола диапазона.
+
+        Args:
+            common_props: Общие свойства
+
+        Returns:
+            Элемент dbc.Input
+        """
+        logger.debug("Создание range контрола")
+        return dbc.Input(
+            type="text",
+            placeholder="min, max",
+            **common_props,
+        )
+
+    def _create_date_control(
+        self,
+        common_props: dict[str, Any],
+    ) -> dbc.Input:
+        """Создание контрола выбора даты.
+
+        Args:
+            common_props: Общие свойства
+
+        Returns:
+            Элемент dbc.Input
+        """
+        logger.debug("Создание date контрола")
+        return dbc.Input(
+            type="date",
+            **common_props,
+        )
+
+    def _create_text_control(
+        self,
+        common_props: dict[str, Any],
+    ) -> dbc.Input:
+        """Создание текстового контрола по умолчанию.
+
+        Args:
+            common_props: Общие свойства
+
+        Returns:
+            Элемент dbc.Input
+        """
+        logger.debug("Создание text контрола (default)")
+        return dbc.Input(
+            type="text",
+            **common_props,
+        )
 
     def _create_component_rows(self) -> list[dbc.Row]:
         """Создание строк с компонентами.
@@ -240,7 +343,6 @@ class DashboardLayout:
         for component_config in self.components:
             width = component_config["width"]
 
-            # Если компонент не помещается в текущую строку, создаем новую
             if current_width + width > 12 and current_row_components:
                 rows.append(self._create_row(current_row_components))
                 current_row_components = []
@@ -249,7 +351,6 @@ class DashboardLayout:
             current_row_components.append(component_config)
             current_width += width
 
-        # Добавляем оставшиеся компоненты
         if current_row_components:
             rows.append(self._create_row(current_row_components))
 
@@ -271,22 +372,8 @@ class DashboardLayout:
             width = config["width"]
             height = config.get("height")
 
-            # Создаем карточку для компонента
-            card_content = []
-
-            if title:
-                card_content.append(html.H3(title))
-
-            card_content.append(component)
-
-            card = dbc.Card(
-                dbc.CardBody(card_content),
-                className="shadow-sm h-100",
-            )
-
-            # Применяем высоту, если задана
-            if height:
-                card.style = {"height": f"{height}px"}
+            card_content = self._build_card_content(title, component)
+            card = self._create_card(card_content, height)
 
             cols.append(
                 dbc.Col(
@@ -296,10 +383,49 @@ class DashboardLayout:
                 )
             )
 
-        return dbc.Row(
-            cols,
-            className="g-4",
+        return dbc.Row(cols, className="g-4")
+
+    def _build_card_content(
+        self,
+        title: str | None,
+        component: Any,
+    ) -> list[Any]:
+        """Создание содержимого карточки.
+
+        Args:
+            title: Заголовок
+            component: Компонент
+
+        Returns:
+            Список элементов содержимого
+        """
+        content = []
+        if title:
+            content.append(html.H3(title))
+        content.append(component)
+        return content
+
+    def _create_card(
+        self,
+        content: list[Any],
+        height: int | None,
+    ) -> dbc.Card:
+        """Создание карточки.
+
+        Args:
+            content: Содержимое карточки
+            height: Высота (опционально)
+
+        Returns:
+            Объект dbc.Card
+        """
+        card = dbc.Card(
+            dbc.CardBody(content),
+            className="shadow-sm h-100",
         )
+        if height:
+            card.style = {"height": f"{height}px"}
+        return card
 
     def clear(self) -> None:
         """Очистка макета (удаление всех компонентов)."""
