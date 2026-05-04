@@ -85,7 +85,7 @@ def _validate_file(filename: str, file_content: bytes) -> None:
     logger.info("Файл успешно валидирован: %s (%d байт)", filename, len(file_content))
 
 
-def _save_uploaded_file(filename: str, file_content: bytes, dashboard_id: int | None = None) -> Path:
+def _save_uploaded_file(filename: str, file_content: bytes, dashboard_id: UUID | None = None) -> Path:
     """Сохраняет загруженный файл во временную директорию.
 
     Выполняет валидацию пути для защиты от directory traversal атак.
@@ -305,7 +305,7 @@ def _apply_transformations(df: pl.DataFrame, transformations: list[Transformatio
 async def _process_csv_file(
     file_path: Path,
     processing_config: ProcessingConfig | None = None,
-    dashboard_id: int | None = None,
+    dashboard_id: UUID | None = None,
     db: AsyncSession | None = None,
 ) -> ProcessingResultData:
     """Обрабатывает CSV файл с использованием Polars.
@@ -368,32 +368,13 @@ async def _process_csv_file(
 
     logger.info("Обработка завершена: %d строк", df.shape[0])
 
-    # Сохраняем агрегатированные данные в БД, если переданы dashboard_id и db
-    if dashboard_id is not None and db is not None and processing_config:
-        try:
-            # Собираем агрегатированные данные из результата обработки
-            if processing_config.groupby and processing_config.aggregations:
-                # Преобразуем результаты группировки в формат для сохранения
-                # Для каждого графика в дашборде нужно создать записи
-                # Так как мы не знаем конкретные graph_id, сохраняем данные
-                # через общий метод сохранения, который будет вызываться извне
-                pass
-
-            # Логируем, что данные готовы для сохранения
-            logger.info(
-                "Агрегатированные данные готовы для сохранения: %d строк",
-                df.shape[0],
-            )
-        except Exception as e:
-            logger.warning("Не удалось подготовить агрегатированные данные: %s", e)
-
     return result_data
 
 
 async def _upload_file_logic(
     filename: str,
     file_content: bytes,
-    dashboard_id: int,
+    dashboard_id: UUID,
     user_id: int,
     db: AsyncSession,
 ) -> UploadResponse:
@@ -461,64 +442,12 @@ async def _upload_file_logic(
         message="File uploaded successfully",
         uploaded_at=uploaded_at,
     )
-    if not has_access:
-        logger.warning(
-            "Нет прав на загрузку: user_id=%d, dashboard_id=%d",
-            user_id,
-            dashboard_id,
-        )
-        raise PermissionError("Недостаточно прав для загрузки файла")
-
-    # Валидация файла
-    _validate_file(filename, file_content)
-
-    # Сохранение файла
-    _save_uploaded_file(filename, file_content, dashboard_id)
-
-    # Создание задачи
-    uploaded_at = datetime.now()
-    
-    # Создаем запись лога обработки в БД
-    log_create = ProcessingLogCreate(
-        dashboard_id=dashboard_id,
-        status=ProcessingStatusEnum.uploaded,
-        message=f"Файл {filename} успешно загружен",
-        started_at=uploaded_at,
-    )
-    processing_log = ProcessingLogRepository.create(db, **log_create.model_dump())
-    logger.info("Лог обработки создан в БД: id=%s", processing_log.id)
-    
-    task_id = processing_log.id  # Используем ID лога как task_id
-
-    logger.info("Файл успешно загружен: task_id=%s, filename=%s", task_id, filename)
-
-    return UploadResponse(
-        task_id=task_id,
-        filename=filename,
-        dashboard_id=dashboard_id,
-        status=ProcessingStatusEnum.uploaded,
-        message="File uploaded successfully",
-        uploaded_at=uploaded_at,
-    )
-    processing_log = ProcessingLogRepository.create(db, **log_create.model_dump())
-    logger.info("Лог обработки создан в БД: id=%s", processing_log.id)
-
-    logger.info("Файл успешно загружен: task_id=%s, filename=%s", task_id, filename)
-
-    return UploadResponse(
-        task_id=task_id,
-        filename=filename,
-        dashboard_id=dashboard_id,
-        status="uploaded",
-        message="File uploaded successfully",
-        uploaded_at=uploaded_at,
-    )
 
 
 async def upload_file(
     filename: str,
     file_content: bytes,
-    dashboard_id: int,
+    dashboard_id: UUID,
     user_id: int,
     db: AsyncSession | None = None,
 ) -> UploadResponse:
@@ -557,7 +486,7 @@ async def upload_file(
 
 async def _trigger_processing_logic(
     task_id: uuid.UUID,
-    dashboard_id: int,
+    dashboard_id: UUID,
     user_id: int,
     processing_config: ProcessingConfig | None,
     db: AsyncSession,
@@ -801,7 +730,7 @@ async def _trigger_processing_logic(
 
 def trigger_processing(
     task_id: uuid.UUID,
-    dashboard_id: int,
+    dashboard_id: UUID,
     user_id: int,
     processing_config: ProcessingConfig | None = None,
     db: AsyncSession | None = None,
@@ -1095,7 +1024,7 @@ async def _get_dashboard_aggregates_logic(
         if graph_data:
             result.append(
                 AggregatedData(
-                    dashboard_id=int(dashboard_id),
+                    dashboard_id=dashboard_id,
                     chart_type=graph.type,
                     data=graph_data,
                     metadata={
@@ -1233,7 +1162,7 @@ async def _get_chart_data_logic(
         if graph_data:
             result.append(
                 AggregatedData(
-                    dashboard_id=int(dashboard_id),
+                    dashboard_id=dashboard_id,
                     chart_type=graph.type,
                     data=graph_data,
                     metadata={
@@ -1414,7 +1343,7 @@ async def _apply_data_filters_logic(
         if graph_data:
             result.append(
                 AggregatedData(
-                    dashboard_id=int(dashboard_id),
+                    dashboard_id=dashboard_id,
                     chart_type=graph.type,
                     data=graph_data,
                     metadata={
@@ -1496,7 +1425,7 @@ def cleanup_task_files(task_id: uuid.UUID) -> None:
 
 
 async def _save_aggregated_data_logic(
-    dashboard_id: int,
+    dashboard_id: UUID,
     aggregates: list[dict[str, Any]],
     db: AsyncSession,
 ) -> int:
@@ -1533,7 +1462,7 @@ async def _save_aggregated_data_logic(
 
 
 async def save_aggregated_data(
-    dashboard_id: int,
+    dashboard_id: UUID,
     aggregates: list[dict[str, Any]],
     db: AsyncSession | None = None,
 ) -> int:
