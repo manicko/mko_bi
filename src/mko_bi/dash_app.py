@@ -30,55 +30,39 @@ from dash.exceptions import PreventUpdate
 import plotly.graph_objects as go
 
 from mko_bi.config import get_config
+from mko_bi.core.security import decode_token
 
 
 logger = logging.getLogger(__name__)
 
 
 def check_token_validity(token: str) -> bool:
-    """Проверяет валидность JWT токена (без проверки подписи).
+    """Проверяет валидность JWT токена (с проверкой подписи).
 
-    Декодирует токен без проверки подписи и проверяет срок его действия.
-    Используется на стороне клиента (Dash) для проверки необходимости
-    перенаправления на страницу входа.
+    Декодирует токен и проверяет срок его действия.
+    Используется для серверной проверки токена.
 
     Args:
         token: JWT токен для проверки.
 
     Returns:
         bool: True, если токен валиден и не истек, иначе False.
-
-    Example:
-        >>> check_token_validity("valid_token_string")
-        True
-        >>> check_token_validity("expired_token_string")
-        False
     """
-    try:
-        logger.debug("Проверка валидности JWT токена")
-        payload = jwt.decode(
-            token,
-            options={"verify_signature": False, "verify_exp": True},
-        )
-        exp = payload.get("exp")
-        if exp is None:
-            logger.warning("Токен не содержит поле exp")
-            return False
-        exp_datetime = datetime.fromtimestamp(exp, tz=UTC)
-        now = datetime.now(UTC)
-        is_valid = exp_datetime > now
-        if not is_valid:
-            logger.info("Токен истек (exp: %s, now: %s)", exp_datetime, now)
-        return is_valid
-    except jwt.ExpiredSignatureError:
-        logger.info("Токен истек")
+    payload = validate_jwt_token(token)
+    if payload is None:
         return False
-    except jwt.DecodeError as e:
-        logger.warning("Ошибка декодирования токена: %s", e)
+    
+    exp = payload.get("exp")
+    if exp is None:
+        logger.warning("Токен не содержит поле exp")
         return False
-    except Exception as e:
-        logger.error("Неизвестная ошибка при проверке токена: %s", e)
-        return False
+    
+    exp_datetime = datetime.fromtimestamp(exp, tz=UTC)
+    now = datetime.now(UTC)
+    is_valid = exp_datetime > now
+    if not is_valid:
+        logger.info("Токен истек (exp: %s, now: %s)", exp_datetime, now)
+    return is_valid
 
 
 def decode_token_payload(token: str) -> dict[str, Any] | None:
@@ -98,6 +82,28 @@ def decode_token_payload(token: str) -> dict[str, Any] | None:
         return payload
     except Exception as e:
         logger.error("Ошибка декодирования токена: %s", e)
+        return None
+
+
+def validate_jwt_token(token: str) -> dict[str, Any] | None:
+    """Проверяет JWT токен с валидацией подписи.
+
+    Использует существующую функцию decode_token из core/security
+    для проверки подписи токена и срока его действия.
+
+    Args:
+        token: JWT токен для проверки.
+
+    Returns:
+        dict[str, Any] | None: Данные токена при успешной проверке,
+            None при ошибке (неверная подпись, истекший токен и т.д.).
+    """
+    try:
+        logger.debug("Проверка JWT токена с валидацией подписи")
+        payload: dict[str, Any] | None = decode_token(token)
+        return payload
+    except Exception as e:
+        logger.warning("JWT токен недействителен: %s", e)
         return None
 
 
@@ -183,9 +189,9 @@ def periodic_token_check(
         str: Путь для перенаправления (если токен недействителен).
     """
     if not token or not check_token_validity(token):
-        if current_path not in ("/", "/dashboards"):
+        if current_path not in ("/dashboards/login", "/dashboards"):
             logger.info("Периодическая проверка: токен недействителен, перенаправление на login")
-            return "/"
+            return "/dashboards/login"
     raise PreventUpdate
 
 
@@ -209,7 +215,7 @@ def display_page(pathname: str, token: str | None) -> html.Div:
         """
         logger.debug("Переход на страницу: %s", pathname)
 
-        if not pathname or pathname == "/":
+        if not pathname or pathname == "/dashboards/login":
             return create_login_page()
         elif pathname == "/dashboards":
             if not token or not check_token_validity(token):
@@ -227,7 +233,7 @@ def display_page(pathname: str, token: str | None) -> html.Div:
                 [
                     html.H1("404 - Страница не найдена"),
                     html.P("Запрошенная страница не существует."),
-                    dbc.Button("На главную", href="/", color="primary"),
+                    dbc.Button("На главную", href="/dashboards/login", color="primary"),
                 ],
                 className="text-center mt-5",
             )

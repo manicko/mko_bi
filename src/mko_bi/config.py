@@ -7,7 +7,6 @@ import redis
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
 from pydantic_settings.sources import PydanticBaseSettingsSource
 from pydantic import BaseModel, PostgresDsn
-from mko_bi.models.user_roles import EnvironmentEnum
 
 
 class DatabaseSettings(BaseModel):
