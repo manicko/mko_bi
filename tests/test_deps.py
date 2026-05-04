@@ -5,7 +5,7 @@
 """
 
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from fastapi import HTTPException
 from jose import ExpiredSignatureError
 from sqlalchemy.ext.asyncio import AsyncSession

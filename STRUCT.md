@@ -171,29 +171,29 @@ C:\py_exp\mko_bi
 │   ├── test_yoy_calculation.py
 │   └── tests
 ├── TODO
+│   ├── AUDIT
+│   │   ├── TASK_001_db_structure_audit.md
+│   │   ├── TASK_001_db_structure_module_dev.md
+│   │   ├── TASK_031_audit.md
+│   │   ├── TASK_033_audit.md
+│   │   ├── TASK_033_HY3_audit.md
+│   │   ├── TASK_034_audit_old.md
+│   │   ├── TASK_035_analysis_report.md
+│   │   ├── TASK_037_test_audit.md
+│   │   ├── TASK_037_test_audit1.md
+│   │   ├── TASK_038_docker_audit.md
+│   │   └── TEST_036_test_audit_arch.md
 │   ├── DB
 │   ├── DEV
 │   │   ├── TASK_001_sync_async_unification.md
-│   │   ├── TASK_006_dash_auth_DONE.md
-│   │   ├── TASK_007_dash_real_data.md
-│   │   ├── TASK_008_transform_pipeline.md
-│   │   ├── TASK_009_csv_loader.md
+│   │   ├── TASK_007_dash_real_data_DONE.md
+│   │   ├── TASK_008_transform_pipeline_DONE.md
+│   │   ├── TASK_009_csv_loader_DONE.md
 │   │   ├── TASK_011_file_cleanup.md
 │   │   ├── TASK_012_multi_axis.md
 │   │   ├── TASK_013_layouts.md
 │   │   └── TASK_051_di_and_interfaces.md
 │   ├── DONE
 │   │   └── TASK_DB_REPRODUCER_MAIN.md
-│   ├── TASK_001_db_structure_audit.md
-│   ├── TASK_001_db_structure_module_dev.md
-│   ├── TASK_031_audit.md
-│   ├── TASK_033_audit.md
-│   ├── TASK_033_HY3_audit.md
-│   ├── TASK_034_audit_old.md
-│   ├── TASK_035_analysis_report.md
-│   ├── TASK_037_test_audit.md
-│   ├── TASK_037_test_audit1.md
-│   ├── TASK_038_docker_audit.md
-│   ├── TEST
-│   └── TEST_036_test_audit_arch.md
+│   └── TEST
 └── uv.lock
