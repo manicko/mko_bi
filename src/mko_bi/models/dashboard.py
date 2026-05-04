@@ -4,6 +4,7 @@ from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
 from mko_bi.models.user_roles import GraphTypeEnum
+from mko_bi.models.layout import LayoutRead
 
 
 class DashboardConfig(BaseModel):
@@ -50,6 +51,7 @@ class DashboardCreate(BaseModel):
     name: str
     description: str | None = None
     config: DashboardConfig
+    layout_id: UUID | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -68,6 +70,7 @@ class DashboardCreate(BaseModel):
                         }
                     ],
                 },
+                "layout_id": "550e8400-e29b-41d4-a716-446655440000",
             }
         },
     )
@@ -80,6 +83,8 @@ class DashboardRead(BaseModel):
     name: str
     description: str | None
     config: DashboardConfig
+    layout_id: UUID | None = None
+    layout: LayoutRead | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -94,6 +99,13 @@ class DashboardRead(BaseModel):
                     "graph_types": ["bar", "line"],
                     "filters": [{"field": "year", "type": "select"}],
                 },
+                "layout_id": "550e8400-e29b-41d4-a716-446655440001",
+                "layout": {
+                    "id": "550e8400-e29b-41d4-a716-446655440001",
+                    "name": "sales_layout",
+                    "definition": {"grid": []},
+                    "created_at": "2026-05-04T18:00:00+03:00",
+                },
                 "created_at": "2026-04-24T16:02:46+03:00",
                 "updated_at": "2026-04-24T16:02:46+03:00",
             }
@@ -107,6 +119,7 @@ class DashboardUpdate(BaseModel):
     name: str | None = None
     description: str | None = None
     config: DashboardConfig | None = None
+    layout_id: UUID | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -118,6 +131,7 @@ class DashboardUpdate(BaseModel):
                     "graph_types": ["bar", "line", "pie"],
                     "filters": [{"field": "year", "type": "select"}],
                 },
+                "layout_id": "550e8400-e29b-41d4-a716-446655440001",
             }
         },
     )

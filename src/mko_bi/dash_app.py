@@ -236,6 +236,24 @@ def _register_callbacks(app: Dash) -> None:
         app: Экземпляр Dash приложения.
     """
 
+    @app.callback(
+        Output("dashboard-title", "children"),
+        Output("dashboard-description", "children"),
+        Output("dashboard-filters", "children"),
+        Output("dashboard-charts", "children"),
+        Input("dashboard-config", "data"),
+        State("auth-token", "data"),
+        prevent_initial_call=True,
+    )
+    def load_dashboard_on_page_load(dashboard_config: dict[str, Any] | None, token: str | None):
+        """Загружает данные дашборда при открытии страницы."""
+        if not dashboard_config or not token:
+            raise PreventUpdate
+        title, description, filters, charts, _ = load_dashboard_data(dashboard_config, token)
+        return title, description, filters, charts
+
+    # Existing callbacks continue below...
+
 @callback(
     Output("url", "pathname", allow_duplicate=True),
     Input("token-check-interval", "n_intervals"),
@@ -664,7 +682,7 @@ def logout_user_dashboard(n_clicks: int | None) -> str:
 
 def load_dashboard_data(
     dashboard_data: dict[str, Any] | None, token: str | None
-) -> tuple[str, str, html.Div, html.Div]:
+) -> tuple[str, str, html.Div, html.Div, dict[str, Any] | None]:
     """Загружает данные дашборда и отображает его содержимое.
 
     Args:
@@ -672,7 +690,7 @@ def load_dashboard_data(
         token: JWT токен аутентификации.
 
     Returns:
-        tuple: (заголовок, описание, фильтры, графики)
+        tuple: (заголовок, описание, фильтры, графики, layout_definition)
     """
     if not token or not dashboard_data:
         raise PreventUpdate
@@ -697,16 +715,22 @@ def load_dashboard_data(
         title = dashboard.get("name", f"Дашборд {dashboard_id}")
         description = dashboard.get("description", "")
 
+        # Извлекаем layout definition если есть
+        layout_definition = None
+        if dashboard.get("layout") and dashboard["layout"].get("definition"):
+            layout_definition = dashboard["layout"]["definition"]
+            logger.info("Используется layout: %s", dashboard["layout"]["name"])
+
         # Получаем агрегированные данные для графиков
         chart_data = fetch_dashboard_data(dashboard_id, token)
 
         # Создаем панель фильтров
         filters = create_filter_panel(dashboard_id, token)
 
-        # Создаем графики с реальными данными
-        charts = create_charts_with_data(dashboard_id, chart_data, token)
+        # Создаем графики с реальными данными, учитывая layout
+        charts = create_charts_with_data(dashboard_id, chart_data, token, layout_definition)
 
-        return title, description, filters, html.Div(charts)
+        return title, description, filters, html.Div(charts), layout_definition
 
     except requests.HTTPError as e:
         status_code = e.response.status_code if hasattr(e, 'response') else 0
@@ -721,10 +745,11 @@ def load_dashboard_data(
             f"Не удалось загрузить дашборд (код {status_code})",
             html.Div(""),
             html.Div(""),
+            None,
         )
     except Exception as e:
         logger.error("Ошибка загрузки дашборда %s: %s", dashboard_id, e)
-        return "Ошибка", str(e), html.Div(""), html.Div("")
+        return "Ошибка", str(e), html.Div(""), html.Div(""), None
 
 
 def create_filter_panel(dashboard_id: str, token: str | None = None) -> html.Div:
@@ -977,49 +1002,158 @@ def reset_dashboard_filters(
 
 
 def create_charts_with_data(
-    dashboard_id: str, chart_data: list[dict[str, Any]] | None, token: str
-) -> list[dbc.Col]:
-    """Создает компоненты графиков на основе реальных данных.
+    dashboard_id: str, chart_data: list[dict[str, Any]] | None, token: str, layout_definition: dict[str, Any] | None = None
+) -> list[dbc.Row]:
+    """Создает компоненты графиков на основе реальных данных, учитывая layout.
 
     Args:
         dashboard_id: Идентификатор дашборда.
         chart_data: Данные графиков от API.
         token: JWT токен аутентификации.
+        layout_definition: Опциональная конфигурация layout-а с grid, graphs и т.д.
 
     Returns:
-        list[dbc.Col]: Список колонок с графиками.
+        list[dbc.Row]: Список строк с графиками, расположенными согласно layout.
     """
-    logger.info("Создание графиков для дашборда: %s", dashboard_id)
+    logger.info("Создание графиков для дашборда: %s, layout=%s", dashboard_id, "есть" if layout_definition else "нет")
 
-    charts: list[dbc.Col] = []
+    # Если нет layout-а, используем дефолтную сетку (по 2 графика в строке)
+    if not layout_definition or not layout_definition.get("grid"):
+        return _create_default_charts(chart_data, dashboard_id)
+
+    # Используем layout для расположения графиков
+    return _create_layout_charts(chart_data, layout_definition, dashboard_id, token)
+
+
+def _create_default_charts(
+    chart_data: list[dict[str, Any]] | None, dashboard_id: str
+) -> list[dbc.Row]:
+    """Создает графики в дефолтной сетке (по 2 в строке).
+
+    Args:
+        chart_data: Данные графиков.
+        dashboard_id: Идентификатор дашборда.
+
+    Returns:
+        list[dbc.Row]: Список строк с графиками.
+    """
+    rows = []
+    current_row_cols = []
+    chart_idx = 0
+
     if not chart_data:
-        return [dbc.Col(html.P("Нет данных для отображения", className="text-muted"))]
+        return [dbc.Row(dbc.Col(html.P("Нет данных для отображения", className="text-muted")))]
 
-    # chart_data - это список объектов AggregatedData
+    for chart_item in chart_data:
+        chart_type = chart_item.get("chart_type", "bar")
+        data = chart_item.get("data", [])
+        metadata = chart_item.get("metadata", {})
+        title = metadata.get("graph_name", f"График {chart_idx + 1}")
+
+        fig = render_graph_from_data(chart_type, data, title)
+        col = dbc.Col(
+            dbc.Card(
+                [
+                    dbc.CardHeader(title),
+                    dbc.CardBody([dcc.Graph(
+                        figure=fig,
+                        id={"type": "dashboard-chart", "index": chart_idx},
+                    )]),
+                ],
+                className="mb-4",
+            ),
+            md=6,
+            className="mb-4",
+        )
+        current_row_cols.append(col)
+        chart_idx += 1
+
+        # Если набрали 2 колонки или это последний график, создаем строку
+        if len(current_row_cols) == 2 or chart_idx == len(chart_data):
+            rows.append(dbc.Row(current_row_cols, className="g-4"))
+            current_row_cols = []
+
+    return rows if rows else [dbc.Row(dbc.Col(html.P("Нет данных для отображения", className="text-muted")))]
+
+
+def _create_layout_charts(
+    chart_data: list[dict[str, Any]] | None,
+    layout_definition: dict[str, Any],
+    dashboard_id: str,
+    token: str,
+) -> list[dbc.Row]:
+    """Создает графики согласно layout-у.
+
+    Args:
+        chart_data: Данные графиков.
+        layout_definition: Конфигурация layout-а.
+        dashboard_id: Идентификатор дашборда.
+        token: JWT токен.
+
+    Returns:
+        list[dbc.Row]: Список строк с графиками, расположенными по grid-у.
+    """
+    rows = []
+    # Создаем мапу graph_id -> chart_data
+    chart_map = {}
     if isinstance(chart_data, list):
-        for i, chart_item in enumerate(chart_data):
+        for item in chart_data:
+            graph_id = item.get("graph_id")
+            if graph_id:
+                chart_map[str(graph_id)] = item
+
+    # Обрабатываем grid из layout-а
+    grid = layout_definition.get("grid", [])
+    for row_config in grid:
+        cols = []
+        columns = row_config.get("columns", [])
+        for col_config in columns:
+            graph_id = str(col_config.get("graph_id", ""))
+            width = col_config.get("width", 12)  # Дефолтная ширина 12
+            # Ограничиваем width до 12
+            width = max(1, min(width, 12))
+
+            # Получаем данные графика
+            chart_item = chart_map.get(graph_id)
+            if not chart_item:
+                # Если данных нет, создаем пустой график
+                col = dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody([html.P(f"График {graph_id} не найден", className="text-muted")]),
+                        className="mb-4",
+                    ),
+                    md=width,
+                    className="mb-4",
+                )
+                cols.append(col)
+                continue
+
             chart_type = chart_item.get("chart_type", "bar")
             data = chart_item.get("data", [])
             metadata = chart_item.get("metadata", {})
-            title = metadata.get("graph_name", f"График {i + 1}")
+            title = metadata.get("graph_name", f"График {graph_id}")
 
-            # Создаем график на основе типа
             fig = render_graph_from_data(chart_type, data, title)
-
             col = dbc.Col(
                 dbc.Card(
                     [
                         dbc.CardHeader(title),
-                        dbc.CardBody([dcc.Graph(figure=fig, id={"type": "dashboard-chart", "index": i})]),
+                        dbc.CardBody([dcc.Graph(
+                            figure=fig,
+                            id={"type": "dashboard-chart", "index": graph_id},
+                        )]),
                     ],
                     className="mb-4",
                 ),
-                md=6,
+                md=width,
                 className="mb-4",
             )
-            charts.append(col)
+            cols.append(col)
 
-    return charts if charts else [dbc.Col(html.P("Нет данных для отображения", className="text-muted"))]
+        if cols:
+            rows.append(dbc.Row(cols, className="g-4"))
+
+    return rows if rows else [dbc.Row(dbc.Col(html.P("Нет данных для отображения в layout-е", className="text-muted")))]
 
 
 def render_graph_from_data(chart_type: str, data: list[dict[str, Any]], title: str) -> go.Figure:

@@ -15,13 +15,16 @@ import logging
 from mko_bi.db.models import dashboard as dashboard_model
 from mko_bi.db.repositories.access_repo import AccessRepository
 from mko_bi.db.repositories.dashboard_repo import DashboardRepository
+from mko_bi.db.repositories.layout_repo import LayoutRepository
 from mko_bi.db.session import get_session
 from sqlalchemy.ext.asyncio import AsyncSession
 from mko_bi.models.dashboard import (
     DashboardConfig,
     DashboardRead,
+    DashboardUpdate,
 )
 from mko_bi.models.user_roles import PermissionEnum, GraphTypeEnum
+from mko_bi.models.layout import LayoutRead
 
 logger = logging.getLogger(__name__)
 
@@ -100,6 +103,30 @@ async def _validate_dashboard_exists(
     if dashboard_obj is None:
         logger.warning("Дашборд не найден: id=%s", dashboard_id)
     return dashboard_obj
+
+
+async def _dashboard_to_read(dashboard_obj: dashboard_model.Dashboard) -> DashboardRead:
+    """Преобразует модель дашборда в Pydantic модель DashboardRead с layout данными.
+
+    Args:
+        dashboard_obj: Модель дашборда SQLAlchemy.
+
+    Returns:
+        DashboardRead с заполненными layout данными.
+    """
+    dashboard_dict = {
+        "id": dashboard_obj.id,
+        "name": dashboard_obj.name,
+        "description": dashboard_obj.description,
+        "config": DashboardConfig(**dashboard_obj.config) if isinstance(dashboard_obj.config, dict) else DashboardConfig(**json.loads(dashboard_obj.config)),
+        "layout_id": dashboard_obj.layout_id,
+        "created_at": dashboard_obj.created_at,
+        "updated_at": dashboard_obj.updated_at,
+    }
+    # Добавляем layout если есть
+    if dashboard_obj.layout:
+        dashboard_dict["layout"] = LayoutRead.model_validate(dashboard_obj.layout)
+    return DashboardRead.model_validate(dashboard_dict)
 
 
 async def _check_owner_permission(dashboard_id: int, user_id: int, db: AsyncSession) -> bool:
@@ -203,12 +230,8 @@ async def _create_dashboard_with_session(
         await db.commit()
         logger.info("Транзакция коммичена для дашборда id=%s", dashboard_obj.id)
 
-        # Преобразование в Pydantic модель
-        # Преобразуем config из JSON строки в dict
-        dashboard_dict = dashboard_obj.__dict__.copy()
-        if isinstance(dashboard_dict.get("config"), str):
-            dashboard_dict["config"] = json.loads(dashboard_dict["config"])
-        return DashboardRead.model_validate(dashboard_dict)
+        # Преобразование в Pydantic модель с layout данными
+        return await _dashboard_to_read(dashboard_obj)
 
     except ValueError:
         # Валидационные ошибки не требуют отката (транзакция еще не начата)
@@ -277,12 +300,8 @@ async def _get_dashboard_with_session(
         permission,
     )
 
-    # Преобразование в Pydantic модель
-    # Преобразуем config из JSON строки в dict
-    dashboard_dict = dashboard_obj.__dict__.copy()
-    if isinstance(dashboard_dict.get("config"), str):
-        dashboard_dict["config"] = json.loads(dashboard_dict["config"])
-    return DashboardRead.model_validate(dashboard_dict)
+    # Преобразование в Pydantic модель с layout данными
+    return await _dashboard_to_read(dashboard_obj)
 
 
 async def get_user_dashboards(user_id: int, db: AsyncSession | None = None) -> list[DashboardRead]:
@@ -315,13 +334,10 @@ async def _get_user_dashboards_with_session(user_id: int, db: AsyncSession) -> l
     # Получение дашбордов через репозиторий
     dashboard_objs = await AccessRepository.get_user_dashboards(user_id, db)
 
-    # Преобразование в Pydantic модели
+    # Преобразование в Pydantic модели с layout данными
     dashboards = []
     for d in dashboard_objs:
-        d_dict = d.__dict__.copy()
-        if isinstance(d_dict.get("config"), str):
-            d_dict["config"] = json.loads(d_dict["config"])
-        dashboards.append(DashboardRead.model_validate(d_dict))
+        dashboards.append(await _dashboard_to_read(d))
 
     logger.info(
         "Получено дашбордов для пользователя id=%s: %s",
@@ -333,7 +349,7 @@ async def _get_user_dashboards_with_session(user_id: int, db: AsyncSession) -> l
 
 
 async def update_dashboard(
-    dashboard_id: int, config: dict[str, Any], db: AsyncSession | None = None
+    dashboard_id: int, update_data: DashboardUpdate, db: AsyncSession | None = None
 ) -> DashboardRead | None:
     """Обновляет конфигурацию дашборда.
 
@@ -342,7 +358,7 @@ async def update_dashboard(
 
     Args:
         dashboard_id: Идентификатор дашборда. 
-        config: Новая конфигурация дашборда в формате JSON-совместимого dict. 
+        update_data: Данные для обновления (config, layout_id и т.д.).
         db: Опциональная сессия базы данных. Если не передана, создается новая. 
 
     Returns:
@@ -354,20 +370,20 @@ async def update_dashboard(
     """
     logger.info("Обновление дашборда: dashboard_id=%s", dashboard_id)
 
-    # Валидация конфигурации
-    config_obj = DashboardConfig(**config)
-    _validate_config(config_obj)
+    # Валидация конфигурации если она предоставлена
+    if update_data.config:
+        _validate_config(update_data.config)
 
     # Если сессия не передана, создаем новую
     if db is None:
         async with get_session() as db:
-            return await _update_dashboard_with_session(dashboard_id, config_obj, db)
+            return await _update_dashboard_with_session(dashboard_id, update_data, db)
     else:
-        return await _update_dashboard_with_session(dashboard_id, config_obj, db)
+        return await _update_dashboard_with_session(dashboard_id, update_data, db)
 
 
 async def _update_dashboard_with_session(
-    dashboard_id: int, config_obj: DashboardConfig, db: AsyncSession
+    dashboard_id: int, update_data: DashboardUpdate, db: AsyncSession
 ) -> DashboardRead | None:
     """Внутренняя функция для обновления дашборда с использованием сессии."""
     # Проверка существования дашборда
@@ -375,20 +391,34 @@ async def _update_dashboard_with_session(
     if dashboard_obj is None:
         return None
 
+    # Подготовка данных для обновления
+    update_kwargs = {}
+    if update_data.config is not None:
+        update_kwargs["config"] = json.dumps(update_data.config.model_dump())
+    if update_data.name is not None:
+        update_kwargs["name"] = update_data.name
+    if update_data.description is not None:
+        update_kwargs["description"] = update_data.description
+    if update_data.layout_id is not None:
+        # Проверка существования layout если указан
+        layout = await LayoutRepository.get(update_data.layout_id, db)
+        if not layout:
+            logger.error("Layout не найден: id=%s", update_data.layout_id)
+            raise ValueError(f"Layout с id={update_data.layout_id} не найден")
+        update_kwargs["layout_id"] = update_data.layout_id
+
     # Обновление через репозиторий
     updated = await DashboardRepository.update(
         db=db,
         dashboard_id=dashboard_id,
-        config=json.dumps(config_obj.model_dump()),
+        **update_kwargs,
     )
 
     if updated:
         logger.info("Дашборд обновлен: id=%s", dashboard_id)
-        # Преобразуем config из JSON строки в dict
-        updated_dict = updated.__dict__.copy()
-        if isinstance(updated_dict.get("config"), str):
-            updated_dict["config"] = json.loads(updated_dict["config"])
-        return DashboardRead.model_validate(updated_dict)
+        await db.commit()
+        # Преобразование в Pydantic модель с layout данными
+        return await _dashboard_to_read(updated)
     else:
         logger.warning("Не удалось обновить дашборд: id=%s", dashboard_id)
         return None
