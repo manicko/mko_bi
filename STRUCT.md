@@ -31,6 +31,7 @@ C:\py_exp\mko_bi
 ├── 'Pydantic TASKS.md'
 ├── pyproject.toml
 ├── SPEC.md
+├── SPEC_FRONTEND.md
 ├── src
 │   ├── data
 │   │   └── logs
@@ -191,18 +192,6 @@ C:\py_exp\mko_bi
 │   │   └── TEST_036_test_audit_arch.md
 │   ├── DB
 │   ├── DEV
-│   │   ├── TASK-DEV-001_jwt_signature_fix_DONE.md
-│   │   ├── TASK-DEV-002_polars_async_wrap_DONE.md
-│   │   ├── TASK-DEV-003_dash_async_http_DONE.md
-│   │   ├── TASK-DEV-004_mypy_type_fixes_DONE.md
-│   │   ├── TASK-DEV-005_sqlalchemy_overlaps_DONE.md
-│   │   ├── TASK-DEV-006_async_rollback_fix_DONE.md
-│   │   ├── TASK-DEV-007_aggregation_enum_fix_DONE.md
-│   │   ├── TASK-DEV-008_mypy_config_fix_DONE.md
-│   │   ├── TASK-DEV-009_uuid_logging_fix_DONE.md
-│   │   ├── TASK-DEV-010_file_cleanup_fix_DONE.md
-│   │   ├── TASK-DEV-011_pagination_DONE.md
-│   │   └── TASK-DEV-012_background_tasks_DONE.md
 │   ├── DONE
 │   │   ├── TASK_001_sync_async_unification.md
 │   │   ├── TASK_014_dash_modern_component_architecture_DONE.md
