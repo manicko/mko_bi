@@ -384,7 +384,12 @@ Test Isolation Report:
 
 ---
 
-# 3. Результаты выполнения задания НОВЫЙ ФАЙЛ  `C:\py_exp\mko_bi\TODO\DATABASES_AUDIT_REPORT_<number>.md` cодержит:
+# 3. Результаты выполнения задания: 
+
+Новый файл `C:\py_exp\mko_bi\TODO\DATABASES_AUDIT_REPORT_<number>.md` (number - уникальный номер файла) 
+
+
+Содержание файла:
 
 ### 1. Database Inventory
 

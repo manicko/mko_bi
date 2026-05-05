@@ -314,6 +314,17 @@ dashboard_access (
 ```
 - **permission**: `view` | `edit` | `admin`
 
+#### `dashboard_filters` - Связь дашбордов с фильтрами (many-to-many)
+```sql
+dashboard_filters (
+    dashboard_id    UUID NOT NULL REFERENCES dashboards(id) ON DELETE CASCADE,
+    filter_id       UUID NOT NULL REFERENCES filters(id) ON DELETE CASCADE,
+    PRIMARY KEY (dashboard_id, filter_id)
+);
+```
+- Связь многие-ко-многим между дашбордами и фильтрами
+- При удалении дашборда или фильтра связь удаляется (CASCADE)
+
 #### `processing_configs` - Настройки обработки
 ```sql
 processing_configs (
@@ -354,14 +365,14 @@ processing_logs (
 
 ### 16.2 Indexes
 ```sql
-CREATE INDEX idx_agg_graph_id ON aggregated_data(graph_id);
-CREATE INDEX idx_agg_dashboard_id ON aggregated_data(dashboard_id);
-CREATE INDEX idx_agg_dims_gin ON aggregated_data USING GIN (dims);
-CREATE INDEX idx_access_user ON dashboard_access(user_id);
-CREATE INDEX idx_access_dashboard ON dashboard_access(dashboard_id);
--- Для graphs (частый запрос всех графиков дашборда)
+CREATE INDEX idx_aggregated_data_graph_id ON aggregated_data(graph_id);
+CREATE INDEX idx_aggregated_data_dashboard_id ON aggregated_data(dashboard_id);
+CREATE INDEX idx_aggregated_data_dashboard_graph ON aggregated_data(dashboard_id, graph_id);
+CREATE INDEX idx_aggregated_data_dims_gin ON aggregated_data USING GIN (dims);
+CREATE INDEX idx_dashboard_access_user ON dashboard_access(user_id);
+CREATE INDEX idx_dashboard_access_dashboard ON dashboard_access(dashboard_id);
 CREATE INDEX idx_graphs_dashboard ON graphs(dashboard_id);
-
+CREATE INDEX idx_dashboard_filters_dashboard_filter ON dashboard_filters(dashboard_id, filter_id);
 ```
 
 ### 16.3 Data Principles
