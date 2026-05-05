@@ -19,6 +19,7 @@ from mko_b_i.models.layout import (
     LayoutUpdate,
     LayoutCreate,
 )
+from mko_bi.models.user_roles import UserRoleEnum
 from mko_b_i.services.layout_service import (
     create_layout,
     get_layout,
@@ -60,7 +61,7 @@ async def create_layout_endpoint(
         HTTPException 500: При ошибке базы данных.
     """
     # Проверка прав администратора
-    if current_user.role != "admin":
+    if current_user.role != UserRoleEnum.admin:
         logger.warning(
             "Нет прав на создание layout-а: user_id=%s, role=%s",
             current_user.id,
@@ -128,7 +129,7 @@ async def get_layouts_endpoint(
     logger.info("Получение списка layout-ов")
 
     try:
-        layouts = await get_all_layouts(db=db)
+        layouts: list[LayoutRead] = await get_all_layouts(db=db)
         logger.info("Получено layout-ов: %s", len(layouts))
         return layouts
     except Exception as e:
@@ -219,7 +220,7 @@ async def update_layout_endpoint(
         HTTPException 500: При ошибке базы данных.
     """
     # Проверка прав администратора
-    if current_user.role != "admin":
+    if current_user.role != UserRoleEnum.admin:
         logger.warning(
             "Нет прав на обновление layout-а: user_id=%s, role=%s",
             current_user.id,
@@ -291,7 +292,7 @@ async def delete_layout_endpoint(
         HTTPException 500: При ошибке базы данных.
     """
     # Проверка прав администратора
-    if current_user.role != "admin":
+    if current_user.role != UserRoleEnum.admin:
         logger.warning(
             "Нет прав на удаление layout-а: user_id=%s, role=%s",
             current_user.id,

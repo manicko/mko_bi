@@ -369,7 +369,7 @@ Pipeline должен быть:
 
 # Формат отчета (ОБЯЗАТЕЛЬНО)
  
-Создать файл `TODO/TASK_ <number> _analysis_report.md`
+Создать новый файл `TODO/TASK_ <number> _analysis_report.md`
 вместо number - подставить номер, убедившись, что файл с таким номером не существует
 
 # 1. Executive Summary

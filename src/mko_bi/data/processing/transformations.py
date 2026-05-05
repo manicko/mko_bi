@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 AGG_FUNC_MAP = {
     AggregationFunctionEnum.sum_val: lambda col: pl.col(col).sum(),
     AggregationFunctionEnum.mean: lambda col: pl.col(col).mean(),
-    AggregationFunctionEnum.count: lambda col: pl.col(col).count(),
+    AggregationFunctionEnum.count_val: lambda col: pl.col(col).count(),
     AggregationFunctionEnum.min_val: lambda col: pl.col(col).min(),
     AggregationFunctionEnum.max_val: lambda col: pl.col(col).max(),
     AggregationFunctionEnum.median: lambda col: pl.col(col).median(),

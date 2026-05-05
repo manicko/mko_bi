@@ -1,8 +1,6 @@
 from pathlib import Path
 from typing import Any
 
-# mypy: ignore-errors
-
 import logging
 import redis
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
@@ -11,8 +9,9 @@ from pydantic import BaseModel, PostgresDsn
 
 from mko_bi.models.user_roles import FileExtensionEnum
 
-logger = logging.getLogger(__name__)
+from pydantic.fields import FieldInfo
 
+logger = logging.getLogger(__name__)
 
 class SecretsFileSource(PydanticBaseSettingsSource):
     """Custom settings source for reading Docker secrets from files.
@@ -21,7 +20,7 @@ class SecretsFileSource(PydanticBaseSettingsSource):
     files containing the actual secret values (Docker secrets pattern).
     """
     
-    def get_field_value(self, field_name: str, field_info: Any) -> Any:
+    def get_field_value(self, field_info: FieldInfo, field_name: str) -> Any:
         """Read secret from file for a specific field."""
         return None  # Not used - we override __call__ instead
     
@@ -136,10 +135,10 @@ class ChartsSettings(BaseModel):
         """Настройки сравнения год-к-году."""
         
         class CurrentYearStyle(BaseModel):
-            line: dict = {"dash": "solid", "width": 3}
+            line: dict[str, Any] = {"dash": "solid", "width": 3}
         
         class PreviousYearStyle(BaseModel):
-            line: dict = {"dash": "dash", "width": 2}
+            line: dict[str, Any] = {"dash": "dash", "width": 2}
         
         current_year_style: CurrentYearStyle = CurrentYearStyle()
         previous_year_style: PreviousYearStyle = PreviousYearStyle()
@@ -148,7 +147,7 @@ class ChartsSettings(BaseModel):
     
     class LayoutSettings(BaseModel):
         template: str = "plotly_white"
-        margin: dict = {"l": 50, "r": 50, "t": 50, "b": 50}
+        margin: dict[str, int] = {"l": 50, "r": 50, "t": 50, "b": 50}
     
     layout: LayoutSettings = LayoutSettings()
 

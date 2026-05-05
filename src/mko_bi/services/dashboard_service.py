@@ -141,7 +141,7 @@ async def _check_owner_permission(dashboard_id: int, user_id: int, db: AsyncSess
         True, если пользователь является владельцем (admin), иначе False. 
     """
     permission = await AccessRepository.check_access(user_id, dashboard_id, db)
-    is_owner: bool = permission == "admin"
+    is_owner: bool = permission == PermissionEnum.admin
     if not is_owner:
         logger.warning(
             "Пользователь id=%s не является владельцем дашборда id=%s (permission=%s)",
@@ -218,7 +218,7 @@ async def _create_dashboard_with_session(
             db=db,
             user_id=owner_id,
             dashboard_id=dashboard_obj.id,
-            permission="admin",
+            permission=PermissionEnum.admin,
         )
         logger.info(
             "Права администратора предоставлены: user_id=%s, dashboard_id=%s",
@@ -350,8 +350,8 @@ async def _get_user_dashboards_with_session(user_id: int, db: AsyncSession) -> l
 
 async def update_dashboard(
     dashboard_id: int,
-    update_data: dict | DashboardUpdate | None = None,
-    config: dict | None = None,
+    update_data: dict[str, Any] | DashboardUpdate | None = None,
+    config: dict[str, Any] | None = None,
     db: AsyncSession | None = None
 ) -> DashboardRead | None:
     """Обновляет конфигурацию дашборда.
@@ -408,7 +408,7 @@ async def update_dashboard(
 
 
 async def _update_dashboard_with_session(
-    dashboard_id: int, update_data: dict | DashboardUpdate, db: AsyncSession
+    dashboard_id: int, update_data: dict[str, Any] | DashboardUpdate, db: AsyncSession
 ) -> DashboardRead | None:
     """Внутренняя функция для обновления дашборда с использованием сессии."""
     # Проверка существования дашборда

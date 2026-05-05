@@ -7,13 +7,14 @@
 import pytest
 from uuid import uuid4
 from httpx import AsyncClient
+from typing import Any
 
 
 class TestCreateDashboardEndpoint:
     """Тесты эндпоинта создания дашборда."""
 
     @pytest.mark.asyncio
-    async def test_create_dashboard_success(self, authenticated_client: AsyncClient, test_user: dict):
+    async def test_create_dashboard_success(self, authenticated_client: AsyncClient, test_user: dict[str, Any]):
         """Успешное создание дашборда."""
         response = await authenticated_client.post(
             "/dashboards/",
@@ -46,7 +47,7 @@ class TestGetDashboardsEndpoint:
     """Тесты эндпоинта получения списка дашбордов."""
 
     @pytest.mark.asyncio
-    async def test_get_dashboards_success(self, authenticated_client: AsyncClient, test_user: dict):
+    async def test_get_dashboards_success(self, authenticated_client: AsyncClient, test_user: dict[str, Any]):
         """Успешное получение списка дашбордов."""
         # Создаем дашборд
         await authenticated_client.post(
@@ -78,7 +79,7 @@ class TestGetDashboardEndpoint:
     """Тесты эндпоинта получения дашборда по ID."""
 
     @pytest.mark.asyncio
-    async def test_get_dashboard_success(self, authenticated_client: AsyncClient, test_user: dict):
+    async def test_get_dashboard_success(self, authenticated_client: AsyncClient, test_user: dict[str, Any]):
         """Успешное получение дашборда."""
         # Создаем дашборд
         create_resp = await authenticated_client.post(
@@ -122,7 +123,7 @@ class TestUpdateDashboardEndpoint:
     """Тесты эндпоинта обновления дашборда."""
 
     @pytest.mark.asyncio
-    async def test_update_dashboard_success(self, authenticated_client: AsyncClient, test_user: dict):
+    async def test_update_dashboard_success(self, authenticated_client: AsyncClient, test_user: dict[str, Any]):
         """Успешное обновление дашборда."""
         # Создаем дашборд
         create_resp = await authenticated_client.post(
@@ -156,7 +157,7 @@ class TestDeleteDashboardEndpoint:
     """Тесты эндпоинта удаления дашборда."""
 
     @pytest.mark.asyncio
-    async def test_delete_dashboard_success(self, authenticated_client: AsyncClient, test_user: dict):
+    async def test_delete_dashboard_success(self, authenticated_client: AsyncClient, test_user: dict[str, Any]):
         """Успешное удаление дашборда."""
         # Создаем дашборд
         create_resp = await authenticated_client.post(
@@ -184,7 +185,7 @@ class TestGrantDashboardAccessEndpoint:
     """Тесты эндпоинта предоставления доступа к дашборду."""
 
     @pytest.mark.asyncio
-    async def test_grant_access_success(self, authenticated_client: AsyncClient, test_user: dict):
+    async def test_grant_access_success(self, authenticated_client: AsyncClient, test_user: dict[str, Any]):
         """Успешное предоставление доступа."""
         # Создаем дашборд
         create_resp = await authenticated_client.post(
@@ -220,7 +221,7 @@ class TestGrantDashboardAccessEndpoint:
         assert data["message"] == "Доступ успешно предоставлен"
 
     @pytest.mark.asyncio
-    async def test_grant_access_mismatched_ids(self, authenticated_client: AsyncClient, test_user: dict):
+    async def test_grant_access_mismatched_ids(self, authenticated_client: AsyncClient, test_user: dict[str, Any]):
         """Ошибка при несовпадении dashboard_id в URL и теле запроса."""
         dashboard_id = str(uuid4())
         other_id = str(uuid4())

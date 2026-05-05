@@ -368,10 +368,11 @@ class TestRequireRole:
         mock_user.role = "editor"
 
         checker = require_role("admin")
-
-        with pytest.raises(Exception) as exc_info:
+        
+        from fastapi import HTTPException
+        with pytest.raises(HTTPException) as exc_info:
             checker(user=mock_user)
-
+        
         assert exc_info.value.status_code == 403
 
     def test_editor_passes_editor_check(self):

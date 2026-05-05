@@ -77,9 +77,9 @@ class TestUserModel:
 
         with pytest.raises(IntegrityError):
             await async_db_session.commit()
-
-        async_db_session.rollback()
-
+        
+        await async_db_session.rollback()
+        
     async def test_user_role_enum_values(self, async_db_session):
         """Проверка допустимых значений роли пользователя."""
         for role in ["admin", "editor", "viewer"]:
@@ -174,9 +174,9 @@ class TestDashboardModel:
 
         with pytest.raises(IntegrityError):
             await async_db_session.commit()
-
-        async_db_session.rollback()
-
+        
+        await async_db_session.rollback()
+        
     async def test_dashboard_updated_at_auto_update(self, async_db_session):
         """Проверка автоматического обновления updated_at."""
         dashboard = dashboard_model.Dashboard(
@@ -806,9 +806,9 @@ class TestLayoutModel:
 
         with pytest.raises(IntegrityError):
             await async_db_session.commit()
-
-        async_db_session.rollback()
-
+        
+        await async_db_session.rollback()
+        
     async def test_layout_dashboards_relationship(self, async_db_session):
         """Проверка связи layout с дашбордами."""
         layout = layout_model.Layout(

@@ -73,7 +73,7 @@ async def upload_file_endpoint(
         HTTPException 500: При ошибке сервера.
     """
     logger.info(
-        "Загрузка файла: filename=%s, dashboard_id=%d, user_id=%s",
+        "Загрузка файла: filename=%s, dashboard_id=%s, user_id=%s",
         file.filename,
         dashboard_id,
         current_user.id,
@@ -86,8 +86,8 @@ async def upload_file_endpoint(
         # Закрываем файл после чтения
         try:
             await file.close()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error("Failed to close file: %s", e)
 
         # Вызов сервиса загрузки
         result = await upload_file(
@@ -172,7 +172,7 @@ async def process_file_endpoint(
         HTTPException 500: При ошибке сервера.
     """
     logger.info(
-        "Запуск обработки: task_id=%s, dashboard_id=%d, user_id=%s",
+        "Запуск обработки: task_id=%s, dashboard_id=%s, user_id=%s",
         task_id,
         dashboard_id,
         current_user.id,

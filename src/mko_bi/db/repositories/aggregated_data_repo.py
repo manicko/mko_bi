@@ -8,7 +8,7 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, insert, select
+from sqlalchemy import delete, insert, select, func
 from sqlalchemy.exc import SQLAlchemyError
 
 from mko_bi.db.models import aggregated_data as aggregated_data_model
@@ -101,32 +101,48 @@ class AggregatedDataRepository:
     
     @classmethod
     async def get_by_dashboard(
-        cls, dashboard_id: int, db: AsyncSession
-    ) -> list[aggregated_data_model.AggregatedData]:
-        """Получить все агрегированные данные для дашборда.
+        cls,
+        dashboard_id: int,
+        db: AsyncSession,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> tuple[int, list[aggregated_data_model.AggregatedData]]:
+        """Получить агрегированные данные для дашборда с пагинацией.
         
         Args:
             dashboard_id: Идентификатор дашборда.
             db: Асинхронная сессия базы данных.
-        
+            limit: Максимальное количество записей (по умолчанию 100).
+            offset: Смещение (по умолчанию 0).
+            
         Returns:
-            Список агрегированных данных.
-        
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            Кортеж (общее количество записей, список агрегированных данных).
         """
         try:
+            # Получение общего количества записей
+            total_result = await db.execute(
+                select(func.count())
+                .select_from(aggregated_data_model.AggregatedData)
+                .where(aggregated_data_model.AggregatedData.dashboard_id == dashboard_id)
+            )
+            total = total_result.scalar_one()
+            
+            # Получение пагинированных данных
             result = await db.execute(
                 select(aggregated_data_model.AggregatedData)
                 .where(aggregated_data_model.AggregatedData.dashboard_id == dashboard_id)
+                .limit(limit)
+                .offset(offset)
             )
             data = list(result.scalars().all())
+            
             logger.info(
-                "Получены данные для dashboard_id=%s, count=%s",
+                "Получены данные для dashboard_id=%s, total=%s, count=%s",
                 dashboard_id,
+                total,
                 len(data),
             )
-            return data
+            return total, data
         except SQLAlchemyError as e:
             logger.error(
                 "Ошибка при получении данных dashboard_id=%s: %s",

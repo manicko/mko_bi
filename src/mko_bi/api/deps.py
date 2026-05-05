@@ -45,6 +45,8 @@ from mko_bi.interfaces import (
     IProcessingLogService,
 )
 
+from mko_bi.models.user_roles import UserRoleEnum
+
 logger = logging.getLogger(__name__)
 
 
@@ -361,7 +363,7 @@ def require_admin_role(
         ):
             return create_user(user_data)
     """
-    if not check_role(user.role, "admin"):
+    if not check_role(user.role, UserRoleEnum.admin):
         logger.warning(
             "Требуется роль admin, у пользователя: user_id=%s, role=%s",
             user.id,
@@ -395,7 +397,7 @@ def require_editor_role(
         ):
             return {"message": "Upload allowed"}
     """
-    if not check_role(user.role, "editor"):
+    if not check_role(user.role, UserRoleEnum.editor):
         logger.warning(
             "Требуется роль editor или выше, у пользователя: user_id=%s, role=%s",
             user.id,
@@ -450,7 +452,7 @@ def require_role_dependency(required_role: str):
     Example:
         @app.get("/admin-only")
         async def admin_only(
-            user: UserDB = Depends(require_role_dependency("admin")),
+            user: UserDB = Depends(require_role_dependency(UserRoleEnum.admin)),
         ):
             return {"message": "Admin area"}
     """

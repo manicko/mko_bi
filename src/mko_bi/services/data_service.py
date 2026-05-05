@@ -4,6 +4,7 @@
 обработки данных для дашбордов.
 """
 
+import asyncio
 import logging
 import uuid
 from datetime import datetime
@@ -11,7 +12,6 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
-import polars as pl
 from sqlalchemy import Float, Integer
 from sqlalchemy.ext.asyncio import AsyncSession
 from werkzeug.utils import secure_filename
@@ -19,6 +19,7 @@ from werkzeug.utils import secure_filename
 from mko_bi.config import get_config, get_redis_client
 from mko_bi.core.permissions import check_dashboard_access
 from mko_bi.core.security import RateLimiter
+from mko_bi.core.task_queue import enqueue_job
 from mko_bi.data.loaders.loader import CSVLoader
 from mko_bi.db.repositories.aggregated_data_repo import AggregatedDataRepository
 from mko_bi.db.repositories.dashboard_repo import DashboardRepository
@@ -189,39 +190,21 @@ def _save_uploaded_file(filename: str, file_content: bytes, dashboard_id: UUID |
     return file_path
 
 
-async def _process_csv_file(
+def _process_csv_file_sync(
     file_path: Path,
     processing_config: ProcessingConfig | None = None,
-    dashboard_id: UUID | None = None,
-    db: AsyncSession | None = None,
 ) -> ProcessingResultData:
-    """Обрабатывает CSV файл с использованием Polars.
+    """Synchronous processing of CSV file using Polars.
 
-    Читает gzipped CSV файл через CSVLoader, применяет трансформации и агрегации.
-    При передаче dashboard_id и db сохраняет агрегированные данные в БД.
-
-    Args:
-        file_path: Путь к файлу.
-        processing_config: Конфигурация обработки.
-        dashboard_id: Опциональный ID дашборда для сохранения агрегатов.
-        db: Опциональная сессия базы данных для сохранения агрегатов.
-
-    Returns:
-        ProcessingResultData: Результаты обработки.
+    This function is called via asyncio.to_thread() to avoid blocking the event loop.
     """
     logger.info("Начало обработки файла: %s", file_path)
 
-    # Чтение файла через CSVLoader (с поддержкой lazy loading)
+    # Чтение файла через CSVLoader
     loader = CSVLoader()
     df = loader.load_csv(file_path)
 
     logger.info("Файл прочитан: %d строк, %d колонок", df.shape[0], df.shape[1])
-
-    result_data: ProcessingResultData = {
-        "columns": df.columns,
-        "rows": df.shape[0],
-        "preview": df.head(10).to_dicts(),
-    }
 
     # Применяем обработку если задана конфигурация
     if processing_config:
@@ -253,17 +236,45 @@ async def _process_csv_file(
                 custom_metrics=processing_config.custom_metrics,
             )
 
-        result_data["processed_rows"] = df.shape[0]
-        result_data["processed_columns"] = df.columns
-        result_data["preview"] = df.head(10).to_dicts()
-    else:
-        result_data["processed_rows"] = df.shape[0]
-        result_data["processed_columns"] = df.columns
-        result_data["preview"] = df.head(10).to_dicts()
+    # Формируем результат
+    result_data: ProcessingResultData = {
+        "columns": df.columns,
+        "rows": df.shape[0],
+        "preview": df.head(10).to_dicts(),
+        "processed_rows": df.shape[0],
+        "processed_columns": df.columns,
+    }
 
     logger.info("Обработка завершена: %d строк", df.shape[0])
 
     return result_data
+
+
+async def _process_csv_file(
+    file_path: Path,
+    processing_config: ProcessingConfig | None = None,
+    dashboard_id: UUID | None = None,
+    db: AsyncSession | None = None,
+) -> ProcessingResultData:
+    """Обрабатывает CSV файл с использованием Polars.
+
+    Читает gzipped CSV файл через CSVLoader, применяет трансформации и агрегации.
+    При передаче dashboard_id и db сохраняет агрегированные данные в БД.
+
+    Args:
+        file_path: Путь к файлу.
+        processing_config: Конфигурация обработки.
+        dashboard_id: Опциональный ID дашборда для сохранения агрегатов.
+        db: Опциональная сессия базы данных для сохранения агрегатов.
+
+    Returns:
+        ProcessingResultData: Результаты обработки.
+    """
+    return await asyncio.to_thread(
+        _process_csv_file_sync,
+        file_path,
+        processing_config,
+    )
 
 
 async def _upload_file_logic(
@@ -302,7 +313,7 @@ async def _upload_file_logic(
     # Проверяем существование дашборда
     dashboard = await DashboardRepository.get(dashboard_id, db)
     if dashboard is None:
-        logger.warning("Дашборд не найден: id=%d", dashboard_id)
+        logger.warning("Дашборд не найден: id=%s", dashboard_id)
         raise ValueError(f"Дашборд с id={dashboard_id} не найден")
 
     # Проверяем права на запись (editor или admin)
@@ -314,7 +325,7 @@ async def _upload_file_logic(
     )
     if not has_access:
         logger.warning(
-            "Нет прав на загрузку: user_id=%d, dashboard_id=%d",
+            "Нет прав на загрузку: user_id=%d, dashboard_id=%s",
             user_id,
             dashboard_id,
         )
@@ -382,7 +393,7 @@ async def upload_file(
         PermissionError: Если у пользователя нет прав на загрузку.
     """
     logger.info(
-        "Начало загрузки файла: filename=%s, content_type=%s, dashboard_id=%d, user_id=%d",
+        "Начало загрузки файла: filename=%s, content_type=%s, dashboard_id=%s, user_id=%d",
         filename,
         content_type,
         dashboard_id,
@@ -417,7 +428,7 @@ async def _trigger_processing_logic(
         ProcessingStatus: Статус обработки.
     """
     logger.info(
-        "Запуск обработки (внутренняя логика): task_id=%s, dashboard_id=%d, user_id=%d",
+        "Запуск обработки (внутренняя логика): task_id=%s, dashboard_id=%s, user_id=%d",
         task_id,
         dashboard_id,
         user_id,
@@ -432,7 +443,7 @@ async def _trigger_processing_logic(
     )
     if not has_access:
         logger.warning(
-            "Нет прав на обработку: user_id=%d, dashboard_id=%d",
+            "Нет прав на обработку: user_id=%d, dashboard_id=%s",
             user_id,
             dashboard_id,
         )
@@ -444,7 +455,7 @@ async def _trigger_processing_logic(
     )
 
     if not logs:
-        logger.warning("Задача не найдена: dashboard_id=%d", dashboard_id)
+        logger.warning("Задача не найдена: dashboard_id=%s", dashboard_id)
         raise ValueError(f"Задача для дашборда с id={dashboard_id} не найдена")
 
     # Берем последний лог
@@ -461,7 +472,7 @@ async def _trigger_processing_logic(
     started_at = datetime.now()
     log_update = ProcessingLogUpdate(
         status=ProcessingStatusEnum.processing,
-        message="Запуск обработки задачи",
+        message="Запуск обработки задачи (background)",
         started_at=started_at,
     )
     await ProcessingLogRepository.update(
@@ -469,173 +480,75 @@ async def _trigger_processing_logic(
     )
     logger.info("Обработка запущена: log_id=%s", processing_log.id)
 
-    # Выполнение обработки файла (ВНЕ транзакции - это долгая операция)
-    file_path = None
-    result_data = None
-    try:
-        # Получаем информацию о загруженном файле из лога
-        # Ищем файл во временной директории
-        config = get_config()
-        upload_dir = Path(config.upload_temp_dir)
+    # Находим файл для обработки
+    config = get_config()
+    upload_dir = Path(config.upload_temp_dir)
 
-        # Ищем файлы для этого дашборда
-        csv_files = list(upload_dir.glob(f"*_{dashboard_id}_*.csv.gz"))
-        if not csv_files:
-            # Ищем любые недавние CSV файлы
-            csv_files = list(upload_dir.glob("*.csv.gz"))
-            csv_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+    # Ищем файлы для этого дашборда
+    csv_files = list(upload_dir.glob(f"*_{dashboard_id}_*.csv.gz"))
+    if not csv_files:
+        # Ищем любые недавние CSV файлы
+        csv_files = list(upload_dir.glob("*.csv.gz"))
+        csv_files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
 
-        if not csv_files:
-            raise FileNotFoundError(f"Файл для дашборда {dashboard_id} не найден")
+    if not csv_files:
+        raise FileNotFoundError(f"Файл для дашборда {dashboard_id} не найден")
 
-        file_path = csv_files[0]
+    file_path = csv_files[0]
 
-        if not file_path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
+    # Подготавливаем конфигурацию для передачи в RQ worker
+    processing_config_dict = None
+    if processing_config:
+        processing_config_dict = processing_config.model_dump(exclude_none=True)
 
-        logger.info("Найден файл для обработки: %s", file_path)
+    # Enqueue job to RQ for background processing
+    job_id = enqueue_job(
+        "mko_bi.workers.data_worker.process_csv_background",
+        str(file_path),
+        str(task_id),
+        str(dashboard_id),
+        processing_config_dict,
+        job_timeout=3600,  # 1 hour timeout for large files
+    )
 
-        # Обработка файла
-        result_data = await _process_csv_file(
-            file_path,
-            processing_config,
-            dashboard_id=dashboard_id,
-            db=None,  # Не передаем db здесь, сохранение отдельно
-        )
-
-        # Сохранение агрегированных данных в БД
-        # Транзакция должна быть максимально короткой
-        # Если сессия передана из API, транзакция уже начата
-        # Если сервис создал новую сессию, транзакция начата в вызывающем коде
-        if processing_config and result_data.get("processed_rows", 0) > 0:
-            # Получаем графики дашборда
-            from sqlalchemy import select
-            from mko_bi.db.models import graphs as graphs_model
-
-            graphs = (
-                await db.execute(
-                    select(graphs_model.Graph).where(
-                        graphs_model.Graph.dashboard_id == dashboard_id
-                    )
-                )
-            ).scalars().all()
-
-            if graphs and processing_config.groupby and processing_config.aggregations:
-                # Подготавливаем данные для каждого графика
-                aggregates: list[dict[str, Any]] = []
-
-                # Получаем данные из обработанного файла
-                df = pl.DataFrame(result_data.get("preview", []))
-
-                if not df.is_empty():
-                    # Для каждого графика создаем агрегаты
-                    for graph in graphs:
-                        # Используем результаты обработки
-                        # Преобразуем данные в соответствии с настройками графика
-                        for row in df.to_dicts():
-                            dims = {}
-                            metrics = {}
-
-                            # Заполняем измерения
-                            for col in processing_config.groupby or []:
-                                if col in row:
-                                    dims[col] = row[col]
-
-                            # Заполняем метрики
-                            for agg in processing_config.aggregations:
-                                field = agg.get("field")
-                                agg_type = agg.get("type")
-                                if field and field in row:
-                                    metric_name = f"{field}_{agg_type}"
-                                    metrics[metric_name] = row.get(metric_name, row[field])
-
-                            if dims and metrics:
-                                aggregates.append({
-                                    "graph_id": str(graph.id),
-                                    "dashboard_id": dashboard_id,
-                                    "dims": dims,
-                                    "metrics": metrics,
-                                })
-
-                # Сохраняем агрегаты через репозиторий
-                if aggregates:
-                    saved_count = await AggregatedDataRepository.bulk_insert(
-                        db=db,
-                        dashboard_id=dashboard_id,
-                        aggregates=aggregates,
-                        clear_old=True,
-                    )
-                    logger.info(
-                        "Сохранено %d агрегированных записей для дашборда %s",
-                        saved_count,
-                        dashboard_id,
-                    )
-            else:
-                logger.warning(
-                    "Для дашборда %s не найдено графиков или не заданы группировки",
-                    dashboard_id,
-                )
-
-        # Обновление статуса - успех
-        completed_at = datetime.now()
-        log_update = ProcessingLogUpdate(
-            status=ProcessingStatusEnum.success,
-            message="Обработка завершена успешно",
-            finished_at=completed_at,
-        )
-        await ProcessingLogRepository.update(
-            db, processing_log.id, **log_update.model_dump(exclude_unset=True)
-        )
-        logger.info("Лог обработки обновлен в БД: id=%s", processing_log.id)
-
-        # Получаем имя файла из сообщения лога
-        filename = "unknown"
-        if processing_log.message and "Файл" in processing_log.message:
-            try:
-                filename = processing_log.message.split("Файл ")[-1].split(" успешно")[0]
-            except (IndexError, AttributeError):
-                filename = "unknown"
-
-        logger.info(
-            "Обработка завершена: dashboard_id=%d, rows=%d",
-            dashboard_id,
-            result_data.get("rows", 0),
-        )
-
-        return ProcessingStatus(
-            task_id=task_id,
-            filename=filename,
-            dashboard_id=dashboard_id,
-            status=ProcessingStatusEnum.completed,
-            progress=100,
-            message="Processing completed successfully",
-            started_at=started_at,
-            completed_at=completed_at,
-        )
-
-    except Exception as e:
-        # Обновляем лог обработки с ошибкой
-        completed_at = datetime.now()
+    if job_id:
+        logger.info("Job enqueued to RQ: job_id=%s, task_id=%s", job_id, task_id)
+    else:
+        # Failed to enqueue, update status to failed
         log_update = ProcessingLogUpdate(
             status=ProcessingStatusEnum.failed,
-            message=f"Ошибка обработки: {str(e)}",
-            finished_at=completed_at,
+            message="Failed to enqueue job to RQ",
+            finished_at=datetime.now(),
         )
         await ProcessingLogRepository.update(
             db, processing_log.id, **log_update.model_dump(exclude_unset=True)
         )
-        logger.info("Лог обработки обновлен в БД (ошибка): id=%s", processing_log.id)
-        logger.error("Ошибка при обработке файла: task_id=%s, error=%s", task_id, e)
-        raise
+        raise RuntimeError("Failed to enqueue processing job")
 
-    finally:
-        # Очистка временного файла
-        if file_path and file_path.exists():
-            try:
-                file_path.unlink()
-                logger.info("Временный файл удален: %s", file_path)
-            except Exception as cleanup_error:
-                logger.error("Ошибка при удалении файла %s: %s", file_path, cleanup_error)
+    # Получаем имя файла из сообщения лога
+    filename = "unknown"
+    if processing_log.message and "Файл" in processing_log.message:
+        try:
+            filename = processing_log.message.split("Файл ")[-1].split(" успешно")[0]
+        except (IndexError, AttributeError):
+            filename = file_path.name
+
+    logger.info(
+        "Обработка запущена в фоне: dashboard_id=%s, task_id=%s",
+        dashboard_id,
+        task_id,
+    )
+
+    return ProcessingStatus(
+        task_id=task_id,
+        filename=filename,
+        dashboard_id=dashboard_id,
+        status=ProcessingStatusEnum.processing,
+        progress=0,
+        message="Processing started in background",
+        started_at=started_at,
+        completed_at=None,
+    )
 
 
 async def trigger_processing(
@@ -662,7 +575,7 @@ async def trigger_processing(
         PermissionError: Если у пользователя нет прав.
     """
     logger.info(
-        "Запуск обработки: task_id=%s, dashboard_id=%d, user_id=%d",
+        "Запуск обработки: task_id=%s, dashboard_id=%s, user_id=%d",
         task_id,
         dashboard_id,
         user_id,
@@ -708,7 +621,7 @@ async def _get_processing_status_logic(
     )
     if not has_access:
         logger.warning(
-            "Нет прав на просмотр статуса: user_id=%d, dashboard_id=%d",
+            "Нет прав на просмотр статуса: user_id=%d, dashboard_id=%s",
             user_id,
             task_log.dashboard_id,
         )
@@ -797,7 +710,7 @@ async def _get_processing_result_logic(
     )
     if not has_access:
         logger.warning(
-            "Нет прав на просмотр результата: user_id=%d, dashboard_id=%d",
+            "Нет прав на просмотр результата: user_id=%d, dashboard_id=%s",
             user_id,
             task_log.dashboard_id,
         )
@@ -866,21 +779,27 @@ async def _get_dashboard_aggregates_logic(
     dashboard_id: UUID,
     user_id: int,
     db: AsyncSession,
-) -> list[AggregatedData]:
+    limit: int = 100,
+    offset: int = 0,
+) -> tuple[int, list[AggregatedData]]:
     """Внутренняя логика получения агрегатов дашборда с использованием переданной сессии.
 
     Args:
         dashboard_id: ID дашборда (UUID).
         user_id: ID пользователя.
         db: Асинхронная сессия базы данных.
+        limit: Максимальное количество записей (по умолчанию 100).
+        offset: Смещение (по умолчанию 0).
 
     Returns:
-        list[AggregatedData]: Список агрегированных данных для всех графиков дашборда.
+        Кортеж (общее количество записей, список агрегированных данных для всех графиков дашборда).
     """
     logger.info(
-        "Получение агрегатов дашборда (внутренняя логика): dashboard_id=%s, user_id=%s",
+        "Получение агрегатов дашборда (внутренняя логика): dashboard_id=%s, user_id=%s, limit=%d, offset=%d",
         dashboard_id,
         user_id,
+        limit,
+        offset,
     )
 
     # Проверка существования дашборда и прав доступа
@@ -901,7 +820,6 @@ async def _get_dashboard_aggregates_logic(
     # Получение всех графиков дашборда
     from sqlalchemy import select
     from mko_bi.db.models import (
-        aggregated_data as aggregated_data_model,
         graphs as graphs_model,
     )
 
@@ -913,53 +831,56 @@ async def _get_dashboard_aggregates_logic(
         )
     ).scalars().all()
 
-    # Получение агрегированных данных для каждого графика
+    # Получение пагинированных агрегированных данных
+    total, agg_data = await AggregatedDataRepository.get_by_dashboard(
+        db, dashboard_id, limit, offset
+    )
+
+    # Группировка данных по графику
     result = []
     for graph in graphs:
-        aggregates = (
-            await db.execute(
-                select(aggregated_data_model.AggregatedData).where(
-                    aggregated_data_model.AggregatedData.graph_id == graph.id
-                )
-            )
-        ).scalars().all()
+        # Фильтруем данные для текущего графика
+        graph_agg = [agg for agg in agg_data if agg.graph_id == graph.id]
+        if not graph_agg:
+            continue
 
-        # Группировка данных по графику
         graph_data = []
-        for agg in aggregates:
+        for agg in graph_agg:
             graph_data.append({
                 "dims": agg.dims,
                 "metrics": agg.metrics,
             })
 
-        if graph_data:
-            result.append(
-                AggregatedData(
-                    dashboard_id=dashboard_id,
-                    chart_type=graph.type,
-                    data=graph_data,
-                    metadata={
-                        "graph_id": str(graph.id),
-                        "graph_name": graph.name,
-                        "count": len(graph_data),
-                    },
-                )
+        result.append(
+            AggregatedData(
+                dashboard_id=dashboard_id,
+                chart_type=graph.type,
+                data=graph_data,
+                metadata={
+                    "graph_id": str(graph.id),
+                    "graph_name": graph.name,
+                    "count": len(graph_data),
+                },
             )
+        )
 
     logger.info(
-        "Агрегаты получены: dashboard_id=%s, charts_count=%s",
+        "Агрегаты получены: dashboard_id=%s, charts_count=%s, total=%d",
         dashboard_id,
         len(result),
+        total,
     )
-    return result
+    return total, result
 
 
 async def get_dashboard_aggregates(
     dashboard_id: UUID,
     user_id: int,
     db: AsyncSession | None = None,
-) -> list[AggregatedData]:
-    """Получает все агрегированные данные для дашборда.
+    limit: int = 100,
+    offset: int = 0,
+) -> tuple[int, list[AggregatedData]]:
+    """Получает все агрегированные данные для дашборда с пагинацией.
 
     Возвращает все агрегаты (данные для всех графиков) указанного дашборда.
     Проверяет права доступа пользователя к дашборду.
@@ -968,25 +889,29 @@ async def get_dashboard_aggregates(
         dashboard_id: ID дашборда (UUID).
         user_id: ID пользователя.
         db: Опциональная асинхронная сессия базы данных.
+        limit: Максимальное количество записей (по умолчанию 100).
+        offset: Смещение (по умолчанию 0).
 
     Returns:
-        list[AggregatedData]: Список агрегированных данных для всех графиков дашборда.
+        Кортеж (общее количество записей, список агрегированных данных для всех графиков дашборда).
 
     Raises:
         ValueError: Если дашборд не найден или у пользователя нет доступа.
         SQLAlchemyError: При ошибке базы данных.
     """
     logger.info(
-        "Получение агрегатов дашборда: dashboard_id=%s, user_id=%s",
+        "Получение агрегатов дашборда: dashboard_id=%s, user_id=%s, limit=%d, offset=%d",
         dashboard_id,
         user_id,
+        limit,
+        offset,
     )
 
     if db is not None:
-        return await _get_dashboard_aggregates_logic(dashboard_id, user_id, db)
+        return await _get_dashboard_aggregates_logic(dashboard_id, user_id, db, limit, offset)
 
     async with get_session() as db_session:
-        return await _get_dashboard_aggregates_logic(dashboard_id, user_id, db_session)
+        return await _get_dashboard_aggregates_logic(dashboard_id, user_id, db_session, limit, offset)
 
 
 async def _get_chart_data_logic(

@@ -23,8 +23,7 @@ from typing import Any, cast
 
 import dash
 import dash_bootstrap_components as dbc
-import jwt
-import requests
+import httpx
 from dash import Dash, Input, Output, State, callback, dcc, html, no_update
 from dash.exceptions import PreventUpdate
 import plotly.graph_objects as go
@@ -65,26 +64,6 @@ def check_token_validity(token: str) -> bool:
     return is_valid
 
 
-def decode_token_payload(token: str) -> dict[str, Any] | None:
-    """Декодирует полезную нагрузку JWT токена без проверки подписи.
-
-    Args:
-        token: JWT токен.
-
-    Returns:
-        dict[str, Any] | None: Данные токена или None при ошибке.
-    """
-    try:
-        payload: dict[str, Any] = jwt.decode(
-            token,
-            options={"verify_signature": False},
-        )
-        return payload
-    except Exception as e:
-        logger.error("Ошибка декодирования токена: %s", e)
-        return None
-
-
 def validate_jwt_token(token: str) -> dict[str, Any] | None:
     """Проверяет JWT токен с валидацией подписи.
 
@@ -107,7 +86,7 @@ def validate_jwt_token(token: str) -> dict[str, Any] | None:
         return None
 
 
-def fetch_dashboard_data(
+async def fetch_dashboard_data(
     dashboard_id: str, token: str, filters: dict[str, Any] | None = None
 ) -> list[dict[str, Any]] | None:
     """Получает данные дашборда через API.
@@ -124,22 +103,21 @@ def fetch_dashboard_data(
         api_base_url = get_config().API_BASE_URL
         headers = {"Authorization": f"Bearer {token}"}
 
-        if filters:
-            # Применяем фильтры через POST запрос
-            filter_request = {"dashboard_id": dashboard_id, "filters": filters}
-            response = requests.post(
-                f"{api_base_url}/data/filter",
-                headers=headers,
-                json=filter_request,
-                timeout=30,
-            )
-        else:
-            # Получаем все данные дашборда
-            response = requests.get(
-                f"{api_base_url}/data/{dashboard_id}",
-                headers=headers,
-                timeout=30,
-            )
+        async with httpx.AsyncClient(timeout=30) as client:
+            if filters:
+                # Применяем фильтры через POST запрос
+                filter_request = {"dashboard_id": dashboard_id, "filters": filters}
+                response = await client.post(
+                    f"{api_base_url}/data/filter",
+                    headers=headers,
+                    json=filter_request,
+                )
+            else:
+                # Получаем все данные дашборда
+                response = await client.get(
+                    f"{api_base_url}/data/{dashboard_id}",
+                    headers=headers,
+                )
 
         response.raise_for_status()
         data: dict[str, Any] | list[dict[str, Any]] = response.json()
@@ -150,8 +128,8 @@ def fetch_dashboard_data(
         )
         return cast(list[dict[str, Any]] | None, data)
 
-    except requests.HTTPError as e:
-        status_code = response.status_code if 'response' in locals() else 0
+    except httpx.HTTPStatusError as e:
+        status_code = e.response.status_code
         logger.error(
             "Ошибка HTTP при получении данных дашборда %s: %s (код %s)",
             dashboard_id,
@@ -159,7 +137,7 @@ def fetch_dashboard_data(
             status_code,
         )
         return None
-    except requests.RequestException as e:
+    except httpx.RequestError as e:
         logger.error(
             "Ошибка сети при получении данных дашборда %s: %s",
             dashboard_id,
@@ -245,11 +223,11 @@ def _register_callbacks(app: Dash) -> None:
         State("auth-token", "data"),
         prevent_initial_call=True,
     )
-    def load_dashboard_on_page_load(dashboard_config: dict[str, Any] | None, token: str | None):
+    async def load_dashboard_on_page_load(dashboard_config: dict[str, Any] | None, token: str | None):
         """Загружает данные дашборда при открытии страницы."""
         if not dashboard_config or not token:
             raise PreventUpdate
-        title, description, filters, charts, _ = load_dashboard_data(dashboard_config, token)
+        title, description, filters, charts, _ = await load_dashboard_data(dashboard_config, token)
         return title, description, filters, charts
 
     # Existing callbacks continue below...
@@ -387,7 +365,7 @@ def create_login_page() -> html.Div:
     State("login-password", "value"),
     prevent_initial_call=True,
 )
-def login_user(n_clicks: int, email: str, password: str) -> tuple[Any, Any, str, Any]:
+async def login_user(n_clicks: int, email: str, password: str) -> tuple[Any, Any, str, Any]:
     """Обрабатывает вход пользователя.
 
     Отправляет запрос на FastAPI эндпоинт /auth/login и сохраняет
@@ -408,29 +386,28 @@ def login_user(n_clicks: int, email: str, password: str) -> tuple[Any, Any, str,
 
     try:
         api_base_url = get_config().API_BASE_URL
-        response = requests.post(
-            f"{api_base_url}/auth/login",
-            json={"email": email, "password": password},
-            timeout=10,
-        )
-        response.raise_for_status()
-        data = response.json()
-        token = data["access_token"]
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.post(
+                f"{api_base_url}/auth/login",
+                json={"email": email, "password": password},
+            )
+            response.raise_for_status()
+            data = response.json()
+            token = data["access_token"]
 
-        # Получаем данные пользователя через /auth/me
-        user_response = requests.get(
-            f"{api_base_url}/auth/me",
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=10,
-        )
-        user_response.raise_for_status()
-        user_data = user_response.json()
+            # Получаем данные пользователя через /auth/me
+            user_response = await client.get(
+                f"{api_base_url}/auth/me",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            user_response.raise_for_status()
+            user_data = user_response.json()
 
         logger.info("Успешный вход пользователя: %s", email)
         return token, user_data, "/dashboards", ""
 
-    except requests.HTTPError as e:
-        status_code = response.status_code
+    except httpx.HTTPStatusError as e:
+        status_code = e.response.status_code
         if status_code == 401:
             logger.warning("Неудачная попытка входа: %s (401)", email)
             return (
@@ -455,7 +432,7 @@ def login_user(n_clicks: int, email: str, password: str) -> tuple[Any, Any, str,
                 cast(Any, no_update),
                 f"Ошибка: {status_code}",
             )
-    except requests.RequestException as e:
+    except httpx.RequestError as e:
         logger.error("Ошибка сети при входе %s: %s", email, e)
         return (
             cast(Any, no_update),
@@ -514,7 +491,7 @@ def create_dashboard_list_page() -> html.Div:
     Output("dashboards-list", "children"),
     Input("auth-token", "data"),
 )
-def load_dashboards(token: str | None) -> list[dbc.Card]:
+async def load_dashboards(token: str | None) -> list[dbc.Card]:
     """Загружает список доступных дашбордов.
 
     Отправляет запрос к FastAPI эндпоинту /dashboards и
@@ -534,13 +511,13 @@ def load_dashboards(token: str | None) -> list[dbc.Card]:
 
     try:
         api_base_url = get_config().API_BASE_URL
-        response = requests.get(
-            f"{api_base_url}/dashboards",
-            headers={"Authorization": f"Bearer {token}"},
-            timeout=10,
-        )
-        response.raise_for_status()
-        dashboards = response.json()
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.get(
+                f"{api_base_url}/dashboards",
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            response.raise_for_status()
+            dashboards = response.json()
 
         cards = []
         for dashboard in dashboards:
@@ -566,11 +543,11 @@ def load_dashboards(token: str | None) -> list[dbc.Card]:
 
         return cards if cards else [html.Div("Дашборды не найдены")]
 
-    except requests.HTTPError as e:
-        status_code = response.status_code
+    except httpx.HTTPStatusError as e:
+        status_code = e.response.status_code
         logger.error("Ошибка API при загрузке дашбордов: %s (код %s)", e, status_code)
         return [html.Div(f"Ошибка загрузки дашбордов: {status_code}", className="text-danger")]
-    except requests.RequestException as e:
+    except httpx.RequestError as e:
         logger.error("Ошибка сети при загрузке дашбордов: %s", e)
         return [html.Div("Ошибка соединения с сервером", className="text-danger")]
     except Exception as e:
@@ -680,7 +657,26 @@ def logout_user_dashboard(n_clicks: int | None) -> str:
     return "/"
 
 
-def load_dashboard_data(
+@callback(
+    Output("dashboard-title", "children"),
+    Output("dashboard-description", "children"),
+    Output("dashboard-filters", "children"),
+    Output("dashboard-charts", "children"),
+    Input("dashboard-config", "data"),
+    State("auth-token", "data"),
+    prevent_initial_call=True,
+)
+async def load_dashboard_on_page_load(
+    dashboard_config: dict[str, Any] | None, token: str | None
+):
+    """Загружает данные дашборда при открытии страницы."""
+    if not dashboard_config or not token:
+        raise PreventUpdate
+    title, description, filters, charts, _ = await load_dashboard_data(dashboard_config, token)
+    return title, description, filters, charts
+
+
+async def load_dashboard_data(
     dashboard_data: dict[str, Any] | None, token: str | None
 ) -> tuple[str, str, html.Div, html.Div, dict[str, Any] | None]:
     """Загружает данные дашборда и отображает его содержимое.
@@ -699,18 +695,17 @@ def load_dashboard_data(
     logger.info("Загрузка дашборда: %s", dashboard_id)
 
     try:
-        # Получаем данные дашборда через API
         api_base_url = get_config().API_BASE_URL
         headers = {"Authorization": f"Bearer {token}"}
 
-        # Запрос конфигурации дашборда
-        dashboard_response = requests.get(
-            f"{api_base_url}/dashboards/{dashboard_id}",
-            headers=headers,
-            timeout=10,
-        )
-        dashboard_response.raise_for_status()
-        dashboard = dashboard_response.json()
+        # Запрос конфигурации дашборда через httpx
+        async with httpx.AsyncClient(timeout=10) as client:
+            dashboard_response = await client.get(
+                f"{api_base_url}/dashboards/{dashboard_id}",
+                headers=headers,
+            )
+            dashboard_response.raise_for_status()
+            dashboard = dashboard_response.json()
 
         title = dashboard.get("name", f"Дашборд {dashboard_id}")
         description = dashboard.get("description", "")
@@ -722,18 +717,21 @@ def load_dashboard_data(
             logger.info("Используется layout: %s", dashboard["layout"]["name"])
 
         # Получаем агрегированные данные для графиков
-        chart_data = fetch_dashboard_data(dashboard_id, token)
+        chart_data = await fetch_dashboard_data(dashboard_id, token)
+
+        # Получаем доступные значения фильтров
+        available_filters = await _get_available_filter_values(dashboard_id, token)
 
         # Создаем панель фильтров
-        filters = create_filter_panel(dashboard_id, token)
+        filters = create_filter_panel(dashboard_id, token, available_filters)
 
         # Создаем графики с реальными данными, учитывая layout
         charts = create_charts_with_data(dashboard_id, chart_data, token, layout_definition)
 
         return title, description, filters, html.Div(charts), layout_definition
 
-    except requests.HTTPError as e:
-        status_code = e.response.status_code if hasattr(e, 'response') else 0
+    except httpx.HTTPStatusError as e:
+        status_code = e.response.status_code
         logger.error(
             "Ошибка API при загрузке дашборда %s: %s (код %s)",
             dashboard_id,
@@ -752,22 +750,26 @@ def load_dashboard_data(
         return "Ошибка", str(e), html.Div(""), html.Div(""), None
 
 
-def create_filter_panel(dashboard_id: str, token: str | None = None) -> html.Div:
+def create_filter_panel(
+    dashboard_id: str, token: str | None = None, available_filters: dict[str, list[str | int]] | None = None
+) -> html.Div:
     """Создает панель фильтров для дашборда.
 
-    Динамически получает доступные значения фильтров из данных.
+    Использует переданные доступные значения фильтров.
 
     Args:
         dashboard_id: Идентификатор дашборда.
         token: JWT токен аутентификации.
+        available_filters: Опциональные доступные значения фильтров.
 
     Returns:
         html.Div: Компонент панели фильтров.
     """
     logger.debug("Создание панели фильтров для дашборда: %s", dashboard_id)
 
-    # Получаем данные дашборда для извлечения доступных значений фильтров
-    available_filters = _get_available_filter_values(dashboard_id, token)
+    # Используем переданные фильтры или пустые значения
+    if available_filters is None:
+        available_filters = {"years": [2023, 2024], "categories": [], "brands": []}
 
     year_options = [{"label": str(y), "value": y} for y in available_filters.get("years", [2023, 2024])]
     category_options = [{"label": c, "value": c} for c in available_filters.get("categories", [])]
@@ -842,7 +844,7 @@ def create_filter_panel(dashboard_id: str, token: str | None = None) -> html.Div
     )
 
 
-def _get_available_filter_values(dashboard_id: str, token: str | None) -> dict[str, list[str | int]]:
+async def _get_available_filter_values(dashboard_id: str, token: str | None) -> dict[str, list[str | int]]:
     """Получает доступные значения для фильтров из данных.
 
     Args:
@@ -861,14 +863,14 @@ def _get_available_filter_values(dashboard_id: str, token: str | None) -> dict[s
         api_base_url = get_config().API_BASE_URL
         headers = {"Authorization": f"Bearer {token}"}
 
-        # Получаем данные дашборда
-        response = requests.get(
-            f"{api_base_url}/data/{dashboard_id}",
-            headers=headers,
-            timeout=10,
-        )
-        response.raise_for_status()
-        data = response.json()
+        # Получаем данные дашборда через httpx
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.get(
+                f"{api_base_url}/data/{dashboard_id}",
+                headers=headers,
+            )
+            response.raise_for_status()
+            data = response.json()
 
         # Извлекаем уникальные значения из dims
         years_set = set()
@@ -912,7 +914,7 @@ def _get_available_filter_values(dashboard_id: str, token: str | None) -> dict[s
     State("auth-token", "data"),
     prevent_initial_call=True,
 )
-def apply_dashboard_filters(
+async def apply_dashboard_filters(
     n_clicks: list[int] | None,
     filter_values: list[Any],
     filter_ids: list[dict[str, Any]],
@@ -951,7 +953,7 @@ def apply_dashboard_filters(
         raise PreventUpdate
 
     # Получаем данные с применением фильтров через API
-    filtered_data = fetch_dashboard_data(dashboard_id, token, active_filters)
+    filtered_data = await fetch_dashboard_data(dashboard_id, token, active_filters)
 
     if not filtered_data:
         logger.warning("Не удалось получить данные с фильтрами")

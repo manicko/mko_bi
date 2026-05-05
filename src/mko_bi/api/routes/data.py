@@ -9,9 +9,10 @@
 """
 
 import logging
+from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from sqlalchemy.orm import Session
 
 from mko_bi.api.deps import (
@@ -46,84 +47,9 @@ async def get_dashboard_aggregates_endpoint(
     dashboard_id: UUID,
     current_user: CurrentUser,
     db: Session = Depends(get_db),
-) -> list[AggregatedData]:
-    """Получает все агрегированные данные для дашборда.
-
-    Возвращает все агрегаты (данные для всех графиков) указанного дашборда.
-    Проверяет права доступа пользователя к дашборду.
-
-    Args:
-        dashboard_id: ID дашборда.
-        current_user: Текущий аутентифицированный пользователь.
-        db: Сессия базы данных.
-
-    Returns:
-        list[AggregatedData]: Список агрегированных данных для всех графиков дашборда.
-
-    Raises:
-        HTTPException 403: Если у пользователя нет прав на чтение дашборда.
-        HTTPException 404: Если дашборд не найден.
-        HTTPException 500: При ошибке сервера.
-    """
-    logger.info(
-        "Запрос агрегатов дашборда: dashboard_id=%s, user_id=%s",
-        dashboard_id,
-        current_user.id,
-    )
-
-    try:
-        # Вызов сервиса получения агрегатов
-        result: list[AggregatedData] = await get_dashboard_aggregates(
-            dashboard_id=dashboard_id,
-            user_id=current_user.id,
-            db=db,
-        )
-
-        logger.info(
-            "Агрегаты получены: dashboard_id=%s, charts_count=%s",
-            dashboard_id,
-            len(result),
-        )
-        return result
-
-    except ValueError as e:
-        logger.warning("Ошибка при получении агрегатов: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
-        ) from e
-    except PermissionError as e:
-        logger.warning("Отказано в доступе: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(e),
-        ) from e
-    except Exception as e:
-        logger.error(
-            "Ошибка при получении агрегатов дашборда id=%s: %s",
-            dashboard_id,
-            e,
-        )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка при получении агрегатов дашборда",
-        ) from e
-
-
-@router.get(
-    "/{dashboard_id}/charts",
-    response_model=list[AggregatedData],
-    status_code=status.HTTP_200_OK,
-    summary="Получение данных для графиков",
-    description="Возвращает данные для конкретных графиков дашборда.",
-    dependencies=[Depends(require_viewer_role)],
-)
-async def get_dashboard_charts_endpoint(
-    dashboard_id: UUID,
-    current_user: CurrentUser,
-    chart_ids: list[UUID] | None = None,
-    db: Session = Depends(get_db),
-) -> list[AggregatedData]:
+    limit: int = Query(default=100, ge=1, le=1000),
+    offset: int = Query(default=0, ge=0),
+) -> dict[str, Any]:
     """Получает данные для конкретных графиков дашборда.
 
     Если chart_ids не указан, возвращает данные для всех графиков дашборда.
@@ -144,27 +70,113 @@ async def get_dashboard_charts_endpoint(
         HTTPException 500: При ошибке сервера.
     """
     logger.info(
-        "Запрос данных для графиков: dashboard_id=%s, chart_ids=%s, user_id=%s",
+        "Запрос данных для графиков: dashboard_id=%s, user_id=%s",
         dashboard_id,
-        chart_ids,
         current_user.id,
     )
 
     try:
-        # Вызов сервиса получения данных для графиков
-        result: list[AggregatedData] = await get_chart_data(
+        # Вызов сервиса получения агрегатов
+        total, agg_data = await get_dashboard_aggregates(
             dashboard_id=dashboard_id,
             user_id=current_user.id,
-            chart_ids=chart_ids,
+            db=db,
+            limit=limit,
+            offset=offset,
+        )
+
+        logger.info(
+            "Агрегаты получены: dashboard_id=%s, charts_count=%s, total=%d",
+            dashboard_id,
+            len(agg_data),
+            total,
+        )
+        return {
+            "data": agg_data,
+            "pagination": {
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+            },
+        }
+
+    except ValueError as e:
+        logger.warning("Ошибка при получении данных для графиков: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        ) from e
+    except PermissionError as e:
+        logger.warning("Отказано в доступе: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        ) from e
+    except Exception as e:
+        logger.error(
+            "Ошибка при получении данных для графиков дашборда id=%s: %s",
+            dashboard_id,
+            e,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при получении данных для графиков",
+        ) from e
+
+
+@router.get(
+    "/{dashboard_id}/charts",
+    response_model=list[AggregatedData],
+    status_code=status.HTTP_200_OK,
+    summary="Получение данных для графиков дашборда",
+    description="Возвращает агрегированные данные для графиков указанного дашборда.",
+    dependencies=[Depends(require_viewer_role)],
+)
+async def get_charts_endpoint(
+    dashboard_id: UUID,
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
+    limit: int = Query(default=100, ge=1, le=1000),
+    offset: int = Query(default=0, ge=0),
+) -> dict[str, Any]:
+    """Получает данные для графиков дашборда.
+    
+    Args:
+        dashboard_id: ID дашборда.
+        current_user: Текущий аутентифицированный пользователь.
+        db: Сессия базы данных.
+        limit: Максимальное количество записей.
+        offset: Смещение для пагинации.
+    
+    Returns:
+        Словарь с данными и метаданными пагинации.
+    """
+    logger.info(
+        "Запрос данных для графиков: dashboard_id=%s, user_id=%s",
+        dashboard_id,
+        current_user.id,
+    )
+
+    try:
+        result = await get_chart_data(
+            dashboard_id=dashboard_id,
+            user_id=current_user.id,
             db=db,
         )
 
         logger.info(
-            "Данные для графиков получены: dashboard_id=%s, charts_count=%s",
+            "Данные для графиков получены: dashboard_id=%s, charts_count=%d",
             dashboard_id,
             len(result),
         )
-        return result
+        return {
+            "data": result,
+            "pagination": {
+                "total": len(result),
+                "limit": limit,
+                "offset": offset,
+            },
+        }
 
     except ValueError as e:
         logger.warning("Ошибка при получении данных для графиков: %s", e)

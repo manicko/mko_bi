@@ -10,6 +10,7 @@ C:\py_exp\mko_bi
 │       ├── 840a99edb818_standardize_index_naming.py
 │       ├── 7130ecb0388c_true_initial_migration.py
 │       ├── a1b2c3d4e5f6_add_config_to_dashboards.py
+│       ├── ce58bba5d461_add_db_constraints_and_fix_schema_issues.py
 │       └── e86f3c8f7324_schema_adjustments.py
 ├── alembic.ini
 ├── best_llm_models.md
@@ -53,7 +54,8 @@ C:\py_exp\mko_bi
 │       │   ├── base_repository.py
 │       │   ├── logging_config.py
 │       │   ├── permissions.py
-│       │   └── security.py
+│       │   ├── security.py
+│       │   └── task_queue.py
 │       ├── dash_app.py
 │       ├── dashboards
 │       │   ├── base.py
@@ -137,12 +139,14 @@ C:\py_exp\mko_bi
 │       ├── settings
 │       │   ├── app.yaml
 │       │   └── README.md
-│       └── utils
-│           ├── decorators.py
-│           ├── exceptions.py
-│           ├── file_utils.py
-│           ├── time_utils.py
-│           └── validators.py
+│       ├── utils
+│       │   ├── decorators.py
+│       │   ├── exceptions.py
+│       │   ├── file_utils.py
+│       │   ├── time_utils.py
+│       │   └── validators.py
+│       └── workers
+│           └── data_worker.py
 ├── STRUCT.md
 ├── TASK_TEMPLATE.md
 ├── tests
@@ -178,18 +182,29 @@ C:\py_exp\mko_bi
 │   │   ├── TASK_001_db_structure_audit.md
 │   │   ├── TASK_001_db_structure_module_dev.md
 │   │   ├── TASK_031_audit.md
-│   │   ├── TASK_033_audit.md
-│   │   ├── TASK_033_HY3_audit.md
+│   │   ├── TASK_031_audit_report_01.md
+│   │   ├── TASK_031_audit_report_02.md
 │   │   ├── TASK_034_audit_old.md
-│   │   ├── TASK_035_analysis_report.md
 │   │   ├── TASK_037_test_audit.md
 │   │   ├── TASK_037_test_audit1.md
 │   │   ├── TASK_038_docker_audit.md
 │   │   └── TEST_036_test_audit_arch.md
 │   ├── DB
 │   ├── DEV
-│   │   └── TASK_001_sync_async_unification.md
+│   │   ├── TASK-DEV-001_jwt_signature_fix_DONE.md
+│   │   ├── TASK-DEV-002_polars_async_wrap_DONE.md
+│   │   ├── TASK-DEV-003_dash_async_http_DONE.md
+│   │   ├── TASK-DEV-004_mypy_type_fixes_DONE.md
+│   │   ├── TASK-DEV-005_sqlalchemy_overlaps_DONE.md
+│   │   ├── TASK-DEV-006_async_rollback_fix_DONE.md
+│   │   ├── TASK-DEV-007_aggregation_enum_fix_DONE.md
+│   │   ├── TASK-DEV-008_mypy_config_fix_DONE.md
+│   │   ├── TASK-DEV-009_uuid_logging_fix_DONE.md
+│   │   ├── TASK-DEV-010_file_cleanup_fix_DONE.md
+│   │   ├── TASK-DEV-011_pagination_DONE.md
+│   │   └── TASK-DEV-012_background_tasks_DONE.md
 │   ├── DONE
+│   │   ├── TASK_001_sync_async_unification.md
 │   │   ├── TASK_014_dash_modern_component_architecture_DONE.md
 │   │   ├── TASK_051_di_and_interfaces.md
 │   │   ├── TASK_052_secrets_management_DONE.md

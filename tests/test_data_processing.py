@@ -221,7 +221,7 @@ class TestCalculateAggregations:
 
     def test_count_aggregation(self, sample_df):
         """Тест подсчета."""
-        aggregations = [AggregationConfig(column="revenue", function=AggregationFunctionEnum.count)]
+        aggregations = [AggregationConfig(column="revenue", function=AggregationFunctionEnum.count_val)]
         result = calculate_aggregations(
             sample_df,
             groupby=["category"],

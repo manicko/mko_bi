@@ -8,13 +8,14 @@ import gzip
 import pytest
 from uuid import uuid4
 from httpx import AsyncClient
+from typing import Any
 
 
 class TestUploadFileEndpoint:
     """Тесты эндпоинта загрузки файла."""
 
     @pytest.mark.asyncio
-    async def test_upload_file_success(self, authenticated_client: AsyncClient, test_user: dict):
+    async def test_upload_file_success(self, authenticated_client: AsyncClient, test_user: dict[str, Any]):
         """Успешная загрузка файла."""
         dashboard_id = uuid4()
 
@@ -42,7 +43,7 @@ class TestUploadFileEndpoint:
         assert data["dashboard_id"] == dashboard_id
 
     @pytest.mark.asyncio
-    async def test_upload_file_invalid_format(self, authenticated_client: AsyncClient, test_user: dict):
+    async def test_upload_file_invalid_format(self, authenticated_client: AsyncClient, test_user: dict[str, Any]):
         """Ошибка при загрузке файла с недопустимым форматом."""
         dashboard_id = uuid4()
 
@@ -84,7 +85,7 @@ class TestUploadFileEndpoint:
         assert response.status_code == 401
 
     @pytest.mark.asyncio
-    async def test_upload_rate_limit_exceeded(self, authenticated_client: AsyncClient, test_user: dict, monkeypatch):
+    async def test_upload_rate_limit_exceeded(self, authenticated_client: AsyncClient, test_user: dict[str, Any], monkeypatch):
         """Проверка срабатывания rate limiting при превышении лимита."""
         import mko_bi.services.data_service as data_service_module
 
