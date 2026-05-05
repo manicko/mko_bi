@@ -150,6 +150,7 @@ C:\py_exp\mko_bi
 │           └── data_worker.py
 ├── STRUCT.md
 ├── TASK_TEMPLATE.md
+├── TASKS_TEMPLATE.md
 ├── tests
 │   ├── conftest.py
 │   ├── services

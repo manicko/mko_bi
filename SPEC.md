@@ -15,7 +15,14 @@
 ## 2. Stack 
 
 * Backend: **FastAPI**
-* Dashboards: **Dash + Plotly**
+* Frontend: **React 18+ (TypeScript) + Vite**
+* UI Kit: **Material UI v5** or **Ant Design**
+* State Management: **TanStack Query** (React Query)
+* Forms: **React Hook Form + Zod**
+* Charts: **Plotly.js React**
+* File Upload: **react-dropzone**
+* HTTP Client: **Axios** (with JWT interceptors)
+* Notifications: **react-hot-toast**
 * Data processing: **Polars** (запрещено использовать pandas)
 * Storage: **PostgreSQL**
 * Validation: **Pydantic**
@@ -114,8 +121,8 @@
 3. Transform (LoaderConfig)
 4. Aggregate
 5. Save to PostgreSQL
-6. Dashboard запрашивает данные
-7. Plotly строит графики
+6. React SPA запрашивает данные через API
+7. Plotly.js React строит графики
 
 ---
 
@@ -158,13 +165,6 @@
 
 ---
 
-
-## 11. Dashboard Layer (Dash)
-
-* читает агрегаты из backend/API
-* строит графики через Plotly
-* применяет фильтры
-
 ---
 
 ## 12. Dashboards
@@ -202,13 +202,37 @@
 
 ## 14. API Responsibilities (FastAPI)
 
-* auth (login)
+* auth (login, register-request)
 * users CRUD (admin only)
 * dashboards CRUD (admin only)
-* upload endpoint
+* upload endpoint (React SPA → FastAPI)
 * trigger processing
-* get aggregated data
+* get aggregated data (JSON для React)
 * access validation (user ↔ dashboard)
+* registration requests management (admin)
+
+### 14.1 Auth Endpoints
+- `POST /api/v1/auth/login` → `{access_token, user}`
+- `POST /api/v1/auth/register-request` → `{message}`
+- `GET /api/v1/auth/me` → `UserProfile`
+
+### 14.2 Dashboard Endpoints
+- `GET /api/v1/dashboards/my` → `DashboardSummary[]`
+- `GET /api/v1/dashboards/:id` → `DashboardDetail`
+- `POST /api/v1/dashboards` (admin)
+- `PUT /api/v1/dashboards/:id` (admin)
+- `DELETE /api/v1/dashboards/:id` (admin)
+
+### 14.3 Data Endpoints
+- `GET /api/v1/data/aggregated?dashboard_id=:id&filters=...` → графики данные
+- `POST /api/v1/upload/:dashboard_id?mode=overwrite|append` (multipart file)
+
+### 14.4 Admin Endpoints
+- `GET /api/v1/admin/users` → `User[]`
+- `PATCH /api/v1/admin/users/:id/role`
+- `GET /api/v1/admin/registration-requests` → `Request[]`
+- `POST /api/v1/admin/registration-requests/:id/approve`
+- `GET /api/v1/admin/logs` → `ProcessingLog[]`
 
 ---
 
@@ -363,6 +387,21 @@ processing_logs (
 );
 ```
 
+#### `registration_requests` - Заявки на регистрацию
+```sql
+registration_requests (
+    id              UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email           TEXT UNIQUE NOT NULL,
+    status          TEXT NOT NULL CHECK (status IN ('pending', 'approved', 'rejected')) DEFAULT 'pending',
+    requested_by_ip INET,
+    reviewed_by     UUID REFERENCES users(id),
+    reviewed_at     TIMESTAMP,
+    created_at      TIMESTAMP DEFAULT NOW()
+);
+```
+- **status**: `pending` | `approved` | `rejected`
+- Заявки создаются через `/api/v1/auth/register-request`
+
 ### 16.2 Indexes
 ```sql
 CREATE INDEX idx_aggregated_data_graph_id ON aggregated_data(graph_id);
@@ -383,74 +422,152 @@ CREATE INDEX idx_dashboard_filters_dashboard_filter ON dashboard_filters(dashboa
 
 ---
 
-## 17. Dashboard Layer (Dash)
+## 11. Frontend Architecture (React SPA)
 
-* читает агрегаты из backend/API
-* строит графики через Plotly
-* применяет фильтры
+### 11.1 Общая концепция
+Архитектурный паттерн: **Clean Architecture + Feature-Sliced Design (FSD)**
 
----
+```
+Browser (React SPA)
+       ↓ HTTPS/JSON
+FastAPI (REST API)
+       ↓
+Service Layer (существующий)
+       ↓
+PostgreSQL
+```
 
-## 18. UI (минимум)
+### 11.2 Ключевые принципы
+- **Separation of Concerns**: React отвечает только за UI, FastAPI — за бизнес-логику и данные
+- **Stateless Backend**: JWT токены, сессии не хранятся на бэкенде
+- **Type Safety**: TypeScript на фронтенде, Pydantic на бэкенде
+- **No Overengineering**: Используем проверенные библиотеки, избегаем избыточной абстракции
 
-* login page
-* dashboard list
-* dashboard page (graphs + filters)
-
----
-## 19. Архитектура интеграции Dash + FastAPI
-
-Dash встроен внутрь FastAPI-приложения.
-
-### Архитектура
-
-* FastAPI является основной точкой входа приложения
-* Dash подключается как встроенное sub-application
-* Аутентификация и проверка доступов выполняются только через FastAPI
-* Dash не обращается к PostgreSQL напрямую
-* Dash получает данные через внутренний service layer / API FastAPI
-
----
-
-### Deployment
-
-* Единое приложение
-* Единый слой подключения к PostgreSQL
-* Единая система аутентификации
-* Один backend-сервис для API и Dash
-
----
-
-### Поток работы
-
-```text
-Browser
-   ↓
-FastAPI
-   ├── REST API
-   ├── Auth / JWT
-   ├── Upload API
-   ├── Data API
-   └── Embedded Dash
-           ↓
-      Service Layer
-           ↓
-      PostgreSQL
+### 11.3 Project Structure (Frontend)
+```
+frontend/
+├── public/
+├── src/
+│   ├── app/
+│   │   ├── providers.tsx
+│   │   └── routes.tsx
+│   ├── features/
+│   │   ├── auth/
+│   │   │   ├── ui/LoginForm.tsx
+│   │   │   ├── api/authApi.ts
+│   │   │   └── model/useAuth.ts
+│   │   ├── dashboards/
+│   │   │   ├── ui/DashboardList.tsx
+│   │   │   └── api/dashboardApi.ts
+│   │   ├── upload/
+│   │   │   └── ui/FileDropzone.tsx
+│   │   ├── users/
+│   │   │   └── ui/UserList.tsx
+│   │   └── admin/
+│   │       └── ui/AdminPanel.tsx
+│   ├── shared/
+│   │   ├── api/axiosInstance.ts
+│   │   ├── components/ProtectedRoute.tsx
+│   │   └── types/api.types.ts
+│   └── main.tsx
+├── package.json
+└── vite.config.ts
 ```
 
 ---
 
-### Основные принципы
+## 18. UI Pages (React SPA)
+
+### 18.1 Login Page (`/login`)
+- Поле email (валидация формата)
+- Поле password (type="password")
+- Кнопка "Войти"
+- Ссылка "Зарегистрироваться" → `/register`
+
+### 18.2 Registration Page (`/register`)
+- Поле email (валидация через Zod)
+- Кнопка "Отправить заявку"
+- Заявка сохраняется в БД (`registration_requests`)
+
+### 18.3 Dashboard List Page (`/dashboards`)
+- Список доступных пользователю дашбордов
+- Каждая карточка: название, описание, ссылка "Открыть"
+- GET `/api/v1/dashboards/my`
+
+### 18.4 Dashboard View Page (`/dashboard/:id`)
+- Заголовок дашборда
+- **Filters Panel**: Select/Range/Date фильтры (динамически по конфигу)
+- **Charts Grid**: Графики (Plotly.js React), таблицы
+- **Upload Button** (видна для роли `editor` и выше)
+- GET `/api/v1/data/aggregated?dashboard_id=:id&filters=...`
+
+### 18.5 User Profile Page (`/profile`)
+- Email (read-only), роль (read-only)
+- Кнопка "Удалить аккаунт" (только для НЕ-админов)
+
+### 18.6 Admin Panel (`/admin`)
+- **User Management**: таблица пользователей, изменение ролей
+- **Registration Requests**: одобрение/отклонение заявок
+- **Dashboard Management**: CRUD дашбордов
+- **Log Viewer**: просмотр логов обработки
+
+### 18.7 Data Upload Page (`/dashboard/:id/upload`)
+- Mode Toggle: "Перезаписать" / "Добавить данные"
+- Dropzone для drag-and-drop файлов (.csv, .csv.gz)
+- Progress Bar для каждого файла
+- POST `/api/v1/upload/:dashboard_id?mode=overwrite|append`
+
+---
+## 19. Architecture (React + FastAPI)
+
+React SPA интегрирован с FastAPI backend через REST API.
+
+### 19.1 Общая архитектура
+
+```
+Browser (React SPA)
+       ↓ HTTPS/JSON
+FastAPI (REST API)
+       ↓
+Service Layer
+       ↓
+PostgreSQL
+```
+
+### 19.2 Ключевые принципы
 
 1. Вся бизнес-логика находится в FastAPI/service layer
-2. Dash отвечает только за UI и визуализацию
-3. Проверка прав доступа выполняется до получения данных
-4. Dash не содержит собственной логики аутентификации
-5. Все запросы к данным проходят через backend-сервис
+2. React отвечает только за UI и визуализацию (Plotly.js React)
+3. Проверка прав доступа выполняется на бэкенде (каждый API запрос)
+4. React не содержит бизнес-логики, только UI state
+5. Все запросы к данным проходят через FastAPI REST API
+
+### 19.3 Поток работы
+
+```
+Browser (React SPA)
+    ↓ HTTPS/JSON
+FastAPI
+    ├── REST API (JSON)
+    ├── Auth / JWT
+    ├── Upload API
+    ├── Data API
+    └── Service Layer
+            ↓
+       PostgreSQL
+```
+
+### 19.4 Stateless Architecture
+
+* FastAPI не хранит сессии (JWT токены)
+* React SPA хранит JWT в memory или secure cookie
+* Каждый запрос к API включает JWT токен в заголовке
 
 ### Database Initialization
 
 При старте приложения FastAPI выполняется автоматическая проверка и инициализация схемы БД через модуль `DatabaseStarter` (lifespan). Миграции применяются согласно окружению (`ENV`) с соблюдением production-ограничений.
+
+---
 
 ## 20. Logging
 
@@ -480,22 +597,28 @@ FastAPI
 
 ---
 
-## 22. Component Architecture (Dash)
+## 22. Enums (StrEnum)
 
-### Styling Framework
-* **dash-bootstrap-components** (Bootstrap 5) для всех UI компонентов
-* Использовать `dbc.Container`, `dbc.Row`, `dbc.Col`, `dbc.Card` для layout
-* Темизация через Bootstrap темы (DARKLY, FLATLY и др.)
-
-### Component Types (StrEnum)
-Все типы компонентов определяются через `StrEnum` в `src/mko_bi/models/enums.py`:
+Все типы сущностей определяются через `StrEnum` в `src/mko_bi/models/enums.py`:
 
 ```python
-class ButtonVariant(StrEnum):
-    PRIMARY = "primary"
-    SECONDARY = "secondary"
-    SUCCESS = "success"
-    DANGER = "danger"
+from enum import StrEnum
+
+class UserRole(StrEnum):
+    ADMIN = "admin"
+    EDITOR = "editor"
+    VIEWER = "viewer"
+
+class DashboardPermission(StrEnum):
+    VIEW = "view"
+    EDIT = "edit"
+    ADMIN = "admin"
+
+class GraphType(StrEnum):
+    BAR = "bar"
+    LINE = "line"
+    PIE = "pie"
+    TABLE = "table"
 
 class FilterType(StrEnum):
     SELECT = "select"
@@ -503,46 +626,93 @@ class FilterType(StrEnum):
     RANGE = "range"
     DATE = "date"
 
-class GraphType(StrEnum):
-    BAR = "bar"
-    LINE = "line"
-    PIE = "pie"
-    TABLE = "table"
-```
+class RegistrationStatus(StrEnum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
 
-### Pydantic Models for Styling
-Конфигурация компонентов через Pydantic модели в `src/mko_bi/models/style.py`:
+class UploadMode(StrEnum):
+    OVERWRITE = "overwrite"
+    APPEND = "append"
 
-```python
-class ComponentStyle(BaseModel):
-    """Базовая модель стилей компонента."""
-    width: int = 12
-    height: int | None = None
-    className: str = ""
-    shadow: bool = True
-```
-
-### Архитектурные требования
-* Маленькие функции (< 20 строк)
-* Декомпозиция: каждый компонент = отдельный модуль
-* Логирование всех операций рендеринга
-* Использование `StrEnum` вместо констант-строк
-* Pydantic модели для валидации конфигов
-
-### Структура компонентов
-```
-src/mko_bi/dashboards/components/
-├── charts/
-│   ├── base.py          # абстрактный базовый класс
-│   ├── bar.py           # график bar (маленький модуль)
-│   ├── line.py          # график line
-│   ├── pie.py           # график pie
-│   └── table.py         # таблица
-├── filters.py           # FilterPanel (декомпозированный)
-├── layout.py            # DashboardLayout
-└── buttons.py           # кнопки (новый модуль)
+class ProcessingStatus(StrEnum):
+    STARTED = "started"
+    UPLOADED = "uploaded"
+    PROCESSING = "processing"
+    SUCCESS = "success"
+    FAILED = "failed"
+    COMPLETED = "completed"
 ```
 
 ---
 
+## 23. Frontend Security
+
+### 23.1 JWT Handling
+- Access token хранится в memory или secure httpOnly cookie (не в localStorage для продакшена)
+- Refresh token (опционально) для продления сессии
+- Интерцепторы Axios для добавления токена к каждому запросу
+
+### 23.2 File Upload
+- Rate limiting на `/api/v1/upload/*`
+- Максимальный размер файла (проверка на бэкенде)
+- MIME-type validation (.csv, .csv.gz) на фронтенде и бэкенде
+
+### 23.3 Role-Based Access
+- Frontend: `ProtectedRoute` + `RoleBasedAccess` компоненты
+- Backend: существующие permissions (обновленные для новых эндпоинтов)
+
+### 23.4 Email Validation (Registration)
+- Regex паттерн (на фронтенде через Zod и на бэкенде через Pydantic)
+- Blacklist доменов (configurable через `app.yaml`)
+
+### 23.5 CORS Configuration (FastAPI)
+```python
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],  # React dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+---
+
+## 24. Deployment
+
+### 24.1 Development
+- React dev server (port 3000) + FastAPI (port 8000) с CORS
+- Hot reload для обоих серверов
+- Environment variables через `.env` файлы
+
+### 24.2 Production
+
+**Вариант А**: FastAPI раздает собранные статические файлы React
+```
+frontend/ (после npm run build)
+  └── dist/  →  раздается через FastAPI StaticFiles
+```
+
+**Вариант Б**: Nginx проксирует `/api` → FastAPI, остальное → React SPA
+```
+Nginx:
+  /api/*  → FastAPI (port 8000)
+  /*      → React SPA static files (port 3000 или static build)
+```
+
+### 24.3 No Overengineering
+- Не использовать Redux/Zustand (TanStack Query достаточно для серверного состояния)
+- Не создавать лишние слои абстракции (axiosInstance → прямые вызовы API)
+- Использовать существующие Pydantic модели (не дублировать логику)
+
+### 24.4 Миграция с Dash
+- Dash можно оставить как fallback для сложных графиков (iframe)
+- Или полностью заменить на Plotly.js React (предпочтительно)
+
+---
+
+**Автор**: Senior Python Architect  
+**Дата**: 2026-05-05  
+**Версия**: 2.0 (React + FastAPI Architecture)
 
