@@ -1,7 +1,7 @@
-"""Тесты для моделей SQLAlchemy (User, Dashboard, Access, Graph, Layout, AggregatedData).
+﻿"""╨в╨╡╤Б╤В╤Л ╨┤╨╗╤П ╨╝╨╛╨┤╨╡╨╗╨╡╨╣ SQLAlchemy (User, Dashboard, Access, Graph, Layout, AggregatedData).
 
-Тестирует создание, чтение, обновление и удаление моделей,
-а также проверки ограничений, связей и каскадного удаления.
+╨в╨╡╤Б╤В╨╕╤А╤Г╨╡╤В ╤Б╨╛╨╖╨┤╨░╨╜╨╕╨╡, ╤З╤В╨╡╨╜╨╕╨╡, ╨╛╨▒╨╜╨╛╨▓╨╗╨╡╨╜╨╕╨╡ ╨╕ ╤Г╨┤╨░╨╗╨╡╨╜╨╕╨╡ ╨╝╨╛╨┤╨╡╨╗╨╡╨╣,
+╨░ ╤В╨░╨║╨╢╨╡ ╨┐╤А╨╛╨▓╨╡╤А╨║╨╕ ╨╛╨│╤А╨░╨╜╨╕╤З╨╡╨╜╨╕╨╣, ╤Б╨▓╤П╨╖╨╡╨╣ ╨╕ ╨║╨░╤Б╨║╨░╨┤╨╜╨╛╨│╨╛ ╤Г╨┤╨░╨╗╨╡╨╜╨╕╤П.
 """
 
 import pytest
@@ -19,14 +19,14 @@ from mko_bi.models.enums import UserRole, DashboardPermission, GraphType, Filter
 
 
 class TestUserModel:
-    """Тесты для модели User."""
+    """╨в╨╡╤Б╤В╤Л ╨┤╨╗╤П ╨╝╨╛╨┤╨╡╨╗╨╕ User."""
 
     async def test_create_user(self, async_db_session):
-        """Создание пользователя с валидными данными."""
+        """╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤П ╤Б ╨▓╨░╨╗╨╕╨┤╨╜╤Л╨╝╨╕ ╨┤╨░╨╜╨╜╤Л╨╝╨╕."""
         user = user_model.User(
             email="test@example.com",
             password_hash="$2b$12$examplehash",
-            role=UserRole.VIEWER.value,
+            role=UserRole.VIEWER,
             is_active=True,
         )
         async_db_session.add(user)
@@ -40,7 +40,7 @@ class TestUserModel:
         assert user.is_active is True
 
     async def test_create_user_with_default_role(self, async_db_session):
-        """Создание пользователя с ролью по умолчанию."""
+        """╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤П ╤Б ╤А╨╛╨╗╤М╤О ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О."""
         user = user_model.User(
             email="test2@example.com",
             password_hash="$2b$12$examplehash",
@@ -51,7 +51,7 @@ class TestUserModel:
         assert user.role == UserRole.VIEWER
 
     async def test_create_user_with_default_is_active(self, async_db_session):
-        """Создание пользователя с is_active по умолчанию."""
+        """╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤П ╤Б is_active ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О."""
         user = user_model.User(
             email="test3@example.com",
             password_hash="$2b$12$examplehash",
@@ -62,7 +62,7 @@ class TestUserModel:
         assert user.is_active is True
 
     async def test_unique_email_constraint(self, async_db_session):
-        """Проверка уникальности email."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╤Г╨╜╨╕╨║╨░╨╗╤М╨╜╨╛╤Б╤В╨╕ email."""
         user1 = user_model.User(
             email="duplicate@example.com",
             password_hash="$2b$12$examplehash",
@@ -82,7 +82,7 @@ class TestUserModel:
         await async_db_session.rollback()
         
     async def test_user_role_enum_values(self, async_db_session):
-        """Проверка допустимых значений роли пользователя."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨┤╨╛╨┐╤Г╤Б╤В╨╕╨╝╤Л╤Е ╨╖╨╜╨░╤З╨╡╨╜╨╕╨╣ ╤А╨╛╨╗╨╕ ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤П."""
         for role in [UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER]:
             user = user_model.User(
                 email=f"{role.value}_user@example.com",
@@ -101,10 +101,10 @@ class TestUserModel:
 
 
 class TestDashboardModel:
-    """Тесты для модели Dashboard."""
+    """╨в╨╡╤Б╤В╤Л ╨┤╨╗╤П ╨╝╨╛╨┤╨╡╨╗╨╕ Dashboard."""
 
     async def test_create_dashboard(self, async_db_session):
-        """Создание дашборда с валидными данными."""
+        """╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨┤╨░╤И╨▒╨╛╤А╨┤╨░ ╤Б ╨▓╨░╨╗╨╕╨┤╨╜╤Л╨╝╨╕ ╨┤╨░╨╜╨╜╤Л╨╝╨╕."""
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
             description="Test description",
@@ -119,7 +119,7 @@ class TestDashboardModel:
         assert dashboard.description == "Test description"
 
     async def test_create_dashboard_with_defaults(self, async_db_session):
-        """Создание дашборда со значениями по умолчанию."""
+        """╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨┤╨░╤И╨▒╨╛╤А╨┤╨░ ╤Б╨╛ ╨╖╨╜╨░╤З╨╡╨╜╨╕╤П╨╝╨╕ ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О."""
         dashboard = dashboard_model.Dashboard(
             name="Default Dashboard",
         )
@@ -130,7 +130,7 @@ class TestDashboardModel:
         assert dashboard.updated_at is not None
 
     async def test_unique_name_constraint(self, async_db_session):
-        """Проверка уникальности имени дашборда."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╤Г╨╜╨╕╨║╨░╨╗╤М╨╜╨╛╤Б╤В╨╕ ╨╕╨╝╨╡╨╜╨╕ ╨┤╨░╤И╨▒╨╛╤А╨┤╨░."""
         dashboard1 = dashboard_model.Dashboard(
             name="Same Name",
         )
@@ -148,7 +148,7 @@ class TestDashboardModel:
         await async_db_session.rollback()
         
     async def test_dashboard_updated_at_auto_update(self, async_db_session):
-        """Проверка автоматического обновления updated_at."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨░╨▓╤В╨╛╨╝╨░╤В╨╕╤З╨╡╤Б╨║╨╛╨│╨╛ ╨╛╨▒╨╜╨╛╨▓╨╗╨╡╨╜╨╕╤П updated_at."""
         dashboard = dashboard_model.Dashboard(
             name="Update Test",
         )
@@ -158,7 +158,7 @@ class TestDashboardModel:
 
         old_updated_at = dashboard.updated_at
 
-        # Обновляем дашборд
+        # ╨Ю╨▒╨╜╨╛╨▓╨╗╤П╨╡╨╝ ╨┤╨░╤И╨▒╨╛╤А╨┤
         dashboard.name = "Updated Name"
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
@@ -170,10 +170,10 @@ class TestDashboardModel:
 
 
 class TestAccessModel:
-    """Тесты для модели Access."""
+    """╨в╨╡╤Б╤В╤Л ╨┤╨╗╤П ╨╝╨╛╨┤╨╡╨╗╨╕ Access."""
 
     async def test_create_access(self, async_db_session):
-        """Создание права доступа."""
+        """╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨┐╤А╨░╨▓╨░ ╨┤╨╛╤Б╤В╤Г╨┐╨░."""
         user = user_model.User(
             email="access_user@example.com",
             password_hash="$2b$12$examplehash",
@@ -201,7 +201,7 @@ class TestAccessModel:
         assert access.permission == DashboardPermission.VIEW
 
     async def test_unique_composite_key(self, async_db_session):
-        """Проверка уникальности составного ключа (user_id, dashboard_id)."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╤Г╨╜╨╕╨║╨░╨╗╤М╨╜╨╛╤Б╤В╨╕ ╤Б╨╛╤Б╤В╨░╨▓╨╜╨╛╨│╨╛ ╨║╨╗╤О╤З╨░ (user_id, dashboard_id)."""
         user = user_model.User(
             email="composite_user@example.com",
             password_hash="$2b$12$examplehash",
@@ -236,7 +236,7 @@ class TestAccessModel:
         await async_db_session.rollback()
 
     async def test_permission_enum_values(self, async_db_session):
-        """Проверка допустимых значений уровня доступа."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨┤╨╛╨┐╤Г╤Б╤В╨╕╨╝╤Л╤Е ╨╖╨╜╨░╤З╨╡╨╜╨╕╨╣ ╤Г╤А╨╛╨▓╨╜╤П ╨┤╨╛╤Б╤В╤Г╨┐╨░."""
         user1 = user_model.User(
             email="perm_user1@example.com",
             password_hash="$2b$12$examplehash",
@@ -285,7 +285,7 @@ class TestAccessModel:
         assert len(accesses) == 3
 
     async def test_cascade_delete_user(self, async_db_session):
-        """Проверка каскадного удаления при удалении пользователя."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨║╨░╤Б╨║╨░╨┤╨╜╨╛╨│╨╛ ╤Г╨┤╨░╨╗╨╡╨╜╨╕╤П ╨┐╤А╨╕ ╤Г╨┤╨░╨╗╨╡╨╜╨╕╨╕ ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤П."""
         user = user_model.User(
             email="cascade_user@example.com",
             password_hash="$2b$12$examplehash",
@@ -307,11 +307,11 @@ class TestAccessModel:
         async_db_session.add(access)
         await async_db_session.commit()
 
-        # Удаляем пользователя
+        # ╨г╨┤╨░╨╗╤П╨╡╨╝ ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤П
         await async_db_session.delete(user)
         await async_db_session.commit()
 
-        # Проверяем, что доступ тоже удален
+        # ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝, ╤З╤В╨╛ ╨┤╨╛╤Б╤В╤Г╨┐ ╤В╨╛╨╢╨╡ ╤Г╨┤╨░╨╗╨╡╨╜
         result = await async_db_session.execute(
             select(access_model.DashboardAccess)
         )
@@ -319,7 +319,7 @@ class TestAccessModel:
         assert len(result) == 0
 
     async def test_cascade_delete_dashboard(self, async_db_session):
-        """Проверка каскадного удаления при удалении дашборда."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨║╨░╤Б╨║╨░╨┤╨╜╨╛╨│╨╛ ╤Г╨┤╨░╨╗╨╡╨╜╨╕╤П ╨┐╤А╨╕ ╤Г╨┤╨░╨╗╨╡╨╜╨╕╨╕ ╨┤╨░╤И╨▒╨╛╤А╨┤╨░."""
         user = user_model.User(
             email="cascade_dash_user@example.com",
             password_hash="$2b$12$examplehash",
@@ -341,11 +341,11 @@ class TestAccessModel:
         async_db_session.add(access)
         await async_db_session.commit()
 
-        # Удаляем дашборд
+        # ╨г╨┤╨░╨╗╤П╨╡╨╝ ╨┤╨░╤И╨▒╨╛╤А╨┤
         await async_db_session.delete(dashboard)
         await async_db_session.commit()
 
-        # Проверяем, что доступ тоже удален
+        # ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝, ╤З╤В╨╛ ╨┤╨╛╤Б╤В╤Г╨┐ ╤В╨╛╨╢╨╡ ╤Г╨┤╨░╨╗╨╡╨╜
         result = await async_db_session.execute(
             select(access_model.DashboardAccess)
         )
@@ -357,10 +357,10 @@ class TestAccessModel:
 
 
 class TestUserDashboardRelationship:
-    """Тесты для связи между пользователями и дашбордами."""
+    """╨в╨╡╤Б╤В╤Л ╨┤╨╗╤П ╤Б╨▓╤П╨╖╨╕ ╨╝╨╡╨╢╨┤╤Г ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤П╨╝╨╕ ╨╕ ╨┤╨░╤И╨▒╨╛╤А╨┤╨░╨╝╨╕."""
 
     async def test_user_dashboards_relationship(self, async_db_session):
-        """Проверка связи пользователя с дашбордами через доступ."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╤Б╨▓╤П╨╖╨╕ ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤П ╤Б ╨┤╨░╤И╨▒╨╛╤А╨┤╨░╨╝╨╕ ╤З╨╡╤А╨╡╨╖ ╨┤╨╛╤Б╤В╤Г╨┐."""
         user = user_model.User(
             email="rel_user@example.com",
             password_hash="$2b$12$examplehash",
@@ -390,7 +390,7 @@ class TestUserDashboardRelationship:
         async_db_session.add_all([access1, access2])
         await async_db_session.commit()
 
-        # Проверяем, что у пользователя есть доступ к дашбордам
+        # ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝, ╤З╤В╨╛ ╤Г ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤П ╨╡╤Б╤В╤М ╨┤╨╛╤Б╤В╤Г╨┐ ╨║ ╨┤╨░╤И╨▒╨╛╤А╨┤╨░╨╝
         result = await async_db_session.execute(
             select(user_model.User).where(user_model.User.id == user.id)
         )
@@ -401,7 +401,7 @@ class TestUserDashboardRelationship:
         assert "Dash 2" in dashboard_names
 
     async def test_dashboard_users_relationship(self, async_db_session):
-        """Проверка связи дашборда с пользователями через доступ."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╤Б╨▓╤П╨╖╨╕ ╨┤╨░╤И╨▒╨╛╤А╨┤╨░ ╤Б ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╤П╨╝╨╕ ╤З╨╡╤А╨╡╨╖ ╨┤╨╛╤Б╤В╤Г╨┐."""
         user1 = user_model.User(
             email="user1@example.com",
             password_hash="$2b$12$examplehash",
@@ -432,7 +432,7 @@ class TestUserDashboardRelationship:
         async_db_session.add_all([access1, access2])
         await async_db_session.commit()
 
-        # Проверяем, что у дашборда есть пользователи
+        # ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝, ╤З╤В╨╛ ╤Г ╨┤╨░╤И╨▒╨╛╤А╨┤╨░ ╨╡╤Б╤В╤М ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╨╕
         result = await async_db_session.execute(
             select(dashboard_model.Dashboard).where(
                 dashboard_model.Dashboard.id == dashboard.id
@@ -446,10 +446,10 @@ class TestUserDashboardRelationship:
 
 
 class TestDashboardGraphRelationship:
-    """Тесты для связи дашборда с графиками."""
+    """╨в╨╡╤Б╤В╤Л ╨┤╨╗╤П ╤Б╨▓╤П╨╖╨╕ ╨┤╨░╤И╨▒╨╛╤А╨┤╨░ ╤Б ╨│╤А╨░╤Д╨╕╨║╨░╨╝╨╕."""
 
     async def test_dashboard_graphs_relationship(self, async_db_session):
-        """Проверка связи дашборда с графиками."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╤Б╨▓╤П╨╖╨╕ ╨┤╨░╤И╨▒╨╛╤А╨┤╨░ ╤Б ╨│╤А╨░╤Д╨╕╨║╨░╨╝╨╕."""
         dashboard = dashboard_model.Dashboard(
             name="Graph Test Dashboard",
         )
@@ -475,7 +475,7 @@ class TestDashboardGraphRelationship:
         async_db_session.add_all([graph1, graph2])
         await async_db_session.commit()
 
-        # Проверяем, что у дашборда есть графики
+        # ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝, ╤З╤В╨╛ ╤Г ╨┤╨░╤И╨▒╨╛╤А╨┤╨░ ╨╡╤Б╤В╤М ╨│╤А╨░╤Д╨╕╨║╨╕
         result = await async_db_session.execute(
             select(dashboard_model.Dashboard).where(
                 dashboard_model.Dashboard.id == dashboard.id
@@ -488,7 +488,7 @@ class TestDashboardGraphRelationship:
         assert "Graph 2" in graph_names
 
     async def test_graph_cascade_delete(self, async_db_session):
-        """Проверка каскадного удаления графиков при удалении дашборда."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨║╨░╤Б╨║╨░╨┤╨╜╨╛╨│╨╛ ╤Г╨┤╨░╨╗╨╡╨╜╨╕╤П ╨│╤А╨░╤Д╨╕╨║╨╛╨▓ ╨┐╤А╨╕ ╤Г╨┤╨░╨╗╨╡╨╜╨╕╨╕ ╨┤╨░╤И╨▒╨╛╤А╨┤╨░."""
         dashboard = dashboard_model.Dashboard(
             name="Cascade Graph Test",
         )
@@ -499,18 +499,17 @@ class TestDashboardGraphRelationship:
             dashboard_id=dashboard.id,
             name="Test Graph",
             type=GraphType.BAR,
-            config={},
             dimensions=["x"],
             metrics=["y"],
         )
         async_db_session.add(graph)
         await async_db_session.commit()
 
-        # Удаляем дашборд
+        # ╨г╨┤╨░╨╗╤П╨╡╨╝ ╨┤╨░╤И╨▒╨╛╤А╨┤
         await async_db_session.delete(dashboard)
         await async_db_session.commit()
 
-        # Проверяем, что график тоже удален
+        # ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝, ╤З╤В╨╛ ╨│╤А╨░╤Д╨╕╨║ ╤В╨╛╨╢╨╡ ╤Г╨┤╨░╨╗╨╡╨╜
         result = await async_db_session.execute(
             select(graph_model.Graph)
         )
@@ -519,10 +518,10 @@ class TestDashboardGraphRelationship:
 
 
 class TestGraphModel:
-    """Тесты для модели Graph."""
+    """╨в╨╡╤Б╤В╤Л ╨┤╨╗╤П ╨╝╨╛╨┤╨╡╨╗╨╕ Graph."""
 
     async def test_create_graph(self, async_db_session):
-        """Создание графика."""
+        """╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨│╤А╨░╤Д╨╕╨║╨░."""
         dashboard = dashboard_model.Dashboard(
             name="Graph Parent Dashboard",
         )
@@ -550,18 +549,18 @@ class TestGraphModel:
         assert graph.metrics == ["sales", "profit"]
 
     async def test_graph_type_constraint(self, async_db_session):
-        """Проверка ограничения на тип графика."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨╛╨│╤А╨░╨╜╨╕╤З╨╡╨╜╨╕╤П ╨╜╨░ ╤В╨╕╨┐ ╨│╤А╨░╤Д╨╕╨║╨░."""
         dashboard = dashboard_model.Dashboard(
             name="Type Constraint Test",
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
 
-        # Допустимые типы должны работать
+        # ╨Ф╨╛╨┐╤Г╤Б╤В╨╕╨╝╤Л╨╡ ╤В╨╕╨┐╤Л ╨┤╨╛╨╗╨╢╨╜╤Л ╤А╨░╨▒╨╛╤В╨░╤В╤М
         for graph_type in [GraphType.BAR, GraphType.LINE, GraphType.PIE, GraphType.TABLE]:
             graph = graph_model.Graph(
                 dashboard_id=dashboard.id,
-                name=f"Graph {graph_type.value}",
+                name=f"Graph {graph_type}",
                 type=graph_type,
                 config={},
                 dimensions=[],
@@ -577,7 +576,7 @@ class TestGraphModel:
         assert len(graphs) == 4
 
     async def test_unique_dashboard_name_constraint(self, async_db_session):
-        """Проверка уникальности имени графика в рамках дашборда."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╤Г╨╜╨╕╨║╨░╨╗╤М╨╜╨╛╤Б╤В╨╕ ╨╕╨╝╨╡╨╜╨╕ ╨│╤А╨░╤Д╨╕╨║╨░ ╨▓ ╤А╨░╨╝╨║╨░╤Е ╨┤╨░╤И╨▒╨╛╤А╨┤╨░."""
         dashboard = dashboard_model.Dashboard(
             name="Unique Name Test",
         )
@@ -611,9 +610,9 @@ class TestGraphModel:
         await async_db_session.rollback()
 
     async def test_graph_foreign_key_constraint(self, async_db_session):
-        """Проверка ограничения внешнего ключа для графика."""
-        # Пытаемся создать график с несуществующим dashboard_id
-        # Это должно вызвать ошибку, но SQLite может не проверять FK по умолчанию
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨╛╨│╤А╨░╨╜╨╕╤З╨╡╨╜╨╕╤П ╨▓╨╜╨╡╤И╨╜╨╡╨│╨╛ ╨║╨╗╤О╤З╨░ ╨┤╨╗╤П ╨│╤А╨░╤Д╨╕╨║╨░."""
+        # ╨Я╤Л╤В╨░╨╡╨╝╤Б╤П ╤Б╨╛╨╖╨┤╨░╤В╤М ╨│╤А╨░╤Д╨╕╨║ ╤Б ╨╜╨╡╤Б╤Г╤Й╨╡╤Б╤В╨▓╤Г╤О╤Й╨╕╨╝ dashboard_id
+        # ╨н╤В╨╛ ╨┤╨╛╨╗╨╢╨╜╨╛ ╨▓╤Л╨╖╨▓╨░╤В╤М ╨╛╤И╨╕╨▒╨║╤Г, ╨╜╨╛ SQLite ╨╝╨╛╨╢╨╡╤В ╨╜╨╡ ╨┐╤А╨╛╨▓╨╡╤А╤П╤В╤М FK ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О
         from uuid import uuid4
         invalid_uuid = uuid4()
         graph = graph_model.Graph(
@@ -625,8 +624,8 @@ class TestGraphModel:
             metrics=[],
         )
         async_db_session.add(graph)
-        # В SQLite FK могут быть отключены, поэтому это может не вызвать ошибку
-        # Но мы все равно тестируем логику
+        # ╨Т SQLite FK ╨╝╨╛╨│╤Г╤В ╨▒╤Л╤В╤М ╨╛╤В╨║╨╗╤О╤З╨╡╨╜╤Л, ╨┐╨╛╤Н╤В╨╛╨╝╤Г ╤Н╤В╨╛ ╨╝╨╛╨╢╨╡╤В ╨╜╨╡ ╨▓╤Л╨╖╨▓╨░╤В╤М ╨╛╤И╨╕╨▒╨║╤Г
+        # ╨Э╨╛ ╨╝╤Л ╨▓╤Б╨╡ ╤А╨░╨▓╨╜╨╛ ╤В╨╡╤Б╤В╨╕╤А╤Г╨╡╨╝ ╨╗╨╛╨│╨╕╨║╤Г
         try:
             await async_db_session.commit()
         except IntegrityError:
@@ -637,10 +636,10 @@ class TestGraphModel:
 
 
 class TestLayoutModel:
-    """Тесты для модели Layout."""
+    """╨в╨╡╤Б╤В╤Л ╨┤╨╗╤П ╨╝╨╛╨┤╨╡╨╗╨╕ Layout."""
 
     async def test_create_layout(self, async_db_session):
-        """Создание layout."""
+        """╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ layout."""
         layout = layout_model.Layout(
             name="Test Layout",
             definition={
@@ -661,7 +660,7 @@ class TestLayoutModel:
         }
 
     async def test_create_layout_with_defaults(self, async_db_session):
-        """Создание layout со значениями по умолчанию."""
+        """╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ layout ╤Б╨╛ ╨╖╨╜╨░╤З╨╡╨╜╨╕╤П╨╝╨╕ ╨┐╨╛ ╤Г╨╝╨╛╨╗╤З╨░╨╜╨╕╤О."""
         layout = layout_model.Layout(
             name="Default Layout",
         )
@@ -672,7 +671,7 @@ class TestLayoutModel:
         assert layout.created_at is not None
 
     async def test_unique_layout_name_constraint(self, async_db_session):
-        """Проверка уникальности имени layout."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╤Г╨╜╨╕╨║╨░╨╗╤М╨╜╨╛╤Б╤В╨╕ ╨╕╨╝╨╡╨╜╨╕ layout."""
         layout1 = layout_model.Layout(
             name="Same Layout Name",
             definition={},
@@ -692,7 +691,7 @@ class TestLayoutModel:
         await async_db_session.rollback()
         
     async def test_layout_dashboards_relationship(self, async_db_session):
-        """Проверка связи layout с дашбордами."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╤Б╨▓╤П╨╖╨╕ layout ╤Б ╨┤╨░╤И╨▒╨╛╤А╨┤╨░╨╝╨╕."""
         layout = layout_model.Layout(
             name="Shared Layout",
             definition={"grid": []},
@@ -711,7 +710,7 @@ class TestLayoutModel:
         async_db_session.add_all([dashboard1, dashboard2])
         await async_db_session.commit()
 
-        # Проверяем, что у layout есть дашборды
+        # ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝, ╤З╤В╨╛ ╤Г layout ╨╡╤Б╤В╤М ╨┤╨░╤И╨▒╨╛╤А╨┤╤Л
         result = await async_db_session.execute(
             select(layout_model.Layout).where(
                 layout_model.Layout.id == layout.id
@@ -724,7 +723,7 @@ class TestLayoutModel:
         assert "Dash with Layout 2" in dashboard_names
 
     async def test_layout_cascade_delete(self, async_db_session):
-        """Проверка SET NULL при удалении layout."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ SET NULL ╨┐╤А╨╕ ╤Г╨┤╨░╨╗╨╡╨╜╨╕╨╕ layout."""
         layout = layout_model.Layout(
             name="To Be Deleted Layout",
             definition={"grid": []},
@@ -739,11 +738,11 @@ class TestLayoutModel:
         async_db_session.add(dashboard)
         await async_db_session.commit()
 
-        # Удаляем layout
+        # ╨г╨┤╨░╨╗╤П╨╡╨╝ layout
         await async_db_session.delete(layout)
         await async_db_session.commit()
 
-        # Проверяем, что layout_id стал NULL у дашборда
+        # ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝, ╤З╤В╨╛ layout_id ╤Б╤В╨░╨╗ NULL ╤Г ╨┤╨░╤И╨▒╨╛╤А╨┤╨░
         result = await async_db_session.execute(
             select(dashboard_model.Dashboard).where(
                 dashboard_model.Dashboard.id == dashboard.id
@@ -757,10 +756,10 @@ class TestLayoutModel:
 
 
 class TestAggregatedDataModel:
-    """Тесты для модели AggregatedData."""
+    """╨в╨╡╤Б╤В╤Л ╨┤╨╗╤П ╨╝╨╛╨┤╨╡╨╗╨╕ AggregatedData."""
 
     async def test_create_aggregated_data(self, async_db_session):
-        """Создание агрегированных данных."""
+        """╨б╨╛╨╖╨┤╨░╨╜╨╕╨╡ ╨░╨│╤А╨╡╨│╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╤Е ╨┤╨░╨╜╨╜╤Л╤Е."""
         dashboard = dashboard_model.Dashboard(
             name="Agg Data Dashboard",
         )
@@ -794,7 +793,7 @@ class TestAggregatedDataModel:
         assert agg_data.metrics == {"value": 100, "count": 10}
 
     async def test_aggregated_data_relationships(self, async_db_session):
-        """Проверка связей агрегированных данных."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╤Б╨▓╤П╨╖╨╡╨╣ ╨░╨│╤А╨╡╨│╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╤Е ╨┤╨░╨╜╨╜╤Л╤Е."""
         dashboard = dashboard_model.Dashboard(
             name="Agg Rel Dashboard",
         )
@@ -821,7 +820,7 @@ class TestAggregatedDataModel:
         async_db_session.add(agg_data)
         await async_db_session.commit()
 
-        # Проверяем связи
+        # ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝ ╤Б╨▓╤П╨╖╨╕
         result = await async_db_session.execute(
             select(aggregated_data_model.AggregatedData).where(
                 aggregated_data_model.AggregatedData.id == agg_data.id
@@ -832,7 +831,7 @@ class TestAggregatedDataModel:
         assert result.graph.id == graph.id
 
     async def test_aggregated_data_cascade_delete_dashboard(self, async_db_session):
-        """Проверка каскадного удаления при удалении дашборда."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨║╨░╤Б╨║╨░╨┤╨╜╨╛╨│╨╛ ╤Г╨┤╨░╨╗╨╡╨╜╨╕╤П ╨┐╤А╨╕ ╤Г╨┤╨░╨╗╨╡╨╜╨╕╨╕ ╨┤╨░╤И╨▒╨╛╤А╨┤╨░."""
         dashboard = dashboard_model.Dashboard(
             name="Cascade Agg Dashboard",
         )
@@ -859,11 +858,11 @@ class TestAggregatedDataModel:
         async_db_session.add(agg_data)
         await async_db_session.commit()
 
-        # Удаляем дашборд
+        # ╨г╨┤╨░╨╗╤П╨╡╨╝ ╨┤╨░╤И╨▒╨╛╤А╨┤
         await async_db_session.delete(dashboard)
         await async_db_session.commit()
 
-        # Проверяем, что агрегированные данные тоже удалены
+        # ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝, ╤З╤В╨╛ ╨░╨│╤А╨╡╨│╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╡ ╨┤╨░╨╜╨╜╤Л╨╡ ╤В╨╛╨╢╨╡ ╤Г╨┤╨░╨╗╨╡╨╜╤Л
         result = await async_db_session.execute(
             select(aggregated_data_model.AggregatedData)
         )
@@ -871,7 +870,7 @@ class TestAggregatedDataModel:
         assert len(result) == 0
 
     async def test_aggregated_data_cascade_delete_graph(self, async_db_session):
-        """Проверка каскадного удаления при удалении графика."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨║╨░╤Б╨║╨░╨┤╨╜╨╛╨│╨╛ ╤Г╨┤╨░╨╗╨╡╨╜╨╕╤П ╨┐╤А╨╕ ╤Г╨┤╨░╨╗╨╡╨╜╨╕╨╕ ╨│╤А╨░╤Д╨╕╨║╨░."""
         dashboard = dashboard_model.Dashboard(
             name="Cascade Graph Dashboard",
         )
@@ -898,11 +897,11 @@ class TestAggregatedDataModel:
         async_db_session.add(agg_data)
         await async_db_session.commit()
 
-        # Удаляем график
+        # ╨г╨┤╨░╨╗╤П╨╡╨╝ ╨│╤А╨░╤Д╨╕╨║
         await async_db_session.delete(graph)
         await async_db_session.commit()
 
-        # Проверяем, что агрегированные данные тоже удалены
+        # ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝, ╤З╤В╨╛ ╨░╨│╤А╨╡╨│╨╕╤А╨╛╨▓╨░╨╜╨╜╤Л╨╡ ╨┤╨░╨╜╨╜╤Л╨╡ ╤В╨╛╨╢╨╡ ╤Г╨┤╨░╨╗╨╡╨╜╤Л
         result = await async_db_session.execute(
             select(aggregated_data_model.AggregatedData)
         )
@@ -913,11 +912,11 @@ class TestAggregatedDataModel:
 
 
 class TestModelIndexes:
-    """Тесты для индексов моделей."""
+    """╨в╨╡╤Б╤В╤Л ╨┤╨╗╤П ╨╕╨╜╨┤╨╡╨║╤Б╨╛╨▓ ╨╝╨╛╨┤╨╡╨╗╨╡╨╣."""
 
     async def test_user_email_index(self, async_db_session):
-        """Проверка индекса на email."""
-        # Создаем несколько пользователей
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨╕╨╜╨┤╨╡╨║╤Б╨░ ╨╜╨░ email."""
+        # ╨б╨╛╨╖╨┤╨░╨╡╨╝ ╨╜╨╡╤Б╨║╨╛╨╗╤М╨║╨╛ ╨┐╨╛╨╗╤М╨╖╨╛╨▓╨░╤В╨╡╨╗╨╡╨╣
         for i in range(5):
             user = user_model.User(
                 email=f"user{i}@example.com",
@@ -926,7 +925,7 @@ class TestModelIndexes:
             async_db_session.add(user)
         await async_db_session.commit()
 
-        # Проверяем, что можно найти по email (использует индекс)
+        # ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝, ╤З╤В╨╛ ╨╝╨╛╨╢╨╜╨╛ ╨╜╨░╨╣╤В╨╕ ╨┐╨╛ email (╨╕╤Б╨┐╨╛╨╗╤М╨╖╤Г╨╡╤В ╨╕╨╜╨┤╨╡╨║╤Б)
         result = await async_db_session.execute(
             select(user_model.User).where(
                 user_model.User.email == "user2@example.com"
@@ -938,8 +937,8 @@ class TestModelIndexes:
         assert result.email == "user2@example.com"
 
     async def test_dashboard_name_index(self, async_db_session):
-        """Проверка индекса на имя дашборда."""
-        # Создаем несколько дашбордов
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╨╕╨╜╨┤╨╡╨║╤Б╨░ ╨╜╨░ ╨╕╨╝╤П ╨┤╨░╤И╨▒╨╛╤А╨┤╨░."""
+        # ╨б╨╛╨╖╨┤╨░╨╡╨╝ ╨╜╨╡╤Б╨║╨╛╨╗╤М╨║╨╛ ╨┤╨░╤И╨▒╨╛╤А╨┤╨╛╨▓
         for i in range(5):
             dashboard = dashboard_model.Dashboard(
                 name=f"Dashboard {i}",
@@ -947,7 +946,7 @@ class TestModelIndexes:
             async_db_session.add(dashboard)
         await async_db_session.commit()
 
-        # Проверяем, что можно найти по имени (использует индекс)
+        # ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝, ╤З╤В╨╛ ╨╝╨╛╨╢╨╜╨╛ ╨╜╨░╨╣╤В╨╕ ╨┐╨╛ ╨╕╨╝╨╡╨╜╨╕ (╨╕╤Б╨┐╨╛╨╗╤М╨╖╤Г╨╡╤В ╨╕╨╜╨┤╨╡╨║╤Б)
         result = await async_db_session.execute(
             select(dashboard_model.Dashboard).where(
                 dashboard_model.Dashboard.name == "Dashboard 2"
@@ -959,7 +958,7 @@ class TestModelIndexes:
         assert result.name == "Dashboard 2"
 
     async def test_access_composite_index(self, async_db_session):
-        """Проверка составного индекса на доступ."""
+        """╨Я╤А╨╛╨▓╨╡╤А╨║╨░ ╤Б╨╛╤Б╤В╨░╨▓╨╜╨╛╨│╨╛ ╨╕╨╜╨┤╨╡╨║╤Б╨░ ╨╜╨░ ╨┤╨╛╤Б╤В╤Г╨┐."""
         user = user_model.User(
             email="index_user@example.com",
             password_hash="$2b$12$examplehash",
@@ -981,7 +980,7 @@ class TestModelIndexes:
         async_db_session.add(access)
         await async_db_session.commit()
 
-        # Проверяем, что можно найти по составному ключу
+        # ╨Я╤А╨╛╨▓╨╡╤А╤П╨╡╨╝, ╤З╤В╨╛ ╨╝╨╛╨╢╨╜╨╛ ╨╜╨░╨╣╤В╨╕ ╨┐╨╛ ╤Б╨╛╤Б╤В╨░╨▓╨╜╨╛╨╝╤Г ╨║╨╗╤О╤З╤Г
         result = await async_db_session.execute(
             select(access_model.DashboardAccess).where(
                 access_model.DashboardAccess.user_id == user.id,

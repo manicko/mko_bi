@@ -247,7 +247,7 @@ class Settings(BaseSettings):
         4. YAML config file (app.yaml)
         5. Default values from code
         
-        Note: Last source in tuple has HIGHEST priority in pydantic-settings.
+        Note: In pydantic-settings 2.x, the FIRST source in tuple has HIGHEST priority.
         """
         yaml_file_path = Path(__file__).parent / "settings" / "app.yaml"
         yaml_source = YamlConfigSettingsSource(
@@ -255,8 +255,8 @@ class Settings(BaseSettings):
             yaml_file=yaml_file_path,
         )
         secrets_source = SecretsFileSource(settings_cls)
-        # Last source has highest priority
-        return (init_settings, yaml_source, dotenv_settings, secrets_source, env_settings)
+        # First source has highest priority
+        return (env_settings, secrets_source, dotenv_settings, yaml_source, init_settings)
     
     def __init__(self, **data: Any) -> None:
         """Initialize configuration and log settings (without secrets)."""

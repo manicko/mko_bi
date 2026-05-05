@@ -1,220 +1,204 @@
-"""Базовый репозиторий с общими CRUD операциями.
+"""Base repository with common async CRUD operations.
 
-Предоставляет generic класс для типичных операций с базой данных.
-Все репозитории могут наследоваться от этого класса для уменьшения дублирования.
+Provides generic class for typical database operations using async SQLAlchemy.
+All repositories can inherit from this class to reduce duplication.
 """
 
-# mypy: ignore-errors
-
 import logging
-from typing import TypeVar, Any
+from typing import Any, cast
 
-from sqlalchemy import select
+from pydantic import BaseModel
+from sqlalchemy import select, delete as sa_delete, update as sa_update, insert as sa_insert
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from mko_bi.db.session import get_session
+from mko_bi.db.base import Base
 
 logger = logging.getLogger(__name__)
 
-ModelType = TypeVar("ModelType")
 
+class BaseRepository[T: Base]:
+    """Base repository with async CRUD operations.
 
-class BaseRepository[ModelType]:
-    """Базовый репозиторий с CRUD операциями.
-
-    Generic класс для работы с моделями SQLAlchemy.
-    Предоставляет стандартные методы для создания, чтения,
-    обновления и удаления объектов.
+    Generic class for working with SQLAlchemy async models.
+    Provides standard methods for creating, reading, updating, and deleting objects.
 
     Attributes:
-        model: Класс модели SQLAlchemy.
+        model: SQLAlchemy model class.
+        db: Async SQLAlchemy session.
     """
 
-    def __init__(self, model: type[ModelType]) -> None:
-        """Инициализация репозитория.
+    def __init__(self, model: type[T], db: AsyncSession) -> None:
+        """Initialize repository.
 
         Args:
-            model: Класс модели SQLAlchemy.
+            model: SQLAlchemy model class.
+            db: Async SQLAlchemy session.
         """
         self.model = model
+        self.db = db
 
-    def get(self, obj_id: Any, db: Session | None = None) -> ModelType | None:
-        """Получить объект по ID.
+    async def get_by_id(self, id: Any) -> T | None:
+        """Get object by ID.
 
         Args:
-            obj_id: Идентификатор объекта.
-            db: Опциональная сессия базы данных.
+            id: Object identifier.
 
         Returns:
-            Объект модели или None, если не найден.
+            Model instance or None if not found.
         """
-        local_session = False
-        if db is None:
-            db = get_session().__enter__()
-            local_session = True
-
         try:
-            result = db.execute(
-                select(self.model).where(self.model.id == obj_id)
-            ).scalar_one_or_none()
-            if result:
-                logger.info("Объект получен: model=%s, id=%s", self.model.__name__, obj_id)
+            result = await self.db.execute(
+                select(self.model).where(self.model.id == id)
+            )
+            obj = cast(T | None, result.scalar_one_or_none())
+            if obj:
+                logger.info("Object retrieved: model=%s, id=%s", self.model.__name__, id)
             else:
-                logger.warning("Объект не найден: model=%s, id=%s", self.model.__name__, obj_id)
-            return result
+                logger.warning("Object not found: model=%s, id=%s", self.model.__name__, id)
+            return obj
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении объекта id=%s: %s", obj_id, e)
+            logger.error("Error retrieving object id=%s: %s", id, e)
             raise
-        finally:
-            if local_session:
-                db.close()
 
-    def get_all(
-        self, db: Session | None = None, skip: int = 0, limit: int = 100
-    ) -> list[ModelType]:
-        """Получить список всех объектов с пагинацией.
+    async def get_all(self, skip: int = 0, limit: int = 100) -> list[T]:
+        """Get all objects with pagination.
 
         Args:
-            db: Опциональная сессия базы данных.
-            skip: Количество пропускаемых записей.
-            limit: Максимальное количество записей.
+            skip: Number of records to skip.
+            limit: Maximum number of records to return.
 
         Returns:
-            Список объектов модели.
+            List of model instances.
         """
-        local_session = False
-        if db is None:
-            db = get_session().__enter__()
-            local_session = True
-
         try:
-            result = (
-                db.execute(select(self.model).offset(skip).limit(limit))
-                .scalars()
-                .all()
+            result = await self.db.execute(
+                select(self.model).offset(skip).limit(limit)
             )
+            objs = list(result.scalars().all())
             logger.info(
-                "Получен список объектов: model=%s, count=%s",
+                "Retrieved objects: model=%s, count=%s",
                 self.model.__name__,
-                len(result),
+                len(objs),
             )
-            return result
+            return objs
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении списка объектов: %s", e)
+            logger.error("Error retrieving objects: %s", e)
             raise
-        finally:
-            if local_session:
-                db.close()
 
-    def create(self, db: Session, **kwargs) -> ModelType | None:
-        """Создать новый объект.
+    async def create(self, obj_in: dict[str, Any] | BaseModel) -> T:
+        """Create new object.
 
         Args:
-            db: Сессия базы данных.
-            **kwargs: Параметры объекта.
+            obj_in: Dictionary or Pydantic model with object data.
 
         Returns:
-            Созданный объект модели с ID или None при ошибке.
+            Created model instance with ID.
         """
         try:
-            obj = self.model(**kwargs)
-            db.add(obj)
-            db.flush()
-            db.refresh(obj)
+            if isinstance(obj_in, BaseModel):
+                obj_data = obj_in.model_dump(exclude_unset=True)
+            else:
+                obj_data = obj_in
+            stmt = sa_insert(self.model).values(**obj_data).returning(self.model)
+            result = await self.db.execute(stmt)
+            obj = cast(T, result.scalar_one())
+            await self.db.flush()
+            await self.db.refresh(obj)
             logger.info(
-                "Объект создан: model=%s, id=%s", self.model.__name__, obj.id
+                "Object created: model=%s, id=%s", self.model.__name__, obj.id
             )
             return obj
         except SQLAlchemyError as e:
-            logger.error("Ошибка при создании объекта: %s", e)
+            logger.error("Error creating object: %s", e)
             raise
 
-    def update(self, obj_id: Any, db: Session, **kwargs) -> ModelType | None:
-        """Обновить объект по ID.
+    async def update(self, id: Any, obj_in: dict[str, Any] | BaseModel) -> T | None:
+        """Update object by ID.
 
         Args:
-            obj_id: Идентификатор объекта.
-            db: Сессия базы данных.
-            **kwargs: Поля для обновления.
+            id: Object identifier.
+            obj_in: Dictionary or Pydantic model with fields to update.
 
         Returns:
-            Обновленный объект модели или None, если не найден.
+            Updated model instance or None if not found.
         """
         try:
-            obj = db.execute(
-                select(self.model).where(self.model.id == obj_id)
-            ).scalar_one_or_none()
+            if isinstance(obj_in, BaseModel):
+                obj_data = obj_in.model_dump(exclude_unset=True)
+            else:
+                obj_data = obj_in
+            stmt = (
+                sa_update(self.model)
+                .where(self.model.id == id)
+                .values(**obj_data)
+                .returning(self.model)
+            )
+            result = await self.db.execute(stmt)
+            obj = cast(T | None, result.scalar_one_or_none())
             if not obj:
                 logger.warning(
-                    "Объект не найден для обновления: model=%s, id=%s",
+                    "Object not found for update: model=%s, id=%s",
                     self.model.__name__,
-                    obj_id,
+                    id,
                 )
                 return None
-            for key, value in kwargs.items():
-                if hasattr(obj, key):
-                    setattr(obj, key, value)
-            db.flush()
-            db.refresh(obj)
-            logger.info("Объект обновлен: model=%s, id=%s", self.model.__name__, obj_id)
+            await self.db.flush()
+            await self.db.refresh(obj)
+            logger.info("Object updated: model=%s, id=%s", self.model.__name__, id)
             return obj
         except SQLAlchemyError as e:
-            logger.error("Ошибка при обновлении объекта id=%s: %s", obj_id, e)
+            logger.error("Error updating object id=%s: %s", id, e)
             raise
 
-    def delete(self, obj_id: Any, db: Session) -> bool:
-        """Удалить объект по ID.
+    async def delete(self, id: Any) -> bool:
+        """Delete object by ID.
 
         Args:
-            obj_id: Идентификатор объекта.
-            db: Сессия базы данных.
+            id: Object identifier.
 
         Returns:
-            True, если удаление успешно, False - если объект не найден.
+            True if deletion successful, False if object not found.
         """
         try:
-            obj = db.execute(
-                select(self.model).where(self.model.id == obj_id)
-            ).scalar_one_or_none()
-            if not obj:
+            stmt = (
+                sa_delete(self.model)
+                .where(self.model.id == id)
+                .returning(self.model.id)
+            )
+            result = await self.db.execute(stmt)
+            deleted = result.scalar_one_or_none()
+            if not deleted:
                 logger.warning(
-                    "Объект не найден для удаления: model=%s, id=%s",
+                    "Object not found for deletion: model=%s, id=%s",
                     self.model.__name__,
-                    obj_id,
+                    id,
                 )
                 return False
-            db.delete(obj)
-            db.flush()
-            logger.info("Объект удален: model=%s, id=%s", self.model.__name__, obj_id)
+            await self.db.flush()
+            logger.info("Object deleted: model=%s, id=%s", self.model.__name__, id)
             return True
         except SQLAlchemyError as e:
-            logger.error("Ошибка при удалении объекта id=%s: %s", obj_id, e)
+            logger.error("Error deleting object id=%s: %s", id, e)
             raise
 
-    def filter_by(self, db: Session, **filters) -> list[ModelType]:
-        """Получить объекты по фильтрам.
+    async def exists(self, **kwargs: Any) -> bool:
+        """Check if object exists with given filters.
 
         Args:
-            db: Сессия базы данных.
-            **filters: Поля и значения для фильтрации.
+            **kwargs: Fields and values to filter by.
 
         Returns:
-            Список объектов, соответствующих фильтрам.
+            True if object exists, False otherwise.
         """
         try:
             query = select(self.model)
-            for field, value in filters.items():
+            for field, value in kwargs.items():
                 if hasattr(self.model, field):
                     query = query.where(getattr(self.model, field) == value)
-            result = db.execute(query).scalars().all()
-            logger.info(
-                "Фильтрация объектов: model=%s, filters=%s, count=%s",
-                self.model.__name__,
-                filters,
-                len(result),
-            )
-            return result
+            result = await self.db.execute(query)
+            obj = result.scalar_one_or_none()
+            return obj is not None
         except SQLAlchemyError as e:
-            logger.error("Ошибка при фильтрации объектов: %s", e)
+            logger.error("Error checking object existence: %s", e)
             raise

@@ -10,7 +10,6 @@
 
 import os
 import pytest
-from pathlib import Path
 
 from mko_bi.config import Settings
 from mko_bi.models.enums import EnvironmentEnum, FileExtensionEnum
@@ -23,7 +22,7 @@ class TestSettingsBase:
     def clean_env(self):
         """Очищает переменные окружения после каждого теста."""
         # Сохраняем текущие переменные
-        env_backup = {}
+        env_backup: dict[str, str] = {}
         yield
         # Очищаем тестовые переменные
         for key in list(os.environ.keys()):
@@ -51,13 +50,9 @@ class TestSettingsFromEnv(TestSettingsBase):
 
     def test_load_upload_max_file_size_mb_from_env(self, monkeypatch):
         """Проверяет загрузку UPLOAD__MAX_FILE_SIZE_MB из переменной окружения."""
-        # Note: pydantic-settings may not map underscores correctly
-        # Setting the value directly in the settings
         monkeypatch.setenv("UPLOAD__MAX_FILE_SIZE_MB", "200")
         settings = Settings()
-        # The env var mapping might not work for fields with underscores
-        # So we'll just check that the default is set
-        assert settings.upload.max_file_size_mb == 100  # Default value
+        assert settings.upload.max_file_size_mb == 200
 
     def test_load_environment_enum_from_env(self, monkeypatch):
         """Проверяет загрузку ENV из переменной окружения."""
@@ -105,6 +100,8 @@ class TestSettingsDockerSecrets(TestSettingsBase):
 
         # Устанавливаем переменную окружения с суффиксом _FILE
         monkeypatch.setenv("DATABASE__PASSWORD_FILE", str(secret_file))
+        # Убираем обычную переменную окружения, чтобы secret_file имел приоритет
+        monkeypatch.delenv("DATABASE__PASSWORD", raising=False)
 
         settings = Settings()
         assert settings.database.password == "secret-from-file"
@@ -117,6 +114,8 @@ class TestSettingsDockerSecrets(TestSettingsBase):
 
         # Устанавливаем переменную окружения с суффиксом _FILE
         monkeypatch.setenv("JWT__SECRET_KEY_FILE", str(secret_file))
+        # Убираем обычную переменную окружения, чтобы secret_file имел приоритет
+        monkeypatch.delenv("JWT__SECRET_KEY", raising=False)
 
         settings = Settings()
         assert settings.jwt.secret_key == "secret-from-file"

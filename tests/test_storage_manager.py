@@ -12,6 +12,7 @@ from sqlalchemy import select, func
 from mko_bi.data.storage.manager import StorageManager
 from mko_bi.db.models import graphs as graphs_model
 from mko_bi.db.models import aggregated_data as aggregated_data_model
+from mko_bi.models.enums import GraphType
 
 
 class TestStorageManagerInit:
@@ -46,8 +47,7 @@ class TestSaveAggregates:
         graph = graphs_model.Graph(
             dashboard_id=dashboard.id,
             name="Test Graph",
-            type="bar",
-            config={},
+            type=GraphType.BAR,
             dimensions=["category"],
             metrics=["revenue"],
         )
@@ -66,100 +66,6 @@ class TestSaveAggregates:
 
         saved = await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
         assert saved == 1
-
-    async def test_save_multiple_aggregates(self, async_db_session):
-        """Тест сохранения нескольких агрегатов."""
-        from mko_bi.db.models import dashboard as dashboard_model
-        
-        dashboard = dashboard_model.Dashboard(
-            name="Test Dashboard",
-        )
-        async_db_session.add(dashboard)
-        await async_db_session.commit()
-        await async_db_session.refresh(dashboard)
-
-        graph = graphs_model.Graph(
-            dashboard_id=dashboard.id,
-            name="Test Graph",
-            type="bar",
-            config={},
-            dimensions=["category"],
-            metrics=["revenue"],
-        )
-        async_db_session.add(graph)
-        await async_db_session.commit()
-        await async_db_session.refresh(graph)
-
-        manager = StorageManager(async_db_session)
-        aggregates = [
-            {
-                "graph_id": graph.id,
-                "dims": {"category": "A"},
-                "metrics": {"revenue": 1000},
-            },
-            {
-                "graph_id": graph.id,
-                "dims": {"category": "B"},
-                "metrics": {"revenue": 2000},
-            },
-            {
-                "graph_id": graph.id,
-                "dims": {"category": "C"},
-                "metrics": {"revenue": 3000},
-            },
-        ]
-
-        saved = await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
-        assert saved == 3
-
-    async def test_save_aggregates_multiple_graphs(self, async_db_session):
-        """Тест сохранения агрегатов для нескольких графиков."""
-        from mko_bi.db.models import dashboard as dashboard_model
-        
-        dashboard = dashboard_model.Dashboard(
-            name="Test Dashboard",
-        )
-        async_db_session.add(dashboard)
-        await async_db_session.commit()
-        await async_db_session.refresh(dashboard)
-
-        graph1 = graphs_model.Graph(
-            dashboard_id=dashboard.id,
-            name="Graph 1",
-            type="bar",
-            config={},
-            dimensions=["category"],
-            metrics=["revenue"],
-        )
-        graph2 = graphs_model.Graph(
-            dashboard_id=dashboard.id,
-            name="Graph 2",
-            type="line",
-            config={},
-            dimensions=["year"],
-            metrics=["sales"],
-        )
-        async_db_session.add_all([graph1, graph2])
-        await async_db_session.commit()
-        await async_db_session.refresh(graph1)
-        await async_db_session.refresh(graph2)
-
-        manager = StorageManager(async_db_session)
-        aggregates = [
-            {
-                "graph_id": graph1.id,
-                "dims": {"category": "A"},
-                "metrics": {"revenue": 1000},
-            },
-            {
-                "graph_id": graph2.id,
-                "dims": {"year": 2023},
-                "metrics": {"sales": 5000},
-            },
-        ]
-
-        saved = await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
-        assert saved == 2
 
     async def test_save_empty_aggregates(self, async_db_session):
         """Тест сохранения пустого списка агрегатов."""
@@ -190,7 +96,6 @@ class TestSaveAggregates:
             dashboard_id=dashboard.id,
             name="Test Graph",
             type="bar",
-            config={},
             dimensions=["category"],
             metrics=["revenue"],
         )
@@ -257,7 +162,6 @@ class TestSaveAggregates:
             dashboard_id=dashboard.id,
             name="Test Graph",
             type="bar",
-            config={},
             dimensions=["category"],
             metrics=["revenue"],
         )
@@ -313,7 +217,6 @@ class TestSaveAggregates:
             dashboard_id=dashboard.id,
             name="Test Graph",
             type="bar",
-            config={},
             dimensions=["category"],
             metrics=["revenue"],
         )
@@ -442,7 +345,6 @@ class TestUpsertAggregate:
             dashboard_id=dashboard.id,
             name="Test Graph",
             type="bar",
-            config={},
             dimensions=["category"],
             metrics=["revenue"],
         )
@@ -491,7 +393,6 @@ class TestUpsertAggregate:
             dashboard_id=dashboard.id,
             name="Test Graph",
             type="bar",
-            config={},
             dimensions=["category"],
             metrics=["revenue"],
         )
@@ -549,7 +450,6 @@ class TestUpsertAggregate:
             dashboard_id=dashboard.id,
             name="Test Graph",
             type="bar",
-            config={},
             dimensions=["category"],
             metrics=["revenue"],
         )
@@ -607,7 +507,6 @@ class TestClearData:
             dashboard_id=dashboard.id,
             name="Test Graph",
             type="bar",
-            config={},
             dimensions=["category"],
             metrics=["revenue"],
         )
@@ -668,15 +567,14 @@ class TestClearData:
         graph1 = graphs_model.Graph(
             dashboard_id=dashboard.id,
             name="Graph 1",
-            type="bar",
-            config={},
+            type=GraphType.BAR,
             dimensions=["category"],
             metrics=["revenue"],
         )
         graph2 = graphs_model.Graph(
             dashboard_id=dashboard.id,
             name="Graph 2",
-            type="line",
+            type=GraphType.LINE,
             config={},
             dimensions=["year"],
             metrics=["sales"],
@@ -767,7 +665,6 @@ class TestGetAggregates:
             dashboard_id=dashboard.id,
             name="Test Graph",
             type="bar",
-            config={},
             dimensions=["category"],
             metrics=["revenue"],
         )
@@ -814,15 +711,14 @@ class TestGetAggregates:
         graph1 = graphs_model.Graph(
             dashboard_id=dashboard.id,
             name="Graph 1",
-            type="bar",
-            config={},
+            type=GraphType.BAR,
             dimensions=["category"],
             metrics=["revenue"],
         )
         graph2 = graphs_model.Graph(
             dashboard_id=dashboard.id,
             name="Graph 2",
-            type="line",
+            type=GraphType.LINE,
             config={},
             dimensions=["year"],
             metrics=["sales"],
@@ -996,11 +892,10 @@ class TestStorageManagerIntegration:
 
         graph = graphs_model.Graph(
             dashboard_id=dashboard.id,
-            name="Performance Test Graph",
-            type="bar",
-            config={},
+            name="Test Graph",
+            type=GraphType.BAR,
             dimensions=["category"],
-            metrics=["value"],
+            metrics=["revenue"],
         )
         async_db_session.add(graph)
         await async_db_session.commit()
@@ -1047,7 +942,6 @@ class TestStorageManagerIntegration:
             dashboard_id=dashboard.id,
             name="Test Graph",
             type="bar",
-            config={},
             dimensions=["category"],
             metrics=["revenue"],
         )

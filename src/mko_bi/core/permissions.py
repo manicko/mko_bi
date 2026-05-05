@@ -26,7 +26,7 @@ from mko_bi.db.repositories.access_repo import AccessRepository
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.db.session import get_session
 from mko_bi.models.user import UserDB
-from mko_bi.models.user_roles import PermissionEnum, UserRoleEnum, UserRole, DashboardPermission
+from mko_bi.models.user_roles import PermissionEnum, UserRoleEnum, UserRole
 
 
 class RolePermissions:

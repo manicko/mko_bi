@@ -1,106 +1,149 @@
-"""RQ task queue setup for background processing.
+"""In-memory async task queue for data processing.
 
-Provides queue initialization and job enqueueing functions
-using Redis as the message broker.
+Provides a simple MVP queue using asyncio.Queue with status tracking.
+For production, replace with Redis/RabbitMQ and integrate with processing_logs.
 """
 
+import asyncio
 import logging
+import uuid
+from collections.abc import Callable
 from typing import Any
 
-import redis
-from rq import Queue
-
-from mko_bi.config import get_redis_client
+from mko_bi.models.enums import ProcessingStatus
 
 logger = logging.getLogger(__name__)
 
-# Queue name constants
-DEFAULT_QUEUE = "default"
-DATA_PROCESSING_QUEUE = "data_processing"
 
+class TaskQueue:
+    """In-memory async task queue for MVP.
 
-def get_redis_connection() -> redis.Redis:
-    """Get Redis connection for RQ.
-
-    Returns:
-        redis.Redis: Configured Redis connection.
+    Uses asyncio.Queue for task storage and tracks task status in memory.
+    For production, replace with a persistent message broker and integrate with processing_logs.
     """
-    return get_redis_client()  # type: ignore[no-any-return]
+
+    def __init__(self) -> None:
+        """Initialize task queue."""
+        self._queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
+        self._statuses: dict[str, ProcessingStatus] = {}
+        self._results: dict[str, Any] = {}
+        self._errors: dict[str, str | None] = {}
+
+    async def enqueue(self, task_func: Callable[..., Any], *args: Any, **kwargs: Any) -> str:
+        """Enqueue a task for async processing.
+
+        Args:
+            task_func: Async function to execute.
+            *args: Positional arguments for the function.
+            **kwargs: Keyword arguments for the function.
+
+        Returns:
+            str: Unique task ID.
+        """
+        task_id = str(uuid.uuid4())
+        self._statuses[task_id] = ProcessingStatus.STARTED
+        await self._queue.put({
+            "task_id": task_id,
+            "func": task_func,
+            "args": args,
+            "kwargs": kwargs,
+        })
+        logger.info("Task enqueued: task_id=%s", task_id)
+        return task_id
+
+    async def process_next(self) -> None:
+        """Process the next task in the queue.
+
+        Executes the task function and updates status to SUCCESS or FAILED.
+        """
+        try:
+            task = await self._queue.get()
+            task_id = task["task_id"]
+            func = task["func"]
+            args = task["args"]
+            kwargs = task["kwargs"]
+
+            self._statuses[task_id] = ProcessingStatus.PROCESSING
+            try:
+                result = await func(*args, **kwargs)
+                self._statuses[task_id] = ProcessingStatus.SUCCESS
+                self._results[task_id] = result
+                logger.info("Task processed successfully: task_id=%s", task_id)
+            except Exception as e:
+                self._statuses[task_id] = ProcessingStatus.FAILED
+                self._errors[task_id] = str(e)
+                logger.error("Task failed: task_id=%s, error=%s", task_id, e)
+            finally:
+                self._queue.task_done()
+        except asyncio.QueueEmpty:
+            logger.debug("No tasks to process")
+        except Exception as e:
+            logger.error("Error processing task: %s", e)
+
+    async def get_status(self, task_id: str) -> ProcessingStatus:
+        """Get task status by ID.
+
+        Args:
+            task_id: Task identifier.
+
+        Returns:
+            ProcessingStatus: Current status of the task.
+        """
+        status = self._statuses.get(task_id)
+        if status is None:
+            logger.warning("Task not found: task_id=%s", task_id)
+            return ProcessingStatus.FAILED
+        return status
+
+    async def get_result(self, task_id: str) -> Any:
+        """Get task result by ID.
+
+        Args:
+            task_id: Task identifier.
+
+        Returns:
+            Any: Task result, or None if not completed.
+        """
+        return self._results.get(task_id)
+
+    async def get_error(self, task_id: str) -> str | None:
+        """Get task error by ID.
+
+        Args:
+            task_id: Task identifier.
+
+        Returns:
+            Optional[str]: Error message, or None if no error.
+        """
+        return self._errors.get(task_id)
 
 
-def get_queue(queue_name: str = DATA_PROCESSING_QUEUE) -> Queue:
-    """Get RQ queue by name.
-
-    Args:
-        queue_name: Name of the queue to retrieve.
-
-    Returns:
-        Queue: RQ queue instance.
-    """
-    redis_conn = get_redis_connection()
-    return Queue(queue_name, connection=redis_conn)
+# Global default queue instance for backward compatibility
+default_queue = TaskQueue()
 
 
-def enqueue_job(
-    func: Any,
+async def enqueue_job(
+    func: Callable[..., Any],
     *args: Any,
-    queue_name: str = DATA_PROCESSING_QUEUE,
-    job_timeout: int = 3600,
     **kwargs: Any,
 ) -> str | None:
-    """Enqueue a job to RQ queue.
+    """Compatibility function for enqueueing jobs.
 
     Args:
-        func: Function to execute in background.
-        *args: Positional arguments for the function.
-        queue_name: Name of the queue.
-        job_timeout: Job timeout in seconds (default: 1 hour).
-        **kwargs: Keyword arguments for the function.
+        func: Async function to execute.
+        *args: Positional arguments.
+        **kwargs: Keyword arguments.
 
     Returns:
-        str | None: Job ID if enqueued successfully, None otherwise.
+        str | None: Task ID if enqueued, None otherwise.
     """
     try:
-        queue = get_queue(queue_name)
-        job = queue.enqueue(
-            func,
-            *args,
-            **kwargs,
-            job_timeout=job_timeout,
-        )
-        logger.info("Job enqueued: job_id=%s, queue=%s", job.id, queue_name)
-        return job.id
+        return await default_queue.enqueue(func, *args, **kwargs)
     except Exception as e:
         logger.error("Failed to enqueue job: %s", e)
         return None
 
 
-def get_job_status(job_id: str, queue_name: str = DATA_PROCESSING_QUEUE) -> dict[str, Any] | None:
-    """Get job status by ID.
-
-    Args:
-        job_id: RQ job ID.
-        queue_name: Name of the queue.
-
-    Returns:
-        dict | None: Job info if found, None otherwise.
-    """
-    try:
-        queue = get_queue(queue_name)
-        job = queue.fetch_job(job_id)
-        if job is None:
-            logger.warning("Job not found: job_id=%s", job_id)
-            return None
-
-        return {
-            "id": job.id,
-            "status": job.get_status(),
-            "result": job.result,
-            "exc_info": job.exc_info,
-            "created_at": job.created_at,
-            "started_at": job.started_at,
-            "ended_at": job.ended_at,
-        }
-    except Exception as e:
-        logger.error("Failed to get job status: %s", e)
-        return None
+def get_task_queue() -> TaskQueue:
+    """Get default task queue instance."""
+    return default_queue
