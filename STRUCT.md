@@ -10,6 +10,7 @@ C:\py_exp\mko_bi
 │       ├── 840a99edb818_standardize_index_naming.py
 │       ├── 7130ecb0388c_true_initial_migration.py
 │       ├── a1b2c3d4e5f6_add_config_to_dashboards.py
+│       ├── a1e404502aac_add_registration_requests_table.py
 │       ├── ce58bba5d461_add_db_constraints_and_fix_schema_issues.py
 │       └── e86f3c8f7324_schema_adjustments.py
 ├── alembic.ini
@@ -24,6 +25,8 @@ C:\py_exp\mko_bi
 │   └── tmp_uploads
 ├── DB_STRUCTURE.md
 ├── DBSTR.md
+├── fix_tests.py
+├── fix_tests_simple.py
 ├── instructions
 │   └── RUN.md
 ├── nginx
@@ -94,6 +97,7 @@ C:\py_exp\mko_bi
 │       │   │   ├── layout.py
 │       │   │   ├── processing_configs.py
 │       │   │   ├── processing_logs.py
+│       │   │   ├── registration_request.py
 │       │   │   └── user.py
 │       │   ├── repositories
 │       │   │   ├── access_repo.py
@@ -155,10 +159,10 @@ C:\py_exp\mko_bi
 │   ├── conftest.py
 │   ├── services
 │   │   └── test_data_service.py
+│   ├── test_config.py
 │   ├── test_data_loader.py
 │   ├── test_data_processing.py
 │   ├── test_models.py
-│   ├── test_new_models.py
 │   ├── test_pydantic_models.py
 │   ├── test_security.py
 │   ├── test_share_calculation.py
@@ -179,8 +183,8 @@ C:\py_exp\mko_bi
 │   │   └── TEST_036_test_audit_arch.md
 │   ├── DB
 │   ├── DEV
-│   │   ├── 001_database_models.md
-│   │   ├── 002_configuration.md
+│   │   ├── 001_database_models_DONE.md
+│   │   ├── 002_configuration_DONE.md
 │   │   ├── 003_authentication.md
 │   │   ├── 004_core_infrastructure.md
 │   │   ├── 005_data_upload.md
@@ -197,7 +201,8 @@ C:\py_exp\mko_bi
 │   │   ├── 016_frontend_admin.md
 │   │   ├── 017_frontend_profile.md
 │   │   ├── 018_testing.md
-│   │   └── 019_deployment.md
+│   │   ├── 019_deployment.md
+│   │   └── 020_fix_remaining_tests.md
 │   ├── DEV_PLAN.md
 │   ├── DONE
 │   │   ├── TASK_001_sync_async_unification.md

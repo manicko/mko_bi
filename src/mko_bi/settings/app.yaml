@@ -1,6 +1,11 @@
 # Environment: development, staging, production, test
 env: development
 
+# App settings
+app:
+  name: mko_bi
+  version: "1.0.0"
+
 # Database migrations
 auto_migrate: true
 migration_script_path: "alembic"
@@ -15,8 +20,8 @@ database:
   port: 5432
   dbname: bidb
   user: postgres
-  # Password must be set via environment variable DB__PASSWORD
-  # Or use Docker secrets: set DB__PASSWORD_FILE=/run/secrets/db_password
+  # Password must be set via environment variable DATABASE__PASSWORD
+  # Or use Docker secrets: set DATABASE__PASSWORD_FILE=/run/secrets/db_password
 
 jwt:
   # Secret key must be set via environment variable JWT__SECRET_KEY
@@ -26,10 +31,15 @@ jwt:
 
 upload:
   temp_dir: "data/tmp_uploads"
-  allowed_file_types:
+  temp_dir_prefix: "mko_bi_upload"
+  max_file_size_mb: 100
+  allowed_extensions:
     - "csv.gz"
     - "csv"
-  max_file_size: 104857600  # 100MB in bytes
+  allowed_mime_types:
+    - "text/csv"
+    - "application/gzip"
+    - "application/x-gzip"
   lazy_threshold_mb: 10.0  # Use lazy evaluation for files larger than this
 
 redis:
@@ -42,6 +52,8 @@ redis:
 logging:
   format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
   level: INFO
+  log_file: null
+  json_logging: true
 
 charts:
   default_colors:
@@ -73,3 +85,11 @@ charts:
 cors_origins:
   - "https://example.com"
   - "https://app.example.com"
+
+email:
+  blocked_domains:
+    - "tempmail.com"
+    - "throwaway.email"
+
+dashboard:
+  default_items_per_page: 20

@@ -5,9 +5,9 @@ import logging
 import redis
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
 from pydantic_settings.sources import PydanticBaseSettingsSource
-from pydantic import BaseModel, PostgresDsn
+from pydantic import BaseModel, PostgresDsn, Field
 
-from mko_bi.models.user_roles import FileExtensionEnum
+from mko_bi.models.enums import EnvironmentEnum, FileExtensionEnum, MimeTypeEnum
 
 from pydantic.fields import FieldInfo
 
@@ -70,12 +70,12 @@ def _set_nested_value(data: dict[str, Any], key: str, value: Any) -> None:
 
 class DatabaseSettings(BaseModel):
     """Настройки подключения к базе данных."""
-    
+
     host: str = "localhost"
     port: int = 5432
     dbname: str = "bidb"
     user: str = "postgres"
-    password: str  # Обязательная переменная, нет дефолта
+    password: str | None = None
     
     @property
     def database_url(self) -> PostgresDsn:
@@ -93,7 +93,7 @@ class DatabaseSettings(BaseModel):
 class JWTSettings(BaseModel):
     """Настройки JWT аутентификации."""
     
-    secret_key: str  # Обязательная переменная, нет дефолта
+    secret_key: str | None = None
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 30
 
@@ -107,20 +107,45 @@ class RedisSettings(BaseModel):
     password: str | None = None
 
 
+class AppSettings(BaseModel):
+    """Настройки приложения."""
+
+    name: str = "mko_bi"
+    version: str = "1.0.0"
+
+
 class UploadSettings(BaseModel):
     """Настройки загрузки файлов."""
-    
+
     temp_dir: str = "data/tmp_uploads"
-    allowed_file_types: list[FileExtensionEnum] = [FileExtensionEnum.CSV_GZ, FileExtensionEnum.CSV]
-    max_file_size: int = 100 * 1024 * 1024  # 100MB
+    temp_dir_prefix: str = "mko_bi_upload"
+    max_file_size_mb: int = Field(default=100, alias="max_file_size_mb")
+    allowed_extensions: list[FileExtensionEnum] = [FileExtensionEnum.CSV_GZ, FileExtensionEnum.CSV]
+    allowed_mime_types: list[MimeTypeEnum] = [MimeTypeEnum.TEXT_CSV, MimeTypeEnum.APPLICATION_GZIP]
     lazy_threshold_mb: float = 10.0
+
+    model_config = {"populate_by_name": True}
+
+
+class EmailSettings(BaseModel):
+    """Настройки email."""
+
+    blocked_domains: list[str] = ["tempmail.com", "throwaway.email"]
+
+
+class DashboardSettings(BaseModel):
+    """Настройки дашбордов."""
+
+    default_items_per_page: int = 20
 
 
 class LoggingSettings(BaseModel):
     """Настройки логирования."""
-    
+
     format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     level: str = "INFO"
+    log_file: str | None = None
+    json_logging: bool = True
 
 
 class ChartsSettings(BaseModel):
@@ -155,35 +180,40 @@ class ChartsSettings(BaseModel):
 class Settings(BaseSettings):
     """Конфигурация приложения с использованием pydantic-settings.
 
-    Все настройки загружаются из YAML файла.
+    Все настройки загружаются из переменных окружения, .env файла,
+    Docker secrets и YAML файла с соблюдением приоритета.
     """
-
-    # --- Database ---
-    database: DatabaseSettings
-
-    # --- JWT ---
-    jwt: JWTSettings
-
-    # --- Upload ---
-    upload: UploadSettings
-
-    # --- Redis ---
-    redis: RedisSettings
-
-    # --- Logging ---
-    logging: LoggingSettings
-
-    # --- Charts ---
-    charts: ChartsSettings
 
     # --- App ---
     app_name: str = "mko_bi"
+    environment: EnvironmentEnum = Field(default=EnvironmentEnum.DEVELOPMENT, alias="ENV")
     debug: bool = False
-    api_base_url: str = "http://localhost:8000"
-    cors_origins: list[str] = []
+    host: str = "0.0.0.0"
+    port: int = 8000
+    app: AppSettings = AppSettings()
+    email: EmailSettings = EmailSettings()
+    dashboard: DashboardSettings = DashboardSettings()
 
-    # --- Environment ---
-    env: str = "development"
+    # --- Database ---
+    database: DatabaseSettings = DatabaseSettings()
+
+    # --- JWT ---
+    jwt: JWTSettings = JWTSettings()
+
+    # --- Upload ---
+    upload: UploadSettings = UploadSettings()
+
+    # --- Redis ---
+    redis: RedisSettings = RedisSettings()
+
+    # --- Logging ---
+    logging: LoggingSettings = LoggingSettings()
+
+    # --- Charts ---
+    charts: ChartsSettings = ChartsSettings()
+
+    # --- CORS ---
+    cors_origins: list[str] = []
 
     # --- Database Migrations ---
     auto_migrate: bool = False
@@ -192,11 +222,10 @@ class Settings(BaseSettings):
     test_database_url: str | None = None
     recreate_test_db: bool = False
 
-    # Настройки для pydantic-settings
     model_config = {
-        "case_sensitive": False,
         "env_prefix": "",
         "env_nested_delimiter": "__",
+        "case_sensitive": False,
         "extra": "ignore",
     }
 
@@ -212,8 +241,8 @@ class Settings(BaseSettings):
         """Customize settings sources with correct priority order.
         
         Priority (highest to lowest):
-        1. Environment variables (DB__PASSWORD, JWT__SECRET_KEY, etc.)
-        2. Docker secrets files (DB__PASSWORD_FILE -> /run/secrets/db_password)
+        1. Environment variables (DATABASE__PASSWORD, JWT__SECRET_KEY, etc.)
+        2. Docker secrets files (DATABASE__PASSWORD_FILE -> /run/secrets/db_password)
         3. .env file (for development convenience)
         4. YAML config file (app.yaml)
         5. Default values from code
@@ -228,6 +257,28 @@ class Settings(BaseSettings):
         secrets_source = SecretsFileSource(settings_cls)
         # Last source has highest priority
         return (init_settings, yaml_source, dotenv_settings, secrets_source, env_settings)
+    
+    def __init__(self, **data: Any) -> None:
+        """Initialize configuration and log settings (without secrets)."""
+        super().__init__(**data)
+        self._log_initialization()
+        self._ensure_upload_dir()
+
+    def _log_initialization(self) -> None:
+        """Log configuration initialization without exposing secrets."""
+        logger.info(
+            "Configuration loaded: env=%s, database_host=%s, redis_host=%s",
+            self.environment,
+            self.database.host,
+            self.redis.host,
+        )
+        if self.debug:
+            logger.debug("Debug mode is enabled")
+
+    def _ensure_upload_dir(self) -> None:
+        """Создаёт директорию для временных файлов загрузок, если её нет."""
+        upload_path = Path(self.upload.temp_dir)
+        upload_path.mkdir(parents=True, exist_ok=True)
 
     @property
     def DATABASE_URL(self) -> str:
@@ -240,7 +291,7 @@ class Settings(BaseSettings):
         return self.DATABASE_URL
 
     @property
-    def jwt_secret_key(self) -> str:
+    def jwt_secret_key(self) -> str | None:
         """Алиас для JWT_SECRET_KEY."""
         return self.jwt.secret_key
 
@@ -256,8 +307,13 @@ class Settings(BaseSettings):
 
     @property
     def allowed_file_types(self) -> list[str]:
-        """Алиас для ALLOWED_FILE_TYPES."""
-        return self.upload.allowed_file_types
+        """Возвращает список разрешённых расширений файлов."""
+        return [ext.value for ext in self.upload.allowed_extensions]
+
+    @property
+    def allowed_mime_types(self) -> list[str]:
+        """Возвращает список разрешённых MIME-типов."""
+        return [mime.value for mime in self.upload.allowed_mime_types]
 
     @property
     def lazy_threshold_mb(self) -> float:
@@ -266,42 +322,31 @@ class Settings(BaseSettings):
 
     @property
     def max_file_size(self) -> int:
-        """Алиас для MAX_FILE_SIZE."""
-        return self.upload.max_file_size
+        """Возвращает максимальный размер файла в байтах."""
+        return self.upload.max_file_size_mb * 1024 * 1024
 
-    def get(self, key: str, default: Any = None) -> Any:
-        """Получить значение конфигурации по ключу.
+    @property
+    def log_level(self) -> str:
+        """Алиас для уровня логирования."""
+        return self.logging.level
 
-        Args:
-            key: Имя атрибута конфигурации.
-            default: Значение по умолчанию, если ключ не найден.
+    @property
+    def log_file(self) -> str | None:
+        """Алиас для файла логирования."""
+        return self.logging.log_file
+
+    def load_yaml_config(self) -> dict[str, Any]:
+        """Загружает и возвращает конфигурацию из app.yaml.
 
         Returns:
-            Значение конфигурации или default.
+            dict[str, Any]: Словарь с настройками из YAML файла.
         """
-        return getattr(self, key, default)
-
-    def __init__(self, **data: Any) -> None:
-        """Initialize configuration and log settings (without secrets)."""
-        super().__init__(**data)
-        self._log_initialization()
-        self._ensure_upload_dir()
-    
-    def _log_initialization(self) -> None:
-        """Log configuration initialization without exposing secrets."""
-        logger.info(
-            "Configuration loaded: env=%s, database_host=%s, redis_host=%s",
-            self.env,
-            self.database.host,
-            self.redis.host,
-        )
-        if self.debug:
-            logger.debug("Debug mode is enabled")
-
-    def _ensure_upload_dir(self) -> None:
-        """Создаёт директорию для временных файлов загрузок, если её нет."""
-        upload_path = Path(self.upload.temp_dir)
-        upload_path.mkdir(parents=True, exist_ok=True)
+        yaml_file_path = Path(__file__).parent / "settings" / "app.yaml"
+        if yaml_file_path.exists():
+            import yaml
+            with open(yaml_file_path) as f:
+                return yaml.safe_load(f)  # type: ignore[no-any-return]
+        return {}
 
 
 # Кэшированный экземпляр конфигурации

@@ -29,6 +29,7 @@ from mko_bi.models.access import (
     AccessCheck,
     AccessGrant,
 )
+from mko_bi.models.enums import UserRole, DashboardPermission
 
 
 class TestUserModels:

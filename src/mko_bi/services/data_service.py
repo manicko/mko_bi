@@ -114,7 +114,7 @@ def _validate_file(filename: str, file_content: bytes, content_type: str | None 
     config = get_config()
 
     # 2. Проверка формата файла
-    allowed_extensions = [ext.value for ext in config.allowed_file_types]
+    allowed_extensions = config.allowed_file_types
     if not any(filename.lower().endswith(ext.lower()) for ext in allowed_extensions):
         logger.error(
             "Недопустимый формат файла: %s. Допустимые: %s",

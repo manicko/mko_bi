@@ -38,7 +38,6 @@ class TestSaveAggregates:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -74,7 +73,6 @@ class TestSaveAggregates:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -120,7 +118,6 @@ class TestSaveAggregates:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar", "line"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -170,7 +167,6 @@ class TestSaveAggregates:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -185,7 +181,6 @@ class TestSaveAggregates:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -253,7 +248,6 @@ class TestSaveAggregates:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -310,7 +304,6 @@ class TestSaveAggregates:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -369,7 +362,6 @@ class TestSaveAggregates:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -392,7 +384,6 @@ class TestSaveAggregates:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -415,7 +406,6 @@ class TestSaveAggregates:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -443,7 +433,6 @@ class TestUpsertAggregate:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -493,7 +482,6 @@ class TestUpsertAggregate:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -552,7 +540,6 @@ class TestUpsertAggregate:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -586,7 +573,6 @@ class TestUpsertAggregate:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -612,7 +598,6 @@ class TestClearData:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -675,7 +660,6 @@ class TestClearData:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar", "line"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -755,7 +739,6 @@ class TestClearData:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -775,7 +758,6 @@ class TestGetAggregates:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -824,7 +806,6 @@ class TestGetAggregates:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar", "line"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -880,7 +861,6 @@ class TestGetAggregates:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -901,7 +881,6 @@ class TestStorageManagerIntegration:
         # Создаем дашборд и графики
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar", "line"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -1010,7 +989,6 @@ class TestStorageManagerIntegration:
         
         dashboard = dashboard_model.Dashboard(
             name="Performance Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -1060,7 +1038,6 @@ class TestStorageManagerIntegration:
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
