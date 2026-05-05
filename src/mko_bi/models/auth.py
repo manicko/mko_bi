@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, EmailStr
 from uuid import UUID
 
-from mko_bi.models.user_roles import UserRoleEnum
+from mko_bi.models.user_roles import UserRole, UserRoleEnum
 
 
 class LoginRequest(BaseModel):
@@ -16,6 +16,40 @@ class LoginRequest(BaseModel):
             "example": {
                 "email": "user@example.com",
                 "password": "secure_password123",
+            }
+        },
+    )
+
+
+class RegistrationRequestCreate(BaseModel):
+    """Модель запроса на регистрацию (заявка)."""
+
+    email: EmailStr
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "email": "user@example.com",
+            }
+        },
+    )
+
+
+class RegistrationRequestResponse(BaseModel):
+    """Модель ответа на создание заявки на регистрацию."""
+
+    id: UUID
+    email: EmailStr
+    status: str
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "email": "user@example.com",
+                "status": "pending",
             }
         },
     )

@@ -26,7 +26,65 @@ from mko_bi.db.repositories.access_repo import AccessRepository
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.db.session import get_session
 from mko_bi.models.user import UserDB
-from mko_bi.models.user_roles import PermissionEnum, UserRoleEnum
+from mko_bi.models.user_roles import PermissionEnum, UserRoleEnum, UserRole, DashboardPermission
+
+
+class RolePermissions:
+    """Класс для проверки прав доступа на основе ролей.
+
+    Определяет, какие роли имеют доступ к определенным операциям.
+    """
+
+    CAN_CREATE_DASHBOARDS: list[UserRole] = [UserRole.ADMIN]
+    CAN_EDIT_DASHBOARDS: list[UserRole] = [UserRole.ADMIN, UserRole.EDITOR]
+    CAN_VIEW_DASHBOARDS: list[UserRole] = [UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER]
+    CAN_MANAGE_USERS: list[UserRole] = [UserRole.ADMIN]
+    CAN_UPLOAD_DATA: list[UserRole] = [UserRole.ADMIN, UserRole.EDITOR]
+
+    @classmethod
+    def can_create_dashboards(cls, user_role: UserRole) -> bool:
+        """Проверить, может ли пользователь создавать дашборды."""
+        return user_role in cls.CAN_CREATE_DASHBOARDS
+
+    @classmethod
+    def can_edit_dashboards(cls, user_role: UserRole) -> bool:
+        """Проверить, может ли пользователь редактировать дашборды."""
+        return user_role in cls.CAN_EDIT_DASHBOARDS
+
+    @classmethod
+    def can_view_dashboards(cls, user_role: UserRole) -> bool:
+        """Проверить, может ли пользователь просматривать дашборды."""
+        return user_role in cls.CAN_VIEW_DASHBOARDS
+
+    @classmethod
+    def can_manage_users(cls, user_role: UserRole) -> bool:
+        """Проверить, может ли пользователь управлять пользователями."""
+        return user_role in cls.CAN_MANAGE_USERS
+
+    @classmethod
+    def can_upload_data(cls, user_role: UserRole) -> bool:
+        """Проверить, может ли пользователь загружать данные."""
+        return user_role in cls.CAN_UPLOAD_DATA
+
+
+def check_permission(user_role: UserRole, required: list[UserRole]) -> bool:
+    """Проверить, имеет ли пользователь требуемые права.
+
+    Args:
+        user_role: Роль пользователя.
+        required: Список ролей, имеющих доступ.
+
+    Returns:
+        bool: True, если пользователь имеет доступ, иначе False.
+    """
+    result = user_role in required
+    logger.debug(
+        "Проверка прав: user_role=%s, required=%s -> %s",
+        user_role,
+        [r.value for r in required],
+        result,
+    )
+    return result
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
@@ -393,11 +451,11 @@ def get_current_user_dependency(
         ) from e
 
 
-def require_role(required_role: str):
+def require_role(required_roles: list[UserRole]):
     """Создает FastAPI зависимость для проверки роли пользователя.
 
     Args:
-        required_role: Минимально требуемая роль.
+        required_roles: Список ролей, имеющих доступ.
 
     Returns:
         Callable: Зависимость FastAPI.
@@ -407,23 +465,25 @@ def require_role(required_role: str):
 
     Example:
         @app.get("/admin")
-        async def admin_route(user: UserDB = Depends(get_current_user_dependency),
-                             _: None = Depends(require_role("admin"))):
+        async def admin_route(
+            user: UserDB = Depends(get_current_user_dependency),
+            _: None = Depends(require_role([UserRole.ADMIN])),
+        ):
             return {"message": "Admin area"}
     """
 
     def role_checker(user: UserDB = Depends(get_current_user_dependency)) -> UserDB:
         """Проверяет роль пользователя и возвращает его при успехе."""
-        if not check_role(user.role, required_role):
+        if not check_permission(user.role, required_roles):
             logger.warning(
-                "Недостаточно прав: user_id=%s, user_role=%s, required_role=%s",
+                "Недостаточно прав: user_id=%s, user_role=%s, required_roles=%s",
                 user.id,
                 user.role,
-                required_role,
+                [r.value for r in required_roles],
             )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Требуется роль: {required_role} или выше",
+                detail=f"Требуются роли: {[r.value for r in required_roles]}",
             )
         return user
 

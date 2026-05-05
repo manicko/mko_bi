@@ -5,6 +5,7 @@
 
 import abc
 from datetime import datetime
+from typing import Any
 from uuid import UUID
 
 from sqlalchemy.orm import Session
@@ -49,6 +50,21 @@ class IAuthService(abc.ABC):
     @abc.abstractmethod
     def verify_token(self, token: str) -> TokenData | None:
         """Проверить JWT токен и вернуть данные."""
+        pass
+
+    @abc.abstractmethod
+    async def register_request(self, email: str, ip: str | None, db: Session | None = None) -> dict[str, Any]:
+        """Создать заявку на регистрацию."""
+        pass
+
+    @abc.abstractmethod
+    async def get_user_by_id(self, user_id: UUID, db: Session | None = None) -> UserRead | None:
+        """Получить пользователя по ID."""
+        pass
+
+    @abc.abstractmethod
+    async def get_user_by_email(self, email: str, db: Session | None = None) -> UserRead | None:
+        """Получить пользователя по email."""
         pass
 
 

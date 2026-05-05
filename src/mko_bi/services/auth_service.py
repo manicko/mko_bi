@@ -6,12 +6,14 @@
 
 import logging
 import re
+from uuid import UUID
 from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mko_bi.config import get_redis_client
 from mko_bi.core.security import RateLimiter, create_access_token, hash_password, verify_password, decode_token
+from mko_bi.db.repositories.registration_request_repo import RegistrationRequestRepository
 from mko_bi.db.repositories.user_repo import UserRepository
 from mko_bi.db.session import get_session
 from mko_bi.interfaces.service_interfaces import IAuthService
@@ -298,3 +300,108 @@ class AuthService(IAuthService):
 
         logger.info("Token verified for user_id: %s", payload.get("user_id"))
         return payload  # type: ignore[no-any-return]
+
+    async def register_request(
+        self, email: str, ip: str | None, db: AsyncSession | None = None
+    ) -> dict[str, Any]:
+        """Создать заявку на регистрацию.
+
+        Сохраняет заявку в таблицу registration_requests со статусом PENDING.
+
+        Args:
+            email: Email заявителя.
+            ip: IP-адрес заявителя.
+            db: Опциональная сессия базы данных.
+
+        Returns:
+            dict: Данные созданной заявки.
+
+        Raises:
+            ValueError: Если заявка с таким email уже существует.
+        """
+        logger.info("Creating registration request: email=%s", email)
+
+        if db is None:
+            async with get_session() as db:
+                return await self.register_request(email, ip, db)
+
+        # Проверяем, нет ли уже заявки с таким email
+        existing_request = await RegistrationRequestRepository.get_by_email(email, db)
+        if existing_request is not None:
+            logger.warning("Registration request already exists: email=%s", email)
+            raise ValueError(f"Заявка с email '{email}' уже существует")
+
+        # Проверяем, нет ли уже пользователя с таким email
+        existing_user = await UserRepository.get_by_email(email, db)
+        if existing_user is not None:
+            logger.warning("User already exists: email=%s", email)
+            raise ValueError(f"Пользователь с email '{email}' уже существует")
+
+        try:
+            async with db.begin():
+                req = await RegistrationRequestRepository.create(email, ip, db)
+                if req is None:
+                    raise ValueError("Ошибка создания заявки")
+
+                logger.info(
+                    "Registration request created: id=%s, email=%s", req.id, email
+                )
+
+            return {
+                "id": req.id,
+                "email": req.email,
+                "status": req.status.value,
+            }
+        except Exception as e:
+            logger.error("Error creating registration request %s: %s", email, e)
+            raise
+
+    async def get_user_by_id(
+        self, user_id: UUID, db: AsyncSession | None = None
+    ) -> UserRead | None:
+        """Получить пользователя по ID.
+
+        Args:
+            user_id: ID пользователя.
+            db: Опциональная сессия базы данных.
+
+        Returns:
+            UserRead или None, если пользователь не найден.
+        """
+        logger.info("Getting user by id: user_id=%s", user_id)
+
+        if db is None:
+            async with get_session() as db:
+                return await self.get_user_by_id(user_id, db)
+
+        user_obj = await UserRepository.get(user_id, db)
+        if user_obj is None:
+            logger.warning("User not found: user_id=%s", user_id)
+            return None
+
+        return UserRead.model_validate(user_obj)
+
+    async def get_user_by_email(
+        self, email: str, db: AsyncSession | None = None
+    ) -> UserDB | None:
+        """Получить пользователя по email.
+
+        Args:
+            email: Email пользователя.
+            db: Опциональная сессия базы данных.
+
+        Returns:
+            UserDB или None, если пользователь не найден.
+        """
+        logger.info("Getting user by email: email=%s", email)
+
+        if db is None:
+            async with get_session() as db:
+                return await self.get_user_by_email(email, db)
+
+        user_obj = await UserRepository.get_by_email(email, db)
+        if user_obj is None:
+            logger.warning("User not found: email=%s", email)
+            return None
+
+        return UserDB.model_validate(user_obj)

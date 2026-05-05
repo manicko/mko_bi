@@ -4,18 +4,27 @@
 - Регистрации новых пользователей
 - Входа пользователей (аутентификация)
 - Обновления JWT токенов
+- Создания заявок на регистрацию
 
 Все эндпоинты возвращают стандартизированные JSON ответы.
 """
 
 import logging
+from ipaddress import ip_address
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from mko_bi.api.deps import get_current_user_dependency, get_auth_service
+from mko_bi.api.deps import get_auth_service, get_current_user_dependency
 from mko_bi.interfaces.service_interfaces import IAuthService
-from mko_bi.models.auth import LoginRequest, RegisterRequest, Token, RefreshRequest
+from mko_bi.models.auth import (
+    LoginRequest,
+    RegisterRequest,
+    RegistrationRequestCreate,
+    Token,
+    RefreshRequest,
+)
 from mko_bi.models.user import UserRead
 
 logger = logging.getLogger(__name__)
@@ -281,3 +290,71 @@ async def get_current_user_info(
     """
     logger.info("Запрос данных пользователя: %s", current_user.email)
     return current_user
+
+
+@router.post(
+    "/register-request",
+    status_code=status.HTTP_201_CREATED,
+    summary="Заявка на регистрацию",
+    description="Создает заявку на регистрацию. Администратор должен одобрить заявку.",
+)
+async def register_request(
+    request_data: RegistrationRequestCreate,
+    request: Request,
+    auth_service: IAuthService = Depends(get_auth_service),
+) -> dict[str, Any]:
+    """Эндпоинт создания заявки на регистрацию.
+
+    Сохраняет заявку в базе данных со статусом PENDING.
+    Администратор должен одобрить или отклонить заявку.
+
+    Args:
+        request_data: Данные заявки (email).
+        request: Объект запроса для получения IP.
+        auth_service: Сервис аутентификации.
+
+    Returns:
+        dict: Сообщение об успешном создании заявки.
+
+    Raises:
+        HTTPException 422: Заявка уже существует.
+    """
+    # Получаем IP адрес клиента
+    client_ip: str | None = None
+    if request.client:
+        client_ip = str(ip_address(request.client.host))
+
+    logger.info(
+        "Попытка создания заявки на регистрацию: %s, IP: %s",
+        request_data.email,
+        client_ip,
+    )
+
+    try:
+        result = auth_service.register_request(
+            email=request_data.email,
+            ip=client_ip,
+        )
+    except ValueError as e:
+        logger.warning(
+            "Ошибка создания заявки на регистрацию %s: %s",
+            request_data.email,
+            e,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from e
+    except Exception as e:
+        logger.error(
+            "Ошибка создания заявки на регистрацию %s: %s",
+            request_data.email,
+            e,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка создания заявки",
+        ) from e
+
+    logger.info("Заявка на регистрацию создана: %s", request_data.email)
+    return {"message": "Заявка отправлена", "id": result["id"]}

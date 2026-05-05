@@ -85,7 +85,7 @@ def hash_password(password: str) -> str:
     return password_hash.decode("latin-1")
 
 
-def verify_password(password: str, hash_value: str) -> bool:
+def verify_password(password: str, hashed_password: str) -> bool:
     """Проверяет соответствие пароля хешу.
 
     Сравнивает переданный пароль с сохраненным хешем bcrypt.
@@ -93,7 +93,7 @@ def verify_password(password: str, hash_value: str) -> bool:
 
     Args:
         password: Пароль в виде обычной строки для проверки.
-        hash_value: Хеш пароля, сохраненный в базе данных.
+        hashed_password: Хеш пароля, сохраненный в базе данных.
 
     Returns:
         bool: True, если пароль соответствует хешу, иначе False.
@@ -107,7 +107,7 @@ def verify_password(password: str, hash_value: str) -> bool:
     """
     truncated_password = _truncate_password(password)
     password_bytes = truncated_password.encode("utf-8")
-    hash_bytes = hash_value.encode("latin-1")
+    hash_bytes = hashed_password.encode("latin-1")
     try:
         result = bcrypt.checkpw(password_bytes, hash_bytes)
         if result:
@@ -199,3 +199,33 @@ def decode_token(token: str) -> dict[str, Any] | None:
     except Exception as e:
         logger.error("Непредвиденная ошибка при декодировании токена: %s", e)
         return None
+
+
+def decode_access_token(token: str) -> dict[str, Any] | None:
+    """Декодирует и валидирует JWT токен (alias для decode_token).
+
+    Args:
+        token: JWT токен для декодирования.
+
+    Returns:
+        dict[str, Any] | None: Декодированные данные токена или None.
+    """
+    return decode_token(token)
+
+
+def get_current_user(token: str) -> dict[str, Any] | None:
+    """Получить данные текущего пользователя из JWT токена.
+
+    Декодирует токен и возвращает данные пользователя.
+
+    Args:
+        token: JWT токен доступа.
+
+    Returns:
+        dict[str, Any] | None: Данные пользователя из токена или None.
+    """
+    return decode_token(token)
+
+
+# Alias для обратной совместимости
+generate_password_hash = hash_password
