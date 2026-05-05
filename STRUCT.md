@@ -154,29 +154,15 @@ C:\py_exp\mko_bi
 ├── tests
 │   ├── conftest.py
 │   ├── services
-│   │   ├── test_auth_service.py
-│   │   ├── test_dashboard_service.py
-│   │   ├── test_data_service.py
-│   │   └── test_user_service.py
-│   ├── test_base_models.py
-│   ├── test_dashboards_api.py
-│   ├── test_data_api.py
+│   │   └── test_data_service.py
 │   ├── test_data_loader.py
 │   ├── test_data_processing.py
-│   ├── test_db_starter.py
-│   ├── test_deps.py
 │   ├── test_models.py
 │   ├── test_new_models.py
-│   ├── test_new_repositories.py
-│   ├── test_permissions.py
-│   ├── test_processing_log_service.py
 │   ├── test_pydantic_models.py
-│   ├── test_repositories.py
 │   ├── test_security.py
 │   ├── test_share_calculation.py
-│   ├── test_simple_async.py
 │   ├── test_storage_manager.py
-│   ├── test_upload_api.py
 │   ├── test_yoy_calculation.py
 │   └── tests
 ├── TODO
@@ -193,6 +179,26 @@ C:\py_exp\mko_bi
 │   │   └── TEST_036_test_audit_arch.md
 │   ├── DB
 │   ├── DEV
+│   │   ├── 001_database_models.md
+│   │   ├── 002_configuration.md
+│   │   ├── 003_authentication.md
+│   │   ├── 004_core_infrastructure.md
+│   │   ├── 005_data_upload.md
+│   │   ├── 006_data_processing.md
+│   │   ├── 007_data_storage.md
+│   │   ├── 008_dashboard_management.md
+│   │   ├── 009_data_api.md
+│   │   ├── 010_user_management.md
+│   │   ├── 011_processing_logs.md
+│   │   ├── 012_frontend_foundation.md
+│   │   ├── 013_frontend_auth.md
+│   │   ├── 014_frontend_dashboards.md
+│   │   ├── 015_frontend_upload.md
+│   │   ├── 016_frontend_admin.md
+│   │   ├── 017_frontend_profile.md
+│   │   ├── 018_testing.md
+│   │   └── 019_deployment.md
+│   ├── DEV_PLAN.md
 │   ├── DONE
 │   │   ├── TASK_001_sync_async_unification.md
 │   │   ├── TASK_014_dash_modern_component_architecture_DONE.md

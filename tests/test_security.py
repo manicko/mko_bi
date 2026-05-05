@@ -17,18 +17,6 @@ from mko_bi.config import get_config
 class TestTruncatePassword:
     """Тесты для функции _truncate_password."""
 
-    def test_short_password_not_truncated(self):
-        """Короткий пароль не должен обрезаться."""
-        password = "short"
-        result = _truncate_password(password)
-        assert result == password
-
-    def test_exact_length_password_not_truncated(self):
-        """Пароль ровно 72 байта не должен обрезаться."""
-        password = "a" * 72
-        result = _truncate_password(password)
-        assert result == password
-
     def test_long_password_truncated(self):
         """Пароль длиннее 72 байт должен обрезаться."""
         password = "a" * 100

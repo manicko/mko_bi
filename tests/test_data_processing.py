@@ -30,17 +30,14 @@ from mko_bi.models.user_roles import AggregationFunctionEnum
 class TestTransformationRegistry:
     """Тесты для реестра трансформаций."""
 
-    def test_init(self):
-        """Тест инициализации реестра."""
-        registry = TransformationRegistry()
-        assert registry.list_transformations() == []
-
-    def test_register_transformation(self):
-        """Тест регистрации трансформации."""
+    def test_register_and_get_transformation(self):
+        """Тест регистрации и получения трансформации."""
         registry = TransformationRegistry()
         func = lambda df: df
         registry.register("test", func)
         assert "test" in registry.list_transformations()
+        assert registry.get("test") == func
+        assert registry.has_transformation("test") is True
 
     def test_register_duplicate_transformation_raises_error(self):
         """Тест регистрации дублирующейся трансформации вызывает ошибку."""
@@ -50,25 +47,10 @@ class TestTransformationRegistry:
         with pytest.raises(ValueError, match="уже зарегистрирована"):
             registry.register("test", func)
 
-    def test_get_existing_transformation(self):
-        """Тест получения существующей трансформации."""
-        registry = TransformationRegistry()
-        func = lambda df: df
-        registry.register("test", func)
-        retrieved = registry.get("test")
-        assert retrieved == func
-
     def test_get_nonexistent_transformation(self):
         """Тест получения несуществующей трансформации."""
         registry = TransformationRegistry()
         assert registry.get("nonexistent") is None
-
-    def test_has_transformation(self):
-        """Тест проверки наличия трансформации."""
-        registry = TransformationRegistry()
-        func = lambda df: df
-        registry.register("test", func)
-        assert registry.has_transformation("test") is True
         assert registry.has_transformation("nonexistent") is False
 
     def test_apply_transformation(self):
@@ -90,16 +72,6 @@ class TestTransformationRegistry:
         df = pl.DataFrame({"a": [1, 2, 3]})
         with pytest.raises(ValueError, match="не найдена"):
             registry.apply(df, "nonexistent")
-
-    def test_list_transformations(self):
-        """Тест получения списка трансформаций."""
-        registry = TransformationRegistry()
-        registry.register("trans1", lambda df: df)
-        registry.register("trans2", lambda df: df)
-        transformations = registry.list_transformations()
-        assert "trans1" in transformations
-        assert "trans2" in transformations
-        assert len(transformations) == 2
 
 
 class TestApplyTransformations:

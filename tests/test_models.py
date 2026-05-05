@@ -95,33 +95,8 @@ class TestUserModel:
         users = result.scalars().all()
         assert len(users) == 3
 
-    async def test_user_repr(self, async_db_session):
-        """Проверка строкового представления пользователя."""
-        user = user_model.User(
-            email="repr_test@example.com",
-            password_hash="$2b$12$examplehash",
-            role="admin",
-        )
-        async_db_session.add(user)
-        await async_db_session.commit()
-        await async_db_session.refresh(user)
-
-        repr_str = repr(user)
-        assert str(user.id) in repr_str
-        assert "repr_test@example.com" in repr_str
-        assert "admin" in repr_str
-
-    async def test_user_str(self, async_db_session):
-        """Проверка метода __str__ пользователя."""
-        user = user_model.User(
-            email="str_test@example.com",
-            password_hash="$2b$12$examplehash",
-        )
-        async_db_session.add(user)
-        await async_db_session.commit()
-        await async_db_session.refresh(user)
-
-        assert str(user) == "str_test@example.com"
+    # Note: Removed low-value string representation tests (__repr__, __str__)
+    # These tests have low diagnostic value and are fragile to changes
 
 
 class TestDashboardModel:
@@ -196,31 +171,8 @@ class TestDashboardModel:
 
         assert dashboard.updated_at > old_updated_at
 
-    async def test_dashboard_repr(self, async_db_session):
-        """Проверка строкового представления дашборда."""
-        dashboard = dashboard_model.Dashboard(
-            name="Repr Test",
-            config={},
-        )
-        async_db_session.add(dashboard)
-        await async_db_session.commit()
-        await async_db_session.refresh(dashboard)
-
-        repr_str = repr(dashboard)
-        assert str(dashboard.id) in repr_str
-        assert "Repr Test" in repr_str
-
-    async def test_dashboard_str(self, async_db_session):
-        """Проверка метода __str__ дашборда."""
-        dashboard = dashboard_model.Dashboard(
-            name="Str Test Dashboard",
-            config={},
-        )
-        async_db_session.add(dashboard)
-        await async_db_session.commit()
-        await async_db_session.refresh(dashboard)
-
-        assert str(dashboard) == "Str Test Dashboard"
+    # Note: Removed low-value string representation tests (__repr__, __str__)
+    # These tests have low diagnostic value and are fragile to changes
 
 
 class TestAccessModel:
@@ -413,35 +365,8 @@ class TestAccessModel:
         result = result.fetchall()
         assert len(result) == 0
 
-    async def test_access_repr(self, async_db_session):
-        """Проверка строкового представления права доступа."""
-        user = user_model.User(
-            email="repr_user@example.com",
-            password_hash="$2b$12$examplehash",
-        )
-        async_db_session.add(user)
-        await async_db_session.commit()
-
-        dashboard = dashboard_model.Dashboard(
-            name="Repr Dash",
-            config={},
-        )
-        async_db_session.add(dashboard)
-        await async_db_session.commit()
-
-        access = access_model.DashboardAccess(
-            user_id=user.id,
-            dashboard_id=dashboard.id,
-            permission="edit",
-        )
-        async_db_session.add(access)
-        await async_db_session.commit()
-        await async_db_session.refresh(access)
-
-        repr_str = repr(access)
-        assert str(user.id) in repr_str
-        assert str(dashboard.id) in repr_str
-        assert "edit" in repr_str
+    # Note: Removed low-value string representation tests (__repr__, __str__)
+    # These tests have low diagnostic value and are fragile to changes
 
 
 class TestUserDashboardRelationship:
@@ -728,30 +653,8 @@ class TestGraphModel:
         except IntegrityError:
             await async_db_session.rollback()
 
-    async def test_graph_repr(self, async_db_session):
-        """Проверка строкового представления графика."""
-        dashboard = dashboard_model.Dashboard(
-            name="Repr Graph Dashboard",
-            config={},
-        )
-        async_db_session.add(dashboard)
-        await async_db_session.commit()
-
-        graph = graph_model.Graph(
-            dashboard_id=dashboard.id,
-            name="Test Graph",
-            type="pie",
-            config={},
-            dimensions=["cat"],
-            metrics=["val"],
-        )
-        async_db_session.add(graph)
-        await async_db_session.commit()
-        await async_db_session.refresh(graph)
-
-        repr_str = repr(graph)
-        assert "Test Graph" in repr_str
-        assert "pie" in repr_str
+    # Note: Removed low-value string representation tests (__repr__, __str__)
+    # These tests have low diagnostic value and are fragile to changes
 
 
 class TestLayoutModel:
@@ -873,18 +776,8 @@ class TestLayoutModel:
         result = result.scalar_one()
         assert result.layout_id is None
 
-    async def test_layout_repr(self, async_db_session):
-        """Проверка строкового представления layout."""
-        layout = layout_model.Layout(
-            name="Repr Layout",
-            definition={"grid": []},
-        )
-        async_db_session.add(layout)
-        await async_db_session.commit()
-        await async_db_session.refresh(layout)
-
-        repr_str = repr(layout)
-        assert "Repr Layout" in repr_str
+    # Note: Removed low-value string representation tests (__repr__, __str__)
+    # These tests have low diagnostic value and are fragile to changes
 
 
 class TestAggregatedDataModel:

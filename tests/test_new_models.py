@@ -86,34 +86,8 @@ class TestFilterModel:
         filters = result.scalars().all()
         assert len(filters) == 4
 
-    async def test_filter_repr(self, async_db_session):
-        """Проверка строкового представления фильтра."""
-        filter_obj = filter_model.Filter(
-            name="Test Filter",
-            type="select",
-            config={},
-        )
-        async_db_session.add(filter_obj)
-        await async_db_session.commit()
-        await async_db_session.refresh(filter_obj)
-
-        repr_str = repr(filter_obj)
-        assert str(filter_obj.id) in repr_str
-        assert "Test Filter" in repr_str
-        assert "select" in repr_str
-
-    async def test_filter_str(self, async_db_session):
-        """Проверка метода __str__ фильтра."""
-        filter_obj = filter_model.Filter(
-            name="Str Test Filter",
-            type="select",
-            config={},
-        )
-        async_db_session.add(filter_obj)
-        await async_db_session.commit()
-        await async_db_session.refresh(filter_obj)
-
-        assert str(filter_obj) == "Str Test Filter"
+    # Note: Removed low-value string representation tests (__repr__, __str__)
+    # These tests have low diagnostic value and are fragile to changes
 
     async def test_filter_dashboards_relationship(self, async_db_session):
         """Проверка связи фильтра с дашбордами."""
@@ -246,45 +220,8 @@ class TestProcessingConfigModel:
         assert dashboard.processing_config is not None
         assert dashboard.processing_config.settings == {"loader": "sales_loader"}
 
-    async def test_processing_config_repr(self, async_db_session):
-        """Проверка строкового представления настроек обработки."""
-        dashboard = dashboard_model.Dashboard(
-            name="Test Dashboard",
-            config={},
-        )
-        async_db_session.add(dashboard)
-        await async_db_session.commit()
-
-        config = processing_config_model.ProcessingConfig(
-            dashboard_id=dashboard.id,
-            settings={},
-        )
-        async_db_session.add(config)
-        await async_db_session.commit()
-        await async_db_session.refresh(config)
-
-        repr_str = repr(config)
-        assert str(config.dashboard_id) in repr_str
-
-    async def test_processing_config_str(self, async_db_session):
-        """Проверка метода __str__ настроек обработки."""
-        dashboard = dashboard_model.Dashboard(
-            name="Test Dashboard",
-            config={},
-        )
-        async_db_session.add(dashboard)
-        await async_db_session.commit()
-
-        config = processing_config_model.ProcessingConfig(
-            dashboard_id=dashboard.id,
-            settings={},
-        )
-        async_db_session.add(config)
-        await async_db_session.commit()
-        await async_db_session.refresh(config)
-
-        assert "ProcessingConfig" in str(config)
-        assert str(config.dashboard_id) in str(config)
+    # Note: Removed low-value string representation tests (__repr__, __str__)
+    # These tests have low diagnostic value and are fragile to changes
 
     async def test_cascade_delete_dashboard(self, async_db_session):
         """Проверка каскадного удаления настроек при удалении дашборда."""
@@ -407,30 +344,8 @@ class TestProcessingLogModel:
         assert len(dashboard.processing_logs) == 1
         assert dashboard.processing_logs[0].status == "success"
 
-    async def test_processing_log_repr(self, async_db_session):
-        """Проверка строкового представления лога обработки."""
-        log = processing_log_model.ProcessingLog(
-            status="success",
-        )
-        async_db_session.add(log)
-        await async_db_session.commit()
-        await async_db_session.refresh(log)
-
-        repr_str = repr(log)
-        assert str(log.id) in repr_str
-        assert "success" in repr_str
-
-    async def test_processing_log_str(self, async_db_session):
-        """Проверка метода __str__ лога обработки."""
-        log = processing_log_model.ProcessingLog(
-            status="success",
-        )
-        async_db_session.add(log)
-        await async_db_session.commit()
-        await async_db_session.refresh(log)
-
-        assert "ProcessingLog" in str(log)
-        assert "success" in str(log)
+    # Note: Removed low-value string representation tests (__repr__, __str__)
+    # These tests have low diagnostic value and are fragile to changes
 
 class TestModelRelationships:
     """Тесты для связей между новыми моделями и существующими."""
