@@ -236,11 +236,13 @@ class TestDatabaseStarterRunMigrations:
     """Тесты запуска миграций."""
 
     @patch("mko_bi.db.starter.to_thread")
-    async def test_run_migrations_calls_to_thread(self, mock_to_thread):
+    @patch("mko_bi.db.starter.DatabaseStarter._verify_migration_success")
+    async def test_run_migrations_calls_to_thread(self, mock_verify, mock_to_thread):
         """Тест что миграции запускаются через to_thread."""
         starter = DatabaseStarter()
         await starter._run_migrations()
         mock_to_thread.assert_called_once()
+        mock_verify.assert_called_once()
 
 
 class TestDatabaseStarterUtilityMethods:

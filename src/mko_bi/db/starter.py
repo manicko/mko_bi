@@ -39,6 +39,7 @@ class DatabaseStarterConfig:
         migration_script_path: str = "alembic",
         alembic_ini_path: str = "alembic.ini",
         recreate_test_db: bool = False,
+        logs_retention_days: int = 30,
     ) -> None:
         self.env = env
         self.main_database_url = main_database_url
@@ -47,6 +48,7 @@ class DatabaseStarterConfig:
         self.migration_script_path = migration_script_path
         self.alembic_ini_path = alembic_ini_path
         self.recreate_test_db = recreate_test_db
+        self.logs_retention_days = logs_retention_days
 
 
 class DatabaseStarter:
@@ -83,6 +85,7 @@ class DatabaseStarter:
         migration_script_path = settings.migration_script_path
         alembic_ini_path = settings.alembic_ini_path
         recreate_test_db = settings.recreate_test_db
+        logs_retention_days = getattr(settings, 'logs_retention_days', 30)
 
         return DatabaseStarterConfig(
             env=env,
@@ -92,6 +95,7 @@ class DatabaseStarter:
             migration_script_path=migration_script_path,
             alembic_ini_path=alembic_ini_path,
             recreate_test_db=recreate_test_db,
+            logs_retention_days=logs_retention_days,
         )
 
     async def startup(self) -> None:
@@ -104,14 +108,56 @@ class DatabaseStarter:
         # 1. Проверка существования БД
         await self._check_database_exists()
 
-        # 2. Проверка схемы
+        # 2. Проверка схемы и версии
         schema_exists = await self._check_schema_exists()
 
-        # 3. Применение миграций (если нужно)
+        # 3. Обработка отсутствия схемы или версии
         if not schema_exists:
             await self._handle_missing_schema()
+        else:
+            # TASK-DB-001 & TASK-DB-007: Check if version needs to be populated
+            await self._check_and_fix_version()
+
+        # 4. Cleanup old logs (TASK-DB-010)
+        if self._config.logs_retention_days > 0:
+            await self.cleanup_old_logs(self._config.logs_retention_days)
 
         logger.info("Database initialization completed")
+
+    async def _check_and_fix_version(self) -> None:
+        """Check if alembic_version is populated and fix if needed.
+        
+        TASK-DB-001: Fix alembic_version table - populate with current version.
+        TASK-DB-007: Enhance starter.py to verify alembic_version has value.
+        """
+        if self._config.env == EnvironmentEnum.PRODUCTION:
+            # In production, only warn, don't auto-fix
+            return
+
+        if not self._config.auto_migrate and self._config.env != EnvironmentEnum.TEST:
+            logger.warning("auto_migrate is disabled, skipping version fix")
+            return
+
+        if not self._config.main_database_url:
+            logger.warning("No database URL configured, skipping version check")
+            return
+
+        engine = create_async_engine(self._config.main_database_url)
+        try:
+            async with engine.connect() as conn:
+                result = await conn.execute(
+                    text("SELECT COUNT(*) FROM alembic_version")
+                )
+                row = result.first()
+                count = row[0] if row else 0
+
+                if count == 0:
+                    logger.warning("alembic_version is empty, populating with current version...")
+                    await self._populate_alembic_version()
+        except Exception as e:
+            logger.warning(f"Failed to check/fix version: {e}")
+        finally:
+            await engine.dispose()
 
     async def shutdown(self) -> None:
         """Действия при завершении приложения."""
@@ -135,13 +181,14 @@ class DatabaseStarter:
             raise DatabaseNotFoundError(f"Database not found: {e}") from e
 
     async def _check_schema_exists(self) -> bool:
-        """Проверка наличия таблицы alembic_version."""
+        """Проверка наличия таблицы alembic_version и наличия в ней версии."""
         if not self._config.main_database_url:
             return False
 
         engine = create_async_engine(self._config.main_database_url)
         try:
             async with engine.connect() as conn:
+                # Check if table exists
                 result = await conn.execute(
                     text(
                         "SELECT EXISTS ("
@@ -151,9 +198,23 @@ class DatabaseStarter:
                     )
                 )
                 row = result.first()
-                schema_exists = row is not None and row[0]
-            logger.info(f"Schema exists: {schema_exists}")
-            return bool(schema_exists)
+                table_exists = row is not None and row[0]
+
+                if not table_exists:
+                    logger.info("alembic_version table does not exist")
+                    return False
+
+                # Check if table has a version recorded (TASK-DB-007)
+                version_check = await conn.execute(
+                    text("SELECT COUNT(*) FROM alembic_version")
+                )
+                count_row = version_check.first()
+                version_exists = count_row is not None and count_row[0] > 0
+
+                if not version_exists:
+                    logger.warning("alembic_version table exists but is empty")
+
+                return bool(version_exists)
         except Exception as e:
             logger.warning(f"Failed to check schema: {e}")
             return False
@@ -161,7 +222,7 @@ class DatabaseStarter:
             await engine.dispose()
 
     async def _handle_missing_schema(self) -> None:
-        """Обработка отсутствия схемы."""
+        """Обработка отсутствия схемы или версии."""
         env = self._config.env
 
         if env == EnvironmentEnum.PRODUCTION:
@@ -210,6 +271,130 @@ class DatabaseStarter:
         logger.info("Running Alembic migrations...")
         await to_thread(_sync_migrate)
         logger.info("Migrations applied successfully")
+
+        # TASK-DB-008: Verify migration success
+        await self._verify_migration_success()
+
+    async def _verify_migration_success(self) -> None:
+        """Verify that alembic_version has been populated after migration.
+        
+        TASK-DB-008: Post-migration verification.
+        """
+        if not self._config.main_database_url:
+            return
+
+        engine = create_async_engine(self._config.main_database_url)
+        try:
+            async with engine.connect() as conn:
+                result = await conn.execute(
+                    text("SELECT COUNT(*) FROM alembic_version")
+                )
+                row = result.first()
+                count = row[0] if row else 0
+
+                if count != 1:
+                    error_msg = f"alembic_version has {count} rows after migration (expected 1)"
+                    if self._config.env == EnvironmentEnum.PRODUCTION:
+                        logger.error(error_msg)
+                    else:
+                        logger.warning(error_msg)
+                else:
+                    logger.info("Migration verification passed: alembic_version has 1 row")
+        except Exception as e:
+            logger.error(f"Failed to verify migration: {e}")
+        finally:
+            await engine.dispose()
+
+    async def _populate_alembic_version(self) -> None:
+        """Populate alembic_version with current HEAD version.
+        
+        TASK-DB-001: Fix alembic_version table - populate with current version.
+        """
+        import subprocess
+        import os
+
+        # Get HEAD revision from alembic
+        alembic_ini = self._config.alembic_ini_path
+        
+        try:
+            result = subprocess.run(
+                ["uv", "run", "alembic", "-c", alembic_ini, "heads"],
+                capture_output=True,
+                text=True,
+                cwd=os.getcwd()
+            )
+            
+            if result.returncode != 0:
+                logger.error(f"Failed to get alembic heads: {result.stderr}")
+                return
+
+            # Parse the head revision (format: "revision (head), description")
+            head_line = result.stdout.strip().split("\n")[0] if result.stdout.strip() else ""
+            head_revision = head_line.split(" ")[0] if head_line else ""
+
+            if not head_revision:
+                logger.error("Could not determine HEAD revision")
+                return
+
+            if not self._config.main_database_url:
+                logger.error("No database URL configured, cannot populate alembic_version")
+                return
+
+            # Insert the version into the database
+            engine = create_async_engine(self._config.main_database_url)
+            try:
+                async with engine.connect() as conn:
+                    await conn.execute(
+                        text("DELETE FROM alembic_version")
+                    )
+                    await conn.execute(
+                        text("INSERT INTO alembic_version (version_num) VALUES (:rev)"),
+                        {"rev": head_revision}
+                    )
+                    await conn.commit()
+                logger.info(f"Populated alembic_version with version: {head_revision}")
+            finally:
+                await engine.dispose()
+
+        except Exception as e:
+            logger.error(f"Failed to populate alembic_version: {e}")
+
+    async def cleanup_old_logs(self, retention_days: int = 30) -> int:
+        """Clean up old processing_logs entries.
+        
+        TASK-DB-010: Implement processing_logs cleanup/retention policy.
+        
+        Args:
+            retention_days: Number of days to retain logs (default: 30)
+            
+        Returns:
+            Number of deleted rows
+        """
+        if not self._config.main_database_url:
+            logger.warning("No database URL configured, skipping log cleanup")
+            return 0
+
+        engine = create_async_engine(self._config.main_database_url)
+        try:
+            async with engine.connect() as conn:
+                # Delete old logs, but keep active ones (started/processing)
+                result = await conn.execute(
+                    text(
+                        "DELETE FROM processing_logs "
+                        "WHERE started_at < NOW() - INTERVAL ':days days' "
+                        "AND status NOT IN ('started', 'processing')"
+                    ),
+                    {"days": retention_days}
+                )
+                await conn.commit()
+                deleted_count = result.rowcount
+                logger.info(f"Cleaned up {deleted_count} old processing logs (retention: {retention_days} days)")
+                return deleted_count
+        except Exception as e:
+            logger.error(f"Failed to cleanup old logs: {e}")
+            return 0
+        finally:
+            await engine.dispose()
 
     async def recreate_test_database(self) -> None:
         """Полное пересоздание тестовой БД."""
