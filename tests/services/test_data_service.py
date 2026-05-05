@@ -111,7 +111,7 @@ A,150,2024
 
     config = ProcessingConfig(
         groupby=["category"],
-        aggregations=[AggregationConfig(column="value", function=AggregationFunctionEnum.sum_val)]
+        aggregations=[AggregationConfig(column="value", function=AggregationFunctionEnum.SUM)]
     )
 
     result = await _process_csv_file(file_path, config)

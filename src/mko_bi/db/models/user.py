@@ -14,11 +14,12 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mko_bi.db.base import Base
-from mko_bi.models.user_roles import UserRoleEnum
+from mko_bi.models.enums import UserRole
 
 if TYPE_CHECKING:
-    from mko_bi.models.access import DashboardAccess
-    from mko_bi.models.dashboard import DashboardConfig
+    from mko_bi.db.models.access import DashboardAccess
+    from mko_bi.db.models.dashboard import Dashboard
+    from mko_bi.db.models.registration_request import RegistrationRequest
 
 
 class User(Base):
@@ -44,13 +45,14 @@ class User(Base):
         nullable=False,
     )
 
-    role: Mapped[UserRoleEnum] = mapped_column(
+    role: Mapped[UserRole] = mapped_column(
         Enum(
-            UserRoleEnum,
+            UserRole,
             name="user_role",
+            values_callable=lambda enum: [e.value for e in enum],
         ),
         nullable=False,
-        default=UserRoleEnum.viewer,
+        default=UserRole.VIEWER,
         server_default=text("'viewer'"),
     )
 
@@ -73,16 +75,23 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
         lazy="selectin",
-        overlaps="users",
+        overlaps="dashboards",
     )
 
     # Связь с дашбордами через таблицу доступа
-    dashboards: Mapped[list["DashboardConfig"]] = relationship(
+    dashboards: Mapped[list["Dashboard"]] = relationship(
         "Dashboard",
         secondary="dashboard_access",
         back_populates="users",
         lazy="selectin",
         overlaps="accesses,dashboard",
+    )
+
+    # Связь с заявками на регистрацию, которые рассмотрел пользователь
+    reviewed_registration_requests: Mapped[list["RegistrationRequest"]] = relationship(
+        "RegistrationRequest",
+        back_populates="reviewer",
+        lazy="selectin",
     )
 
     def __repr__(self) -> str:

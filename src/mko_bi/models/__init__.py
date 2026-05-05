@@ -16,7 +16,7 @@ from mko_bi.models.data import (
     LoaderConfig,
     ProcessingConfig,
     ProcessingResult,
-    ProcessingStatus,
+    ProcessingStatusResponse,
     UploadResponse,
     ValidationResult,
 )
@@ -52,6 +52,15 @@ from mko_bi.models.transformation_configs import (
     ShareConfig,
     YoyConfig,
 )
+from mko_bi.models.enums import (
+    DashboardPermission,
+    FilterType,
+    GraphType,
+    ProcessingStatus,
+    RegistrationStatus,
+    UploadMode,
+    UserRole,
+)
 from mko_bi.models.user_roles import (
     BarmodeEnum,
     GraphTypeEnum,
@@ -84,7 +93,7 @@ __all__ = [
     "LoaderConfig",
     "ProcessingConfig",
     "ProcessingResult",
-    "ProcessingStatus",
+    "ProcessingStatusResponse",
     "UploadResponse",
     "ValidationResult",
     # Filters
@@ -113,7 +122,15 @@ __all__ = [
     "FilterConfig",
     "ShareConfig",
     "YoyConfig",
-    # Enums
+    # Enums (new names)
+    "DashboardPermission",
+    "FilterType",
+    "GraphType",
+    "ProcessingStatus",
+    "RegistrationStatus",
+    "UploadMode",
+    "UserRole",
+    # Enums (backwards compatibility)
     "BarmodeEnum",
     "GraphTypeEnum",
     "OrientationEnum",

@@ -26,7 +26,7 @@ class RegisterRequest(BaseModel):
 
     email: EmailStr
     password: str
-    role: UserRoleEnum = UserRoleEnum.viewer
+    role: UserRoleEnum = UserRoleEnum.VIEWER
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -34,7 +34,7 @@ class RegisterRequest(BaseModel):
             "example": {
                 "email": "user@example.com",
                 "password": "secure_password123",
-                "role": UserRoleEnum.viewer,
+                "role": UserRoleEnum.VIEWER,
             }
         },
     )

@@ -33,7 +33,7 @@ from mko_bi.models.data import (
     AggregatedData,
     ProcessingConfig,
     ProcessingResult,
-    ProcessingStatus,
+    ProcessingStatusResponse,
     UploadResponse,
 )
 from mko_bi.models.processing_logs import ProcessingLogCreate, ProcessingLogUpdate
@@ -414,7 +414,7 @@ async def _trigger_processing_logic(
     user_id: int,
     processing_config: ProcessingConfig | None,
     db: AsyncSession,
-) -> ProcessingStatus:
+) -> ProcessingStatusResponse:
     """Внутренняя логика запуска обработки с использованием переданной сессии.
 
     Args:
@@ -539,7 +539,7 @@ async def _trigger_processing_logic(
         task_id,
     )
 
-    return ProcessingStatus(
+    return ProcessingStatusResponse(
         task_id=task_id,
         filename=filename,
         dashboard_id=dashboard_id,
@@ -557,7 +557,7 @@ async def trigger_processing(
     user_id: int,
     processing_config: ProcessingConfig | None = None,
     db: AsyncSession | None = None,
-) -> ProcessingStatus:
+) -> ProcessingStatusResponse:
     """Запускает обработку загруженного файла.
 
     Args:
@@ -593,7 +593,7 @@ async def _get_processing_status_logic(
     task_id: uuid.UUID,
     user_id: int,
     db: AsyncSession,
-) -> ProcessingStatus:
+) -> ProcessingStatusResponse:
     """Внутренняя логика получения статуса обработки с использованием переданной сессии.
 
     Args:
@@ -639,7 +639,7 @@ async def _get_processing_status_logic(
         "Статус получен: task_id=%s, status=%s", task_id, task_log.status
     )
 
-    return ProcessingStatus(
+    return ProcessingStatusResponse(
         task_id=task_id,
         filename=filename,
         dashboard_id=task_log.dashboard_id,
@@ -655,7 +655,7 @@ async def get_processing_status(
     task_id: uuid.UUID,
     user_id: int,
     db: AsyncSession | None = None,
-) -> ProcessingStatus:
+) -> ProcessingStatusResponse:
     """Получает статус обработки.
 
     Args:

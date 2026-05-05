@@ -18,7 +18,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mko_bi.db.base import Base
-from mko_bi.models.user_roles import GraphTypeEnum
+from mko_bi.models.enums import GraphType
 
 if TYPE_CHECKING:
     from mko_bi.db.models.dashboard import Dashboard
@@ -52,8 +52,12 @@ class Graph(Base):
         nullable=False,
     )
 
-    type: Mapped[GraphTypeEnum] = mapped_column(
-        Enum(GraphTypeEnum, name="graph_type"),
+    type: Mapped[GraphType] = mapped_column(
+        Enum(
+            GraphType,
+            name="graph_type",
+            values_callable=lambda enum: [e.value for e in enum],
+        ),
         nullable=False,
     )
 

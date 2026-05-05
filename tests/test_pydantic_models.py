@@ -235,7 +235,7 @@ class TestDataModels:
         
         config = ProcessingConfig(
             filters=[FilterConfig(column="year", operator=FilterOperatorEnum.GTE, value=2020)],
-            aggregations=[AggregationConfig(column="revenue", function=AggregationFunctionEnum.sum_val, alias="total_revenue")],
+            aggregations=[AggregationConfig(column="revenue", function=AggregationFunctionEnum.SUM, alias="total_revenue")],
             groupby=["category", "region"],
         )
         assert len(config.filters) == 1
@@ -355,7 +355,7 @@ class TestAuthModels:
         check = AccessCheck(
             user_id="550e8400-e29b-41d4-a716-446655440000",
             dashboard_id="550e8400-e29b-41d4-a716-446655440001",
-            required_permission="view",
+            required_permission=DashboardPermission.VIEW,
         )
         assert str(check.user_id) == "550e8400-e29b-41d4-a716-446655440000"
         assert str(check.dashboard_id) == "550e8400-e29b-41d4-a716-446655440001"

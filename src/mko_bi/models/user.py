@@ -16,7 +16,7 @@ class UserBase(BaseModel):
         json_schema_extra={
             "example": {
                 "email": "user@example.com",
-                "role": UserRoleEnum.viewer,
+                "role": UserRoleEnum.VIEWER,
             }
         },
     )
@@ -33,7 +33,7 @@ class UserCreate(UserBase):
             "example": {
                 "email": "user@example.com",
                 "password": "secure_password123",
-                "role": UserRoleEnum.viewer,
+                "role": UserRoleEnum.VIEWER,
             }
         },
     )
@@ -51,7 +51,7 @@ class UserRead(UserBase):
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "email": "user@example.com",
-                "role": UserRoleEnum.viewer,
+                "role": UserRoleEnum.VIEWER,
                 "created_at": "2026-04-24T16:02:46+03:00",
             }
         },
@@ -72,7 +72,7 @@ class UserDB(UserBase):
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "email": "user@example.com",
                 "password_hash": "$2b$12$examplehash",
-                "role": UserRoleEnum.viewer,
+                "role": UserRoleEnum.VIEWER,
                 "created_at": "2026-04-24T16:02:46+03:00",
             }
         },
@@ -91,7 +91,7 @@ class UserUpdate(BaseModel):
         json_schema_extra={
             "example": {
                 "email": "newemail@example.com",
-                "role": UserRoleEnum.editor,
+                "role": UserRoleEnum.EDITOR,
                 "password": "new_secure_password",
             }
         },

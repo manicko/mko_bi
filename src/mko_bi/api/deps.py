@@ -363,7 +363,7 @@ def require_admin_role(
         ):
             return create_user(user_data)
     """
-    if not check_role(user.role, UserRoleEnum.admin):
+    if not check_role(user.role, UserRoleEnum.ADMIN):
         logger.warning(
             "Требуется роль admin, у пользователя: user_id=%s, role=%s",
             user.id,
@@ -397,7 +397,7 @@ def require_editor_role(
         ):
             return {"message": "Upload allowed"}
     """
-    if not check_role(user.role, UserRoleEnum.editor):
+    if not check_role(user.role, UserRoleEnum.EDITOR):
         logger.warning(
             "Требуется роль editor или выше, у пользователя: user_id=%s, role=%s",
             user.id,
@@ -452,7 +452,7 @@ def require_role_dependency(required_role: str):
     Example:
         @app.get("/admin-only")
         async def admin_only(
-            user: UserDB = Depends(require_role_dependency(UserRoleEnum.admin)),
+            user: UserDB = Depends(require_role_dependency(UserRoleEnum.ADMIN)),
         ):
             return {"message": "Admin area"}
     """

@@ -15,6 +15,7 @@ from mko_bi.db.models import access as access_model
 from mko_bi.db.models import graphs as graph_model
 from mko_bi.db.models import layout as layout_model
 from mko_bi.db.models import aggregated_data as aggregated_data_model
+from mko_bi.models.enums import UserRole, DashboardPermission, GraphType, FilterType
 
 
 class TestUserModel:
@@ -25,7 +26,7 @@ class TestUserModel:
         user = user_model.User(
             email="test@example.com",
             password_hash="$2b$12$examplehash",
-            role="viewer",
+            role=UserRole.VIEWER.value,
             is_active=True,
         )
         async_db_session.add(user)
@@ -35,7 +36,7 @@ class TestUserModel:
         assert user.id is not None
         assert isinstance(user.id, UUID)
         assert user.email == "test@example.com"
-        assert user.role == "viewer"
+        assert user.role == UserRole.VIEWER
         assert user.is_active is True
 
     async def test_create_user_with_default_role(self, async_db_session):
@@ -47,7 +48,7 @@ class TestUserModel:
         async_db_session.add(user)
         await async_db_session.commit()
 
-        assert user.role == "viewer"
+        assert user.role == UserRole.VIEWER
 
     async def test_create_user_with_default_is_active(self, async_db_session):
         """Создание пользователя с is_active по умолчанию."""
@@ -82,9 +83,9 @@ class TestUserModel:
         
     async def test_user_role_enum_values(self, async_db_session):
         """Проверка допустимых значений роли пользователя."""
-        for role in ["admin", "editor", "viewer"]:
+        for role in [UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER]:
             user = user_model.User(
-                email=f"{role}_user@example.com",
+                email=f"{role.value}_user@example.com",
                 password_hash="$2b$12$examplehash",
                 role=role,
             )
@@ -107,7 +108,6 @@ class TestDashboardModel:
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
             description="Test description",
-            config={"graph_types": ["bar"]},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -117,33 +117,28 @@ class TestDashboardModel:
         assert isinstance(dashboard.id, UUID)
         assert dashboard.name == "Test Dashboard"
         assert dashboard.description == "Test description"
-        assert dashboard.config == {"graph_types": ["bar"]}
 
     async def test_create_dashboard_with_defaults(self, async_db_session):
         """Создание дашборда со значениями по умолчанию."""
         dashboard = dashboard_model.Dashboard(
             name="Default Dashboard",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
 
         assert dashboard.description is None
-        assert dashboard.config == {}
         assert dashboard.updated_at is not None
 
     async def test_unique_name_constraint(self, async_db_session):
         """Проверка уникальности имени дашборда."""
         dashboard1 = dashboard_model.Dashboard(
             name="Same Name",
-            config={},
         )
         async_db_session.add(dashboard1)
         await async_db_session.commit()
 
         dashboard2 = dashboard_model.Dashboard(
             name="Same Name",
-            config={},
         )
         async_db_session.add(dashboard2)
 
@@ -156,7 +151,6 @@ class TestDashboardModel:
         """Проверка автоматического обновления updated_at."""
         dashboard = dashboard_model.Dashboard(
             name="Update Test",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -189,7 +183,6 @@ class TestAccessModel:
 
         dashboard = dashboard_model.Dashboard(
             name="Access Test Dashboard",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -197,7 +190,7 @@ class TestAccessModel:
         access = access_model.DashboardAccess(
             user_id=user.id,
             dashboard_id=dashboard.id,
-            permission="view",
+            permission=DashboardPermission.VIEW,
         )
         async_db_session.add(access)
         await async_db_session.commit()
@@ -205,7 +198,7 @@ class TestAccessModel:
 
         assert access.user_id == user.id
         assert access.dashboard_id == dashboard.id
-        assert access.permission == "view"
+        assert access.permission == DashboardPermission.VIEW
 
     async def test_unique_composite_key(self, async_db_session):
         """Проверка уникальности составного ключа (user_id, dashboard_id)."""
@@ -218,7 +211,6 @@ class TestAccessModel:
 
         dashboard = dashboard_model.Dashboard(
             name="Composite Test",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -226,7 +218,7 @@ class TestAccessModel:
         access1 = access_model.DashboardAccess(
             user_id=user.id,
             dashboard_id=dashboard.id,
-            permission="view",
+            permission=DashboardPermission.VIEW,
         )
         async_db_session.add(access1)
         await async_db_session.commit()
@@ -234,7 +226,7 @@ class TestAccessModel:
         access2 = access_model.DashboardAccess(
             user_id=user.id,
             dashboard_id=dashboard.id,
-            permission="edit",
+            permission=DashboardPermission.EDIT,
         )
         async_db_session.add(access2)
 
@@ -264,22 +256,19 @@ class TestAccessModel:
 
         dashboard1 = dashboard_model.Dashboard(
             name="Perm Test 1",
-            config={},
         )
         async_db_session.add(dashboard1)
         dashboard2 = dashboard_model.Dashboard(
             name="Perm Test 2",
-            config={},
         )
         async_db_session.add(dashboard2)
         dashboard3 = dashboard_model.Dashboard(
             name="Perm Test 3",
-            config={},
         )
         async_db_session.add(dashboard3)
         await async_db_session.commit()
 
-        permissions = ["view", "edit", "admin"]
+        permissions = [DashboardPermission.VIEW, DashboardPermission.EDIT, DashboardPermission.ADMIN]
         for i, permission in enumerate(permissions):
             access = access_model.DashboardAccess(
                 user_id=[user1, user2, user3][i].id,
@@ -306,7 +295,6 @@ class TestAccessModel:
 
         dashboard = dashboard_model.Dashboard(
             name="Cascade Dash Test",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -314,7 +302,7 @@ class TestAccessModel:
         access = access_model.DashboardAccess(
             user_id=user.id,
             dashboard_id=dashboard.id,
-            permission="view",
+            permission=DashboardPermission.VIEW,
         )
         async_db_session.add(access)
         await async_db_session.commit()
@@ -341,7 +329,6 @@ class TestAccessModel:
 
         dashboard = dashboard_model.Dashboard(
             name="Cascade Dash Test",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -349,7 +336,7 @@ class TestAccessModel:
         access = access_model.DashboardAccess(
             user_id=user.id,
             dashboard_id=dashboard.id,
-            permission="view",
+            permission=DashboardPermission.VIEW,
         )
         async_db_session.add(access)
         await async_db_session.commit()
@@ -383,11 +370,9 @@ class TestUserDashboardRelationship:
 
         dashboard1 = dashboard_model.Dashboard(
             name="Dash 1",
-            config={},
         )
         dashboard2 = dashboard_model.Dashboard(
             name="Dash 2",
-            config={},
         )
         async_db_session.add_all([dashboard1, dashboard2])
         await async_db_session.commit()
@@ -395,12 +380,12 @@ class TestUserDashboardRelationship:
         access1 = access_model.DashboardAccess(
             user_id=user.id,
             dashboard_id=dashboard1.id,
-            permission="view",
+            permission=DashboardPermission.VIEW,
         )
         access2 = access_model.DashboardAccess(
             user_id=user.id,
             dashboard_id=dashboard2.id,
-            permission="edit",
+            permission=DashboardPermission.EDIT,
         )
         async_db_session.add_all([access1, access2])
         await async_db_session.commit()
@@ -430,7 +415,6 @@ class TestUserDashboardRelationship:
 
         dashboard = dashboard_model.Dashboard(
             name="Shared Dashboard",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -438,12 +422,12 @@ class TestUserDashboardRelationship:
         access1 = access_model.DashboardAccess(
             user_id=user1.id,
             dashboard_id=dashboard.id,
-            permission="view",
+            permission=DashboardPermission.VIEW,
         )
         access2 = access_model.DashboardAccess(
             user_id=user2.id,
             dashboard_id=dashboard.id,
-            permission="admin",
+            permission=DashboardPermission.ADMIN,
         )
         async_db_session.add_all([access1, access2])
         await async_db_session.commit()
@@ -468,7 +452,6 @@ class TestDashboardGraphRelationship:
         """Проверка связи дашборда с графиками."""
         dashboard = dashboard_model.Dashboard(
             name="Graph Test Dashboard",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -476,7 +459,7 @@ class TestDashboardGraphRelationship:
         graph1 = graph_model.Graph(
             dashboard_id=dashboard.id,
             name="Graph 1",
-            type="bar",
+            type=GraphType.BAR,
             config={"color": "blue"},
             dimensions=["category"],
             metrics=["value"],
@@ -484,7 +467,7 @@ class TestDashboardGraphRelationship:
         graph2 = graph_model.Graph(
             dashboard_id=dashboard.id,
             name="Graph 2",
-            type="line",
+            type=GraphType.LINE,
             config={"color": "red"},
             dimensions=["date"],
             metrics=["amount"],
@@ -508,7 +491,6 @@ class TestDashboardGraphRelationship:
         """Проверка каскадного удаления графиков при удалении дашборда."""
         dashboard = dashboard_model.Dashboard(
             name="Cascade Graph Test",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -516,7 +498,7 @@ class TestDashboardGraphRelationship:
         graph = graph_model.Graph(
             dashboard_id=dashboard.id,
             name="Test Graph",
-            type="bar",
+            type=GraphType.BAR,
             config={},
             dimensions=["x"],
             metrics=["y"],
@@ -543,7 +525,6 @@ class TestGraphModel:
         """Создание графика."""
         dashboard = dashboard_model.Dashboard(
             name="Graph Parent Dashboard",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -551,7 +532,7 @@ class TestGraphModel:
         graph = graph_model.Graph(
             dashboard_id=dashboard.id,
             name="Test Graph",
-            type="bar",
+            type=GraphType.BAR,
             config={"axis": {"x": "bottom"}},
             dimensions=["category", "year"],
             metrics=["sales", "profit"],
@@ -563,7 +544,7 @@ class TestGraphModel:
         assert graph.id is not None
         assert isinstance(graph.id, UUID)
         assert graph.name == "Test Graph"
-        assert graph.type == "bar"
+        assert graph.type == GraphType.BAR
         assert graph.config == {"axis": {"x": "bottom"}}
         assert graph.dimensions == ["category", "year"]
         assert graph.metrics == ["sales", "profit"]
@@ -572,16 +553,15 @@ class TestGraphModel:
         """Проверка ограничения на тип графика."""
         dashboard = dashboard_model.Dashboard(
             name="Type Constraint Test",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
 
         # Допустимые типы должны работать
-        for graph_type in ["bar", "line", "pie", "table"]:
+        for graph_type in [GraphType.BAR, GraphType.LINE, GraphType.PIE, GraphType.TABLE]:
             graph = graph_model.Graph(
                 dashboard_id=dashboard.id,
-                name=f"Graph {graph_type}",
+                name=f"Graph {graph_type.value}",
                 type=graph_type,
                 config={},
                 dimensions=[],
@@ -600,7 +580,6 @@ class TestGraphModel:
         """Проверка уникальности имени графика в рамках дашборда."""
         dashboard = dashboard_model.Dashboard(
             name="Unique Name Test",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -608,7 +587,7 @@ class TestGraphModel:
         graph1 = graph_model.Graph(
             dashboard_id=dashboard.id,
             name="Same Name",
-            type="bar",
+            type=GraphType.BAR,
             config={},
             dimensions=[],
             metrics=[],
@@ -619,7 +598,7 @@ class TestGraphModel:
         graph2 = graph_model.Graph(
             dashboard_id=dashboard.id,
             name="Same Name",
-            type="line",
+            type=GraphType.LINE,
             config={},
             dimensions=[],
             metrics=[],
@@ -640,7 +619,7 @@ class TestGraphModel:
         graph = graph_model.Graph(
             dashboard_id=invalid_uuid,
             name="Invalid FK Graph",
-            type="bar",
+            type=GraphType.BAR,
             config={},
             dimensions=[],
             metrics=[],
@@ -724,12 +703,10 @@ class TestLayoutModel:
         dashboard1 = dashboard_model.Dashboard(
             name="Dash with Layout 1",
             layout_id=layout.id,
-            config={},
         )
         dashboard2 = dashboard_model.Dashboard(
             name="Dash with Layout 2",
             layout_id=layout.id,
-            config={},
         )
         async_db_session.add_all([dashboard1, dashboard2])
         await async_db_session.commit()
@@ -758,7 +735,6 @@ class TestLayoutModel:
         dashboard = dashboard_model.Dashboard(
             name="Dashboard with Layout",
             layout_id=layout.id,
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -787,7 +763,6 @@ class TestAggregatedDataModel:
         """Создание агрегированных данных."""
         dashboard = dashboard_model.Dashboard(
             name="Agg Data Dashboard",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -795,7 +770,7 @@ class TestAggregatedDataModel:
         graph = graph_model.Graph(
             dashboard_id=dashboard.id,
             name="Agg Graph",
-            type="bar",
+            type=GraphType.BAR,
             config={},
             dimensions=["category"],
             metrics=["value"],
@@ -822,7 +797,6 @@ class TestAggregatedDataModel:
         """Проверка связей агрегированных данных."""
         dashboard = dashboard_model.Dashboard(
             name="Agg Rel Dashboard",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -830,7 +804,7 @@ class TestAggregatedDataModel:
         graph = graph_model.Graph(
             dashboard_id=dashboard.id,
             name="Agg Rel Graph",
-            type="bar",
+            type=GraphType.BAR,
             config={},
             dimensions=["x"],
             metrics=["y"],
@@ -861,7 +835,6 @@ class TestAggregatedDataModel:
         """Проверка каскадного удаления при удалении дашборда."""
         dashboard = dashboard_model.Dashboard(
             name="Cascade Agg Dashboard",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -869,7 +842,7 @@ class TestAggregatedDataModel:
         graph = graph_model.Graph(
             dashboard_id=dashboard.id,
             name="Cascade Agg Graph",
-            type="bar",
+            type=GraphType.BAR,
             config={},
             dimensions=["x"],
             metrics=["y"],
@@ -901,7 +874,6 @@ class TestAggregatedDataModel:
         """Проверка каскадного удаления при удалении графика."""
         dashboard = dashboard_model.Dashboard(
             name="Cascade Graph Dashboard",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -909,7 +881,7 @@ class TestAggregatedDataModel:
         graph = graph_model.Graph(
             dashboard_id=dashboard.id,
             name="Cascade Graph",
-            type="bar",
+            type=GraphType.BAR,
             config={},
             dimensions=["x"],
             metrics=["y"],
@@ -971,7 +943,6 @@ class TestModelIndexes:
         for i in range(5):
             dashboard = dashboard_model.Dashboard(
                 name=f"Dashboard {i}",
-                config={},
             )
             async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -998,7 +969,6 @@ class TestModelIndexes:
 
         dashboard = dashboard_model.Dashboard(
             name="Index Test Dashboard",
-            config={},
         )
         async_db_session.add(dashboard)
         await async_db_session.commit()
@@ -1006,7 +976,7 @@ class TestModelIndexes:
         access = access_model.DashboardAccess(
             user_id=user.id,
             dashboard_id=dashboard.id,
-            permission="view",
+            permission=DashboardPermission.VIEW,
         )
         async_db_session.add(access)
         await async_db_session.commit()
@@ -1021,4 +991,4 @@ class TestModelIndexes:
         result = result.scalar_one_or_none()
 
         assert result is not None
-        assert result.permission == "view"
+        assert result.permission == DashboardPermission.VIEW

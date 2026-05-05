@@ -53,9 +53,9 @@ logger = logging.getLogger(__name__)
 # Иерархия ролей (чем выше значение, тем больше прав)
 # Используем UserRoleEnum - значения уже определяют порядок
 ROLE_LEVELS: dict[UserRoleEnum, int] = {
-    UserRoleEnum.viewer: 1,
-    UserRoleEnum.editor: 2,
-    UserRoleEnum.admin: 3,
+    UserRoleEnum.VIEWER: 1,
+    UserRoleEnum.EDITOR: 2,
+    UserRoleEnum.ADMIN: 3,
 }
 
 # Уровни доступа - используем PermissionEnum

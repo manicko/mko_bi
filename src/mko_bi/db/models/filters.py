@@ -18,7 +18,7 @@ from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mko_bi.db.base import Base
-from mko_bi.models.user_roles import FilterTypeEnum
+from mko_bi.models.enums import FilterType
 
 
 class Filter(Base):
@@ -43,8 +43,12 @@ class Filter(Base):
         unique=True,
     )
 
-    type: Mapped[FilterTypeEnum] = mapped_column(
-        Enum(FilterTypeEnum, name="filter_type"),
+    type: Mapped[FilterType] = mapped_column(
+        Enum(
+            FilterType,
+            name="filter_type",
+            values_callable=lambda enum: [e.value for e in enum],
+        ),
         nullable=False,
     )
 

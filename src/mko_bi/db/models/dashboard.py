@@ -12,16 +12,16 @@ from sqlalchemy import (
     text,
     func,
 )
-from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mko_bi.db.base import Base
 
 if TYPE_CHECKING:
     from mko_bi.db.models.access import DashboardAccess
-    from mko_bi.db.models.user import UserBase
+    from mko_bi.db.models.user import User
     from mko_bi.db.models.layout import Layout
-    from mko_bi.db.models.graphs import Graph
+    from mko_bi.db.models.graph import Graph
     from mko_bi.db.models.aggregated_data import AggregatedData
     from mko_bi.db.models.filters import Filter
     from mko_bi.db.models.processing_configs import ProcessingConfig
@@ -61,12 +61,6 @@ class Dashboard(Base):
         nullable=True,
     )
     
-    config: Mapped[dict[str, object]] = mapped_column(
-        JSONB,
-        nullable=False,
-        default=dict,
-    )
-    
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
@@ -90,7 +84,7 @@ class Dashboard(Base):
     )
     
     # Связь с пользователями через таблицу доступа
-    users: Mapped[list[UserBase]] = relationship(
+    users: Mapped[list[User]] = relationship(
         "User",
         secondary="dashboard_access",
         back_populates="dashboards",

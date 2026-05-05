@@ -1,6 +1,9 @@
 from mko_bi.models.enums import (  # noqa: F401
     AggregationFunctionEnum,
     BarmodeEnum,
+    ButtonVariant,
+    ComponentSize,
+    DashboardPermission,
     EnvironmentEnum,
     FileExtensionEnum,
     FilterOperatorEnum,
@@ -8,19 +11,26 @@ from mko_bi.models.enums import (  # noqa: F401
     GraphType,
     MimeTypeEnum,
     OrientationEnum,
-    PermissionEnum,
-    ProcessingStatusEnum,
-    UserRoleEnum,
+    ProcessingStatus,
+    RegistrationStatus,
+    UploadMode,
+    UserRole,
     YoyModeEnum,
 )
 
 # Aliases for backwards compatibility
+UserRoleEnum = UserRole
+PermissionEnum = DashboardPermission
 GraphTypeEnum = GraphType
 FilterTypeEnum = FilterType
+ProcessingStatusEnum = ProcessingStatus
 
 __all__ = [
     "AggregationFunctionEnum",
     "BarmodeEnum",
+    "ButtonVariant",
+    "ComponentSize",
+    "DashboardPermission",
     "EnvironmentEnum",
     "FileExtensionEnum",
     "FilterOperatorEnum",
@@ -30,8 +40,11 @@ __all__ = [
     "GraphTypeEnum",
     "MimeTypeEnum",
     "OrientationEnum",
-    "PermissionEnum",
+    "ProcessingStatus",
     "ProcessingStatusEnum",
+    "RegistrationStatus",
+    "UploadMode",
+    "UserRole",
     "UserRoleEnum",
     "YoyModeEnum",
 ]

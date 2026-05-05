@@ -22,16 +22,16 @@ logger = logging.getLogger(__name__)
 
 # Маппинг функций агрегации на Polars выражения
 AGG_FUNC_MAP = {
-    AggregationFunctionEnum.sum_val: lambda col: pl.col(col).sum(),
-    AggregationFunctionEnum.mean: lambda col: pl.col(col).mean(),
-    AggregationFunctionEnum.count_val: lambda col: pl.col(col).count(),
-    AggregationFunctionEnum.min_val: lambda col: pl.col(col).min(),
-    AggregationFunctionEnum.max_val: lambda col: pl.col(col).max(),
-    AggregationFunctionEnum.median: lambda col: pl.col(col).median(),
-    AggregationFunctionEnum.std: lambda col: pl.col(col).std(),
-    AggregationFunctionEnum.var: lambda col: pl.col(col).var(),
-    AggregationFunctionEnum.first: lambda col: pl.col(col).first(),
-    AggregationFunctionEnum.last: lambda col: pl.col(col).last(),
+    AggregationFunctionEnum.SUM: lambda col: pl.col(col).sum(),
+    AggregationFunctionEnum.MEAN: lambda col: pl.col(col).mean(),
+    AggregationFunctionEnum.COUNT: lambda col: pl.col(col).count(),
+    AggregationFunctionEnum.MIN: lambda col: pl.col(col).min(),
+    AggregationFunctionEnum.MAX: lambda col: pl.col(col).max(),
+    AggregationFunctionEnum.MEDIAN: lambda col: pl.col(col).median(),
+    AggregationFunctionEnum.STD: lambda col: pl.col(col).std(),
+    AggregationFunctionEnum.VAR: lambda col: pl.col(col).var(),
+    AggregationFunctionEnum.FIRST: lambda col: pl.col(col).first(),
+    AggregationFunctionEnum.LAST: lambda col: pl.col(col).last(),
 }
 
 

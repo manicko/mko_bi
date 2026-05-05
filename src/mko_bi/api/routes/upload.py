@@ -19,10 +19,10 @@ from mko_bi.api.deps import (
     CurrentUser,
 )
 from mko_bi.models.data import (
-    UploadResponse,
-    ProcessingStatus,
-    ProcessingResult,
     ProcessingConfig,
+    ProcessingResult,
+    ProcessingStatusResponse,
+    UploadResponse,
 )
 from mko_bi.services.data_service import (
     upload_file,
@@ -135,7 +135,7 @@ async def upload_file_endpoint(
 
 @router.post(
     "/{dashboard_id}/process",
-    response_model=ProcessingStatus,
+    response_model=ProcessingStatusResponse,
     status_code=status.HTTP_202_ACCEPTED,
     summary="Запуск обработки",
     description="Запускает обработку загруженного файла. Доступно только редакторам и администраторам.",
@@ -147,7 +147,7 @@ async def process_file_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
     config: ProcessingConfig | None = None,
-) -> ProcessingStatus:
+) -> ProcessingStatusResponse:
     """Запускает обработку загруженного файла.
 
     Асинхронно обрабатывает загруженный файл с использованием заданной
@@ -218,7 +218,7 @@ async def process_file_endpoint(
 
 @router.get(
     "/status/{task_id}",
-    response_model=ProcessingStatus,
+    response_model=ProcessingStatusResponse,
     status_code=status.HTTP_200_OK,
     summary="Статус обработки",
     description="Возвращает текущий статус обработки файла.",
@@ -227,7 +227,7 @@ async def get_status_endpoint(
     task_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
-) -> ProcessingStatus:
+) -> ProcessingStatusResponse:
     """Получает текущий статус обработки файла.
 
     Args:

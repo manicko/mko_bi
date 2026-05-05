@@ -156,8 +156,8 @@ class TestCalculateAggregations:
     def test_groupby_aggregations(self, sample_df):
         """Тест группировки с агрегациями."""
         aggregations = [
-            AggregationConfig(column="revenue", function=AggregationFunctionEnum.sum_val, alias="total_revenue"),
-            AggregationConfig(column="cost", function=AggregationFunctionEnum.sum_val, alias="total_cost"),
+            AggregationConfig(column="revenue", function=AggregationFunctionEnum.SUM, alias="total_revenue"),
+            AggregationConfig(column="cost", function=AggregationFunctionEnum.SUM, alias="total_cost"),
         ]
         result = calculate_aggregations(
             sample_df,
@@ -170,7 +170,7 @@ class TestCalculateAggregations:
 
     def test_sum_aggregation(self, sample_df):
         """Тест суммы."""
-        aggregations = [AggregationConfig(column="revenue", function=AggregationFunctionEnum.sum_val)]
+        aggregations = [AggregationConfig(column="revenue", function=AggregationFunctionEnum.SUM)]
         result = calculate_aggregations(
             sample_df,
             groupby=["category"],
@@ -183,7 +183,7 @@ class TestCalculateAggregations:
 
     def test_mean_aggregation(self, sample_df):
         """Тест среднего."""
-        aggregations = [AggregationConfig(column="revenue", function=AggregationFunctionEnum.mean)]
+        aggregations = [AggregationConfig(column="revenue", function=AggregationFunctionEnum.MEAN)]
         result = calculate_aggregations(
             sample_df,
             groupby=["category"],
@@ -193,7 +193,7 @@ class TestCalculateAggregations:
 
     def test_count_aggregation(self, sample_df):
         """Тест подсчета."""
-        aggregations = [AggregationConfig(column="revenue", function=AggregationFunctionEnum.count_val)]
+        aggregations = [AggregationConfig(column="revenue", function=AggregationFunctionEnum.COUNT)]
         result = calculate_aggregations(
             sample_df,
             groupby=["category"],
@@ -206,8 +206,8 @@ class TestCalculateAggregations:
     def test_min_max_aggregation(self, sample_df):
         """Тест минимума и максимума."""
         aggregations = [
-            AggregationConfig(column="revenue", function=AggregationFunctionEnum.min_val),
-            AggregationConfig(column="revenue", function=AggregationFunctionEnum.max_val),
+            AggregationConfig(column="revenue", function=AggregationFunctionEnum.MIN),
+            AggregationConfig(column="revenue", function=AggregationFunctionEnum.MAX),
         ]
         result = calculate_aggregations(
             sample_df,
@@ -220,7 +220,7 @@ class TestCalculateAggregations:
     def test_yoy_calculation(self, sample_df):
         """Тест YoY расчета."""
         # Группируем по году и суммируем доход
-        aggregations = [AggregationConfig(column="revenue", function=AggregationFunctionEnum.sum_val, alias="revenue_sum")]
+        aggregations = [AggregationConfig(column="revenue", function=AggregationFunctionEnum.SUM, alias="revenue_sum")]
         yoy_config = YoyConfig(year_column="year", value_column="revenue_sum", alias="yoy")
         result = calculate_aggregations(
             sample_df,
@@ -234,7 +234,7 @@ class TestCalculateAggregations:
 
     def test_share_calculation(self, sample_df):
         """Тест расчета долей."""
-        aggregations = [AggregationConfig(column="revenue", function=AggregationFunctionEnum.sum_val, alias="revenue_sum")]
+        aggregations = [AggregationConfig(column="revenue", function=AggregationFunctionEnum.SUM, alias="revenue_sum")]
         share_config = ShareConfig(value_column="revenue_sum", alias="share")
         result = calculate_aggregations(
             sample_df,
@@ -250,7 +250,7 @@ class TestCalculateAggregations:
     def test_share_calculation_grouped(self, sample_df):
         """Тест расчета долей с группировкой по году."""
         aggregations = [
-            AggregationConfig(column="revenue", function=AggregationFunctionEnum.sum_val, alias="revenue_sum")
+            AggregationConfig(column="revenue", function=AggregationFunctionEnum.SUM, alias="revenue_sum")
         ]
         share_config = ShareConfig(
             value_column="revenue_sum",
@@ -272,8 +272,8 @@ class TestCalculateAggregations:
     def test_custom_metrics(self, sample_df):
         """Тест кастомных метрик."""
         aggregations = [
-            AggregationConfig(column="revenue", function=AggregationFunctionEnum.sum_val, alias="revenue_sum"),
-            AggregationConfig(column="cost", function=AggregationFunctionEnum.sum_val, alias="cost_sum"),
+            AggregationConfig(column="revenue", function=AggregationFunctionEnum.SUM, alias="revenue_sum"),
+            AggregationConfig(column="cost", function=AggregationFunctionEnum.SUM, alias="cost_sum"),
         ]
         custom_metrics = [
             CustomMetricConfig(name="profit", formula="revenue_sum - cost_sum"),
@@ -295,8 +295,8 @@ class TestCalculateAggregations:
         # Фильтруем, группируем, агрегируем, считаем YoY и доли
         filters = [FilterConfig(column="revenue", operator=">", value=0)]
         aggregations = [
-            AggregationConfig(column="revenue", function=AggregationFunctionEnum.sum_val, alias="revenue_sum"),
-            AggregationConfig(column="cost", function=AggregationFunctionEnum.sum_val, alias="cost_sum"),
+            AggregationConfig(column="revenue", function=AggregationFunctionEnum.SUM, alias="revenue_sum"),
+            AggregationConfig(column="cost", function=AggregationFunctionEnum.SUM, alias="cost_sum"),
         ]
         result = apply_transformations(
             sample_df,
@@ -336,7 +336,7 @@ class TestInternalFunctions:
             "cat": ["A", "A", "B", "B"],
             "val": [10, 20, 30, 40],
         })
-        aggregations = [AggregationConfig(column="val", function=AggregationFunctionEnum.sum_val)]
+        aggregations = [AggregationConfig(column="val", function=AggregationFunctionEnum.SUM)]
         result = _apply_groupby_aggregations(df, ["cat"], aggregations)
         assert result.shape[0] == 2
         assert "val_sum" in result.columns

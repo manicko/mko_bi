@@ -6,6 +6,7 @@ from mko_bi.db.models.graphs import Graph
 from mko_bi.db.models.layout import Layout
 from mko_bi.db.models.processing_configs import ProcessingConfig
 from mko_bi.db.models.processing_logs import ProcessingLog
+from mko_bi.db.models.registration_request import RegistrationRequest
 from mko_bi.db.models.user import User
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     "Layout",
     "ProcessingConfig",
     "ProcessingLog",
+    "RegistrationRequest",
     "User",
 ]

@@ -23,7 +23,7 @@ class TestFilterModel:
         """Создание фильтра с валидными данными."""
         filter_obj = filter_model.Filter(
             name="Year Filter",
-            type="select",
+            type=FilterType.SELECT,
             config={"field": "year", "source": "dims", "multi": False},
         )
         async_db_session.add(filter_obj)
@@ -40,8 +40,7 @@ class TestFilterModel:
         """Создание фильтра со значениями по умолчанию."""
         filter_obj = filter_model.Filter(
             name="Category Filter",
-            type="multiselect",
-            config={},
+            type=FilterType.MULTISELECT,
         )
         async_db_session.add(filter_obj)
         await async_db_session.commit()
@@ -53,16 +52,14 @@ class TestFilterModel:
         """Проверка уникальности имени фильтра."""
         filter1 = filter_model.Filter(
             name="Same Name",
-            type="select",
-            config={},
+            type=FilterType.SELECT,
         )
         async_db_session.add(filter1)
         await async_db_session.commit()
 
         filter2 = filter_model.Filter(
             name="Same Name",
-            type="multiselect",
-            config={},
+            type=FilterType.MULTISELECT,
         )
         async_db_session.add(filter2)
 
@@ -77,8 +74,6 @@ class TestFilterModel:
             filter_obj = filter_model.Filter(
                 name=f"{filter_type} Filter",
                 type=filter_type,
-                config={},
-            )
             async_db_session.add(filter_obj)
         await async_db_session.commit()
 
@@ -93,15 +88,11 @@ class TestFilterModel:
         """Проверка связи фильтра с дашбордами."""
         filter_obj = filter_model.Filter(
             name="Dashboard Filter",
-            type="select",
-            config={},
-        )
+            type=FilterType.SELECT,
         async_db_session.add(filter_obj)
 
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={},
-        )
         async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(filter_obj)
@@ -129,8 +120,6 @@ class TestProcessingConfigModel:
         """Создание настроек обработки с валидными данными."""
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={},
-        )
         async_db_session.add(dashboard)
         await async_db_session.commit()
 
@@ -158,8 +147,6 @@ class TestProcessingConfigModel:
         """Создание настроек обработки со значениями по умолчанию."""
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={},
-        )
         async_db_session.add(dashboard)
         await async_db_session.commit()
 
@@ -177,8 +164,6 @@ class TestProcessingConfigModel:
         """Проверка уникальности dashboard_id (один-к-одному)."""
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={},
-        )
         async_db_session.add(dashboard)
         await async_db_session.commit()
 
@@ -204,8 +189,6 @@ class TestProcessingConfigModel:
         """Проверка связи настроек обработки с дашбордом."""
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={},
-        )
         async_db_session.add(dashboard)
         await async_db_session.commit()
 
@@ -227,8 +210,6 @@ class TestProcessingConfigModel:
         """Проверка каскадного удаления настроек при удалении дашборда."""
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={},
-        )
         async_db_session.add(dashboard)
         await async_db_session.commit()
 
@@ -257,7 +238,7 @@ class TestProcessingLogModel:
     async def test_create_processing_log(self, async_db_session):
         """Создание лога обработки с валидными данными."""
         log = processing_log_model.ProcessingLog(
-            status="started",
+            status=ProcessingStatus.STARTED,
             message="Processing started",
         )
         async_db_session.add(log)
@@ -276,14 +257,12 @@ class TestProcessingLogModel:
         """Создание лога обработки с привязкой к дашборду."""
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={},
-        )
         async_db_session.add(dashboard)
         await async_db_session.commit()
 
         log = processing_log_model.ProcessingLog(
             dashboard_id=dashboard.id,
-            status="success",
+            status=ProcessingStatus.SUCCESS,
             message="Processing completed",
             started_at=datetime.now(),
             finished_at=datetime.now(),
@@ -300,7 +279,7 @@ class TestProcessingLogModel:
     async def test_create_processing_log_with_defaults(self, async_db_session):
         """Создание лога обработки со значениями по умолчанию."""
         log = processing_log_model.ProcessingLog(
-            status="started",
+            status=ProcessingStatus.STARTED,
         )
         async_db_session.add(log)
         await async_db_session.commit()
@@ -327,14 +306,12 @@ class TestProcessingLogModel:
         """Проверка связи лога обработки с дашбордом."""
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
-            config={},
-        )
         async_db_session.add(dashboard)
         await async_db_session.commit()
 
         log = processing_log_model.ProcessingLog(
             dashboard_id=dashboard.id,
-            status="success",
+            status=ProcessingStatus.SUCCESS,
             message="Processing completed",
         )
         async_db_session.add(log)
@@ -354,8 +331,6 @@ class TestModelRelationships:
         """Тест дашборда со всеми типами связей."""
         dashboard = dashboard_model.Dashboard(
             name="Full Dashboard",
-            config={},
-        )
         async_db_session.add(dashboard)
         await async_db_session.commit()
         await async_db_session.refresh(dashboard)
@@ -363,9 +338,7 @@ class TestModelRelationships:
         # Добавляем фильтр
         filter_obj = filter_model.Filter(
             name="Test Filter",
-            type="select",
-            config={},
-        )
+            type=FilterType.SELECT,
         async_db_session.add(filter_obj)
         await async_db_session.commit()
         await async_db_session.refresh(filter_obj)
@@ -382,7 +355,7 @@ class TestModelRelationships:
         # Добавляем лог обработки
         log = processing_log_model.ProcessingLog(
             dashboard_id=dashboard.id,
-            status="success",
+            status=ProcessingStatus.SUCCESS,
             message="Test",
         )
         async_db_session.add(log)

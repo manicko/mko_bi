@@ -62,7 +62,7 @@ class UploadResponse(BaseModel):
     )
 
 
-class ProcessingStatus(BaseModel):
+class ProcessingStatusResponse(BaseModel):
     """Модель статуса обработки."""
 
     task_id: UUID
@@ -342,8 +342,8 @@ class ChartConfig(BaseModel):
     x: str
     color: str | None = None
     metrics: list[str]
-    orientation: OrientationEnum = OrientationEnum.vertical
-    barmode: BarmodeEnum = BarmodeEnum.group
+    orientation: OrientationEnum = OrientationEnum.VERTICAL
+    barmode: BarmodeEnum = BarmodeEnum.GROUP
     secondary_y: list[str] = Field(default_factory=list)
     layout: ChartLayoutConfig | None = Field(default=None)
     yoy: YoyConfig | None = Field(

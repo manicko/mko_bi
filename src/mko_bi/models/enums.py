@@ -6,117 +6,64 @@
 from enum import StrEnum
 
 
-class ButtonVariant(StrEnum):
-    """Варианты стилей кнопок."""
+class UserRole(StrEnum):
+    """Роли пользователей системы."""
 
-    PRIMARY = "primary"
-    SECONDARY = "secondary"
-    SUCCESS = "success"
-    DANGER = "danger"
-    WARNING = "warning"
-    INFO = "info"
-    LIGHT = "light"
-    DARK = "dark"
+    ADMIN = "admin"
+    EDITOR = "editor"
+    VIEWER = "viewer"
 
 
-class FilterType(StrEnum):
-    """Типы фильтров."""
+class DashboardPermission(StrEnum):
+    """Уровни доступа к дашбордам."""
 
-    select = "select"
-    multiselect = "multiselect"
-    range = "range"
-    date = "date"
+    VIEW = "view"
+    EDIT = "edit"
+    ADMIN = "admin"
 
 
 class GraphType(StrEnum):
     """Типы графиков."""
 
-    bar = "bar"
-    line = "line"
-    pie = "pie"
-    table = "table"
+    BAR = "bar"
+    LINE = "line"
+    PIE = "pie"
+    TABLE = "table"
 
 
-class ComponentSize(StrEnum):
-    """Размеры компонентов."""
+class FilterType(StrEnum):
+    """Типы фильтров."""
 
-    SMALL = "sm"
-    MEDIUM = "md"
-    LARGE = "lg"
-
-
-class UserRoleEnum(StrEnum):
-    """Роли пользователей системы."""
-
-    admin = "admin"
-    editor = "editor"
-    viewer = "viewer"
+    SELECT = "select"
+    MULTISELECT = "multiselect"
+    RANGE = "range"
+    DATE = "date"
 
 
-class PermissionEnum(StrEnum):
-    """Уровни доступа к дашбордам."""
+class RegistrationStatus(StrEnum):
+    """Статусы заявок на регистрацию."""
 
-    view = "view"
-    edit = "edit"
-    admin = "admin"
-
-
-class OrientationEnum(StrEnum):
-    """Ориентация графика."""
-
-    vertical = "v"
-    horizontal = "h"
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
 
 
-class BarmodeEnum(StrEnum):
-    """Режим отображения столбчатых диаграмм."""
+class UploadMode(StrEnum):
+    """Режимы загрузки данных."""
 
-    group = "group"
-    stack = "stack"
-
-
-class YoyModeEnum(StrEnum):
-    """Режим отображения год-к-году сравнения."""
-
-    absolute = "absolute"
-    percent = "percent"
+    OVERWRITE = "overwrite"
+    APPEND = "append"
 
 
-class AggregationFunctionEnum(StrEnum):
-    """Функции агрегации данных."""
-
-    sum_val = "sum"
-    mean = "mean"
-    count_val = "count"
-    min_val = "min"
-    max_val = "max"
-    median = "median"
-    std = "std"
-    var = "var"
-    first = "first"
-    last = "last"
-
-
-class ProcessingStatusEnum(StrEnum):
+class ProcessingStatus(StrEnum):
     """Статусы обработки данных."""
 
-    started = "started"
-    uploaded = "uploaded"
-    processing = "processing"
-    success = "success"
-    failed = "failed"
-    completed = "completed"
-
-
-class FilterOperatorEnum(StrEnum):
-    """Операторы для фильтрации данных."""
-
-    EQ = "=="
-    NE = "!="
-    GT = ">"
-    LT = "<"
-    GTE = ">="
-    LTE = "<="
+    STARTED = "started"
+    UPLOADED = "uploaded"
+    PROCESSING = "processing"
+    SUCCESS = "success"
+    FAILED = "failed"
+    COMPLETED = "completed"
 
 
 class EnvironmentEnum(StrEnum):
@@ -144,10 +91,81 @@ class MimeTypeEnum(StrEnum):
 class FileExtensionEnum(StrEnum):
     """Разрешенные расширения файлов."""
 
-    CSV_GZ = ".csv.gz"
-    CSV = ".csv"
+    CSV = "csv"
+    CSV_GZ = "csv.gz"
 
     @classmethod
     def allowed_values(cls) -> list[str]:
         """Возвращает список разрешенных расширений."""
         return [member.value for member in cls]
+
+
+# Остальные enum-ы, используемые в дашбордах (Dash components)
+
+
+class ButtonVariant(StrEnum):
+    """Варианты стилей кнопок."""
+
+    PRIMARY = "primary"
+    SECONDARY = "secondary"
+    SUCCESS = "success"
+    DANGER = "danger"
+    WARNING = "warning"
+    INFO = "info"
+    LIGHT = "light"
+    DARK = "dark"
+
+
+class ComponentSize(StrEnum):
+    """Размеры компонентов."""
+
+    SMALL = "sm"
+    MEDIUM = "md"
+    LARGE = "lg"
+
+
+class OrientationEnum(StrEnum):
+    """Ориентация графика."""
+
+    VERTICAL = "v"
+    HORIZONTAL = "h"
+
+
+class BarmodeEnum(StrEnum):
+    """Режим отображения столбчатых диаграмм."""
+
+    GROUP = "group"
+    STACK = "stack"
+
+
+class YoyModeEnum(StrEnum):
+    """Режим отображения год-к-году сравнения."""
+
+    ABSOLUTE = "absolute"
+    PERCENT = "percent"
+
+
+class AggregationFunctionEnum(StrEnum):
+    """Функции агрегации данных."""
+
+    SUM = "sum"
+    MEAN = "mean"
+    COUNT = "count"
+    MIN = "min"
+    MAX = "max"
+    MEDIAN = "median"
+    STD = "std"
+    VAR = "var"
+    FIRST = "first"
+    LAST = "last"
+
+
+class FilterOperatorEnum(StrEnum):
+    """Операторы для фильтрации данных."""
+
+    EQ = "=="
+    NE = "!="
+    GT = ">"
+    LT = "<"
+    GTE = ">="
+    LTE = "<="
