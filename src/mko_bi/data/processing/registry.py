@@ -1,126 +1,160 @@
-"""Реестр трансформаций для пайплайна обработки данных.
+"""Оркестрация пайплайна обработки данных.
 
-Этот модуль предоставляет реестр для управления доступными
-трансформациями и их применения к данным.
+Содержит класс DataPipeline, который управляет последовательностью
+трансформации, агрегации, сохранения и обновления статусов.
 """
 
 import logging
-from typing import Any, TypeVar, cast
-from collections.abc import Callable
+from uuid import UUID
 
 import polars as pl
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from mko_bi.data.processing.transformations import (
+    apply_transformations,
+    aggregate_data,
+)
+from mko_bi.data.storage.manager import StorageManager
+from mko_bi.models.enums import ProcessingStatus, UploadMode
+from mko_bi.models.processing_logs import ProcessingLogRead
+from mko_bi.services.processing_config_service import get_by_dashboard_id
 
 logger = logging.getLogger(__name__)
 
-T = TypeVar("T", bound=Callable[..., Any])
 
+class DataPipeline:
+    """Оркестрация обработки данных.
 
-class TransformationRegistry:
-    """Реестр трансформаций.
-
-    Управляет регистрацией и применением различных
-    трансформаций к данным. Поддерживает фильтрацию, группировку,
-    сортировку и другие операции.
+    Управляет последовательностью шагов: трансформация,
+    агрегация, сохранение и обновление статуса.
 
     Attributes:
-        _transformations: Словарь зарегистрированных трансформаций.
+        storage_manager: Менеджер для сохранения агрегированных данных.
     """
 
-    def __init__(self) -> None:
-        """Инициализация реестра трансформаций."""
-        self._transformations: dict[str, Callable[..., Any]] = {}
-        logger.debug("TransformationRegistry инициализирован")
-
-    def register(self, name: str, func: Callable[..., Any]) -> None:
-        """Регистрирует новую трансформацию.
+    def __init__(self, storage_manager: StorageManager) -> None:
+        """Инициализация пайплайна.
 
         Args:
-            name: Имя трансформации.
-            func: Функция трансформации.
-
-        Raises:
-            ValueError: Если трансформация с таким именем уже зарегистрирована.
+            storage_manager: Экземпляр менеджера хранения данных.
         """
-        if name in self._transformations:
-            error_msg = f"Трансформация '{name}' уже зарегистрирована"
-            logger.error(error_msg)
-            raise ValueError(error_msg)
+        self.storage_manager = storage_manager
+        logger.debug("DataPipeline инициализирован")
 
-        self._transformations[name] = func
-        logger.debug("Трансформация '%s' успешно зарегистрирована", name)
-
-    def get(self, name: str) -> Callable[..., Any] | None:
-        """Получает зарегистрированную трансформацию по имени.
-
-        Args:
-            name: Имя трансформации.
-
-        Returns:
-            Callable: Функция трансформации или None, если не найдена.
-        """
-        transformation = self._transformations.get(name)
-        if transformation is None:
-            logger.warning("Трансформация '%s' не найдена в реестре", name)
-        else:
-            logger.debug("Трансформация '%s' получена из реестра", name)
-        return transformation
-
-    def apply(
+    async def run(
         self,
         df: pl.DataFrame,
-        transformation_name: str,
-        *args: Any,
-        **kwargs: Any,
-    ) -> pl.DataFrame:
-        """Применяет зарегистрированную трансформацию к данным.
+        dashboard_id: UUID,
+        mode: UploadMode,
+        db: AsyncSession,
+    ) -> ProcessingLogRead:
+        """Запускает пайплайн обработки данных.
 
         Args:
-            df: Исходный DataFrame.
-            transformation_name: Имя трансформации.
-            *args: Позиционные аргументы для функции трансформации.
-            **kwargs: Именованные аргументы для функции трансформации.
+            df: Исходный DataFrame с данными.
+            dashboard_id: Идентификатор дашборда.
+            mode: Режим загрузки (overwrite/append).
+            db: Асинхронная сессия БД.
 
         Returns:
-            pl.DataFrame: Трансформированный DataFrame.
-
-        Raises:
-            ValueError: Если трансформация не найдена.
+            ProcessingLogRead: Результат выполнения с статусом.
         """
-        transformation = self.get(transformation_name)
-        if transformation is None:
-            error_msg = f"Трансформация '{transformation_name}' не найдена"
-            logger.error(error_msg)
-            raise ValueError(error_msg)
+        from mko_bi.services.processing_log_service import create_log, update_log_status
+        from mko_bi.db.repositories.graph_repo import GraphRepository
 
-        logger.info("Применение трансформации '%s'", transformation_name)
-        result = transformation(df, *args, **kwargs)
-        logger.debug(
-            "Трансформация '%s' применена: %d строк, %d колонок",
-            transformation_name,
-            result.shape[0],
-            result.shape[1],
+        log_entry = None
+        try:
+            logger.info(
+                "Запуск пайплайна для dashboard_id=%s, mode=%s",
+                dashboard_id,
+                mode,
+            )
+
+            # Создаем запись в логе
+            log_entry = await create_log(
+                dashboard_id=dashboard_id,
+                status=ProcessingStatus.STARTED,
+                db=db,
+            )
+
+            # Шаг 1: Получаем конфиг и трансформируем
+            logger.info("Шаг 1: Трансформация данных")
+            config_response = await get_by_dashboard_id(dashboard_id, db)
+            config = config_response.settings if config_response else {}
+            
+            transformed_df = apply_transformations(df, config)
+            logger.info("Трансформация завершена: %d строк", transformed_df.shape[0])
+
+            # Шаг 2: Получаем графики и агрегируем
+            logger.info("Шаг 2: Агрегация данных")
+            graphs = await GraphRepository.get_by_dashboard(dashboard_id, db)
+            graph_configs = [
+                {
+                    "dimensions": g.dimensions,
+                    "metrics": g.metrics,
+                }
+                for g in graphs
+            ]
+            
+            aggregates = aggregate_data(transformed_df, graph_configs)
+            
+            # Добавляем graph_id к каждому агрегату
+            for agg, g in zip(aggregates, graphs, strict=False):
+                agg["graph_id"] = g.id
+            
+            logger.info("Агрегация завершена: %d записей", len(aggregates))
+
+            # Шаг 3: Сохранение
+            logger.info("Шаг 3: Сохранение данных")
+            clear_old = mode == UploadMode.OVERWRITE
+            await self.storage_manager.save_aggregates(
+                dashboard_id=dashboard_id,
+                aggregates=aggregates,
+                clear_old=clear_old,
+            )
+            logger.info("Сохранение завершено")
+
+            # Обновляем статус лога
+            updated_log = await update_log_status(
+                log_id=log_entry.id,
+                status=ProcessingStatus.COMPLETED,
+                db=db,
+            )
+            logger.info("Пайплайн успешно завершен")
+            return updated_log
+
+        except Exception as e:
+            logger.error("Ошибка в пайплайне: %s", e)
+            if log_entry:
+                await update_log_status(
+                    log_id=log_entry.id,
+                    status=ProcessingStatus.FAILED,
+                    db=db,
+                    message=str(e),
+                )
+            raise
+
+    async def _update_status(
+        self,
+        log_id: UUID,
+        status: ProcessingStatus,
+        db: AsyncSession,
+        message: str | None = None,
+    ) -> None:
+        """Обновляет статус в логе обработки.
+
+        Args:
+            log_id: Идентификатор записи в логе.
+            status: Новый статус.
+            db: Асинхронная сессия БД.
+            message: Опциональное сообщение об ошибке.
+        """
+        from mko_bi.services.processing_log_service import update_log_status
+
+        logger.debug("Обновление статуса log_id=%s: %s", log_id, status)
+        await update_log_status(
+            log_id=log_id,
+            status=status,
+            db=db,
+            message=message,
         )
-        return cast(pl.DataFrame, result)
-
-    def list_transformations(self) -> list[str]:
-        """Возвращает список всех зарегистрированных трансформаций.
-
-        Returns:
-            List[str]: Список имен трансформаций.
-        """
-        transformations = list(self._transformations.keys())
-        logger.debug("Доступные трансформации: %s", transformations)
-        return transformations
-
-    def has_transformation(self, name: str) -> bool:
-        """Проверяет наличие трансформации в реестре.
-
-        Args:
-            name: Имя трансформации.
-
-        Returns:
-            bool: True, если трансформация зарегистрирована.
-        """
-        has = name in self._transformations
-        logger.debug("Проверка трансформации '%s': %s", name, has)
-        return has

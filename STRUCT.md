@@ -108,6 +108,7 @@ C:\py_exp\mko_bi
 │       │   │   ├── layout_repo.py
 │       │   │   ├── processing_config_repo.py
 │       │   │   ├── processing_log_repo.py
+│       │   │   ├── registration_request_repo.py
 │       │   │   └── user_repo.py
 │       │   ├── session.py
 │       │   └── starter.py
@@ -185,8 +186,8 @@ C:\py_exp\mko_bi
 │   ├── DEV
 │   │   ├── 001_database_models_DONE.md
 │   │   ├── 002_configuration_DONE.md
-│   │   ├── 003_authentication.md
-│   │   ├── 004_core_infrastructure.md
+│   │   ├── 003_authentication_DONE.md
+│   │   ├── 004_core_infrastructure_DONE.md
 │   │   ├── 005_data_upload.md
 │   │   ├── 006_data_processing.md
 │   │   ├── 007_data_storage.md
@@ -202,8 +203,8 @@ C:\py_exp\mko_bi
 │   │   ├── 017_frontend_profile.md
 │   │   ├── 018_testing.md
 │   │   ├── 019_deployment.md
-│   │   ├── 020_env_var_nested_mapping.md
-│   │   └── 020_fix_remaining_tests.md
+│   │   ├── 020_env_var_nested_mapping_DONE.md
+│   │   └── 020_fix_remaining_tests_DONE.md
 │   ├── DEV_PLAN.md
 │   ├── DONE
 │   │   ├── TASK_001_sync_async_unification.md

@@ -10,17 +10,17 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mko_b_i.api.deps import (
+from mko_bi.api.deps import (
     get_db_dependency,
     CurrentUser,
 )
-from mko_b_i.models.layout import (
+from mko_bi.models.layout import (
     LayoutRead,
     LayoutUpdate,
     LayoutCreate,
 )
-from mko_bi.models.user_roles import UserRoleEnum
-from mko_b_i.services.layout_service import (
+from mko_bi.models.enums import UserRole
+from mko_bi.services.layout_service import (
     create_layout,
     get_layout,
     get_all_layouts,
@@ -61,7 +61,7 @@ async def create_layout_endpoint(
         HTTPException 500: При ошибке базы данных.
     """
     # Проверка прав администратора
-    if current_user.role != UserRoleEnum.admin:
+    if current_user.role != UserRole.ADMIN:
         logger.warning(
             "Нет прав на создание layout-а: user_id=%s, role=%s",
             current_user.id,
@@ -220,7 +220,7 @@ async def update_layout_endpoint(
         HTTPException 500: При ошибке базы данных.
     """
     # Проверка прав администратора
-    if current_user.role != UserRoleEnum.admin:
+    if current_user.role != UserRole.ADMIN:
         logger.warning(
             "Нет прав на обновление layout-а: user_id=%s, role=%s",
             current_user.id,
@@ -292,7 +292,7 @@ async def delete_layout_endpoint(
         HTTPException 500: При ошибке базы данных.
     """
     # Проверка прав администратора
-    if current_user.role != UserRoleEnum.admin:
+    if current_user.role != UserRole.ADMIN:
         logger.warning(
             "Нет прав на удаление layout-а: user_id=%s, role=%s",
             current_user.id,

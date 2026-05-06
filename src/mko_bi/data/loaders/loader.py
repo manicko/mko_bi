@@ -17,6 +17,23 @@ from mko_bi.models.data import LoaderConfig
 logger = logging.getLogger(__name__)
 
 
+def detect_file_type(filename: str) -> str:
+    """Detect file type based on filename extension.
+
+    Args:
+        filename: Name of the file.
+
+    Returns:
+        str: "csv" for .csv files, "csv_gz" for .csv.gz files, "unknown" otherwise.
+    """
+    if filename.endswith(".csv.gz"):
+        return "csv_gz"
+    elif filename.endswith(".csv"):
+        return "csv"
+    else:
+        return "unknown"
+
+
 class CSVLoader:
     """Загрузчик CSV файлов.
 
@@ -40,6 +57,7 @@ class CSVLoader:
     def load_csv(
         self,
         file_path: Path,
+        config: dict[str, Any] | None = None,
         lazy_threshold_mb: float | None = None,
     ) -> pl.DataFrame:
         """Загружает CSV файл с поддержкой lazy loading для больших файлов.
@@ -50,6 +68,7 @@ class CSVLoader:
 
         Args:
             file_path: Путь к CSV файлу.
+            config: Опциональная конфигурация для чтения CSV (separator, has_header, encoding, etc.).
             lazy_threshold_mb: Порог в МБ для lazy loading.
                 Если None, берется из конфигурации приложения.
 
@@ -84,14 +103,14 @@ class CSVLoader:
                     file_size_mb,
                     lazy_threshold_mb,
                 )
-                df = self._read_csv_lazy(file_path)
+                df = self._read_csv_lazy(file_path, config)
             else:
                 logger.info(
                     "Используется обычное чтение для файла %.2f MB (порог: %.2f MB)",
                     file_size_mb,
                     lazy_threshold_mb,
                 )
-                df = self._read_csv(file_path)
+                df = self._read_csv(file_path, config)
 
             logger.info(
                 "Файл прочитан: %d строк, %d колонок",
@@ -131,22 +150,32 @@ class CSVLoader:
         """
         return self.load_csv(file_path)
 
-    def _read_csv_lazy(self, file_path: Path) -> pl.DataFrame:
+    def _read_csv_lazy(self, file_path: Path, config: dict[str, Any] | None = None) -> pl.DataFrame:
         """Читает CSV файл с использованием lazy evaluation.
 
         Args:
             file_path: Путь к CSV файлу.
+            config: Опциональная конфигурация для чтения CSV.
 
         Returns:
             pl.DataFrame: Прочитанные данные.
         """
         try:
+            read_kwargs = {}
+            if config:
+                if "separator" in config:
+                    read_kwargs["separator"] = config["separator"]
+                if "has_header" in config:
+                    read_kwargs["has_header"] = config["has_header"]
+                if "encoding" in config:
+                    read_kwargs["encoding"] = config["encoding"]
+
             if file_path.suffix == ".gz" or file_path.name.endswith(".csv.gz"):
                 logger.debug("Чтение gzipped CSV файла (lazy): %s", file_path)
-                return pl.scan_csv(file_path).collect()
+                return pl.scan_csv(file_path, **read_kwargs).collect()
             else:
                 logger.debug("Чтение обычного CSV файла (lazy): %s", file_path)
-                return pl.scan_csv(file_path).collect()
+                return pl.scan_csv(file_path, **read_kwargs).collect()
         except Exception as e:
             logger.error("Ошибка чтения CSV файла (lazy) %s: %s", file_path, e)
             raise
@@ -202,23 +231,34 @@ class CSVLoader:
         logger.info("Размер файла %s: %.2f MB", file_path, file_size_mb)
         return file_size_mb
 
-    def _read_csv(self, file_path: Path) -> pl.DataFrame:
+    def _read_csv(self, file_path: Path, config: dict[str, Any] | None = None) -> pl.DataFrame:
         """Читает CSV файл (поддерживает gzip сжатие).
 
         Args:
             file_path: Путь к CSV файлу.
+            config: Опциональная конфигурация для чтения CSV.
 
         Returns:
             pl.DataFrame: Прочитанные данные.
         """
         try:
+            read_kwargs = {}
+            if config:
+                if "separator" in config:
+                    read_kwargs["separator"] = config["separator"]
+                if "has_header" in config:
+                    read_kwargs["has_header"] = config["has_header"]
+
             if file_path.suffix == ".gz" or file_path.name.endswith(".csv.gz"):
                 logger.debug("Чтение gzipped CSV файла: %s", file_path)
-                with gzip.open(file_path, "rt", encoding="utf-8") as f:
-                    return pl.read_csv(f)
+                encoding = config.get("encoding", "utf-8") if config else "utf-8"
+                with gzip.open(file_path, "rt", encoding=encoding) as f:
+                    return pl.read_csv(f, **read_kwargs)
             else:
                 logger.debug("Чтение обычного CSV файла: %s", file_path)
-                return pl.read_csv(file_path)
+                if config and "encoding" in config:
+                    read_kwargs["encoding"] = config["encoding"]
+                return pl.read_csv(file_path, **read_kwargs)
         except Exception as e:
             logger.error("Ошибка чтения CSV файла %s: %s", file_path, e)
             raise

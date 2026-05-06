@@ -571,3 +571,112 @@ async def _grant_access_with_session(
     )
 
     return True
+
+
+async def revoke_access(
+    dashboard_id: int, user_id: int, db: AsyncSession | None = None
+) -> bool:
+    """Revoke user's access to a dashboard.
+
+    Args:
+        dashboard_id: Dashboard ID.
+        user_id: User ID whose access to revoke.
+        db: Optional database session.
+
+    Returns:
+        True if access was revoked, False if record not found.
+
+    Raises:
+        SQLAlchemyError: On database error.
+    """
+    logger.info(
+        "Revoking access: dashboard_id=%s, user_id=%s",
+        dashboard_id,
+        user_id,
+    )
+
+    if db is None:
+        async with get_session() as db:
+            return await _revoke_access_with_session(dashboard_id, user_id, db)
+    else:
+        return await _revoke_access_with_session(dashboard_id, user_id, db)
+
+
+async def _revoke_access_with_session(
+    dashboard_id: int, user_id: int, db: AsyncSession
+) -> bool:
+    """Internal function for revoking access using session."""
+    result = await AccessRepository.revoke_access(
+        user_id=user_id, dashboard_id=dashboard_id, db=db
+    )
+
+    if result:
+        await db.commit()
+        logger.info(
+            "Access revoked: user_id=%s, dashboard_id=%s",
+            user_id,
+            dashboard_id,
+        )
+    else:
+        logger.warning(
+            "Access record not found for revocation: user_id=%s, dashboard_id=%s",
+            user_id,
+            dashboard_id,
+        )
+
+    return bool(result)
+
+
+async def get_dashboard_access_list(
+    dashboard_id: int, db: AsyncSession | None = None
+) -> list[dict[str, Any]]:
+    """Get all access records for a dashboard.
+
+    Args:
+        dashboard_id: Dashboard ID.
+        db: Optional database session.
+
+    Returns:
+        List of access records as dictionaries.
+
+    Raises:
+        SQLAlchemyError: On database error.
+    """
+    logger.info("Getting access list for dashboard: dashboard_id=%s", dashboard_id)
+
+    if db is None:
+        async with get_session() as db:
+            return await _get_dashboard_access_list_with_session(dashboard_id, db)
+    else:
+        return await _get_dashboard_access_list_with_session(dashboard_id, db)
+
+
+async def _get_dashboard_access_list_with_session(
+    dashboard_id: int, db: AsyncSession
+) -> list[dict[str, Any]]:
+    """Internal function for getting access list using session."""
+    from mko_bi.db.models import access as access_model
+
+    try:
+        result = await db.execute(
+            select(access_model.DashboardAccess).where(
+                access_model.DashboardAccess.dashboard_id == dashboard_id
+            )
+        )
+        access_records = list(result.scalars().all())
+
+        return [
+            {
+                "user_id": str(record.user_id),
+                "dashboard_id": str(record.dashboard_id),
+                "permission": record.permission,
+            }
+            for record in access_records
+        ]
+    except Exception as e:
+        logger.error(
+            "Error getting access list for dashboard id=%s: %s",
+            dashboard_id,
+            e,
+        )
+        raise

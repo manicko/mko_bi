@@ -16,6 +16,8 @@ from sqlalchemy.engine import Result
 if TYPE_CHECKING:
     from sqlalchemy.ext.asyncio import AsyncSession
 
+from mko_bi.models.enums import UploadMode
+
 logger = logging.getLogger(__name__)
 
 
@@ -526,4 +528,231 @@ class StorageManager:
         if missing_ids:
             raise ValueError(
                 f"Графики не найдены или не принадлежат дашборду: {missing_ids}"
+            )
+
+    # --- Методы согласно спецификации задачи 007 ---
+
+    @classmethod
+    async def save_aggregated_data(
+        cls,
+        dashboard_id: UUID,
+        graph_id: UUID,
+        aggregated_results: list[dict[str, Any]],
+        mode: UploadMode,
+        db: "AsyncSession",
+    ) -> None:
+        """Сохраняет агрегированные данные для графика.
+
+        При OVERWRITE: удаляет старые данные для graph_id.
+        При APPEND: добавляет новые данные.
+        Сохраняет в aggregated_data таблицу.
+
+        Args:
+            dashboard_id: Идентификатор дашборда.
+            graph_id: Идентификатор графика.
+            aggregated_results: Список агрегированных данных.
+            mode: Режим загрузки (OVERWRITE или APPEND).
+            db: Асинхронная сессия SQLAlchemy.
+
+        Raises:
+            ValueError: Если данные невалидны.
+            SQLAlchemyError: При ошибках работы с базой данных.
+        """
+        if not aggregated_results:
+            logger.info("Пустой список агрегатов для graph_id=%s", graph_id)
+            return
+
+        try:
+            # Проверка существования графика
+            await cls._validate_graph_exists(graph_id, dashboard_id, db)
+
+            # При OVERWRITE удаляем старые данные
+            if mode == UploadMode.OVERWRITE:
+                deleted = await cls._delete_by_graph_internal(graph_id, db)
+                logger.info(
+                    "Удалено %d старых записей для graph_id=%s",
+                    deleted,
+                    graph_id,
+                )
+
+            # Массовая вставка новых данных
+            inserted = await cls._bulk_insert_internal(
+                dashboard_id, graph_id, aggregated_results, db
+            )
+            logger.info(
+                "Сохранено %d агрегатов для graph_id=%s, mode=%s",
+                inserted,
+                graph_id,
+                mode,
+            )
+        except SQLAlchemyError as e:
+            logger.error(
+                "Ошибка при сохранении агрегатов для graph_id=%s: %s",
+                graph_id,
+                str(e),
+            )
+            raise
+
+    @classmethod
+    async def delete_by_graph(
+        cls,
+        graph_id: UUID,
+        db: "AsyncSession",
+    ) -> None:
+        """Удаляет агрегированные данные для конкретного графика.
+
+        Args:
+            graph_id: Идентификатор графика.
+            db: Асинхронная сессия SQLAlchemy.
+
+        Raises:
+            SQLAlchemyError: При ошибках работы с базой данных.
+        """
+        try:
+            deleted = await cls._delete_by_graph_internal(graph_id, db)
+            logger.info(
+                "Удалено %d записей для graph_id=%s",
+                deleted,
+                graph_id,
+            )
+        except SQLAlchemyError as e:
+            logger.error(
+                "Ошибка при удалении данных для graph_id=%s: %s",
+                graph_id,
+                str(e),
+            )
+            raise
+
+    @classmethod
+    async def delete_by_dashboard(
+        cls,
+        dashboard_id: UUID,
+        db: "AsyncSession",
+    ) -> None:
+        """Удаляет все агрегированные данные для дашборда.
+
+        Args:
+            dashboard_id: Идентификатор дашборда.
+            db: Асинхронная сессия SQLAlchemy.
+
+        Raises:
+            SQLAlchemyError: При ошибках работы с базой данных.
+        """
+        try:
+            from mko_bi.db.models.aggregated_data import AggregatedData
+
+            result = await db.execute(
+                delete(AggregatedData).where(
+                    AggregatedData.dashboard_id == dashboard_id
+                )
+            )
+            deleted = result.rowcount if result.rowcount is not None else 0
+            logger.info(
+                "Удалено %d записей для dashboard_id=%s",
+                deleted,
+                dashboard_id,
+            )
+        except SQLAlchemyError as e:
+            logger.error(
+                "Ошибка при удалении данных для dashboard_id=%s: %s",
+                dashboard_id,
+                str(e),
+            )
+            raise
+
+    @classmethod
+    async def _delete_by_graph_internal(
+        cls,
+        graph_id: UUID,
+        db: "AsyncSession",
+    ) -> int:
+        """Внутренний метод удаления данных графика.
+
+        Args:
+            graph_id: Идентификатор графика.
+            db: Асинхронная сессия SQLAlchemy.
+
+        Returns:
+            Количество удалённых записей.
+        """
+        from mko_bi.db.models.aggregated_data import AggregatedData
+
+        result = await db.execute(
+            delete(AggregatedData).where(
+                AggregatedData.graph_id == graph_id
+            )
+        )
+        return result.rowcount if result.rowcount is not None else 0
+
+    @classmethod
+    async def _bulk_insert_internal(
+        cls,
+        dashboard_id: UUID,
+        graph_id: UUID,
+        aggregated_results: list[dict[str, Any]],
+        db: "AsyncSession",
+    ) -> int:
+        """Выполняет массовую вставку агрегированных данных.
+
+        Args:
+            dashboard_id: Идентификатор дашборда.
+            graph_id: Идентификатор графика.
+            aggregated_results: Список агрегированных данных.
+            db: Асинхронная сессия SQLAlchemy.
+
+        Returns:
+            Количество вставленных записей.
+        """
+        from mko_bi.db.models.aggregated_data import AggregatedData
+
+        # Подготавливаем данные для вставки
+        insert_data = [
+            {
+                "dashboard_id": dashboard_id,
+                "graph_id": graph_id,
+                "dims": item.get("dims", {}),
+                "metrics": item.get("metrics", {}),
+            }
+            for item in aggregated_results
+        ]
+
+        await db.execute(
+            insert(AggregatedData),
+            insert_data,
+        )
+        await db.flush()
+        logger.debug("Массовая вставка выполнена: %d записей", len(insert_data))
+        return len(insert_data)
+
+    @classmethod
+    async def _validate_graph_exists(
+        cls,
+        graph_id: UUID,
+        dashboard_id: UUID,
+        db: "AsyncSession",
+    ) -> None:
+        """Проверяет существование графика и его принадлежность дашборду.
+
+        Args:
+            graph_id: Идентификатор графика.
+            dashboard_id: Идентификатор дашборда.
+            db: Асинхронная сессия SQLAlchemy.
+
+        Raises:
+            ValueError: Если график не найден или не принадлежит дашборду.
+        """
+        from mko_bi.db.models import graphs as graphs_model
+
+        result = await db.execute(
+            select(graphs_model.Graph).where(
+                and_(
+                    graphs_model.Graph.id == graph_id,
+                    graphs_model.Graph.dashboard_id == dashboard_id,
+                )
+            )
+        )
+        graph = result.scalar_one_or_none()
+        if not graph:
+            raise ValueError(
+                f"График не найден или не принадлежит дашборду: graph_id={graph_id}"
             )

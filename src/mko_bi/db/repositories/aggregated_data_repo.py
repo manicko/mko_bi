@@ -8,7 +8,7 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import delete, insert, select, func
+from sqlalchemy import delete, insert, select, func, distinct
 from sqlalchemy.exc import SQLAlchemyError
 
 from mko_bi.db.models import aggregated_data as aggregated_data_model
@@ -30,8 +30,8 @@ class AggregatedDataRepository:
     async def bulk_insert(
         cls,
         db: AsyncSession,
-        dashboard_id: int,
-        aggregates: list[dict[str, Any]],
+        dashboard_id: UUID,
+        records: list[dict[str, Any]],
         clear_old: bool = True,
     ) -> int:
         """Выполняет пакетную вставку агрегированных данных.
@@ -44,7 +44,7 @@ class AggregatedDataRepository:
         Args:
             db: Асинхронная сессия базы данных.
             dashboard_id: Идентификатор дашборда.
-            aggregates: Список агрегированных данных для вставки.
+            records: Список агрегированных данных для вставки.
                 Каждый элемент должен содержать:
                 - graph_id: UUID графика
                 - dims: dict значения измерений (JSON)
@@ -65,13 +65,13 @@ class AggregatedDataRepository:
                     )
                 )
             
-            if not aggregates:
+            if not records:
                 logger.info("Нет данных для вставки: dashboard_id=%s", dashboard_id)
                 return 0
             
             # Подготавливаем данные для вставки
             insert_data = []
-            for item in aggregates:
+            for item in records:
                 insert_data.append({
                     "dashboard_id": dashboard_id,
                     "graph_id": item["graph_id"],
@@ -100,49 +100,32 @@ class AggregatedDataRepository:
             raise
     
     @classmethod
-    async def get_by_dashboard(
+    async def get_by_dashboard_id(
         cls,
-        dashboard_id: int,
+        dashboard_id: UUID,
         db: AsyncSession,
-        limit: int = 100,
-        offset: int = 0,
-    ) -> tuple[int, list[aggregated_data_model.AggregatedData]]:
-        """Получить агрегированные данные для дашборда с пагинацией.
+    ) -> list[aggregated_data_model.AggregatedData]:
+        """Получить агрегированные данные для дашборда.
         
         Args:
             dashboard_id: Идентификатор дашборда.
             db: Асинхронная сессия базы данных.
-            limit: Максимальное количество записей (по умолчанию 100).
-            offset: Смещение (по умолчанию 0).
             
         Returns:
-            Кортеж (общее количество записей, список агрегированных данных).
+            Список агрегированных данных для дашборда.
         """
         try:
-            # Получение общего количества записей
-            total_result = await db.execute(
-                select(func.count())
-                .select_from(aggregated_data_model.AggregatedData)
-                .where(aggregated_data_model.AggregatedData.dashboard_id == dashboard_id)
-            )
-            total = total_result.scalar_one()
-            
-            # Получение пагинированных данных
             result = await db.execute(
                 select(aggregated_data_model.AggregatedData)
                 .where(aggregated_data_model.AggregatedData.dashboard_id == dashboard_id)
-                .limit(limit)
-                .offset(offset)
             )
             data = list(result.scalars().all())
-            
             logger.info(
-                "Получены данные для dashboard_id=%s, total=%s, count=%s",
+                "Получены данные для dashboard_id=%s, count=%s",
                 dashboard_id,
-                total,
                 len(data),
             )
-            return total, data
+            return data
         except SQLAlchemyError as e:
             logger.error(
                 "Ошибка при получении данных dashboard_id=%s: %s",
@@ -152,14 +135,18 @@ class AggregatedDataRepository:
             raise
     
     @classmethod
-    async def get_by_graph(
-        cls, graph_id: UUID, db: AsyncSession
+    async def get_by_graph_id(
+        cls,
+        graph_id: UUID,
+        db: AsyncSession,
+        filters: dict[str, Any] | None = None,
     ) -> list[aggregated_data_model.AggregatedData]:
         """Получить агрегированные данные для графика.
         
         Args:
             graph_id: Идентификатор графика (UUID).
             db: Асинхронная сессия базы данных.
+            filters: Опциональный словарь фильтров для JSONB поля dims.
         
         Returns:
             Список точек данных для графика.
@@ -168,10 +155,18 @@ class AggregatedDataRepository:
             SQLAlchemyError: При ошибке базы данных.
         """
         try:
-            result = await db.execute(
-                select(aggregated_data_model.AggregatedData)
-                .where(aggregated_data_model.AggregatedData.graph_id == graph_id)
+            query = select(aggregated_data_model.AggregatedData).where(
+                aggregated_data_model.AggregatedData.graph_id == graph_id
             )
+            
+            # Применение фильтров к JSONB полю dims
+            if filters:
+                for key, value in filters.items():
+                    query = query.where(
+                        aggregated_data_model.AggregatedData.dims[key].astext == str(value)
+                    )
+            
+            result = await db.execute(query)
             data = list(result.scalars().all())
             logger.info(
                 "Получены данные для graph_id=%s, count=%s",
@@ -188,8 +183,48 @@ class AggregatedDataRepository:
             raise
     
     @classmethod
-    async def delete_by_dashboard(
-        cls, dashboard_id: int, db: AsyncSession
+    async def delete_by_graph_id(
+        cls,
+        graph_id: UUID,
+        db: AsyncSession,
+    ) -> int:
+        """Удалить агрегированные данные для графика.
+        
+        Args:
+            graph_id: Идентификатор графика.
+            db: Асинхронная сессия базы данных.
+        
+        Returns:
+            Количество удаленных записей.
+        
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
+        """
+        try:
+            result = await db.execute(
+                delete(aggregated_data_model.AggregatedData)
+                .where(aggregated_data_model.AggregatedData.graph_id == graph_id)
+            )
+            count = result.rowcount if hasattr(result, 'rowcount') else 0
+            logger.info(
+                "Данные удалены: graph_id=%s, count=%s",
+                graph_id,
+                count,
+            )
+            return count
+        except SQLAlchemyError as e:
+            logger.error(
+                "Ошибка при удалении данных graph_id=%s: %s",
+                graph_id,
+                e,
+            )
+            raise
+    
+    @classmethod
+    async def delete_by_dashboard_id(
+        cls,
+        dashboard_id: UUID,
+        db: AsyncSession,
     ) -> int:
         """Удалить все агрегированные данные для дашборда.
         
@@ -224,23 +259,49 @@ class AggregatedDataRepository:
             raise
     
     @classmethod
-    async def get_all(cls, db: AsyncSession) -> list[aggregated_data_model.AggregatedData]:
-        """Получить все агрегированные данные.
+    async def get_dims_values(
+        cls,
+        graph_id: UUID,
+        dim_name: str,
+        db: AsyncSession,
+    ) -> list[str]:
+        """Получить уникальные значения измерения для графика.
+        
+        Используется для получения списков значений фильтров.
+        Извлекает уникальные значения из JSONB поля dims.
         
         Args:
+            graph_id: Идентификатор графика.
+            dim_name: Имя измерения (поле в JSONB dims).
             db: Асинхронная сессия базы данных.
         
         Returns:
-            Список всех агрегированных данных.
+            Список уникальных значений измерения.
         
         Raises:
             SQLAlchemyError: При ошибке базы данных.
         """
         try:
-            result = await db.execute(select(aggregated_data_model.AggregatedData))
-            data = list(result.scalars().all())
-            logger.info("Получен список данных, количество: %s", len(data))
-            return data
+            # Извлекаем значения dim_name из JSONB поля dims
+            result = await db.execute(
+                select(distinct(
+                    aggregated_data_model.AggregatedData.dims[dim_name].astext
+                )).where(
+                    aggregated_data_model.AggregatedData.graph_id == graph_id
+                )
+            )
+            values = [row[0] for row in result if row[0] is not None]
+            logger.info(
+                "Получены значения dims: graph_id=%s, dim_name=%s, count=%s",
+                graph_id,
+                dim_name,
+                len(values),
+            )
+            return values
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении списка данных: %s", e)
+            logger.error(
+                "Ошибка при получении значений dims graph_id=%s: %s",
+                graph_id,
+                e,
+            )
             raise

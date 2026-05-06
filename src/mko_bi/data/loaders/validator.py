@@ -5,10 +5,12 @@
 """
 
 import logging
+from typing import Any
 
 import polars as pl
 
 from mko_bi.models.data import LoaderConfig, ValidationResult
+from mko_bi.models.enums import FileExtensionEnum, MimeTypeEnum
 
 logger = logging.getLogger(__name__)
 
@@ -313,3 +315,23 @@ class DataValidator:
                 lines.append(f"  - {warning}")
 
         return "\n".join(lines)
+
+
+def validate_file_extension(filename: str) -> bool:
+    return any(filename.endswith(ext.value) for ext in FileExtensionEnum)
+
+
+def validate_mime_type(mime_type: str) -> bool:
+    return mime_type in {mime.value for mime in MimeTypeEnum}
+
+
+def validate_file_size(file_size: int, max_size_mb: int) -> bool:
+    max_bytes = max_size_mb * 1024 * 1024
+    return file_size <= max_bytes
+
+
+def validate_dataframe(df: pl.DataFrame, config: dict[str, Any]) -> list[str]:
+    loader_config = LoaderConfig(**config) if config else LoaderConfig()
+    validator = DataValidator(config=loader_config)
+    result = validator.validate(df)
+    return result.errors + result.warnings

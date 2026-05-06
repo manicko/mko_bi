@@ -22,8 +22,8 @@ from mko_bi.models.data import (
     ProcessingConfig,
     ProcessingResult,
     ProcessingStatusResponse,
-    UploadResponse,
 )
+from mko_bi.models.enums import UploadMode
 from mko_bi.services.data_service import (
     upload_file,
     trigger_processing,
@@ -38,18 +38,17 @@ router = APIRouter(prefix="/upload", tags=["upload"])
 
 @router.post(
     "/{dashboard_id}",
-    response_model=UploadResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Загрузка файла",
     description="Загружает CSV файл для последующей обработки. Доступно только редакторам и администраторам.",
 )
 async def upload_file_endpoint(
     dashboard_id: UUID,
-    background_tasks: BackgroundTasks,
     current_user: CurrentUser,
     file: UploadFile = File(...),
+    mode: UploadMode = UploadMode.OVERWRITE,
     db: AsyncSession = Depends(get_db),
-) -> UploadResponse:
+) -> dict[str, str | UUID]:
     """Загружает файл для дашборда.
 
     Принимает файл в формате .csv.gz и сохраняет его во временную директорию
@@ -89,23 +88,29 @@ async def upload_file_endpoint(
         except Exception as e:
             logger.error("Failed to close file: %s", e)
 
-        # Вызов сервиса загрузки
+        # Вызов сервиса загрузки с mode parameter
         result = await upload_file(
             filename=file.filename,
             file_content=file_content,
             content_type=file.content_type,
             dashboard_id=dashboard_id,
             user_id=current_user.id,
+            mode=mode,
             db=db,
         )
 
         logger.info(
-            "Файл успешно загружен: task_id=%s, filename=%s",
+            "Файл успешно загружен: processing_log_id=%s, filename=%s, mode=%s",
             result.task_id,
             file.filename,
+            mode,
         )
 
-        return result
+        # Возврат согласно спецификации: {"message": str, "processing_log_id": UUID}
+        return {
+            "message": result.message,
+            "processing_log_id": result.task_id,
+        }
 
     except ValueError as e:
         logger.warning("Ошибка валидации при загрузке: %s", e)

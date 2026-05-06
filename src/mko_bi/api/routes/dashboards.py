@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from mko_bi.api.deps import (
     get_db,
+    require_admin_role,
     require_viewer_role,
     CurrentUser,
 )
@@ -31,7 +32,11 @@ from mko_bi.services.dashboard_service import (
     update_dashboard,
     delete_dashboard,
     grant_access,
+    revoke_access,
+    get_dashboard_access_list,
 )
+from mko_bi.db.repositories.dashboard_filter_repo import DashboardFilterRepository
+from mko_bi.db.repositories.filter_repo import FilterRepository
 
 logger = logging.getLogger(__name__)
 
@@ -482,3 +487,144 @@ async def grant_dashboard_access_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Ошибка при предоставлении доступа",
         ) from e
+
+
+# --- Dashboard-Filter binding endpoints ---
+
+
+@router.post(
+    "/{dashboard_id}/filters",
+    status_code=status.HTTP_200_OK,
+    summary="Bind filter to dashboard",
+    description="Binds a filter to a dashboard. Requires admin role.",
+    dependencies=[Depends(require_admin_role)],
+)
+async def bind_filter_endpoint(
+    dashboard_id: UUID,
+    filter_id: UUID,
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Bind a filter to a dashboard."""
+    logger.info("Binding filter to dashboard: dashboard_id=%s, filter_id=%s", dashboard_id, filter_id)
+    try:
+        filter_obj = FilterRepository.get(filter_id, db)
+        if not filter_obj:
+            raise HTTPException(status_code=404, detail="Filter not found")
+        
+        result = await DashboardFilterRepository.bind_filter(
+            dashboard_id=dashboard_id, filter_id=filter_id, db=db
+        )
+        await db.commit()
+        return {"message": "Filter bound to dashboard", "bound": result}
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.delete(
+    "/{dashboard_id}/filters/{filter_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Unbind filter from dashboard",
+    description="Unbinds a filter from a dashboard. Requires admin role.",
+    dependencies=[Depends(require_admin_role)],
+)
+async def unbind_filter_endpoint(
+    dashboard_id: UUID,
+    filter_id: UUID,
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Unbind a filter from a dashboard."""
+    logger.info("Unbinding filter from dashboard: dashboard_id=%s, filter_id=%s", dashboard_id, filter_id)
+    try:
+        result = await DashboardFilterRepository.unbind_filter(
+            dashboard_id=dashboard_id, filter_id=filter_id, db=db
+        )
+        await db.commit()
+        if result:
+            return {"message": "Filter unbound from dashboard"}
+        else:
+            raise HTTPException(status_code=404, detail="Filter not bound to this dashboard")
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.get(
+    "/{dashboard_id}/filters",
+    response_model=list[dict],
+    status_code=status.HTTP_200_OK,
+    summary="List dashboard filters",
+    description="Returns all filters bound to a dashboard.",
+)
+async def get_dashboard_filters_endpoint(
+    dashboard_id: UUID,
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """Get all filters bound to a dashboard."""
+    logger.info("Getting filters for dashboard: dashboard_id=%s", dashboard_id)
+    try:
+        filter_ids = await DashboardFilterRepository.get_dashboard_filters(
+            dashboard_id=dashboard_id, db=db
+        )
+        return [{"filter_id": str(fid)} for fid in filter_ids]
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+# --- Dashboard Access management endpoints ---
+
+
+@router.get(
+    "/{dashboard_id}/access",
+    response_model=list[dict],
+    status_code=status.HTTP_200_OK,
+    summary="List dashboard access",
+    description="Returns all access records for a dashboard. Requires admin role.",
+    dependencies=[Depends(require_admin_role)],
+)
+async def get_dashboard_access_endpoint(
+    dashboard_id: UUID,
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
+) -> list[dict]:
+    """Get all access records for a dashboard."""
+    logger.info("Getting access list for dashboard: dashboard_id=%s", dashboard_id)
+    try:
+        access_list = await get_dashboard_access_list(
+            dashboard_id=dashboard_id, db=db
+        )
+        return access_list
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+@router.delete(
+    "/{dashboard_id}/access/{user_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Revoke dashboard access",
+    description="Revokes user's access to a dashboard. Requires admin role.",
+    dependencies=[Depends(require_admin_role)],
+)
+async def revoke_dashboard_access_endpoint(
+    dashboard_id: UUID,
+    user_id: UUID,
+    current_user: CurrentUser,
+    db: Session = Depends(get_db),
+) -> dict:
+    """Revoke a user's access to a dashboard."""
+    logger.info("Revoking access: dashboard_id=%s, user_id=%s", dashboard_id, user_id)
+    try:
+        result = await revoke_access(
+            dashboard_id=dashboard_id, user_id=user_id, db=db
+        )
+        await db.commit()
+        if result:
+            return {"message": "Access revoked successfully"}
+        else:
+            raise HTTPException(status_code=404, detail="Access record not found")
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e)) from e

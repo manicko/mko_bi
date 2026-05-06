@@ -44,6 +44,7 @@ from mko_bi.models.user_roles import (
 from mko_bi.models.types import (
     ProcessingResultData,
 )
+from mko_bi.models.enums import UploadMode
 
 logger = logging.getLogger(__name__)
 
@@ -284,6 +285,7 @@ async def _upload_file_logic(
     dashboard_id: UUID,
     user_id: int,
     db: AsyncSession,
+    mode: UploadMode = UploadMode.OVERWRITE,
 ) -> UploadResponse:
     """Внутренняя логика загрузки файла с использованием переданной сессии.
 
@@ -334,6 +336,16 @@ async def _upload_file_logic(
     # Валидация файла (включая MIME-type)
     _validate_file(filename, file_content, content_type)
 
+    # Handle upload mode - clear old data if OVERWRITE
+    if mode == UploadMode.OVERWRITE:
+        await AggregatedDataRepository.delete_by_dashboard(db, dashboard_id)
+        logger.info("Cleared old aggregated data for dashboard %s (OVERWRITE mode)", dashboard_id)
+    elif mode == UploadMode.APPEND:
+        logger.info("Appending to existing data for dashboard %s (APPEND mode)", dashboard_id)
+    else:
+        logger.warning("Unknown upload mode %s, defaulting to OVERWRITE", mode)
+        await AggregatedDataRepository.delete_by_dashboard(db, dashboard_id)
+
     # Сохранение файла
     _save_uploaded_file(filename, file_content, dashboard_id)
 
@@ -370,6 +382,7 @@ async def upload_file(
     content_type: str | None,
     dashboard_id: UUID,
     user_id: int,
+    mode: UploadMode = UploadMode.OVERWRITE,
     db: AsyncSession | None = None,
 ) -> UploadResponse:
     """Загружает файл для дашборда.
@@ -401,11 +414,11 @@ async def upload_file(
     )
 
     if db is not None:
-        return await _upload_file_logic(filename, file_content, content_type, dashboard_id, user_id, db)
+        return await _upload_file_logic(filename, file_content, content_type, dashboard_id, user_id, db, mode=mode)
 
     async with get_session() as db_session:
         async with db_session.begin():
-            return await _upload_file_logic(filename, file_content, content_type, dashboard_id, user_id, db_session)
+            return await _upload_file_logic(filename, file_content, content_type, dashboard_id, user_id, db_session, mode=mode)
 
 
 async def _trigger_processing_logic(
