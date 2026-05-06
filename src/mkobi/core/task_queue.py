@@ -10,7 +10,7 @@ import uuid
 from collections.abc import Callable
 from typing import Any
 
-from mkobi.models.enums import ProcessingStatusEnum
+from mkobi.models.enums import ProcessingStatus
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class TaskQueue:
     def __init__(self) -> None:
         """Initialize task queue."""
         self._queue: asyncio.Queue[dict[str, Any]] = asyncio.Queue()
-        self._statuses: dict[str, ProcessingStatusEnum] = {}
+        self._statuses: dict[str, ProcessingStatus] = {}
         self._results: dict[str, Any] = {}
         self._errors: dict[str, str | None] = {}
 
@@ -41,7 +41,7 @@ class TaskQueue:
             str: Unique task ID.
         """
         task_id = str(uuid.uuid4())
-        self._statuses[task_id] = ProcessingStatusEnum.STARTED
+        self._statuses[task_id] = ProcessingStatus.STARTED
         await self._queue.put({
             "task_id": task_id,
             "func": task_func,
@@ -63,14 +63,14 @@ class TaskQueue:
             args = task["args"]
             kwargs = task["kwargs"]
 
-            self._statuses[task_id] = ProcessingStatusEnum.PROCESSING
+            self._statuses[task_id] = ProcessingStatus.PROCESSING
             try:
                 result = await func(*args, **kwargs)
-                self._statuses[task_id] = ProcessingStatusEnum.SUCCESS
+                self._statuses[task_id] = ProcessingStatus.SUCCESS
                 self._results[task_id] = result
                 logger.info("Task processed successfully: task_id=%s", task_id)
             except Exception as e:
-                self._statuses[task_id] = ProcessingStatusEnum.FAILED
+                self._statuses[task_id] = ProcessingStatus.FAILED
                 self._errors[task_id] = str(e)
                 logger.error("Task failed: task_id=%s, error=%s", task_id, e)
             finally:
@@ -80,19 +80,19 @@ class TaskQueue:
         except Exception as e:
             logger.error("Error processing task: %s", e)
 
-    async def get_status(self, task_id: str) -> ProcessingStatusEnum:
+    async def get_status(self, task_id: str) -> ProcessingStatus:
         """Get task status by ID.
 
         Args:
             task_id: Task identifier.
 
         Returns:
-            ProcessingStatusEnum: Current status of the task.
+            ProcessingStatus: Current status of the task.
         """
         status = self._statuses.get(task_id)
         if status is None:
             logger.warning("Task not found: task_id=%s", task_id)
-            return ProcessingStatusEnum.FAILED
+            return ProcessingStatus.FAILED
         return status
 
     async def get_result(self, task_id: str) -> Any:

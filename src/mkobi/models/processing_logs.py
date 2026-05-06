@@ -2,14 +2,14 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
-from mkobi.models.enums import ProcessingStatusEnum
+from mkobi.models.enums import ProcessingStatus
 
 
 class ProcessingLogFilter(BaseModel):
     """Модель для фильтрации логов обработки."""
 
     dashboard_id: UUID | None = None
-    status: ProcessingStatusEnum | None = None
+    status: ProcessingStatus | None = None
     date_from: datetime | None = None
     date_to: datetime | None = None
     skip: int = 0
@@ -34,7 +34,7 @@ class ProcessingLogCreate(BaseModel):
     """Модель для создания лога обработки."""
 
     dashboard_id: UUID | None = None
-    status: ProcessingStatusEnum
+    status: ProcessingStatus
     message: str | None = None
 
     model_config = ConfigDict(
@@ -52,7 +52,7 @@ class ProcessingLogCreate(BaseModel):
 class ProcessingLogUpdate(BaseModel):
     """Модель для обновления лога обработки."""
 
-    status: ProcessingStatusEnum | None = None
+    status: ProcessingStatus | None = None
     message: str | None = None
     started_at: datetime | None = None
     finished_at: datetime | None = None
@@ -74,7 +74,7 @@ class ProcessingLogRead(BaseModel):
 
     id: UUID
     dashboard_id: UUID | None = None
-    status: ProcessingStatusEnum
+    status: ProcessingStatus
     message: str | None = None
     started_at: datetime | None = None
     finished_at: datetime | None = None

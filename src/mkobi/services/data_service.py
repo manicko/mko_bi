@@ -29,7 +29,7 @@ from mkobi.models.data import (
 )
 from mkobi.models.processing_logs import ProcessingLogCreate, ProcessingLogUpdate
 from mkobi.models.enums import UploadMode
-from mkobi.models.enums import MimeTypeEnum, ProcessingStatusEnum
+from mkobi.models.enums import MimeTypeEnum, ProcessingStatus
 logger = logging.getLogger(__name__)
 
 # Rate limiter for upload endpoints
@@ -306,7 +306,7 @@ async def _upload_file_logic(
     uploaded_at = datetime.now()
     log_create = ProcessingLogCreate(
         dashboard_id=dashboard_id,
-        status=ProcessingStatusEnum.UPLOADED,
+        status=ProcessingStatus.UPLOADED,
         message=f"Файл {filename} успешно загружен",
         started_at=uploaded_at,
     )
@@ -328,7 +328,7 @@ async def _upload_file_logic(
     else:
         # Failed to enqueue, update status to failed
         log_update = ProcessingLogUpdate(
-            status=ProcessingStatusEnum.FAILED,
+            status=ProcessingStatus.FAILED,
             message="Failed to enqueue processing job",
             finished_at=datetime.now(),
         )
@@ -348,7 +348,7 @@ async def _upload_file_logic(
         task_id=processing_log.id,
         filename=filename,
         dashboard_id=dashboard_id,
-        status=ProcessingStatusEnum.UPLOADED,
+        status=ProcessingStatus.UPLOADED,
         message="File uploaded successfully, processing started",
         uploaded_at=uploaded_at,
     )
@@ -445,14 +445,14 @@ async def trigger_processing(
         raise PermissionError("Недостаточно прав для запуска обработки")
 
     # Если задача уже в процессе или завершена, не запускаем повторно
-    if processing_log.status in [ProcessingStatusEnum.PROCESSING, ProcessingStatusEnum.SUCCESS, ProcessingStatusEnum.COMPLETED]:
+    if processing_log.status in [ProcessingStatus.PROCESSING, ProcessingStatus.SUCCESS, ProcessingStatus.COMPLETED]:
         logger.info("Задача уже обрабатывается или завершена: task_id=%s, status=%s", task_id, processing_log.status)
         return ProcessingStatusResponse(
             task_id=processing_log.id,
             filename=processing_log.message.replace("Файл ", "").replace(" успешно загружен", ""),
             dashboard_id=processing_log.dashboard_id,
             status=processing_log.status,
-            progress=100 if processing_log.status in [ProcessingStatusEnum.SUCCESS, ProcessingStatusEnum.COMPLETED] else 0,
+            progress=100 if processing_log.status in [ProcessingStatus.SUCCESS, ProcessingStatus.COMPLETED] else 0,
             message=processing_log.message,
             started_at=processing_log.started_at,
             completed_at=processing_log.finished_at,
@@ -461,7 +461,7 @@ async def trigger_processing(
     # Обновляем статус на processing
     from mkobi.db.repositories.processing_log_repo import ProcessingLogUpdate
     log_update = ProcessingLogUpdate(
-        status=ProcessingStatusEnum.PROCESSING,
+        status=ProcessingStatus.PROCESSING,
         message="Запуск обработки данных",
     )
     await ProcessingLogRepository.update(db, task_id, **log_update.model_dump(exclude_unset=True))
@@ -499,7 +499,7 @@ async def trigger_processing(
         if not job_id:
             logger.error("Не удалось запланировать задачу обработки для task_id=%s", task_id)
             log_update = ProcessingLogUpdate(
-                status=ProcessingStatusEnum.FAILED,
+                status=ProcessingStatus.FAILED,
                 message="Не удалось запланировать задачу обработки",
                 finished_at=datetime.now(),
             )
@@ -510,7 +510,7 @@ async def trigger_processing(
     else:
         # Если файла нет, обновляем статус
         log_update = ProcessingLogUpdate(
-            status=ProcessingStatusEnum.FAILED,
+            status=ProcessingStatus.FAILED,
             message="Файл для обработки не найден",
             finished_at=datetime.now(),
         )
@@ -524,7 +524,7 @@ async def trigger_processing(
         filename=updated_log.message.replace("Файл ", "").replace(" успешно загружен", ""),
         dashboard_id=updated_log.dashboard_id,
         status=updated_log.status,
-        progress=50 if updated_log.status == ProcessingStatusEnum.PROCESSING else 0,
+        progress=50 if updated_log.status == ProcessingStatus.PROCESSING else 0,
         message=updated_log.message,
         started_at=updated_log.started_at,
         completed_at=updated_log.finished_at,
@@ -568,13 +568,13 @@ async def get_processing_status(
 
     # Вычисляем прогресс
     progress = 0
-    if processing_log.status == ProcessingStatusEnum.UPLOADED:
+    if processing_log.status == ProcessingStatus.UPLOADED:
         progress = 10
-    elif processing_log.status == ProcessingStatusEnum.PROCESSING:
+    elif processing_log.status == ProcessingStatus.PROCESSING:
         progress = 50
-    elif processing_log.status in [ProcessingStatusEnum.SUCCESS, ProcessingStatusEnum.COMPLETED]:
+    elif processing_log.status in [ProcessingStatus.SUCCESS, ProcessingStatus.COMPLETED]:
         progress = 100
-    elif processing_log.status == ProcessingStatusEnum.FAILED:
+    elif processing_log.status == ProcessingStatus.FAILED:
         progress = 0
 
     return ProcessingStatusResponse(
@@ -626,7 +626,7 @@ async def get_processing_result(
         raise PermissionError("Нет прав на просмотр результата этой задачи")
 
     # Проверяем, что обработка завершена успешно
-    if processing_log.status not in [ProcessingStatusEnum.SUCCESS, ProcessingStatusEnum.COMPLETED]:
+    if processing_log.status not in [ProcessingStatus.SUCCESS, ProcessingStatus.COMPLETED]:
         raise ValueError(f"Обработка еще не завершена или завершилась с ошибкой. Статус: {processing_log.status}")
 
     # Получаем агрегированные данные

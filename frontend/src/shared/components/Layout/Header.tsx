@@ -1,6 +1,6 @@
 import { AppBar, Box, Button, Toolbar, Typography } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../../../features/auth/useAuth'
+import { useAuth } from '../../../features/auth/model/useAuth'
 
 export function Header() {
   const { user, logout } = useAuth()

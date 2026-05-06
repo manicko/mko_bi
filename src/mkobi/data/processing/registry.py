@@ -15,7 +15,7 @@ from mkobi.data.processing.transformations import (
     aggregate_data,
 )
 from mkobi.data.storage.manager import StorageManager
-from mkobi.models.enums import ProcessingStatusEnum, UploadMode
+from mkobi.models.enums import ProcessingStatus, UploadMode
 from mkobi.models.processing_logs import ProcessingLogRead
 from mkobi.services.processing_config_service import get_by_dashboard_id
 
@@ -73,7 +73,7 @@ class DataPipeline:
             # Создаем запись в логе
             log_entry = await create_log(
                 dashboard_id=dashboard_id,
-                status=ProcessingStatusEnum.STARTED,
+                status=ProcessingStatus.STARTED,
                 db=db,
             )
 
@@ -117,7 +117,7 @@ class DataPipeline:
             # Обновляем статус лога
             updated_log = await update_log_status(
                 log_id=log_entry.id,
-                status=ProcessingStatusEnum.COMPLETED,
+                status=ProcessingStatus.COMPLETED,
                 db=db,
             )
             logger.info("Пайплайн успешно завершен")
@@ -128,7 +128,7 @@ class DataPipeline:
             if log_entry:
                 await update_log_status(
                     log_id=log_entry.id,
-                    status=ProcessingStatusEnum.FAILED,
+                    status=ProcessingStatus.FAILED,
                     db=db,
                     message=str(e),
                 )
@@ -137,7 +137,7 @@ class DataPipeline:
     async def _update_status(
         self,
         log_id: UUID,
-        status: ProcessingStatusEnum,
+        status: ProcessingStatus,
         db: AsyncSession,
         message: str | None = None,
     ) -> None:

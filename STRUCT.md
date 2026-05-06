@@ -1,4 +1,4 @@
-C:\py_exp\mkobi
+C:\py_dev\mkobi
 ├── alembic
 │   ├── env.py
 │   ├── README
@@ -26,20 +26,96 @@ C:\py_exp\mkobi
 │   └── tmp_uploads
 ├── DB_STRUCTURE.md
 ├── DBSTR.md
+├── docker-compose.yml
+├── Dockerfile
 ├── fix_tests.py
 ├── fix_tests_simple.py
+├── frontend
+│   ├── eslint.config.js
+│   ├── index.html
+│   ├── package-lock.json
+│   ├── package.json
+│   ├── public
+│   │   ├── favicon.svg
+│   │   └── icons.svg
+│   ├── README.md
+│   ├── src
+│   │   ├── app
+│   │   │   ├── providers.tsx
+│   │   │   └── routes.tsx
+│   │   ├── assets
+│   │   │   ├── hero.png
+│   │   │   ├── react.svg
+│   │   │   └── vite.svg
+│   │   ├── features
+│   │   │   ├── auth
+│   │   │   │   ├── api
+│   │   │   │   │   └── authApi.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── model
+│   │   │   │   │   ├── authToken.ts
+│   │   │   │   │   └── useAuth.ts
+│   │   │   │   └── ui
+│   │   │   │       ├── LoginForm.tsx
+│   │   │   │       └── RegisterForm.tsx
+│   │   │   ├── dashboards
+│   │   │   │   ├── api
+│   │   │   │   │   └── dashboardApi.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   ├── model
+│   │   │   │   └── ui
+│   │   │   │       ├── charts
+│   │   │   │       │   ├── BarChart.tsx
+│   │   │   │       │   ├── index.ts
+│   │   │   │       │   ├── LineChart.tsx
+│   │   │   │       │   ├── PieChart.tsx
+│   │   │   │       │   ├── PlotlyChart.tsx
+│   │   │   │       │   └── TableChart.tsx
+│   │   │   │       ├── DashboardFilters.tsx
+│   │   │   │       ├── DashboardList.tsx
+│   │   │   │       └── DashboardView.tsx
+│   │   │   └── upload
+│   │   │       ├── api
+│   │   │       │   └── uploadApi.ts
+│   │   │       ├── index.ts
+│   │   │       └── ui
+│   │   │           ├── FileDropzone.tsx
+│   │   │           └── UploadPage.tsx
+│   │   ├── main.tsx
+│   │   ├── react-plotly.d.ts
+│   │   └── shared
+│   │       ├── api
+│   │       │   ├── axiosInstance.ts
+│   │       │   └── index.ts
+│   │       ├── components
+│   │       │   ├── index.ts
+│   │       │   ├── Layout
+│   │       │   │   ├── AppLayout.tsx
+│   │       │   │   ├── Header.tsx
+│   │       │   │   ├── index.ts
+│   │       │   │   └── Sidebar.tsx
+│   │       │   ├── PlaceholderPage.tsx
+│   │       │   ├── ProtectedRoute.tsx
+│   │       │   └── RoleBasedAccess.tsx
+│   │       └── types
+│   │           └── api.types.ts
+│   ├── tsconfig.app.json
+│   ├── tsconfig.json
+│   ├── tsconfig.node.json
+│   └── vite.config.ts
 ├── instructions
 │   └── RUN.md
+├── mypy.ini
 ├── nginx
 │   └── nginx.conf
+├── PRODUCTION_CHECKLIST.md
 ├── 'Pydantic TASKS.md'
 ├── pyproject.toml
+├── README.md
+├── README_DOCKER.md
 ├── SPEC.md
 ├── SPEC_FRONTEND.md
 ├── src
-│   ├── data
-│   │   └── logs
-│   ├── db
 │   └── mkobi
 │       ├── api
 │       │   ├── deps.py
@@ -135,6 +211,7 @@ C:\py_exp\mkobi
 │       │   ├── types.py
 │       │   ├── user.py
 │       │   └── user_roles.py
+│       ├── py.typed
 │       ├── services
 │       │   ├── auth_service.py
 │       │   ├── dashboard_service.py
@@ -164,20 +241,23 @@ C:\py_exp\mkobi
 │   ├── services
 │   │   ├── test_data_service.py
 │   │   └── test_user_service.py
+│   ├── test_auth.py
 │   ├── test_config.py
-│   ├── test_dashboards.py
+│   ├── test_dashboards_api.py
 │   ├── test_data_loader.py
 │   ├── test_data_processing.py
 │   ├── test_filters.py
 │   ├── test_graphs.py
 │   ├── test_layouts.py
 │   ├── test_models.py
+│   ├── test_processing_logs.py
 │   ├── test_pydantic_models.py
+│   ├── test_repositories.py
 │   ├── test_security.py
 │   ├── test_share_calculation.py
 │   ├── test_storage_manager.py
-│   ├── test_yoy_calculation.py
-│   └── tests
+│   ├── test_upload_api.py
+│   └── test_yoy_calculation.py
 ├── TODO
 │   ├── AUDIT
 │   │   ├── TASK_001_db_structure_audit.md
@@ -190,7 +270,6 @@ C:\py_exp\mkobi
 │   │   ├── TASK_037_test_audit1.md
 │   │   ├── TASK_038_docker_audit.md
 │   │   └── TEST_036_test_audit_arch.md
-│   ├── DB
 │   ├── DEV
 │   │   ├── 001_database_models_DONE.md
 │   │   ├── 002_configuration_DONE.md
@@ -202,23 +281,23 @@ C:\py_exp\mkobi
 │   │   ├── 008_dashboard_management_DONE.md
 │   │   ├── 009_data_api_DONE.md
 │   │   ├── 010_user_management_DONE.md
-│   │   ├── 011_processing_logs.md
-│   │   ├── 012_frontend_foundation.md
-│   │   ├── 013_frontend_auth.md
-│   │   ├── 014_frontend_dashboards.md
-│   │   ├── 015_frontend_upload.md
+│   │   ├── 011_processing_logs_DONE.md
+│   │   ├── 012_frontend_foundation_DONE.md
+│   │   ├── 013_frontend_auth_DONE.md
+│   │   ├── 014_frontend_dashboards_DONE.md
+│   │   ├── 015_frontend_upload_DONE.md
 │   │   ├── 016_frontend_admin.md
 │   │   ├── 017_frontend_profile.md
-│   │   ├── 018_testing.md
-│   │   ├── 019_deployment.md
+│   │   ├── 018_testing_DONE.md
+│   │   ├── 019_deployment_DONE.md
 │   │   ├── 020_env_var_nested_mapping_DONE.md
-│   │   └── 020_fix_remaining_tests_DONE.md
+│   │   ├── 020_fix_remaining_tests_DONE.md
+│   │   └── DOCKER_PLAN.md
 │   ├── DEV_PLAN.md
-│   ├── DONE
-│   │   ├── TASK_001_sync_async_unification.md
-│   │   ├── TASK_014_dash_modern_component_architecture_DONE.md
-│   │   ├── TASK_051_di_and_interfaces.md
-│   │   ├── TASK_052_secrets_management_DONE.md
-│   │   └── TASK_DB_REPRODUCER_MAIN.md
-│   └── TEST
+│   └── DONE
+│       ├── TASK_001_sync_async_unification.md
+│       ├── TASK_014_dash_modern_component_architecture_DONE.md
+│       ├── TASK_051_di_and_interfaces.md
+│       ├── TASK_052_secrets_management_DONE.md
+│       └── TASK_DB_REPRODUCER_MAIN.md
 └── uv.lock

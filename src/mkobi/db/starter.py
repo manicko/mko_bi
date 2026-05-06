@@ -64,9 +64,9 @@ class DatabaseStarter:
 
         # Определяем окружение из настроек
         try:
-            env = EnvironmentEnum(settings.env)
+            env = settings.environment
         except ValueError:
-            logger.warning(f"Unknown ENV value: {settings.env}, defaulting to development")
+            logger.warning(f"Unknown ENV value: {settings.environment}, defaulting to development")
             env = EnvironmentEnum.DEVELOPMENT
 
         # Получаем URL из settings (yaml/config)

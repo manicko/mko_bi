@@ -1,4 +1,4 @@
-import { useAuth } from '../../../features/auth/useAuth'
+import { useAuth } from '../../features/auth'
 
 interface RoleBasedAccessProps {
   roles: string[]

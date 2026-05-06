@@ -12,7 +12,7 @@ export const axiosInstance = axios.create({
 // Request interceptor - add JWT token
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('access_token')
+    const token = sessionStorage.getItem('access_token')
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
     }
@@ -26,7 +26,7 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem('access_token')
+      sessionStorage.removeItem('access_token')
       toast.error('Session expired. Please login again.')
       window.location.href = '/login'
     }

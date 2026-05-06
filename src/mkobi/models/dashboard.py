@@ -3,14 +3,14 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
-from mkobi.models.user_roles import GraphTypeEnum
+from mkobi.models.enums import GraphType
 from mkobi.models.layout import LayoutRead
 
 
 class DashboardConfig(BaseModel):
     """Модель конфигурации дашборда."""
 
-    graph_types: list[GraphTypeEnum]
+    graph_types: list[GraphType]
     filters: list[dict[str, Any]] | None = None
     aggregations: list[dict[str, Any]] | None = None
     charts: list[dict[str, Any]] | None = None

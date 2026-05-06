@@ -82,9 +82,9 @@ class DatabaseSettings(BaseModel):
 
     @property
     def database_url(self) -> PostgresDsn:
-        """Формирует URL для подключения к PostgreSQL."""
+        """Формирует URL для подключения к PostgreSQL с использованием asyncpg."""
         return PostgresDsn.build(
-            scheme="postgresql",
+            scheme="postgresql+asyncpg",
             username=self.user,
             password=self.password,
             host=self.host,

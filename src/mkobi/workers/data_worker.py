@@ -21,14 +21,14 @@ from mkobi.data.processing.transformations import (
 from mkobi.db.models.processing_logs import ProcessingLog
 from mkobi.db.session import get_session
 from mkobi.models.data import ProcessingConfig
-from mkobi.models.user_roles import ProcessingStatusEnum
+from mkobi.models.enums import ProcessingStatus
 
 logger = logging.getLogger(__name__)
 
 
 async def _update_processing_log_status(
     task_id: str,
-    status: ProcessingStatusEnum,
+    status: ProcessingStatus,
     message: str,
     started_at: datetime | None = None,
     finished_at: datetime | None = None,
@@ -114,7 +114,7 @@ def _process_csv_file_sync_impl(
         async def _update_start():
             await _update_processing_log_status(
                 task_id=task_id,
-                status=ProcessingStatusEnum.processing,
+                status=ProcessingStatus.PROCESSING,
                 message="Processing started (background task)",
                 started_at=datetime.now(),
             )
@@ -168,7 +168,7 @@ def _process_csv_file_sync_impl(
         async def _update_success():
             await _update_processing_log_status(
                 task_id=task_id,
-                status=ProcessingStatusEnum.success,
+                status=ProcessingStatus.SUCCESS,
                 message=f"Processing completed successfully: {result_data['rows']} rows processed",
                 finished_at=datetime.now(),
             )
@@ -194,7 +194,7 @@ def _process_csv_file_sync_impl(
         async def _update_failed():
             await _update_processing_log_status(
                 task_id=task_id,
-                status=ProcessingStatusEnum.failed,
+                status=ProcessingStatus.FAILED,
                 message=f"Processing failed: {error_msg}",
                 finished_at=datetime.now(),
             )

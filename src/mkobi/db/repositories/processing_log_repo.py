@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mkobi.core.base_repository import BaseRepository
 from mkobi.db.models import processing_logs as processing_log_model
 from mkobi.db.models.processing_logs import ProcessingLog
-from mkobi.models.enums import ProcessingStatusEnum
+from mkobi.models.enums import ProcessingStatus
 from mkobi.models.processing_logs import ProcessingLogFilter, ProcessingLogRead
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class ProcessingLogRepository(BaseRepository[ProcessingLog]):
     async def create_log(
         self,
         dashboard_id: UUID | None,
-        status: ProcessingStatusEnum,
+        status: ProcessingStatus,
         message: str | None = None,
     ) -> ProcessingLog:
         """Создать новый лог обработки.
@@ -80,7 +80,7 @@ class ProcessingLogRepository(BaseRepository[ProcessingLog]):
     async def update_status(
         self,
         log_id: UUID,
-        status: ProcessingStatusEnum,
+        status: ProcessingStatus,
         message: str | None = None,
     ) -> None:
         """Обновить статус лога обработки.
@@ -109,7 +109,7 @@ class ProcessingLogRepository(BaseRepository[ProcessingLog]):
                 log_obj.message = message
 
             # Устанавливаем finished_at при успешном завершении или ошибке
-            if status in (ProcessingStatusEnum.SUCCESS, ProcessingStatusEnum.FAILED):
+            if status in (ProcessingStatus.SUCCESS, ProcessingStatus.FAILED):
                 log_obj.finished_at = datetime.now()
 
             await self.db.flush()

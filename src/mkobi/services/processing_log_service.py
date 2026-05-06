@@ -10,7 +10,7 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
-from mkobi.models.enums import ProcessingStatusEnum
+from mkobi.models.enums import ProcessingStatus
 from mkobi.models.processing_logs import ProcessingLogFilter, ProcessingLogRead
 
 logger = logging.getLogger(__name__)
@@ -43,7 +43,7 @@ class ProcessingLogService:
         repo = ProcessingLogRepository(db)
         log = await repo.create_log(
             dashboard_id=dashboard_id,
-            status=ProcessingStatusEnum.STARTED,
+            status=ProcessingStatus.STARTED,
             message="Processing started",
         )
         return ProcessingLogRead.model_validate(log)
@@ -65,7 +65,7 @@ class ProcessingLogService:
         repo = ProcessingLogRepository(db)
         await repo.update_status(
             log_id=log_id,
-            status=ProcessingStatusEnum.UPLOADED,
+            status=ProcessingStatus.UPLOADED,
             message="File uploaded successfully",
         )
         log = await repo.get_by_id(log_id)
@@ -88,7 +88,7 @@ class ProcessingLogService:
         repo = ProcessingLogRepository(db)
         await repo.update_status(
             log_id=log_id,
-            status=ProcessingStatusEnum.PROCESSING,
+            status=ProcessingStatus.PROCESSING,
             message="Processing data",
         )
         log = await repo.get_by_id(log_id)
@@ -112,7 +112,7 @@ class ProcessingLogService:
         repo = ProcessingLogRepository(db)
         await repo.update_status(
             log_id=log_id,
-            status=ProcessingStatusEnum.SUCCESS,
+            status=ProcessingStatus.SUCCESS,
             message=message or "Processing completed successfully",
         )
         log = await repo.get_by_id(log_id)
@@ -140,7 +140,7 @@ class ProcessingLogService:
         repo = ProcessingLogRepository(db)
         await repo.update_status(
             log_id=log_id,
-            status=ProcessingStatusEnum.FAILED,
+            status=ProcessingStatus.FAILED,
             message=error,
         )
         log = await repo.get_by_id(log_id)

@@ -87,6 +87,7 @@ def create_app() -> FastAPI:
     application.include_router(routes.filters.router)
     application.include_router(routes.processing_configs.router)
     application.include_router(routes.processing_logs.router)
+    application.include_router(routes.admin.router)
 
     # Создание и монтирование Dash приложения
     logger.info("Mounting Dash application at /dashboards")

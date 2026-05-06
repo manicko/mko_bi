@@ -1,0 +1,163 @@
+import { useCallback, useEffect, useState } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import {
+  Typography,
+  CircularProgress,
+  Alert,
+  Button,
+  Grid,
+  Paper,
+  Stack,
+} from '@mui/material'
+import { useDashboard, useAggregatedData, useInvalidateDashboard } from '../api/dashboardApi'
+import { DashboardFilters } from './DashboardFilters'
+import { PlotlyChart } from './charts'
+import type { GraphDataWithConfig, FilterDetail } from '../../../shared/types/api.types'
+import { dashboardApi } from '../api/dashboardApi'
+
+export function DashboardView() {
+  const { id } = useParams<{ id: string }>()
+  const navigate = useNavigate()
+  const [filterDetails, setFilterDetails] = useState<FilterDetail[]>([])
+  const [filters, setFilters] = useState<
+    Record<string, string | string[] | number | number[]>
+  >({})
+
+  const {
+    data: dashboard,
+    isLoading: dashboardLoading,
+    error: dashboardError,
+  } = useDashboard(id || '')
+  const {
+    data: aggregatedData,
+    isLoading: dataLoading,
+    error: dataError,
+  } = useAggregatedData(id || '', filters)
+  const { invalidateAggregatedData } = useInvalidateDashboard()
+
+  useEffect(() => {
+    if (dashboard?.config?.filters && dashboard.config.filters.length > 0) {
+      const fetchFilters = async () => {
+        try {
+          const details = await Promise.all(
+            (dashboard.config.filters as string[]).map((filterId) =>
+              dashboardApi.getFilter(filterId)
+            )
+          )
+          setFilterDetails(details)
+        } catch {
+          console.error('Failed to load filters')
+        }
+      }
+      fetchFilters()
+    }
+  }, [dashboard?.config?.filters])
+
+  const handleFilterChange = useCallback(
+    (newFilters: Record<string, string | string[] | number | number[]>) => {
+      setFilters(newFilters)
+    },
+    []
+  )
+
+  useEffect(() => {
+    if (id && Object.keys(filters).length > 0) {
+      invalidateAggregatedData(id)
+    }
+  }, [filters, id, invalidateAggregatedData])
+
+  if (dashboardLoading) {
+    return (
+      <Stack sx={{ alignItems: 'center', p: 4 }}>
+        <CircularProgress />
+      </Stack>
+    )
+  }
+
+  if (dashboardError || !dashboard) {
+    return (
+      <Alert severity="error" sx={{ m: 2 }}>
+        Failed to load dashboard. Please try again.
+      </Alert>
+    )
+  }
+
+  const canEdit = ['edit', 'admin'].includes(dashboard.permission)
+
+  return (
+    <Stack sx={{ p: 3 }} spacing={2}>
+      <Stack
+        direction="row"
+        sx={{ justifyContent: 'space-between', alignItems: 'center', mb: 3 }}
+      >
+        <Typography variant="h4">{dashboard.name}</Typography>
+        {canEdit && (
+          <Button
+            variant="contained"
+            onClick={() => navigate(`/dashboard/${id}/upload`)}
+          >
+            Upload Data
+          </Button>
+        )}
+      </Stack>
+
+      {dashboard.description && (
+        <Typography variant="body1" color="text.secondary" component="p" sx={{ mb: 2 }}>
+          {dashboard.description}
+        </Typography>
+      )}
+
+      <Grid container spacing={2}>
+        {dashboard.config.filters && dashboard.config.filters.length > 0 && (
+          <Grid size={{ xs: 12, md: 3 }}>
+            <DashboardFilters
+              filters={filterDetails}
+              values={filters}
+              onChange={handleFilterChange}
+            />
+          </Grid>
+        )}
+
+        <Grid
+          size={{
+            xs: 12,
+            md: dashboard.config.filters?.length > 0 ? 9 : 12,
+          }}
+        >
+          {dataLoading && (
+            <Stack sx={{ alignItems: 'center', p: 4 }}>
+              <CircularProgress />
+            </Stack>
+          )}
+
+          {dataError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              Failed to load chart data.
+            </Alert>
+          )}
+
+          {aggregatedData?.graphs && aggregatedData.graphs.length > 0 ? (
+            <Stack spacing={2}>
+              {aggregatedData.graphs.map((graph: GraphDataWithConfig) => (
+                <Paper key={graph.graph_id} variant="outlined" sx={{ p: 2 }}>
+                  <Typography variant="h6" gutterBottom>
+                    {graph.name}
+                  </Typography>
+                  <Stack sx={{ height: 400 }}>
+                    <PlotlyChart data={graph.data} layout={graph.layout} />
+                  </Stack>
+                </Paper>
+              ))}
+            </Stack>
+          ) : (
+            !dataLoading && (
+              <Alert severity="info">
+                No data available for this dashboard. Upload data to see charts.
+              </Alert>
+            )
+          )}
+        </Grid>
+      </Grid>
+    </Stack>
+  )
+}

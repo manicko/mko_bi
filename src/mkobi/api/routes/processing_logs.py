@@ -11,11 +11,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import get_db_dependency, require_admin_role
-from mkobi.models.enums import ProcessingStatusEnum
+from mkobi.models.enums import ProcessingStatus
 from mkobi.models.processing_logs import ProcessingLogFilter, ProcessingLogRead
 from mkobi.services.processing_log_service import ProcessingLogService
 
-router = APIRouter(prefix="/api/v1/admin/logs", tags=["admin", "processing_logs"])
+router = APIRouter(prefix="/admin/logs", tags=["admin", "processing_logs"])
 
 
 @router.get(
@@ -29,7 +29,7 @@ async def get_logs_endpoint(
         None,
         description="Фильтр по ID дашборда",
     ),
-    status_filter: ProcessingStatusEnum | None = Query(
+    status_filter: ProcessingStatus | None = Query(
         None,
         description="Фильтр по статусу (STARTED, UPLOADED, PROCESSING, SUCCESS, FAILED)",
     ),

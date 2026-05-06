@@ -1,10 +1,12 @@
 import { Drawer, List, ListItem, ListItemButton, ListItemText } from '@mui/material'
 import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../../features/auth/model/useAuth'
 
 const DRAWER_WIDTH = 240
 
 export function Sidebar() {
   const navigate = useNavigate()
+  const { user } = useAuth()
 
   return (
     <Drawer
@@ -24,6 +26,13 @@ export function Sidebar() {
             <ListItemText primary="Dashboards" />
           </ListItemButton>
         </ListItem>
+        {user?.role === 'admin' && (
+          <ListItem disablePadding>
+            <ListItemButton onClick={() => navigate('/admin')}>
+              <ListItemText primary="Admin Panel" />
+            </ListItemButton>
+          </ListItem>
+        )}
       </List>
     </Drawer>
   )

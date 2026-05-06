@@ -9,6 +9,7 @@ from mkobi.api.routes import (
     filters,
     processing_configs,
     processing_logs,
+    admin,
 )
 
 __all__ = [
@@ -20,4 +21,5 @@ __all__ = [
     "filters",
     "processing_configs",
     "processing_logs",
+    "admin",
 ]

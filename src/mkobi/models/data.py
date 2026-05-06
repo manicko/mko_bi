@@ -3,7 +3,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 from uuid import UUID
 
-from mkobi.models.user_roles import FileExtensionEnum, GraphTypeEnum, BarmodeEnum, OrientationEnum, ProcessingStatusEnum
+from mkobi.models.enums import FileExtensionEnum, GraphType, BarmodeEnum, OrientationEnum, ProcessingStatus
 from mkobi.models.transformation_configs import (
     AggregationConfig,
     CustomMetricConfig,
@@ -43,7 +43,7 @@ class UploadResponse(BaseModel):
     task_id: UUID
     filename: str
     dashboard_id: UUID
-    status: ProcessingStatusEnum
+    status: ProcessingStatus
     message: str
     uploaded_at: datetime
 
@@ -68,7 +68,7 @@ class ProcessingStatusResponse(BaseModel):
     task_id: UUID
     filename: str
     dashboard_id: UUID
-    status: ProcessingStatusEnum
+    status: ProcessingStatus
     progress: int = Field(0, ge=0, le=100)
     message: str | None = None
     started_at: datetime | None = None
@@ -162,7 +162,7 @@ class AggregatedData(BaseModel):
     """Модель агрегированных данных для дашборда."""
 
     dashboard_id: UUID
-    chart_type: GraphTypeEnum
+    chart_type: GraphType
     data: list[AggregatedRecordModel]
     metadata: ChartMetadata | None = None
 

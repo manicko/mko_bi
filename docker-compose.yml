@@ -23,7 +23,7 @@ services:
       db:
         condition: service_healthy
     environment:
-      ENV: production
+      ENV: development
       DATABASE__HOST: db
       DATABASE__PORT: 5432
       DATABASE__USER: postgres

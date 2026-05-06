@@ -2,7 +2,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
-from mkobi.models.user_roles import FilterTypeEnum
+from mkobi.models.enums import FilterType
 from mkobi.models.types import FilterConfigDict
 
 
@@ -10,7 +10,7 @@ class FilterBase(BaseModel):
     """Базовая модель для фильтров."""
 
     name: str
-    type: FilterTypeEnum
+    type: FilterType
     config: FilterConfigDict
 
     model_config = ConfigDict(
@@ -35,7 +35,7 @@ class FilterUpdate(BaseModel):
     """Модель для обновления фильтра."""
 
     name: str | None = None
-    type: FilterTypeEnum | None = None
+    type: FilterType | None = None
     config: FilterConfigDict | None = None
 
     model_config = ConfigDict(

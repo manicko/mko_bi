@@ -2,7 +2,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
-from mkobi.models.user_roles import GraphTypeEnum
+from mkobi.models.enums import GraphType
 from mkobi.models.types import GraphConfigDict
 
 
@@ -10,7 +10,7 @@ class GraphBase(BaseModel):
     """Базовая модель для графиков."""
 
     name: str
-    type: GraphTypeEnum
+    type: GraphType
     dashboard_id: UUID
     config: GraphConfigDict
     dimensions: list[str]
@@ -41,7 +41,7 @@ class GraphUpdate(BaseModel):
     """Модель для обновления графика."""
 
     name: str | None = None
-    type: GraphTypeEnum | None = None
+    type: GraphType | None = None
     config: GraphConfigDict | None = None
     dimensions: list[str] | None = None
     metrics: list[str] | None = None
