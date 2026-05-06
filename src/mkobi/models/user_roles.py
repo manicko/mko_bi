@@ -11,7 +11,7 @@ from mkobi.models.enums import (  # noqa: F401
     GraphType,
     MimeTypeEnum,
     OrientationEnum,
-    ProcessingStatus,
+    ProcessingStatusEnum,
     RegistrationStatus,
     UploadMode,
     UserRole,
@@ -23,7 +23,7 @@ UserRoleEnum = UserRole
 PermissionEnum = DashboardPermission
 GraphTypeEnum = GraphType
 FilterTypeEnum = FilterType
-ProcessingStatusEnum = ProcessingStatus
+ProcessingStatus = ProcessingStatusEnum
 
 __all__ = [
     "AggregationFunctionEnum",

@@ -45,8 +45,8 @@ router = APIRouter(prefix="/data", tags=["data"])
 )
 async def get_dashboard_aggregates_endpoint(
     dashboard_id: UUID,
+    current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
-    current_user: CurrentUser = Depends(get_current_user_dependency),
     limit: int = Query(default=100, ge=1, le=1000),
     offset: int = Query(default=0, ge=0),
 ) -> dict[str, Any]:
@@ -135,7 +135,7 @@ async def get_dashboard_aggregates_endpoint(
 async def get_charts_endpoint(
     dashboard_id: UUID,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
     limit: int = Query(default=100, ge=1, le=1000),
     offset: int = Query(default=0, ge=0),
 ) -> dict[str, Any]:
@@ -213,7 +213,7 @@ async def get_charts_endpoint(
 async def apply_filters_endpoint(
     filter_request: DataFilter,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> list[AggregatedData]:
     """Применяет фильтры к агрегированным данным дашборда.
 

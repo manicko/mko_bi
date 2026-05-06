@@ -19,7 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.config import get_config
-from mkobi.utils import file_utils
+from mkobi.utils import get_user_temp_dir
 from mkobi.data.loaders.validator import validate_file_extension, validate_mime_type
 from mkobi.models.enums import FileExtensionEnum, MimeTypeEnum
 from mkobi.api.deps import (
@@ -38,9 +38,10 @@ from mkobi.services.data_service import (
     get_processing_status,
     get_processing_result,
 )
-from werkzeug.utils import secure_filename
 
 router = APIRouter(prefix="/upload", tags=["upload"])
+
+logger = logging.getLogger(__name__)
 
 
 @router.post(
@@ -114,9 +115,11 @@ async def upload_file_endpoint(
             )
 
         # 4. Сохранение файла во временную директорию пользователя (platformdirs)
-        temp_dir = file_utils.get_user_temp_dir(current_user.id)
-        secured_filename = secure_filename(file.filename)
-        unique_filename = f"{uuid.uuid4()}_{dashboard_id}_{secured_filename}"
+        temp_dir = get_user_temp_dir(current_user.id)
+        # Basic filename sanitization - remove path components
+        filename = file.filename or "unknown"
+        sanitized_filename = Path(filename).name
+        unique_filename = f"{uuid.uuid4()}_{dashboard_id}_{sanitized_filename}"
         file_path = temp_dir / unique_filename
 
         # Проверка безопасности пути (защита от directory traversal)

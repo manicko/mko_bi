@@ -6,7 +6,7 @@
 
 from typing import Any
 from pydantic import BaseModel, ConfigDict, Field
-from mkobi.models.user_roles import AggregationFunctionEnum, FilterOperatorEnum
+from mkobi.models.enums import AggregationFunctionEnum, FilterOperatorEnum
 
 
 class FilterConfig(BaseModel):

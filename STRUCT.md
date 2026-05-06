@@ -192,7 +192,7 @@ C:\py_exp\mkobi
 │   │   ├── 003_authentication_DONE.md
 │   │   ├── 004_core_infrastructure_DONE.md
 │   │   ├── 005_data_upload_DONE.md
-│   │   ├── 006_data_processing_DONE.md
+│   │   ├── 006_data_processing.md
 │   │   ├── 007_data_storage.md
 │   │   ├── 008_dashboard_management.md
 │   │   ├── 009_data_api.md

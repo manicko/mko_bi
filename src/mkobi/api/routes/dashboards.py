@@ -8,6 +8,8 @@
 import logging
 from uuid import UUID
 
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -17,6 +19,7 @@ from mkobi.api.deps import (
     require_viewer_role,
     CurrentUser,
 )
+from mkobi.core.permissions import check_dashboard_access
 from mkobi.models.dashboard import (
     DashboardCreate,
     DashboardRead,
@@ -49,7 +52,7 @@ router = APIRouter(prefix="/dashboards", tags=["dashboards"])
     description="Создает новый дашборд. Текущий пользователь становится владельцем.",
 )
 async def create_dashboard_endpoint(
-    dashboard: DashboardCreate,
+    dashboard_data: DashboardCreate,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
 ) -> DashboardRead:
@@ -70,6 +73,12 @@ async def create_dashboard_endpoint(
         HTTPException 422: Если данные не прошли валидацию.
         HTTPException 500: При ошибке базы данных.
     """
+    dashboard = DashboardCreate(
+        name=dashboard_data.name,
+        description=dashboard_data.description,
+        config=dashboard_data.config,
+    )
+
     logger.info(
         "Создание дашборда: name=%s, owner_id=%s",
         dashboard.name,
@@ -83,7 +92,14 @@ async def create_dashboard_endpoint(
             owner_id=current_user.id,
             db=db,
         )
+
+        logger.info(
+            "Дашборд успешно создан: id=%s, name=%s",
+            result.id,
+            result.name,
+        )
         return result
+
     except ValueError as e:
         logger.warning("Ошибка валидации при создании дашборда: %s", e)
         raise HTTPException(
@@ -111,7 +127,7 @@ async def create_dashboard_endpoint(
 )
 async def get_dashboards_endpoint(
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> list[DashboardRead]:
     """Получает список всех дашбордов, доступных пользователю.
 
@@ -161,7 +177,7 @@ async def get_dashboards_endpoint(
 async def get_dashboard_endpoint(
     dashboard_id: UUID,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> DashboardRead:
     """Получает дашборд по ID с проверкой доступа.
 
@@ -185,27 +201,47 @@ async def get_dashboard_endpoint(
     )
 
     try:
-        dashboard = await get_dashboard(
-            dashboard_id=dashboard_id,
-            user_id=current_user.id,
-            db=db,
-        )
+        dashboard = await get_dashboard(dashboard_id, db)
         if dashboard is None:
             logger.warning(
-                "Дашборд не найден или нет доступа: dashboard_id=%s, user_id=%s",
+                "Дашборд не найден: dashboard_id=%s",
+                dashboard_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Дашборд не найден",
+            )
+
+        # Проверяем доступ на чтение
+        has_access = await check_dashboard_access(
+            user_id=current_user.id,
+            dashboard_id=dashboard_id,
+            required_permission="view",
+            db=db,
+        )
+        if not has_access:
+            logger.warning(
+                "Нет прав на чтение дашборда: dashboard_id=%s, user_id=%s",
                 dashboard_id,
                 current_user.id,
             )
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Дашборд не найден или у вас нет доступа",
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="У вас нет прав на чтение этого дашборда",
             )
+
+        logger.info(
+            "Дашборд успешно получен: id=%s, name=%s",
+            dashboard.id,
+            dashboard.name,
+        )
         return dashboard
+
     except HTTPException:
         raise
     except Exception as e:
         logger.error(
-            "Ошибка при получении дашборда id=%s: %s",
+            "Ошибка при получении дашборда dashboard_id=%s: %s",
             dashboard_id,
             e,
         )
@@ -227,7 +263,7 @@ async def update_dashboard_endpoint(
     dashboard_id: UUID,
     dashboard_update: DashboardUpdate,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> DashboardRead:
     """Обновляет конфигурацию дашборда.
 
@@ -312,7 +348,7 @@ async def update_dashboard_endpoint(
 async def delete_dashboard_endpoint(
     dashboard_id: UUID,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> None:
     """Удаляет дашборд.
 
@@ -382,7 +418,7 @@ async def grant_dashboard_access_endpoint(
     dashboard_id: UUID,
     access_grant: AccessGrant,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> dict:
     """Предоставляет пользователю доступ к дашборду.
 
@@ -501,7 +537,7 @@ async def bind_filter_endpoint(
     dashboard_id: UUID,
     filter_id: UUID,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> dict:
     """Bind a filter to a dashboard."""
     logger.info("Binding filter to dashboard: dashboard_id=%s, filter_id=%s", dashboard_id, filter_id)
@@ -531,7 +567,7 @@ async def unbind_filter_endpoint(
     dashboard_id: UUID,
     filter_id: UUID,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> dict:
     """Unbind a filter from a dashboard."""
     logger.info("Unbinding filter from dashboard: dashboard_id=%s, filter_id=%s", dashboard_id, filter_id)
@@ -559,7 +595,7 @@ async def unbind_filter_endpoint(
 async def get_dashboard_filters_endpoint(
     dashboard_id: UUID,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> list[dict]:
     """Get all filters bound to a dashboard."""
     logger.info("Getting filters for dashboard: dashboard_id=%s", dashboard_id)
@@ -586,8 +622,8 @@ async def get_dashboard_filters_endpoint(
 async def get_dashboard_access_endpoint(
     dashboard_id: UUID,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
-) -> list[dict]:
+    db: AsyncSession = Depends(get_db_dependency),
+) -> list[dict[str, Any]]:
     """Get all access records for a dashboard."""
     logger.info("Getting access list for dashboard: dashboard_id=%s", dashboard_id)
     try:
@@ -608,10 +644,10 @@ async def get_dashboard_access_endpoint(
 )
 async def revoke_dashboard_access_endpoint(
     dashboard_id: UUID,
-    user_id: UUID,
+    user_id: int,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
-) -> dict:
+    db: AsyncSession = Depends(get_db_dependency),
+) -> dict[str, Any]:
     """Revoke a user's access to a dashboard."""
     logger.info("Revoking access: dashboard_id=%s, user_id=%s", dashboard_id, user_id)
     try:

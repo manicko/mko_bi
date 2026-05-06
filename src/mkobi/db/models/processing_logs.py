@@ -14,7 +14,7 @@ from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mkobi.db.base import Base
-from mkobi.models.enums import ProcessingStatus
+from mkobi.models.enums import ProcessingStatusEnum
 
 
 class ProcessingLog(Base):
@@ -39,9 +39,9 @@ class ProcessingLog(Base):
         nullable=True,
     )
 
-    status: Mapped[ProcessingStatus] = mapped_column(
+    status: Mapped[ProcessingStatusEnum] = mapped_column(
         Enum(
-            ProcessingStatus,
+            ProcessingStatusEnum,
             name="processing_status",
             values_callable=lambda enum: [e.value for e in enum],
         ),

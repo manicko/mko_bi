@@ -18,7 +18,7 @@ from mkobi.models.transformation_configs import (
     AggregationConfig,
     FilterConfig,
 )
-from mkobi.models.user_roles import (
+from mkobi.models.enums import (
     AggregationFunctionEnum,
     FilterOperatorEnum,
 )
@@ -66,7 +66,7 @@ B,200,2023
 A,150,2024
 """
     file_path = tmp_path / "test.csv.gz"
-    with gzip.open(file_path, 'wt', encoding='utf-8') as f:
+    with gzip.open(file_path, "wt", encoding="utf-8") as f:
         f.write(csv_content)
 
     result = await _process_csv_file(file_path)
@@ -86,7 +86,7 @@ B,200,2023
 A,150,2024
 """
     file_path = tmp_path / "test.csv.gz"
-    with gzip.open(file_path, 'wt', encoding='utf-8') as f:
+    with gzip.open(file_path, "wt", encoding="utf-8") as f:
         f.write(csv_content)
 
     config = ProcessingConfig(
@@ -106,7 +106,7 @@ B,200,2023
 A,150,2024
 """
     file_path = tmp_path / "test.csv.gz"
-    with gzip.open(file_path, 'wt', encoding='utf-8') as f:
+    with gzip.open(file_path, "wt", encoding="utf-8") as f:
         f.write(csv_content)
 
     config = ProcessingConfig(
@@ -126,7 +126,7 @@ A,100
 B,200
 """
     file_path = tmp_path / "test.csv.gz"
-    with gzip.open(file_path, 'wt', encoding='utf-8') as f:
+    with gzip.open(file_path, "wt", encoding="utf-8") as f:
         f.write(csv_content)
 
     result = await _process_csv_file(file_path)

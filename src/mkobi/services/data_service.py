@@ -20,27 +20,16 @@ from mkobi.db.repositories.aggregated_data_repo import AggregatedDataRepository
 from mkobi.db.repositories.dashboard_repo import DashboardRepository
 from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
 from mkobi.db.session import get_session
-from mkobi.data.processing.transformations import (
-    apply_transformations,
-    calculate_aggregations,
-)
 from mkobi.models.data import (
-    AggregatedData,
     ProcessingConfig,
     ProcessingResult,
+    ProcessingResultData,
     ProcessingStatusResponse,
     UploadResponse,
 )
 from mkobi.models.processing_logs import ProcessingLogCreate, ProcessingLogUpdate
-from mkobi.models.user_roles import (
-    MimeTypeEnum,
-    ProcessingStatusEnum,
-)
-from mkobi.models.types import (
-    ProcessingResultData,
-)
 from mkobi.models.enums import UploadMode
-
+from mkobi.models.enums import MimeTypeEnum, ProcessingStatusEnum
 logger = logging.getLogger(__name__)
 
 # Rate limiter for upload endpoints
@@ -409,3 +398,569 @@ async def upload_file(
     async with get_session() as db_session:
         async with db_session.begin():
             return await _upload_file_logic(filename, file_path, content_type, dashboard_id, user_id, db_session, mode=mode)
+
+
+async def trigger_processing(
+    task_id: UUID,
+    dashboard_id: UUID,
+    user_id: int,
+    db: AsyncSession,
+    processing_config: ProcessingConfig | None = None,
+) -> ProcessingStatusResponse:
+    """Запускает обработку загруженного файла.
+
+    Args:
+        task_id: ID задачи (processing_log.id).
+        dashboard_id: ID дашборда.
+        user_id: ID пользователя.
+        db: Асинхронная сессия базы данных.
+        processing_config: Конфигурация обработки (опционально).
+
+    Returns:
+        ProcessingStatusResponse: Статус обработки.
+
+    Raises:
+        ValueError: Если задача не найдена.
+        PermissionError: Если у пользователя нет прав.
+    """
+    from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
+
+    # Проверяем существование задачи
+    processing_log = await ProcessingLogRepository.get(task_id, db)
+    if processing_log is None:
+        raise ValueError(f"Задача с id={task_id} не найдена")
+
+    # Проверяем, что задача принадлежит указанному дашборду
+    if processing_log.dashboard_id != dashboard_id:
+        raise ValueError(f"Задача не принадлежит дашборду {dashboard_id}")
+
+    # Проверяем права на запись (требуется editor или admin)
+    has_access = await check_dashboard_access(
+        user_id=user_id,
+        dashboard_id=dashboard_id,
+        required_permission="edit",
+        db=db,
+    )
+    if not has_access:
+        raise PermissionError("Недостаточно прав для запуска обработки")
+
+    # Если задача уже в процессе или завершена, не запускаем повторно
+    if processing_log.status in [ProcessingStatusEnum.PROCESSING, ProcessingStatusEnum.SUCCESS, ProcessingStatusEnum.COMPLETED]:
+        logger.info("Задача уже обрабатывается или завершена: task_id=%s, status=%s", task_id, processing_log.status)
+        return ProcessingStatusResponse(
+            task_id=processing_log.id,
+            filename=processing_log.message.replace("Файл ", "").replace(" успешно загружен", ""),
+            dashboard_id=processing_log.dashboard_id,
+            status=processing_log.status,
+            progress=100 if processing_log.status in [ProcessingStatusEnum.SUCCESS, ProcessingStatusEnum.COMPLETED] else 0,
+            message=processing_log.message,
+            started_at=processing_log.started_at,
+            completed_at=processing_log.finished_at,
+        )
+
+    # Обновляем статус на processing
+    from mkobi.db.repositories.processing_log_repo import ProcessingLogUpdate
+    log_update = ProcessingLogUpdate(
+        status=ProcessingStatusEnum.PROCESSING,
+        message="Запуск обработки данных",
+    )
+    await ProcessingLogRepository.update(db, task_id, **log_update.model_dump(exclude_unset=True))
+
+    # Получаем путь к файлу (если он еще существует)
+    config = get_config()
+    temp_dir = Path(config.upload_temp_dir)
+    
+    # Ищем файл, связанный с этой задачей
+    file_path = None
+    try:
+        files = list(temp_dir.glob(f"*{task_id}*.csv*"))
+        if files:
+            file_path = files[0]
+    except Exception as e:
+        logger.warning("Не удалось найти файл для задачи %s: %s", task_id, e)
+
+    # Если файл найден, обрабатываем его через воркер
+    if file_path and file_path.exists():
+        from mkobi.core.task_queue import enqueue_job
+        
+        processing_config_dict = None
+        if processing_config:
+            processing_config_dict = processing_config.model_dump(exclude_none=True)
+
+        job_id = await enqueue_job(
+            "mkobi.workers.data_worker.process_csv_background",
+            str(file_path),
+            str(task_id),
+            str(dashboard_id),
+            processing_config_dict,
+            job_timeout=3600,
+        )
+
+        if not job_id:
+            logger.error("Не удалось запланировать задачу обработки для task_id=%s", task_id)
+            log_update = ProcessingLogUpdate(
+                status=ProcessingStatusEnum.FAILED,
+                message="Не удалось запланировать задачу обработки",
+                finished_at=datetime.now(),
+            )
+            await ProcessingLogRepository.update(db, task_id, **log_update.model_dump(exclude_unset=True))
+            raise RuntimeError("Не удалось запланировать задачу обработки")
+
+        logger.info("Задача обработки запланирована: job_id=%s, task_id=%s", job_id, task_id)
+    else:
+        # Если файла нет, обновляем статус
+        log_update = ProcessingLogUpdate(
+            status=ProcessingStatusEnum.FAILED,
+            message="Файл для обработки не найден",
+            finished_at=datetime.now(),
+        )
+        await ProcessingLogRepository.update(db, task_id, **log_update.model_dump(exclude_unset=True))
+        logger.warning("Файл для обработки не найден: task_id=%s", task_id)
+
+    # Возвращаем обновленный статус
+    updated_log = await ProcessingLogRepository.get(task_id, db)
+    return ProcessingStatusResponse(
+        task_id=updated_log.id,
+        filename=updated_log.message.replace("Файл ", "").replace(" успешно загружен", ""),
+        dashboard_id=updated_log.dashboard_id,
+        status=updated_log.status,
+        progress=50 if updated_log.status == ProcessingStatusEnum.PROCESSING else 0,
+        message=updated_log.message,
+        started_at=updated_log.started_at,
+        completed_at=updated_log.finished_at,
+    )
+
+
+async def get_processing_status(
+    task_id: UUID,
+    user_id: int,
+    db: AsyncSession,
+) -> ProcessingStatusResponse:
+    """Получает текущий статус обработки.
+
+    Args:
+        task_id: ID задачи.
+        user_id: ID пользователя.
+        db: Асинхронная сессия базы данных.
+
+    Returns:
+        ProcessingStatusResponse: Статус обработки.
+
+    Raises:
+        ValueError: Если задача не найдена.
+        PermissionError: Если у пользователя нет прав.
+    """
+    from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
+
+    processing_log = await ProcessingLogRepository.get(task_id, db)
+    if processing_log is None:
+        raise ValueError(f"Задача с id={task_id} не найдена")
+
+    # Проверяем, что пользователь имеет доступ к дашборду
+    has_access = await check_dashboard_access(
+        user_id=user_id,
+        dashboard_id=processing_log.dashboard_id,
+        required_permission="view",
+        db=db,
+    )
+    if not has_access:
+        raise PermissionError("Нет прав на просмотр статуса этой задачи")
+
+    # Вычисляем прогресс
+    progress = 0
+    if processing_log.status == ProcessingStatusEnum.UPLOADED:
+        progress = 10
+    elif processing_log.status == ProcessingStatusEnum.PROCESSING:
+        progress = 50
+    elif processing_log.status in [ProcessingStatusEnum.SUCCESS, ProcessingStatusEnum.COMPLETED]:
+        progress = 100
+    elif processing_log.status == ProcessingStatusEnum.FAILED:
+        progress = 0
+
+    return ProcessingStatusResponse(
+        task_id=processing_log.id,
+        filename=processing_log.message.replace("Файл ", "").replace(" успешно загружен", ""),
+        dashboard_id=processing_log.dashboard_id,
+        status=processing_log.status,
+        progress=progress,
+        message=processing_log.message,
+        started_at=processing_log.started_at,
+        completed_at=processing_log.finished_at,
+    )
+
+
+async def get_processing_result(
+    task_id: UUID,
+    user_id: int,
+    db: AsyncSession,
+) -> ProcessingResult:
+    """Получает результат обработки.
+
+    Args:
+        task_id: ID задачи.
+        user_id: ID пользователя.
+        db: Асинхронная сессия базы данных.
+
+    Returns:
+        ProcessingResult: Результат обработки.
+
+    Raises:
+        ValueError: Если задача не найдена или не завершена.
+        PermissionError: Если у пользователя нет прав.
+    """
+    from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
+    from mkobi.db.repositories.aggregated_data_repo import AggregatedDataRepository
+
+    processing_log = await ProcessingLogRepository.get(task_id, db)
+    if processing_log is None:
+        raise ValueError(f"Задача с id={task_id} не найдена")
+
+    # Проверяем, что пользователь имеет доступ к дашборду
+    has_access = await check_dashboard_access(
+        user_id=user_id,
+        dashboard_id=processing_log.dashboard_id,
+        required_permission="view",
+        db=db,
+    )
+    if not has_access:
+        raise PermissionError("Нет прав на просмотр результата этой задачи")
+
+    # Проверяем, что обработка завершена успешно
+    if processing_log.status not in [ProcessingStatusEnum.SUCCESS, ProcessingStatusEnum.COMPLETED]:
+        raise ValueError(f"Обработка еще не завершена или завершилась с ошибкой. Статус: {processing_log.status}")
+
+    # Получаем агрегированные данные
+    aggregates = await AggregatedDataRepository.get_by_dashboard(processing_log.dashboard_id, db)
+
+    # Формируем результат
+    result_data = ProcessingResultData(
+        columns=list(set([col for agg in aggregates for col in agg.dims.keys()] + [col for agg in aggregates for col in agg.metrics.keys()])),
+        rows=len(aggregates),
+    )
+
+    return ProcessingResult(
+        success=True,
+        task_id=task_id,
+        dashboard_id=processing_log.dashboard_id,
+        rows_processed=len(aggregates),
+        message="Обработка завершена успешно",
+        data=result_data,
+    )
+
+
+async def _process_csv_file(
+    file_path: Path,
+    config: dict[str, Any] | ProcessingConfig | None = None,
+) -> dict[str, Any]:
+    """Обрабатывает CSV файл и возвращает результат.
+
+    Используется для тестирования и синхронной обработки.
+
+    Args:
+        file_path: Путь к CSV файлу.
+        config: Конфигурация обработки (опционально).
+
+    Returns:
+        dict: Результат обработки.
+    """
+    from mkobi.data.loaders.loader import CSVLoader
+    from mkobi.data.processing.transformations import apply_transformations, calculate_aggregations
+    from mkobi.models.data import ProcessingConfig
+
+    loader = CSVLoader()
+    df = loader.load_csv(file_path)
+
+    result = {
+        "columns": df.columns,
+        "rows": df.shape[0],
+    }
+
+    if config:
+        if isinstance(config, ProcessingConfig):
+            processing_config = config
+        else:
+            processing_config = ProcessingConfig(**config)
+
+        # Применяем трансформации
+        df = apply_transformations(
+            df,
+            filters=processing_config.filters,
+            groupby=processing_config.groupby if not processing_config.aggregations else None,
+            sort_by=processing_config.sort_by,
+            descending=processing_config.descending,
+            limit=processing_config.limit,
+        )
+
+        # Применяем агрегации
+        if processing_config.aggregations or processing_config.yoy_config or processing_config.share_config or processing_config.custom_metrics:
+            df = calculate_aggregations(
+                df,
+                groupby=processing_config.groupby,
+                aggregations=processing_config.aggregations,
+                yoy_config=processing_config.yoy_config,
+                share_config=processing_config.share_config,
+                custom_metrics=processing_config.custom_metrics,
+            )
+
+        result["processed_rows"] = df.shape[0]
+    else:
+        result["processed_rows"] = df.shape[0]
+
+    return result
+
+
+async def get_dashboard_aggregates(
+    dashboard_id: UUID,
+    user_id: int,
+    db: AsyncSession,
+    limit: int = 100,
+    offset: int = 0,
+) -> dict[str, Any]:
+    """Получает агрегированные данные для дашборда.
+
+    Args:
+        dashboard_id: ID дашборда.
+        user_id: ID пользователя.
+        db: Асинхронная сессия базы данных.
+        limit: Максимальное количество записей.
+        offset: Смещение для пагинации.
+
+    Returns:
+        dict: Словарь с данными и метаданными.
+
+    Raises:
+        ValueError: Если дашборд не найден.
+        PermissionError: Если у пользователя нет прав.
+    """
+    from mkobi.db.repositories.dashboard_repo import DashboardRepository
+    from mkobi.db.repositories.aggregated_data_repo import AggregatedDataRepository
+
+    # Проверяем существование дашборда
+    dashboard = await DashboardRepository.get(dashboard_id, db)
+    if dashboard is None:
+        raise ValueError(f"Дашборд с id={dashboard_id} не найден")
+
+    # Проверяем права на чтение
+    has_access = await check_dashboard_access(
+        user_id=user_id,
+        dashboard_id=dashboard_id,
+        required_permission="view",
+        db=db,
+    )
+    if not has_access:
+        raise PermissionError("Нет прав на чтение этого дашборда")
+
+    # Получаем агрегированные данные
+    aggregates = await AggregatedDataRepository.get_by_dashboard(
+        dashboard_id=dashboard_id,
+        db=db,
+        limit=limit,
+        offset=offset,
+    )
+
+    # Получаем графики для дашборда
+    from mkobi.db.repositories.graph_repo import GraphRepository
+    graphs = await GraphRepository.get_by_dashboard(dashboard_id, db)
+
+    # Формируем ответ
+    charts = []
+    for graph in graphs:
+        chart_data = {
+            "graph_id": str(graph.id),
+            "name": graph.name,
+            "type": graph.type,
+            "config": graph.config,
+            "dimensions": graph.dimensions,
+            "metrics": graph.metrics,
+        }
+        charts.append(chart_data)
+
+    return {
+        "dashboard_id": str(dashboard_id),
+        "charts": charts,
+        "aggregates": [
+            {
+                "id": str(agg.id),
+                "graph_id": str(agg.graph_id),
+                "dims": agg.dims,
+                "metrics": agg.metrics,
+            }
+            for agg in aggregates
+        ],
+        "total": len(aggregates),
+        "limit": limit,
+        "offset": offset,
+    }
+
+
+async def get_chart_data(
+    dashboard_id: UUID,
+    user_id: int,
+    db: AsyncSession,
+) -> dict[str, Any]:
+    """Получает данные для графиков дашборда.
+
+    Args:
+        dashboard_id: ID дашборда.
+        user_id: ID пользователя.
+        db: Асинхронная сессия базы данных.
+
+    Returns:
+        dict: Словарь с данными для графиков.
+
+    Raises:
+        ValueError: Если дашборд не найден.
+        PermissionError: Если у пользователя нет прав.
+    """
+    from mkobi.db.repositories.dashboard_repo import DashboardRepository
+    from mkobi.db.repositories.aggregated_data_repo import AggregatedDataRepository
+    from mkobi.db.repositories.graph_repo import GraphRepository
+
+    # Проверяем существование дашборда
+    dashboard = await DashboardRepository.get(dashboard_id, db)
+    if dashboard is None:
+        raise ValueError(f"Дашборд с id={dashboard_id} не найден")
+
+    # Проверяем права на чтение
+    has_access = await check_dashboard_access(
+        user_id=user_id,
+        dashboard_id=dashboard_id,
+        required_permission="view",
+        db=db,
+    )
+    if not has_access:
+        raise PermissionError("Нет прав на чтение этого дашборда")
+
+    # Получаем графики
+    graphs = await GraphRepository.get_by_dashboard(dashboard_id, db)
+
+    # Получаем агрегированные данные
+    aggregates = await AggregatedDataRepository.get_by_dashboard(dashboard_id, db)
+
+    # Группируем данные по графикам
+    charts = []
+    for graph in graphs:
+        graph_aggregates = [a for a in aggregates if str(a.graph_id) == str(graph.id)]
+        charts.append({
+            "graph_id": str(graph.id),
+            "name": graph.name,
+            "type": graph.type,
+            "data": [
+                {
+                    "dims": agg.dims,
+                    "metrics": agg.metrics,
+                }
+                for agg in graph_aggregates
+            ],
+        })
+
+    return {
+        "dashboard_id": str(dashboard_id),
+        "charts": charts,
+        "total": len(aggregates),
+    }
+
+
+async def apply_data_filters(
+    dashboard_id: UUID,
+    filters: list[dict[str, Any]],
+    user_id: int,
+    db: AsyncSession,
+) -> dict[str, Any]:
+    """Применяет фильтры к агрегированным данным дашборда.
+
+    Args:
+        dashboard_id: ID дашборда.
+        filters: Список фильтров.
+        user_id: ID пользователя.
+        db: Асинхронная сессия базы данных.
+
+    Returns:
+        dict: Отфильтрованные данные.
+
+    Raises:
+        ValueError: Если дашборд не найден.
+        PermissionError: Если у пользователя нет прав.
+    """
+    from mkobi.db.repositories.dashboard_repo import DashboardRepository
+    from mkobi.db.repositories.aggregated_data_repo import AggregatedDataRepository
+
+    # Проверяем существование дашборда
+    dashboard = await DashboardRepository.get(dashboard_id, db)
+    if dashboard is None:
+        raise ValueError(f"Дашборд с id={dashboard_id} не найден")
+
+    # Проверяем права на чтение
+    has_access = await check_dashboard_access(
+        user_id=user_id,
+        dashboard_id=dashboard_id,
+        required_permission="view",
+        db=db,
+    )
+    if not has_access:
+        raise PermissionError("Нет прав на чтение этого дашборда")
+
+    # Получаем агрегированные данные
+    aggregates = await AggregatedDataRepository.get_by_dashboard(dashboard_id, db)
+
+    # Применяем фильтры
+    filtered_aggregates = []
+    for agg in aggregates:
+        match = True
+        for filter_item in filters:
+            field = filter_item.get("field")
+            operator = filter_item.get("operator", "==")
+            value = filter_item.get("value")
+
+            if field in agg.dims:
+                field_value = agg.dims[field]
+            elif field in agg.metrics:
+                field_value = agg.metrics[field]
+            else:
+                match = False
+                break
+
+            if operator == "==":
+                if field_value != value:
+                    match = False
+                    break
+            elif operator == "!=":
+                if field_value == value:
+                    match = False
+                    break
+            elif operator == ">":
+                if not (field_value > value):
+                    match = False
+                    break
+            elif operator == "<":
+                if not (field_value < value):
+                    match = False
+                    break
+            elif operator == ">=":
+                if not (field_value >= value):
+                    match = False
+                    break
+            elif operator == "<=":
+                if not (field_value <= value):
+                    match = False
+                    break
+
+        if match:
+            filtered_aggregates.append(agg)
+
+    return {
+        "dashboard_id": str(dashboard_id),
+        "aggregates": [
+            {
+                "id": str(agg.id),
+                "graph_id": str(agg.graph_id),
+                "dims": agg.dims,
+                "metrics": agg.metrics,
+            }
+            for agg in filtered_aggregates
+        ],
+        "total": len(filtered_aggregates),
+        "filters_applied": len(filters),
+    }
+
+

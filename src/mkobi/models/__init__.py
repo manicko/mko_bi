@@ -56,7 +56,7 @@ from mkobi.models.enums import (
     DashboardPermission,
     FilterType,
     GraphType,
-    ProcessingStatus,
+    ProcessingStatusEnum,
     RegistrationStatus,
     UploadMode,
     UserRole,

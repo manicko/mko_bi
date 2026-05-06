@@ -334,4 +334,4 @@ def validate_dataframe(df: pl.DataFrame, config: dict[str, Any]) -> list[str]:
     loader_config = LoaderConfig(**config) if config else LoaderConfig()
     validator = DataValidator(config=loader_config)
     result = validator.validate(df)
-    return result.errors + result.warnings
+    return list(result.errors) + list(result.warnings)

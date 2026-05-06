@@ -3,7 +3,7 @@
 Provides base application exception and specialized subclasses, plus FastAPI exception handlers.
 """
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 
 from mkobi.core.logging_config import get_logger

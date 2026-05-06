@@ -55,7 +55,7 @@ class UploadMode(StrEnum):
     APPEND = "append"
 
 
-class ProcessingStatus(StrEnum):
+class ProcessingStatusEnum(StrEnum):
     """Статусы обработки данных."""
 
     STARTED = "started"

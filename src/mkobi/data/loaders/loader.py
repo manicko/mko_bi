@@ -4,6 +4,7 @@
 включая поддержку сжатых .csv.gz файлов.
 """
 
+import asyncio
 import gzip
 import logging
 from pathlib import Path
@@ -17,7 +18,7 @@ from mkobi.models.data import LoaderConfig
 logger = logging.getLogger(__name__)
 
 
-async def load_csv(filepath: Path, config: dict | None = None) -> pl.DataFrame:
+async def load_csv(filepath: Path, config: dict[str, Any] | None = None) -> pl.DataFrame:
     """Асинхронная загрузка CSV файла.
 
     Обертка над синхронным CSVLoader для использования в асинхронном коде.
