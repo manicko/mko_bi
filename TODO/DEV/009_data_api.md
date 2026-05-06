@@ -4,7 +4,7 @@
 
 ### TASK: Aggregated data formatting for React
 
-FILE: `src/mko_bi/services/data_service.py`
+FILE: `src/mkobi/services/data_service.py`
 
 GOAL: Форматирование агрегированных данных для Plotly.js React (SPEC_FRONTEND.md п.4.6)
 
@@ -36,7 +36,7 @@ DONE:
 
 ### TASK: Filters application (backend)
 
-FILE: `src/mko_bi/services/data_service.py` (дополнение)
+FILE: `src/mkobi/services/data_service.py` (дополнение)
 
 GOAL: Применение глобальных фильтров через backend (SPEC.md п.13)
 

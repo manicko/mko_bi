@@ -898,7 +898,7 @@ wheels = [
 ]
 
 [[package]]
-name = "mko-bi"
+name = "mkobi"
 version = "1.0.8"
 source = { editable = "." }
 dependencies = [

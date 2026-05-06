@@ -1,6 +1,6 @@
 TASK: создать пользователя
 
-FILE: src/mko_bi/services/user_service.py
+FILE: src/mkobi/services/user_service.py
 
 GOAL: создание пользователя с ролью
 

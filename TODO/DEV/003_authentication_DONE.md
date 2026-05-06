@@ -4,7 +4,7 @@
 
 ### TASK: Password hashing (bcrypt)
 
-FILE: `src/mko_bi/core/security.py`
+FILE: `src/mkobi/core/security.py`
 
 GOAL: Хеширование и проверка паролей через bcrypt (SPEC.md п.5, п.29)
 
@@ -31,7 +31,7 @@ DONE:
 
 ### TASK: JWT token creation и validation
 
-FILE: `src/mko_bi/core/security.py` (дополнение)
+FILE: `src/mkobi/core/security.py` (дополнение)
 
 GOAL: JWT токены для аутентификации (SPEC.md п.5, п.29)
 
@@ -60,7 +60,7 @@ DONE:
 
 ### TASK: Auth API endpoints
 
-FILE: `src/mko_bi/api/routes/auth.py`
+FILE: `src/mkobi/api/routes/auth.py`
 
 GOAL: Login и register-request endpoints (SPEC.md п.14.1)
 
@@ -97,7 +97,7 @@ DONE:
 
 ### TASK: Auth service
 
-FILE: `src/mko_bi/services/auth_service.py`
+FILE: `src/mkobi/services/auth_service.py`
 
 GOAL: Бизнес-логика аутентификации
 
@@ -126,7 +126,7 @@ DONE:
 
 ### TASK: Permissions & role-based access
 
-FILE: `src/mko_bi/core/permissions.py`
+FILE: `src/mkobi/core/permissions.py`
 
 GOAL: Проверка прав доступа (SPEC.md п.4, п.15)
 

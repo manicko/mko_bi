@@ -4,7 +4,7 @@
 
 ### TASK: Processing logs repository
 
-FILE: `src/mko_bi/db/repositories/processing_log_repo.py`
+FILE: `src/mkobi/db/repositories/processing_log_repo.py`
 
 GOAL: Репозиторий для логов обработки (SPEC.md п.16.1, таблица processing_logs)
 
@@ -32,7 +32,7 @@ DONE:
 
 ### TASK: Processing logs API
 
-FILE: `src/mko_bi/api/routes/processing_logs.py`
+FILE: `src/mkobi/api/routes/processing_logs.py`
 
 GOAL: Endpoint для просмотра логов (SPEC.md п.14.4)
 
@@ -59,7 +59,7 @@ DONE:
 
 ### TASK: Processing logs service
 
-FILE: `src/mko_bi/services/processing_log_service.py`
+FILE: `src/mkobi/services/processing_log_service.py`
 
 GOAL: Бизнес-логика логов
 

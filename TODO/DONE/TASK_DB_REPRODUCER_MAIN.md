@@ -24,7 +24,7 @@
 ### 2.1 Расположение
 
 ```
-src/mko_bi/db/
+src/mkobi/db/
 ├── base.py              # SQLAlchemy Base (существует)
 ├── models/             # SQLAlchemy модели (существует)
 ├── repositories/       # Репозитории (существует)
@@ -34,12 +34,12 @@ src/mko_bi/db/
 
 ### 2.2 Интеграция с FastAPI
 
-Модуль вызывается из `src/mko_bi/app.py` через lifespan context manager:
+Модуль вызывается из `src/mkobi/app.py` через lifespan context manager:
 
 ```python
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from mko_bi.db.starter import DatabaseStarter
+from mkobi.db.starter import DatabaseStarter
 
 
 @asynccontextmanager
@@ -57,7 +57,7 @@ async def lifespan(app: FastAPI):
 
 ### 3.1 Определение окружения
 
-Модуль определяет окружение через переменную `ENV` с использованием `EnvironmentEnum` из `mko_bi/models/types.py`:
+Модуль определяет окружение через переменную `ENV` с использованием `EnvironmentEnum` из `mkobi/models/types.py`:
 
 Приоритет определения:
 1. Переменная окружения `ENV`
@@ -96,6 +96,7 @@ async def lifespan(app: FastAPI):
 from alembic import command
 from alembic.config import Config
 
+
 def run_migrations(alembic_cfg_path: str) -> None:
     """Применение миграций через Alembic API."""
     alembic_cfg = Config(alembic_cfg_path)
@@ -131,7 +132,8 @@ def run_migrations(alembic_cfg_path: str) -> None:
 
 ```python
 from pydantic import BaseModel
-from mko_bi.models.types import EnvironmentEnum
+from mkobi.models.types import EnvironmentEnum
+
 
 class DatabaseStarterConfig(BaseModel):
     """Конфигурация модуля воспроизведения БД."""
@@ -317,7 +319,7 @@ async def recreate_test_database(self) -> None:
 
 ## 9. Используемые Enum
 
-Все перечисления должны использовать `StrEnum` из `mko_bi/models/types.py`:
+Все перечисления должны использовать `StrEnum` из `mkobi/models/types.py`:
 
 Запрещено использовать:
 - `dict` для маппинга констант (используйте Enum)
@@ -327,7 +329,7 @@ async def recreate_test_database(self) -> None:
 
 ## 10. Критерии приёмки
 
-1. ✅ Модуль расположен в `src/mko_bi/db/starter.py`
+1. ✅ Модуль расположен в `src/mkobi/db/starter.py`
 2. ✅ Использует `asyncio.to_thread()` для Alembic миграций
 3. ✅ Интегрирован с FastAPI через `lifespan`
 4. ✅ Поддерживает переменную `ENV` (production/staging/development/test)

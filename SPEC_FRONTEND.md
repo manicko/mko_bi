@@ -367,21 +367,24 @@ CREATE TABLE registration_requests (
 ALTER TABLE users ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE;
 ```
 
-### 6.2 New Pydantic Models (`src/mko_bi/models/`)
+### 6.2 New Pydantic Models (`src/mkobi/models/`)
 ```python
 # auth.py
 class LoginRequest(BaseModel):
     email: EmailStr
     password: str
 
+
 class AuthResponse(BaseModel):
     access_token: str
     token_type: str
     user: "UserResponse"
 
+
 # registration.py
 class RegistrationRequestCreate(BaseModel):
     email: EmailStr
+
 
 class RegistrationRequestResponse(BaseModel):
     id: UUID
@@ -390,22 +393,25 @@ class RegistrationRequestResponse(BaseModel):
     created_at: datetime
 ```
 
-### 6.3 New Enums (`src/mko_bi/models/enums.py`)
+### 6.3 New Enums (`src/mkobi/models/enums.py`)
 ```python
 class UserRole(StrEnum):
     ADMIN = "admin"
     EDITOR = "editor"
     VIEWER = "viewer"
 
+
 class DashboardPermission(StrEnum):
     VIEW = "view"
     EDIT = "edit"
     ADMIN = "admin"
 
+
 class RegistrationStatus(StrEnum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
+
 
 class UploadMode(StrEnum):
     OVERWRITE = "overwrite"

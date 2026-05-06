@@ -6,8 +6,8 @@
 
 import polars as pl
 
-from mko_bi.data.processing.transformations import _calculate_share
-from mko_bi.models.transformation_configs import ShareConfig
+from mkobi.data.processing.transformations import _calculate_share
+from mkobi.models.transformation_configs import ShareConfig
 
 
 class TestCalculateShareBasic:

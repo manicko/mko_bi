@@ -386,7 +386,7 @@ Test Isolation Report:
 
 # 3. Результаты выполнения задания: 
 
-Новый файл `C:\py_exp\mko_bi\TODO\DATABASES_AUDIT_REPORT_<number>.md` (number - уникальный номер файла) 
+Новый файл `C:\py_exp\mkobi\TODO\DATABASES_AUDIT_REPORT_<number>.md` (number - уникальный номер файла) 
 
 
 Содержание файла:

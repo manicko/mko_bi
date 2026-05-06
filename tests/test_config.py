@@ -11,8 +11,8 @@
 import os
 import pytest
 
-from mko_bi.config import Settings
-from mko_bi.models.enums import EnvironmentEnum, FileExtensionEnum
+from mkobi.config import Settings
+from mkobi.models.enums import EnvironmentEnum, FileExtensionEnum
 
 
 class TestSettingsBase:
@@ -26,7 +26,19 @@ class TestSettingsBase:
         yield
         # Очищаем тестовые переменные
         for key in list(os.environ.keys()):
-            if key.startswith(("DATABASE__", "JWT__", "UPLOAD__", "REDIS__", "LOGGING__", "CORS_", "APP_", "ENV", "DEBUG", "HOST", "PORT")):
+            if key.startswith((
+                "DATABASE__",
+                "JWT__",
+                "UPLOAD__",
+                "REDIS__",
+                "LOGGING__",
+                "CORS_",
+                "APP_",
+                "ENV",
+                "DEBUG",
+                "HOST",
+                "PORT",
+            )):
                 if key in env_backup:
                     os.environ[key] = env_backup[key]
                 else:
@@ -69,7 +81,7 @@ class TestSettingsFromYaml(TestSettingsBase):
         settings = Settings()
         yaml_config = settings.load_yaml_config()
         assert "app" in yaml_config
-        assert yaml_config["app"]["name"] == "mko_bi"
+        assert yaml_config["app"]["name"] == "mkobi"
 
     def test_load_app_version_from_yaml(self):
         """Проверяет загрузку app.version из YAML файла."""
@@ -202,7 +214,7 @@ class TestAppSettings(TestSettingsBase):
     def test_app_settings_defaults(self):
         """Проверяет значения по умолчанию для AppSettings."""
         settings = Settings()
-        assert settings.app.name == "mko_bi"
+        assert settings.app.name == "mkobi"
         assert settings.app.version == "1.0.0"
 
 
@@ -213,7 +225,7 @@ class TestUploadSettings(TestSettingsBase):
         """Проверяет значения по умолчанию для UploadSettings."""
         settings = Settings()
         assert settings.upload.max_file_size_mb == 100
-        assert settings.upload.temp_dir_prefix == "mko_bi_upload"
+        assert settings.upload.temp_dir_prefix == "mkobi_upload"
         assert FileExtensionEnum.CSV in settings.upload.allowed_extensions
 
 

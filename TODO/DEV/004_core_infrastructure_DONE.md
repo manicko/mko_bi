@@ -4,7 +4,7 @@
 
 ### TASK: Logging configuration
 
-FILE: `src/mko_bi/core/logging_config.py`
+FILE: `src/mkobi/core/logging_config.py`
 
 GOAL: Настройка логирования согласно SPEC.md п.20, п.2.31
 
@@ -35,7 +35,7 @@ DONE:
 
 ### TASK: Base repository (async)
 
-FILE: `src/mko_bi/core/base_repository.py`
+FILE: `src/mkobi/core/base_repository.py`
 
 GOAL: Базовый класс для async репозиториев (SPEC.md требует async SQLAlchemy)
 
@@ -67,7 +67,7 @@ DONE:
 
 ### TASK: Task queue for data processing
 
-FILE: `src/mko_bi/core/task_queue.py`
+FILE: `src/mkobi/core/task_queue.py`
 
 GOAL: Очередь задач для асинхронной обработки данных (SPEC.md подразумевает processing pipeline)
 
@@ -95,7 +95,7 @@ DONE:
 
 ### TASK: File utilities (platformdirs)
 
-FILE: `src/mko_bi/utils/file_utils.py`
+FILE: `src/mkobi/utils/file_utils.py`
 
 GOAL: Работа с временными файлами через platformdirs (SPEC.md п.33, п.7)
 
@@ -112,7 +112,7 @@ IMPLEMENT:
 
 LOGIC:
 
-1. `platformdirs.user_cache_dir("mko_bi", appauthor=False)` 
+1. `platformdirs.user_cache_dir("mkobi", appauthor=False)` 
 2. Создание уникальной подпапки для каждого upload
 3. Удаление через `shutil.rmtree()` после processing
 4. Проверка расширений через `pathlib.Path.suffix`
@@ -127,7 +127,7 @@ DONE:
 
 ### TASK: Exception handlers
 
-FILE: `src/mko_bi/utils/exceptions.py`
+FILE: `src/mkobi/utils/exceptions.py`
 
 GOAL: Кастомные исключения и обработчики
 

@@ -1,6 +1,6 @@
 TASK: Внедрить корректное управление секретами для production
 
-FILE: src/mko_bi/config.py, src/mko_bi/settings/app.yaml, tests/conftest.py
+FILE: src/mkobi/config.py, src/mkobi/settings/app.yaml, tests/conftest.py
 
 GOAL: Обеспечить безопасное хранение секретов (пароли БД, JWT keys) с использованием переменных окружения и поддержкой Docker secrets
 

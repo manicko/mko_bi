@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-# Set required environment variables BEFORE importing any mko_bi modules
+# Set required environment variables BEFORE importing any mkobi modules
 # Use pydantic-settings nested env vars (double underscore)
 os.environ["DATABASE__HOST"] = "localhost"
 os.environ["DATABASE__PORT"] = "5432"
@@ -22,18 +22,21 @@ os.environ["JWT__SECRET_KEY"] = "test_secret_key_change_in_production"
 os.environ["REDIS__HOST"] = "localhost"
 os.environ["REDIS__PORT"] = "6379"
 
-from mko_bi.main import app
-from mko_bi.core.security import hash_password, create_access_token
-from mko_bi.db.repositories.user_repo import UserRepository
+from mkobi.main import app
+from mkobi.core.security import hash_password, create_access_token
+from mkobi.db.repositories.user_repo import UserRepository
 
 # Test PostgreSQL database (async)
 # Use get_config() to be consistent with the app
-from mko_bi.config import get_config
+from mkobi.config import get_config
+
 _config = get_config()
-TEST_ASYNC_DB_URL = str(_config.database.database_url).replace("postgresql://", "postgresql+asyncpg://", 1)
+TEST_ASYNC_DB_URL = str(_config.database.database_url).replace(
+    "postgresql://", "postgresql+asyncpg://", 1
+)
 
 # Import models for metadata registration
-from mko_bi.db.models import (  # noqa: E402, F401
+from mkobi.db.models import (  # noqa: E402, F401
     AggregatedData,
     Dashboard,
     DashboardAccess,
@@ -77,26 +80,32 @@ class MockRedis:
 @pytest.fixture(autouse=True)
 def mock_redis(monkeypatch):
     """Mock Redis client for all tests to avoid requiring real Redis."""
-    from mko_bi.core.security import RateLimiter
+    from mkobi.core.security import RateLimiter
 
     mock_redis_client = MockRedis()
 
     # Patch get_redis_client to return mock
-    import mko_bi.config as config_module
+    import mkobi.config as config_module
+
     def mock_get_redis_client():
         return mock_redis_client
+
     monkeypatch.setattr(config_module, "get_redis_client", mock_get_redis_client)
 
     # Patch the rate limiter instances in data_service
-    import mko_bi.services.data_service as data_service_module
+    import mkobi.services.data_service as data_service_module
+
     data_service_module._upload_rate_limiter = RateLimiter(mock_redis_client)
 
     # Patch auth service rate limiter
-    import mko_bi.services.auth_service as auth_service_module
+    import mkobi.services.auth_service as auth_service_module
+
     original_init = auth_service_module.AuthService.__init__
+
     def patched_init(self, *args, **kwargs):
         original_init(self, *args, **kwargs)
         self._rate_limiter = RateLimiter(mock_redis_client)
+
     monkeypatch.setattr(auth_service_module.AuthService, "__init__", patched_init)
 
 
@@ -104,7 +113,7 @@ def pytest_sessionstart(session):
     """Setup before test session starts using Alembic migrations."""
     import asyncio
     import subprocess
-    from mko_bi.db.base import Base
+    from mkobi.db.base import Base
 
     async def run_migrations():
         # Drop all tables and enums to start with clean state
@@ -120,7 +129,9 @@ def pytest_sessionstart(session):
             # Drop enum types
             await conn.execute(text("DROP TYPE IF EXISTS processing_status CASCADE"))
             await conn.execute(text("DROP TYPE IF EXISTS user_role CASCADE"))
-            await conn.execute(text("DROP TYPE IF EXISTS dashboard_permission_level CASCADE"))
+            await conn.execute(
+                text("DROP TYPE IF EXISTS dashboard_permission_level CASCADE")
+            )
             await conn.execute(text("DROP TYPE IF EXISTS graph_type CASCADE"))
             await conn.execute(text("DROP TYPE IF EXISTS filter_type CASCADE"))
         await engine.dispose()
@@ -130,8 +141,16 @@ def pytest_sessionstart(session):
     # Run alembic migrations using subprocess to avoid event loop conflicts
     sync_db_url = TEST_ASYNC_DB_URL.replace("postgresql+asyncpg://", "postgresql://")
     result = subprocess.run(
-        ["uv", "run", "alembic", "-x", f"sqlalchemy.url={sync_db_url}", "upgrade", "head"],
-        cwd="C:\\py_exp\\mko_bi",
+        [
+            "uv",
+            "run",
+            "alembic",
+            "-x",
+            f"sqlalchemy.url={sync_db_url}",
+            "upgrade",
+            "head",
+        ],
+        cwd="C:\\py_exp\\mkobi",
         capture_output=True,
         text=True,
     )
@@ -168,6 +187,7 @@ async def async_db_session(async_test_engine, async_session_maker):
     # Clean up after test
     async with async_test_engine.begin() as conn:
         from sqlalchemy import inspect
+
         table_names = await conn.run_sync(
             lambda sync_conn: inspect(sync_conn).get_table_names()
         )
@@ -175,9 +195,9 @@ async def async_db_session(async_test_engine, async_session_maker):
             tables_sql = ", ".join(f'"{table}"' for table in table_names)
             await conn.execute(text(f"TRUNCATE TABLE {tables_sql} CASCADE"))
             # Reset sequences after TRUNCATE
-            await conn.execute(text(
-                "ALTER SEQUENCE IF EXISTS aggregated_data_id_seq RESTART WITH 1"
-            ))
+            await conn.execute(
+                text("ALTER SEQUENCE IF EXISTS aggregated_data_id_seq RESTART WITH 1")
+            )
 
 
 @pytest.fixture
@@ -187,7 +207,9 @@ async def async_client():
     from httpx import ASGITransport
 
     transport = ASGITransport(app=app)
-    async with httpx.AsyncClient(transport=transport, base_url="http://testserver") as client:
+    async with httpx.AsyncClient(
+        transport=transport, base_url="http://testserver"
+    ) as client:
         yield client
 
 
@@ -210,7 +232,7 @@ async def test_user(async_db_session) -> dict[str, str | object]:
         role="admin",
     )
     await async_db_session.commit()
-    
+
     token = create_access_token({"user_id": str(user.id), "email": user.email})
 
     return {

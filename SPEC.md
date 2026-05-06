@@ -599,20 +599,23 @@ FastAPI
 
 ## 22. Enums (StrEnum)
 
-Все типы сущностей определяются через `StrEnum` в `src/mko_bi/models/enums.py`:
+Все типы сущностей определяются через `StrEnum` в `src/mkobi/models/enums.py`:
 
 ```python
 from enum import StrEnum
+
 
 class UserRole(StrEnum):
     ADMIN = "admin"
     EDITOR = "editor"
     VIEWER = "viewer"
 
+
 class DashboardPermission(StrEnum):
     VIEW = "view"
     EDIT = "edit"
     ADMIN = "admin"
+
 
 class GraphType(StrEnum):
     BAR = "bar"
@@ -620,20 +623,24 @@ class GraphType(StrEnum):
     PIE = "pie"
     TABLE = "table"
 
+
 class FilterType(StrEnum):
     SELECT = "select"
     MULTISELECT = "multiselect"
     RANGE = "range"
     DATE = "date"
 
+
 class RegistrationStatus(StrEnum):
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
 
+
 class UploadMode(StrEnum):
     OVERWRITE = "overwrite"
     APPEND = "append"
+
 
 class ProcessingStatus(StrEnum):
     STARTED = "started"

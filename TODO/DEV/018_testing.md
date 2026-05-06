@@ -189,7 +189,7 @@ IMPLEMENT:
 
 ```toml
 [tool.coverage.run]
-source = ["src/mko_bi"]
+source = ["src/mkobi"]
 omit = ["*/tests/*", "*/migrations/*"]
 
 [tool.coverage.report]

@@ -1,8 +1,8 @@
 TASK: Унификация sync/async кода в сервисах
 
-FILE: src/mko_bi/services/data_service.py
-FILE: src/mko_bi/api/routes/upload.py
-FILE: src/mko_bi/api/deps.py
+FILE: src/mkobi/services/data_service.py
+FILE: src/mkobi/api/routes/upload.py
+FILE: src/mkobi/api/deps.py
 
 GOAL: Устранить смешение синхронного и асинхронного кода для предотвращения deadlock и race conditions
 

@@ -1,4 +1,4 @@
-# DEV_PLAN.md - План разработки mko_bi
+# DEV_PLAN.md - План разработки mkobi
 
 **Автор**: Senior Python Architect (Kilo)
 **Дата**: 2026-05-05
@@ -18,17 +18,17 @@ BI Dashboard System - веб-приложение для загрузки CSV д
 
 | Блок ТЗ | Файлы в структуре |
 |---------|-------------------|
-| Database & Models | `src/mko_bi/db/models/*.py`, `alembic/versions/*.py` |
-| Configuration | `src/mko_bi/config.py`, `src/mko_bi/settings/app.yaml` |
-| Authentication | `src/mko_bi/api/routes/auth.py`, `src/mko_bi/services/auth_service.py`, `src/mko_bi/models/auth.py` |
-| Core Infrastructure | `src/mko_bi/core/*.py`, `src/mko_bi/utils/*.py` |
-| Data Upload | `src/mko_bi/api/routes/upload.py`, `src/mko_bi/data/loaders/*.py` |
-| Data Processing | `src/mko_bi/data/processing/*.py` |
-| Data Storage | `src/mko_bi/data/storage/manager.py`, `src/mko_bi/db/repositories/aggregated_data_repo.py` |
-| Dashboard Management | `src/mko_bi/api/routes/dashboards.py`, `src/mko_bi/services/dashboard_service.py`, `src/mko_bi/dashboards/*` |
-| Data API | `src/mko_bi/api/routes/data.py`, `src/mko_bi/services/data_service.py` |
-| User Management | `src/mko_bi/api/routes/users.py`, `src/mko_bi/services/user_service.py` |
-| Processing Logs | `src/mko_bi/api/routes/processing_logs.py`, `src/mko_bi/services/processing_log_service.py` |
+| Database & Models | `src/mkobi/db/models/*.py`, `alembic/versions/*.py` |
+| Configuration | `src/mkobi/config.py`, `src/mkobi/settings/app.yaml` |
+| Authentication | `src/mkobi/api/routes/auth.py`, `src/mkobi/services/auth_service.py`, `src/mkobi/models/auth.py` |
+| Core Infrastructure | `src/mkobi/core/*.py`, `src/mkobi/utils/*.py` |
+| Data Upload | `src/mkobi/api/routes/upload.py`, `src/mkobi/data/loaders/*.py` |
+| Data Processing | `src/mkobi/data/processing/*.py` |
+| Data Storage | `src/mkobi/data/storage/manager.py`, `src/mkobi/db/repositories/aggregated_data_repo.py` |
+| Dashboard Management | `src/mkobi/api/routes/dashboards.py`, `src/mkobi/services/dashboard_service.py`, `src/mkobi/dashboards/*` |
+| Data API | `src/mkobi/api/routes/data.py`, `src/mkobi/services/data_service.py` |
+| User Management | `src/mkobi/api/routes/users.py`, `src/mkobi/services/user_service.py` |
+| Processing Logs | `src/mkobi/api/routes/processing_logs.py`, `src/mkobi/services/processing_log_service.py` |
 | Frontend | `frontend/` (создать с нуля) |
 | Testing | `tests/*.py` |
 
@@ -241,7 +241,7 @@ BI Dashboard System - веб-приложение для загрузки CSV д
 ## Заметки по реализации
 
 - Использовать `StrEnum` для всех перечислений
-- Pydantic models в `src/mko_bi/models/`
+- Pydantic models в `src/mkobi/models/`
 - Async SQLAlchemy с asyncpg драйвером
 - Polars (не pandas) для обработки данных
 - JSONB для гибких структур (dims, metrics, configs)

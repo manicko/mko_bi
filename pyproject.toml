@@ -3,7 +3,7 @@ build-backend = "setuptools.build_meta"
 requires = ["setuptools>=61.0", "wheel>=0.37.1"]
 
 [project]
-name = "mko_bi"
+name = "mkobi"
 version = "1.0.8"
 authors = [
     { name = "mko", email = "manicko@yandex.ru" },
@@ -45,11 +45,11 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/manicko/mko_bi"
-Issues = "https://github.com/manicko/mko_bi"
+Homepage = "https://github.com/manicko/mkobi"
+Issues = "https://github.com/manicko/mkobi"
 
 [project.scripts]
-mko-get-mediascope = "mko_bi.app:app"
+mko-get-mediascope = "mkobi.app:app"
 
 
 [tool.setuptools]
@@ -59,7 +59,7 @@ include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["src"]
-include = ["mko_bi", "mko_bi.*"]
+include = ["mkobi", "mkobi.*"]
 exclude = ["tests/.pytest_cache*"]
 namespaces = false
 
@@ -81,7 +81,7 @@ exclude = '''
 # isort configuration (used by isort hook)
 [tool.isort]
 profile = "black"
-known_first_party = ["mko_bi", "settings", "core"]
+known_first_party = ["mkobi", "settings", "core"]
 combine_as_imports = true
 
 # Ruff top-level global settings
@@ -129,16 +129,16 @@ ignore = [
 # Specific ruff.isort-related options (only ruff-supported keys)
 # Note: do NOT set profile here (ruff doesn't accept "profile" key)
 [tool.ruff.lint.isort]
-known-first-party = ["mko_bi", "settings", "core"]
+known-first-party = ["mkobi", "settings", "core"]
 combine-as-imports = true
 
 # Per-file ignores for false positives
 [tool.ruff.lint.per-file-ignores]
-"src/mko_bi/db/models/*.py" = ["F821", "E402"]  # Forward references in SQLAlchemy models, TYPE_CHECKING imports
+"src/mkobi/db/models/*.py" = ["F821", "E402"]  # Forward references in SQLAlchemy models, TYPE_CHECKING imports
 "tests/*" = ["E731"]  # Lambda in tests (simplified for testing)
-"src/mko_bi/core/permissions.py" = ["F821"]  # FastAPI Depends(get_db) pattern
-"src/mko_bi/dashboards/components/charts/line.py" = ["B905"]  # zip(*sorted_pairs) unpacking
-"src/mko_bi/interfaces_old/*.py" = ["UP046"]  # Old interfaces, not used
+"src/mkobi/core/permissions.py" = ["F821"]  # FastAPI Depends(get_db) pattern
+"src/mkobi/dashboards/components/charts/line.py" = ["B905"]  # zip(*sorted_pairs) unpacking
+"src/mkobi/interfaces_old/*.py" = ["UP046"]  # Old interfaces, not used
 
 # Ruff formatting section
 [tool.ruff.format]
@@ -165,19 +165,19 @@ namespace_packages = false
 mypy_path = "src"
 
 [[tool.mypy.overrides]]
-module = ["mko_bi.*"]
+module = ["mkobi.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["mko_bi.utils.decorators"]
+module = ["mkobi.utils.decorators"]
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = ["mko_bi.db.models.*"]
+module = ["mkobi.db.models.*"]
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = ["mko_bi.interfaces.*"]
+module = ["mkobi.interfaces.*"]
 ignore_errors = true
 
 

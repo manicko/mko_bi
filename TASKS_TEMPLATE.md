@@ -7,7 +7,7 @@
 
 ### TASK: базовый pipeline
 
-FILE: src/mko_bi/data/processing/base.py
+FILE: src/mkobi/data/processing/base.py
 
 GOAL: оркестрация обработки
 
@@ -31,7 +31,7 @@ DONE:
 
 ### TASK: трансформации
 
-FILE: src/mko_bi/data/processing/transformations.py
+FILE: src/mkobi/data/processing/transformations.py
 
 GOAL: преобразование данных
 
@@ -53,7 +53,7 @@ DONE:
 
 ### TASK: агрегации
 
-FILE: src/mko_bi/data/processing/registry.py
+FILE: src/mkobi/data/processing/registry.py
 
 GOAL: агрегаты
 

@@ -9,13 +9,13 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import select
 from uuid import UUID
 
-from mko_bi.db.models import user as user_model
-from mko_bi.db.models import dashboard as dashboard_model
-from mko_bi.db.models import access as access_model
-from mko_bi.db.models import graphs as graph_model
-from mko_bi.db.models import layout as layout_model
-from mko_bi.db.models import aggregated_data as aggregated_data_model
-from mko_bi.models.enums import UserRole, DashboardPermission, GraphType, FilterType
+from mkobi.db.models import user as user_model
+from mkobi.db.models import dashboard as dashboard_model
+from mkobi.db.models import access as access_model
+from mkobi.db.models import graphs as graph_model
+from mkobi.db.models import layout as layout_model
+from mkobi.db.models import aggregated_data as aggregated_data_model
+from mkobi.models.enums import UserRole, DashboardPermission, GraphType, FilterType
 
 
 class TestUserModel:

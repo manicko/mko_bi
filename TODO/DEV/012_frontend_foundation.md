@@ -11,7 +11,7 @@ GOAL: Создание frontend проекта (SPEC_FRONTEND.md п.2.1, п.3)
 IMPLEMENT:
 
 ```bash
-cd C:\py_exp\mko_bi
+cd C:\py_exp\mkobi
 npm create vite@latest frontend -- --template react-ts
 cd frontend
 npm install

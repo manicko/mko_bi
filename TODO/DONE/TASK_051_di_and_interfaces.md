@@ -8,16 +8,16 @@ Improve the codebase by properly implementing Dependency Injection (DI) pattern 
 - Small functions, decomposition
 - Proper architecture with DI
 - logging in all modules
-- Pydantic models in `src/mko_bi/models`
-- Enum (or StrEnum) instead of dict and list in `src/mko_bi/models`
+- Pydantic models in `src/mkobi/models`
+- Enum (or StrEnum) instead of dict and list in `src/mkobi/models`
 - settings/*.yaml for configuration
 
 ## Tasks
 
 ### 1. Analyze Current Implementation
-- [x] Review existing interfaces in `src/mko_bi/interfaces/`
+- [x] Review existing interfaces in `src/mkobi/interfaces/`
 - [x] Review current DI implementation
-- [x] Check Enum usage in `src/mko_bi/models/user_roles.py`
+- [x] Check Enum usage in `src/mkobi/models/user_roles.py`
 
 ### 2. Fix Mypy Issues
 - [ ] Remove `# mypy: ignore-errors` from `repository_interfaces.py`
@@ -40,7 +40,7 @@ Improve the codebase by properly implementing Dependency Injection (DI) pattern 
 
 ### 5. Code Quality
 - [ ] Run `uv run ruff check .` and fix issues
-- [ ] Run `uv run mypy src/mko_bi` and fix type errors
+- [ ] Run `uv run mypy src/mkobi` and fix type errors
 - [ ] Run tests `uv run pytest tests/`
 - [ ] Ensure logging is properly configured in all modules
 

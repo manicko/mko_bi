@@ -4,7 +4,7 @@
 
 ### TASK: Users CRUD (admin)
 
-FILE: `src/mko_bi/api/routes/users.py`
+FILE: `src/mkobi/api/routes/users.py`
 
 GOAL: Управление пользователями (SPEC.md п.14.4, п.14.2)
 
@@ -35,7 +35,7 @@ DONE:
 
 ### TASK: Registration requests management
 
-FILE: `src/mko_bi/api/routes/auth.py` (дополнение)
+FILE: `src/mkobi/api/routes/auth.py` (дополнение)
 
 GOAL: Управление заявками на регистрацию (SPEC.md п.14.4)
 
@@ -65,7 +65,7 @@ DONE:
 
 ### TASK: User service
 
-FILE: `src/mko_bi/services/user_service.py`
+FILE: `src/mkobi/services/user_service.py`
 
 GOAL: Бизнес-логика пользователей
 

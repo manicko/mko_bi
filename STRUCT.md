@@ -1,4 +1,4 @@
-C:\py_exp\mko_bi
+C:\py_exp\mkobi
 ├── alembic
 │   ├── env.py
 │   ├── README
@@ -16,6 +16,7 @@ C:\py_exp\mko_bi
 ├── alembic.ini
 ├── best_llm_models.md
 ├── bidb_schema.sql
+├── check_paths.py
 ├── check_tables.py
 ├── create_db.sql
 ├── data
@@ -39,7 +40,7 @@ C:\py_exp\mko_bi
 │   ├── data
 │   │   └── logs
 │   ├── db
-│   └── mko_bi
+│   └── mkobi
 │       ├── api
 │       │   ├── deps.py
 │       │   └── routes
@@ -47,6 +48,7 @@ C:\py_exp\mko_bi
 │       │       ├── dashboards.py
 │       │       ├── data.py
 │       │       ├── filters.py
+│       │       ├── graphs.py
 │       │       ├── layouts.py
 │       │       ├── processing_configs.py
 │       │       ├── processing_logs.py
@@ -102,6 +104,7 @@ C:\py_exp\mko_bi
 │       │   ├── repositories
 │       │   │   ├── access_repo.py
 │       │   │   ├── aggregated_data_repo.py
+│       │   │   ├── dashboard_filter_repo.py
 │       │   │   ├── dashboard_repo.py
 │       │   │   ├── filter_repo.py
 │       │   │   ├── graph_repo.py
@@ -188,8 +191,8 @@ C:\py_exp\mko_bi
 │   │   ├── 002_configuration_DONE.md
 │   │   ├── 003_authentication_DONE.md
 │   │   ├── 004_core_infrastructure_DONE.md
-│   │   ├── 005_data_upload.md
-│   │   ├── 006_data_processing.md
+│   │   ├── 005_data_upload_DONE.md
+│   │   ├── 006_data_processing_DONE.md
 │   │   ├── 007_data_storage.md
 │   │   ├── 008_dashboard_management.md
 │   │   ├── 009_data_api.md

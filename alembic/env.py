@@ -18,7 +18,7 @@ if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
 # Import all models to ensure they're registered with Base metadata
-from mko_bi.db.models import (  # noqa: F401, E402
+from mkobi.db.models import (  # noqa: F401, E402
     AggregatedData,
     Dashboard,
     DashboardAccess,
@@ -29,14 +29,14 @@ from mko_bi.db.models import (  # noqa: F401, E402
     ProcessingLog,
     User,
 )
-from mko_bi.db.base import Base  # noqa: E402
+from mkobi.db.base import Base  # noqa: E402
 
 target_metadata = Base.metadata
 
 # Get database URL from environment or app config
 db_url = os.environ.get("DATABASE_URL")
 if db_url is None:
-    from mko_bi.config import get_config
+    from mkobi.config import get_config
     app_config = get_config()
     db_url = app_config.DATABASE_URL
 

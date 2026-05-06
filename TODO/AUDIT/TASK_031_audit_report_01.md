@@ -142,7 +142,7 @@
 
 ## 5. File-Level Recommendations
 
-### File: `src/mko_bi/services/dashboard_service.py`
+### File: `src/mkobi/services/dashboard_service.py`
 
 **Problems**:
 - Lines 353, 354, 411: Missing type arguments for generic `dict`
@@ -158,7 +158,7 @@ update_data: dict[str, Any] | DashboardUpdate | None = None
 config: dict[str, Any] | None = None
 ```
 
-### File: `src/mko_bi/db/models/user.py`
+### File: `src/mkobi/db/models/user.py`
 
 **Problems**:
 - Lines 71-86: SQLAlchemy relationship overlaps warnings
@@ -183,7 +183,7 @@ dashboards: Mapped[list["DashboardConfig"]] = relationship(
 )
 ```
 
-### File: `src/mko_bi/api/routes/layouts.py`
+### File: `src/mkobi/api/routes/layouts.py`
 
 **Problems**:
 - Line 133: Returning `Any` from function declared to return `list[Any]`
@@ -289,7 +289,7 @@ The system is well-architected, secure, and maintainable. It meets all specifica
 ============================= test session starts ==============================
 platform win32 -- Python 3.12.1, pytest-9.0.3, pluggy-1.6.0
 cachedir: .pytest_cache
-rootdir: C:\py_exp\mko_bi
+rootdir: C:\py_exp\mkobi
 configfile: pyproject.toml
 plugins: anyio-4.13.0, dash-4.1.0, asyncio-1.3.0, mock-3.15.1
 asyncio: mode=Mode.AUTO, debug=False
@@ -314,5 +314,5 @@ mypy: 15 errors in 5 files (mostly missing type arguments)
 
 **Report Generated**: 2026-05-05  
 **Auditor**: Kilo AI  
-**Project**: BI Dashboard System (mko_bi)  
+**Project**: BI Dashboard System (mkobi)  
 **Version**: 1.0.0

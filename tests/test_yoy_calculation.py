@@ -6,8 +6,8 @@
 
 import polars as pl
 
-from mko_bi.data.processing.transformations import _calculate_yoy
-from mko_bi.models.transformation_configs import YoyConfig
+from mkobi.data.processing.transformations import _calculate_yoy
+from mkobi.models.transformation_configs import YoyConfig
 
 
 class TestCalculateYoyBasic:

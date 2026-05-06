@@ -6,32 +6,32 @@ Tests the business logic for file upload, processing, and status tracking.
 import pytest
 from pydantic import ValidationError
 
-from mko_bi.models.user import (
+from mkobi.models.user import (
     UserBase,
     UserCreate,
     UserRead,
     UserDB,
     UserUpdate,
 )
-from mko_bi.models.enums import UserRole, DashboardPermission, GraphType, FilterType
-from mko_bi.models.dashboard import (
+from mkobi.models.enums import UserRole, DashboardPermission, GraphType, FilterType
+from mkobi.models.dashboard import (
     DashboardConfig,
     DashboardCreate,
     DashboardRead,
     DashboardUpdate,
 )
-from mko_bi.models.data import (
+from mkobi.models.data import (
     DataUpload,
     ProcessingConfig,
     ProcessingResult,
     AggregatedData,
 )
-from mko_bi.models.auth import (
+from mkobi.models.auth import (
     LoginRequest,
     Token,
     TokenData,
 )
-from mko_bi.models.access import (
+from mkobi.models.access import (
     AccessCheck,
     AccessGrant,
 )
@@ -224,11 +224,11 @@ class TestDataModels:
 
     def test_processing_config_valid(self):
         """Проверяет создание валидной конфигурации обработки."""
-        from mko_bi.models.transformation_configs import (
+        from mkobi.models.transformation_configs import (
             AggregationConfig,
             FilterConfig,
         )
-        from mko_bi.models.user_roles import (
+        from mkobi.models.user_roles import (
             AggregationFunctionEnum,
             FilterOperatorEnum,
         )

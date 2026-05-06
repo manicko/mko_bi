@@ -1,0 +1,95 @@
+# Environment: development, staging, production, test
+env: development
+
+# App settings
+app:
+  name: mkobi
+  version: "1.0.0"
+
+# Database migrations
+auto_migrate: true
+migration_script_path: "alembic"
+alembic_ini_path: "alembic.ini"
+
+# Test database (optional)
+# test_database_url: "postgresql+asyncpg://postgres:${DB_PASSWORD}@localhost:5432/bidb_test"
+recreate_test_db: false
+
+database:
+  host: localhost
+  port: 5432
+  dbname: bidb
+  user: postgres
+  # Password must be set via environment variable DATABASE__PASSWORD
+  # Or use Docker secrets: set DATABASE__PASSWORD_FILE=/run/secrets/db_password
+
+jwt:
+  # Secret key must be set via environment variable JWT__SECRET_KEY
+  # Or use Docker secrets: set JWT__SECRET_KEY_FILE=/run/secrets/jwt_secret
+  algorithm: HS256
+  access_token_expire_minutes: 30
+
+upload:
+  temp_dir: "data/tmp_uploads"
+  temp_dir_prefix: "mkobi_upload"
+  max_file_size_mb: 100
+  allowed_extensions:
+    - "csv.gz"
+    - "csv"
+  allowed_mime_types:
+    - "text/csv"
+    - "application/gzip"
+    - "application/x-gzip"
+  lazy_threshold_mb: 10.0  # Use lazy evaluation for files larger than this
+
+redis:
+  host: localhost
+  port: 6379
+  db: 0
+  # Password must be set via environment variable REDIS__PASSWORD
+  # Or use Docker secrets: set REDIS__PASSWORD_FILE=/run/secrets/redis_password
+
+logging:
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  level: INFO
+  log_file: null
+  json_logging: true
+
+charts:
+  default_colors:
+    - "#1f77b4"
+    - "#ff7f0e"
+    - "#2ca02c"
+    - "#d62728"
+    - "#9467bd"
+    - "#8c564b"
+    - "#e377c2"
+    - "#7f7f7f"
+  yoy:
+    current_year_style:
+      line:
+        dash: "solid"
+        width: 3
+    previous_year_style:
+      line:
+        dash: "dash"
+        width: 2
+  layout:
+    template: "plotly_white"
+    margin:
+      l: 50
+      r: 50
+      t: 50
+      b: 50
+
+cors_origins:
+  - "https://example.com"
+  - "https://app.example.com"
+
+email:
+  blocked_domains:
+    - "tempmail.com"
+    - "throwaway.email"
+
+dashboard:
+  default_items_per_page: 20

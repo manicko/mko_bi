@@ -8,7 +8,7 @@
 
 ## Настройка через YAML конфиг
 
-Все настройки находятся в файле: `src/mko_bi/settings/app.yaml`
+Все настройки находятся в файле: `src/mkobi/settings/app.yaml`
 
 ### Основные настройки
 
@@ -104,7 +104,7 @@ set "PGPASSWORD=1234" & psql -h localhost -p 5432 -U postgres -f create_db.sql
 ### Быстрый запуск (разработка)
 
 ```bash
-uv run uvicorn mko_bi.main:app --reload
+uv run uvicorn mkobi.main:app --reload
 ```
 
 Приложение будет доступно по адресу: http://127.0.0.1:8000
@@ -112,7 +112,7 @@ uv run uvicorn mko_bi.main:app --reload
 ### Логи при успешном запуске
 
 ```
-INFO:     Will watch for changes in these directories: ['C:\\py_exp\\mko_bi']
+INFO:     Will watch for changes in these directories: ['C:\\py_exp\\mkobi']
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 INFO:     Started reloader process [21368] using StatReload
 Configuring CORS with allowed origins: [...]
@@ -153,7 +153,7 @@ uv run pytest tests/ -v
 uv run pytest tests/test_dashboards_api.py -v
 
 # Проверка типов
-uv run mypy src/mko_bi/
+uv run mypy src/mkobi/
 
 # Проверка стиля кода
 uv run ruff check .
@@ -181,7 +181,7 @@ uv run alembic upgrade head
 
 ## Структура конфигурации
 
-Конфигурация находится в файле: `src/mko_bi/settings/app.yaml`
+Конфигурация находится в файле: `src/mkobi/settings/app.yaml`
 
 Pydantic-settings читает настройки из YAML файла. Для чувствительных данных (пароли) рекомендуется использовать переменные окружения, переопределяя значения из YAML.
 
@@ -210,5 +210,5 @@ recreate_test_db: true
 
 Затем запустите:
 ```bash
-uv run python -m mko_bi.db.starter --recreate-test-db
+uv run python -m mkobi.db.starter --recreate-test-db
 ```

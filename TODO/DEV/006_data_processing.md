@@ -4,7 +4,7 @@
 
 ### TASK: Data pipeline orchestration
 
-FILE: `src/mko_bi/data/processing/registry.py` (переиспользовать или создать base.py)
+FILE: `src/mkobi/data/processing/registry.py` (переиспользовать или создать base.py)
 
 GOAL: Оркестрация обработки данных (SPEC.md п.9)
 
@@ -35,7 +35,7 @@ DONE:
 
 ### TASK: Transformations
 
-FILE: `src/mko_bi/data/processing/transformations.py`
+FILE: `src/mkobi/data/processing/transformations.py`
 
 GOAL: Трансформация данных согласно конфигу (SPEC.md п.9)
 
@@ -67,7 +67,7 @@ DONE:
 
 ### TASK: Aggregations
 
-FILE: `src/mko_bi/data/processing/aggregations.py` (или registry.py)
+FILE: `src/mkobi/data/processing/aggregations.py` (или registry.py)
 
 GOAL: Агрегация данных (SPEC.md п.9)
 
@@ -100,7 +100,7 @@ DONE:
 
 ### TASK: Processing configs service
 
-FILE: `src/mko_bi/services/processing_config_service.py`
+FILE: `src/mkobi/services/processing_config_service.py`
 
 GOAL: Управление настройками обработки (SPEC.md п.16.1, таблица processing_configs)
 

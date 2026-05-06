@@ -4,7 +4,7 @@
 
 ### TASK: CORS configuration (FastAPI)
 
-FILE: `src/mko_bi/app.py`
+FILE: `src/mkobi/app.py`
 
 GOAL: Настройка CORS для React SPA (SPEC.md п.23.5, SPEC_FRONTEND.md п.2.2)
 
@@ -37,7 +37,7 @@ DONE:
 
 ### TASK: Static files serving (FastAPI)
 
-FILE: `src/mko_bi/app.py` (или отдельный файл)
+FILE: `src/mkobi/app.py` (или отдельный файл)
 
 GOAL: Раздача статических файлов React build (SPEC.md п.24.2 Вариант А)
 
@@ -49,6 +49,7 @@ from fastapi.responses import FileResponse
 
 # После всех API роутов
 app.mount("/", StaticFiles(directory="frontend/dist", html=True), name="static")
+
 
 # Или fallback to index.html
 @app.get("/{full_path:path}")
@@ -88,11 +89,11 @@ RUN pip install uv && uv sync --frozen
 
 COPY . .
 
-RUN uv run python -m src.mko_bi.main
+RUN uv run python -m src.mkobi.main
 
 EXPOSE 8000
 
-CMD ["uv", "run", "uvicorn", "src.mko_bi.app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "uvicorn", "src.mkobi.app:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
 `docker-compose.yml`:

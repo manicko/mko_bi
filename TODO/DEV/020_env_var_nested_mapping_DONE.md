@@ -1,6 +1,6 @@
 TASK: Fix env var mapping for nested models in pydantic-settings
 
-FILE: src/mko_bi/config.py
+FILE: src/mkobi/config.py
 
 GOAL: Ensure environment variables like DATABASE__HOST properly override YAML values with correct priority.
 

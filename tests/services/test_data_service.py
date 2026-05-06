@@ -7,18 +7,18 @@ import gzip
 
 import pytest
 
-from mko_bi.services.data_service import (
+from mkobi.services.data_service import (
     _process_csv_file,
     _validate_file,
 )
-from mko_bi.models.data import (
+from mkobi.models.data import (
     ProcessingConfig,
 )
-from mko_bi.models.transformation_configs import (
+from mkobi.models.transformation_configs import (
     AggregationConfig,
     FilterConfig,
 )
-from mko_bi.models.user_roles import (
+from mkobi.models.user_roles import (
     AggregationFunctionEnum,
     FilterOperatorEnum,
 )

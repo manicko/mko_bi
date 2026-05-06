@@ -9,10 +9,10 @@ from uuid import uuid4
 
 from sqlalchemy import select, func
 
-from mko_bi.data.storage.manager import StorageManager
-from mko_bi.db.models import graphs as graphs_model
-from mko_bi.db.models import aggregated_data as aggregated_data_model
-from mko_bi.models.enums import GraphType
+from mkobi.data.storage.manager import StorageManager
+from mkobi.db.models import graphs as graphs_model
+from mkobi.db.models import aggregated_data as aggregated_data_model
+from mkobi.models.enums import GraphType
 
 
 class TestStorageManagerInit:
@@ -35,7 +35,7 @@ class TestSaveAggregates:
 
     async def test_save_single_aggregate(self, async_db_session):
         """Тест сохранения одного агрегата."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -69,7 +69,7 @@ class TestSaveAggregates:
 
     async def test_save_empty_aggregates(self, async_db_session):
         """Тест сохранения пустого списка агрегатов."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -83,7 +83,7 @@ class TestSaveAggregates:
 
     async def test_save_aggregates_with_clear_old(self, async_db_session):
         """Тест сохранения с очисткой старых данных."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -149,7 +149,7 @@ class TestSaveAggregates:
 
     async def test_save_aggregates_without_clear_old(self, async_db_session):
         """Тест сохранения без очистки старых данных."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -204,7 +204,7 @@ class TestSaveAggregates:
 
     async def test_save_aggregates_upsert(self, async_db_session):
         """Тест обновления существующих данных (upsert)."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -261,7 +261,7 @@ class TestSaveAggregates:
 
     async def test_save_aggregates_invalid_data(self, async_db_session):
         """Тест сохранения с невалидными данными."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -283,7 +283,7 @@ class TestSaveAggregates:
 
     async def test_save_aggregates_missing_fields(self, async_db_session):
         """Тест сохранения с отсутствующими обязательными полями."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -305,7 +305,7 @@ class TestSaveAggregates:
 
     async def test_save_aggregates_nonexistent_graph(self, async_db_session):
         """Тест сохранения для несуществующего графика."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -332,7 +332,7 @@ class TestUpsertAggregate:
 
     async def test_upsert_new_aggregate(self, async_db_session):
         """Тест вставки нового агрегата."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -380,7 +380,7 @@ class TestUpsertAggregate:
 
     async def test_upsert_existing_aggregate(self, async_db_session):
         """Тест обновления существующего агрегата."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -437,7 +437,7 @@ class TestUpsertAggregate:
 
     async def test_upsert_invalid_data(self, async_db_session):
         """Тест upsert с невалидными данными."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -469,7 +469,7 @@ class TestUpsertAggregate:
 
     async def test_upsert_nonexistent_graph(self, async_db_session):
         """Тест upsert для несуществующего графика."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -494,7 +494,7 @@ class TestClearData:
 
     async def test_clear_dashboard_data(self, async_db_session):
         """Тест очистки всех данных дашборда."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -555,7 +555,7 @@ class TestClearData:
 
     async def test_clear_graph_data(self, async_db_session):
         """Тест очистки данных конкретного графика."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -633,7 +633,7 @@ class TestClearData:
 
     async def test_clear_nonexistent_data(self, async_db_session):
         """Тест очистки данных для дашборда без данных."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -652,7 +652,7 @@ class TestGetAggregates:
 
     async def test_get_all_aggregates(self, async_db_session):
         """Тест получения всех агрегатов дашборда."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -699,7 +699,7 @@ class TestGetAggregates:
 
     async def test_get_aggregates_for_graph(self, async_db_session):
         """Тест получения агрегатов для конкретного графика."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -753,7 +753,7 @@ class TestGetAggregates:
 
     async def test_get_aggregates_empty(self, async_db_session):
         """Тест получения агрегатов для пустого дашборда."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",
@@ -772,7 +772,7 @@ class TestStorageManagerIntegration:
 
     async def test_full_save_and_retrieve_flow(self, async_db_session):
         """Тест полного цикла: сохранение и получение данных."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         # Создаем дашборд и графики
         dashboard = dashboard_model.Dashboard(
@@ -881,7 +881,7 @@ class TestStorageManagerIntegration:
 
     async def test_batch_insert_performance(self, async_db_session):
         """Тест пакетной вставки большого количества данных."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Performance Test Dashboard",
@@ -929,7 +929,7 @@ class TestStorageManagerIntegration:
 
     async def test_transaction_rollback_on_error(self, async_db_session):
         """Тест отката транзакции при ошибке."""
-        from mko_bi.db.models import dashboard as dashboard_model
+        from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
             name="Test Dashboard",

@@ -4,14 +4,14 @@ from datetime import timedelta
 from unittest.mock import patch
 from jose import jwt
 
-from mko_bi.core.security import (
+from mkobi.core.security import (
     hash_password,
     verify_password,
     create_access_token,
     decode_token,
     _truncate_password,
 )
-from mko_bi.config import get_config
+from mkobi.config import get_config
 
 
 class TestTruncatePassword:
@@ -207,7 +207,7 @@ class TestDecodeToken:
         # Создаем токен с правильным ключом
         token = create_access_token({"user_id": 1})
         # Пытаемся декодировать с другим ключом (имитация ошибки)
-        with patch("mko_bi.core.security.get_config") as mock_get_config:
+        with patch("mkobi.core.security.get_config") as mock_get_config:
             mock_get_config.return_value.JWT_SECRET_KEY = "wrong_secret"
             mock_get_config.return_value.JWT_ALGORITHM = "HS256"
             result = decode_token(token)

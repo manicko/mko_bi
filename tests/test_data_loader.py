@@ -11,9 +11,9 @@ from pathlib import Path
 import polars as pl
 import pytest
 
-from mko_bi.data.loaders.loader import CSVLoader
-from mko_bi.data.loaders.validator import DataValidator
-from mko_bi.models.data import LoaderConfig, ValidationResult
+from mkobi.data.loaders.loader import CSVLoader
+from mkobi.data.loaders.validator import DataValidator
+from mkobi.models.data import LoaderConfig, ValidationResult
 
 
 class TestCSVLoader:

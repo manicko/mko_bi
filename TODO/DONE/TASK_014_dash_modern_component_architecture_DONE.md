@@ -1,18 +1,18 @@
 TASK: рефакторинг компонентов Dash (modern architecture)
 
-FILE: src/mko_bi/dashboards/components/
+FILE: src/mkobi/dashboards/components/
 
 GOAL: внедрить современную архитектуру компонентов с использованием StrEnum, Pydantic моделей и декомпозиции
 
 IMPLEMENT:
 
-1. Создать `src/mko_bi/models/enums.py` с StrEnum:
+1. Создать `src/mkobi/models/enums.py` с StrEnum:
    - ButtonVariant
    - FilterType
    - GraphType
    - ComponentSize
 
-2. Создать `src/mko_bi/models/style.py` с Pydantic моделями:
+2. Создать `src/mkobi/models/style.py` с Pydantic моделями:
    - ComponentStyle
    - ButtonStyle
    - FilterStyle
@@ -28,7 +28,7 @@ IMPLEMENT:
    - создать отдельные функции для каждого типа контрола
    - использовать Pydantic модели для конфигурации
 
-5. Создать `src/mko_bi/dashboards/components/buttons.py`:
+5. Создать `src/mkobi/dashboards/components/buttons.py`:
    - Button компонент с вариантами из ButtonVariant
    - маленькие функции создания кнопок
 
@@ -42,7 +42,7 @@ LOGIC:
 CONSTRAINTS:
 
 - используется dash-bootstrap-components
-- пакет mko_bi (1 underscore)
+- пакет mkobi (1 underscore)
 - чистый модульный код
 - логирование через logging
 

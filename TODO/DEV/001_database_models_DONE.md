@@ -4,7 +4,7 @@
 
 ### TASK: Enum definitions (StrEnum)
 
-FILE: `src/mko_bi/models/enums.py`
+FILE: `src/mkobi/models/enums.py`
 
 GOAL: Определить все перечисления через StrEnum согласно SPEC.md п.22
 
@@ -38,7 +38,7 @@ DONE:
 
 ### TASK: SQLAlchemy base models
 
-FILE: `src/mko_bi/db/models/*.py`
+FILE: `src/mkobi/db/models/*.py`
 
 GOAL: Создать SQLAlchemy async models согласно SPEC.md п.16
 
@@ -58,7 +58,7 @@ IMPLEMENT:
 
 LOGIC:
 
-1. Все модели наследуются от `Base` (src/mko_bi/db/base.py)
+1. Все модели наследуются от `Base` (src/mkobi/db/base.py)
 2. Использовать `UUID` с `uuid_generate_v4()` как default
 3. JSONB для гибких полей (definition, config, dims, metrics, settings)
 4. ForeignKey с `ondelete="CASCADE"` где применимо
@@ -76,7 +76,7 @@ DONE:
 
 ### TASK: Pydantic API models
 
-FILE: `src/mko_bi/models/*.py`
+FILE: `src/mkobi/models/*.py`
 
 GOAL: Создать Pydantic models для валидации API запросов/ответов
 
@@ -104,7 +104,7 @@ LOGIC:
 DONE:
 
 * [ ] Все Pydantic models созданы
-* [ ] Экспортированы из `src/mko_bi/models/__init__.py`
+* [ ] Экспортированы из `src/mkobi/models/__init__.py`
 * [ ] Тесты на валидацию
 
 ---

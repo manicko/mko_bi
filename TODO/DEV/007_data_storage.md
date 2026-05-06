@@ -4,7 +4,7 @@
 
 ### TASK: Storage manager
 
-FILE: `src/mko_bi/data/storage/manager.py`
+FILE: `src/mkobi/data/storage/manager.py`
 
 GOAL: Сохранение агрегированных данных в PostgreSQL (SPEC.md п.10)
 
@@ -36,7 +36,7 @@ DONE:
 
 ### TASK: Aggregated data repository
 
-FILE: `src/mko_bi/db/repositories/aggregated_data_repo.py`
+FILE: `src/mkobi/db/repositories/aggregated_data_repo.py`
 
 GOAL: Репозиторий для работы с aggregated_data (SPEC.md п.16.1)
 
@@ -66,7 +66,7 @@ DONE:
 
 ### TASK: Data API endpoint
 
-FILE: `src/mko_bi/api/routes/data.py`
+FILE: `src/mkobi/api/routes/data.py`
 
 GOAL: Endpoint для получения агрегированных данных (SPEC.md п.14.3)
 

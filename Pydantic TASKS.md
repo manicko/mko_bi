@@ -4,7 +4,7 @@
 
 ### TASK: модели для логина
 
-FILE: src/mko_bi/models/auth.py
+FILE: src/mkobi/models/auth.py
 
 GOAL: описать вход/выход авторизации
 
@@ -54,7 +54,7 @@ DONE:
 
 ### TASK: базовые модели пользователя
 
-FILE: src/mko_bi/models/user.py
+FILE: src/mkobi/models/user.py
 
 GOAL: разделить внутреннюю и внешнюю модель
 
@@ -104,7 +104,7 @@ DONE:
 
 ### TASK: модели дашборда
 
-FILE: src/mko_bi/models/dashboard.py
+FILE: src/mkobi/models/dashboard.py
 
 GOAL: описать config-driven дашборд
 
@@ -139,7 +139,7 @@ DONE:
 
 ### TASK: схема config дашборда
 
-FILE: src/mko_bi/models/dashboard.py
+FILE: src/mkobi/models/dashboard.py
 
 GOAL: строгая структура графиков
 
@@ -177,7 +177,7 @@ DONE:
 
 ### TASK: модель загрузки файла
 
-FILE: src/mko_bi/models/data.py
+FILE: src/mkobi/models/data.py
 
 GOAL: описание upload
 
@@ -199,7 +199,7 @@ DONE:
 
 ### TASK: модель фильтров
 
-FILE: src/mko_bi/models/data.py
+FILE: src/mkobi/models/data.py
 
 GOAL: фильтрация данных
 
@@ -227,7 +227,7 @@ DONE:
 
 ### TASK: модель ответа агрегатов
 
-FILE: src/mko_bi/models/data.py
+FILE: src/mkobi/models/data.py
 
 GOAL: унифицированный ответ API
 
@@ -262,7 +262,7 @@ DONE:
 
 ### TASK: модель доступа
 
-FILE: src/mko_bi/models/user.py
+FILE: src/mkobi/models/user.py
 
 GOAL: связка user-dashboard
 
@@ -287,7 +287,7 @@ DONE:
 
 ### TASK: кастомные валидаторы
 
-FILE: src/mko_bi/models/dashboard.py
+FILE: src/mkobi/models/dashboard.py
 
 GOAL: сложная валидация config
 
@@ -313,7 +313,7 @@ DONE:
 
 ### TASK: подключить модели в API
 
-FILE: src/mko_bi/api/routes/*
+FILE: src/mkobi/api/routes/*
 
 GOAL: использовать Pydantic в endpoints
 
@@ -335,7 +335,7 @@ DONE:
 
 ### TASK: orm mode / from_attributes
 
-FILE: src/mko_bi/models/*
+FILE: src/mkobi/models/*
 
 GOAL: совместимость с ORM
 

@@ -4,14 +4,14 @@
 
 ### TASK: Pydantic Settings config
 
-FILE: `src/mko_bi/config.py`
+FILE: `src/mkobi/config.py`
 
 GOAL: Централизованная конфигурация с поддержкой множественных источников (SPEC.md п.6.1)
 
 IMPLEMENT:
 
 * class `Settings(BaseSettings)`:
-  * `app_name: str = "mko_bi"`
+  * `app_name: str = "mkobi"`
   * `environment: EnvironmentEnum`
   * `debug: bool = False`
   * `host: str = "0.0.0.0"`
@@ -56,7 +56,7 @@ DONE:
 
 ### TASK: App YAML config
 
-FILE: `src/mko_bi/settings/app.yaml`
+FILE: `src/mkobi/settings/app.yaml`
 
 GOAL: Нечувствительные настройки (SPEC.md п.6.1)
 
@@ -64,11 +64,11 @@ IMPLEMENT:
 
 ```yaml
 app:
-  name: mko_bi
+  name: mkobi
   version: 1.0.0
 
 upload:
-  temp_dir_prefix: "mko_bi_upload"
+  temp_dir_prefix: "mkobi_upload"
   
 email:
   blocked_domains:
@@ -98,7 +98,7 @@ DONE:
 
 ### TASK: Database session configuration
 
-FILE: `src/mko_bi/db/session.py`
+FILE: `src/mkobi/db/session.py`
 
 GOAL: Async SQLAlchemy session с asyncpg
 
