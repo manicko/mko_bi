@@ -4,11 +4,11 @@ import { RoleBasedAccess } from '../shared/components/RoleBasedAccess'
 import { AppLayout } from '../shared/components/Layout'
 import { LoginForm } from '../features/auth/ui/LoginForm'
 import { RegisterForm } from '../features/auth/ui/RegisterForm'
-import { PlaceholderPage } from '../shared/components/PlaceholderPage'
 import { DashboardList } from '../features/dashboards/ui/DashboardList'
 import { DashboardView } from '../features/dashboards/ui/DashboardView'
 import { UploadPage } from '../features/upload/ui/UploadPage'
 import { AdminPanel } from '../features/admin/ui/AdminPanel'
+import { UserProfile } from '../features/users/ui/UserProfile'
 
 export function AppRoutes() {
   return (
@@ -56,7 +56,7 @@ export function AppRoutes() {
           path="/profile"
           element={
             <ProtectedRoute>
-              <PlaceholderPage title="Profile" />
+              <UserProfile />
             </ProtectedRoute>
           }
         />

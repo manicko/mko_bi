@@ -231,6 +231,53 @@ async def update_user_endpoint(
 
 
 @router.delete(
+    "/me",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Удаление своего аккаунта",
+    description="Удаляет аккаунт текущего пользователя.",
+)
+async def delete_me_endpoint(
+    current_user: CurrentUser,
+    user_service: UserService = Depends(get_user_service),
+) -> None:
+    """Удаляет аккаунт текущего пользователя.
+
+    Args:
+        current_user: Текущий аутентифицированный пользователь.
+        user_service: Сервис пользователей.
+
+    Returns:
+        None: Возвращает пустой ответ с кодом 204.
+
+    Raises:
+        HTTPException 403: Если попытка удалить аккаунт администратора.
+        HTTPException 500: При ошибке базы данных.
+    """
+    logger.info("Удаление своего аккаунта: id=%s", current_user.id)
+
+    try:
+        result = await user_service.delete_user(user_id=current_user.id)
+        if not result:
+            logger.warning("Пользователь не найден для удаления: id=%s", current_user.id)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Пользователь не найден",
+            )
+    except ValueError as e:
+        logger.warning("Ошибка при удалении аккаунта: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=str(e),
+        ) from e
+    except Exception as e:
+        logger.error("Ошибка при удалении аккаунта id=%s: %s", current_user.id, e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Ошибка при удалении аккаунта",
+        ) from e
+
+
+@router.delete(
     "/{user_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Удаление пользователя",

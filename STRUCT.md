@@ -48,6 +48,15 @@ C:\py_dev\mkobi
 │   │   │   ├── react.svg
 │   │   │   └── vite.svg
 │   │   ├── features
+│   │   │   ├── admin
+│   │   │   │   ├── api
+│   │   │   │   │   └── adminApi.ts
+│   │   │   │   └── ui
+│   │   │   │       ├── AdminPanel.tsx
+│   │   │   │       ├── DashboardManagement.tsx
+│   │   │   │       ├── LogViewer.tsx
+│   │   │   │       ├── RegistrationRequests.tsx
+│   │   │   │       └── UserManagement.tsx
 │   │   │   ├── auth
 │   │   │   │   ├── api
 │   │   │   │   │   └── authApi.ts
@@ -74,13 +83,19 @@ C:\py_dev\mkobi
 │   │   │   │       ├── DashboardFilters.tsx
 │   │   │   │       ├── DashboardList.tsx
 │   │   │   │       └── DashboardView.tsx
-│   │   │   └── upload
+│   │   │   ├── upload
+│   │   │   │   ├── api
+│   │   │   │   │   └── uploadApi.ts
+│   │   │   │   ├── index.ts
+│   │   │   │   └── ui
+│   │   │   │       ├── FileDropzone.tsx
+│   │   │   │       └── UploadPage.tsx
+│   │   │   └── users
 │   │   │       ├── api
-│   │   │       │   └── uploadApi.ts
+│   │   │       │   └── userApi.ts
 │   │   │       ├── index.ts
 │   │   │       └── ui
-│   │   │           ├── FileDropzone.tsx
-│   │   │           └── UploadPage.tsx
+│   │   │           └── UserProfile.tsx
 │   │   ├── main.tsx
 │   │   ├── react-plotly.d.ts
 │   │   └── shared
@@ -120,6 +135,7 @@ C:\py_dev\mkobi
 │       ├── api
 │       │   ├── deps.py
 │       │   └── routes
+│       │       ├── admin.py
 │       │       ├── auth.py
 │       │       ├── dashboards.py
 │       │       ├── data.py
@@ -257,47 +273,29 @@ C:\py_dev\mkobi
 │   ├── test_share_calculation.py
 │   ├── test_storage_manager.py
 │   ├── test_upload_api.py
+│   ├── test_users_api.py
 │   └── test_yoy_calculation.py
 ├── TODO
 │   ├── AUDIT
 │   │   ├── TASK_001_db_structure_audit.md
 │   │   ├── TASK_001_db_structure_module_dev.md
 │   │   ├── TASK_031_audit.md
-│   │   ├── TASK_031_audit_report_01.md
-│   │   ├── TASK_031_audit_report_02.md
+│   │   ├── TASK_031_audit_full.md
 │   │   ├── TASK_034_audit_old.md
 │   │   ├── TASK_037_test_audit.md
 │   │   ├── TASK_037_test_audit1.md
 │   │   ├── TASK_038_docker_audit.md
+│   │   ├── TASK_050_architecture_audit.md
 │   │   └── TEST_036_test_audit_arch.md
 │   ├── DEV
-│   │   ├── 001_database_models_DONE.md
-│   │   ├── 002_configuration_DONE.md
-│   │   ├── 003_authentication_DONE.md
-│   │   ├── 004_core_infrastructure_DONE.md
-│   │   ├── 005_data_upload_DONE.md
-│   │   ├── 006_data_processing_DONE.md
-│   │   ├── 007_data_storage_DONE.md
-│   │   ├── 008_dashboard_management_DONE.md
-│   │   ├── 009_data_api_DONE.md
-│   │   ├── 010_user_management_DONE.md
-│   │   ├── 011_processing_logs_DONE.md
-│   │   ├── 012_frontend_foundation_DONE.md
-│   │   ├── 013_frontend_auth_DONE.md
-│   │   ├── 014_frontend_dashboards_DONE.md
-│   │   ├── 015_frontend_upload_DONE.md
-│   │   ├── 016_frontend_admin.md
-│   │   ├── 017_frontend_profile.md
-│   │   ├── 018_testing_DONE.md
-│   │   ├── 019_deployment_DONE.md
-│   │   ├── 020_env_var_nested_mapping_DONE.md
-│   │   ├── 020_fix_remaining_tests_DONE.md
 │   │   └── DOCKER_PLAN.md
-│   ├── DEV_PLAN.md
-│   └── DONE
-│       ├── TASK_001_sync_async_unification.md
-│       ├── TASK_014_dash_modern_component_architecture_DONE.md
-│       ├── TASK_051_di_and_interfaces.md
-│       ├── TASK_052_secrets_management_DONE.md
-│       └── TASK_DB_REPRODUCER_MAIN.md
+│   ├── DONE
+│   │   ├── TASK_001_sync_async_unification.md
+│   │   ├── TASK_014_dash_modern_component_architecture_DONE.md
+│   │   ├── TASK_051_di_and_interfaces.md
+│   │   ├── TASK_052_secrets_management_DONE.md
+│   │   └── TASK_DB_REPRODUCER_MAIN.md
+│   ├── TASK_01_analysis_report.md
+│   ├── TASK_02_analysis_report.md
+│   └── TASK_03_analysis_report.md
 └── uv.lock
