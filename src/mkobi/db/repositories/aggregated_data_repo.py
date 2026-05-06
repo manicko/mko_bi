@@ -135,6 +135,52 @@ class AggregatedDataRepository:
             raise
     
     @classmethod
+    async def get_by_graph_with_filters(
+        cls,
+        graph_id: UUID,
+        db: AsyncSession,
+        filters: list[Any] | None = None,
+    ) -> list[aggregated_data_model.AggregatedData]:
+        """Получить агрегированные данные для графика с условиями фильтрации.
+
+        Args:
+            graph_id: Идентификатор графика (UUID).
+            db: Асинхронная сессия базы данных.
+            filters: Список SQLAlchemy условий фильтрации.
+
+        Returns:
+            Список точек данных для графика.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
+        """
+        try:
+            query = select(aggregated_data_model.AggregatedData).where(
+                aggregated_data_model.AggregatedData.graph_id == graph_id
+            )
+
+            # Применение условий фильтрации
+            if filters:
+                for condition in filters:
+                    query = query.where(condition)
+
+            result = await db.execute(query)
+            data = list(result.scalars().all())
+            logger.info(
+                "Получены данные с фильтрами для graph_id=%s, count=%s",
+                graph_id,
+                len(data),
+            )
+            return data
+        except SQLAlchemyError as e:
+            logger.error(
+                "Ошибка при получении данных graph_id=%s: %s",
+                graph_id,
+                e,
+            )
+            raise
+
+    @classmethod
     async def get_by_graph_id(
         cls,
         graph_id: UUID,

@@ -104,7 +104,7 @@ class DashboardFilterRepository:
                     dashboard_filters.c.filter_id == filter_id,
                 )
             )
-            if result.rowcount == 0:
+            if result.rowcount == 0:  # type: ignore[attr-defined]
                 logger.warning(
                     "Filter binding not found: dashboard_id=%s, filter_id=%s",
                     dashboard_id,

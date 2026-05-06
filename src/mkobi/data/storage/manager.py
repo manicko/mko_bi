@@ -359,13 +359,13 @@ class StorageManager:
         """
         from mkobi.db.models.aggregated_data import AggregatedData
         
-        result: Result[Any] = await self.db.execute(
+        result = await self.db.execute(
             delete(AggregatedData).where(
                 AggregatedData.dashboard_id == dashboard_id
             )
         )
         # В SQLAlchemy 2.0 rowcount может быть None для некоторых операций
-        return result.rowcount if result.rowcount is not None else 0  # type: ignore[attr-defined]
+        return result.rowcount if hasattr(result, 'rowcount') and result.rowcount is not None else 0
 
     async def _batch_insert_aggregates(
         self,
@@ -646,7 +646,7 @@ class StorageManager:
                     AggregatedData.dashboard_id == dashboard_id
                 )
             )
-            deleted = result.rowcount if result.rowcount is not None else 0
+            deleted = result.rowcount if hasattr(result, 'rowcount') and result.rowcount is not None else 0
             logger.info(
                 "Удалено %d записей для dashboard_id=%s",
                 deleted,
@@ -682,7 +682,7 @@ class StorageManager:
                 AggregatedData.graph_id == graph_id
             )
         )
-        return result.rowcount if result.rowcount is not None else 0
+        return result.rowcount if hasattr(result, 'rowcount') and result.rowcount is not None else 0
 
     @classmethod
     async def _bulk_insert_internal(

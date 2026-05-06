@@ -15,6 +15,7 @@ from mkobi.api.deps import (
     require_admin_role,
     CurrentUser,
 )
+from mkobi.models.enums import UserRole
 from mkobi.models.user import UserRead
 from mkobi.services.user_service import UserService
 
@@ -34,7 +35,7 @@ router = APIRouter(prefix="/users", tags=["users"])
 async def create_user_endpoint(
     email: str,
     password: str,
-    role: str,
+    role: UserRole,
     user_service: UserService = Depends(get_user_service),
 ) -> UserRead:
     """Создает нового пользователя в системе.
@@ -58,7 +59,7 @@ async def create_user_endpoint(
 
     try:
         user_data = await user_service.create_user(email=email, password=password, role=role)
-        return UserRead(**user_data)
+        return user_data
     except ValueError as e:
         logger.warning("Ошибка валидации при создании пользователя: %s", e)
         raise HTTPException(
@@ -99,7 +100,7 @@ async def get_users_endpoint(
     logger.info("Получение списка всех пользователей")
 
     try:
-        users_data = await user_service.list_users()
+        users_data = await user_service.get_all_users()
         return [UserRead(**user) for user in users_data]
     except Exception as e:
         logger.error("Ошибка при получении списка пользователей: %s", e)
@@ -142,7 +143,7 @@ async def get_user_endpoint(
     logger.info("Получение пользователя: id=%s, requester_id=%s", user_id, current_user.id)
 
     # Проверка прав: пользователь может получить только свои данные, админ - любые
-    if current_user.role != "admin" and str(current_user.id) != str(user_id):
+    if current_user.role != UserRole.ADMIN and str(current_user.id) != str(user_id):
         logger.warning(
             "Попытка получить чужие данные: requester_id=%s, target_id=%s",
             current_user.id,
@@ -182,7 +183,7 @@ async def get_user_endpoint(
 )
 async def update_user_endpoint(
     user_id: UUID,
-    new_role: str,
+    new_role: UserRole,
     user_service: UserService = Depends(get_user_service),
 ) -> UserRead:
     """обновляет роль пользователя.
@@ -212,7 +213,7 @@ async def update_user_endpoint(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Пользователь не найден",
             )
-        return UserRead(**updated)
+        return updated
     except ValueError as e:
         logger.warning("Ошибка валидации при обновлении пользователя: %s", e)
         raise HTTPException(

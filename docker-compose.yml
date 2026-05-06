@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: bidb
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DATABASE__PASSWORD:-1234}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      ENV: production
+      DATABASE__HOST: db
+      DATABASE__PORT: 5432
+      DATABASE__USER: postgres
+      DATABASE__PASSWORD: ${DATABASE__PASSWORD:-1234}
+      DATABASE__DBNAME: bidb
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-change-me-in-production}
+      JWT__ALGORITHM: HS256
+      UPLOAD__TEMP_DIR: /app/data/tmp_uploads
+      LOGGING__LOG_FILE: /app/data/logs/app.log
+      CORS_ORIGINS: '["http://localhost"]'
+      LOGGING__LEVEL: INFO
+      AUTO_MIGRATE: "true"
+    ports:
+      - "8000:8000"
+    volumes:
+      - app_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  app_data:

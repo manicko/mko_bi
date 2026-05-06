@@ -2,14 +2,12 @@
 
 import pytest
 import polars as pl
-from uuid import uuid4
 
 from mkobi.data.processing.registry import DataPipeline
 from mkobi.data.processing.transformations import (
     apply_transformations,
     aggregate_data,
 )
-from mkobi.models.enums import UploadMode, ProcessingStatus
 
 
 class TestDataPipeline:

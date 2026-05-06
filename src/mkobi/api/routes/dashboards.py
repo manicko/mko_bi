@@ -26,6 +26,7 @@ from mkobi.models.dashboard import (
     DashboardUpdate,
 )
 from mkobi.models.access import AccessGrant
+from mkobi.models.graph import GraphCreate, GraphRead
 from mkobi.services.dashboard_service import (
     create_dashboard,
     get_dashboard,
@@ -49,7 +50,8 @@ router = APIRouter(prefix="/dashboards", tags=["dashboards"])
     response_model=DashboardRead,
     status_code=status.HTTP_201_CREATED,
     summary="Создание дашборда",
-    description="Создает новый дашборд. Текущий пользователь становится владельцем.",
+    description="Создает новый дашборд. Доступно только администраторам.",
+    dependencies=[Depends(require_admin_role)],
 )
 async def create_dashboard_endpoint(
     dashboard_data: DashboardCreate,
@@ -119,13 +121,13 @@ async def create_dashboard_endpoint(
 
 
 @router.get(
-    "/",
+    "/my",
     response_model=list[DashboardRead],
     status_code=status.HTTP_200_OK,
-    summary="Список доступных дашбордов",
-    description="Возвращает список всех дашбордов, доступных текущему пользователю.",
+    summary="Список дашбордов пользователя",
+    description="Возвращает список дашбордов, доступных текущему пользователю.",
 )
-async def get_dashboards_endpoint(
+async def get_my_dashboards_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
 ) -> list[DashboardRead]:
@@ -153,7 +155,7 @@ async def get_dashboards_endpoint(
             current_user.id,
             len(dashboards),
         )
-        return dashboards
+        return dashboards  # type: ignore[no-any-return]
     except Exception as e:
         logger.error(
             "Ошибка при получении списка дашбордов для пользователя id=%s: %s",
@@ -256,8 +258,8 @@ async def get_dashboard_endpoint(
     response_model=DashboardRead,
     status_code=status.HTTP_200_OK,
     summary="Обновление дашборда",
-    description="Обновляет конфигурацию дашборда. Доступно только владельцу.",
-    dependencies=[Depends(require_viewer_role)],
+    description="Обновляет конфигурацию дашборда. Доступно только администраторам.",
+    dependencies=[Depends(require_admin_role)],
 )
 async def update_dashboard_endpoint(
     dashboard_id: UUID,
@@ -342,8 +344,8 @@ async def update_dashboard_endpoint(
     "/{dashboard_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Удаление дашборда",
-    description="Удаляет дашборд. Доступно только владельцу.",
-    dependencies=[Depends(require_viewer_role)],
+    description="Удаляет дашборд. Доступно только администраторам.",
+    dependencies=[Depends(require_admin_role)],
 )
 async def delete_dashboard_endpoint(
     dashboard_id: UUID,
@@ -419,7 +421,7 @@ async def grant_dashboard_access_endpoint(
     access_grant: AccessGrant,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
-) -> dict:
+) -> dict[str, Any]:
     """Предоставляет пользователю доступ к дашборду.
 
     Доступно только владельцу дашборда (пользователю с правами admin).
@@ -538,7 +540,7 @@ async def bind_filter_endpoint(
     filter_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
-) -> dict:
+) -> dict[str, Any]:
     """Bind a filter to a dashboard."""
     logger.info("Binding filter to dashboard: dashboard_id=%s, filter_id=%s", dashboard_id, filter_id)
     try:
@@ -568,7 +570,7 @@ async def unbind_filter_endpoint(
     filter_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
-) -> dict:
+) -> dict[str, Any]:
     """Unbind a filter from a dashboard."""
     logger.info("Unbinding filter from dashboard: dashboard_id=%s, filter_id=%s", dashboard_id, filter_id)
     try:
@@ -587,7 +589,7 @@ async def unbind_filter_endpoint(
 
 @router.get(
     "/{dashboard_id}/filters",
-    response_model=list[dict],
+    response_model=list[dict[str, Any]],
     status_code=status.HTTP_200_OK,
     summary="List dashboard filters",
     description="Returns all filters bound to a dashboard.",
@@ -596,7 +598,7 @@ async def get_dashboard_filters_endpoint(
     dashboard_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Get all filters bound to a dashboard."""
     logger.info("Getting filters for dashboard: dashboard_id=%s", dashboard_id)
     try:
@@ -613,7 +615,7 @@ async def get_dashboard_filters_endpoint(
 
 @router.get(
     "/{dashboard_id}/access",
-    response_model=list[dict],
+    response_model=list[dict[str, Any]],
     status_code=status.HTTP_200_OK,
     summary="List dashboard access",
     description="Returns all access records for a dashboard. Requires admin role.",
@@ -630,7 +632,7 @@ async def get_dashboard_access_endpoint(
         access_list = await get_dashboard_access_list(
             dashboard_id=dashboard_id, db=db
         )
-        return access_list
+        return access_list  # type: ignore[no-any-return]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -662,3 +664,114 @@ async def revoke_dashboard_access_endpoint(
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+# --- Dashboard graph endpoints ---
+
+
+@router.post(
+    "/{dashboard_id}/graphs",
+    response_model=GraphRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a new graph for a dashboard",
+    description="Creates a new graph for a specific dashboard. Requires admin role.",
+    dependencies=[Depends(require_admin_role)],
+)
+async def create_dashboard_graph_endpoint(
+    dashboard_id: UUID,
+    graph: GraphCreate,
+    current_user: CurrentUser,
+    db: AsyncSession = Depends(get_db_dependency),
+) -> GraphRead:
+    """Create a new graph for a dashboard.
+
+    Args:
+        dashboard_id: Dashboard ID.
+        graph: Model with data for creating the graph.
+        current_user: Current authenticated user.
+        db: Database session.
+
+    Returns:
+        GraphRead: Model of the created graph.
+
+    Raises:
+        HTTPException 404: If dashboard not found.
+        HTTPException 422: If data validation failed.
+        HTTPException 500: On database error.
+    """
+    from mkobi.db.repositories.graph_repo import GraphRepository
+
+    logger.info(
+        "Creating graph for dashboard: name=%s, dashboard_id=%s, user_id=%s",
+        graph.name,
+        dashboard_id,
+        current_user.id,
+    )
+
+    try:
+        result = await GraphRepository.create(
+            db=db,
+            name=graph.name,
+            type=graph.type,
+            dashboard_id=dashboard_id,
+            config=graph.config,
+            dimensions=graph.dimensions,
+            metrics=graph.metrics,
+        )
+        await db.commit()
+        return GraphRead.model_validate(result)
+    except ValueError as e:
+        logger.warning("Validation error creating graph: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from e
+    except Exception as e:
+        await db.rollback()
+        logger.error("Error creating graph name=%s: %s", graph.name, e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error creating graph",
+        ) from e
+
+
+@router.get(
+    "/{dashboard_id}/graphs",
+    response_model=list[GraphRead],
+    status_code=status.HTTP_200_OK,
+    summary="List graphs for a dashboard",
+    description="Returns a list of all graphs for a specific dashboard.",
+)
+async def get_dashboard_graphs_endpoint(
+    dashboard_id: UUID,
+    current_user: CurrentUser,
+    db: AsyncSession = Depends(get_db_dependency),
+) -> list[GraphRead]:
+    """Get all graphs for a dashboard.
+
+    Args:
+        dashboard_id: Dashboard ID.
+        current_user: Current authenticated user.
+        db: Database session.
+
+    Returns:
+        list[GraphRead]: List of graph models.
+
+    Raises:
+        HTTPException 500: On database error.
+    """
+    from mkobi.db.repositories.graph_repo import GraphRepository
+
+    logger.info("Getting graphs for dashboard: dashboard_id=%s", dashboard_id)
+
+    try:
+        graphs = await GraphRepository.get_by_dashboard(
+            dashboard_id=dashboard_id, db=db
+        )
+        return [GraphRead.model_validate(g) for g in graphs]
+    except Exception as e:
+        logger.error("Error getting graphs for dashboard %s: %s", dashboard_id, e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error getting graphs",
+        ) from e

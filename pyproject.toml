@@ -153,7 +153,7 @@ python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
-follow_imports = "silent"
+follow_imports = "skip"
 strict_optional = true
 warn_redundant_casts = true
 warn_unused_ignores = true
@@ -162,11 +162,16 @@ check_untyped_defs = true
 no_implicit_reexport = true
 ignore_missing_imports = true
 namespace_packages = false
-mypy_path = "src"
+# mypy_path removed - causes conflicts
+explicit_package_bases = false
+
+[[tool.mypy.overrides]]
+module = ["db.*"]
+ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = ["mkobi.*"]
-ignore_missing_imports = true
+ignore_missing_imports = false
 
 [[tool.mypy.overrides]]
 module = ["mkobi.utils.decorators"]
@@ -180,19 +185,29 @@ ignore_errors = true
 module = ["mkobi.interfaces.*"]
 ignore_errors = true
 
+[[tool.mypy.overrides]]
+module = ["alembic.*"]
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+path = "tests"
+ignore_errors = true
+
 
 [tool.pytest.ini_options]
 minversion = "8.0"
-python_files = ["tests.py", "test_*.py"]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
 addopts = [
     "--import-mode=importlib",
     "-ra",
     "-v",
-    "--strict-markers",
-    "--asyncio-mode=auto"
+    "--strict-markers"
 ]
 console_output_style = "classic"
-testpaths = ["tests"]
 pythonpath = ["src"]
 # register custom markers to avoid PytestUnknownMarkWarning
 markers = [
@@ -201,6 +216,14 @@ markers = [
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
 
+[tool.coverage.run]
+source = ["src/mkobi"]
+omit = ["*/tests/*", "*/migrations/*"]
+
+[tool.coverage.report]
+fail_under = 80
+show_missing = true
+
 [dependency-groups]
 dev = [
     "black>=26.1.0",
@@ -208,6 +231,7 @@ dev = [
     "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",
     "pytest-mock>=3.15.1",
+    "pytest-cov>=5.0.0",
     "ruff>=0.15.1",
     "pandas-stubs==3.0.0.260204",
     "mypy>=1.10.0",

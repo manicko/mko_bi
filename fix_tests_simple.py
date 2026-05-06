@@ -4,7 +4,7 @@ import os
 
 def fix_test_file(filepath):
     """Fix a test file by removing config={} and updating enum usages."""
-    with open(filepath, 'r', encoding='utf-8') as f:
+    with open(filepath, encoding='utf-8') as f:
         content = f.read()
     
     # Remove config={} from Dashboard creations
@@ -67,7 +67,7 @@ def fix_test_file(filepath):
 
 # Find all test files
 test_dir = 'tests'
-for root, dirs, files in os.walk(test_dir):
+for root, _dirs, files in os.walk(test_dir):
     for file in files:
         if file.endswith('.py'):
             filepath = os.path.join(root, file)

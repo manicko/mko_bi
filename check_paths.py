@@ -8,6 +8,6 @@ for d in os.listdir(src_path):
         # Check if data/processing exists
         data_path = os.path.join(full_path, 'data', 'processing')
         if os.path.exists(data_path):
-            print(f"  data/processing exists!")
+            print("  data/processing exists!")
             for f in os.listdir(data_path):
                 print(f"    {f}")

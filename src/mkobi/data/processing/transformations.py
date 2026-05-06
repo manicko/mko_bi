@@ -11,7 +11,7 @@ from typing import Any
 
 import polars as pl
 
-from mkobi.models.user_roles import AggregationFunctionEnum
+from mkobi.models.enums import AggregationFunctionEnum
 
 logger = logging.getLogger(__name__)
 

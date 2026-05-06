@@ -63,7 +63,7 @@ async def login(
     logger.info("Попытка входа пользователя: %s", login_data.email)
 
     try:
-        token_data = auth_service.login_user(
+        token_data = await auth_service.login_user(
             login_data.email, login_data.password
         )
     except ValueError as e:
@@ -160,7 +160,7 @@ async def register(
     logger.info("Попытка регистрации пользователя: %s", register_data.email)
 
     try:
-        user = auth_service.register_user(
+        user = await auth_service.register_user(
             email=register_data.email,
             password=register_data.password,
             role=register_data.role,
@@ -246,7 +246,7 @@ async def refresh(
         )
 
     try:
-        token_data = auth_service.refresh_token(user_id, email, role)
+        token_data = await auth_service.refresh_token(user_id, email, role)
     except ValueError as e:
         logger.warning("Пользователь не найден при обновлении токена: %s", user_id)
         raise HTTPException(
@@ -331,7 +331,7 @@ async def register_request(
     )
 
     try:
-        result = auth_service.register_request(
+        result = await auth_service.register_request(
             email=request_data.email,
             ip=client_ip,
         )

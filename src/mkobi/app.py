@@ -10,7 +10,8 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse, Response
+from fastapi.staticfiles import StaticFiles
 from asgiref.wsgi import WsgiToAsgi
 from pydantic import ValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -93,6 +94,9 @@ def create_app() -> FastAPI:
     asgi_dash = WsgiToAsgi(dash_app.server)
     application.mount("/dashboards", asgi_dash)
 
+    # Настройка раздачи статических файлов React SPA (после всех API роутов)
+    _setup_static_files(application)
+
     # Корневой эндпоинт
     @application.get("/", tags=["health"])
     async def root() -> dict[str, str | int]:
@@ -145,3 +149,40 @@ def create_app() -> FastAPI:
         )
 
     return application
+
+
+def _setup_static_files(application: FastAPI) -> None:
+    """Настраивает раздачу статических файлов React SPA.
+
+    Монтирует статические файлы из frontend/dist и настраивает
+    SPA fallback для всех не-API роутов.
+    """
+    import os
+
+    static_dir = "frontend/dist"
+
+    # Проверяем существование директории со сборкой React
+    if os.path.isdir(static_dir):
+        logger.info(f"Mounting static files from {static_dir}")
+        application.mount(
+            "/",
+            StaticFiles(directory=static_dir, html=True),
+            name="static",
+        )
+    else:
+        logger.warning(
+            f"Static directory '{static_dir}' not found. "
+            "React SPA will not be served. Run 'cd frontend && npm run build' first."
+        )
+
+        # Fallback: SPA routing для разработки или если сборка не найдена
+        @application.get("/{full_path:path}", include_in_schema=False)
+        async def serve_spa(full_path: str) -> Response:
+            """SPA fallback - возвращает index.html для всех не-API роутов."""
+            index_path = os.path.join(static_dir, "index.html")
+            if os.path.exists(index_path):
+                return FileResponse(index_path)
+            return JSONResponse(
+                status_code=404,
+                content={"detail": "React SPA not built. Run 'cd frontend && npm run build'"},
+            )

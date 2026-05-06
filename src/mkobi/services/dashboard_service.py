@@ -162,20 +162,20 @@ async def create_dashboard(
     права администратора (admin) на управление дашбордом. 
     Операция выполняется в транзакции: если предоставление прав 
     доступа завершается ошибкой, создание дашборда откатывается. 
-
+    
     Args:
         name: Название дашборда. 
         config: Конфигурация дашборда в формате JSON-совместимого dict. 
         owner_id: Идентификатор пользователя-владельца. 
         db: Опциональная сессия базы данных. Если не передана, создается новая. 
-
+        
     Returns:
         DashboardRead: Модель созданного дашборда. 
-
+        
     Raises:
         ValueError: Если конфигурация некорректна. 
         SQLAlchemyError: При ошибке базы данных. 
-
+        
     Example:
         >>> dashboard = create_dashboard(
         ...     name="Sales Dashboard",
@@ -209,6 +209,7 @@ async def _create_dashboard_with_session(
             db=db,
             name=name,
             config=json.dumps(config_obj.model_dump()),
+            created_by=owner_id,
         )
         logger.info(
             "Дашборд создан: id=%s, name=%s", dashboard_obj.id, dashboard_obj.name

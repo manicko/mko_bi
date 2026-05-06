@@ -861,6 +861,293 @@ async def get_chart_data(
     }
 
 
+def format_for_plotly(graph_config: dict[str, Any], data: list[dict[str, Any]]) -> dict[str, Any]:
+    """Format aggregated data for Plotly.js React.
+
+    Converts database format (dims JSONB, metrics JSONB) to Plotly format
+    based on graph type.
+
+    Args:
+        graph_config: Graph configuration containing 'type' and optional settings.
+            Supported types: 'bar', 'line', 'pie', 'table'
+        data: List of aggregated data records with 'dims' and 'metrics' keys.
+
+    Returns:
+        dict: Plotly-formatted data:
+            - Bar: {x: [], y: [], type: 'bar'}
+            - Line: {x: [], y: [], type: 'scatter', mode: 'lines+markers'}
+            - Pie: {labels: [], values: [], type: 'pie'}
+            - Table: {columns: [], data: []}
+
+    Raises:
+        ValueError: If graph type is not supported.
+    """
+    graph_type = graph_config.get("type", "bar")
+    logger.debug("Formatting data for Plotly: type=%s, records=%d", graph_type, len(data))
+
+    if graph_type == "bar":
+        x_values = []
+        y_values = []
+        metric_key = _get_metric_key(graph_config, data)
+        dim_key = _get_dim_key(graph_config, data)
+
+        for item in data:
+            dims = item.get("dims", {})
+            metrics = item.get("metrics", {})
+            if dim_key in dims and metric_key in metrics:
+                x_values.append(dims[dim_key])
+                y_values.append(metrics[metric_key])
+
+        return {"x": x_values, "y": y_values, "type": "bar"}
+
+    elif graph_type == "line":
+        x_values = []
+        y_values = []
+        metric_key = _get_metric_key(graph_config, data)
+        dim_key = _get_dim_key(graph_config, data)
+
+        for item in data:
+            dims = item.get("dims", {})
+            metrics = item.get("metrics", {})
+            if dim_key in dims and metric_key in metrics:
+                x_values.append(dims[dim_key])
+                y_values.append(metrics[metric_key])
+
+        return {
+            "x": x_values,
+            "y": y_values,
+            "type": "scatter",
+            "mode": "lines+markers",
+        }
+
+    elif graph_type == "pie":
+        labels = []
+        values = []
+        metric_key = _get_metric_key(graph_config, data)
+        dim_key = _get_dim_key(graph_config, data)
+
+        for item in data:
+            dims = item.get("dims", {})
+            metrics = item.get("metrics", {})
+            if dim_key in dims and metric_key in metrics:
+                labels.append(dims[dim_key])
+                values.append(metrics[metric_key])
+
+        return {"labels": labels, "values": values, "type": "pie"}
+
+    elif graph_type == "table":
+        columns = []
+        table_data = []
+
+        if data:
+            first_item = data[0]
+            columns = list(first_item.get("dims", {}).keys()) + list(
+                first_item.get("metrics", {}).keys()
+            )
+            for item in data:
+                row = {**item.get("dims", {}), **item.get("metrics", {})}
+                table_data.append(row)
+
+        return {"columns": columns, "data": table_data}
+
+    else:
+        logger.error("Unsupported graph type: %s", graph_type)
+        raise ValueError(f"Unsupported graph type: {graph_type}")
+
+
+def _get_dim_key(graph_config: dict[str, Any], data: list[dict[str, Any]]) -> str:
+    """Extract dimension key from graph config or data.
+
+    Args:
+        graph_config: Graph configuration.
+        data: Aggregated data.
+
+    Returns:
+        str: Dimension key name.
+    """
+    dimensions: list[str] = graph_config.get("dimensions", [])
+    if dimensions:
+        return str(dimensions[0])
+    if data and "dims" in data[0]:
+        return str(next(iter(data[0]["dims"]), "category"))
+    return "category"
+
+
+def _get_metric_key(graph_config: dict[str, Any], data: list[dict[str, Any]]) -> str:
+    """Extract metric key from graph config or data.
+
+    Args:
+        graph_config: Graph configuration.
+        data: Aggregated data.
+
+    Returns:
+        str: Metric key name.
+    """
+    metrics: list[str] = graph_config.get("metrics", [])
+    if metrics:
+        return str(metrics[0])
+    if data and "metrics" in data[0]:
+        return str(next(iter(data[0]["metrics"]), "value"))
+    return "value"
+
+
+def apply_filters_to_dims(data: list[dict[str, Any]], filters: dict[str, Any]) -> list[dict[str, Any]]:
+    """Filter data by JSONB dims field.
+
+    Supports multiple values for filters (OR logic within same filter key).
+
+    Args:
+        data: List of aggregated data records with 'dims' field.
+        filters: Dictionary of filters {field: value} or {field: [values]}.
+
+    Returns:
+        list[dict]: Filtered data.
+    """
+    if not filters:
+        return data
+
+    logger.debug("Applying filters to dims: filters=%s", filters)
+    filtered = []
+
+    for item in data:
+        dims = item.get("dims", {})
+        match = True
+
+        for key, filter_value in filters.items():
+            if key not in dims:
+                match = False
+                break
+
+            if isinstance(filter_value, list):
+                if dims[key] not in filter_value:
+                    match = False
+                    break
+            else:
+                if dims[key] != filter_value:
+                    match = False
+                    break
+
+        if match:
+            filtered.append(item)
+
+    logger.info("Filters applied: %d -> %d records", len(data), len(filtered))
+    return filtered
+
+
+def build_filter_conditions(filters: dict[str, Any]) -> list[Any]:
+    """Build SQLAlchemy filter conditions for JSONB filtering.
+
+    Uses SQLAlchemy for JSONB filtering with AggregatedData.dims.op('->>')(key) == value.
+
+    Args:
+        filters: Dictionary of filters {field: value} or {field: [values]}.
+
+    Returns:
+        list: List of SQLAlchemy ClauseElement conditions.
+
+    Raises:
+        ImportError: If SQLAlchemy is not available.
+    """
+    from sqlalchemy import or_
+    from mkobi.db.models.aggregated_data import AggregatedData
+
+    conditions: list[Any] = []
+    if not filters:
+        return conditions
+
+    logger.debug("Building filter conditions: filters=%s", filters)
+
+    for key, value in filters.items():
+        if isinstance(value, list):
+            from sqlalchemy import or_
+            or_conditions = [
+                AggregatedData.dims.op('->>')(key) == str(v) for v in value
+            ]
+            conditions.append(or_(*or_conditions))
+        else:
+            conditions.append(AggregatedData.dims.op('->>')(key) == str(value))
+
+    return conditions
+
+
+async def get_filtered_data(
+    dashboard_id: UUID,
+    filters: dict[str, Any],
+    db: AsyncSession,
+) -> dict[str, Any]:
+    """Get filtered data for dashboard with Plotly formatting.
+
+    Loads all dashboard graphs, loads aggregated_data for each,
+    applies filters to dims field, and formats for React.
+
+    Args:
+        dashboard_id: Dashboard ID.
+        filters: Dictionary of filters to apply.
+        db: Async database session.
+
+    Returns:
+        dict: Formatted data for React with Plotly format.
+
+    Raises:
+        ValueError: If dashboard not found or no graphs.
+    """
+    from mkobi.db.repositories.graph_repo import GraphRepository
+    from mkobi.db.repositories.aggregated_data_repo import AggregatedDataRepository
+
+    logger.info(
+        "Getting filtered data: dashboard_id=%s, filters=%s", dashboard_id, filters
+    )
+
+    # Load all graphs for dashboard
+    graphs = await GraphRepository.get_by_dashboard(dashboard_id, db)
+    if not graphs:
+        logger.warning("No graphs found for dashboard: %s", dashboard_id)
+        return {"dashboard_id": str(dashboard_id), "charts": []}
+
+    # Build filter conditions for SQL query
+    filter_conditions = build_filter_conditions(filters)
+
+    charts = []
+    for graph in graphs:
+        # Load aggregated data for this graph
+        if filter_conditions:
+            aggregates = await AggregatedDataRepository.get_by_graph_with_filters(
+                graph_id=graph.id, db=db, filters=filter_conditions
+            )
+        else:
+            aggregates = await AggregatedDataRepository.get_by_graph(graph.id, db)
+
+        # Convert to format expected by format_for_plotly
+        graph_data = [
+            {"dims": agg.dims, "metrics": agg.metrics} for agg in aggregates
+        ]
+
+        # Format for Plotly
+        graph_config = {
+            "type": graph.type,
+            "dimensions": graph.dimensions,
+            "metrics": graph.metrics,
+            "config": graph.config,
+        }
+        plotly_data = format_for_plotly(graph_config, graph_data)
+
+        charts.append(
+            {
+                "graph_id": str(graph.id),
+                "name": graph.name,
+                "type": graph.type,
+                "data": plotly_data,
+            }
+        )
+
+    logger.info(
+        "Filtered data retrieved: dashboard_id=%s, charts=%d",
+        dashboard_id,
+        len(charts),
+    )
+    return {"dashboard_id": str(dashboard_id), "charts": charts}
+
+
 async def apply_data_filters(
     dashboard_id: UUID,
     filters: list[dict[str, Any]],

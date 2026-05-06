@@ -2,21 +2,21 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, EmailStr
 from uuid import UUID
 
-from mkobi.models.user_roles import UserRoleEnum
+from mkobi.models.enums import UserRole
 
 
 class UserBase(BaseModel):
     """Базовая модель пользователя."""
 
     email: EmailStr
-    role: UserRoleEnum
+    role: UserRole
 
     model_config = ConfigDict(
         from_attributes=True,
         json_schema_extra={
             "example": {
                 "email": "user@example.com",
-                "role": UserRoleEnum.VIEWER,
+                "role": UserRole.VIEWER,
             }
         },
     )
@@ -33,7 +33,7 @@ class UserCreate(UserBase):
             "example": {
                 "email": "user@example.com",
                 "password": "secure_password123",
-                "role": UserRoleEnum.VIEWER,
+                "role": UserRole.VIEWER,
             }
         },
     )
@@ -51,7 +51,7 @@ class UserRead(UserBase):
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "email": "user@example.com",
-                "role": UserRoleEnum.VIEWER,
+                "role": UserRole.VIEWER,
                 "created_at": "2026-04-24T16:02:46+03:00",
             }
         },
@@ -72,7 +72,7 @@ class UserDB(UserBase):
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "email": "user@example.com",
                 "password_hash": "$2b$12$examplehash",
-                "role": UserRoleEnum.VIEWER,
+                "role": UserRole.VIEWER,
                 "created_at": "2026-04-24T16:02:46+03:00",
             }
         },
@@ -83,7 +83,7 @@ class UserUpdate(BaseModel):
     """Модель для обновления пользователя."""
 
     email: EmailStr | None = None
-    role: UserRoleEnum | None = None
+    role: UserRole | None = None
     password: str | None = None
 
     model_config = ConfigDict(
@@ -91,7 +91,7 @@ class UserUpdate(BaseModel):
         json_schema_extra={
             "example": {
                 "email": "newemail@example.com",
-                "role": UserRoleEnum.EDITOR,
+                "role": UserRole.EDITOR,
                 "password": "new_secure_password",
             }
         },

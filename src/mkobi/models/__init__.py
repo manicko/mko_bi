@@ -39,7 +39,6 @@ from mkobi.models.processing_configs import (
     ProcessingConfigUpdate,
 )
 from mkobi.models.processing_logs import (
-    ProcessingLogBase,
     ProcessingLogCreate,
     ProcessingLogRead,
     ProcessingLogUpdate,
@@ -56,7 +55,6 @@ from mkobi.models.enums import (
     DashboardPermission,
     FilterType,
     GraphType,
-    ProcessingStatusEnum,
     RegistrationStatus,
     UploadMode,
     UserRole,

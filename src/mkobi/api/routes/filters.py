@@ -226,8 +226,8 @@ async def get_filter_endpoint(
     response_model=FilterRead,
     status_code=status.HTTP_200_OK,
     summary="Обновление фильтра",
-    description="Обновляет данные фильтра. Доступно editor и admin.",
-    dependencies=[Depends(require_editor_role)],
+    description="Обновляет данные фильтра. Доступно только администраторам.",
+    dependencies=[Depends(require_admin_role)],
 )
 async def update_filter_endpoint(
     filter_id: UUID,

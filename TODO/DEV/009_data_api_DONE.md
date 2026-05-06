@@ -28,9 +28,9 @@ LOGIC:
 
 DONE:
 
-* [ ] Форматирование работает для всех типов графиков
-* [ ] Filters применяются
-* [ ] Тесты написаны
+* [x] Форматирование работает для всех типов графиков
+* [x] Filters применяются
+* [x] Тесты написаны
 
 ---
 
@@ -47,7 +47,7 @@ IMPLEMENT:
   * Для каждого графика: загрузка aggregated_data
   * Применение фильтров к dims полю
   * Форматирование для React
-* `def build_filter_conditions(filters: dict) -> list[sqlalchemy.ClauseElement]`:
+* `def build_filter_conditions(filters: dict) -> list[Any]`:
   * Использовать SQLAlchemy для JSONB фильтрации
   * `AggregatedData.dims.op('->>')(key) == value`
 
@@ -60,8 +60,8 @@ LOGIC:
 
 DONE:
 
-* [ ] Фильтры применяются корректно
-* [ ] SQL инъекции невозможны
-* [ ] Тесты написаны
+* [x] Фильтры применяются корректно
+* [x] SQL инъекции невозможны
+* [x] Тесты написаны
 
 ---

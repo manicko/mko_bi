@@ -85,7 +85,7 @@ class AuthService(IAuthService):
         Raises:
             ValueError: Если пользователь с таким email уже существует.
         """
-        existing_user = await UserRepository.get_by_email(email, db)
+        existing_user = await UserRepository.get_by_email(db, email)
         if existing_user is not None:
             logger.warning("Попытка регистрации с существующим email: %s", email)
             raise ValueError(f"Пользователь с email '{email}' уже существует")
@@ -123,27 +123,25 @@ class AuthService(IAuthService):
                 return await self.register_user(email, password, role, db)
 
         try:
-            async with db.begin():
-                await self._check_email_uniqueness(email, db)
-                password_hash = hash_password(password)
-                logger.info("Password successfully hashed for user: %s", email)
+            await self._check_email_uniqueness(email, db)
+            password_hash = hash_password(password)
+            logger.info("Password successfully hashed for user: %s", email)
 
-                user_obj = await UserRepository.create(
-                    db=db,
-                    email=email,
-                    password_hash=password_hash,
-                    role=role,
-                )
+            user_obj = await UserRepository.create(
+                db=db,
+                email=email,
+                password_hash=password_hash,
+                role=role,
+            )
 
-                logger.info(
-                    "User successfully registered: id=%s, email=%s, role=%s",
-                    user_obj.id,
-                    email,
-                    role,
-                )
+            logger.info(
+                "User successfully registered: id=%s, email=%s, role=%s",
+                user_obj.id,
+                email,
+                role,
+            )
 
             return UserRead.model_validate(user_obj)
-
         except Exception as e:
             logger.error("Error during user registration %s: %s", email, e)
             raise
@@ -320,13 +318,14 @@ class AuthService(IAuthService):
             ValueError: Если заявка с таким email уже существует.
         """
         logger.info("Creating registration request: email=%s", email)
+        logger.info("db type: %s", type(db))
 
         if db is None:
             async with get_session() as db:
                 return await self.register_request(email, ip, db)
 
         # Проверяем, нет ли уже заявки с таким email
-        existing_request = await RegistrationRequestRepository.get_by_email(email, db)
+        existing_request = await RegistrationRequestRepository.get_by_email(db, email)
         if existing_request is not None:
             logger.warning("Registration request already exists: email=%s", email)
             raise ValueError(f"Заявка с email '{email}' уже существует")
@@ -338,14 +337,13 @@ class AuthService(IAuthService):
             raise ValueError(f"Пользователь с email '{email}' уже существует")
 
         try:
-            async with db.begin():
-                req = await RegistrationRequestRepository.create(email, ip, db)
-                if req is None:
-                    raise ValueError("Ошибка создания заявки")
+            req = await RegistrationRequestRepository.create(db, email, ip)
+            if req is None:
+                raise ValueError("Ошибка создания заявки")
 
-                logger.info(
-                    "Registration request created: id=%s, email=%s", req.id, email
-                )
+            logger.info(
+                "Registration request created: id=%s, email=%s", req.id, email
+            )
 
             return {
                 "id": req.id,

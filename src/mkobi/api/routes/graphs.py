@@ -31,6 +31,9 @@ router = APIRouter(prefix="/graphs", tags=["graphs"])
 _graph_repo = GraphRepository()
 
 
+# --- Global graph endpoints ---
+
+
 @router.post(
     "/",
     response_model=GraphRead,

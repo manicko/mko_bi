@@ -11,6 +11,7 @@ from uuid import UUID
 from sqlalchemy.orm import Session
 
 from mkobi.models.user import UserRead
+from mkobi.models.enums import UserRole
 from mkobi.models.dashboard import DashboardRead
 from mkobi.models.graph import GraphRead
 from mkobi.models.filters import FilterRead
@@ -72,7 +73,7 @@ class IUserService(abc.ABC):
     """Интерфейс сервиса пользователей."""
 
     @abc.abstractmethod
-    def create_user(self, email: str, password: str, role: str) -> UserRead:
+    def create_user(self, email: str, password: str, role: UserRole) -> UserRead:
         """Создать нового пользователя."""
         pass
 
@@ -87,7 +88,7 @@ class IUserService(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def update_user_role(self, user_id: UUID, new_role: str) -> UserRead | None:
+    def update_user_role(self, user_id: UUID, new_role: UserRole) -> UserRead | None:
         """Обновить роль пользователя."""
         pass
 

@@ -163,7 +163,7 @@ class UserRepository:
             if not user_obj:
                 logger.warning("Пользователь не найден для удаления: id=%s", user_id)
                 return False
-            db.delete(user_obj)  # type: ignore[unused-coroutine]
+            await db.delete(user_obj)
             await db.flush()
             logger.info("Пользователь удален: id=%s", user_id)
             return True

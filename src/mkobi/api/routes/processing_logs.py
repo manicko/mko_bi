@@ -1,146 +1,45 @@
-"""Маршруты для работы с логами обработки."""
+"""Маршруты для работы с логами обработки.
+
+Предоставляет endpoints для просмотра логов обработки данных.
+Соответствует требованиям SPEC.md п.14.4 и задаче 011_processing_logs.md.
+"""
 
 from datetime import datetime
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from mkobi.api.deps import get_db, get_current_user_dependency
-from mkobi.core.permissions import check_dashboard_access
-from mkobi.models.processing_logs import (
-    ProcessingLogCreate,
-    ProcessingLogRead,
-    ProcessingLogUpdate,
-)
-from mkobi.models.user import UserDB
-from mkobi.services import processing_log_service
+from mkobi.api.deps import get_db_dependency, require_admin_role
+from mkobi.models.enums import ProcessingStatusEnum
+from mkobi.models.processing_logs import ProcessingLogFilter, ProcessingLogRead
+from mkobi.services.processing_log_service import ProcessingLogService
 
-router = APIRouter(prefix="/processing-logs", tags=["processing_logs"])
-
-# Делаем зависимости доступными для тестов
-get_current_user = get_current_user_dependency
-
-
-@router.post(
-    "/",
-    response_model=ProcessingLogRead,
-    status_code=status.HTTP_201_CREATED,
-    summary="Создать лог обработки",
-    description="Создает новый лог обработки для дашборда.",
-)
-async def create_log_endpoint(
-    log_create: ProcessingLogCreate,
-    current_user: UserDB = Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> ProcessingLogRead:
-    """Создает новый лог обработки.
-
-    Доступно только для пользователей с ролью admin или editor.
-    Если указан dashboard_id, проверяется доступ к дашборду.
-    """
-    # Проверяем права доступа к дашборду, если он указан
-    if log_create.dashboard_id is not None:
-        has_access = check_dashboard_access(
-            user_id=current_user.id,
-            dashboard_id=log_create.dashboard_id,
-            required_permission="edit",
-            db=db,
-        )
-        if not has_access:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Недостаточно прав для создания лога для этого дашборда",
-            )
-
-    try:
-        log = processing_log_service.create_log(db, log_create)
-        return log
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ошибка при создании лога обработки: {str(e)}",
-        ) from e
-
-
-@router.put(
-    "/{log_id}/status",
-    response_model=ProcessingLogRead,
-    summary="Обновить статус лога",
-    description="Обновляет статус лога обработки и, при необходимости, сообщение об ошибке.",
-)
-async def update_log_status_endpoint(
-    log_id: UUID,
-    status_update: ProcessingLogUpdate,
-    current_user: UserDB = Depends(get_current_user),
-    db: Session = Depends(get_db),
-) -> ProcessingLogRead:
-    """Обновляет статус лога обработки.
-
-    Доступно только для пользователей с ролью admin или editor.
-    Проверяется доступ к дашборду, к которому привязан лог.
-    """
-    # Получаем лог для проверки доступа
-    log = processing_log_service.get_log(db, log_id)
-    if log is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Лог обработки не найден",
-        )
-
-    # Проверяем права доступа к дашборду, если лог к нему привязан
-    if log.dashboard_id is not None:
-        has_access = check_dashboard_access(
-            user_id=current_user.id,
-            dashboard_id=log.dashboard_id,
-            required_permission="edit",
-            db=db,
-        )
-        if not has_access:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Недостаточно прав для обновления лога этого дашборда",
-            )
-
-    try:
-        updated_log = processing_log_service.update_log_status(db, log_id, status_update)
-        if updated_log is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Лог обработки не найден",
-            )
-        return updated_log
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ошибка при обновлении лога обработки: {str(e)}",
-        ) from e
+router = APIRouter(prefix="/api/v1/admin/logs", tags=["admin", "processing_logs"])
 
 
 @router.get(
     "/",
     response_model=list[ProcessingLogRead],
-    summary="Получить список логов",
-    description="Получает список логов обработки с возможностью фильтрации.",
+    summary="Получить список логов обработки",
+    description="Получает список логов обработки с фильтрацией и пагинацией. Только для администраторов.",
 )
 async def get_logs_endpoint(
     dashboard_id: UUID | None = Query(
         None,
         description="Фильтр по ID дашборда",
     ),
-    status_filter: str | None = Query(
+    status_filter: ProcessingStatusEnum | None = Query(
         None,
-        description="Фильтр по статусу (started, success, failed)",
+        description="Фильтр по статусу (STARTED, UPLOADED, PROCESSING, SUCCESS, FAILED)",
     ),
-    start_date: datetime | None = Query(
+    date_from: datetime | None = Query(
         None,
-        description="Фильтр по начальной дате",
+        description="Фильтр по начальной дате (started_at)",
     ),
-    end_date: datetime | None = Query(
+    date_to: datetime | None = Query(
         None,
-        description="Фильтр по конечной дате",
+        description="Фильтр по конечной дате (started_at)",
     ),
     skip: int = Query(
         0,
@@ -153,37 +52,26 @@ async def get_logs_endpoint(
         le=1000,
         description="Максимальное количество записей (макс. 1000)",
     ),
-    current_user: UserDB = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    _current_user=Depends(require_admin_role),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> list[ProcessingLogRead]:
     """Получает список логов обработки с фильтрацией.
 
-    Доступно только для пользователей с ролью admin или editor.
-    Если указан dashboard_id, проверяется доступ к дашборду.
+    Доступно только для администраторов.
+    Поддерживает фильтрацию по dashboard_id, status, date range.
+    Сортировка по started_at DESC.
     """
-    # Проверяем права доступа к дашборду, если он указан
-    if dashboard_id is not None:
-        has_access = check_dashboard_access(
-            user_id=current_user.id,
-            dashboard_id=dashboard_id,
-            required_permission="view",
-            db=db,
-        )
-        if not has_access:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Недостаточно прав для просмотра логов этого дашборда",
-            )
-
     try:
-        logs: list[ProcessingLogRead] = processing_log_service.get_logs(
-            db,
+        filters = ProcessingLogFilter(
             dashboard_id=dashboard_id,
             status=status_filter,
-            start_date=start_date,
-            end_date=end_date,
+            date_from=date_from,
+            date_to=date_to,
             skip=skip,
             limit=limit,
+        )
+        logs: list[ProcessingLogRead] = await ProcessingLogService.get_filtered(
+            filters=filters, db=db
         )
         return logs
     except Exception as e:
@@ -197,37 +85,32 @@ async def get_logs_endpoint(
     "/{log_id}",
     response_model=ProcessingLogRead,
     summary="Получить лог по ID",
-    description="Получает лог обработки по его ID.",
+    description="Получает детали лога обработки по его ID. Только для администраторов.",
 )
 async def get_log_endpoint(
     log_id: UUID,
-    current_user: UserDB = Depends(get_current_user),
-    db: Session = Depends(get_db),
+    _current_user=Depends(require_admin_role),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> ProcessingLogRead:
     """Получает лог обработки по его ID.
 
-    Доступно только для пользователей с ролью admin или editor.
-    Проверяется доступ к дашборду, к которому привязан лог.
+    Доступно только для администраторов.
     """
-    log = processing_log_service.get_log(db, log_id)
-    if log is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Лог обработки не найден",
-        )
+    try:
+        from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
 
-    # Проверяем права доступа к дашборду, если лог к нему привязан
-    if log.dashboard_id is not None:
-        has_access = check_dashboard_access(
-            user_id=current_user.id,
-            dashboard_id=log.dashboard_id,
-            required_permission="view",
-            db=db,
-        )
-        if not has_access:
+        repo = ProcessingLogRepository(db)
+        log = await repo.get_by_id(log_id)
+        if log is None:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Недостаточно прав для просмотра лога этого дашборда",
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Лог обработки не найден",
             )
-
-    return log
+        return ProcessingLogRead.model_validate(log)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Ошибка при получении лога: {str(e)}",
+        ) from e

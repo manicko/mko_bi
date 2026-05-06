@@ -15,7 +15,7 @@ from mkobi.db.models import access as access_model
 from mkobi.db.models import graphs as graph_model
 from mkobi.db.models import layout as layout_model
 from mkobi.db.models import aggregated_data as aggregated_data_model
-from mkobi.models.enums import UserRole, DashboardPermission, GraphType, FilterType
+from mkobi.models.enums import UserRole, DashboardPermission, GraphType
 
 
 class TestUserModel:

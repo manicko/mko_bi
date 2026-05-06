@@ -162,10 +162,15 @@ C:\py_exp\mkobi
 ├── tests
 │   ├── conftest.py
 │   ├── services
-│   │   └── test_data_service.py
+│   │   ├── test_data_service.py
+│   │   └── test_user_service.py
 │   ├── test_config.py
+│   ├── test_dashboards.py
 │   ├── test_data_loader.py
 │   ├── test_data_processing.py
+│   ├── test_filters.py
+│   ├── test_graphs.py
+│   ├── test_layouts.py
 │   ├── test_models.py
 │   ├── test_pydantic_models.py
 │   ├── test_security.py
@@ -192,11 +197,11 @@ C:\py_exp\mkobi
 │   │   ├── 003_authentication_DONE.md
 │   │   ├── 004_core_infrastructure_DONE.md
 │   │   ├── 005_data_upload_DONE.md
-│   │   ├── 006_data_processing.md
-│   │   ├── 007_data_storage.md
-│   │   ├── 008_dashboard_management.md
-│   │   ├── 009_data_api.md
-│   │   ├── 010_user_management.md
+│   │   ├── 006_data_processing_DONE.md
+│   │   ├── 007_data_storage_DONE.md
+│   │   ├── 008_dashboard_management_DONE.md
+│   │   ├── 009_data_api_DONE.md
+│   │   ├── 010_user_management_DONE.md
 │   │   ├── 011_processing_logs.md
 │   │   ├── 012_frontend_foundation.md
 │   │   ├── 013_frontend_auth.md
