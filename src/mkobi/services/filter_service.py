@@ -2,7 +2,7 @@
 
 Provides business logic for CRUD operations with filters.
 
-All operations are performed through FilterRepository with validation,
+All operations are performed through injected FilterRepository with validation,
 permission checking, and logging.
 
 Implements IFilterService interface for dependency injection.
@@ -16,20 +16,31 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.db.repositories.filter_repo import FilterRepository
+from mkobi.interfaces.repository_interfaces import IFilterRepository
 from mkobi.interfaces.service_interfaces import IFilterService
-from mkobi.models.filters import FilterRead
 from mkobi.models.enums import FilterType
+from mkobi.models.filters import FilterRead
 from mkobi.models.types import FilterConfigDict
 
 logger = logging.getLogger(__name__)
 
 
 class FilterService(IFilterService):
-    """Service class for managing filters."""
+    """Service class for managing filters.
 
-    def __init__(self) -> None:
-        """Initialize service."""
-        logger.debug("FilterService initialized")
+    Implements IFilterService interface for working with filters.
+    Uses injected FilterRepository for data access.
+    """
+
+    def __init__(self, filter_repo: IFilterRepository | None = None) -> None:
+        """Initialize service with injected repository.
+
+        Args:
+            filter_repo: Filter repository instance implementing IFilterRepository.
+                        If None, creates a new FilterRepository().
+        """
+        self.filter_repo = filter_repo if filter_repo is not None else FilterRepository()
+        logger.debug("FilterService initialized with injected repository")
 
     async def create_filter(
         self,
@@ -60,13 +71,13 @@ class FilterService(IFilterService):
         self._validate_filter_config(config)
 
         # Check name uniqueness
-        existing = await FilterRepository.get_by_name(name, db)
+        existing = await self.filter_repo.get_by_name(name, db)
         if existing:
             logger.warning("Filter with name already exists: name=%s", name)
             raise ValueError(f"Filter with name '{name}' already exists")
 
         try:
-            filter_obj = await FilterRepository.create(
+            filter_obj = await self.filter_repo.create(
                 db=db,
                 name=name,
                 type=type_,
@@ -109,7 +120,7 @@ class FilterService(IFilterService):
             raise ValueError("db session is required for get_filter_by_id")
 
         try:
-            filter_obj = await FilterRepository.get(filter_id, db)
+            filter_obj = await self.filter_repo.get(filter_id, db)
             if filter_obj is None:
                 logger.warning("Filter not found: id=%s", filter_id)
                 return None
@@ -136,13 +147,13 @@ class FilterService(IFilterService):
             raise ValueError("db session is required for get_filter_by_name")
 
         try:
-            filter_obj = await FilterRepository.get_by_name(name, db)
+            filter_obj = await self.filter_repo.get_by_name(name, db)
             if filter_obj is None:
                 logger.warning("Filter not found by name: name=%s", name)
                 return None
             return FilterRead.model_validate(filter_obj)
         except Exception as e:
-            logger.error("Error getting filter by name=%s: %s", name, e)
+            logger.error("Error getting filter by name %s: %s", name, e)
             raise
 
     async def get_all_filters(
@@ -161,7 +172,7 @@ class FilterService(IFilterService):
             raise ValueError("db session is required for get_all_filters")
 
         try:
-            filters = await FilterRepository.get_all(db)
+            filters = await self.filter_repo.get_all(db)
             return [FilterRead.model_validate(f) for f in filters]
         except Exception as e:
             logger.error("Error getting all filters: %s", e)
@@ -191,7 +202,7 @@ class FilterService(IFilterService):
             raise ValueError("db session is required for update_filter")
 
         # Check if filter exists
-        existing = await FilterRepository.get(filter_id, db)
+        existing = await self.filter_repo.get(filter_id, db)
         if existing is None:
             logger.warning("Filter not found for update: id=%s", filter_id)
             return None
@@ -200,7 +211,7 @@ class FilterService(IFilterService):
         if name is not None:
             self._validate_filter_name(name)
             # Check name uniqueness (excluding current filter)
-            name_check = await FilterRepository.get_by_name(name, db)
+            name_check = await self.filter_repo.get_by_name(name, db)
             if name_check and name_check.id != filter_id:
                 raise ValueError(f"Filter with name '{name}' already exists")
 
@@ -224,7 +235,7 @@ class FilterService(IFilterService):
             return FilterRead.model_validate(existing)
 
         try:
-            updated = await FilterRepository.update(filter_id, db, **update_data)
+            updated = await self.filter_repo.update(filter_id, db, **update_data)
             if updated is None:
                 return None
 
@@ -256,7 +267,7 @@ class FilterService(IFilterService):
             raise ValueError("db session is required for delete_filter")
 
         try:
-            result = await FilterRepository.delete(filter_id, db)
+            result = await self.filter_repo.delete(filter_id, db)
             await db.commit()
 
             if result:
@@ -272,7 +283,14 @@ class FilterService(IFilterService):
             raise
 
     def _validate_filter_type(self, filter_type: str) -> None:
-        """Validate filter type."""
+        """Validate filter type.
+
+        Args:
+            filter_type: Filter type string to validate.
+
+        Raises:
+            ValueError: If filter type is invalid.
+        """
         try:
             FilterType(filter_type)
         except ValueError:
@@ -287,7 +305,14 @@ class FilterService(IFilterService):
             ) from None
 
     def _validate_filter_name(self, name: str) -> None:
-        """Validate filter name."""
+        """Validate filter name.
+
+        Args:
+            name: Filter name to validate.
+
+        Raises:
+            ValueError: If name is invalid.
+        """
         if not name or not name.strip():
             logger.error("Filter name cannot be empty")
             raise ValueError("Filter name cannot be empty")
@@ -304,7 +329,14 @@ class FilterService(IFilterService):
             )
 
     def _validate_filter_config(self, config: dict[str, Any]) -> None:
-        """Validate filter config."""
+        """Validate filter config.
+
+        Args:
+            config: Filter configuration dictionary to validate.
+
+        Raises:
+            ValueError: If config is invalid.
+        """
         if not isinstance(config, dict):
             logger.error("Filter config must be a dictionary")
             raise ValueError("Filter config must be a dictionary")

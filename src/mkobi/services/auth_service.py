@@ -361,7 +361,8 @@ class AuthService(IAuthService):
                 return await self.register_request(email, ip, db)
 
         # Check if request with this email already exists
-        existing_request = await RegistrationRequestRepository.get_by_email(email, db)
+        reg_req_repo = RegistrationRequestRepository()
+        existing_request = await reg_req_repo.get_by_email(email, db)
         if existing_request is not None:
             logger.warning(
                 "Registration request already exists", extra={"email": email}
@@ -378,7 +379,7 @@ class AuthService(IAuthService):
             raise ValueError(f"User with email '{email}' already exists")
 
         try:
-            req = await RegistrationRequestRepository.create(email, ip, db)
+            req = await reg_req_repo.create(email, ip, db)
             if req is None:
                 raise ValueError("Error creating registration request")
 

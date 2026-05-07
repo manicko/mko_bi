@@ -1,26 +1,111 @@
-FROM python:3.12-slim
+# syntax=docker/dockerfile:1.4
+# =============================================================================
+# Optimized Multi-stage Dockerfile for mkobi
+# FASTER builds: BuildKit caching, pinned versions, optimized layers
+# Targets: dev (hot reload), test, prod (default)
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# Stage: base - Stable Python 3.12 on Debian Bookworm (FAST apt)
+# -----------------------------------------------------------------------------
+FROM python:3.12-slim-bookworm AS base
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    UV_CACHE_DIR=/root/.cache/uv
+
+# Install system deps with BuildKit cache mount for faster rebuilds
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt,sharing=locked \
+    apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv (PINNED version for better layer caching)
+ARG UV_VERSION=0.5.21
+RUN curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh
 
 WORKDIR /app
 
-# Install uv for fast dependency management
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+# Create non-root user early (rarely changes)
+RUN addgroup --system app && adduser --system --group app
 
-# Copy dependency files and source structure for better layer caching
-COPY pyproject.toml uv.lock ./
-COPY README.md ./
-COPY src ./src
+# -----------------------------------------------------------------------------
+# Stage: dev - Development with HOT RELOAD (--reload flag)
+# -----------------------------------------------------------------------------
+FROM base AS dev
 
-# Install dependencies
-RUN uv sync --frozen --no-dev
+# Copy dependency files FIRST for layer caching
+COPY --link pyproject.toml uv.lock ./
 
-# Copy application code (includes any additional files)
-COPY . .
+# Install all dependencies including dev with uv cache mount
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen
 
-# Create data directories (will be overridden by volume mount, but ensures they exist)
-RUN mkdir -p /app/data/uploads /app/data/logs /app/data/tmp_uploads
+# Copy source code with --link for better layer sharing
+COPY --link src/ ./src/
+COPY --link alembic/ ./alembic/
+COPY --link alembic.ini ./
 
-# Expose the port the app runs on
+# Create data directories
+RUN mkdir -p /app/data/uploads /app/data/logs /app/data/tmp_uploads && \
+    chown -R app:app /app/data
+
+USER app
+
 EXPOSE 8000
 
-# Run the application
-CMD ["uv", "run", "uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Hot reload enabled for development
+CMD ["uv", "run", "uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+
+# -----------------------------------------------------------------------------
+# Stage: test - Testing environment
+# -----------------------------------------------------------------------------
+FROM base AS test
+
+COPY --link pyproject.toml uv.lock ./
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen
+
+COPY --link src/ ./src/
+COPY --link tests/ ./tests/
+COPY --link alembic/ ./alembic/
+COPY --link alembic.ini ./
+
+RUN mkdir -p /app/data/uploads /app/data/logs /app/data/tmp_uploads && \
+    chown -R app:app /app/data
+
+USER app
+
+ENV ENV=test \
+    DATABASE__DBNAME=bidb_test
+
+CMD ["uv", "run", "pytest", "tests/", "-v"]
+
+# -----------------------------------------------------------------------------
+# Stage: prod - Production (DEFAULT target - faster rebuilds)
+# -----------------------------------------------------------------------------
+FROM base AS prod
+
+# Copy dependency files FIRST for layer caching
+COPY --link pyproject.toml uv.lock ./
+
+# Install only production dependencies with cache mount
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev
+
+# Copy source code with --link for better layer sharing
+COPY --link src/ ./src/
+COPY --link alembic/ ./alembic/
+COPY --link alembic.ini ./
+
+RUN mkdir -p /app/data/uploads /app/data/logs /app/data/tmp_uploads && \
+    chown -R app:app /app/data
+
+USER app
+
+EXPOSE 8000
+
+CMD ["uv", "run", "uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

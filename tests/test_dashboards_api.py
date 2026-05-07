@@ -98,7 +98,11 @@ class TestCreateDashboard:
         """Test creating dashboard as admin (success)."""
         response = await authenticated_client.post(
             "/dashboards/",
-            json={"name": "new_dashboard", "description": "Test desc"},
+            json={
+                "name": "new_dashboard",
+                "description": "Test desc",
+                "config": {"graph_types": ["bar"]},
+            },
         )
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()

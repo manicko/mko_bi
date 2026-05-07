@@ -25,9 +25,7 @@ class UserRepository(IUserRepository):
     separate database session with automatic transaction management.
     Implements IUserRepository interface.
     """
-
-    @classmethod
-    async def get(cls, id: UUID, db: AsyncSession) -> user_model.User | None:
+    async def get(self, id: UUID, db: AsyncSession) -> user_model.User | None:
         """Get user by ID.
 
         Args:
@@ -50,9 +48,7 @@ class UserRepository(IUserRepository):
         except SQLAlchemyError as e:
             logger.error("Error getting user id=%s: %s", id, e)
             raise
-
-    @classmethod
-    async def get_by_email(cls, email: str, db: AsyncSession) -> user_model.User | None:
+    async def get_by_email(self, email: str, db: AsyncSession) -> user_model.User | None:
         """Get user by email.
 
         Args:
@@ -75,9 +71,7 @@ class UserRepository(IUserRepository):
         except SQLAlchemyError as e:
             logger.error("Error getting user email=%s: %s", email, e)
             raise
-
-    @classmethod
-    async def get_all(cls, db: AsyncSession) -> list[user_model.User]:
+    async def get_all(self, db: AsyncSession) -> list[user_model.User]:
         """Get all users.
 
         Args:
@@ -94,9 +88,7 @@ class UserRepository(IUserRepository):
         except SQLAlchemyError as e:
             logger.error("Error getting users list: %s", e)
             raise
-
-    @classmethod
-    async def create(cls, db: AsyncSession, **kwargs) -> user_model.User | None:
+    async def create(self, db: AsyncSession, **kwargs) -> user_model.User | None:
         """Create new user.
 
         Args:
@@ -116,10 +108,8 @@ class UserRepository(IUserRepository):
         except SQLAlchemyError as e:
             logger.error("Error creating user: %s", e)
             raise
-
-    @classmethod
     async def update(
-        cls, id: UUID, db: AsyncSession, **kwargs
+        self, id: UUID, db: AsyncSession, **kwargs
     ) -> user_model.User | None:
         """Update user data.
 
@@ -149,9 +139,7 @@ class UserRepository(IUserRepository):
         except SQLAlchemyError as e:
             logger.error("Error updating user id=%s: %s", id, e)
             raise
-
-    @classmethod
-    async def delete(cls, id: UUID, db: AsyncSession) -> bool:
+    async def delete(self, id: UUID, db: AsyncSession) -> bool:
         """Delete user.
 
         Args:

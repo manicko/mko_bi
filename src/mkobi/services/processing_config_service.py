@@ -76,7 +76,8 @@ class ProcessingConfigService(IProcessingConfigService):
             async with get_session() as db:
                 return await self.get_by_dashboard_id(dashboard_id, db)
 
-        config_obj = await ProcessingConfigRepository.get(dashboard_id, db)
+        config_repo = ProcessingConfigRepository()
+        config_obj = await config_repo.get(dashboard_id, db)
         if config_obj is None:
             logger.warning("Config not found: dashboard_id=%s", dashboard_id)
             return None
@@ -115,9 +116,10 @@ class ProcessingConfigService(IProcessingConfigService):
             async with get_session() as db:
                 return await self.upsert(dashboard_id, settings, db)
 
-        existing = await ProcessingConfigRepository.get(dashboard_id, db)
+        config_repo = ProcessingConfigRepository()
+        existing = await config_repo.get(dashboard_id, db)
         if existing:
-            updated = await ProcessingConfigRepository.update(
+            updated = await config_repo.update(
                 dashboard_id=dashboard_id,
                 db=db,
                 settings=settings,
@@ -131,7 +133,7 @@ class ProcessingConfigService(IProcessingConfigService):
                 ProcessingConfigRead, ProcessingConfigRead.model_validate(updated)
             )
         else:
-            created = await ProcessingConfigRepository.create(
+            created = await config_repo.create(
                 db=db,
                 dashboard_id=dashboard_id,
                 settings=settings,
@@ -164,7 +166,7 @@ class ProcessingConfigService(IProcessingConfigService):
             async with get_session() as db:
                 return await self.delete(dashboard_id, db)
 
-        result: bool = await ProcessingConfigRepository.delete(dashboard_id, db)
+        result: bool = await config_repo.delete(dashboard_id, db)
         if result:
             logger.info("Config deleted: dashboard_id=%s", dashboard_id)
         else:

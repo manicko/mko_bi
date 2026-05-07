@@ -9,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     BigInteger,
     Index,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.engine.interfaces import Dialect
@@ -50,6 +51,12 @@ class AggregatedData(Base):
         Index("idx_aggregated_data_dashboard_id", "dashboard_id"),
         Index("idx_aggregated_data_dashboard_graph", "dashboard_id", "graph_id"),
         Index("idx_aggregated_data_dims_gin", "dims", postgresql_using="gin"),
+        UniqueConstraint(
+            "dashboard_id",
+            "graph_id",
+            "dims",
+            name="uq_aggregated_data_dashboard_graph_dims",
+        ),
     )
 
     id: Mapped[int] = mapped_column(
@@ -83,14 +90,14 @@ class AggregatedData(Base):
         default=dict,
     )
 
-    # Связь с дашбордом
+    # Relationship with dashboard
     dashboard: Mapped[Dashboard] = relationship(
         "Dashboard",
         back_populates="aggregated_data",
         lazy="selectin",
     )
 
-    # Связь с графиком
+    # Relationship with graph
     graph: Mapped[Graph] = relationship(
         "Graph",
         back_populates="aggregated_data",

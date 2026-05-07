@@ -26,8 +26,6 @@ class AggregatedDataRepository(IAggregatedDataRepository):
     separate database session with automatic transaction management.
     Implements IAggregatedDataRepository interface.
     """
-
-    @classmethod
     async def bulk_insert(
         cls,
         db: AsyncSession,
@@ -96,8 +94,6 @@ class AggregatedDataRepository(IAggregatedDataRepository):
                 e,
             )
             raise
-
-    @classmethod
     async def get_by_dashboard_id(
         cls, dashboard_id: UUID, db: AsyncSession
     ) -> list[aggregated_data_model.AggregatedData]:
@@ -129,8 +125,6 @@ class AggregatedDataRepository(IAggregatedDataRepository):
                 e,
             )
             raise
-
-    @classmethod
     async def get_by_graph_id(
         cls,
         graph_id: UUID,
@@ -174,8 +168,6 @@ class AggregatedDataRepository(IAggregatedDataRepository):
                 e,
             )
             raise
-
-    @classmethod
     async def delete_by_graph_id(
         cls,
         graph_id: UUID,
@@ -209,8 +201,6 @@ class AggregatedDataRepository(IAggregatedDataRepository):
                 e,
             )
             raise
-
-    @classmethod
     async def delete_by_dashboard_id(
         cls,
         dashboard_id: UUID,
@@ -244,8 +234,6 @@ class AggregatedDataRepository(IAggregatedDataRepository):
                 e,
             )
             raise
-
-    @classmethod
     async def get_dims_values(
         cls,
         graph_id: UUID,

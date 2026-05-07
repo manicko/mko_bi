@@ -1,14 +1,14 @@
-"""Менеджер хранения агрегированных данных.
+"""Storage manager for aggregated data.
 
-Реализует операции сохранения, обновления, удаления и получения
-агрегированных данных для дашбордов в PostgreSQL.
+Implements operations for saving, updating, deleting and retrieving
+aggregated data for dashboards in PostgreSQL.
 
-Особенности:
-- Использует PostgreSQL UPSERT (ON CONFLICT DO UPDATE)
-- Поддерживает batch insert/upsert
-- Не управляет транзакциями (commit/rollback снаружи)
-- Использует SQLAlchemy Core
-- Без race condition
+Features:
+- Uses PostgreSQL UPSERT (ON CONFLICT DO UPDATE)
+- Supports batch insert/upsert
+- Does not manage transactions (commit/rollback is external)
+- Uses SQLAlchemy Core
+- No race condition
 """
 
 from __future__ import annotations
@@ -30,12 +30,12 @@ logger = logging.getLogger(__name__)
 
 
 class StorageManager:
-    """Менеджер хранения агрегированных данных."""
+    """Storage manager for aggregated data."""
 
     CHUNK_SIZE: int = 1000
 
     def __init__(self, db: AsyncSession) -> None:
-        """Инициализация менеджера.
+        """Initialize manager.
 
         Args:
             db: Async SQLAlchemy session.
@@ -52,30 +52,30 @@ class StorageManager:
         aggregates: list[dict[str, Any]],
         clear_old: bool = False,
     ) -> int:
-        """Сохраняет агрегированные данные.
+        """Save aggregated data.
 
-        При clear_old=True:
-        - удаляются старые данные dashboard
-        - выполняется bulk insert
+        When clear_old=True:
+        - deletes old dashboard data
+        - performs bulk insert
 
-        При clear_old=False:
-        - выполняется bulk upsert
+        When clear_old=False:
+        - performs bulk upsert
 
         Args:
-            dashboard_id: ID дашборда.
-            aggregates: Агрегированные данные.
-            clear_old: Удалить старые данные.
+            dashboard_id: Dashboard ID.
+            aggregates: Aggregated data.
+            clear_old: Delete old data.
 
         Returns:
-            Количество обработанных записей.
+            Number of processed records.
 
         Raises:
-            ValueError: Ошибка валидации.
-            SQLAlchemyError: Ошибка БД.
+            ValueError: Validation error.
+            SQLAlchemyError: Database error.
         """
         if not aggregates:
             logger.info(
-                "Пустой список агрегатов для dashboard_id=%s",
+                "Empty aggregates list for dashboard_id=%s",
                 dashboard_id,
             )
             return 0
@@ -93,7 +93,7 @@ class StorageManager:
             deleted = await self.delete_by_dashboard(dashboard_id)
 
             logger.info(
-                "Удалено %d старых записей dashboard_id=%s",
+                "Deleted %d old records for dashboard_id=%s",
                 deleted,
                 dashboard_id,
             )
@@ -105,7 +105,7 @@ class StorageManager:
             )
 
             logger.info(
-                "Вставлено %d агрегатов dashboard_id=%s",
+                "Inserted %d aggregates for dashboard_id=%s",
                 inserted,
                 dashboard_id,
             )
@@ -119,7 +119,7 @@ class StorageManager:
         )
 
         logger.info(
-            "Upsert %d агрегатов dashboard_id=%s",
+            "Upserted %d aggregates for dashboard_id=%s",
             processed,
             dashboard_id,
         )
@@ -133,11 +133,11 @@ class StorageManager:
         dims: dict[str, Any],
         metrics: dict[str, Any],
     ) -> bool:
-        """Выполняет UPSERT одного агрегата.
+        """Perform UPSERT for a single aggregate.
 
         Returns:
-            True если вставлена новая запись.
-            False если обновлена существующая.
+            True if a new record was inserted.
+            False if an existing record was updated.
         """
         self._validate_single_aggregate(dims, metrics)
 
@@ -181,7 +181,7 @@ class StorageManager:
         dashboard_id: UUID,
         graph_id: UUID | None = None,
     ) -> list[dict[str, Any]]:
-        """Получает агрегированные данные."""
+        """Retrieve aggregated data."""
         query = select(
             AggregatedData.id,
             AggregatedData.graph_id,
@@ -212,7 +212,7 @@ class StorageManager:
         self,
         graph_id: UUID,
     ) -> int:
-        """Удаляет данные графика."""
+        """Delete data for a specific graph."""
         result = await self.db.execute(
             delete(AggregatedData).where(
                 AggregatedData.graph_id == graph_id,
@@ -222,7 +222,7 @@ class StorageManager:
         deleted = result.rowcount or 0
 
         logger.info(
-            "Удалено %d записей graph_id=%s",
+            "Deleted %d records for graph_id=%s",
             deleted,
             graph_id,
         )
@@ -233,7 +233,7 @@ class StorageManager:
         self,
         dashboard_id: UUID,
     ) -> int:
-        """Удаляет данные дашборда."""
+        """Delete all data for a dashboard."""
         result = await self.db.execute(
             delete(AggregatedData).where(
                 AggregatedData.dashboard_id == dashboard_id,
@@ -243,7 +243,7 @@ class StorageManager:
         deleted = result.rowcount or 0
 
         logger.info(
-            "Удалено %d записей dashboard_id=%s",
+            "Deleted %d records for dashboard_id=%s",
             deleted,
             dashboard_id,
         )
@@ -260,7 +260,7 @@ class StorageManager:
         aggregates: list[dict[str, Any]],
         table_model: Any,
     ) -> int:
-        """Выполняет bulk insert."""
+        """Perform bulk insert."""
         total_inserted = 0
 
         for i in range(0, len(aggregates), self.CHUNK_SIZE):
@@ -291,7 +291,7 @@ class StorageManager:
         aggregates: list[dict[str, Any]],
         table_model: Any,
     ) -> int:
-        """Выполняет bulk upsert."""
+        """Perform bulk upsert."""
         total_processed = 0
 
         for i in range(0, len(aggregates), self.CHUNK_SIZE):
@@ -331,7 +331,7 @@ class StorageManager:
         graph_ids: set[UUID],
         dashboard_id: UUID,
     ) -> None:
-        """Проверяет существование графиков."""
+        """Validate that graphs exist and belong to the dashboard."""
         from mkobi.db.models import graphs as graphs_model
 
         result = await self.db.execute(
@@ -349,14 +349,14 @@ class StorageManager:
 
         if missing:
             raise ValueError(
-                f"Графики не найдены или не принадлежат dashboard: {missing}"
+                f"Graphs not found or do not belong to dashboard: {missing}"
             )
 
     def _validate_aggregates(
         self,
         aggregates: list[dict[str, Any]],
     ) -> None:
-        """Валидирует список агрегатов."""
+        """Validate list of aggregates."""
         required_fields = {
             "graph_id",
             "dims",
@@ -367,7 +367,7 @@ class StorageManager:
             missing = required_fields - set(agg.keys())
 
             if missing:
-                raise ValueError(f"Агрегат {idx} не содержит поля: {missing}")
+                raise ValueError(f"Aggregate {idx} missing fields: {missing}")
 
             self._validate_single_aggregate(
                 dims=agg["dims"],
@@ -379,12 +379,12 @@ class StorageManager:
         dims: dict[str, Any],
         metrics: dict[str, Any],
     ) -> None:
-        """Валидирует один агрегат."""
+        """Validate a single aggregate."""
         if not isinstance(dims, dict):
-            raise ValueError("dims должен быть dict")
+            raise ValueError("dims must be a dict")
 
         if not isinstance(metrics, dict):
-            raise ValueError("metrics должен быть dict")
+            raise ValueError("metrics must be a dict")
 
     # =========================================================================
     # Compatibility API

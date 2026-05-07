@@ -555,11 +555,13 @@ async def bind_filter_endpoint(
         filter_id,
     )
     try:
-        filter_obj = FilterRepository.get(filter_id, db)
+        filter_repo = FilterRepository()
+        filter_obj = filter_repo.get(filter_id, db)
         if not filter_obj:
             raise HTTPException(status_code=404, detail="Filter not found")
 
-        result = await DashboardFilterRepository.bind_filter(
+        dashboard_filter_repo = DashboardFilterRepository()
+        result = await dashboard_filter_repo.bind_filter(
             dashboard_id=dashboard_id, filter_id=filter_id, db=db
         )
         await db.commit()
@@ -589,7 +591,8 @@ async def unbind_filter_endpoint(
         filter_id,
     )
     try:
-        result = await DashboardFilterRepository.unbind_filter(
+        dashboard_filter_repo = DashboardFilterRepository()
+        result = await dashboard_filter_repo.unbind_filter(
             dashboard_id=dashboard_id, filter_id=filter_id, db=db
         )
         await db.commit()
@@ -619,7 +622,8 @@ async def get_dashboard_filters_endpoint(
     """Get all filters bound to a dashboard."""
     logger.info("Getting filters for dashboard: dashboard_id=%s", dashboard_id)
     try:
-        filter_ids = await DashboardFilterRepository.get_dashboard_filters(
+        dashboard_filter_repo = DashboardFilterRepository()
+        filter_ids = await dashboard_filter_repo.get_dashboard_filters(
             dashboard_id=dashboard_id, db=db
         )
         return [{"filter_id": str(fid)} for fid in filter_ids]

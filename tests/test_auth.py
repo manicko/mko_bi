@@ -70,7 +70,7 @@ class TestRegisterRequest:
         assert "id" in data
 
         # Cleanup
-        repo = RegistrationRequestRepository
+        repo = RegistrationRequestRepository()
         request = await repo.get_by_email("new_user@example.com", async_db_session)
         if request:
             await repo.delete(request.id, async_db_session)
@@ -97,7 +97,7 @@ class TestRegisterRequest:
         assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
         # Cleanup
-        repo = RegistrationRequestRepository
+        repo = RegistrationRequestRepository()
         request = await repo.get_by_email(email, async_db_session)
         if request:
             await repo.delete(request.id, async_db_session)

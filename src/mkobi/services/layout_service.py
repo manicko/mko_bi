@@ -50,13 +50,14 @@ async def _create_layout_with_session(
     name: str, definition: dict[str, Any], db: AsyncSession
 ) -> LayoutRead:
     """Внутренняя функция для создания layout с использованием сессии."""
-    existing = await LayoutRepository.get_by_name(name, db)
+    layout_repo = LayoutRepository()
+    existing = await layout_repo.get_by_name(name, db)
     if existing:
         logger.error("Layout с таким именем уже существует: name=%s", name)
         raise ValueError(f"Layout с именем '{name}' уже существует")
 
     try:
-        layout_obj = await LayoutRepository.create(db=db, name=name, definition=definition)
+        layout_obj = await layout_repo.create(db=db, name=name, definition=definition)
         await db.commit()
         logger.info("Layout создан: id=%s, name=%s", layout_obj.id, layout_obj.name)
 
@@ -92,7 +93,8 @@ async def _get_layout_with_session(
     layout_id: UUID, db: AsyncSession
 ) -> LayoutRead | None:
     """Внутренняя функция для получения layout с использованием сессии."""
-    layout_obj = await LayoutRepository.get(layout_id, db)
+    layout_repo = LayoutRepository()
+    layout_obj = await layout_repo.get(layout_id, db)
     if not layout_obj:
         return None
     return LayoutRead.model_validate(layout_obj)
@@ -118,7 +120,8 @@ async def get_all_layouts(db: AsyncSession | None = None) -> list[LayoutRead]:
 
 async def _get_all_layouts_with_session(db: AsyncSession) -> list[LayoutRead]:
     """Внутренняя функция для получения всех layout-ов с использованием сессии."""
-    layout_objs = await LayoutRepository.get_all(db)
+    layout_repo = LayoutRepository()
+    layout_objs = await layout_repo.get_all(db)
     return [LayoutRead.model_validate(layout_obj) for layout_obj in layout_objs]
 
 
@@ -149,14 +152,15 @@ async def _update_layout_with_session(
 ) -> LayoutRead | None:
     """Внутренняя функция для обновления layout с использованием сессии."""
     # Проверка существования
-    existing = await LayoutRepository.get(layout_id, db)
+    layout_repo = LayoutRepository()
+    existing = await layout_repo.get(layout_id, db)
     if not existing:
         logger.warning("Layout не найден для обновления: id=%s", layout_id)
         return None
 
     # Проверка уникальности имени при обновлении
     if update_data.name and update_data.name != existing.name:
-        name_check = await LayoutRepository.get_by_name(update_data.name, db)
+        name_check = await layout_repo.get_by_name(update_data.name, db)
         if name_check:
             logger.error("Layout с таким именем уже существует: name=%s", update_data.name)
             raise ValueError(f"Layout с именем '{update_data.name}' уже существует")
@@ -169,7 +173,7 @@ async def _update_layout_with_session(
         update_kwargs["definition"] = update_data.definition
 
     try:
-        updated = await LayoutRepository.update(db=db, layout_id=layout_id, **update_kwargs)
+        updated = await layout_repo.update(db=db, layout_id=layout_id, **update_kwargs)
         if not updated:
             return None
         await db.commit()
@@ -203,7 +207,8 @@ async def delete_layout(layout_id: UUID, db: AsyncSession | None = None) -> bool
 async def _delete_layout_with_session(layout_id: UUID, db: AsyncSession) -> bool:
     """Внутренняя функция для удаления layout с использованием сессии."""
     try:
-        result: bool = await LayoutRepository.delete(layout_id, db)
+        layout_repo = LayoutRepository()
+        result: bool = await layout_repo.delete(layout_id, db)
         if result:
             await db.commit()
             logger.info("Layout успешно удален: id=%s", layout_id)

@@ -26,8 +26,7 @@ class DashboardRepository(IDashboardRepository):
     Implements IDashboardRepository interface.
     """
 
-    @classmethod
-    async def get(cls, id: UUID, db: AsyncSession) -> dashboard_model.Dashboard | None:
+    async def get(self, id: UUID, db: AsyncSession) -> dashboard_model.Dashboard | None:
         """Get dashboard by ID.
 
         Args:
@@ -54,9 +53,8 @@ class DashboardRepository(IDashboardRepository):
             )
             raise
 
-    @classmethod
     async def get_by_user(
-        cls, user_id: UUID, db: AsyncSession
+        self, user_id: UUID, db: AsyncSession
     ) -> list[dashboard_model.Dashboard]:
         """Get all dashboards available to user.
 
@@ -85,9 +83,8 @@ class DashboardRepository(IDashboardRepository):
             )
             raise
 
-    @classmethod
     async def create(
-        cls, db: AsyncSession, **kwargs
+        self, db: AsyncSession, **kwargs
     ) -> dashboard_model.Dashboard | None:
         """Create new dashboard.
 
@@ -115,9 +112,8 @@ class DashboardRepository(IDashboardRepository):
             logger.error("Error creating dashboard", extra={"error": str(e)})
             raise
 
-    @classmethod
     async def update(
-        cls, id: UUID, db: AsyncSession, **kwargs
+        self, id: UUID, db: AsyncSession, **kwargs
     ) -> dashboard_model.Dashboard | None:
         """Update dashboard data.
 
@@ -156,8 +152,7 @@ class DashboardRepository(IDashboardRepository):
             )
             raise
 
-    @classmethod
-    async def delete(cls, id: UUID, db: AsyncSession) -> bool:
+    async def delete(self, id: UUID, db: AsyncSession) -> bool:
         """Delete dashboard.
 
         Args:
@@ -191,8 +186,7 @@ class DashboardRepository(IDashboardRepository):
             )
             raise
 
-    @classmethod
-    async def get_all(cls, db: AsyncSession) -> list[dashboard_model.Dashboard]:
+    async def get_all(self, db: AsyncSession) -> list[dashboard_model.Dashboard]:
         """Get all dashboards.
 
         Args:
@@ -216,9 +210,8 @@ class DashboardRepository(IDashboardRepository):
             )
             raise
 
-    @classmethod
     async def get_by_name(
-        cls, name: str, db: AsyncSession
+        self, name: str, db: AsyncSession
     ) -> dashboard_model.Dashboard | None:
         """Get dashboard by name.
 

@@ -23,9 +23,7 @@ class LayoutRepository:
     layout-ов в базе данных. Все операции выполняются в рамках
     асинхронной сессии с обработкой ошибок.
     """
-
-    @classmethod
-    async def get(cls, layout_id: UUID, db: AsyncSession) -> layout_model.Layout | None:
+    async def get(self, layout_id: UUID, db: AsyncSession) -> layout_model.Layout | None:
         """Получить layout по ID.
 
         Args:
@@ -51,9 +49,7 @@ class LayoutRepository:
         except SQLAlchemyError as e:
             logger.error("Ошибка при получении layout id=%s: %s", layout_id, e)
             raise
-
-    @classmethod
-    async def get_by_name(cls, name: str, db: AsyncSession) -> layout_model.Layout | None:
+    async def get_by_name(self, name: str, db: AsyncSession) -> layout_model.Layout | None:
         """Получить layout по имени.
 
         Args:
@@ -79,9 +75,7 @@ class LayoutRepository:
         except SQLAlchemyError as e:
             logger.error("Ошибка при получении layout по имени %s: %s", name, e)
             raise
-
-    @classmethod
-    async def get_all(cls, db: AsyncSession) -> list[layout_model.Layout]:
+    async def get_all(self, db: AsyncSession) -> list[layout_model.Layout]:
         """Получить все layout-ы.
 
         Args:
@@ -101,9 +95,7 @@ class LayoutRepository:
         except SQLAlchemyError as e:
             logger.error("Ошибка при получении списка layout-ов: %s", e)
             raise
-
-    @classmethod
-    async def create(cls, db: AsyncSession, **kwargs) -> layout_model.Layout | None:
+    async def create(self, db: AsyncSession, **kwargs) -> layout_model.Layout | None:
         """Создать новый layout.
 
         Args:
@@ -126,8 +118,6 @@ class LayoutRepository:
         except SQLAlchemyError as e:
             logger.error("Ошибка при создании layout: %s", e)
             raise
-
-    @classmethod
     async def update(
         cls, layout_id: UUID, db: AsyncSession, **kwargs
     ) -> layout_model.Layout | None:
@@ -162,9 +152,7 @@ class LayoutRepository:
         except SQLAlchemyError as e:
             logger.error("Ошибка при обновлении layout id=%s: %s", layout_id, e)
             raise
-
-    @classmethod
-    async def delete(cls, layout_id: UUID, db: AsyncSession) -> bool:
+    async def delete(self, layout_id: UUID, db: AsyncSession) -> bool:
         """Удалить layout.
 
         Args:

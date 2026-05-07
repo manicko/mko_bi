@@ -26,8 +26,7 @@ class GraphRepository(IGraphRepository):
     Implements IGraphRepository interface.
     """
 
-    @classmethod
-    async def get(cls, id: UUID, db: AsyncSession) -> graph_model.Graph | None:
+    async def get(self, id: UUID, db: AsyncSession) -> graph_model.Graph | None:
         """Get graph by ID.
 
         Args:
@@ -51,9 +50,8 @@ class GraphRepository(IGraphRepository):
             logger.error("Error getting graph id=%s: %s", id, e)
             raise
 
-    @classmethod
     async def get_by_dashboard_id(
-        cls, dashboard_id: UUID, db: AsyncSession
+        self, dashboard_id: UUID, db: AsyncSession
     ) -> list[graph_model.Graph]:
         """Get all graphs for dashboard.
 
@@ -81,8 +79,7 @@ class GraphRepository(IGraphRepository):
             logger.error("Error getting graphs dashboard_id=%s: %s", dashboard_id, e)
             raise
 
-    @classmethod
-    async def create(cls, db: AsyncSession, **kwargs) -> graph_model.Graph | None:
+    async def create(self, db: AsyncSession, **kwargs) -> graph_model.Graph | None:
         """Create new graph.
 
         Args:
@@ -103,9 +100,8 @@ class GraphRepository(IGraphRepository):
             logger.error("Error creating graph: %s", e)
             raise
 
-    @classmethod
     async def update(
-        cls, id: UUID, db: AsyncSession, **kwargs
+        self, id: UUID, db: AsyncSession, **kwargs
     ) -> graph_model.Graph | None:
         """Update graph data.
 
@@ -136,8 +132,7 @@ class GraphRepository(IGraphRepository):
             logger.error("Error updating graph id=%s: %s", id, e)
             raise
 
-    @classmethod
-    async def delete(cls, id: UUID, db: AsyncSession) -> bool:
+    async def delete(self, id: UUID, db: AsyncSession) -> bool:
         """Delete graph.
 
         Args:
@@ -163,8 +158,7 @@ class GraphRepository(IGraphRepository):
             logger.error("Error deleting graph id=%s: %s", id, e)
             raise
 
-    @classmethod
-    async def get_all(cls, db: AsyncSession) -> list[graph_model.Graph]:
+    async def get_all(self, db: AsyncSession) -> list[graph_model.Graph]:
         """Get all graphs.
 
         Args:

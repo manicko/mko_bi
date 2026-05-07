@@ -27,9 +27,8 @@ class AccessRepository(IAccessRepository):
     Implements IAccessRepository interface.
     """
 
-    @classmethod
     async def grant_access(
-        cls,
+        self,
         db: AsyncSession,
         user_id: UUID,
         dashboard_id: UUID,
@@ -86,8 +85,7 @@ class AccessRepository(IAccessRepository):
             )
             raise
 
-    @classmethod
-    async def revoke_access(cls, user_id: UUID, dashboard_id: UUID, db: AsyncSession) -> bool:
+    async def revoke_access(self, user_id: UUID, dashboard_id: UUID, db: AsyncSession) -> bool:
         """Revoke user access to dashboard.
 
         Args:
@@ -130,9 +128,8 @@ class AccessRepository(IAccessRepository):
             )
             raise
 
-    @classmethod
     async def check_access(
-        cls, user_id: UUID, dashboard_id: UUID, db: AsyncSession
+        self, user_id: UUID, dashboard_id: UUID, db: AsyncSession
     ) -> str | None:
         """Check user access level to dashboard.
 
@@ -176,9 +173,8 @@ class AccessRepository(IAccessRepository):
             )
             raise
 
-    @classmethod
     async def get_user_dashboards(
-        cls, user_id: UUID, db: AsyncSession
+        self, user_id: UUID, db: AsyncSession
     ) -> list[dashboard_model.Dashboard]:
         """Get all dashboards available to user.
 
@@ -210,8 +206,7 @@ class AccessRepository(IAccessRepository):
             )
             raise
 
-    @classmethod
-    async def get_all(cls, db: AsyncSession) -> list[access_model.DashboardAccess]:
+    async def get_all(self, db: AsyncSession) -> list[access_model.DashboardAccess]:
         """Get all access records.
 
         Args:

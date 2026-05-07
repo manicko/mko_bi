@@ -3,6 +3,8 @@
 This module provides endpoints for CRUD operations on filters.
 Create and delete operations are admin-only.
 Read and update operations are available to editors and admins.
+
+Uses FilterService via dependency injection following the project's DI pattern.
 """
 
 import logging
@@ -12,7 +14,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
-    get_db,
+    get_db_dependency,
+    get_filter_service,
     require_admin_role,
     require_editor_role,
     CurrentUser,
@@ -22,13 +25,7 @@ from mkobi.models.filters import (
     FilterRead,
     FilterUpdate,
 )
-from mkobi.services.filter_service import (
-    create_filter,
-    get_filter_by_id,
-    get_all_filters,
-    update_filter,
-    delete_filter,
-)
+from mkobi.services.filter_service import FilterService
 
 logger = logging.getLogger(__name__)
 
@@ -46,7 +43,8 @@ router = APIRouter(tags=["filters"])
 async def create_filter_endpoint(
     filter_data: FilterCreate,
     current_user: CurrentUser,
-    db: AsyncSession = Depends(get_db),
+    filter_service: FilterService = Depends(get_filter_service),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> FilterRead:
     """Create a new global filter.
 
@@ -56,6 +54,7 @@ async def create_filter_endpoint(
     Args:
         filter_data: Model with filter creation data.
         current_user: Current authenticated user.
+        filter_service: Injected filter service.
         db: Database session.
 
     Returns:
@@ -74,7 +73,7 @@ async def create_filter_endpoint(
     )
 
     try:
-        result = await create_filter(
+        result = await filter_service.create_filter(
             name=filter_data.name,
             type_=filter_data.type,
             config=filter_data.config,
@@ -118,7 +117,8 @@ async def create_filter_endpoint(
 )
 async def get_filters_endpoint(
     current_user: CurrentUser,
-    db: AsyncSession = Depends(get_db),
+    filter_service: FilterService = Depends(get_filter_service),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> list[FilterRead]:
     """Get list of all global filters.
 
@@ -126,6 +126,7 @@ async def get_filters_endpoint(
 
     Args:
         current_user: Current authenticated user.
+        filter_service: Injected filter service.
         db: Database session.
 
     Returns:
@@ -140,7 +141,7 @@ async def get_filters_endpoint(
     )
 
     try:
-        filters: list[FilterRead] = await get_all_filters(db=db)
+        filters: list[FilterRead] = await filter_service.get_all_filters(db=db)
         logger.info(
             "Retrieved filters for user id=%s: %s",
             current_user.id,
@@ -170,7 +171,8 @@ async def get_filters_endpoint(
 async def get_filter_endpoint(
     filter_id: UUID,
     current_user: CurrentUser,
-    db: AsyncSession = Depends(get_db),
+    filter_service: FilterService = Depends(get_filter_service),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> FilterRead:
     """Get filter by ID.
 
@@ -179,6 +181,7 @@ async def get_filter_endpoint(
     Args:
         filter_id: Filter ID.
         current_user: Current authenticated user.
+        filter_service: Injected filter service.
         db: Database session.
 
     Returns:
@@ -195,7 +198,7 @@ async def get_filter_endpoint(
     )
 
     try:
-        filter_obj = await get_filter_by_id(filter_id=filter_id, db=db)
+        filter_obj = await filter_service.get_filter_by_id(filter_id=filter_id, db=db)
         if filter_obj is None:
             logger.warning(
                 "Filter not found: filter_id=%s, user_id=%s",
@@ -233,7 +236,8 @@ async def update_filter_endpoint(
     filter_id: UUID,
     filter_update: FilterUpdate,
     current_user: CurrentUser,
-    db: AsyncSession = Depends(get_db),
+    filter_service: FilterService = Depends(get_filter_service),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> FilterRead:
     """Update filter data.
 
@@ -243,6 +247,7 @@ async def update_filter_endpoint(
         filter_id: Filter ID to update.
         filter_update: Model with new data.
         current_user: Current authenticated user.
+        filter_service: Injected filter service.
         db: Database session.
 
     Returns:
@@ -260,7 +265,7 @@ async def update_filter_endpoint(
     )
 
     try:
-        updated = await update_filter(
+        updated = await filter_service.update_filter(
             filter_id=filter_id,
             name=filter_update.name,
             type_=filter_update.type,
@@ -311,7 +316,8 @@ async def update_filter_endpoint(
 async def delete_filter_endpoint(
     filter_id: UUID,
     current_user: CurrentUser,
-    db: AsyncSession = Depends(get_db),
+    filter_service: FilterService = Depends(get_filter_service),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> None:
     """Delete filter.
 
@@ -320,6 +326,7 @@ async def delete_filter_endpoint(
     Args:
         filter_id: Filter ID to delete.
         current_user: Current authenticated user.
+        filter_service: Injected filter service.
         db: Database session.
 
     Raises:
@@ -333,7 +340,7 @@ async def delete_filter_endpoint(
     )
 
     try:
-        result = await delete_filter(filter_id=filter_id, db=db)
+        result = await filter_service.delete_filter(filter_id=filter_id, db=db)
         if not result:
             logger.warning(
                 "Filter not found for deletion: filter_id=%s",

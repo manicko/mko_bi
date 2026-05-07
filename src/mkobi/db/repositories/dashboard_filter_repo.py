@@ -22,8 +22,6 @@ class DashboardFilterRepository:
     Provides methods to manage the many-to-many relationship
     between dashboards and filters.
     """
-
-    @classmethod
     async def bind_filter(
         cls, dashboard_id: UUID, filter_id: UUID, db: AsyncSession
     ) -> bool:
@@ -79,8 +77,6 @@ class DashboardFilterRepository:
                 e,
             )
             raise
-
-    @classmethod
     async def unbind_filter(
         cls, dashboard_id: UUID, filter_id: UUID, db: AsyncSession
     ) -> bool:
@@ -127,8 +123,6 @@ class DashboardFilterRepository:
                 e,
             )
             raise
-
-    @classmethod
     async def get_dashboard_filters(
         cls, dashboard_id: UUID, db: AsyncSession
     ) -> list[UUID]:
@@ -164,8 +158,6 @@ class DashboardFilterRepository:
                 e,
             )
             raise
-
-    @classmethod
     async def get_filter_dashboards(
         cls, filter_id: UUID, db: AsyncSession
     ) -> list[UUID]:

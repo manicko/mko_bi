@@ -26,8 +26,6 @@ class ProcessingConfigRepository(IProcessingConfigRepository):
     separate database session with automatic transaction management.
     Implements IProcessingConfigRepository interface.
     """
-
-    @classmethod
     async def get(
         cls, id: UUID, db: AsyncSession
     ) -> processing_config_model.ProcessingConfig | None:
@@ -62,8 +60,6 @@ class ProcessingConfigRepository(IProcessingConfigRepository):
                 "Error getting config dashboard_id=%s: %s", id, e
             )
             raise
-
-    @classmethod
     async def create(
         cls, db: AsyncSession, **kwargs
     ) -> processing_config_model.ProcessingConfig | None:
@@ -88,8 +84,6 @@ class ProcessingConfigRepository(IProcessingConfigRepository):
         except SQLAlchemyError as e:
             logger.error("Error creating processing config: %s", e)
             raise
-
-    @classmethod
     async def update(
         cls, id: UUID, db: AsyncSession, **kwargs
     ) -> processing_config_model.ProcessingConfig | None:
@@ -128,9 +122,7 @@ class ProcessingConfigRepository(IProcessingConfigRepository):
                 "Error updating config dashboard_id=%s: %s", id, e
             )
             raise
-
-    @classmethod
-    async def delete(cls, id: UUID, db: AsyncSession) -> bool:
+    async def delete(self, id: UUID, db: AsyncSession) -> bool:
         """Delete processing config.
 
         Args:
@@ -162,9 +154,7 @@ class ProcessingConfigRepository(IProcessingConfigRepository):
                 "Error deleting config dashboard_id=%s: %s", id, e
             )
             raise
-
-    @classmethod
-    async def get_all(cls, db: AsyncSession) -> list[processing_config_model.ProcessingConfig]:
+    async def get_all(self, db: AsyncSession) -> list[processing_config_model.ProcessingConfig]:
         """Get all processing configs.
 
         Args:

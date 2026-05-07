@@ -28,8 +28,6 @@ class ProcessingLogRepository(IProcessingLogRepository):
     processing logs in the database.
     Implements IProcessingLogRepository interface.
     """
-
-    @classmethod
     async def create_log(
         cls,
         dashboard_id: UUID | None,
@@ -69,8 +67,6 @@ class ProcessingLogRepository(IProcessingLogRepository):
         except SQLAlchemyError as e:
             logger.error("Error creating log: %s", e)
             raise
-
-    @classmethod
     async def update_status(
         cls,
         log_id: UUID,
@@ -110,8 +106,6 @@ class ProcessingLogRepository(IProcessingLogRepository):
         except SQLAlchemyError as e:
             logger.error("Error updating log status id=%s: %s", log_id, e)
             raise
-
-    @classmethod
     async def get_by_dashboard(
         cls,
         dashboard_id: UUID | None,
@@ -148,8 +142,6 @@ class ProcessingLogRepository(IProcessingLogRepository):
         except SQLAlchemyError as e:
             logger.error("Error getting logs dashboard_id=%s: %s", dashboard_id, e)
             raise
-
-    @classmethod
     async def get_filtered(
         cls,
         filters: ProcessingLogFilter,
@@ -206,8 +198,6 @@ class ProcessingLogRepository(IProcessingLogRepository):
         except SQLAlchemyError as e:
             logger.error("Error getting filtered logs: %s", e)
             raise
-
-    @classmethod
     async def get_latest_by_dashboard(
         cls,
         dashboard_id: UUID,
@@ -247,8 +237,6 @@ class ProcessingLogRepository(IProcessingLogRepository):
                 e,
             )
             raise
-
-    @classmethod
     async def get_by_id(
         cls,
         log_id: UUID,

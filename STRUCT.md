@@ -7,6 +7,7 @@ C:\py_dev\mkobi
 │       ├── 2aa835fe1fac_add_composite_index_on_aggregated_data.py
 │       ├── 3f7a1b2c9d0e_add_processing_logs_dashboard_id_index.py
 │       ├── 57f43a5c499d_change_json_to_jsonb_for_postgresql.py
+│       ├── 91f5436a3098_add_unique_constraint_on_aggregated_.py
 │       ├── 840a99edb818_standardize_index_naming.py
 │       ├── 7130ecb0388c_true_initial_migration.py
 │       ├── 20260507141843_add_updated_at_to_users.py
@@ -28,8 +29,12 @@ C:\py_dev\mkobi
 │   └── tmp_uploads
 ├── DB_STRUCTURE.md
 ├── DBSTR.md
+├── docker-compose.override.yml
+├── docker-compose.test.yml
 ├── docker-compose.yml
 ├── Dockerfile
+├── fix_repositories.py
+├── fix_static_calls.py
 ├── frontend
 │   ├── eslint.config.js
 │   ├── index.html
@@ -155,6 +160,7 @@ C:\py_dev\mkobi
 │       │   ├── base_repository.py
 │       │   ├── logging_config.py
 │       │   ├── permissions.py
+│       │   ├── redis_client.py
 │       │   ├── security.py
 │       │   └── task_queue.py
 │       ├── data
@@ -238,7 +244,6 @@ C:\py_dev\mkobi
 ├── STRUCT.md
 ├── TASK_TEMPLATE.md
 ├── TASKS_TEMPLATE.md
-├── test_output.txt
 ├── tests
 │   ├── conftest.py
 │   ├── test_auth.py
@@ -273,21 +278,19 @@ C:\py_dev\mkobi
 │   │   └── TEST_036_test_audit_arch.md
 │   ├── DEV
 │   │   ├── 03_mypy_type_errors.md
-│   │   ├── 13_dependency_injection_fixes_DONE.md
-│   │   ├── 13_frontend_typescript_fixes_DONE.md
-│   │   ├── 14_config_module_fixes.md
 │   │   ├── 15_code_quality_tools.md
-│   │   ├── 16_logging_improvements_DONE.md
-│   │   ├── 17_security_improvements.md
-│   │   ├── 18_data_pipeline_fixes.md
-│   │   └── DOCKER_PLAN.md
-│   ├── DONE
-│   │   ├── TASK_001_sync_async_unification.md
-│   │   ├── TASK_014_dash_modern_component_architecture_DONE.md
-│   │   ├── TASK_051_di_and_interfaces.md
-│   │   ├── TASK_052_secrets_management_DONE.md
-│   │   └── TASK_DB_REPRODUCER_MAIN.md
-│   ├── TASK_01_analysis_report.md
-│   ├── TASK_02_analysis_report.md
-│   └── TASK_03_analysis_report.md
+│   │   ├── 21_storage_manager_unique_constraint.md
+│   │   ├── DOCKER_PLAN.md
+│   │   ├── TASK_006_repository_instance_methods_fix.md
+│   │   ├── TASK_006_storage_manager_methods_fix.md
+│   │   ├── TASK_007_aggregated_data_unique_constraint_fix.md
+│   │   ├── TASK_007_dashboard_creation_fix.md
+│   │   ├── TASK_008_test_messages_english_fix.md
+│   │   └── TASK_009_upload_api_auth_fix.md
+│   └── DONE
+│       ├── TASK_001_sync_async_unification.md
+│       ├── TASK_014_dash_modern_component_architecture_DONE.md
+│       ├── TASK_051_di_and_interfaces.md
+│       ├── TASK_052_secrets_management_DONE.md
+│       └── TASK_DB_REPRODUCER_MAIN.md
 └── uv.lock

@@ -192,7 +192,8 @@ class DataService(IDataService):
         db: AsyncSession,
     ) -> list[ProcessingResultData]:
         """Internal method to get aggregated data."""
-        records = await AggregatedDataRepository.get_by_graph(
+        agg_repo = AggregatedDataRepository()
+        records = await agg_repo.get_by_graph(
             db=db,
             graph_id=graph_id,
         )
@@ -442,7 +443,8 @@ async def get_processing_result(
         raise ValueError(f"Task {task_id} not found")
 
     # Get aggregated data
-    records = await AggregatedDataRepository.get_by_dashboard(
+    agg_repo = AggregatedDataRepository()
+    records = await agg_repo.get_by_dashboard(
         db=db,
         dashboard_id=log.dashboard_id,
     )

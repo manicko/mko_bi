@@ -1,0 +1,141 @@
+# =============================================================================
+# Dockerignore for mkobi BI Dashboard System
+# Optimized for multi-stage Docker builds - REDUCES BUILD CONTEXT SIZE
+# =============================================================================
+
+# Python cache and compiled files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+venv/
+env/
+.venv/
+env.bak/
+venv.bak/
+
+# IDE and editor files
+.idea/
+.vscode/
+.kilo/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# Version control - EXCLUDE entirely (speeds up build context)
+.git/
+.gitignore
+.gitattributes
+
+# Python packaging and distribution
+*.egg-info/
+*.egg
+dist/
+build/
+wheels/
+*.egg
+
+# Test files and coverage - EXCLUDE from all builds (use multi-stage for test)
+tests/
+.pytest_cache/
+.coverage
+htmlcov/
+*.cover
+test_output*.txt
+mypy*.txt
+
+# Documentation and markdown files (not needed in container)
+*.md
+!README.md
+docs/
+
+# Log files and temporary data - EXCLUDE to reduce context
+*.log
+data/logs/
+data/tmp_uploads/
+data/pgre/
+data/.gitkeep
+
+# Frontend build artifacts and dependencies
+frontend/node_modules/
+frontend/dist/
+frontend/build/
+frontend/.eslintcache
+frontend/package-lock.json
+
+# Environment and secrets - NEVER include in Docker images
+.env
+.env.example
+.env.local
+.env.*.local
+
+# Docker files (prevent recursive copy and reduce context)
+Dockerfile
+docker-compose.yml
+docker-compose.override.yml
+docker-compose.test.yml
+.dockerignore
+docker-compose.*.yml
+
+# Database and migration files - INCLUDE alembic for runtime migrations
+# alembic/versions/ is needed for Alembic to detect migrations
+
+# Dependencies lock files - INCLUDE uv.lock (needed for "uv sync --frozen")
+# package-lock.json is excluded (frontend uses separate builder if needed)
+
+# TODO and audit files (not needed in any Docker environment)
+TODO/
+AUDIT/
+TASKS_TEMPLATE.md
+TASK_TEMPLATE.md
+best_llm_models.md
+
+# Type checking and linting cache
+.mypy_cache/
+.ruff_cache/
+
+# Jupyter notebook checkpoints
+.ipynb_checkpoints/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.bak
+*~
+
+# IDE-specific files
+.idea/workspace.xml
+.idea/tasks.xml
+.vscode/settings.json
+.vscode/launch.json
+
+# SQL and database files not needed in container
+*.sql
+create_db.sql
+bidb_schema.sql
+DB_STRUCTURE.md
+DBSTR.md
+
+# Scripts not needed in container
+check_paths.py
+check_tables.py
+fix_repositories.py
+fix_static_calls.py
+
+# Specific output files
+mypy_errors.txt
+mypy_output.txt
+test_output*.txt

@@ -17,8 +17,6 @@ logger = logging.getLogger(__name__)
 
 class RegistrationRequestRepository:
     """Репозиторий для операций с заявками на регистрацию."""
-
-    @classmethod
     async def create(
         cls, email: str, ip: str | None, db: AsyncSession
     ) -> RegistrationRequest | None:
@@ -45,9 +43,7 @@ class RegistrationRequestRepository:
         except SQLAlchemyError as e:
             logger.error("Ошибка при создании заявки на регистрацию %s: %s", email, e)
             raise
-
-    @classmethod
-    async def get_by_email(cls, email: str, db: AsyncSession) -> RegistrationRequest | None:
+    async def get_by_email(self, email: str, db: AsyncSession) -> RegistrationRequest | None:
         """Получить заявку по email.
 
         Args:
@@ -70,9 +66,7 @@ class RegistrationRequestRepository:
         except SQLAlchemyError as e:
             logger.error("Ошибка при поиске заявки %s: %s", email, e)
             raise
-
-    @classmethod
-    async def delete(cls, request_id: UUID, db: AsyncSession) -> bool:
+    async def delete(self, request_id: UUID, db: AsyncSession) -> bool:
         """Удалить заявку по ID.
 
         Args:

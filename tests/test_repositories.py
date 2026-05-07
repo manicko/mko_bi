@@ -15,7 +15,8 @@ class TestUserRepository:
 
     async def test_create_user(self, async_db_session) -> None:
         """Test creating a new user."""
-        user = await UserRepository.create(
+        repo = UserRepository()
+        user = await repo.create(
             db=async_db_session,
             email="repo_test@example.com",
             password_hash="hashed_password",
@@ -29,7 +30,8 @@ class TestUserRepository:
 
     async def test_get_by_id(self, async_db_session) -> None:
         """Test getting user by ID."""
-        user = await UserRepository.create(
+        repo = UserRepository()
+        user = await repo.create(
             db=async_db_session,
             email="repo_get@example.com",
             password_hash="hashed_password",
@@ -37,14 +39,15 @@ class TestUserRepository:
         )
         await async_db_session.commit()
 
-        retrieved = await UserRepository.get(user.id, async_db_session)
+        retrieved = await repo.get(user.id, async_db_session)
         assert retrieved is not None
         assert retrieved.id == user.id
         assert retrieved.email == "repo_get@example.com"
 
     async def test_get_by_email(self, async_db_session) -> None:
         """Test getting user by email."""
-        await UserRepository.create(
+        repo = UserRepository()
+        await repo.create(
             db=async_db_session,
             email="repo_email@example.com",
             password_hash="hashed_password",
@@ -52,13 +55,14 @@ class TestUserRepository:
         )
         await async_db_session.commit()
 
-        retrieved = await UserRepository.get_by_email("repo_email@example.com", async_db_session)
+        retrieved = await repo.get_by_email("repo_email@example.com", async_db_session)
         assert retrieved is not None
         assert retrieved.email == "repo_email@example.com"
 
     async def test_update_user(self, async_db_session) -> None:
         """Test updating a user."""
-        user = await UserRepository.create(
+        repo = UserRepository()
+        user = await repo.create(
             db=async_db_session,
             email="repo_update@example.com",
             password_hash="hashed_password",
@@ -66,7 +70,7 @@ class TestUserRepository:
         )
         await async_db_session.commit()
 
-        updated = await UserRepository.update(
+        updated = await repo.update(
             user.id, db=async_db_session, role=UserRole.EDITOR
         )
         await async_db_session.commit()
@@ -75,7 +79,8 @@ class TestUserRepository:
 
     async def test_delete_user(self, async_db_session) -> None:
         """Test deleting a user."""
-        user = await UserRepository.create(
+        repo = UserRepository()
+        user = await repo.create(
             db=async_db_session,
             email="repo_delete@example.com",
             password_hash="hashed_password",
@@ -83,11 +88,11 @@ class TestUserRepository:
         )
         await async_db_session.commit()
 
-        result = await UserRepository.delete(user.id, async_db_session)
+        result = await repo.delete(user.id, async_db_session)
         await async_db_session.commit()
 
         assert result is True
-        deleted = await UserRepository.get(user.id, async_db_session)
+        deleted = await repo.get(user.id, async_db_session)
         assert deleted is None
 
 
@@ -96,7 +101,8 @@ class TestDashboardRepository:
 
     async def test_create_dashboard(self, async_db_session, test_user: dict) -> None:
         """Test creating a new dashboard."""
-        dashboard = await DashboardRepository.create(
+        repo = DashboardRepository()
+        dashboard = await repo.create(
             db=async_db_session,
             name="repo_test_dashboard",
             description="Test dashboard for repo tests",
@@ -110,20 +116,22 @@ class TestDashboardRepository:
 
     async def test_get_by_id(self, async_db_session, test_user: dict) -> None:
         """Test getting dashboard by ID."""
-        dashboard = await DashboardRepository.create(
+        repo = DashboardRepository()
+        dashboard = await repo.create(
             db=async_db_session,
             name="repo_get_dashboard",
             created_by=test_user["id"],
         )
         await async_db_session.commit()
 
-        retrieved = await DashboardRepository.get(dashboard.id, async_db_session)
+        retrieved = await repo.get(dashboard.id, async_db_session)
         assert retrieved is not None
         assert retrieved.id == dashboard.id
 
     async def test_get_user_dashboards(self, async_db_session, test_user: dict) -> None:
         """Test getting dashboards accessible by user."""
-        dashboard = await DashboardRepository.create(
+        repo = DashboardRepository()
+        dashboard = await repo.create(
             db=async_db_session,
             name="repo_user_dashboard",
             created_by=test_user["id"],
@@ -131,7 +139,8 @@ class TestDashboardRepository:
         await async_db_session.commit()
 
         # Add access for test user
-        await AccessRepository.grant_access(
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
             db=async_db_session,
             user_id=test_user["id"],
             dashboard_id=dashboard.id,
@@ -140,7 +149,7 @@ class TestDashboardRepository:
         await async_db_session.commit()
 
         # Verify access was granted (check via get_user_dashboards)
-        dashboards = await AccessRepository.get_user_dashboards(
+        dashboards = await access_repo.get_user_dashboards(
             test_user["id"], async_db_session
         )
         assert len(dashboards) >= 1
@@ -153,7 +162,8 @@ class TestGraphRepository:
     async def test_create_graph(self, async_db_session, test_user: dict) -> None:
         """Test creating a new graph."""
         # First create a dashboard
-        dashboard = await DashboardRepository.create(
+        dashboard_repo = DashboardRepository()
+        dashboard = await dashboard_repo.create(
             db=async_db_session,
             name="graph_test_dashboard",
             created_by=test_user["id"],
@@ -161,7 +171,8 @@ class TestGraphRepository:
         await async_db_session.commit()
 
         # Create graph
-        graph = await GraphRepository.create(
+        graph_repo = GraphRepository()
+        graph = await graph_repo.create(
             db=async_db_session,
             dashboard_id=dashboard.id,
             name="test_graph",
@@ -182,7 +193,8 @@ class TestFilterRepository:
 
     async def test_create_filter(self, async_db_session) -> None:
         """Test creating a new filter."""
-        filter_obj = await FilterRepository.create(
+        filter_repo = FilterRepository()
+        filter_obj = await filter_repo.create(
             db=async_db_session,
             name="test_filter",
             type=FilterType.SELECT,
@@ -200,7 +212,8 @@ class TestLayoutRepository:
 
     async def test_create_layout(self, async_db_session) -> None:
         """Test creating a new layout."""
-        layout = await LayoutRepository.create(
+        layout_repo = LayoutRepository()
+        layout = await layout_repo.create(
             db=async_db_session,
             name="test_layout",
             definition={"grid": []},
@@ -217,7 +230,8 @@ class TestAccessRepository:
     async def test_grant_access(self, async_db_session, test_user: dict) -> None:
         """Test granting dashboard access."""
         # Create dashboard first
-        dashboard = await DashboardRepository.create(
+        dashboard_repo = DashboardRepository()
+        dashboard = await dashboard_repo.create(
             db=async_db_session,
             name="access_test_dashboard",
             created_by=test_user["id"],
@@ -225,7 +239,8 @@ class TestAccessRepository:
         await async_db_session.commit()
 
         # Grant access
-        await AccessRepository.grant_access(
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
             db=async_db_session,
             user_id=test_user["id"],
             dashboard_id=dashboard.id,
@@ -234,7 +249,7 @@ class TestAccessRepository:
         await async_db_session.commit()
 
         # Verify access was granted (check via get_user_dashboards)
-        dashboards = await AccessRepository.get_user_dashboards(
+        dashboards = await access_repo.get_user_dashboards(
             test_user["id"], async_db_session
         )
         assert any(d.id == dashboard.id for d in dashboards)

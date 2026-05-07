@@ -1,0 +1,32 @@
+# =============================================================================
+# Docker Compose Override for Development
+# Usage: docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
+# =============================================================================
+
+services:
+  app:
+    build:
+      target: dev
+    environment:
+      ENV: development
+      LOGGING__LEVEL: DEBUG
+      AUTO_MIGRATE: "true"
+      RECREATE_TEST_DB: "true"
+    volumes:
+      # Mount source code for hot reload
+      - ./src:/app/src:ro
+      - ./alembic:/app/alembic:ro
+      - ./tests:/app/tests:ro
+      - ./pyproject.toml:/app/pyproject.toml:ro
+      - ./uv.lock:/app/uv.lock:ro
+    command: ["uv", "run", "uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    # Remove healthcheck in dev for faster startup
+    healthcheck:
+      disable: true
+
+  db:
+    environment:
+      POSTGRES_PASSWORD: ${DATABASE__PASSWORD:-1234}
+    # Expose port for local development tools
+    ports:
+      - "5432:5432"

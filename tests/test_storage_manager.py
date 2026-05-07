@@ -1,7 +1,7 @@
-"""Тесты для менеджера хранения агрегированных данных.
+"""Tests for aggregated data storage manager.
 
-Тестирует класс StorageManager для сохранения агрегированных данных
-в PostgreSQL с поддержкой пакетных вставок, транзакций и очистки данных.
+Tests the StorageManager class for saving aggregated data
+to PostgreSQL with support for batch inserts, transactions and data cleanup.
 """
 
 import pytest
@@ -16,25 +16,25 @@ from mkobi.models.enums import GraphType
 
 
 class TestStorageManagerInit:
-    """Тесты для инициализации StorageManager."""
+    """Tests for StorageManager initialization."""
 
     async def test_init_with_async_db_session(self, async_db_session):
-        """Тест инициализации с сессией базы данных."""
+        """Test initialization with database session."""
         manager = StorageManager(async_db_session)
         assert manager.db == async_db_session
 
     async def test_init_stores_db_reference(self, async_db_session):
-        """Тест сохранения ссылки на сессию базы данных."""
+        """Test that database reference is stored."""
         manager = StorageManager(async_db_session)
         assert hasattr(manager, 'db')
         assert manager.db is async_db_session
 
 
 class TestSaveAggregates:
-    """Тесты для метода save_aggregates."""
+    """Tests for save_aggregates method."""
 
     async def test_save_single_aggregate(self, async_db_session):
-        """Тест сохранения одного агрегата."""
+        """Test saving a single aggregate."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -68,7 +68,7 @@ class TestSaveAggregates:
         assert saved == 1
 
     async def test_save_empty_aggregates(self, async_db_session):
-        """Тест сохранения пустого списка агрегатов."""
+        """Test saving an empty list of aggregates."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -82,7 +82,7 @@ class TestSaveAggregates:
         assert saved == 0
 
     async def test_save_aggregates_with_clear_old(self, async_db_session):
-        """Тест сохранения с очисткой старых данных."""
+        """Test save with clearing old data."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -148,7 +148,7 @@ class TestSaveAggregates:
         assert rows[0].metrics == {"revenue": 2000}
 
     async def test_save_aggregates_without_clear_old(self, async_db_session):
-        """Тест сохранения без очистки старых данных."""
+        """Test save without clearing old data."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -203,7 +203,7 @@ class TestSaveAggregates:
         assert count == 2
 
     async def test_save_aggregates_upsert(self, async_db_session):
-        """Тест обновления существующих данных (upsert)."""
+        """Test updating existing data (upsert)."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -260,7 +260,7 @@ class TestSaveAggregates:
         assert rows[0].metrics == {"revenue": 1500}
 
     async def test_save_aggregates_invalid_data(self, async_db_session):
-        """Тест сохранения с невалидными данными."""
+        """Test save with invalid data."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -278,11 +278,11 @@ class TestSaveAggregates:
             }
         ]
 
-        with pytest.raises(ValueError, match="dims должен быть словарем"):
+        with pytest.raises(ValueError, match="dims must be a dict"):
             await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
 
     async def test_save_aggregates_missing_fields(self, async_db_session):
-        """Тест сохранения с отсутствующими обязательными полями."""
+        """Test save with missing required fields."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -300,11 +300,11 @@ class TestSaveAggregates:
             }
         ]
 
-        with pytest.raises(ValueError, match="не содержит поля"):
+        with pytest.raises(ValueError, match="missing fields"):
             await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
 
     async def test_save_aggregates_nonexistent_graph(self, async_db_session):
-        """Тест сохранения для несуществующего графика."""
+        """Test save for non-existent graph."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -323,15 +323,15 @@ class TestSaveAggregates:
             }
         ]
 
-        with pytest.raises(ValueError, match="Графики не найдены"):
+        with pytest.raises(ValueError, match="Graphs not found"):
             await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
 
 
 class TestUpsertAggregate:
-    """Тесты для метода upsert_aggregate."""
+    """Tests for upsert_aggregate method."""
 
     async def test_upsert_new_aggregate(self, async_db_session):
-        """Тест вставки нового агрегата."""
+        """Test inserting a new aggregate."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -379,7 +379,7 @@ class TestUpsertAggregate:
         assert agg.metrics == {"revenue": 1000}
 
     async def test_upsert_existing_aggregate(self, async_db_session):
-        """Тест обновления существующего агрегата."""
+        """Test updating an existing aggregate."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -436,7 +436,7 @@ class TestUpsertAggregate:
         assert agg.metrics == {"revenue": 1500}
 
     async def test_upsert_invalid_data(self, async_db_session):
-        """Тест upsert с невалидными данными."""
+        """Test upsert with invalid data."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -459,7 +459,7 @@ class TestUpsertAggregate:
 
         manager = StorageManager(async_db_session)
 
-        with pytest.raises(ValueError, match="dims должен быть dict"):
+        with pytest.raises(ValueError, match="dims must be a dict"):
             await manager.upsert_aggregate(
                 dashboard_id=dashboard.id,
                 graph_id=graph.id,
@@ -468,7 +468,7 @@ class TestUpsertAggregate:
             )
 
     async def test_upsert_nonexistent_graph(self, async_db_session):
-        """Тест upsert для несуществующего графика."""
+        """Test upsert for non-existent graph."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -480,7 +480,7 @@ class TestUpsertAggregate:
 
         manager = StorageManager(async_db_session)
 
-        with pytest.raises(ValueError, match="Графики не найдены"):
+        with pytest.raises(ValueError, match="Graphs not found"):
             await manager.upsert_aggregate(
                 dashboard_id=dashboard.id,
                 graph_id=uuid4(),
@@ -490,10 +490,10 @@ class TestUpsertAggregate:
 
 
 class TestClearData:
-    """Тесты для методов очистки данных."""
+    """Tests for data clearing methods."""
 
     async def test_clear_dashboard_data(self, async_db_session):
-        """Тест очистки всех данных дашборда."""
+        """Test clearing all dashboard data."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -554,7 +554,7 @@ class TestClearData:
         assert count == 0
 
     async def test_clear_graph_data(self, async_db_session):
-        """Тест очистки данных конкретного графика."""
+        """Test clearing data for a specific graph."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -632,7 +632,7 @@ class TestClearData:
         assert agg.graph_id == graph2.id
 
     async def test_clear_nonexistent_data(self, async_db_session):
-        """Тест очистки данных для дашборда без данных."""
+        """Test clearing data for dashboard without data."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -648,10 +648,10 @@ class TestClearData:
 
 
 class TestGetAggregates:
-    """Тесты для метода get_aggregates."""
+    """Tests for get_aggregates method."""
 
     async def test_get_all_aggregates(self, async_db_session):
-        """Тест получения всех агрегатов дашборда."""
+        """Test getting all dashboard aggregates."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -698,7 +698,7 @@ class TestGetAggregates:
         assert categories == {"A", "B"}
 
     async def test_get_aggregates_for_graph(self, async_db_session):
-        """Тест получения агрегатов для конкретного графика."""
+        """Test getting aggregates for a specific graph."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -752,7 +752,7 @@ class TestGetAggregates:
         assert result[0]["dims"] == {"category": "A"}
 
     async def test_get_aggregates_empty(self, async_db_session):
-        """Тест получения агрегатов для пустого дашборда."""
+        """Test getting aggregates for an empty dashboard."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -768,10 +768,10 @@ class TestGetAggregates:
 
 
 class TestStorageManagerIntegration:
-    """Интеграционные тесты для StorageManager."""
+    """Integration tests for StorageManager."""
 
     async def test_full_save_and_retrieve_flow(self, async_db_session):
-        """Тест полного цикла: сохранение и получение данных."""
+        """Test complete cycle: save and retrieve data."""
         from mkobi.db.models import dashboard as dashboard_model
         
         # Создаем дашборд и графики
@@ -880,7 +880,7 @@ class TestStorageManagerIntegration:
         assert all_aggregates == []
 
     async def test_batch_insert_performance(self, async_db_session):
-        """Тест пакетной вставки большого количества данных."""
+        """Test batch insert of large number of records."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(
@@ -928,7 +928,7 @@ class TestStorageManagerIntegration:
         assert values == expected_values
 
     async def test_transaction_rollback_on_error(self, async_db_session):
-        """Тест отката транзакции при ошибке."""
+        """Test transaction rollback on error."""
         from mkobi.db.models import dashboard as dashboard_model
         
         dashboard = dashboard_model.Dashboard(

@@ -263,7 +263,8 @@ async def _check_access_with_session(
     """
     try:
         # Get user access level
-        permission = await AccessRepository.check_access(
+        access_repo = AccessRepository()
+        permission = await access_repo.check_access(
             user_id=user_id,
             dashboard_id=dashboard_id,
             db=db,

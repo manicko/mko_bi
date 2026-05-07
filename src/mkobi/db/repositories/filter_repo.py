@@ -25,9 +25,7 @@ class FilterRepository(IFilterRepository):
     separate database session with automatic transaction management.
     Implements IFilterRepository interface.
     """
-
-    @classmethod
-    async def get(cls, id: UUID, db: AsyncSession) -> filter_model.Filter | None:
+    async def get(self, id: UUID, db: AsyncSession) -> filter_model.Filter | None:
         """Get filter by ID.
 
         Args:
@@ -52,8 +50,6 @@ class FilterRepository(IFilterRepository):
         except SQLAlchemyError as e:
             logger.error("Error getting filter id=%s: %s", id, e)
             raise
-
-    @classmethod
     async def get_by_name(
         cls, name: str, db: AsyncSession
     ) -> filter_model.Filter | None:
@@ -81,9 +77,7 @@ class FilterRepository(IFilterRepository):
         except SQLAlchemyError as e:
             logger.error("Error getting filter name=%s: %s", name, e)
             raise
-
-    @classmethod
-    async def create(cls, db: AsyncSession, **kwargs) -> filter_model.Filter | None:
+    async def create(self, db: AsyncSession, **kwargs) -> filter_model.Filter | None:
         """Create new filter.
 
         Args:
@@ -105,8 +99,6 @@ class FilterRepository(IFilterRepository):
         except SQLAlchemyError as e:
             logger.error("Error creating filter: %s", e)
             raise
-
-    @classmethod
     async def update(
         cls, id: UUID, db: AsyncSession, **kwargs
     ) -> filter_model.Filter | None:
@@ -140,9 +132,7 @@ class FilterRepository(IFilterRepository):
         except SQLAlchemyError as e:
             logger.error("Error updating filter id=%s: %s", id, e)
             raise
-
-    @classmethod
-    async def delete(cls, id: UUID, db: AsyncSession) -> bool:
+    async def delete(self, id: UUID, db: AsyncSession) -> bool:
         """Delete filter.
 
         Args:
@@ -169,9 +159,7 @@ class FilterRepository(IFilterRepository):
         except SQLAlchemyError as e:
             logger.error("Error deleting filter id=%s: %s", id, e)
             raise
-
-    @classmethod
-    async def get_all(cls, db: AsyncSession) -> list[filter_model.Filter]:
+    async def get_all(self, db: AsyncSession) -> list[filter_model.Filter]:
         """Get all filters.
 
         Args:

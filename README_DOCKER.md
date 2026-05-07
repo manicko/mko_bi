@@ -1,283 +1,240 @@
-# Docker Quick Start - mkobi BI Dashboard
+# Docker Setup for mkobi BI Dashboard System
 
-**Date**: 2026-05-06  
-**Version**: 1.0  
+## Overview
 
----
+This project uses a multi-stage Dockerfile with the following targets:
+- **base** - Common base image with system dependencies
+- **dev** - Development environment with hot reload
+- **test** - Environment for running tests
+- **prod** - Production image with multiple workers (default)
+- **prod-slim** - Minimal production image
 
 ## Prerequisites
 
-- Docker installed
-- Docker Compose installed (or docker compose plugin)
-
----
+- Docker Engine 20.10+
+- Docker Compose 2.0+
+- uv (for local development)
 
 ## Quick Start
 
-### 1. Clone the repository
+### Production
 
 ```bash
-git clone <repository-url>
-cd mkobi
+# Build and start production environment
+docker compose up -d
+
+# Or with specific target
+DOCKER_TARGET=prod docker compose up -d
 ```
 
-### 2. Configure environment (optional)
-
-Copy `.env.example` to `.env` and update values:
+### Development
 
 ```bash
-cp .env.example .env
+# Start development environment with hot reload
+docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
+
+# View logs
+docker compose -f docker-compose.yml -f docker-compose.override.yml logs -f app
 ```
 
-**Important changes for production:**
-- Set `DATABASE__PASSWORD` to a secure password
-- Set `JWT__SECRET_KEY` to a strong secret (generate with `openssl rand -hex 32`)
-- Update `CORS_ORIGINS` to your domain for production
-
-### 3. Start the application
+### Testing
 
 ```bash
-docker-compose up -d
+# Start test environment
+docker compose -f docker-compose.yml -f docker-compose.test.yml up -d
+
+# Run tests
+docker compose -f docker-compose.yml -f docker-compose.test.yml exec app uv run pytest tests/ -v
+
+# Stop test environment
+docker compose -f docker-compose.yml -f docker-compose.test.yml down
 ```
 
-This will:
-- Start PostgreSQL 16 database in a container
-- Build and start the mkobi application
-- Create persistent Docker volumes for data
-- Run database migrations automatically
-- **Create and migrate test database** (if `RECREATE_TEST_DB=true`)
+## Multi-Stage Builds Explained
 
-### 3.1 Test Database (Optional)
+### Stage: base
+- Python 3.12-slim as base
+- Installs system dependencies (build-essential, libpq-dev)
+- Installs uv for fast dependency management
+- Creates non-root user for security
 
-To enable automatic test database creation on first launch, add to `docker-compose.yml`:
+### Stage: frontend-builder
+- Uses Node 20 Alpine
+- Installs frontend dependencies
+- Builds React production bundle
+- Output: `frontend/dist/`
 
-```yaml
-# In app service environment:
-ENV: test  # or development
-DATABASE__TEST_DBNAME: bidb_test
-RECREATE_TEST_DB: "true"
-```
+### Stage: dev
+- Extends base
+- Installs ALL dependencies (including dev)
+- Copies source code for hot reload
+- Runs with `--reload` flag
 
-This ensures `uv run pytest tests/` can run against a properly migrated test database.
+### Stage: test
+- Extends base
+- Installs ALL dependencies (including dev)
+- Copies tests and source code
+- Sets `ENV=test`
+- Default command runs pytest
 
-### 4. Access the application
+### Stage: prod-base
+- Extends base
+- Installs only production dependencies (`--no-dev`)
+- Copies source code and frontend build
+- Creates data directories
 
-- **API**: http://localhost:8000
-- **API Docs (Swagger UI)**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+### Stage: prod (default target)
+- Extends prod-base
+- Runs with multiple workers (`--workers 4`)
+- Optimized for production deployment
 
----
+### Stage: prod-slim
+- Even smaller image using python:3.12-slim
+- Copies pre-installed venv from prod-base
+- Minimal runtime dependencies only
 
-## Data Storage
+## Layer Caching Optimizations
 
-All data is stored in Docker volumes:
+The Dockerfile is optimized for fast builds:
 
-| Volume | Container Path | Purpose |
-|--------|----------------|---------|
-| `app_data` | `/app/data` | App data (uploads, logs, temp files) |
-| `postgres_data` | `/var/lib/postgresql/data` | PostgreSQL database files |
+1. **Copy dependency files first**: `pyproject.toml` and `uv.lock` are copied before source code
+2. **Separate frontend build**: Frontend is built in a separate stage
+3. **Minimal layers**: Related commands are combined to reduce layers
+4. **Proper .dockerignore**: Excludes unnecessary files from build context
 
-### View data volumes:
+## Build Examples
 
 ```bash
-docker volume ls
-docker volume inspect mkobi_app_data
-docker volume inspect mkobi_postgres_data
+# Build specific target
+docker build --target dev -t mkobi:dev .
+docker build --target prod -t mkobi:prod .
+docker build --target test -t mkobi:test .
+
+# Build with no cache (force rebuild)
+docker build --no-cache --target prod -t mkobi:prod .
+
+# Build with build args
+docker build --build-arg UV_VERSION=v0.1.0 --target prod -t mkobi:prod .
 ```
-
-### Access uploaded files:
-
-```bash
-docker exec -it mkobi-app-1 ls -la /app/data/uploads
-```
-
----
-
-## Common Commands
-
-### View logs
-
-```bash
-# All services
-docker-compose logs -f
-
-# App only
-docker-compose logs -f app
-
-# Database only
-docker-compose logs -f db
-```
-
-### Stop the application
-
-```bash
-docker-compose down
-```
-
-### Stop and remove volumes (⚠️ deletes all data)
-
-```bash
-docker-compose down -v
-```
-
-### Rebuild after code changes
-
-```bash
-docker-compose up -d --build
-```
-
-### Run migrations manually
-
-```bash
-docker exec -it mkobi-app-1 uv run alembic upgrade head
-```
-
-### Access PostgreSQL database
-
-```bash
-docker exec -it mkobi-db-1 psql -U postgres -d bidb
-```
-
----
 
 ## Environment Variables
 
-Key variables in `.env` (or set in environment):
+See `docker-compose.yml` for all environment variables.
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `DATABASE__PASSWORD` | `1234` | PostgreSQL password |
-| `JWT__SECRET_KEY` | (auto-generated) | JWT signing key |
-| `JWT__ALGORITHM` | `HS256` | JWT algorithm |
-| `CORS_ORIGINS` | `["http://localhost"]` | CORS allowed origins |
-| `AUTO_MIGRATE` | `true` | Auto-run migrations on startup |
-| `RECREATE_TEST_DB` | `false` | Auto-create test DB on startup |
-| `DATABASE__TEST_DBNAME` | `bidb_test` | Test database name |
-| `LOGGING__LEVEL` | `INFO` | Logging level |
-| `LOGGING__LOG_FILE` | `/app/data/logs/app.log` | Log file path |
+Key variables:
+- `ENV` - Environment (development/test/production)
+- `DATABASE__HOST` - Database host
+- `DATABASE__PASSWORD` - Database password
+- `JWT__SECRET_KEY` - JWT secret key
+- `LOGGING__LEVEL` - Logging level (DEBUG/INFO/WARNING/ERROR)
+- `AUTO_MIGRATE` - Auto-run database migrations (true/false)
+- `RECREATE_TEST_DB` - Recreate test database on startup (true/false)
 
----
+## Volumes
 
-## Production Deployment
+- `postgres_data` - PostgreSQL data persistence
+- `app_data` - Application data (uploads, logs, temp files)
+- `redis_data` - Redis data (if using task queue)
 
-### 1. Update `.env` for production:
+## Health Checks
 
-```bash
-ENV=production
-DATABASE__PASSWORD=<strong-password>
-JWT__SECRET_KEY=<strong-secret>
-CORS_ORIGINS='["https://yourdomain.com"]'
-LOGGING__LEVEL=WARNING
-```
+- **db**: Uses `pg_isready` to check PostgreSQL readiness
+- **app**: Uses HTTP health endpoint `/health`
+- **redis**: Uses `redis-cli ping`
 
-### 2. Use Docker secrets (recommended):
+## Common Commands
 
 ```bash
-# Instead of putting passwords in .env, use Docker secrets:
-DATABASE__PASSWORD_FILE=/run/secrets/db_password
-JWT__SECRET_KEY_FILE=/run/secrets/jwt_secret
+# View running containers
+docker compose ps
+
+# View logs
+docker compose logs -f app
+
+# Execute command in running container
+docker compose exec app uv run pytest tests/
+
+# Open shell in container
+docker compose exec app /bin/bash
+
+# Stop all services
+docker compose down
+
+# Stop and remove volumes
+docker compose down -v
+
+# Rebuild after changes
+docker compose up -d --build
 ```
-
-### 3. Run production checklist:
-
-See `PRODUCTION_CHECKLIST.md` for full pre-deployment verification.
-
----
 
 ## Troubleshooting
 
-### Database connection error
-
-Wait for database to be healthy:
+### Database connection issues
 ```bash
-docker-compose ps
-# Look for "health: starting" -> wait until "healthy"
+# Check if database is ready
+docker compose exec db pg_isready -U postgres
+
+# View database logs
+docker compose logs db
 ```
 
-### Port already in use
-
-Change the port mapping in `docker-compose.yml`:
-```yaml
-ports:
-  - "8080:8000"  # Maps host port 8080 to container 8000
-```
-
-### Migration errors
-
-Check logs and run manually:
+### Migration issues
 ```bash
-docker-compose logs app
-docker exec -it mkobi-app-1 uv run alembic upgrade head
+# Run migrations manually
+docker compose exec app uv run alembic upgrade head
+
+# Check migration status
+docker compose exec app uv run alembic current
 ```
 
-### Test database not created
-
-Ensure these variables are set in `docker-compose.yml`:
-```yaml
-ENV: development  # or test
-RECREATE_TEST_DB: "true"
-DATABASE__TEST_DBNAME: bidb_test
-```
-
-Then restart:
+### Frontend not loading
 ```bash
-docker-compose down && docker-compose up -d
+# Rebuild frontend
+docker compose exec app npm run build --prefix frontend
+
+# Check nginx logs (if using)
+docker compose logs nginx
 ```
 
-### Run tests in Docker
+## Security Notes
 
-```bash
-docker exec -it mkobi-app-1 uv run pytest tests/
+1. **Non-root user**: Application runs as `app` user (not root)
+2. **Secrets**: Use Docker secrets or environment variables for sensitive data
+3. **.env file**: Never commit `.env` file to version control
+4. **Production**: Change default passwords and JWT secret in production
+
+## Performance Tips
+
+1. **Use layer caching**: Order Dockerfile commands from least to most frequently changing
+2. **Multi-stage builds**: Reduces final image size by excluding build dependencies
+3. **uv package manager**: Faster than pip for dependency installation
+4. **--no-dev flag**: Excludes development dependencies in production
+
+## File Structure
+
+```
+.
+├── Dockerfile                    # Multi-stage Dockerfile
+├── docker-compose.yml            # Production compose file
+├── docker-compose.override.yml   # Development overrides
+├── docker-compose.test.yml       # Test environment
+├── .dockerignore                 # Excludes files from build context
+├── nginx/
+│   └── nginx.conf                # Nginx configuration (optional)
+└── frontend/
+    ├── dist/                     # Built frontend (generated)
+    └── ...
 ```
 
----
+## Migration from Old Setup
 
-## Architecture
+If migrating from a single-stage Dockerfile:
 
-```
-┌─────────────────────────────────────────────┐
-│              HOST MACHINE                │
-│                                   │
-│  ┌──────────────┐    ┌──────────────┐ │
-│  │   Docker     │    │   Docker     │ │
-│  │   Volume:    │    │   Volume:    │ │
-│  │   app_data   │    │   postgres_  │ │
-│  │              │    │   data       │ │
-│  └──────┬───────┘    └──────┬───────┘ │
-│         │                    │          │
-│         ▼                    ▼          │
-│  ┌─────────────────────────────────┐  │
-│  │         DOCKER NETWORK         │  │
-│  │  ┌──────────┐  ┌──────────┐ │  │
-│  │  │   app    │  │    db    │ │  │
-│  │  │  :8000   │  │  :5432   │ │  │
-│  │  └────┬─────┘  └────┬─────┘ │  │
-│  │       │              │       │  │
-│  │       └──────┬───────┘       │  │
-│  │              │                  │  │
-│  │         localhost:8000         │  │
-│  │                              │  │
-│  │  On startup:                 │  │
-│  │  • Check DB exists           │  │
-│  │  • Run Alembic migrations    │  │
-│  │  • Create test DB (optional) │  │
-│  └─────────────────────────────────┘  │
-└─────────────────────────────────────────────┘
-```
+1. Review the new multi-stage Dockerfile
+2. Update `docker-compose.yml` to specify build target
+3. Test each environment (dev/test/prod)
+4. Update CI/CD pipelines to use new targets
 
-**Key points:**
-- App and database run in isolated Docker containers
-- Data persists in Docker volumes (survives container restarts)
-- On first launch: migrations auto-run via `DatabaseStarter`
-- Test database created/migrated if `RECREATE_TEST_DB=true`
-- No need to install Python, PostgreSQL, or dependencies on host
-- Same setup works on any machine with Docker
+## License
 
----
-
-## Next Steps
-
-1. Run `docker-compose up -d`
-2. Open http://localhost:8000/docs
-3. Create first admin user (see API docs)
-4. Start uploading data and creating dashboards!
+MIT
