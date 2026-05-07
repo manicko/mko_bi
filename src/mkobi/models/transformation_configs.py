@@ -1,7 +1,7 @@
-"""Pydantic модели для конфигурации трансформаций данных.
+"""Pydantic models for data transformation configuration.
 
-Этот модуль содержит модели для типизации настроек
-фильтрации, агрегации, расчета YoY, долей и кастомных метрик.
+This module contains models for typing settings
+for filtering, aggregation, YoY calculation, share calculation and custom metrics.
 """
 
 from typing import Any
@@ -10,7 +10,7 @@ from mkobi.models.enums import AggregationFunctionEnum, FilterOperatorEnum
 
 
 class FilterConfig(BaseModel):
-    """Конфигурация фильтрации данных."""
+    """Data filter configuration."""
 
     column: str
     operator: FilterOperatorEnum
@@ -29,7 +29,7 @@ class FilterConfig(BaseModel):
 
 
 class AggregationConfig(BaseModel):
-    """Конфигурация агрегации данных."""
+    """Data aggregation configuration."""
 
     column: str
     function: AggregationFunctionEnum
@@ -48,22 +48,22 @@ class AggregationConfig(BaseModel):
 
 
 class YoyConfig(BaseModel):
-    """Конфигурация расчета Year-over-Year."""
+    """Year-over-Year calculation configuration."""
 
     year_column: str
     value_column: str
     group_cols: list[str] | None = Field(
         default=None,
-        description="Колонки для группировки (измерения/dims)",
+        description="Columns to group by (dimensions/dims)",
     )
     month_column: str | None = Field(
         default=None,
-        description="Колонка с месяцем (для сдвига на 12 месяцев)",
+        description="Column containing month (for 12-month shift)",
     )
-    alias: str = Field(default="yoy", description="Имя колонки с предыдущим значением")
+    alias: str = Field(default="yoy", description="Name of previous value column")
     percent_alias: str = Field(
         default="yoy_percent",
-        description="Имя колонки с процентным изменением",
+        description="Name of percentage change column",
     )
 
     model_config = ConfigDict(
@@ -82,14 +82,14 @@ class YoyConfig(BaseModel):
 
 
 class ShareConfig(BaseModel):
-    """Конфигурация расчета долей."""
+    """Share calculation configuration."""
 
     value_column: str
     group_cols: list[str] | None = Field(
         default=None,
-        description="Колонки для группировки при расчете долей",
+        description="Columns to group by when calculating shares",
     )
-    alias: str = Field(default="share", description="Имя колонки с долей")
+    alias: str = Field(default="share", description="Name of share column")
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -104,17 +104,38 @@ class ShareConfig(BaseModel):
 
 
 class CustomMetricConfig(BaseModel):
-    """Конфигурация кастомной метрики."""
+    """Custom metric configuration."""
 
     name: str
-    formula: str
+    expr: str
 
     model_config = ConfigDict(
         from_attributes=True,
         json_schema_extra={
             "example": {
                 "name": "profit_margin",
-                "formula": "profit / revenue * 100",
+                "expr": "profit / revenue * 100",
+            }
+        },
+    )
+
+
+class TransformationConfig(BaseModel):
+    """Full transformation configuration."""
+
+    filters: list[FilterConfig] | None = None
+    computed_fields: list[CustomMetricConfig] | None = None
+    rename: dict[str, str] | None = None
+    dtype: dict[str, str] | None = None
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "filters": [{"column": "year", "operator": ">=", "value": 2020}],
+                "computed_fields": [{"name": "profit_margin", "formula": "profit / revenue * 100"}],
+                "rename": {"revenue": "total_revenue"},
+                "dtype": {"year": "INTEGER", "revenue": "FLOAT"},
             }
         },
     )

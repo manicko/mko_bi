@@ -10,8 +10,8 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mkobi.config import get_async_redis_client
 from mkobi.core.logging_config import get_logger
+from mkobi.core.redis_client import get_async_redis_client
 from mkobi.core.security import (
     AsyncRateLimiter,
     create_access_token,

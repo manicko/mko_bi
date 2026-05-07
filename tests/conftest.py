@@ -52,10 +52,6 @@ from mkobi.db.models import (  # noqa: E402, F401
     User,
 )
 
-# Mock Redis for rate limiter tests
-import asyncio
-from unittest.mock import AsyncMock
-
 
 class MockRedis:
     """Mock Redis client for testing rate limiter without real Redis."""
@@ -104,6 +100,10 @@ class MockPipeline:
     async def expire(self, key, ttl):
         return await self._redis.expire(key, ttl)
 
+    async def execute(self):
+        """Mock execute - commands are already applied."""
+        pass
+
 
 @pytest.fixture(autouse=True)
 def mock_redis(monkeypatch):
@@ -113,12 +113,12 @@ def mock_redis(monkeypatch):
     mock_redis_client = MockRedis()
 
     # Patch get_async_redis_client to return mock
-    import mkobi.config as config_module
+    import mkobi.core.redis_client as redis_client_module
 
     def mock_get_async_redis_client():
         return mock_redis_client
 
-    monkeypatch.setattr(config_module, "get_async_redis_client", mock_get_async_redis_client)
+    monkeypatch.setattr(redis_client_module, "get_async_redis_client", mock_get_async_redis_client)
 
     # Patch the rate limiter instances in data_service
     import mkobi.services.data_service as data_service_module
@@ -144,12 +144,10 @@ def pytest_sessionstart(session):
     """Setup before test session starts using DatabaseStarter."""
     import asyncio
 
-    from mkobi.db.starter import DatabaseStarter
-
     async def init_test_db():
-        starter = DatabaseStarter()
         # Skip recreation - tests will use existing test DB
-        # await starter.recreate_test_database()
+        # await DatabaseStarter().recreate_test_database()
+        pass
 
     asyncio.run(init_test_db())
 

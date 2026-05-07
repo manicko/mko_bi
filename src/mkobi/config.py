@@ -3,8 +3,6 @@ import os
 from pathlib import Path
 from typing import Any
 
-import redis
-import redis.asyncio as aioredis
 import yaml
 from pydantic import BaseModel, Field, PostgresDsn
 from pydantic.fields import FieldInfo
@@ -14,6 +12,21 @@ from pydantic_settings.sources import PydanticBaseSettingsSource
 from mkobi.models.enums import EnvironmentEnum, FileExtensionEnum, MimeTypeEnum
 
 logger = logging.getLogger(__name__)
+
+
+def _set_nested_value(data: dict[str, Any], key: str, value: Any) -> None:
+    """Set a nested value in a dict using __ as separator.
+
+    Example: _set_nested_value({}, "DATABASE__PASSWORD", "secret")
+             -> {"database": {"password": "secret"}}
+    """
+    parts = key.lower().split("__")
+    current = data
+    for part in parts[:-1]:
+        if part not in current:
+            current[part] = {}
+        current = current[part]
+    current[parts[-1]] = value
 
 
 class SecretsFileSource(PydanticBaseSettingsSource):
@@ -51,21 +64,6 @@ class SecretsFileSource(PydanticBaseSettingsSource):
                         logger.warning(f"Failed to read secret file {file_path}: {e}")
 
         return result
-
-
-def _set_nested_value(data: dict[str, Any], key: str, value: Any) -> None:
-    """Set a nested value in a dict using __ as separator.
-
-    Example: _set_nested_value({}, "DATABASE__PASSWORD", "secret")
-             -> {"database": {"password": "secret"}}
-    """
-    parts = key.lower().split("__")
-    current = data
-    for part in parts[:-1]:
-        if part not in current:
-            current[part] = {}
-        current = current[part]
-    current[parts[-1]] = value
 
     def __repr__(self) -> str:
         return "SecretsFileSource()"
@@ -389,36 +387,3 @@ def get_config() -> Settings:
     if _settings is None:
         _settings = Settings()
     return _settings
-
-
-def get_redis_client() -> "redis.Redis":
-    """Возвращает синхронный клиент Redis на основе настроек.
-
-    Returns:
-        redis.Redis: Синхронный клиент Redis.
-    """
-    config = get_config()
-    return redis.Redis(
-        host=config.redis.host,
-        port=config.redis.port,
-        db=config.redis.db,
-        password=config.redis.password,
-        decode_responses=True,
-    )
-
-
-def get_async_redis_client() -> "redis.asyncio.Redis":
-    """Возвращает асинхронный клиент Redis на основе настроек.
-
-    Returns:
-        redis.asyncio.Redis: Асинхронный клиент Redis.
-    """
-
-    config = get_config()
-    return aioredis.Redis(
-        host=config.redis.host,
-        port=config.redis.port,
-        db=config.redis.db,
-        password=config.redis.password,
-        decode_responses=True,
-    )

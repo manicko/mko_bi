@@ -55,27 +55,39 @@ class AsyncRateLimiter:
 
 
 def _truncate_password(password: str) -> str:
-    """Truncate password to maximum length for bcrypt (72 bytes).
+    """Truncate password to 72 bytes (bcrypt limit) at character boundary.
 
     Bcrypt has a limitation on password length - 72 bytes.
-    If password is longer, it will be truncated to that length.
+    Truncation happens at character boundary to avoid splitting multi-byte UTF-8 characters.
 
     Args:
-        password: Original password.
+        password: Original password string.
 
     Returns:
-        str: Password truncated to 72 bytes if necessary.
+        str: Password truncated to 72 bytes or less, preserving valid UTF-8.
     """
     encoded = password.encode("utf-8")
-    if len(encoded) > MAX_PASSWORD_LENGTH:
-        truncated = encoded[:MAX_PASSWORD_LENGTH].decode("utf-8", errors="ignore")
-        logger.warning(
-            "Password longer than %d bytes, truncated to %d bytes",
-            len(encoded),
-            MAX_PASSWORD_LENGTH,
-        )
-        return truncated
-    return password
+    if len(encoded) <= MAX_PASSWORD_LENGTH:
+        return password
+
+    # Truncate at character boundary to prevent invalid UTF-8 sequences
+    truncated_chars = []
+    current_byte_len = 0
+    for char in password:
+        char_byte_len = len(char.encode("utf-8"))
+        if current_byte_len + char_byte_len > MAX_PASSWORD_LENGTH:
+            break
+        truncated_chars.append(char)
+        current_byte_len += char_byte_len
+
+    truncated = "".join(truncated_chars)
+    truncated_byte_len = len(truncated.encode("utf-8"))
+    logger.warning(
+        "Password truncated from %d bytes to %d bytes (character boundary preservation)",
+        len(encoded),
+        truncated_byte_len,
+    )
+    return truncated
 
 
 def hash_password(password: str) -> str:

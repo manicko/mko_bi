@@ -300,7 +300,7 @@ class TestSaveAggregates:
             }
         ]
 
-        with pytest.raises(ValueError, match="не содержит обязательное поле"):
+        with pytest.raises(ValueError, match="не содержит поля"):
             await manager.save_aggregates(dashboard.id, aggregates, clear_old=True)
 
     async def test_save_aggregates_nonexistent_graph(self, async_db_session):
@@ -459,7 +459,7 @@ class TestUpsertAggregate:
 
         manager = StorageManager(async_db_session)
 
-        with pytest.raises(ValueError, match="dims и metrics должны быть словарями"):
+        with pytest.raises(ValueError, match="dims должен быть dict"):
             await manager.upsert_aggregate(
                 dashboard_id=dashboard.id,
                 graph_id=graph.id,
@@ -541,7 +541,7 @@ class TestClearData:
         assert count == 2
 
         # Очищаем данные
-        deleted = await manager.clear_dashboard_data(dashboard.id)
+        deleted = await manager.delete_by_dashboard(dashboard.id)
         assert deleted == 2
 
         # Проверяем, что данных больше нет
@@ -611,7 +611,7 @@ class TestClearData:
         assert count == 2
 
         # Очищаем данные только для graph1
-        deleted = await manager.clear_graph_data(dashboard.id, graph1.id)
+        deleted = await manager.delete_by_graph(graph1.id)
         assert deleted == 1
 
         # Проверяем, что остались только данные для graph2
@@ -643,7 +643,7 @@ class TestClearData:
         await async_db_session.refresh(dashboard)
 
         manager = StorageManager(async_db_session)
-        deleted = await manager.clear_dashboard_data(dashboard.id)
+        deleted = await manager.delete_by_dashboard(dashboard.id)
         assert deleted == 0
 
 
@@ -873,7 +873,7 @@ class TestStorageManagerIntegration:
         assert electronics_agg["metrics"]["count"] == 60
 
         # Очищаем данные и проверяем
-        deleted = await manager.clear_dashboard_data(dashboard.id)
+        deleted = await manager.delete_by_dashboard(dashboard.id)
         assert deleted == 4  # Было 3 записи (2 для graph1 после обновления, 2 для graph2)
 
         all_aggregates = await manager.get_aggregates(dashboard.id)

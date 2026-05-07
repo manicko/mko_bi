@@ -17,6 +17,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 
 from mkobi.api.deps import get_auth_service, get_current_user_dependency
 from mkobi.core.logging_config import get_logger
+from mkobi.core import redis_client
+from mkobi.core.security import AsyncRateLimiter
 from mkobi.models.auth import (
     LoginRequest,
     RefreshRequest,
@@ -37,6 +39,17 @@ async def _handle_login(
     auth_service,
 ) -> Token:
     """Common login logic and error handling."""
+    # Apply rate limiting for login attempts
+    rate_limiter = AsyncRateLimiter(redis_client.get_async_redis_client())
+    if not await rate_limiter.check_rate_limit(
+        f"login:{email}", max_attempts=5, ttl=300
+    ):
+        logger.warning("Login rate limit exceeded", extra={"email": email})
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many login attempts. Try again later.",
+        )
+
     logger.info("Login attempt", extra={"email": email})
 
     token_data = await auth_service.login_user(email, password)
@@ -294,6 +307,21 @@ async def register_request(
     client_ip: str | None = None
     if request.client:
         client_ip = str(ip_address(request.client.host))
+
+    # Apply rate limiting for registration requests
+    rate_limiter = AsyncRateLimiter(redis_client.get_async_redis_client())
+    rate_limit_key = f"register-request:{client_ip}" if client_ip else f"register-request:{request_data.email}"
+    if not await rate_limiter.check_rate_limit(
+        rate_limit_key, max_attempts=3, ttl=3600
+    ):
+        logger.warning(
+            "Registration request rate limit exceeded",
+            extra={"email": request_data.email, "ip": client_ip},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Too many registration requests. Try again later.",
+        )
 
     logger.info(
         "Registration request attempt",

@@ -113,7 +113,8 @@ C:\py_dev\mkobi
 │   │       │   ├── ProtectedRoute.tsx
 │   │       │   └── RoleBasedAccess.tsx
 │   │       └── types
-│   │           └── api.types.ts
+│   │           ├── api.types.ts
+│   │           └── enums.ts
 │   ├── tsconfig.app.json
 │   ├── tsconfig.json
 │   ├── tsconfig.node.json
@@ -272,8 +273,8 @@ C:\py_dev\mkobi
 │   │   └── TEST_036_test_audit_arch.md
 │   ├── DEV
 │   │   ├── 03_mypy_type_errors.md
-│   │   ├── 13_dependency_injection_fixes.md
-│   │   ├── 13_frontend_typescript_fixes.md
+│   │   ├── 13_dependency_injection_fixes_DONE.md
+│   │   ├── 13_frontend_typescript_fixes_DONE.md
 │   │   ├── 14_config_module_fixes.md
 │   │   ├── 15_code_quality_tools.md
 │   │   ├── 16_logging_improvements_DONE.md

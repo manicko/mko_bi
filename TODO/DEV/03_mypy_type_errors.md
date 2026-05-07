@@ -22,10 +22,10 @@ IMPLEMENT (по приоритету):
 #### Step 1: Исправление unused type: ignore
 * Найти файлы с неиспользуемыми `type: ignore`
 * Удалить или заменить на корректные аннотации
-* Файлы: `dashboard_filter_repo.py`, `processing_config_repo.py`, `filter_repo.py`
+
 
 #### Step 2: Исправление обращения к атрибутам enum
-* `YoyModeEnum.percent` → `YoyModeEnum.PERCENT`
+* пример `YoyModeEnum.percent` → `YoyModeEnum.PERCENT`
 * Проверить все обращения к enum атрибутам
 
 #### Step 3: Исправление возвращаемых типов в репозиториях

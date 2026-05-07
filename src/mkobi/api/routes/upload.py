@@ -18,7 +18,10 @@ from mkobi.api.deps import (
     CurrentUser,
     get_db,
 )
+from mkobi.config import get_config
 from mkobi.core.logging_config import get_logger
+from mkobi.core import redis_client
+from mkobi.core.security import AsyncRateLimiter
 from mkobi.models.data import (
     ProcessingConfig,
     ProcessingResult,
@@ -54,13 +57,46 @@ async def upload_file_endpoint(
     logger.info(
         "File upload started",
         extra={
-            "filename": file.filename,
+            "file_name": file.filename,
             "dashboard_id": str(dashboard_id),
             "user_id": str(current_user.id),
         },
     )
 
     try:
+        config = get_config()
+
+        # Enforce file size limit before reading into memory
+        if file.size > config.max_file_size:
+            logger.warning(
+                "File size exceeds limit",
+                extra={
+                    "file_name": file.filename,
+                    "size_bytes": file.size,
+                    "max_bytes": config.max_file_size,
+                },
+            )
+            raise HTTPException(
+                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                detail=f"File size exceeds maximum limit of {config.upload.max_file_size_mb}MB",
+            )
+
+        # Apply rate limiting for upload endpoint
+        rate_limiter = AsyncRateLimiter(redis_client.get_async_redis_client())
+        if not await rate_limiter.check_rate_limit(
+            f"upload:{current_user.id}",
+            max_attempts=10,
+            ttl=3600,
+        ):
+            logger.warning(
+                "Upload rate limit exceeded",
+                extra={"user_id": str(current_user.id)},
+            )
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Rate limit exceeded for uploads",
+            )
+
         # Read file content directly from UploadFile
         filename = file.filename or "unknown"
         sanitized_filename = Path(filename).name
@@ -69,7 +105,7 @@ async def upload_file_endpoint(
 
         logger.info(
             "File content read",
-            extra={"filename": sanitized_filename, "size_bytes": len(file_content)},
+            extra={"file_name": sanitized_filename, "size_bytes": len(file_content)},
         )
 
         # Call service (validation is in service layer)
@@ -91,7 +127,7 @@ async def upload_file_endpoint(
             "File uploaded successfully",
             extra={
                 "processing_log_id": str(result.task_id),
-                "filename": file.filename,
+                "file_name": file.filename,
                 "mode": mode,
             },
         )

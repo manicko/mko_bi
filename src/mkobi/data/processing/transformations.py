@@ -1,8 +1,8 @@
-"""Трансформации и агрегации данных для пайплайна обработки.
+"""Data transformations and aggregations for processing pipeline.
 
-Этот модуль предоставляет функции для применения различных
-трансформаций к данным, включая фильтрацию, группировку,
-сортировку, расчет YoY и долей.
+This module provides functions to apply various
+data transformations including filtering, grouping,
+sorting, YoY calculation and share calculation.
 """
 
 import logging
@@ -10,12 +10,14 @@ import re
 from typing import Any
 
 import polars as pl
+from pydantic import ValidationError
 
 from mkobi.models.enums import AggregationFunctionEnum, FilterOperatorEnum
+from mkobi.models.transformation_configs import TransformationConfig
 
 logger = logging.getLogger(__name__)
 
-# Маппинг функций агрегации на Polars выражения
+# Mapping aggregation functions to Polars expressions
 AGG_FUNC_MAP = {
     AggregationFunctionEnum.SUM: lambda col: pl.col(col).sum(),
     AggregationFunctionEnum.MEAN: lambda col: pl.col(col).mean(),
@@ -39,67 +41,73 @@ def apply_transformations(
     descending: bool = False,
     limit: int | None = None,
 ) -> pl.DataFrame:
-    """Применяет трансформации к DataFrame согласно конфигу.
+    """Apply transformations to DataFrame per config.
     
-    Выполняет фильтрацию, группировку, сортировку,
-    добавление вычисляемых полей, переименование колонок
-    и приведение типов.
+    Executes filtering, grouping, sorting,
+    computed field addition, column renaming
+    and type casting.
 
     Args:
-        df: Исходный DataFrame.
-        config: Словарь конфигурации (filters, computed_fields, rename, dtype).
-        filters: Список условий фильтрации.
-        groupby: Список колонок для группировки (базовой, без агрегаций).
-        sort_by: Имя колонки для сортировки.
-        descending: Сортировка по убыванию.
-        limit: Ограничение количества строк.
+        df: Source DataFrame.
+        config: Configuration dict (filters, computed_fields, rename, dtype).
+        filters: List of filter conditions.
+        groupby: List of columns for base grouping (no aggregations).
+        sort_by: Column name to sort by.
+        descending: Sort in descending order.
+        limit: Limit number of rows.
 
     Returns:
-        pl.DataFrame: Трансформированный DataFrame.
+        pl.DataFrame: Transformed DataFrame.
     """
     config = config or {}
+    # Validate config structure
+    try:
+        TransformationConfig(**config)
+    except ValidationError as e:
+        logger.error("Invalid transformation config: %s", e)
+        raise ValueError(f"Invalid transformation config: {e}") from None
     result = df
 
-    # 1. Фильтрация строк (where conditions)
+    # 1. Row filtering (where conditions)
     filter_list = filters if filters is not None else config.get("filters")
     if filter_list:
-        logger.debug("Применение фильтров: %s", filter_list)
+        logger.debug("Applying filters: %s", filter_list)
         result = _apply_filters(result, filter_list)
 
-    # 2. Группировка (базовая, без агрегаций)
+    # 2. Base grouping (no aggregations)
     if groupby:
-        logger.debug("Группировка по: %s", groupby)
+        logger.debug("Grouping by: %s", groupby)
         result = result.group_by(groupby).agg(pl.all().first())
 
-    # 3. Сортировка
+    # 3. Sorting
     if sort_by:
-        logger.debug("Сортировка по: %s (desc=%s)", sort_by, descending)
+        logger.debug("Sorting by: %s (desc=%s)", sort_by, descending)
         result = result.sort(sort_by, descending=descending)
 
-    # 4. Лимит строк
+    # 4. Row limit
     if limit:
-        logger.debug("Ограничение строк: %s", limit)
+        logger.debug("Limiting rows: %s", limit)
         result = result.head(limit)
 
-    # 5. Вычисляемые поля (computed columns)
+    # 5. Computed fields
     computed_fields = config.get("computed_fields")
     if computed_fields:
-        logger.debug("Добавление вычисляемых полей: %s", computed_fields)
+        logger.debug("Adding computed fields: %s", computed_fields)
         result = _add_computed_fields(result, computed_fields)
 
-    # 6. Переименование колонок
+    # 6. Column renaming
     rename_map = config.get("rename")
     if rename_map:
-        logger.debug("Переименование колонок: %s", rename_map)
+        logger.debug("Renaming columns: %s", rename_map)
         result = result.rename(rename_map)
 
-    # 7. Типизация колонок
+    # 7. Column type casting
     dtype_map = config.get("dtype")
     if dtype_map:
-        logger.debug("Приведение типов: %s", dtype_map)
+        logger.debug("Casting column types: %s", dtype_map)
         result = _apply_dtypes(result, dtype_map)
 
-    logger.info("Трансформации применены: %d строк", result.shape[0])
+    logger.info("Transformations applied: %d rows", result.shape[0])
     return result
 
 
@@ -107,14 +115,14 @@ def _apply_filters(
     df: pl.DataFrame,
     filters: list[Any],
 ) -> pl.DataFrame:
-    """Применяет фильтры к DataFrame.
+    """Apply filters to DataFrame.
 
     Args:
-        df: Исходный DataFrame.
-        filters: Список условий фильтрации (FilterConfig объекты или dict с keys: column, operator, value).
+        df: Source DataFrame.
+        filters: List of filter conditions (FilterConfig objects or dicts with keys: column, operator, value).
 
     Returns:
-        pl.DataFrame: Отфильтрованный DataFrame.
+        pl.DataFrame: Filtered DataFrame.
     """
     result = df
     for condition in filters:
@@ -149,10 +157,10 @@ def _apply_filters(
         elif op_value == "in" and isinstance(value, list):
             result = result.filter(pl.col(column).is_in(value))
         else:
-            logger.warning("Неизвестный оператор фильтрации: %s", op_value)
+            logger.warning("Unknown filter operator: %s", op_value)
             continue
 
-        logger.debug("Применен фильтр: %s %s %s", column, op_value, value)
+        logger.debug("Applied filter: %s %s %s", column, op_value, value)
 
     return result
 
@@ -161,14 +169,14 @@ def _add_computed_fields(
     df: pl.DataFrame,
     fields: list[dict[str, Any]],
 ) -> pl.DataFrame:
-    """Добавляет вычисляемые поля.
+    """Add computed fields to DataFrame.
 
     Args:
-        df: Исходный DataFrame.
-        fields: Список словарей с ключами 'name' и 'expr'.
+        df: Source DataFrame.
+        fields: List of dicts with keys 'name' and 'expr'.
 
     Returns:
-        pl.DataFrame: DataFrame с добавленными полями.
+        pl.DataFrame: DataFrame with added computed fields.
     """
     result = df
     for field in fields:
@@ -179,9 +187,9 @@ def _add_computed_fields(
         try:
             expr = _parse_formula(expr_str)
             result = result.with_columns(expr.alias(name))
-            logger.debug("Вычисляемое поле '%s' добавлено", name)
+            logger.debug("Added computed field '%s'", name)
         except Exception as e:
-            logger.error("Ошибка в вычисляемом поле '%s': %s", name, e)
+            logger.error("Error in computed field '%s': %s", name, e)
             raise
     return result
 
@@ -190,14 +198,14 @@ def _apply_dtypes(
     df: pl.DataFrame,
     dtype_map: dict[str, str],
 ) -> pl.DataFrame:
-    """Применяет типизацию колонок.
+    """Apply column type casting.
 
     Args:
-        df: Исходный DataFrame.
-        dtype_map: Словарь {col_name: polars_type_string}.
+        df: Source DataFrame.
+        dtype_map: Dict {col_name: polars_type_string}.
 
     Returns:
-        pl.DataFrame: DataFrame с приведенными типами.
+        pl.DataFrame: DataFrame with casted types.
     """
     cast_exprs = []
     for col, dtype_str in dtype_map.items():
@@ -206,9 +214,9 @@ def _apply_dtypes(
             if dtype:
                 cast_exprs.append(pl.col(col).cast(dtype))
             else:
-                logger.warning("Неизвестный тип данных: %s", dtype_str)
+                logger.warning("Unknown data type: %s", dtype_str)
         except Exception as e:
-            logger.error("Ошибка приведения типа %s: %s", col, e)
+            logger.error("Type casting error for column %s: %s", col, e)
 
     if cast_exprs:
         return df.with_columns(cast_exprs)
@@ -223,43 +231,43 @@ def calculate_aggregations(
     share_config: dict[str, Any] | None = None,
     custom_metrics: list[dict[str, Any]] | None = None,
 ) -> pl.DataFrame:
-    """Выполняет агрегации данных с поддержкой YoY и долей.
+    """Calculate data aggregations with YoY and share support.
 
     Args:
-        df: Исходный DataFrame.
-        groupby: Список колонок для группировки.
-        aggregations: Список агрегаций (AggregationConfig объекты).
-        yoy_config: Конфигурация для YoY расчета.
-        share_config: Конфигурация для расчета долей.
-        custom_metrics: Список кастомных метрик.
+        df: Source DataFrame.
+        groupby: List of columns to group by.
+        aggregations: List of aggregation configs (AggregationConfig objects).
+        yoy_config: Configuration for YoY calculation.
+        share_config: Configuration for share calculation.
+        custom_metrics: List of custom metrics.
 
     Returns:
-        pl.DataFrame: Агрегированный DataFrame.
+        pl.DataFrame: Aggregated DataFrame.
     """
-    logger.info("Начало расчета агрегаций")
+    logger.info("Starting aggregation calculation")
     result = df
 
-    # Группировка и базовые агрегации
+    # Grouping and base aggregations
     if groupby and aggregations:
-        logger.debug("Группировка по: %s", groupby)
+        logger.debug("Grouping by: %s", groupby)
         result = _apply_groupby_aggregations(result, groupby, aggregations)
 
-    # YoY расчет
+    # YoY calculation
     if yoy_config:
-        logger.debug("YoY расчет: %s", yoy_config)
+        logger.debug("YoY calculation: %s", yoy_config)
         result = _calculate_yoy(result, **yoy_config)
 
-    # Расчет долей
+    # Share calculation
     if share_config:
-        logger.debug("Расчет долей: %s", share_config)
+        logger.debug("Share calculation: %s", share_config)
         result = _calculate_share(result, **share_config)
 
-    # Кастомные метрики
+    # Custom metrics
     if custom_metrics:
-        logger.debug("Кастомные метрики: %s", custom_metrics)
+        logger.debug("Custom metrics: %s", custom_metrics)
         result = _add_computed_fields(result, custom_metrics)
 
-    logger.info("Агрегации рассчитаны: %d строк", result.shape[0])
+    logger.info("Aggregations calculated: %d rows", result.shape[0])
     return result
 
 
@@ -267,14 +275,14 @@ def aggregate_data(
     df: pl.DataFrame,
     graph_configs: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Агрегирует данные согласно конфигурации графиков.
+    """Aggregate data per graph configurations.
 
     Args:
-        df: Исходный DataFrame.
-        graph_configs: Список конфигураций графиков.
+        df: Source DataFrame.
+        graph_configs: List of graph configuration dicts.
 
     Returns:
-        list[dict]: Список словарей для JSONB сохранения.
+        list[dict]: List of dicts for JSONB storage.
     """
     results = []
     for config in graph_configs:
@@ -298,15 +306,15 @@ def _apply_groupby_aggregations(
     groupby: list[str],
     aggregations: list[Any],
 ) -> pl.DataFrame:
-    """Применяет группировку и агрегации.
+    """Apply grouping and aggregations.
 
     Args:
-        df: Исходный DataFrame.
-        groupby: Список колонок для группировки.
-        aggregations: Список агрегаций (AggregationConfig объекты или dict).
+        df: Source DataFrame.
+        groupby: List of columns to group by.
+        aggregations: List of aggregation configs (AggregationConfig objects or dicts).
 
     Returns:
-        pl.DataFrame: Агрегированный DataFrame.
+        pl.DataFrame: Aggregated DataFrame.
     """
     agg_exprs = []
     for agg in aggregations:
@@ -323,11 +331,11 @@ def _apply_groupby_aggregations(
         try:
             func_enum = AggregationFunctionEnum(func_str) if isinstance(func_str, str) else func_str
         except ValueError:
-            logger.warning("Неизвестная функция агрегации: %s", func_str)
+            logger.warning("Unknown aggregation function: %s", func_str)
             continue
 
         if func_enum not in AGG_FUNC_MAP:
-            logger.warning("Функция не поддерживается: %s", func_enum)
+            logger.warning("Unsupported aggregation function: %s", func_enum)
             continue
 
         expr = AGG_FUNC_MAP[func_enum](column).alias(alias)
@@ -345,18 +353,18 @@ def _calculate_yoy(
     alias: str = "yoy",
     percent_alias: str | None = None,
 ) -> pl.DataFrame:
-    """Вычисляет годовой рост (Year-over-Year).
+    """Calculate Year-over-Year growth.
 
     Args:
-        df: Исходный DataFrame.
-        year_column: Имя колонки с годом.
-        value_column: Имя колонки со значением.
-        group_cols: Список колонок для группировки (измерения).
-        month_column: Имя колонки с месяцем.
-        alias: Имя результирующей колонки.
+        df: Source DataFrame.
+        year_column: Column name containing year.
+        value_column: Column name containing value.
+        group_cols: List of grouping columns (dimensions).
+        month_column: Column name containing month.
+        alias: Name of resulting YoY column.
 
     Returns:
-        pl.DataFrame: DataFrame с колонкой YoY.
+        pl.DataFrame: DataFrame with YoY column.
     """
     sort_cols = [year_column]
     if month_column:
@@ -407,16 +415,16 @@ def _calculate_share(
     alias: str = "share",
     group_cols: list[str] | None = None,
 ) -> pl.DataFrame:
-    """Вычисляет долю каждого значения от общей суммы.
+    """Calculate share of each value from total sum.
 
     Args:
-        df: Исходный DataFrame.
-        value_column: Имя колонки со значением.
-        alias: Имя результирующей колонки.
-        group_cols: Список колонок для группировки.
+        df: Source DataFrame.
+        value_column: Column name containing value.
+        alias: Name of resulting share column.
+        group_cols: List of columns to group by.
 
     Returns:
-        pl.DataFrame: DataFrame с колонкой долей.
+        pl.DataFrame: DataFrame with share column.
     """
     if group_cols:
         total_df = df.group_by(group_cols).agg(pl.col(value_column).sum().alias("total"))
@@ -439,13 +447,13 @@ def _calculate_share(
 
 
 def _parse_formula(formula: str) -> pl.Expr:
-    """Парсит простую формулу в Polars выражение.
+    """Parse simple formula into Polars expression.
 
     Args:
-        formula: Строка формулы (например, "revenue / cost * 100").
+        formula: Formula string (e.g., "revenue / cost * 100").
 
     Returns:
-        pl.Expr: Polars выражение.
+        pl.Expr: Polars expression.
     """
     tokens = re.split(r'([+\-*/])', formula)
     tokens = [t.strip() for t in tokens if t.strip()]
@@ -468,7 +476,7 @@ def _parse_formula(formula: str) -> pl.Expr:
         elif op == "/":
             expr = expr / pl.col(next_token)
         else:
-            raise ValueError(f"Неизвестный оператор в формуле: {op}")
+            raise ValueError(f"Unknown operator in formula: {op}")
         i += 2
 
     return expr

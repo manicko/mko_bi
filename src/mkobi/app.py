@@ -20,6 +20,7 @@ from mkobi.api import routes
 from mkobi.config import get_config
 from mkobi.core.logging_config import setup_logging
 from mkobi.db.starter import DatabaseStarter
+from mkobi.models.enums import EnvironmentEnum
 
 # Получаем конфигурацию и настраиваем логирование
 config = get_config()
@@ -56,6 +57,20 @@ def create_app() -> FastAPI:
     """
     # Создаем приложение
     config = get_config()
+
+    # Validate JWT secret key is configured
+    if not config.jwt.secret_key:
+        logger.error("JWT secret key is not configured. Set JWT__SECRET_KEY environment variable.")
+        raise ValueError("JWT_SECRET_KEY must be set")
+
+    # Validate CORS configuration for production
+    if config.environment == EnvironmentEnum.PRODUCTION:
+        if not config.cors_origins:
+            logger.error("CORS origins must be set in production environment")
+            raise ValueError("CORS origins must be configured for production")
+        if "*" in config.cors_origins:
+            logger.warning("CORS is configured to allow all origins (*) in production")
+
     application = FastAPI(
         title=config.app_name,
         description="BI Dashboard System API",

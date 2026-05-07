@@ -103,7 +103,7 @@ class DashboardRepository(IDashboardRepository):
             await db.refresh(dashboard_obj)
             logger.info(
                 "Dashboard created",
-                extra={"id": str(dashboard_obj.id), "name": dashboard_obj.name},
+                extra={"id": str(dashboard_obj.id), "dashboard_name": dashboard_obj.name},
             )
             return dashboard_obj
         except SQLAlchemyError as e:
@@ -227,13 +227,13 @@ class DashboardRepository(IDashboardRepository):
             )
             dashboard = result.scalar_one_or_none()
             if dashboard:
-                logger.info("Dashboard found by name", extra={"name": name})
+                logger.info("Dashboard found by name", extra={"dashboard_name": name})
             else:
-                logger.warning("Dashboard not found by name", extra={"name": name})
+                logger.warning("Dashboard not found by name", extra={"dashboard_name": name})
             return dashboard
         except SQLAlchemyError as e:
             logger.error(
                 "Error getting dashboard by name",
-                extra={"name": name, "error": str(e)},
+                extra={"dashboard_name": name, "error": str(e)},
             )
             raise

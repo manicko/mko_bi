@@ -1,18 +1,20 @@
-"""Сервис обработки данных.
+"""Data processing service.
 
-Предоставляет бизнес-логику для загрузки, обработки и отслеживания статуса
-обработки данных для дашбордов.
+Provides business logic for uploading, processing and tracking
+data processing status for dashboards.
 """
 
 import logging
 import uuid
+from datetime import datetime
 from pathlib import Path
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mkobi.config import get_config, get_redis_client
+from mkobi.config import get_config
 from mkobi.core.permissions import check_dashboard_access
+from mkobi.core.redis_client import get_redis_client
 from mkobi.core.security import RateLimiter
 from mkobi.core.task_queue import enqueue_job
 from mkobi.db.repositories.aggregated_data_repo import AggregatedDataRepository
@@ -33,10 +35,10 @@ logger = logging.getLogger(__name__)
 
 
 class DataService(IDataService):
-    """Класс сервиса для обработки данных."""
+    """Data service class for processing data."""
 
     def __init__(self, db: AsyncSession | None = None):
-        """Инициализация сервиса."""
+        """Initialize service."""
         self._db = db
         # Try to initialize Redis, but don't fail if Redis is unavailable
         try:
@@ -58,7 +60,7 @@ class DataService(IDataService):
         content_type: str | None = None,
         db: AsyncSession | None = None,
     ) -> UploadResponse:
-        """Обрабатывает загруженный файл."""
+        """Process uploaded file and save aggregates."""
         actual_db = db or self._db
         if actual_db is None:
             async with get_session() as session:
@@ -88,11 +90,11 @@ class DataService(IDataService):
         content_type: str | None,
         db: AsyncSession,
     ) -> UploadResponse:
-        """Внутренний метод обработки с использованием сессии."""
-        # Валидация файла
+        """Internal method for processing with session."""
+        # Validate file
         self._validate_file(filename, file_content, content_type)
 
-        # Проверка прав доступа
+        # Check access permissions
         if user_id:
             has_access = await check_dashboard_access(
                 user_id=user_id,
@@ -102,16 +104,18 @@ class DataService(IDataService):
             )
             if not has_access:
                 logger.warning(
-                    "Отказано в обработке: user_id=%s, dashboard_id=%s",
+                    "Processing denied: user_id=%s, dashboard_id=%s",
                     user_id,
                     dashboard_id,
                 )
-                raise PermissionError("Нет прав на обработку данных для этого дашборда")
+                raise PermissionError(
+                    "No permission to process data for this dashboard"
+                )
 
-        # Генерируем ID задачи
+        # Generate task ID
         task_id = uuid.uuid4()
 
-        # Сохраняем файл во временную директорию
+        # Save file to temporary directory
         config = get_config()
         upload_dir = Path(config.upload_temp_dir)
         upload_dir.mkdir(parents=True, exist_ok=True)
@@ -121,13 +125,14 @@ class DataService(IDataService):
 
         try:
             temp_file_path.write_bytes(file_content)
-            logger.info("Файл сохранен: path=%s", temp_file_path)
+            logger.info("File saved: path=%s", temp_file_path)
         except Exception as e:
-            logger.error("Ошибка сохранения файла: %s", e)
+            logger.error("File save error: %s", e)
             raise
 
-        # Создаем запись в логе обработки
-        log = await ProcessingLogRepository.create_log(
+        # Create processing log entry
+        log_repo = ProcessingLogRepository()
+        log = await log_repo.create_log(
             db=db,
             dashboard_id=dashboard_id,
             status=ProcessingStatus.STARTED,
@@ -135,7 +140,7 @@ class DataService(IDataService):
         )
         await db.commit()
 
-        # Ставим задачу в очередь
+        # Enqueue job
         await enqueue_job(
             "process_upload_task",
             file_path=str(temp_file_path),
@@ -145,25 +150,27 @@ class DataService(IDataService):
         )
 
         logger.info(
-            "Задача поставлена в очередь: task_id=%s, dashboard_id=%s",
+            "Task enqueued: task_id=%s, dashboard_id=%s",
             task_id,
             dashboard_id,
         )
 
         return UploadResponse(
             task_id=task_id,
-            status="queued",
+            filename=filename or "unknown",
+            dashboard_id=dashboard_id,
+            status=ProcessingStatus.UPLOADED,
             message="File uploaded successfully, processing queued",
+            uploaded_at=datetime.now(),
         )
 
-    # ... [rest of the methods remain the same, truncated for brevity]
     async def get_aggregated_data(
         self,
         dashboard_id: UUID,
         graph_id: UUID,
         db: AsyncSession | None = None,
     ) -> list[ProcessingResultData]:
-        """Получает агрегированные данные для графика."""
+        """Get aggregated data for graph."""
         actual_db = db or self._db
         if actual_db is None:
             async with get_session() as session:
@@ -184,7 +191,7 @@ class DataService(IDataService):
         graph_id: UUID,
         db: AsyncSession,
     ) -> list[ProcessingResultData]:
-        """Внутренний метод получения агрегированных данных."""
+        """Internal method to get aggregated data."""
         records = await AggregatedDataRepository.get_by_graph(
             db=db,
             graph_id=graph_id,
@@ -200,24 +207,104 @@ class DataService(IDataService):
             )
         return result
 
-    # ... [other methods remain the same]
+    async def get_available_metrics(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> list[str]:
+        """Get available metrics for dashboard.
+
+        Args:
+            dashboard_id: Dashboard identifier.
+            db: Optional async session.
+
+        Returns:
+            list[str]: List of available metric names.
+        """
+        actual_db = db or self._db
+        if actual_db is None:
+            async with get_session() as session:
+                return await self._get_available_metrics_with_session(
+                    dashboard_id, session
+                )
+        return await self._get_available_metrics_with_session(dashboard_id, actual_db)
+
+    async def _get_available_metrics_with_session(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession,
+    ) -> list[str]:
+        """Internal method to get available metrics."""
+        from mkobi.db.repositories.graph_repo import GraphRepository
+
+        repo = GraphRepository(db)
+        graphs = await repo.get_by_dashboard(dashboard_id)
+
+        metrics: set[str] = set()
+        for graph in graphs:
+            if graph.metrics:
+                metrics.update(graph.metrics)
+
+        return list(metrics)
+
+    async def get_available_dimensions(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> list[str]:
+        """Get available dimensions for dashboard.
+
+        Args:
+            dashboard_id: Dashboard identifier.
+            db: Optional async session.
+
+        Returns:
+            list[str]: List of available dimension names.
+        """
+        actual_db = db or self._db
+        if actual_db is None:
+            async with get_session() as session:
+                return await self._get_available_dimensions_with_session(
+                    dashboard_id, session
+                )
+        return await self._get_available_dimensions_with_session(
+            dashboard_id, actual_db
+        )
+
+    async def _get_available_dimensions_with_session(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession,
+    ) -> list[str]:
+        """Internal method to get available dimensions."""
+        from mkobi.db.repositories.graph_repo import GraphRepository
+
+        repo = GraphRepository(db)
+        graphs = await repo.get_by_dashboard(dashboard_id)
+
+        dimensions: set[str] = set()
+        for graph in graphs:
+            if graph.dimensions:
+                dimensions.update(graph.dimensions)
+
+        return list(dimensions)
 
     # --- Helper methods ---
 
     def _validate_mime_type(self, content_type: str | None) -> None:
-        """Валидирует MIME-type загружаемого файла."""
+        """Validate MIME-type of uploaded file."""
         if content_type is None:
-            logger.warning("MIME-type не указан, пропускаем проверку")
+            logger.warning("MIME-type not specified, skipping check")
             return
 
         allowed_mime_types = MimeTypeEnum.allowed_values()
         if content_type not in allowed_mime_types:
             logger.error(
-                "Недопустимый MIME-type: %s. Допустимые: %s",
+                "Invalid MIME-type: %s. Allowed: %s",
                 content_type,
                 allowed_mime_types,
             )
-            raise ValueError(f"Недопустимый MIME-type: {content_type}")
+            raise ValueError(f"Invalid MIME-type: {content_type}")
 
     def _validate_file(
         self,
@@ -225,41 +312,41 @@ class DataService(IDataService):
         file_content: bytes,
         content_type: str | None,
     ) -> None:
-        """Валидирует загружаемый файл."""
-        # 1. Проверка MIME-type
+        """Validate uploaded file."""
+        # 1. Check MIME-type
         self._validate_mime_type(content_type)
 
-        # 2. Проверка формата файла
+        # 2. Check file format
         config = get_config()
         allowed_extensions = config.allowed_file_types
         if filename and not any(
             filename.lower().endswith(ext.lower()) for ext in allowed_extensions
         ):
             logger.error(
-                "Недопустимый формат файла: %s. Допустимые: %s",
+                "Invalid file format: %s. Allowed: %s",
                 filename,
                 allowed_extensions,
             )
             raise ValueError(
-                f"Недопустимый формат файла: '{filename}'. "
-                f"Допустимые форматы: {', '.join(allowed_extensions)}"
+                f"Invalid file format: '{filename}'. "
+                f"Allowed formats: {', '.join(allowed_extensions)}"
             )
 
-        # 3. Проверка размера файла
+        # 3. Check file size
         if len(file_content) > self._max_file_size:
             logger.error(
-                "Файл превышает максимальный размер: %s (%d > %d)",
+                "File exceeds maximum size: %s (%d > %d)",
                 filename,
                 len(file_content),
                 self._max_file_size,
             )
             raise ValueError(
-                f"Файл '{filename}' превышает максимальный размер "
-                f"({len(file_content)} > {self._max_file_size} байт)"
+                f"File '{filename}' exceeds maximum size "
+                f"({len(file_content)} > {self._max_file_size} bytes)"
             )
 
         logger.info(
-            "Файл успешно валидирован: %s (%d байт)", filename, len(file_content)
+            "File validated successfully: %s (%d bytes)", filename, len(file_content)
         )
 
 
@@ -361,8 +448,9 @@ async def get_processing_result(
     )
 
     return ProcessingResult(
+        success=True,
         task_id=task_id,
-        status=log.status,
+        dashboard_id=log.dashboard_id,
         rows_processed=len(records),
         message=log.message,
     )
@@ -370,8 +458,8 @@ async def get_processing_result(
 
 # Cleanup function
 def cleanup_task_files(task_id: uuid.UUID) -> None:
-    """Удаляет временные файлы задачи."""
-    logger.info("Очистка файлов задачи: task_id=%s", task_id)
+    """Delete temporary task files."""
+    logger.info("Cleaning up task files: task_id=%s", task_id)
     config = get_config()
     upload_dir = Path(config.upload_temp_dir)
 
@@ -381,6 +469,6 @@ def cleanup_task_files(task_id: uuid.UUID) -> None:
     for file_path in csv_files:
         try:
             file_path.unlink()
-            logger.info("Файл удален: %s", file_path)
+            logger.info("File deleted: %s", file_path)
         except Exception as e:
-            logger.error("Ошибка удаления файла %s: %s", file_path, e)
+            logger.error("Error deleting file %s: %s", file_path, e)

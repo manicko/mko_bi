@@ -5,9 +5,13 @@ data transformation, aggregation, saving and status updates.
 """
 
 import logging
+import tenacity
+from typing import Any
 from uuid import UUID
 
 import polars as pl
+from sqlalchemy import ConnectionError
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.data.processing.transformations import (
@@ -94,13 +98,47 @@ class DataPipeline:
                 db=db,
             )
 
+            # Check for empty input DataFrame
+            if df.height == 0:
+                logger.warning("Empty DataFrame provided, skipping processing")
+                await self.log_service.update_processing_log(
+                    log_id=log_entry.id,
+                    status=ProcessingStatus.COMPLETED.value,
+                    message="No data to process",
+                    finished_at=None,
+                    db=db,
+                )
+                log_entry.status = ProcessingStatus.COMPLETED
+                return log_entry
+
             # Step 2: Get config and transform data
             logger.info("Step 1: Transforming data")
             config_response = await self.config_service.get_processing_config_by_dashboard(
                 dashboard_id, db
             )
             config = config_response.settings if config_response else {}
-            transformed_df = apply_transformations(df, config)
+
+            try:
+                transformed_df = apply_transformations(df, config)
+            except pl.PolarsError as e:
+                logger.error("Polars transformation error: %s", e)
+                await self.log_service.update_processing_log(
+                    log_id=log_entry.id,
+                    status=ProcessingStatus.FAILED.value,
+                    message=f"Transformation error: {e}",
+                    db=db,
+                )
+                raise ValueError(f"Data transformation failed: {e}") from None
+            except Exception as e:
+                logger.error("Unexpected transformation error: %s", e)
+                await self.log_service.update_processing_log(
+                    log_id=log_entry.id,
+                    status=ProcessingStatus.FAILED.value,
+                    message=f"Unexpected transformation error: {e}",
+                    db=db,
+                )
+                raise
+
             logger.info("Transformation complete: %d rows", transformed_df.shape[0])
 
             # Step 3: Get graphs and aggregate data
@@ -118,11 +156,11 @@ class DataPipeline:
 
             # Step 4: Save results
             logger.info("Step 3: Saving data")
-            await self.storage_manager.save(
+            clear_old = (mode == UploadMode.OVERWRITE)
+            await self._save_with_retry(
                 dashboard_id=dashboard_id,
                 aggregates=aggregates,
-                mode=mode,
-                db=db,
+                clear_old=clear_old,
             )
 
             # Update status to SUCCESS
@@ -138,8 +176,8 @@ class DataPipeline:
             logger.info("Pipeline completed successfully: dashboard_id=%s", dashboard_id)
             return log_entry
 
-        except Exception as e:
-            logger.error("Pipeline error: %s", e)
+        except (pl.PolarsError, SQLAlchemyError, ValueError, ConnectionError) as e:
+            logger.error("Pipeline failed with expected error: %s", e)
             if log_entry:
                 await self.log_service.update_processing_log(
                     log_id=log_entry.id,
@@ -149,3 +187,33 @@ class DataPipeline:
                     db=db,
                 )
             raise
+        except Exception as e:
+            logger.error("Pipeline failed with unexpected error: %s", e)
+            if log_entry:
+                await self.log_service.update_processing_log(
+                    log_id=log_entry.id,
+                    status=ProcessingStatus.FAILED.value,
+                    message=f"Unexpected error: {e}",
+                    finished_at=None,
+                    db=db,
+                )
+            raise
+
+    @tenacity.retry(
+        stop=tenacity.stop_after_attempt(3),
+        wait=tenacity.wait_exponential(multiplier=1, min=4, max=10),
+        retry=tenacity.retry_if_exception_type((SQLAlchemyError, ConnectionError)),
+        reraise=True,
+    )
+    async def _save_with_retry(
+        self,
+        dashboard_id: UUID,
+        aggregates: list[dict[str, Any]],
+        clear_old: bool,
+    ) -> int:
+        """Save aggregates with retry on transient DB errors."""
+        return await self.storage_manager.save_aggregates(
+            dashboard_id=dashboard_id,
+            aggregates=aggregates,
+            clear_old=clear_old,
+        )

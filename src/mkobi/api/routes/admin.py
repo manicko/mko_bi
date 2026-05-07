@@ -9,7 +9,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
     CurrentUser,
-    get_auth_service,
     get_db_dependency,
     get_user_service,
     require_admin_role,

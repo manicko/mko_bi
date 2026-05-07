@@ -20,7 +20,8 @@ class TestUploadCSV:
     @pytest.fixture
     async def test_dashboard(self, async_db_session) -> Dashboard:
         """Create a test dashboard for upload tests."""
-        dashboard = await DashboardRepository.create(
+        repo = DashboardRepository()
+        dashboard = await repo.create(
             db=async_db_session,
             name="test_upload_dashboard",
             description="Dashboard for upload tests",
@@ -52,7 +53,8 @@ class TestUploadCSV:
     ) -> None:
         """Test successful CSV file upload."""
         # Grant edit access to test user
-        await AccessRepository.grant_access(
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
             db=async_db_session,
             user_id=test_user["id"],
             dashboard_id=test_dashboard.id,
@@ -88,7 +90,8 @@ class TestUploadCSV:
 
         try:
             # Grant edit access to test user
-            await AccessRepository.grant_access(
+            access_repo = AccessRepository()
+            await access_repo.grant_access(
                 db=async_db_session,
                 user_id=test_user["id"],
                 dashboard_id=test_dashboard.id,
