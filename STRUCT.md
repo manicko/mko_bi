@@ -283,9 +283,10 @@ C:\py_dev\mkobi
 │   │   ├── DOCKER_PLAN.md
 │   │   ├── TASK_006_repository_instance_methods_fix.md
 │   │   ├── TASK_006_storage_manager_methods_fix.md
-│   │   ├── TASK_007_aggregated_data_unique_constraint_fix.md
+│   │   ├── TASK_007_aggregated_data_unique_constraint_fix_DONE.md
 │   │   ├── TASK_007_dashboard_creation_fix.md
 │   │   ├── TASK_008_test_messages_english_fix.md
+│   │   ├── TASK_009_postgresql_connection_fix.md
 │   │   └── TASK_009_upload_api_auth_fix.md
 │   └── DONE
 │       ├── TASK_001_sync_async_unification.md

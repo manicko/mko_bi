@@ -1,53 +1,57 @@
-# syntax=docker/dockerfile:1.4
 # =============================================================================
 # Optimized Multi-stage Dockerfile for mkobi
-# FASTER builds: BuildKit caching, pinned versions, optimized layers
+# FASTER builds: stable base, minimal layers, optimized caching
 # Targets: dev (hot reload), test, prod (default)
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# Stage: base - Stable Python 3.12 on Debian Bookworm (FAST apt)
+# Stage: base - Stable Python 3.12 on Debian Bookworm (FAST mirrors)
 # -----------------------------------------------------------------------------
 FROM python:3.12-slim-bookworm AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    UV_CACHE_DIR=/root/.cache/uv
+    PYTHONUNBUFFERED=1
 
-# Install system deps with BuildKit cache mount for faster rebuilds
-RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
-    --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && apt-get install -y --no-install-recommends \
+# Configure fast mirror (Yandex for CIS regions)
+RUN rm -f /etc/apt/sources.list.d/*.sources && \
+    echo "deb http://mirror.yandex.ru/debian bookworm main" > /etc/apt/sources.list && \
+    echo "deb http://mirror.yandex.ru/debian-security bookworm-security main" >> /etc/apt/sources.list && \
+    echo "deb http://mirror.yandex.ru/debian bookworm-updates main" >> /etc/apt/sources.list
+
+# Install system deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv (PINNED version for better layer caching)
-ARG UV_VERSION=0.5.21
-RUN curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh
+# Install uv via official installer (latest version, no version pinning)
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app
 
-# Create non-root user early (rarely changes)
+# Create non-root user
 RUN addgroup --system app && adduser --system --group app
+
+# Use system Python for uv (skip venv creation)
+ENV UV_SYSTEM_PYTHON=1
 
 # -----------------------------------------------------------------------------
 # Stage: dev - Development with HOT RELOAD (--reload flag)
 # -----------------------------------------------------------------------------
 FROM base AS dev
 
-# Copy dependency files FIRST for layer caching
-COPY --link pyproject.toml uv.lock ./
+# Copy dependency files and source code (uv sync needs src/ to build package)
+COPY pyproject.toml uv.lock ./
+COPY src/ ./src/
 
-# Install all dependencies including dev with uv cache mount
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen
+# Install all dependencies including dev (system Python, no venv)
+RUN uv sync --frozen
 
-# Copy source code with --link for better layer sharing
-COPY --link src/ ./src/
-COPY --link alembic/ ./alembic/
-COPY --link alembic.ini ./
+# Copy remaining files
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
 
 # Create data directories
 RUN mkdir -p /app/data/uploads /app/data/logs /app/data/tmp_uploads && \
@@ -65,14 +69,13 @@ CMD ["uv", "run", "uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port"
 # -----------------------------------------------------------------------------
 FROM base AS test
 
-COPY --link pyproject.toml uv.lock ./
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen
+COPY pyproject.toml uv.lock ./
+COPY src/ ./src/
+RUN uv sync --frozen
 
-COPY --link src/ ./src/
-COPY --link tests/ ./tests/
-COPY --link alembic/ ./alembic/
-COPY --link alembic.ini ./
+COPY tests/ ./tests/
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
 
 RUN mkdir -p /app/data/uploads /app/data/logs /app/data/tmp_uploads && \
     chown -R app:app /app/data
@@ -89,17 +92,16 @@ CMD ["uv", "run", "pytest", "tests/", "-v"]
 # -----------------------------------------------------------------------------
 FROM base AS prod
 
-# Copy dependency files FIRST for layer caching
-COPY --link pyproject.toml uv.lock ./
+# Copy dependency files and source code (uv sync needs src/ to build package)
+COPY pyproject.toml uv.lock ./
+COPY src/ ./src/
 
-# Install only production dependencies with cache mount
-RUN --mount=type=cache,target=/root/.cache/uv \
-    uv sync --frozen --no-dev
+# Install only production dependencies (system Python, no venv)
+RUN uv sync --frozen --no-dev
 
-# Copy source code with --link for better layer sharing
-COPY --link src/ ./src/
-COPY --link alembic/ ./alembic/
-COPY --link alembic.ini ./
+# Copy remaining files
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
 
 RUN mkdir -p /app/data/uploads /app/data/logs /app/data/tmp_uploads && \
     chown -R app:app /app/data
