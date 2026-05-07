@@ -12,12 +12,15 @@ from typing import Any
 from uuid import UUID
 
 import polars as pl
+from sqlalchemy import delete, select, update
 
 from mkobi.data.loaders.loader import CSVLoader
 from mkobi.data.processing.transformations import (
     apply_transformations,
     calculate_aggregations,
 )
+from mkobi.db.models.aggregated_data import AggregatedData
+from mkobi.db.models.graphs import Graph
 from mkobi.db.models.processing_logs import ProcessingLog
 from mkobi.db.session import get_session
 from mkobi.models.data import ProcessingConfig
@@ -44,8 +47,6 @@ async def _update_processing_log_status(
     """
     async with get_session() as session:
         async with session.begin():
-            from sqlalchemy import update
-
             stmt = (
                 update(ProcessingLog)
                 .where(ProcessingLog.id == UUID(task_id))
@@ -58,7 +59,9 @@ async def _update_processing_log_status(
             )
             await session.execute(stmt)
             await session.commit()
-            logger.info("Processing log updated: task_id=%s, status=%s", task_id, status)
+            logger.info(
+                "Processing log updated: task_id=%s, status=%s", task_id, status
+            )
 
 
 async def _process_csv_file_task_sync(
@@ -104,8 +107,6 @@ def _process_csv_file_sync_impl(
     Returns:
         dict: Processing result with status and data.
     """
-    from uuid import UUID
-
     file_path = Path(file_path_str)
     dashboard_id = UUID(dashboard_id_str)
 
@@ -141,7 +142,12 @@ def _process_csv_file_sync_impl(
             )
 
             # Apply aggregations
-            if config.aggregations or config.yoy_config or config.share_config or config.custom_metrics:
+            if (
+                config.aggregations
+                or config.yoy_config
+                or config.share_config
+                or config.custom_metrics
+            ):
                 df = calculate_aggregations(
                     df,
                     groupby=config.groupby,
@@ -228,9 +234,6 @@ async def _store_aggregates(
     """
     async with get_session() as session:
         async with session.begin():
-            from sqlalchemy import select
-            from mkobi.db.models.graphs import Graph
-
             # Get graphs for dashboard
             result = await session.execute(
                 select(Graph).where(Graph.dashboard_id == dashboard_id)
@@ -245,10 +248,8 @@ async def _store_aggregates(
             rows = df.to_dicts()
 
             # Store aggregates for each graph
-            from mkobi.db.models.aggregated_data import AggregatedData
 
             # Clear old data
-            from sqlalchemy import delete
             await session.execute(
                 delete(AggregatedData).where(
                     AggregatedData.dashboard_id == dashboard_id
@@ -258,7 +259,9 @@ async def _store_aggregates(
             # Insert new data
             for row in rows:
                 for graph in graphs:
-                    dims = {k: v for k, v in row.items() if k in df.columns[:3]}  # Simplified
+                    dims = {
+                        k: v for k, v in row.items() if k in df.columns[:3]
+                    }  # Simplified
                     metrics = {k: v for k, v in row.items() if k not in dims}
 
                     agg = AggregatedData(
@@ -270,7 +273,9 @@ async def _store_aggregates(
                     session.add(agg)
 
             await session.commit()
-            logger.info("Aggregates stored: dashboard_id=%s, rows=%d", dashboard_id, len(rows))
+            logger.info(
+                "Aggregates stored: dashboard_id=%s, rows=%d", dashboard_id, len(rows)
+            )
 
 
 def process_csv_background(

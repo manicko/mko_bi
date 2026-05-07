@@ -139,8 +139,9 @@ class TestDashboardRepository:
         )
         await async_db_session.commit()
 
-        dashboards = await DashboardRepository.get_user_dashboards(
-            async_db_session, test_user["id"]
+        # Verify access was granted (check via get_user_dashboards)
+        dashboards = await AccessRepository.get_user_dashboards(
+            test_user["id"], async_db_session
         )
         assert len(dashboards) >= 1
         assert any(d.id == dashboard.id for d in dashboards)
@@ -233,7 +234,7 @@ class TestAccessRepository:
         await async_db_session.commit()
 
         # Verify access was granted (check via get_user_dashboards)
-        dashboards = await DashboardRepository.get_user_dashboards(
-            async_db_session, test_user["id"]
+        dashboards = await AccessRepository.get_user_dashboards(
+            test_user["id"], async_db_session
         )
         assert any(d.id == dashboard.id for d in dashboards)

@@ -8,10 +8,10 @@ interface PieChartProps {
 }
 
 export function PieChart({ data, layout, title }: PieChartProps) {
-  const chartLayout: PlotlyLayout = {
-    title: title || '',
+  const chartLayout: Partial<PlotlyLayout> = {
+    title: { text: title || '' },
     ...layout,
   }
 
-  return <PlotlyChart data={{ ...data, type: 'pie' }} layout={chartLayout} />
+  return <PlotlyChart data={{ ...data, type: 'pie' } as PlotlyData} layout={chartLayout as PlotlyLayout} />
 }

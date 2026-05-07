@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""Модель агрегированных данных дашбордов."""
+"""Aggregated data model for dashboards."""
 
 from typing import Any, TYPE_CHECKING
 from uuid import UUID
@@ -8,6 +8,7 @@ from uuid import UUID
 from sqlalchemy import (
     ForeignKey,
     BigInteger,
+    Index,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.engine.interfaces import Dialect
@@ -22,7 +23,7 @@ if TYPE_CHECKING:
 
 
 class JSONBType(TypeDecorator[dict[str, Any]]):
-    """Тип данных JSONB для PostgreSQL, JSON для других БД."""
+    """JSONB type for PostgreSQL, JSON for other databases."""
     
     impl = JSONB
     cache_ok = True
@@ -31,19 +32,25 @@ class JSONBType(TypeDecorator[dict[str, Any]]):
         if dialect.name == "postgresql":
             return dialect.type_descriptor(JSONB())
         else:
-            # Для SQLite и других БД используем обычный JSON
+            # For SQLite and other databases, use regular JSON
             from sqlalchemy import JSON
             return dialect.type_descriptor(JSON())
 
 
 class AggregatedData(Base):
-    """Модель агрегированных данных дашбордов.
+    """Aggregated data model for dashboards.
 
-    Хранит агрегированные данные для графиков дашбордов.
-    Каждая строка представляет одну точку графика.
+    Stores aggregated data for dashboard graphs.
+    Each row represents one chart data point.
     """
 
     __tablename__ = "aggregated_data"
+    __table_args__ = (
+        Index("idx_aggregated_data_graph_id", "graph_id"),
+        Index("idx_aggregated_data_dashboard_id", "dashboard_id"),
+        Index("idx_aggregated_data_dashboard_graph", "dashboard_id", "graph_id"),
+        Index("idx_aggregated_data_dims_gin", "dims", postgresql_using="gin"),
+    )
 
     id: Mapped[int] = mapped_column(
         BigInteger,

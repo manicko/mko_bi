@@ -91,7 +91,9 @@ def add_exception_handlers(app: FastAPI) -> None:
     """
 
     @app.exception_handler(AppException)
-    async def app_exception_handler(request: Request, exc: AppException) -> JSONResponse:
+    async def app_exception_handler(
+        request: Request, exc: AppException
+    ) -> JSONResponse:
         logger.error(
             "AppException raised: error_code=%s, detail=%s",
             exc.error_code,
@@ -107,8 +109,10 @@ def add_exception_handlers(app: FastAPI) -> None:
         )
 
     @app.exception_handler(Exception)
-    async def global_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-        logger.error("Unhandled exception: %s", exc, exc_info=True)
+    async def global_exception_handler(
+        request: Request, exc: Exception
+    ) -> JSONResponse:
+        logger.error("Unhandled exception: %s", exc)
         return JSONResponse(
             status_code=500,
             content={

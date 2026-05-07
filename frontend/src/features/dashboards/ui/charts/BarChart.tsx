@@ -16,13 +16,13 @@ export function BarChart({
   xAxisLabel,
   yAxisLabel,
 }: BarChartProps) {
-  const chartLayout: PlotlyLayout = {
-    title: title || '',
-    xaxis: { title: xAxisLabel || '', type: 'category' },
-    yaxis: { title: yAxisLabel || '' },
+  const chartLayout: Partial<PlotlyLayout> = {
+    title: { text: title || '' },
+    xaxis: { title: { text: xAxisLabel || '' }, type: 'category' },
+    yaxis: { title: { text: yAxisLabel || '' } },
     barmode: 'group',
     ...layout,
   }
 
-  return <PlotlyChart data={{ ...data, type: 'bar' }} layout={chartLayout} />
+  return <PlotlyChart data={{ ...data, type: 'bar' } as PlotlyData} layout={chartLayout as PlotlyLayout} />
 }

@@ -13,12 +13,12 @@ import {
 import { toast } from 'react-hot-toast'
 import { FileDropzone } from './FileDropzone'
 import { uploadApi } from '../api/uploadApi'
-import type { UploadMode } from '../../../shared/types/api.types'
+import { UploadMode, FileUploadStatus } from '../../../shared/types/enums'
 
 interface FileUploadState {
   file: File
   progress: number
-  status: 'pending' | 'uploading' | 'success' | 'error'
+  status: FileUploadStatus
   error?: string
   processingLogId?: string
 }
@@ -27,7 +27,7 @@ export function UploadPage() {
   const { id: dashboardId } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
-  const [mode, setMode] = useState<UploadMode>('overwrite')
+  const [mode, setMode] = useState<UploadMode>(UploadMode.OVERWRITE)
   const [files, setFiles] = useState<File[]>([])
   const [fileStates, setFileStates] = useState<FileUploadState[]>([])
   const [isUploading, setIsUploading] = useState(false)
@@ -46,7 +46,7 @@ export function UploadPage() {
       ...newFiles.map((file) => ({
         file,
         progress: 0,
-        status: 'pending' as const,
+        status: FileUploadStatus.PENDING,
       })),
     ])
   }, [])
@@ -70,7 +70,7 @@ export function UploadPage() {
 
       setFileStates((prev) =>
         prev.map((f, idx) =>
-          idx === i ? { ...f, status: 'uploading' as const, progress: 0 } : f
+          idx === i ? { ...f, status: FileUploadStatus.UPLOADING, progress: 0 } : f
         )
       )
 
@@ -93,7 +93,7 @@ export function UploadPage() {
             idx === i
               ? {
                   ...f,
-                  status: 'success' as const,
+                  status: FileUploadStatus.SUCCESS,
                   progress: 100,
                   processingLogId: response.processing_log_id,
                 }
@@ -104,7 +104,7 @@ export function UploadPage() {
         const errorMessage = error instanceof Error ? error.message : 'Upload failed'
         setFileStates((prev) =>
           prev.map((f, idx) =>
-            idx === i ? { ...f, status: 'error' as const, error: errorMessage } : f
+            idx === i ? { ...f, status: FileUploadStatus.ERROR, error: errorMessage } : f
           )
         )
         toast.error(`Failed to upload ${file.name}`)
@@ -136,15 +136,15 @@ export function UploadPage() {
           onChange={handleModeChange}
           sx={{ mb: 2 }}
         >
-          <ToggleButton value="overwrite">
-            Перезаписать (Reset all data)
+          <ToggleButton value={UploadMode.OVERWRITE}>
+            Overwrite (Reset all data)
           </ToggleButton>
-          <ToggleButton value="append">
-            Добавить данные (Append rows)
+          <ToggleButton value={UploadMode.APPEND}>
+            Append (Add new rows)
           </ToggleButton>
         </ToggleButtonGroup>
         <Typography variant="body2" color="textSecondary">
-          {mode === 'overwrite'
+          {mode === UploadMode.OVERWRITE
             ? 'This will reset all chart data for this dashboard'
             : 'New rows will be appended to existing data'}
         </Typography>
@@ -171,20 +171,20 @@ export function UploadPage() {
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
                 <Typography variant="body2">{fileState.file.name}</Typography>
                 <Typography variant="body2" color={
-                  fileState.status === 'success' ? 'success.main' :
-                  fileState.status === 'error' ? 'error.main' : 'textSecondary'
+                  fileState.status === FileUploadStatus.SUCCESS ? 'success.main' :
+                  fileState.status === FileUploadStatus.ERROR ? 'error.main' : 'textSecondary'
                 }>
-                  {fileState.status === 'success' && 'Success'}
-                  {fileState.status === 'error' && `Error: ${fileState.error}`}
-                  {fileState.status === 'uploading' && 'Uploading...'}
-                  {fileState.status === 'pending' && 'Pending'}
+                  {fileState.status === FileUploadStatus.SUCCESS && 'Success'}
+                  {fileState.status === FileUploadStatus.ERROR && `Error: ${fileState.error}`}
+                  {fileState.status === FileUploadStatus.UPLOADING && 'Uploading...'}
+                  {fileState.status === FileUploadStatus.PENDING && 'Pending'}
                 </Typography>
               </Box>
-              {(fileState.status === 'uploading' || fileState.status === 'success') && (
+              {(fileState.status === FileUploadStatus.UPLOADING || fileState.status === FileUploadStatus.SUCCESS) && (
                 <LinearProgress
                   variant="determinate"
                   value={fileState.progress}
-                  color={fileState.status === 'success' ? 'success' : 'primary'}
+                  color={fileState.status === FileUploadStatus.SUCCESS ? 'success' : 'primary'}
                 />
               )}
             </Box>

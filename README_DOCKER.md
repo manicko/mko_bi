@@ -45,6 +45,20 @@ This will:
 - Build and start the mkobi application
 - Create persistent Docker volumes for data
 - Run database migrations automatically
+- **Create and migrate test database** (if `RECREATE_TEST_DB=true`)
+
+### 3.1 Test Database (Optional)
+
+To enable automatic test database creation on first launch, add to `docker-compose.yml`:
+
+```yaml
+# In app service environment:
+ENV: test  # or development
+DATABASE__TEST_DBNAME: bidb_test
+RECREATE_TEST_DB: "true"
+```
+
+This ensures `uv run pytest tests/` can run against a properly migrated test database.
 
 ### 4. Access the application
 
@@ -137,6 +151,8 @@ Key variables in `.env` (or set in environment):
 | `JWT__ALGORITHM` | `HS256` | JWT algorithm |
 | `CORS_ORIGINS` | `["http://localhost"]` | CORS allowed origins |
 | `AUTO_MIGRATE` | `true` | Auto-run migrations on startup |
+| `RECREATE_TEST_DB` | `false` | Auto-create test DB on startup |
+| `DATABASE__TEST_DBNAME` | `bidb_test` | Test database name |
 | `LOGGING__LEVEL` | `INFO` | Logging level |
 | `LOGGING__LOG_FILE` | `/app/data/logs/app.log` | Log file path |
 
@@ -194,6 +210,26 @@ docker-compose logs app
 docker exec -it mkobi-app-1 uv run alembic upgrade head
 ```
 
+### Test database not created
+
+Ensure these variables are set in `docker-compose.yml`:
+```yaml
+ENV: development  # or test
+RECREATE_TEST_DB: "true"
+DATABASE__TEST_DBNAME: bidb_test
+```
+
+Then restart:
+```bash
+docker-compose down && docker-compose up -d
+```
+
+### Run tests in Docker
+
+```bash
+docker exec -it mkobi-app-1 uv run pytest tests/
+```
+
 ---
 
 ## Architecture
@@ -220,6 +256,11 @@ docker exec -it mkobi-app-1 uv run alembic upgrade head
 │  │       └──────┬───────┘       │  │
 │  │              │                  │  │
 │  │         localhost:8000         │  │
+│  │                              │  │
+│  │  On startup:                 │  │
+│  │  • Check DB exists           │  │
+│  │  • Run Alembic migrations    │  │
+│  │  • Create test DB (optional) │  │
 │  └─────────────────────────────────┘  │
 └─────────────────────────────────────────────┘
 ```
@@ -227,6 +268,8 @@ docker exec -it mkobi-app-1 uv run alembic upgrade head
 **Key points:**
 - App and database run in isolated Docker containers
 - Data persists in Docker volumes (survives container restarts)
+- On first launch: migrations auto-run via `DatabaseStarter`
+- Test database created/migrated if `RECREATE_TEST_DB=true`
 - No need to install Python, PostgreSQL, or dependencies on host
 - Same setup works on any machine with Docker
 

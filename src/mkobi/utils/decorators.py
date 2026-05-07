@@ -10,7 +10,8 @@ import time
 from collections.abc import Callable
 from typing import Any, ParamSpec, TypeVar, cast
 
-from mkobi.models.user_roles import UserRoleEnum
+from mkobi.core.permissions import check_role
+from mkobi.models.enums import UserRole
 
 logger = logging.getLogger(__name__)
 
@@ -40,9 +41,7 @@ def timing(func: Callable[P, T]) -> Callable[P, T]:  # noqa: UP047
         start = time.perf_counter()
         result = func(*args, **kwargs)
         elapsed = (time.perf_counter() - start) * 1000
-        logger.info(
-            "Время выполнения %s: %.2f мс", func.__name__, elapsed
-        )
+        logger.info("Время выполнения %s: %.2f мс", func.__name__, elapsed)
         return result
 
     return cast(Callable[P, T], wrapper)
@@ -138,14 +137,10 @@ def log_execution(
             try:
                 result = func(*args, **kwargs)
                 if log_result:
-                    logger.info(
-                        "Результат %s: %s", func.__name__, result
-                    )
+                    logger.info("Результат %s: %s", func.__name__, result)
                 return result
             except Exception as e:
-                logger.error(
-                    "Ошибка в %s: %s", func.__name__, e, exc_info=True
-                )
+                logger.error("Ошибка в %s: %s", func.__name__, e, exc_info=True)
                 raise
 
         return cast(Callable[P, T], wrapper)
@@ -153,7 +148,9 @@ def log_execution(
     return decorator
 
 
-def require_role(required_role: str | UserRoleEnum) -> Callable[[Callable[P, T]], Callable[P, T]]:
+def require_role(
+    required_role: str | UserRole,
+) -> Callable[[Callable[P, T]], Callable[P, T]]:
     """Декоратор для проверки роли пользователя.
 
     Args:
@@ -184,14 +181,10 @@ def require_role(required_role: str | UserRoleEnum) -> Callable[[Callable[P, T]]
             # Получаем роль пользователя
             user_role = getattr(user, "role", None)
             if not user_role:
-                logger.error(
-                    "Роль пользователя не найдена в %s", func.__name__
-                )
+                logger.error("Роль пользователя не найдена в %s", func.__name__)
                 raise PermissionError("Роль пользователя не найдена")
 
             # Проверяем роль
-            from mkobi.core.permissions import check_role
-
             if not check_role(str(user_role), str(required_role)):
                 logger.warning(
                     "Недостаточно прав для %s: role=%s, required=%s",
@@ -199,9 +192,7 @@ def require_role(required_role: str | UserRoleEnum) -> Callable[[Callable[P, T]]
                     user_role,
                     required_role,
                 )
-                raise PermissionError(
-                    f"Требуется роль: {required_role} или выше"
-                )
+                raise PermissionError(f"Требуется роль: {required_role} или выше")
 
             return func(*args, **kwargs)
 
@@ -236,9 +227,7 @@ def error_handler(  # noqa: UP047
                 return func(*args, **kwargs)
             except Exception as e:
                 if log_error:
-                    logger.error(
-                        "Ошибка в %s: %s", func.__name__, e, exc_info=True
-                    )
+                    logger.error("Ошибка в %s: %s", func.__name__, e, exc_info=True)
                 if fallback_value is not None:
                     return fallback_value
                 raise

@@ -3,13 +3,13 @@
 from fastapi import status
 from httpx import AsyncClient
 
-from mkobi.db.repositories.dashboard_repo import DashboardRepository
 from mkobi.db.repositories.access_repo import AccessRepository
+from mkobi.db.repositories.dashboard_repo import DashboardRepository
 from mkobi.models.enums import DashboardPermission, UserRole
 
 
 class TestGetMyDashboards:
-    """Tests for GET /dashboards/my endpoint."""
+    """Tests for GET /api/v1/dashboards/my endpoint."""
 
     async def test_get_my_dashboards(
         self, authenticated_client: AsyncClient, async_db_session, test_user: dict
@@ -42,7 +42,7 @@ class TestGetMyDashboards:
 
 
 class TestGetDashboardDetail:
-    """Tests for GET /dashboards/{id} endpoint."""
+    """Tests for GET /api/v1/dashboards/{id} endpoint."""
 
     async def test_get_dashboard_detail(
         self, authenticated_client: AsyncClient, async_db_session, test_user: dict
@@ -90,14 +90,14 @@ class TestGetDashboardDetail:
 
 
 class TestCreateDashboard:
-    """Tests for POST /dashboards endpoint."""
+    """Tests for POST /api/v1/dashboards endpoint."""
 
     async def test_create_dashboard_admin(
         self, authenticated_client: AsyncClient, async_db_session, test_user: dict
     ) -> None:
         """Test creating dashboard as admin (success)."""
         response = await authenticated_client.post(
-            "/dashboards",
+            "/dashboards/",
             json={"name": "new_dashboard", "description": "Test desc"},
         )
         assert response.status_code == status.HTTP_201_CREATED
@@ -110,6 +110,7 @@ class TestCreateDashboard:
         """Test creating dashboard without admin role (403)."""
         # Create viewer user
         from mkobi.db.repositories.user_repo import UserRepository
+
         repo = UserRepository()
         user = await repo.create(
             db=async_db_session,
@@ -121,18 +122,19 @@ class TestCreateDashboard:
 
         # Login as viewer
         from mkobi.core.security import create_access_token
+
         token = create_access_token({"user_id": str(user.id), "email": user.email})
         async_client.headers["Authorization"] = f"Bearer {token}"
 
         response = await async_client.post(
-            "/dashboards",
+            "/dashboards/",
             json={"name": "forbidden_dashboard"},
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 class TestUpdateDashboard:
-    """Tests for PUT /dashboards/{id} endpoint."""
+    """Tests for PUT /api/v1/dashboards/{id} endpoint."""
 
     async def test_update_dashboard_admin(
         self, authenticated_client: AsyncClient, async_db_session, test_user: dict
@@ -160,6 +162,7 @@ class TestUpdateDashboard:
         """Test updating dashboard without admin role (403)."""
         # Create viewer user and dashboard
         from mkobi.db.repositories.user_repo import UserRepository
+
         user_repo = UserRepository()
         user = await user_repo.create(
             db=async_db_session,
@@ -179,6 +182,7 @@ class TestUpdateDashboard:
 
         # Login as viewer
         from mkobi.core.security import create_access_token
+
         token = create_access_token({"user_id": str(user.id), "email": user.email})
         async_client.headers["Authorization"] = f"Bearer {token}"
 
@@ -190,7 +194,7 @@ class TestUpdateDashboard:
 
 
 class TestDeleteDashboard:
-    """Tests for DELETE /dashboards/{id} endpoint."""
+    """Tests for DELETE /api/v1/dashboards/{id} endpoint."""
 
     async def test_delete_dashboard_admin(
         self, authenticated_client: AsyncClient, async_db_session, test_user: dict
@@ -213,6 +217,7 @@ class TestDeleteDashboard:
         """Test deleting dashboard without admin role (403)."""
         # Create viewer user and dashboard
         from mkobi.db.repositories.user_repo import UserRepository
+
         user_repo = UserRepository()
         user = await user_repo.create(
             db=async_db_session,
@@ -232,6 +237,7 @@ class TestDeleteDashboard:
 
         # Login as viewer
         from mkobi.core.security import create_access_token
+
         token = create_access_token({"user_id": str(user.id), "email": user.email})
         async_client.headers["Authorization"] = f"Bearer {token}"
 

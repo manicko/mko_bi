@@ -1,4 +1,4 @@
-"""Маршруты для управления настройками обработки."""
+"""Routes for managing processing configuration."""
 
 import logging
 from uuid import UUID
@@ -7,20 +7,16 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
-    get_db,
-    require_viewer_role,
-    require_editor_role,
     CurrentUser,
+    get_db,
+    require_editor_role,
+    require_viewer_role,
 )
 from mkobi.models.processing_configs import (
-    ProcessingConfigUpdate,
     ProcessingConfigRead,
+    ProcessingConfigUpdate,
 )
-from mkobi.services.processing_config_service import (
-    get_by_dashboard_id,
-    upsert,
-    delete,
-)
+from mkobi.services.processing_config_service import ProcessingConfigService
 
 logger = logging.getLogger(__name__)
 
@@ -39,20 +35,21 @@ async def get_config_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> ProcessingConfigRead:
     try:
-        config = await get_by_dashboard_id(dashboard_id=dashboard_id, db=db)
+        service = ProcessingConfigService(db=db)
+        config = await service.get_by_dashboard_id(dashboard_id)
         if config is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Настройки обработки не найдены",
+                detail="Processing config not found",
             )
         return config
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Ошибка: %s", e)
+        logger.error("Error getting processing config: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка получения настроек",
+            detail="Error getting processing config",
         ) from e
 
 
@@ -74,10 +71,10 @@ async def upsert_config_endpoint(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Settings cannot be empty",
             )
-        config = await upsert(
+        service = ProcessingConfigService(db=db)
+        config = await service.upsert(
             dashboard_id=dashboard_id,
             settings=config_update.settings,
-            db=db,
         )
         return config
     except ValueError as e:
@@ -86,10 +83,10 @@ async def upsert_config_endpoint(
             detail=str(e),
         ) from e
     except Exception as e:
-        logger.error("Ошибка: %s", e)
+        logger.error("Error updating processing config: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка обновления настроек",
+            detail="Error updating processing config",
         ) from e
 
 
@@ -104,17 +101,16 @@ async def delete_config_endpoint(
     db: AsyncSession = Depends(get_db),
 ) -> None:
     try:
-        success = await delete(dashboard_id=dashboard_id, db=db)
-        if not success:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Настройки не найдены",
-            )
-    except HTTPException:
-        raise
+        service = ProcessingConfigService(db=db)
+        await service.delete(dashboard_id)
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=str(e),
+        ) from e
     except Exception as e:
-        logger.error("Ошибка: %s", e)
+        logger.error("Error deleting processing config: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка удаления настроек",
+            detail="Error deleting processing config",
         ) from e

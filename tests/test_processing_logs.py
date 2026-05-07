@@ -71,12 +71,13 @@ class TestProcessingLogRepository:
     @pytest.mark.asyncio
     async def test_create_log(self, async_db_session):
         """Test creating a log entry."""
-        repo = ProcessingLogRepository(async_db_session)
+        repo = ProcessingLogRepository()
 
         log = await repo.create_log(
             dashboard_id=None,
             status=ProcessingStatusEnum.STARTED,
             message="Test log",
+            db=async_db_session,
         )
 
         assert log.dashboard_id is None
@@ -87,21 +88,24 @@ class TestProcessingLogRepository:
     @pytest.mark.asyncio
     async def test_update_status(self, async_db_session):
         """Test updating log status."""
-        repo = ProcessingLogRepository(async_db_session)
+        repo = ProcessingLogRepository()
 
         log = await repo.create_log(
             dashboard_id=None,
             status=ProcessingStatusEnum.STARTED,
+            message="Test",
+            db=async_db_session,
         )
 
         await repo.update_status(
             log_id=log.id,
             status=ProcessingStatusEnum.SUCCESS,
             message="Completed",
+            db=async_db_session,
         )
 
         # Verify update
-        updated = await repo.get_by_id(log.id)
+        updated = await repo.get_by_id(log.id, db=async_db_session)
         assert updated is not None
         assert updated.status == ProcessingStatusEnum.SUCCESS
         assert updated.message == "Completed"
@@ -110,28 +114,48 @@ class TestProcessingLogRepository:
     @pytest.mark.asyncio
     async def test_get_by_dashboard(self, async_db_session):
         """Test getting logs by dashboard."""
-        repo = ProcessingLogRepository(async_db_session)
+        repo = ProcessingLogRepository()
 
         # Create multiple logs with None dashboard_id
-        await repo.create_log(None, ProcessingStatusEnum.STARTED)
-        await repo.create_log(None, ProcessingStatusEnum.SUCCESS)
+        await repo.create_log(
+            dashboard_id=None,
+            status=ProcessingStatusEnum.STARTED,
+            message="Test1",
+            db=async_db_session,
+        )
+        await repo.create_log(
+            dashboard_id=None,
+            status=ProcessingStatusEnum.SUCCESS,
+            message="Test2",
+            db=async_db_session,
+        )
 
-        logs = await repo.get_by_dashboard(None)
+        logs = await repo.get_by_dashboard(None, db=async_db_session)
         assert len(logs) == 2
 
     @pytest.mark.asyncio
     async def test_get_filtered(self, async_db_session):
         """Test filtered log retrieval."""
-        repo = ProcessingLogRepository(async_db_session)
+        repo = ProcessingLogRepository()
 
-        await repo.create_log(None, ProcessingStatusEnum.STARTED)
-        await repo.create_log(None, ProcessingStatusEnum.SUCCESS)
+        await repo.create_log(
+            dashboard_id=None,
+            status=ProcessingStatusEnum.STARTED,
+            message="Test1",
+            db=async_db_session,
+        )
+        await repo.create_log(
+            dashboard_id=None,
+            status=ProcessingStatusEnum.SUCCESS,
+            message="Test2",
+            db=async_db_session,
+        )
 
         filters = ProcessingLogFilter(
             status=ProcessingStatusEnum.SUCCESS,
         )
 
-        logs = await repo.get_filtered(filters)
+        logs = await repo.get_filtered(filters, db=async_db_session)
         assert len(logs) == 1
         assert logs[0].status == ProcessingStatusEnum.SUCCESS
 

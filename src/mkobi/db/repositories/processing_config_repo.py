@@ -1,75 +1,80 @@
-"""Репозиторий для работы с настройками обработки.
+"""Repository for processing configuration operations.
 
-Предоставляет методы CRUD для модели ProcessingConfig.
-Все методы используют контекстный менеджер сессий и обрабатывают ошибки.
+Provides CRUD methods for ProcessingConfig model.
+All methods use contextual session management and handle errors.
 """
 
 import logging
+from typing import cast
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.db.models import processing_configs as processing_config_model
-from sqlalchemy.ext.asyncio import AsyncSession
+from mkobi.interfaces.repository_interfaces import IProcessingConfigRepository
 
 logger = logging.getLogger(__name__)
 
 
-class ProcessingConfigRepository:
-    """Репозиторий для операций с настройками обработки.
-    
-    Предоставляет методы для создания, чтения, обновления и удаления
-    настроек обработки в базе данных. Все операции выполняются в рамках
-    отдельной сессии базы данных с автоматическим управлением
-    транзакциями.
+class ProcessingConfigRepository(IProcessingConfigRepository):
+    """Repository for processing configuration operations.
+
+    Provides methods for creating, reading, updating and deleting
+    processing configurations in the database. All operations are performed within a
+    separate database session with automatic transaction management.
+    Implements IProcessingConfigRepository interface.
     """
-    
+
     @classmethod
     async def get(
-        cls, dashboard_id: UUID, db: AsyncSession
+        cls, id: UUID, db: AsyncSession
     ) -> processing_config_model.ProcessingConfig | None:
-        """Получить настройки обработки по ID дашборда.
-        
+        """Get processing config by dashboard ID.
+
         Args:
-            dashboard_id: Идентификатор дашборда (UUID).
-            db: Асинхронная сессия базы данных.
-        
+            id: Dashboard identifier (UUID).
+            db: Async database session.
+
         Returns:
-            Модель настроек обработки или None, если не найдена.
-        
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            Processing config model or None if not found.
         """
         try:
             result = await db.execute(
                 select(processing_config_model.ProcessingConfig).where(
-                    processing_config_model.ProcessingConfig.dashboard_id == dashboard_id
+                    processing_config_model.ProcessingConfig.dashboard_id
+                    == id
                 )
             )
             config = result.scalar_one_or_none()
             if config:
-                logger.info("Настройки обработки получены: dashboard_id=%s", dashboard_id)
+                logger.info(
+                    "Processing config retrieved: dashboard_id=%s", id
+                )
             else:
-                logger.warning("Настройки обработки не найдены: dashboard_id=%s", dashboard_id)
-            return config
+                logger.warning(
+                    "Processing config not found: dashboard_id=%s", id
+                )
+            return cast(processing_config_model.ProcessingConfig | None, config)
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении настроек dashboard_id=%s: %s", dashboard_id, e)
+            logger.error(
+                "Error getting config dashboard_id=%s: %s", id, e
+            )
             raise
 
     @classmethod
-    async def create(cls, db: AsyncSession, **kwargs) -> processing_config_model.ProcessingConfig | None:
-        """Создать новые настройки обработки.
-        
+    async def create(
+        cls, db: AsyncSession, **kwargs
+    ) -> processing_config_model.ProcessingConfig | None:
+        """Create new processing config.
+
         Args:
-            db: Асинхронная сессия базы данных.
-            **kwargs: Параметры настроек (dashboard_id, settings).
-        
+            db: Async database session.
+            **kwargs: Config parameters (dashboard_id, settings).
+
         Returns:
-            Модель созданных настроек с ID или None при ошибке.
-        
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            Created config model with ID or None on error.
         """
         try:
             config_obj = processing_config_model.ProcessingConfig(**kwargs)
@@ -77,101 +82,102 @@ class ProcessingConfigRepository:
             await db.flush()
             await db.refresh(config_obj)
             logger.info(
-                "Настройки обработки созданы: dashboard_id=%s", config_obj.dashboard_id
+                "Processing config created: dashboard_id=%s", config_obj.dashboard_id
             )
-            return config_obj
+            return cast(processing_config_model.ProcessingConfig | None, config_obj)
         except SQLAlchemyError as e:
-            logger.error("Ошибка при создании настроек обработки: %s", e)
+            logger.error("Error creating processing config: %s", e)
             raise
 
     @classmethod
     async def update(
-        cls, dashboard_id: UUID, db: AsyncSession, **kwargs
+        cls, id: UUID, db: AsyncSession, **kwargs
     ) -> processing_config_model.ProcessingConfig | None:
-        """Обновить настройки обработки.
-        
+        """Update processing config.
+
         Args:
-            dashboard_id: Идентификатор дашборда (UUID).
-            db: Асинхронная сессия базы данных.
-            **kwargs: Поля для обновления.
-        
+            id: Dashboard identifier (UUID).
+            db: Async database session.
+            **kwargs: Fields to update.
+
         Returns:
-            Обновленная модель настроек или None, если не найдена.
-        
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            Updated config model or None if not found.
         """
         try:
             result = await db.execute(
                 select(processing_config_model.ProcessingConfig).where(
-                    processing_config_model.ProcessingConfig.dashboard_id == dashboard_id
+                    processing_config_model.ProcessingConfig.dashboard_id
+                    == id
                 )
             )
             config_obj = result.scalar_one_or_none()
             if not config_obj:
-                logger.warning("Настройки не найдены для обновления: dashboard_id=%s", dashboard_id)
+                logger.warning(
+                    "Config not found for update: dashboard_id=%s", id
+                )
                 return None
             for key, value in kwargs.items():
                 if hasattr(config_obj, key):
                     setattr(config_obj, key, value)
             await db.flush()
             await db.refresh(config_obj)
-            logger.info("Настройки обновлены: dashboard_id=%s", dashboard_id)
-            return config_obj
+            logger.info("Processing config updated: dashboard_id=%s", id)
+            return cast(processing_config_model.ProcessingConfig | None, config_obj)
         except SQLAlchemyError as e:
-            logger.error("Ошибка при обновлении настроек dashboard_id=%s: %s", dashboard_id, e)
+            logger.error(
+                "Error updating config dashboard_id=%s: %s", id, e
+            )
             raise
 
     @classmethod
-    async def delete(cls, dashboard_id: UUID, db: AsyncSession) -> bool:
-        """Удалить настройки обработки.
-        
+    async def delete(cls, id: UUID, db: AsyncSession) -> bool:
+        """Delete processing config.
+
         Args:
-            dashboard_id: Идентификатор дашборда (UUID).
-            db: Асинхронная сессия базы данных.
-        
+            id: Dashboard identifier (UUID).
+            db: Async database session.
+
         Returns:
-            True, если удаление успешно, False - если настройки не найдены.
-        
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            True if deletion successful, False if config not found.
         """
         try:
             result = await db.execute(
                 select(processing_config_model.ProcessingConfig).where(
-                    processing_config_model.ProcessingConfig.dashboard_id == dashboard_id
+                    processing_config_model.ProcessingConfig.dashboard_id
+                    == id
                 )
             )
             config_obj = result.scalar_one_or_none()
             if not config_obj:
-                logger.warning("Настройки не найдены для удаления: dashboard_id=%s", dashboard_id)
+                logger.warning(
+                    "Config not found for deletion: dashboard_id=%s", id
+                )
                 return False
-            db.delete(config_obj)  # type: ignore[unused-coroutine]
+            await db.delete(config_obj)
             await db.flush()
-            logger.info("Настройки удалены: dashboard_id=%s", dashboard_id)
+            logger.info("Processing config deleted: dashboard_id=%s", id)
             return True
         except SQLAlchemyError as e:
-            logger.error("Ошибка при удалении настроек dashboard_id=%s: %s", dashboard_id, e)
+            logger.error(
+                "Error deleting config dashboard_id=%s: %s", id, e
+            )
             raise
 
     @classmethod
     async def get_all(cls, db: AsyncSession) -> list[processing_config_model.ProcessingConfig]:
-        """Получить все настройки обработки.
-        
+        """Get all processing configs.
+
         Args:
-            db: Асинхронная сессия базы данных.
-        
+            db: Async database session.
+
         Returns:
-            Список всех настроек обработки.
-        
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            List of all processing configs.
         """
         try:
             result = await db.execute(select(processing_config_model.ProcessingConfig))
             configs = list(result.scalars().all())
-            logger.info("Получен список настроек, количество: %s", len(configs))
+            logger.info("Processing configs list retrieved, count: %s", len(configs))
             return configs
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении списка настроек: %s", e)
+            logger.error("Error getting processing configs list: %s", e)
             raise

@@ -1,14 +1,16 @@
-"""Зависимости FastAPI для API маршрутов.
+"""FastAPI dependencies for API routes.
 
-Этот модуль предоставляет готовые зависимости FastAPI для использования
-в API маршрутах, включая аутентификацию, авторизацию и проверку прав доступа.
+This module provides ready-to-use FastAPI dependencies for use in API routes,
+including authentication, authorization and access checks.
 
-Типичные сценарии использования:
-    - Защита эндпоинтов аутентификацией
-    - Проверка ролей пользователей
-    - Проверка доступа к дашбордам
-    - Получение текущего пользователя
+Typical usage scenarios:
+    - Protect endpoints with authentication
+    - Check user roles
+    - Check dashboard access
+    - Get current user
 """
+
+from __future__ import annotations
 
 import logging
 from typing import Annotated, Any
@@ -28,40 +30,23 @@ from mkobi.core.permissions import (
 )
 from mkobi.db.session import get_db, get_session  # noqa: F401 - re-exported for backwards compatibility
 from mkobi.models.user import UserDB
-from mkobi.interfaces import (
-    IUserRepository,
-    IDashboardRepository,
-    IAccessRepository,
-    IAggregatedDataRepository,
-    IFilterRepository,
-    IProcessingConfigRepository,
-    IProcessingLogRepository,
-    IAuthService,
-    IUserService,
-    IDashboardService,
-    IFilterService,
-    IDataService,
-    IProcessingConfigService,
-    IProcessingLogService,
-)
-
-from mkobi.models.user_roles import UserRoleEnum
+from mkobi.models.enums import UserRole
 
 logger = logging.getLogger(__name__)
 
 
-# --- Базовые зависимости ---
+# --- Base dependencies ---
 
 security = HTTPBearer()
 
 
 async def get_db_dependency() -> AsyncGenerator[AsyncSession, None]:
-    """Зависимость для получения асинхронной сессии базы данных.
+    """Database session dependency for FastAPI routes.
 
-    Создает новую сессию для каждого запроса и закрывает её после завершения.
+    Creates a new session for each request and closes it after completion.
 
     Yields:
-        AsyncSession: Асинхронная сессия SQLAlchemy.
+        AsyncSession: SQLAlchemy async session.
 
     Example:
         @app.get("/users/")
@@ -73,216 +58,199 @@ async def get_db_dependency() -> AsyncGenerator[AsyncSession, None]:
         yield db
 
 
-# --- Dependency Injection для репозиториев ---
+# --- Dependency Injection for repositories ---
 
 
-def get_user_repository(db: AsyncSession = Depends(get_db_dependency)) -> IUserRepository:
-    """DI фабрика для получения репозитория пользователей.
-    
+def get_user_repository():
+    """DI factory for user repository.
+
     Args:
-        db: Асинхронная сессия базы данных.
-        
+        db: Async database session.
+
     Returns:
-        IUserRepository: Реализация репозитория пользователей.
+        IUserRepository: User repository implementation.
     """
     from mkobi.db.repositories.user_repo import UserRepository
     return UserRepository()
 
 
-def get_dashboard_repository(db: AsyncSession = Depends(get_db_dependency)) -> IDashboardRepository:
-    """DI фабрика для получения репозитория дашбордов.
-    
-    Args:
-        db: Асинхронная сессия базы данных.
-        
+def get_dashboard_repository():
+    """DI factory for dashboard repository.
+
     Returns:
-        IDashboardRepository: Реализация репозитория дашбордов.
+        DashboardRepository: Dashboard repository implementation.
     """
     from mkobi.db.repositories.dashboard_repo import DashboardRepository
     return DashboardRepository()
 
 
-def get_access_repository(db: AsyncSession = Depends(get_db_dependency)) -> IAccessRepository:
-    """DI фабрика для получения репозитория прав доступа.
-    
-    Args:
-        db: Асинхронная сессия базы данных.
-        
+def get_access_repository():
+    """DI factory for access repository.
+
     Returns:
-        IAccessRepository: Реализация репозитория прав доступа.
+        AccessRepository: Access repository implementation.
     """
     from mkobi.db.repositories.access_repo import AccessRepository
     return AccessRepository()
 
 
-def get_aggregated_data_repository(db: AsyncSession = Depends(get_db_dependency)) -> IAggregatedDataRepository:
-    """DI фабрика для получения репозитория агрегированных данных.
-    
-    Args:
-        db: Асинхронная сессия базы данных.
-        
+def get_aggregated_data_repository():
+    """DI factory for aggregated data repository.
+
     Returns:
-        IAggregatedDataRepository: Реализация репозитория агрегированных данных.
+        AggregatedDataRepository: Aggregated data repository implementation.
     """
     from mkobi.db.repositories.aggregated_data_repo import AggregatedDataRepository
     return AggregatedDataRepository()
 
 
-def get_filter_repository(db: AsyncSession = Depends(get_db_dependency)) -> IFilterRepository:
-    """DI фабрика для получения репозитория фильтров.
-    
-    Args:
-        db: Асинхронная сессия базы данных.
-        
+def get_filter_repository():
+    """DI factory for filter repository.
+
     Returns:
-        IFilterRepository: Реализация репозитория фильтров.
+        FilterRepository: Filter repository implementation.
     """
     from mkobi.db.repositories.filter_repo import FilterRepository
     return FilterRepository()
 
 
-def get_processing_config_repository(db: AsyncSession = Depends(get_db_dependency)) -> IProcessingConfigRepository:
-    """DI фабрика для получения репозитория настроек обработки.
-    
-    Args:
-        db: Асинхронная сессия базы данных.
-        
+def get_processing_config_repository():
+    """DI factory for processing config repository.
+
     Returns:
-        IProcessingConfigRepository: Реализация репозитория настроек обработки.
+        ProcessingConfigRepository: Processing config repository implementation.
     """
     from mkobi.db.repositories.processing_config_repo import ProcessingConfigRepository
     return ProcessingConfigRepository()
 
 
-def get_processing_log_repository(db: AsyncSession = Depends(get_db_dependency)) -> IProcessingLogRepository:
-    """DI фабрика для получения репозитория логов обработки.
-    
-    Args:
-        db: Асинхронная сессия базы данных.
-        
+def get_processing_log_repository():
+    """DI factory for processing log repository.
+
     Returns:
-        IProcessingLogRepository: Реализация репозитория логов обработки.
+        ProcessingLogRepository: Processing log repository implementation.
     """
     from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
     return ProcessingLogRepository()
 
 
-# --- Dependency Injection для сервисов ---
+def get_graph_repository():
+    """DI factory for graph repository.
 
-
-def get_auth_service(db: AsyncSession = Depends(get_db_dependency)) -> IAuthService:
-    """DI фабрика для получения сервиса аутентификации.
-    
-    Args:
-        db: Асинхронная сессия базы данных.
-        
     Returns:
-        IAuthService: Реализация сервиса аутентификации.
+        GraphRepository: Graph repository implementation.
+    """
+    from mkobi.db.repositories.graph_repo import GraphRepository
+    return GraphRepository()
+
+
+# --- Dependency Injection for services ---
+
+
+def get_auth_service():
+    """DI factory for authentication service.
+
+    Returns:
+        AuthService: Authentication service implementation.
     """
     from mkobi.services.auth_service import AuthService
     return AuthService()
 
 
-def get_user_service(db: AsyncSession = Depends(get_db_dependency)) -> IUserService:
-    """DI фабрика для получения сервиса пользователей.
-    
+def get_user_service(
+    user_repo=Depends(get_user_repository),
+):
+    """DI factory for user service.
+
     Args:
-        db: Асинхронная сессия базы данных.
-        
+        user_repo: Injected user repository.
+
     Returns:
-        IUserService: Реализация сервиса пользователей.
+        UserService: User service implementation.
     """
     from mkobi.services.user_service import UserService
-    return UserService()
+    return UserService(user_repo)
 
 
-def get_dashboard_service(db: AsyncSession = Depends(get_db_dependency)) -> IDashboardService:
-    """DI фабрика для получения сервиса дашбордов.
-    
+def get_dashboard_service(
+    dashboard_repo=Depends(get_dashboard_repository),
+    access_repo=Depends(get_access_repository),
+):
+    """DI factory for dashboard service.
+
     Args:
-        db: Асинхронная сессия базы данных.
-        
+        dashboard_repo: Injected dashboard repository.
+        access_repo: Injected access repository.
+
     Returns:
-        IDashboardService: Реализация сервиса дашбордов.
+        DashboardService: Dashboard service implementation.
     """
     from mkobi.services.dashboard_service import DashboardService
-    return DashboardService()
+    return DashboardService(dashboard_repo, access_repo)
 
 
-def get_filter_service(db: AsyncSession = Depends(get_db_dependency)) -> IFilterService:
-    """DI фабрика для получения сервиса фильтров.
-    
-    Args:
-        db: Асинхронная сессия базы данных.
-        
+def get_filter_service():
+    """DI factory for filter service.
+
     Returns:
-        IFilterService: Реализация сервиса фильтров.
+        FilterService: Filter service implementation.
     """
     from mkobi.services.filter_service import FilterService
     return FilterService()
 
 
-def get_data_service(db: AsyncSession = Depends(get_db_dependency)) -> IDataService:
-    """DI фабрика для получения сервиса данных.
-    
-    Args:
-        db: Асинхронная сессия базы данных.
-        
+def get_data_service():
+    """DI factory for data service.
+
     Returns:
-        IDataService: Реализация сервиса данных.
+        DataService: Data service implementation.
     """
     from mkobi.services.data_service import DataService
     return DataService()
 
 
-def get_processing_config_service(db: AsyncSession = Depends(get_db_dependency)) -> IProcessingConfigService:
-    """DI фабрика для получения сервиса настроек обработки.
-    
-    Args:
-        db: Асинхронная сессия базы данных.
-        
+def get_processing_config_service():
+    """DI factory for processing config service.
+
     Returns:
-        IProcessingConfigService: Реализация сервиса настроек обработки.
+        ProcessingConfigService: Processing config service implementation.
     """
     from mkobi.services.processing_config_service import ProcessingConfigService
     return ProcessingConfigService()
 
 
-def get_processing_log_service(db: AsyncSession = Depends(get_db_dependency)) -> IProcessingLogService:
-    """DI фабрика для получения сервиса логов обработки.
-    
-    Args:
-        db: Асинхронная сессия базы данных.
-        
+def get_processing_log_service():
+    """DI factory for processing log service.
+
     Returns:
-        IProcessingLogService: Реализация сервиса логов обработки.
+        ProcessingLogService: Processing log service implementation.
     """
     from mkobi.services.processing_log_service import ProcessingLogService
     return ProcessingLogService()
 
 
-# --- Аутентификация ---
+# --- Authentication ---
 
 
 def get_token_from_header(
     credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> str:
-    """Извлекает токен из заголовка Authorization.
+    """Extract token from Authorization header.
 
     Args:
-        credentials: Учетные данные из заголовка.
+        credentials: Credentials from header.
 
     Returns:
-        str: JWT токен.
+        str: JWT token.
 
     Raises:
-        HTTPException: Если заголовок отсутствует или некорректен.
+        HTTPException: If header is missing or incorrect.
     """
     if credentials.scheme.lower() != "bearer":
-        logger.warning("Некорректная схема аутентификации: %s", credentials.scheme)
+        logger.warning("Invalid authentication scheme: %s", credentials.scheme)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Некорректная схема аутентификации",
+            detail="Invalid authentication scheme",
             headers={"WWW-Authenticate": "Bearer"},
         )
     return credentials.credentials
@@ -292,20 +260,20 @@ async def get_current_user_dependency(
     token: str = Depends(get_token_from_header),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> UserDB:
-    """Получает текущего аутентифицированного пользователя.
+    """Get current authenticated user.
 
-    Декодирует JWT токен, извлекает user_id и получает данные
-    пользователя из базы данных.
+    Decodes JWT token, extracts user_id and retrieves user
+    data from database.
 
     Args:
-        token: JWT токен доступа.
-        db: Асинхронная сессия базы данных.
+        token: JWT access token.
+        db: Async database session.
 
     Returns:
-        UserDB: Модель аутентифицированного пользователя.
+        UserDB: Authenticated user model.
 
     Raises:
-        HTTPException: Если токен недействителен, истек или пользователь не найден.
+        HTTPException: If token is invalid, expired or user not found.
 
     Example:
         @app.get("/users/me")
@@ -314,46 +282,46 @@ async def get_current_user_dependency(
     """
     try:
         user = await get_current_user(token, db)
-        logger.debug("Пользователь аутентифицирован: user_id=%s", user.id)
+        logger.debug("User authenticated: user_id=%s", user.id)
         return user
     except ExpiredSignatureError:
-        logger.warning("Истёкший токен")
+        logger.warning("Expired token")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Срок действия токена истёк",
+            detail="Token has expired",
             headers={"WWW-Authenticate": "Bearer"},
         ) from None
     except AuthenticationError:
-        # AuthenticationError уже залогирована в get_current_user
+        # AuthenticationError already logged in get_current_user
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Не удалось аутентифицировать пользователя",
+            detail="Could not authenticate user",
             headers={"WWW-Authenticate": "Bearer"},
         ) from None
     except Exception as e:
-        logger.error("Неожиданная ошибка аутентификации: %s", e)
+        logger.error("Unexpected authentication error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Внутренняя ошибка сервера",
+            detail="Internal server error",
         ) from e
 
 
-# --- Авторизация (проверка ролей) ---
+# --- Authorization (role checks) ---
 
 
 def require_admin_role(
     user: UserDB = Depends(get_current_user_dependency),
 ) -> UserDB:
-    """Требует роль администратора.
+    """Require admin role.
 
     Args:
-        user: Пользователь (получается через get_current_user_dependency).
+        user: User (obtained via get_current_user_dependency).
 
     Returns:
-        UserDB: Пользователь, если у него роль admin.
+        UserDB: User if has admin role.
 
     Raises:
-        HTTPException: Если у пользователя нет роли admin.
+        HTTPException: If user does not have admin role.
 
     Example:
         @app.post("/users/")
@@ -363,15 +331,15 @@ def require_admin_role(
         ):
             return create_user(user_data)
     """
-    if not check_role(user.role, UserRoleEnum.ADMIN):
+    if not check_role(user.role, UserRole.ADMIN):
         logger.warning(
-            "Требуется роль admin, у пользователя: user_id=%s, role=%s",
+            "Admin role required for user: user_id=%s, role=%s",
             user.id,
             user.role,
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Требуется роль: admin",
+            detail="Admin role required",
         )
     return user
 
@@ -379,16 +347,16 @@ def require_admin_role(
 def require_editor_role(
     user: UserDB = Depends(get_current_user_dependency),
 ) -> UserDB:
-    """Требует роль редактора или выше (editor, admin).
+    """Require editor role or higher (editor, admin).
 
     Args:
-        user: Пользователь (получается через get_current_user_dependency).
+        user: User (obtained via get_current_user_dependency).
 
     Returns:
-        UserDB: Пользователь, если у него роль editor или admin.
+        UserDB: User if has editor or admin role.
 
     Raises:
-        HTTPException: Если у пользователя недостаточно прав.
+        HTTPException: If user has insufficient permissions.
 
     Example:
         @app.post("/upload/")
@@ -397,15 +365,15 @@ def require_editor_role(
         ):
             return {"message": "Upload allowed"}
     """
-    if not check_role(user.role, UserRoleEnum.EDITOR):
+    if not check_role(user.role, UserRole.EDITOR):
         logger.warning(
-            "Требуется роль editor или выше, у пользователя: user_id=%s, role=%s",
+            "Editor role or higher required for user: user_id=%s, role=%s",
             user.id,
             user.role,
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Требуется роль: editor или admin",
+            detail="Editor role or higher required",
         )
     return user
 
@@ -413,16 +381,16 @@ def require_editor_role(
 def require_viewer_role(
     user: UserDB = Depends(get_current_user_dependency),
 ) -> UserDB:
-    """Требует роль зрителя или выше (viewer, editor, admin).
+    """Require viewer role or higher (viewer, editor, admin).
 
-    По сути, просто проверяет, что пользователь аутентифицирован,
-    так как viewer - минимальная роль.
+    Essentially checks that user is authenticated,
+    since viewer is the minimum role.
 
     Args:
-        user: Пользователь (получается через get_current_user_dependency).
+        user: User (obtained via get_current_user_dependency).
 
     Returns:
-        UserDB: Пользователь.
+        UserDB: User.
 
     Example:
         @app.get("/dashboards/")
@@ -431,28 +399,28 @@ def require_viewer_role(
         ):
             return {"message": "Access granted"}
     """
-    # Все аутентифицированные пользователи имеют хотя бы роль viewer
+    # All authenticated users have at least viewer role
     return user
 
 
 def require_role_dependency(required_role: str):
-    """Создает зависимость для проверки конкретной роли.
+    """Create dependency for checking specific role.
 
-    Универсальная зависимость для проверки любой роли.
+    Universal dependency for checking any role.
 
     Args:
-        required_role: Требуемая роль (viewer, editor, admin).
+        required_role: Required role (viewer, editor, admin).
 
     Returns:
-        Callable: Функция-зависимость FastAPI.
+        Callable: FastAPI dependency function.
 
     Raises:
-        HTTPException: Если у пользователя недостаточно прав.
+        HTTPException: If user has insufficient permissions.
 
     Example:
         @app.get("/admin-only")
         async def admin_only(
-            user: UserDB = Depends(require_role_dependency(UserRoleEnum.ADMIN)),
+            user: UserDB = Depends(require_role_dependency(UserRole.ADMIN)),
         ):
             return {"message": "Admin area"}
     """
@@ -462,21 +430,21 @@ def require_role_dependency(required_role: str):
     ) -> UserDB:
         if not check_role(user.role, required_role):
             logger.warning(
-                "Недостаточно прав: user_id=%s, user_role=%s, required_role=%s",
+                "Insufficient permissions: user_id=%s, user_role=%s, required_role=%s",
                 user.id,
                 user.role,
                 required_role,
             )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Требуется роль: {required_role} или выше",
+                detail=f"Role {required_role} or higher required",
             )
         return user
 
     return role_checker
 
 
-# --- Проверка доступа к дашбордам ---
+# --- Dashboard access checks ---
 
 
 async def require_dashboard_read_access(
@@ -484,18 +452,18 @@ async def require_dashboard_read_access(
     user: UserDB = Depends(get_current_user_dependency),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> UserDB:
-    """Требует права на чтение дашборда.
+    """Require read access to dashboard.
 
     Args:
-        dashboard_id: ID дашборда (извлекается из пути).
-        user: Пользователь (получается через get_current_user_dependency).
-        db: Асинхронная сессия базы данных.
+        dashboard_id: Dashboard ID (from path).
+        user: User (obtained via get_current_user_dependency).
+        db: Async database session.
 
     Returns:
-        UserDB: Пользователь, если у него есть доступ.
+        UserDB: User if has access.
 
     Raises:
-        HTTPException: Если у пользователя нет прав на чтение.
+        HTTPException: If user has no read access.
 
     Example:
         @app.get("/dashboards/{dashboard_id}")
@@ -512,13 +480,13 @@ async def require_dashboard_read_access(
         db=db,
     ):
         logger.warning(
-            "Отказано в чтении дашборда: user_id=%s, dashboard_id=%s",
+            "Read access denied: user_id=%s, dashboard_id=%s",
             user.id,
             dashboard_id,
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="У вас нет прав на чтение этого дашборда",
+            detail="You do not have read access to this dashboard",
         )
     return user
 
@@ -528,18 +496,18 @@ async def require_dashboard_write_access(
     user: UserDB = Depends(get_current_user_dependency),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> UserDB:
-    """Требует права на запись (редактирование) дашборда.
+    """Require write (edit) access to dashboard.
 
     Args:
-        dashboard_id: ID дашборда (извлекается из пути).
-        user: Пользователь (получается через get_current_user_dependency).
-        db: Асинхронная сессия базы данных.
+        dashboard_id: Dashboard ID (from path).
+        user: User (obtained via get_current_user_dependency).
+        db: Async database session.
 
     Returns:
-        UserDB: Пользователь, если у него есть права на запись.
+        UserDB: User if has write access.
 
     Raises:
-        HTTPException: Если у пользователя нет прав на запись.
+        HTTPException: If user has no write access.
 
     Example:
         @app.put("/dashboards/{dashboard_id}")
@@ -556,13 +524,13 @@ async def require_dashboard_write_access(
         db=db,
     ):
         logger.warning(
-            "Отказано в записи дашборда: user_id=%s, dashboard_id=%s",
+            "Write access denied: user_id=%s, dashboard_id=%s",
             user.id,
             dashboard_id,
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="У вас нет прав на редактирование этого дашборда",
+            detail="You do not have write access to this dashboard",
         )
     return user
 
@@ -572,18 +540,18 @@ async def require_dashboard_admin_access(
     user: UserDB = Depends(get_current_user_dependency),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> UserDB:
-    """Требует права на администрирование дашборда.
+    """Require admin access to dashboard.
 
     Args:
-        dashboard_id: ID дашборда (извлекается из пути).
-        user: Пользователь (получается через get_current_user_dependency).
-        db: Асинхронная сессия базы данных.
+        dashboard_id: Dashboard ID (from path).
+        user: User (obtained via get_current_user_dependency).
+        db: Async database session.
 
     Returns:
-        UserDB: Пользователь, если у него есть права на администрирование.
+        UserDB: User if has admin access.
 
     Raises:
-        HTTPException: Если у пользователя нет прав на администрирование.
+        HTTPException: If user has no admin access.
 
     Example:
         @app.delete("/dashboards/{dashboard_id}")
@@ -600,20 +568,20 @@ async def require_dashboard_admin_access(
         db=db,
     ):
         logger.warning(
-            "Отказано в администрировании дашборда: user_id=%s, dashboard_id=%s",
+            "Admin access denied: user_id=%s, dashboard_id=%s",
             user.id,
             dashboard_id,
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="У вас нет прав на администрирование этого дашборда",
+            detail="You do not have admin access to this dashboard",
         )
     return user
 
 
-# --- Комбинированные зависимости ---
+# --- Combined dependencies ---
 
-# Типизированные алиасы для удобства использования
+# Typed aliases for convenience
 CurrentUser = Annotated[UserDB, Depends(get_current_user_dependency)]
 AdminUser = Annotated[UserDB, Depends(require_admin_role)]
 EditorUser = Annotated[UserDB, Depends(require_editor_role)]
@@ -624,20 +592,20 @@ async def get_dashboard_permissions(
     dashboard_id: UUID,
     user: UserDB = Depends(get_current_user_dependency),
     db: AsyncSession = Depends(get_db_dependency),
-    access_repo: IAccessRepository = Depends(get_access_repository),
+    access_repo=Depends(get_access_repository),
 ) -> dict[str, Any]:
-    """Получает права доступа пользователя к дашборду.
+    """Get user's access permissions for dashboard.
 
     Args:
-        dashboard_id: ID дашборда.
-        user: Пользователь.
-        db: Асинхронная сессия базы данных.
-        access_repo: Репозиторий доступа.
+        dashboard_id: Dashboard ID.
+        user: User.
+        db: Async database session.
+        access_repo: Access repository.
 
     Returns:
-        dict: Словарь с информацией о правах доступа.
+        dict: Dictionary with access permission info.
     """
-    permission = access_repo.check_access(
+    permission = await access_repo.check_access(
         user_id=user.id,
         dashboard_id=dashboard_id,
         db=db,
@@ -647,19 +615,19 @@ async def get_dashboard_permissions(
         "user_id": user.id,
         "dashboard_id": dashboard_id,
         "permission": permission,
-        "can_read": check_dashboard_access(
+        "can_read": await check_dashboard_access(
             user_id=user.id,
             dashboard_id=dashboard_id,
             required_permission="view",
             db=db,
         ),
-        "can_write": check_dashboard_access(
+        "can_write": await check_dashboard_access(
             user_id=user.id,
             dashboard_id=dashboard_id,
             required_permission="edit",
             db=db,
         ),
-        "can_admin": check_dashboard_access(
+        "can_admin": await check_dashboard_access(
             user_id=user.id,
             dashboard_id=dashboard_id,
             required_permission="admin",

@@ -52,20 +52,21 @@ from mkobi.models.transformation_configs import (
     YoyConfig,
 )
 from mkobi.models.enums import (
+    AggregationFunctionEnum,
+    BarmodeEnum,
+    ButtonVariant,
+    ComponentSize,
     DashboardPermission,
+    EnvironmentEnum,
+    FileExtensionEnum,
     FilterType,
     GraphType,
+    MimeTypeEnum,
+    OrientationEnum,
     ProcessingStatus,
     RegistrationStatus,
     UploadMode,
     UserRole,
-)
-from mkobi.models.user_roles import (
-    BarmodeEnum,
-    GraphTypeEnum,
-    OrientationEnum,
-    PermissionEnum,
-    UserRoleEnum,
     YoyModeEnum,
 )
 
@@ -121,19 +122,21 @@ __all__ = [
     "FilterConfig",
     "ShareConfig",
     "YoyConfig",
-    # Enums (new names)
+    # Enums
+    "AggregationFunctionEnum",
+    "BarmodeEnum",
+    "ButtonVariant",
+    "ComponentSize",
     "DashboardPermission",
+    "EnvironmentEnum",
+    "FileExtensionEnum",
     "FilterType",
     "GraphType",
+    "MimeTypeEnum",
+    "OrientationEnum",
     "ProcessingStatus",
     "RegistrationStatus",
     "UploadMode",
     "UserRole",
-    # Enums (backwards compatibility)
-    "BarmodeEnum",
-    "GraphTypeEnum",
-    "OrientationEnum",
-    "PermissionEnum",
-    "UserRoleEnum",
     "YoyModeEnum",
 ]

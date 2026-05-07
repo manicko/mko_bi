@@ -1,7 +1,7 @@
-"""Маршруты для управления layout-ами.
+"""Routes for managing layouts.
 
-Этот модуль предоставляет эндпоинты для CRUD операций с layout-ами.
-Доступ к операциям ограничен и требует аутентификации.
+This module provides endpoints for CRUD operations on layouts.
+Access is restricted and requires authentication.
 """
 
 import logging
@@ -37,43 +37,43 @@ router = APIRouter(prefix="/layouts", tags=["layouts"])
     "/",
     response_model=LayoutRead,
     status_code=status.HTTP_201_CREATED,
-    summary="Создание layout-а",
-    description="Создает новый layout. Доступно только администраторам.",
+    summary="Create layout",
+    description="Creates a new layout. Admin only.",
 )
 async def create_layout_endpoint(
     layout: LayoutCreate,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
 ) -> LayoutRead:
-    """Создает новый layout.
-    
+    """Create a new layout.
+
     Args:
-        layout: Модель с данными для создания layout-а.
-        current_user: Текущий аутентифицированный пользователь.
-        db: Сессия базы данных.
-    
+        layout: Model with layout creation data.
+        current_user: Current authenticated user.
+        db: Database session.
+
     Returns:
-        LayoutRead: Модель созданного layout-а.
-    
+        LayoutRead: Model of the created layout.
+
     Raises:
-        HTTPException 403: Если у пользователя нет прав администратора.
-        HTTPException 422: Если данные не прошли валидацию.
-        HTTPException 500: При ошибке базы данных.
+        HTTPException 403: If user is not an admin.
+        HTTPException 422: If data validation failed.
+        HTTPException 500: On database error.
     """
-    # Проверка прав администратора
+    # Check admin permissions
     if current_user.role != UserRole.ADMIN:
         logger.warning(
-            "Нет прав на создание layout-а: user_id=%s, role=%s",
+            "Insufficient permissions to create layout: user_id=%s, role=%s",
             current_user.id,
             current_user.role,
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Только администраторы могут создавать layout-ы",
+            detail="Only admins can create layouts",
         )
 
     logger.info(
-        "Создание layout-а: name=%s, user_id=%s",
+        "Creating layout: name=%s, user_id=%s",
         layout.name,
         current_user.id,
     )
@@ -86,20 +86,20 @@ async def create_layout_endpoint(
         )
         return result
     except ValueError as e:
-        logger.warning("Ошибка валидации при создании layout-а: %s", e)
+        logger.warning("Validation error creating layout: %s", e)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         ) from e
     except Exception as e:
         logger.error(
-            "Ошибка при создании layout-а name=%s: %s",
+            "Error creating layout name=%s: %s",
             layout.name,
             e,
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка при создании layout-а",
+            detail="Error creating layout",
         ) from e
 
 
@@ -107,36 +107,36 @@ async def create_layout_endpoint(
     "/",
     response_model=list[LayoutRead],
     status_code=status.HTTP_200_OK,
-    summary="Список доступных layout-ов",
-    description="Возвращает список всех layout-ов.",
+    summary="List layouts",
+    description="Returns list of all layouts.",
 )
 async def get_layouts_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
 ) -> list[LayoutRead]:
-    """Получает список всех layout-ов.
-    
+    """Get list of all layouts.
+
     Args:
-        current_user: Текущий аутентифицированный пользователь.
-        db: Сессия базы данных.
-    
+        current_user: Current authenticated user.
+        db: Database session.
+
     Returns:
-        list[LayoutRead]: Список моделей layout-ов.
-    
+        list[LayoutRead]: List of layout models.
+
     Raises:
-        HTTPException 500: При ошибке базы данных.
+        HTTPException 500: On database error.
     """
-    logger.info("Получение списка layout-ов")
+    logger.info("Getting layout list")
 
     try:
         layouts: list[LayoutRead] = await get_all_layouts(db=db)
-        logger.info("Получено layout-ов: %s", len(layouts))
+        logger.info("Retrieved layouts: %s", len(layouts))
         return layouts
     except Exception as e:
-        logger.error("Ошибка при получении списка layout-ов: %s", e)
+        logger.error("Error getting layout list: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка при получении списка layout-ов",
+            detail="Error getting layout list",
         ) from e
 
 
@@ -144,46 +144,46 @@ async def get_layouts_endpoint(
     "/{layout_id}",
     response_model=LayoutRead,
     status_code=status.HTTP_200_OK,
-    summary="Получение layout-а по ID",
-    description="Возвращает данные layout-а по его ID.",
+    summary="Get layout by ID",
+    description="Returns layout data by ID.",
 )
 async def get_layout_endpoint(
     layout_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
 ) -> LayoutRead:
-    """Получает layout по ID.
-    
+    """Get layout by ID.
+
     Args:
-        layout_id: ID layout-а.
-        current_user: Текущий аутентифицированный пользователь.
-        db: Сессия базы данных.
-    
+        layout_id: Layout ID.
+        current_user: Current authenticated user.
+        db: Database session.
+
     Returns:
-        LayoutRead: Модель layout-а.
-    
+        LayoutRead: Layout model.
+
     Raises:
-        HTTPException 404: Если layout не найден.
-        HTTPException 500: При ошибке базы данных.
+        HTTPException 404: If layout not found.
+        HTTPException 500: On database error.
     """
-    logger.info("Запрос layout-а: layout_id=%s", layout_id)
+    logger.info("Layout request: layout_id=%s", layout_id)
 
     try:
         layout = await get_layout(layout_id=layout_id, db=db)
         if layout is None:
-            logger.warning("Layout не найден: id=%s", layout_id)
+            logger.warning("Layout not found: id=%s", layout_id)
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Layout не найден",
+                detail="Layout not found",
             )
         return layout
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Ошибка при получении layout-а id=%s: %s", layout_id, e)
+        logger.error("Error getting layout id=%s: %s", layout_id, e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка при получении layout-а",
+            detail="Error getting layout",
         ) from e
 
 
@@ -191,8 +191,8 @@ async def get_layout_endpoint(
     "/{layout_id}",
     response_model=LayoutRead,
     status_code=status.HTTP_200_OK,
-    summary="Обновление layout-а",
-    description="Обновляет данные layout-а. Доступно только администраторам.",
+    summary="Update layout",
+    description="Updates layout data. Admin only.",
 )
 async def update_layout_endpoint(
     layout_id: UUID,
@@ -200,39 +200,39 @@ async def update_layout_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
 ) -> LayoutRead:
-    """Обновляет layout.
-    
-    Доступно только администраторам.
-    
+    """Update layout.
+
+    Admin-only operation.
+
     Args:
-        layout_id: ID layout-а для обновления.
-        layout_update: Модель с новыми данными.
-        current_user: Текущий аутентифицированный пользователь.
-        db: Сессия базы данных.
-    
+        layout_id: Layout ID to update.
+        layout_update: Model with new data.
+        current_user: Current authenticated user.
+        db: Database session.
+
     Returns:
-        LayoutRead: Модель обновленного layout-а.
-    
+        LayoutRead: Model of the updated layout.
+
     Raises:
-        HTTPException 403: Если у пользователя нет прав администратора.
-        HTTPException 404: Если layout не найден.
-        HTTPException 422: Если данные не прошли валидацию.
-        HTTPException 500: При ошибке базы данных.
+        HTTPException 403: If user is not an admin.
+        HTTPException 404: If layout not found.
+        HTTPException 422: If data validation failed.
+        HTTPException 500: On database error.
     """
-    # Проверка прав администратора
+    # Check admin permissions
     if current_user.role != UserRole.ADMIN:
         logger.warning(
-            "Нет прав на обновление layout-а: user_id=%s, role=%s",
+            "Insufficient permissions to update layout: user_id=%s, role=%s",
             current_user.id,
             current_user.role,
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Только администраторы могут обновлять layout-ы",
+            detail="Only admins can update layouts",
         )
 
     logger.info(
-        "Обновление layout-а: layout_id=%s, user_id=%s",
+        "Updating layout: layout_id=%s, user_id=%s",
         layout_id,
         current_user.id,
     )
@@ -244,14 +244,14 @@ async def update_layout_endpoint(
             db=db,
         )
         if updated is None:
-            logger.warning("Layout не найден для обновления: id=%s", layout_id)
+            logger.warning("Layout not found for update: id=%s", layout_id)
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Layout не найден",
+                detail="Layout not found",
             )
         return updated
     except ValueError as e:
-        logger.warning("Ошибка валидации при обновлении layout-а: %s", e)
+        logger.warning("Validation error updating layout: %s", e)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
@@ -259,52 +259,52 @@ async def update_layout_endpoint(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Ошибка при обновлении layout-а id=%s: %s", layout_id, e)
+        logger.error("Error updating layout id=%s: %s", layout_id, e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка при обновлении layout-а",
+            detail="Error updating layout",
         ) from e
 
 
 @router.delete(
     "/{layout_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Удаление layout-а",
-    description="Удаляет layout. Доступно только администраторам.",
+    summary="Delete layout",
+    description="Deletes a layout. Admin only.",
 )
 async def delete_layout_endpoint(
     layout_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
 ) -> None:
-    """Удаляет layout.
-    
-    Доступно только администраторам.
-    
+    """Delete layout.
+
+    Admin-only operation.
+
     Args:
-        layout_id: ID layout-а для удаления.
-        current_user: Текущий аутентифицированный пользователь.
-        db: Сессия базы данных.
-    
+        layout_id: Layout ID to delete.
+        current_user: Current authenticated user.
+        db: Database session.
+
     Raises:
-        HTTPException 403: Если у пользователя нет прав администратора.
-        HTTPException 404: Если layout не найден.
-        HTTPException 500: При ошибке базы данных.
+        HTTPException 403: If user is not an admin.
+        HTTPException 404: If layout not found.
+        HTTPException 500: On database error.
     """
-    # Проверка прав администратора
+    # Check admin permissions
     if current_user.role != UserRole.ADMIN:
         logger.warning(
-            "Нет прав на удаление layout-а: user_id=%s, role=%s",
+            "Insufficient permissions to delete layout: user_id=%s, role=%s",
             current_user.id,
             current_user.role,
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Только администраторы могут удалять layout-ы",
+            detail="Only admins can delete layouts",
         )
 
     logger.info(
-        "Удаление layout-а: layout_id=%s, user_id=%s",
+        "Deleting layout: layout_id=%s, user_id=%s",
         layout_id,
         current_user.id,
     )
@@ -312,16 +312,16 @@ async def delete_layout_endpoint(
     try:
         result = await delete_layout(layout_id=layout_id, db=db)
         if not result:
-            logger.warning("Layout не найден для удаления: id=%s", layout_id)
+            logger.warning("Layout not found for deletion: id=%s", layout_id)
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Layout не найден",
+                detail="Layout not found",
             )
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Ошибка при удалении layout-а id=%s: %s", layout_id, e)
+        logger.error("Error deleting layout id=%s: %s", layout_id, e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка при удалении layout-а",
+            detail="Error deleting layout",
         ) from e

@@ -1,7 +1,7 @@
-"""Репозиторий для работы с пользователями.
+"""Repository for user operations.
 
-Предоставляет методы CRUD для модели User.
-Все методы используют контекстный менеджер сессий и обрабатывают ошибки.
+Provides CRUD methods for User model.
+All methods use contextual session management and handle errors.
 """
 
 import logging
@@ -9,62 +9,56 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.db.models import user as user_model
-from sqlalchemy.ext.asyncio import AsyncSession
+from mkobi.interfaces.repository_interfaces import IUserRepository
 
 logger = logging.getLogger(__name__)
 
 
-class UserRepository:
-    """Репозиторий для операций с пользователями.
+class UserRepository(IUserRepository):
+    """Repository for user operations.
 
-    Предоставляет методы для создания, чтения, обновления и удаления
-    пользователей в базе данных. Все операции выполняются в рамках
-    отдельной сессии базы данных с автоматическим управлением транзакциями.
+    Provides methods for creating, reading, updating and deleting
+    users in the database. All operations are performed within a
+    separate database session with automatic transaction management.
+    Implements IUserRepository interface.
     """
 
-    @classmethod
-    async def get(cls, user_id: UUID, db: AsyncSession) -> user_model.User | None:
-        """Получить пользователя по ID.
+    async def get(self, id: UUID, db: AsyncSession) -> user_model.User | None:
+        """Get user by ID.
 
         Args:
-            user_id: Идентификатор пользователя (UUID).
-            db: Асинхронная сессия базы данных.
+            id: User identifier (UUID).
+            db: Async database session.
 
         Returns:
-            Модель пользователя или None, если не найден.
-
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            User model or None if not found.
         """
         try:
             result = await db.execute(
-                select(user_model.User).where(user_model.User.id == user_id)
+                select(user_model.User).where(user_model.User.id == id)
             )
             user = result.scalar_one_or_none()
             if user:
-                logger.info("Пользователь получен: id=%s", user_id)
+                logger.info("User retrieved: id=%s", id)
             else:
-                logger.warning("Пользователь не найден: id=%s", user_id)
+                logger.warning("User not found: id=%s", id)
             return user
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении пользователя id=%s: %s", user_id, e)
+            logger.error("Error getting user id=%s: %s", id, e)
             raise
 
-    @classmethod
-    async def get_by_email(cls, email: str, db: AsyncSession) -> user_model.User | None:
-        """Получить пользователя по email.
+    async def get_by_email(self, email: str, db: AsyncSession) -> user_model.User | None:
+        """Get user by email.
 
         Args:
-            email: Email пользователя.
-            db: Асинхронная сессия базы данных.
+            email: User email.
+            db: Async database session.
 
         Returns:
-            Модель пользователя или None, если не найден.
-
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            User model or None if not found.
         """
         try:
             result = await db.execute(
@@ -72,123 +66,107 @@ class UserRepository:
             )
             user = result.scalar_one_or_none()
             if user:
-                logger.info("Пользователь получен по email: %s", email)
+                logger.info("User retrieved by email: %s", email)
             else:
-                logger.warning("Пользователь не найден по email: %s", email)
+                logger.warning("User not found by email: %s", email)
             return user
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении пользователя email=%s: %s", email, e)
+            logger.error("Error getting user email=%s: %s", email, e)
             raise
 
-    @classmethod
-    async def create(cls, db: AsyncSession, **kwargs) -> user_model.User | None:
-        """Создать нового пользователя.
+    async def get_all(self, db: AsyncSession) -> list[user_model.User]:
+        """Get all users.
 
         Args:
-            db: Асинхронная сессия базы данных.
-            **kwargs: Параметры пользователя (email, password_hash, role).
+            db: Async database session.
 
         Returns:
-            Модель созданного пользователя с ID или None при ошибке.
+            List of all users.
+        """
+        try:
+            result = await db.execute(select(user_model.User))
+            users = list(result.scalars().all())
+            logger.info("Users list retrieved, count: %s", len(users))
+            return users
+        except SQLAlchemyError as e:
+            logger.error("Error getting users list: %s", e)
+            raise
 
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+    async def create(self, db: AsyncSession, **kwargs) -> user_model.User | None:
+        """Create new user.
+
+        Args:
+            db: Async database session.
+            **kwargs: User parameters (email, password_hash, role).
+
+        Returns:
+            Created user model with ID or None on error.
         """
         try:
             user_obj = user_model.User(**kwargs)
             db.add(user_obj)
             await db.flush()
             await db.refresh(user_obj)
-            logger.info(
-                "Пользователь создан: id=%s, email=%s", user_obj.id, user_obj.email
-            )
+            logger.info("User created: id=%s, email=%s", user_obj.id, user_obj.email)
             return user_obj
         except SQLAlchemyError as e:
-            logger.error("Ошибка при создании пользователя: %s", e)
+            logger.error("Error creating user: %s", e)
             raise
 
-    @classmethod
-    async def update(cls, user_id: UUID, db: AsyncSession, **kwargs) -> user_model.User | None:
-        """Обновить данные пользователя.
+    async def update(
+        self, id: UUID, db: AsyncSession, **kwargs
+    ) -> user_model.User | None:
+        """Update user data.
 
         Args:
-            user_id: Идентификатор пользователя (UUID).
-            db: Асинхронная сессия базы данных.
-            **kwargs: Поля для обновления.
+            id: User identifier (UUID).
+            db: Async database session.
+            **kwargs: Fields to update.
 
         Returns:
-            Обновленная модель пользователя или None, если не найден.
-
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            Updated user model or None if not found.
         """
         try:
             result = await db.execute(
-                select(user_model.User).where(user_model.User.id == user_id)
+                select(user_model.User).where(user_model.User.id == id)
             )
             user_obj = result.scalar_one_or_none()
             if not user_obj:
-                logger.warning("Пользователь не найден для обновления: id=%s", user_id)
+                logger.warning("User not found for update: id=%s", id)
                 return None
             for key, value in kwargs.items():
                 if hasattr(user_obj, key):
                     setattr(user_obj, key, value)
             await db.flush()
             await db.refresh(user_obj)
-            logger.info("Пользователь обновлен: id=%s", user_id)
+            logger.info("User updated: id=%s", id)
             return user_obj
         except SQLAlchemyError as e:
-            logger.error("Ошибка при обновлении пользователя id=%s: %s", user_id, e)
+            logger.error("Error updating user id=%s: %s", id, e)
             raise
 
-    @classmethod
-    async def delete(cls, user_id: UUID, db: AsyncSession) -> bool:
-        """Удалить пользователя.
+    async def delete(self, id: UUID, db: AsyncSession) -> bool:
+        """Delete user.
 
         Args:
-            user_id: Идентификатор пользователя (UUID).
-            db: Асинхронная сессия базы данных.
+            id: User identifier (UUID).
+            db: Async database session.
 
         Returns:
-            True, если удаление успешно, False - если пользователь не найден.
-
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            True if deletion successful, False if user not found.
         """
         try:
             result = await db.execute(
-                select(user_model.User).where(user_model.User.id == user_id)
+                select(user_model.User).where(user_model.User.id == id)
             )
             user_obj = result.scalar_one_or_none()
             if not user_obj:
-                logger.warning("Пользователь не найден для удаления: id=%s", user_id)
+                logger.warning("User not found for deletion: id=%s", id)
                 return False
             await db.delete(user_obj)
             await db.flush()
-            logger.info("Пользователь удален: id=%s", user_id)
+            logger.info("User deleted: id=%s", id)
             return True
         except SQLAlchemyError as e:
-            logger.error("Ошибка при удалении пользователя id=%s: %s", user_id, e)
-            raise
-
-    @classmethod
-    async def get_all(cls, db: AsyncSession) -> list[user_model.User]:
-        """Получить всех пользователей.
-
-        Args:
-            db: Асинхронная сессия базы данных.
-
-        Returns:
-            Список всех пользователей.
-
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
-        """
-        try:
-            result = await db.execute(select(user_model.User))
-            users = list(result.scalars().all())
-            logger.info("Получен список пользователей, количество: %s", len(users))
-            return users
-        except SQLAlchemyError as e:
-            logger.error("Ошибка при получении списка пользователей: %s", e)
+            logger.error("Error deleting user id=%s: %s", id, e)
             raise

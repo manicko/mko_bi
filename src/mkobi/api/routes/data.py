@@ -1,11 +1,11 @@
-"""Маршруты для получения агрегированных данных дашбордов.
+"""Routes for getting dashboard aggregated data.
 
-Этот модуль предоставляет эндпоинты для:
-- Получения агрегированных данных для дашбордов
-- Получения данных для конкретных графиков
-- Применения фильтров к данным
+This module provides endpoints for:
+- Getting aggregated data for dashboards
+- Getting data for specific charts
+- Applying filters to data
 
-Все операции требуют аутентификации и соответствующих прав доступа.
+All operations require authentication and appropriate permissions.
 """
 
 import json
@@ -14,16 +14,13 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
     CurrentUser,
-    get_db_dependency,
     require_viewer_role,
+    get_data_service,
 )
-from mkobi.services.data_service import (
-    get_filtered_data,
-)
+from mkobi.services.data_service import DataService
 
 logger = logging.getLogger(__name__)
 
@@ -34,44 +31,44 @@ router = APIRouter(prefix="/data", tags=["data"])
     "/aggregated",
     response_model=list[dict[str, Any]],
     status_code=status.HTTP_200_OK,
-    summary="Получение агрегированных данных дашборда",
-    description="Возвращает данные для всех графиков дашборда с применением фильтров.",
+    summary="Get dashboard aggregated data",
+    description="Returns data for all dashboard charts with applied filters.",
     dependencies=[Depends(require_viewer_role)],
 )
 async def get_aggregated_data_endpoint(
     current_user: CurrentUser,
-    db: AsyncSession = Depends(get_db_dependency),
-    dashboard_id: UUID = Query(..., description="ID дашборда"),
-    filters: str | None = Query(default=None, description="JSON строка с фильтрами"),
+    data_service: DataService = Depends(get_data_service),
+    dashboard_id: UUID = Query(..., description="Dashboard ID"),
+    filters: str | None = Query(default=None, description="JSON string with filters"),
 ) -> dict[str, Any]:
-    """Получает агрегированные данные для дашборда.
+    """Get aggregated data for dashboard.
 
-    Применяет фильтры к JSONB полю dims и группирует данные по graph_id.
-    Формат ответа: {"graphs": [{"graph_id": "...", "data": [...]}]}
+    Applies filters to JSONB field dims and groups data by graph_id.
+    Response format: {"graphs": [{"graph_id": "...", "data": [...]}]}
 
     Args:
-        dashboard_id: ID дашборда.
-        filters: JSON строка с фильтрами (опционально).
-        current_user: Текущий аутентифицированный пользователь.
-        db: Сессия базы данных.
+        dashboard_id: Dashboard ID.
+        filters: JSON string with filters (optional).
+        current_user: Current authenticated user.
+        data_service: Data service (dependency injection).
 
     Returns:
-        dict: Данные для графиков в формате для React (Plotly.js).
+        dict: Data for charts in React (Plotly.js) format.
 
     Raises:
-        HTTPException 403: Если у пользователя нет прав на чтение дашборда.
-        HTTPException 404: Если дашборд не найден.
-        HTTPException 500: При ошибке сервера.
+        HTTPException 403: If user has no read access to dashboard.
+        HTTPException 404: If dashboard not found.
+        HTTPException 500: On server error.
     """
     logger.info(
-        "Запрос агрегированных данных: dashboard_id=%s, user_id=%s, filters=%s",
+        "Aggregated data request: dashboard_id=%s, user_id=%s, filters=%s",
         dashboard_id,
         current_user.id,
         filters,
     )
 
     try:
-        # Парсим фильтры из JSON строки
+        # Parse filters from JSON string
         filters_dict: dict[str, Any] = {}
         if filters:
             try:
@@ -79,42 +76,41 @@ async def get_aggregated_data_endpoint(
             except json.JSONDecodeError as e:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail=f"Некорректный JSON в filters: {e}",
+                    detail=f"Invalid JSON in filters: {e}",
                 ) from e
 
-        # Получаем данные через сервис с применением фильтров
-        result: dict[str, Any] = await get_filtered_data(
+        # Get data through service with applied filters
+        result: dict[str, Any] = await data_service.get_filtered_data(
             dashboard_id=dashboard_id,
             filters=filters_dict,
-            db=db,
         )
 
         logger.info(
-            "Агрегированные данные получены: dashboard_id=%s, charts_count=%d",
+            "Aggregated data retrieved: dashboard_id=%s, charts_count=%d",
             dashboard_id,
-            len(result.get("charts", [])),
+            len(result.get("graphs", [])),
         )
         return result
 
     except ValueError as e:
-        logger.warning("Ошибка при получении данных: %s", e)
+        logger.warning("Error getting data: %s", e)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         ) from e
     except PermissionError as e:
-        logger.warning("Отказано в доступе: %s", e)
+        logger.warning("Access denied: %s", e)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail=str(e),
         ) from e
     except Exception as e:
         logger.error(
-            "Ошибка при получении агрегированных данных для дашборда id=%s: %s",
+            "Error getting aggregated data for dashboard id=%s: %s",
             dashboard_id,
             e,
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка при получении данных",
+            detail="Error getting data",
         ) from e

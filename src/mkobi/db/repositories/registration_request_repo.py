@@ -4,6 +4,7 @@
 """
 
 import logging
+from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -68,4 +69,34 @@ class RegistrationRequestRepository:
             return req
         except SQLAlchemyError as e:
             logger.error("Ошибка при поиске заявки %s: %s", email, e)
+            raise
+
+    @classmethod
+    async def delete(cls, request_id: UUID, db: AsyncSession) -> bool:
+        """Удалить заявку по ID.
+
+        Args:
+            request_id: ID заявки.
+            db: Асинхронная сессия базы данных.
+
+        Returns:
+            True, если удаление успешно, False - если заявка не найдена.
+
+        Raises:
+            SQLAlchemyError: При ошибке базы данных.
+        """
+        try:
+            result = await db.execute(
+                select(RegistrationRequest).where(RegistrationRequest.id == request_id)
+            )
+            req = result.scalar_one_or_none()
+            if not req:
+                logger.warning("Заявка не найдена для удаления: id=%s", request_id)
+                return False
+            await db.delete(req)
+            await db.flush()
+            logger.info("Заявка удалена: id=%s", request_id)
+            return True
+        except SQLAlchemyError as e:
+            logger.error("Ошибка при удалении заявки id=%s: %s", request_id, e)
             raise

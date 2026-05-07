@@ -67,7 +67,7 @@
 
 ## Implementation Plan
 
-### Step 1: `docker-compose.yml` (Standard Volumes)
+### Step 1: `docker-compose.yml` (Standard Volumes + Test DB Support)
 
 ```yaml
 services:
@@ -95,12 +95,13 @@ services:
       db:
         condition: service_healthy
     environment:
-      ENV: production
+      ENV: development
       DATABASE__HOST: db
       DATABASE__PORT: 5432
       DATABASE__USER: postgres
       DATABASE__PASSWORD: ${DATABASE__PASSWORD:-1234}
       DATABASE__DBNAME: bidb
+      DATABASE__TEST_DBNAME: bidb_test  # Test DB name
       JWT__SECRET_KEY: ${JWT__SECRET_KEY:-change-me-in-production}
       JWT__ALGORITHM: HS256
       UPLOAD__TEMP_DIR: /app/data/tmp_uploads
@@ -108,6 +109,7 @@ services:
       CORS_ORIGINS: '["http://localhost"]'
       LOGGING__LEVEL: INFO
       AUTO_MIGRATE: "true"
+      RECREATE_TEST_DB: "true"  # Create test DB on first launch
     ports:
       - "8000:8000"
     volumes:
@@ -124,6 +126,8 @@ volumes:
 - No host path dependencies
 - Works identically on Linux, Mac, Windows
 - Data persists until `docker-compose down -v`
+- **Test DB auto-created** via `RECREATE_TEST_DB=true`
+- **Alembic migrations** run automatically via `AUTO_MIGRATE=true`
 
 ---
 
@@ -158,11 +162,19 @@ CMD ["uv", "run", "uvicorn", "src.mkobi.app:app", "--host", "0.0.0.0", "--port",
 
 ---
 
-### Step 3: Update `config.py` (No Changes Needed)
+### Step 3: Update `config.py` (Already Supports Test DB)
 
-The app already reads from env vars:
-- `UPLOAD__TEMP_DIR` → defaults to `/app/data/tmp_uploads` in container
-- `LOGGING__LOG_FILE` → defaults to `/app/data/logs/app.log`
+The app already supports test database configuration:
+- `test_database_url` - URL for test database
+- `recreate_test_db` - Auto-create test DB on startup
+- `DATABASE__TEST_DBNAME` - Test DB name (default: `bidb_test`)
+
+**Implementation in `src/mkobi/db/starter.py`:**
+```python
+# On startup (lifespan):
+if config.recreate_test_db:
+    await self.recreate_test_database()  # Creates + migrates test DB
+```
 
 No code changes needed - pydantic-settings handles env vars correctly.
 
@@ -202,91 +214,13 @@ LOGGING__LEVEL=INFO
 
 ### Step 6: `README_DOCKER.md` (Quick Start Guide)
 
-```markdown
-## Quick Start with Docker
+Updated to include test database section (see updated `README_DOCKER.md`).
 
-### Prerequisites
-- Docker installed
-- Docker Compose installed (or docker compose plugin)
-
-### Start Application
-
-1. (Optional) Configure environment:
-   ```bash
-   cp .env.example .env
-   # Edit .env and set secure passwords
-   ```
-
-2. Start all services:
-   ```bash
-   docker-compose up -d
-   ```
-
-3. Access the application:
-   - **API**: http://localhost:8000
-   - **API Docs**: http://localhost:8000/docs
-   - **ReDoc**: http://localhost:8000/redoc
-
-### Data Storage
-
-All data is stored in Docker volumes:
-
-| Volume | Container Path | Purpose |
-|--------|----------------|---------|
-| `app_data` | `/app/data` | App data (uploads, logs, temp files) |
-| `postgres_data` | `/var/lib/postgresql/data` | PostgreSQL database files |
-
-#### View volumes:
-```bash
-docker volume ls
-docker volume inspect mkobi_app_data
-docker volume inspect mkobi_postgres_data
-```
-
-#### Access data inside volumes:
-```bash
-# List uploaded files
-docker exec mkobi-app-1 ls -la /app/data/uploads
-
-# View logs
-docker exec mkobi-app-1 cat /app/data/logs/app.log
-
-# Access PostgreSQL
-docker exec -it mkobi-db-1 psql -U postgres -d bidb
-```
-
-### Common Commands
-
-| Command | Description |
-|---------|-------------|
-| `docker-compose ps` | Show running services |
-| `docker-compose logs -f` | Follow all logs |
-| `docker-compose logs -f app` | Follow app logs |
-| `docker-compose down` | Stop and remove containers |
-| `docker-compose down -v` | ⚠️ Stop + DELETE ALL DATA |
-| `docker-compose up -d --build` | Rebuild after code changes |
-
-### Production Deployment
-
-1. Set strong passwords in `.env`:
-   ```bash
-   DATABASE__PASSWORD=<strong-password>
-   JWT__SECRET_KEY=<strong-secret>
-   ```
-
-2. Use Docker secrets (recommended):
-   ```bash
-   DATABASE__PASSWORD_FILE=/run/secrets/db_password
-   JWT__SECRET_KEY_FILE=/run/secrets/jwt_secret
-   ```
-
-3. Update CORS for production:
-   ```bash
-   CORS_ORIGINS='["https://yourdomain.com"]'
-   ```
-
-4. Run production checklist (see `PRODUCTION_CHECKLIST.md`)
-```
+Key additions:
+- Test Database section (3.1)
+- `RECREATE_TEST_DB` environment variable
+- Troubleshooting: Test database not created
+- Run tests in Docker section
 
 ---
 
@@ -306,13 +240,17 @@ docker exec -it mkobi-db-1 psql -U postgres -d bidb
 ## Implementation Steps
 
 1. [x] Create `docker-compose.yml` with named volumes
-2. [x] Update `Dockerfile` to create `/app/data` directories
-3. [x] Add `.env` to `.gitignore`
-4. [x] Create `README_DOCKER.md` with quick start
-5. [ ] Test on clean machine: `docker-compose up -d`
-6. [x] Run `ruff check .` - passed
-7. [x] Run `uv run mypy .` - config issue (pre-existing)
-8. [x] Run `uv run pytest tests/` - 281 passed, 30 failed (pre-existing bugs)
+2. [x] Update `docker-compose.yml` to support test DB creation
+3. [x] Update `Dockerfile` to create `/app/data` directories
+4. [x] Add `.env` to `.gitignore`
+5. [x] Create `README_DOCKER.md` with quick start
+6. [x] Update `README_DOCKER.md` with test DB section
+7. [x] Update `SPEC.md` with Docker + test DB initialization
+8. [ ] Test on clean machine: `docker-compose up -d`
+9. [x] Run `ruff check .` - passed
+10. [x] Run `uv run mypy .` - config issue (pre-existing)
+11. [x] Run `uv run pytest tests/` - 281 passed, 30 failed (pre-existing bugs)
+12. [ ] Verify test DB auto-creation: `docker exec -it mkobi-app-1 uv run pytest tests/`
 
 ---
 

@@ -1,7 +1,7 @@
-"""Репозиторий для работы с логами обработки.
+"""Repository for processing log operations.
 
-Предоставляет методы для работы с логами обработки данных.
-Наследуется от BaseRepository для получения базовых CRUD операций.
+Provides methods for working with data processing logs.
+Inherits from BaseRepository to get basic CRUD operations.
 """
 
 import logging
@@ -12,48 +12,40 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mkobi.core.base_repository import BaseRepository
 from mkobi.db.models import processing_logs as processing_log_model
 from mkobi.db.models.processing_logs import ProcessingLog
+from mkobi.interfaces.repository_interfaces import IProcessingLogRepository
 from mkobi.models.enums import ProcessingStatus
 from mkobi.models.processing_logs import ProcessingLogFilter, ProcessingLogRead
 
 logger = logging.getLogger(__name__)
 
 
-class ProcessingLogRepository(BaseRepository[ProcessingLog]):
-    """Репозиторий для операций с логами обработки.
+class ProcessingLogRepository(IProcessingLogRepository):
+    """Repository for processing log operations.
 
-    Предоставляет методы для создания, чтения и обновления
-    логов обработки в базе данных.
+    Provides methods for creating, reading and updating
+    processing logs in the database.
+    Implements IProcessingLogRepository interface.
     """
-
-    def __init__(self, db: AsyncSession) -> None:
-        """Инициализация репозитория.
-
-        Args:
-            db: Асинхронная сессия базы данных.
-        """
-        super().__init__(processing_log_model.ProcessingLog, db)
 
     async def create_log(
         self,
         dashboard_id: UUID | None,
         status: ProcessingStatus,
-        message: str | None = None,
+        message: str | None,
+        db: AsyncSession,
     ) -> ProcessingLog:
-        """Создать новый лог обработки.
+        """Create new processing log.
 
         Args:
-            dashboard_id: Идентификатор дашборда (опционально).
-            status: Статус обработки.
-            message: Сообщение об ошибке или успехе (опционально).
+            dashboard_id: Dashboard identifier (optional).
+            status: Processing status.
+            message: Error or success message (optional).
+            db: Async database session.
 
         Returns:
-            Созданная модель лога обработки.
-
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            Created processing log model.
         """
         try:
             log_data = {
@@ -63,75 +55,73 @@ class ProcessingLogRepository(BaseRepository[ProcessingLog]):
                 "started_at": datetime.now(),
             }
             log_obj = processing_log_model.ProcessingLog(**log_data)
-            self.db.add(log_obj)
-            await self.db.flush()
-            await self.db.refresh(log_obj)
+            db.add(log_obj)
+            await db.flush()
+            await db.refresh(log_obj)
             logger.info(
-                "Лог обработки создан: id=%s, dashboard_id=%s, status=%s",
+                "Processing log created: id=%s, dashboard_id=%s, status=%s",
                 log_obj.id,
                 dashboard_id,
                 status,
             )
             return log_obj
         except SQLAlchemyError as e:
-            logger.error("Ошибка при создании лога: %s", e)
+            logger.error("Error creating log: %s", e)
             raise
 
     async def update_status(
         self,
         log_id: UUID,
         status: ProcessingStatus,
-        message: str | None = None,
+        message: str | None,
+        db: AsyncSession,
     ) -> None:
-        """Обновить статус лога обработки.
+        """Update processing log status.
 
         Args:
-            log_id: Идентификатор лога.
-            status: Новый статус.
-            message: Сообщение (опционально).
-
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            log_id: Log identifier.
+            status: New status.
+            message: Message (optional).
+            db: Async database session.
         """
         try:
-            result = await self.db.execute(
+            result = await db.execute(
                 select(processing_log_model.ProcessingLog).where(
                     processing_log_model.ProcessingLog.id == log_id
                 )
             )
             log_obj = result.scalar_one_or_none()
             if not log_obj:
-                logger.warning("Лог не найден для обновления: id=%s", log_id)
+                logger.warning("Log not found for update: id=%s", log_id)
                 return
 
             log_obj.status = status
             if message is not None:
                 log_obj.message = message
 
-            # Устанавливаем finished_at при успешном завершении или ошибке
+            # Set finished_at on successful completion or error
             if status in (ProcessingStatus.SUCCESS, ProcessingStatus.FAILED):
                 log_obj.finished_at = datetime.now()
 
-            await self.db.flush()
-            logger.info("Статус лога обновлен: id=%s, status=%s", log_id, status)
+            await db.flush()
+            logger.info("Log status updated: id=%s, status=%s", log_id, status)
         except SQLAlchemyError as e:
-            logger.error("Ошибка при обновлении статуса лога id=%s: %s", log_id, e)
+            logger.error("Error updating log status id=%s: %s", log_id, e)
             raise
 
     async def get_by_dashboard(
         self,
         dashboard_id: UUID | None,
+        db: AsyncSession,
     ) -> list[ProcessingLogRead]:
-        """Получить все логи обработки для дашборда.
+        """Get all processing logs for dashboard.
 
         Args:
-            dashboard_id: Идентификатор дашборда (может быть None).
+            dashboard_id: Dashboard identifier (can be None).
+            db: Async database session.
 
         Returns:
-            Список логов обработки для дашборда в формате Pydantic моделей.
-
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            List of processing logs for dashboard as Pydantic models.
         """
         try:
             query = select(processing_log_model.ProcessingLog)
@@ -144,41 +134,39 @@ class ProcessingLogRepository(BaseRepository[ProcessingLog]):
                     processing_log_model.ProcessingLog.dashboard_id.is_(None)
                 )
             query = query.order_by(processing_log_model.ProcessingLog.started_at.desc())
-            result = await self.db.execute(query)
+            result = await db.execute(query)
             logs = list(result.scalars().all())
             logger.info(
-                "Получены логи для dashboard_id=%s, количество: %s",
+                "Logs retrieved for dashboard_id=%s, count: %s",
                 dashboard_id,
                 len(logs),
             )
             return [ProcessingLogRead.model_validate(log) for log in logs]
         except SQLAlchemyError as e:
-            logger.error(
-                "Ошибка при получении логов dashboard_id=%s: %s", dashboard_id, e
-            )
+            logger.error("Error getting logs dashboard_id=%s: %s", dashboard_id, e)
             raise
 
     async def get_filtered(
         self,
         filters: ProcessingLogFilter,
+        db: AsyncSession,
     ) -> list[ProcessingLogRead]:
-        """Получить логи обработки с фильтрацией.
+        """Get processing logs with filtering.
 
         Args:
-            filters: Параметры фильтрации.
+            filters: Filter parameters.
+            db: Async database session.
 
         Returns:
-            Список логов обработки в формате Pydantic моделей.
-
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            List of processing logs as Pydantic models.
         """
         try:
             query = select(processing_log_model.ProcessingLog)
 
             if filters.dashboard_id is not None:
                 query = query.where(
-                    processing_log_model.ProcessingLog.dashboard_id == filters.dashboard_id
+                    processing_log_model.ProcessingLog.dashboard_id
+                    == filters.dashboard_id
                 )
 
             if filters.status is not None:
@@ -204,34 +192,33 @@ class ProcessingLogRepository(BaseRepository[ProcessingLog]):
             if filters.limit > 0:
                 query = query.limit(filters.limit)
 
-            result = await self.db.execute(query)
+            result = await db.execute(query)
             logs = list(result.scalars().all())
             logger.info(
-                "Получены отфильтрованные логи, количество: %s",
+                "Filtered logs retrieved, count: %s",
                 len(logs),
             )
             return [ProcessingLogRead.model_validate(log) for log in logs]
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении отфильтрованных логов: %s", e)
+            logger.error("Error getting filtered logs: %s", e)
             raise
 
     async def get_latest_by_dashboard(
         self,
         dashboard_id: UUID,
+        db: AsyncSession,
     ) -> ProcessingLogRead | None:
-        """Получить последний лог обработки для дашборда.
+        """Get latest processing log for dashboard.
 
         Args:
-            dashboard_id: Идентификатор дашборда.
+            dashboard_id: Dashboard identifier.
+            db: Async database session.
 
         Returns:
-            Последний лог обработки или None, если не найден.
-
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            Latest processing log or None if not found.
         """
         try:
-            result = await self.db.execute(
+            result = await db.execute(
                 select(processing_log_model.ProcessingLog)
                 .where(processing_log_model.ProcessingLog.dashboard_id == dashboard_id)
                 .order_by(processing_log_model.ProcessingLog.started_at.desc())
@@ -240,18 +227,49 @@ class ProcessingLogRepository(BaseRepository[ProcessingLog]):
             log = result.scalar_one_or_none()
             if log:
                 logger.info(
-                    "Получен последний лог для dashboard_id=%s: id=%s",
+                    "Latest log retrieved for dashboard_id=%s: id=%s",
                     dashboard_id,
                     log.id,
                 )
                 return ProcessingLogRead.model_validate(log)
             else:
-                logger.info("Логи для dashboard_id=%s не найдены", dashboard_id)
+                logger.info("No logs found for dashboard_id=%s", dashboard_id)
                 return None
         except SQLAlchemyError as e:
             logger.error(
-                "Ошибка при получении последнего лога dashboard_id=%s: %s",
+                "Error getting latest log dashboard_id=%s: %s",
                 dashboard_id,
                 e,
             )
+            raise
+
+    async def get_by_id(
+        self,
+        log_id: UUID,
+        db: AsyncSession,
+    ) -> ProcessingLogRead | None:
+        """Get log by ID.
+
+        Args:
+            log_id: Log identifier.
+            db: Async database session.
+
+        Returns:
+            Log model or None if not found.
+        """
+        try:
+            result = await db.execute(
+                select(processing_log_model.ProcessingLog).where(
+                    processing_log_model.ProcessingLog.id == log_id
+                )
+            )
+            log = result.scalar_one_or_none()
+            if log:
+                logger.info("Log retrieved: id=%s", log_id)
+                return ProcessingLogRead.model_validate(log)
+            else:
+                logger.info("Log not found: id=%s", log_id)
+                return None
+        except SQLAlchemyError as e:
+            logger.error("Error getting log id=%s: %s", log_id, e)
             raise

@@ -1,15 +1,14 @@
-"""Маршруты аутентификации и регистрации.
+"""Authentication and registration routes.
 
-Этот модуль предоставляет эндпоинты для:
-- Регистрации новых пользователей
-- Входа пользователей (аутентификация)
-- Обновления JWT токенов
-- Создания заявок на регистрацию
+This module provides endpoints for:
+- Registering new users
+- User login (authentication)
+- JWT token refresh
+- Creating registration requests
 
-Все эндпоинты возвращают стандартизированные JSON ответы.
+All endpoints return standardized JSON responses.
 """
 
-import logging
 from ipaddress import ip_address
 from typing import Any
 
@@ -17,147 +16,109 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from mkobi.api.deps import get_auth_service, get_current_user_dependency
-from mkobi.interfaces.service_interfaces import IAuthService
+from mkobi.core.logging_config import get_logger
 from mkobi.models.auth import (
     LoginRequest,
+    RefreshRequest,
     RegisterRequest,
     RegistrationRequestCreate,
     Token,
-    RefreshRequest,
 )
 from mkobi.models.user import UserRead
 
-logger = logging.getLogger(__name__)
-
+logger = get_logger(__name__)
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+async def _handle_login(
+    email: str,
+    password: str,
+    auth_service,
+) -> Token:
+    """Common login logic and error handling."""
+    logger.info("Login attempt", extra={"email": email})
+
+    token_data = await auth_service.login_user(email, password)
+
+    if token_data is None:
+        logger.warning("Login failed", extra={"email": email})
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid credentials",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    logger.info("Login successful", extra={"email": email})
+    return Token(access_token=token_data["access_token"], token_type="bearer")
 
 
 @router.post(
     "/login",
     response_model=Token,
     status_code=status.HTTP_200_OK,
-    summary="Вход пользователя",
-    description="Аутентифицирует пользователя по email и паролю, возвращает JWT токен.",
+    summary="User login",
+    description="Authenticates user by email and password, returns JWT token.",
 )
 async def login(
     login_data: LoginRequest,
-    auth_service: IAuthService = Depends(get_auth_service),
+    auth_service=Depends(get_auth_service),
 ) -> Token:
-    """Эндпоинт входа пользователя.
-
-    Принимает email и пароль, проверяет их корректность и возвращает
-    JWT токен доступа при успешной аутентификации.
-
-    Args:
-        login_data: Модель с email и паролем.
-        auth_service: Сервис аутентификации.
-
-    Returns:
-        Token: Модель с access_token и token_type.
-
-    Raises:
-        HTTPException 401: Неверный email или пароль.
-        HTTPException 422: Ошибка валидации данных.
-    """
-    logger.info("Попытка входа пользователя: %s", login_data.email)
-
-    try:
-        token_data = await auth_service.login_user(
-            login_data.email, login_data.password
-        )
-    except ValueError as e:
-        logger.warning("Неудачная попытка входа: %s", login_data.email)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e),
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from e
-    except Exception as e:
-        logger.error("Ошибка создания токена для %s: %s", login_data.email, e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка создания токена",
-        ) from e
-
-    logger.info("Пользователь успешно вошел: %s", login_data.email)
-    return Token(access_token=token_data["access_token"], token_type="bearer")
+    """User login endpoint."""
+    return await _handle_login(
+        email=login_data.email,
+        password=login_data.password,
+        auth_service=auth_service,
+    )
 
 
 @router.post(
     "/login/form",
     response_model=Token,
     status_code=status.HTTP_200_OK,
-    summary="Вход пользователя (форма)",
-    description="Аутентификация через форму OAuth2.",
+    summary="User login (form)",
+    description="Authentication via OAuth2 form. Calls common /login logic.",
 )
 async def login_form(
     form_data: OAuth2PasswordRequestForm = Depends(),
-    auth_service: IAuthService = Depends(get_auth_service),
+    auth_service=Depends(get_auth_service),
 ) -> Token:
-    """Эндпоинт входа через OAuth2 форму.
-
-    Принимает данные из формы OAuth2 и возвращает JWT токен.
-
-    Args:
-        form_data: Данные формы OAuth2.
-        auth_service: Сервис аутентификации.
-
-    Returns:
-        Token: Модель с access_token и token_type.
-    """
-    logger.info("Попытка входа через форму: %s", form_data.username)
-
-    try:
-        token_data = auth_service.login_user(
-            form_data.username, form_data.password
-        )
-    except ValueError as e:
-        logger.warning("Неудачная попытка входа через форму: %s", form_data.username)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e),
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from e
-    except Exception as e:
-        logger.error("Ошибка создания токена для %s: %s", form_data.username, e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка создания токена",
-        ) from e
-
-    logger.info("Пользователь успешно вошел через форму: %s", form_data.username)
-    return Token(access_token=token_data["access_token"], token_type="bearer")
+    """Login endpoint via OAuth2 form."""
+    return await _handle_login(
+        email=form_data.username,
+        password=form_data.password,
+        auth_service=auth_service,
+    )
 
 
 @router.post(
     "/register",
     response_model=Token,
     status_code=status.HTTP_201_CREATED,
-    summary="Регистрация пользователя",
-    description="Создает нового пользователя и возвращает JWT токен.",
+    summary="User registration",
+    description="Creates new user and returns JWT token.",
 )
 async def register(
     register_data: RegisterRequest,
-    auth_service: IAuthService = Depends(get_auth_service),
+    auth_service=Depends(get_auth_service),
 ) -> Token:
-    """Эндпоинт регистрации нового пользователя.
+    """User registration endpoint.
 
-    Принимает email, пароль и роль, создает пользователя и возвращает
-    JWT токен доступа.
+    Accepts email, password and role, creates user and returns
+    JWT access token.
 
     Args:
-        register_data: Модель с данными для регистрации.
-        auth_service: Сервис аутентификации.
+        register_data: Model with registration data.
+        auth_service: Authentication service.
 
     Returns:
-        Token: Модель с access_token и token_type.
+        Token: Model with access_token and token_type.
 
     Raises:
-        HTTPException 400: Пользователь с таким email уже существует.
-        HTTPException 422: Ошибка валидации данных.
+        HTTPException 400: User with this email already exists.
+        HTTPException 422: Data validation error.
     """
-    logger.info("Попытка регистрации пользователя: %s", register_data.email)
+    logger.info("Registration attempt", extra={"email": register_data.email})
 
     try:
         user = await auth_service.register_user(
@@ -167,31 +128,36 @@ async def register(
         )
     except ValueError as e:
         logger.warning(
-            "Ошибка валидации при регистрации %s: %s", register_data.email, e
+            "Validation error during registration",
+            extra={"email": register_data.email, "error": str(e)},
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         ) from e
     except Exception as e:
-        logger.error("Ошибка регистрации пользователя %s: %s", register_data.email, e)
+        logger.error(
+            "Registration error",
+            extra={"email": register_data.email, "error": str(e)},
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка регистрации пользователя",
+            detail="Registration error",
         ) from e
 
     try:
         access_token = auth_service.create_access_token(user.id, user.role)
     except Exception as e:
         logger.error(
-            "Ошибка создания токена после регистрации %s: %s", register_data.email, e
+            "Token creation error after registration",
+            extra={"email": register_data.email, "error": str(e)},
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка создания токена",
+            detail="Token creation error",
         ) from e
 
-    logger.info("Пользователь успешно зарегистрирован: %s", register_data.email)
+    logger.info("User registered successfully", extra={"email": register_data.email})
     return Token(access_token=access_token, token_type="bearer")
 
 
@@ -199,37 +165,37 @@ async def register(
     "/refresh",
     response_model=Token,
     status_code=status.HTTP_200_OK,
-    summary="Обновление токена",
-    description="Обновляет истекший JWT токен доступа.",
+    summary="Refresh token",
+    description="Refreshes expired JWT access token.",
 )
 async def refresh(
     refresh_data: RefreshRequest,
-    auth_service: IAuthService = Depends(get_auth_service),
+    auth_service=Depends(get_auth_service),
 ) -> Token:
-    """Эндпоинт обновления токена.
+    """Token refresh endpoint.
 
-    Принимает refresh токен (в текущей реализации - тот же JWT),
-    декодирует его и выдает новый токен доступа.
+    Accepts refresh token (in current implementation - same JWT),
+    decodes it and issues new access token.
 
     Args:
-        refresh_data: Модель с refresh токеном.
-        auth_service: Сервис аутентификации.
+        refresh_data: Model with refresh token.
+        auth_service: Authentication service.
 
     Returns:
-        Token: Модель с новым access_token и token_type.
+        Token: Model with new access_token and token_type.
 
     Raises:
-        HTTPException 401: Неверный или истекший токен.
-        HTTPException 422: Ошибка валидации данных.
+        HTTPException 401: Invalid or expired token.
+        HTTPException 422: Data validation error.
     """
-    logger.info("Попытка обновления токена")
+    logger.info("Token refresh attempt")
 
     payload = auth_service.verify_token(refresh_data.refresh_token)
     if payload is None:
-        logger.warning("Неверный refresh токен")
+        logger.warning("Invalid refresh token")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Неверный токен",
+            detail="Invalid token",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -238,30 +204,35 @@ async def refresh(
     role = payload.get("role")
 
     if user_id is None or email is None or role is None:
-        logger.warning("В токене отсутствуют необходимые данные")
+        logger.warning("Token missing required data")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Некорректный токен",
+            detail="Invalid token",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
     try:
         token_data = await auth_service.refresh_token(user_id, email, role)
     except ValueError as e:
-        logger.warning("Пользователь не найден при обновлении токена: %s", user_id)
+        logger.warning(
+            "User not found during token refresh", extra={"user_id": user_id}
+        )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Пользователь не найден",
+            detail="User not found",
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
     except Exception as e:
-        logger.error("Ошибка создания нового токена для user_id=%s: %s", user_id, e)
+        logger.error(
+            "Token refresh error",
+            extra={"user_id": user_id, "error": str(e)},
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка создания токена",
+            detail="Token creation error",
         ) from e
 
-    logger.info("Токен успешно обновлен для user_id=%s", user_id)
+    logger.info("Token refreshed successfully", extra={"user_id": user_id})
     return Token(access_token=token_data["access_token"], token_type="bearer")
 
 
@@ -269,65 +240,64 @@ async def refresh(
     "/me",
     response_model=UserRead,
     status_code=status.HTTP_200_OK,
-    summary="Получение данных текущего пользователя",
-    description="Возвращает данные о текущем аутентифицированном пользователе.",
+    summary="Get current user data",
+    description="Returns data of the currently authenticated user.",
 )
 async def get_current_user_info(
     current_user: UserRead = Depends(get_current_user_dependency),
 ) -> UserRead:
-    """Эндпоинт получения информации о текущем пользователе.
+    """Endpoint to get current user information.
 
-    Требует валидный JWT токен в заголовке Authorization.
+    Requires valid JWT token in Authorization header.
 
     Args:
-        current_user: Текущий аутентифицированный пользователь.
+        current_user: Currently authenticated user.
 
     Returns:
-        UserRead: Модель пользователя без пароля.
+        UserRead: User model without password.
 
     Raises:
-        HTTPException 401: Неверный или отсутствующий токен.
+        HTTPException 401: Invalid or missing token.
     """
-    logger.info("Запрос данных пользователя: %s", current_user.email)
+    logger.info("Current user data request", extra={"email": current_user.email})
     return current_user
 
 
 @router.post(
     "/register-request",
     status_code=status.HTTP_201_CREATED,
-    summary="Заявка на регистрацию",
-    description="Создает заявку на регистрацию. Администратор должен одобрить заявку.",
+    summary="Registration request",
+    description="Creates registration request. Admin must approve the request.",
 )
 async def register_request(
     request_data: RegistrationRequestCreate,
     request: Request,
-    auth_service: IAuthService = Depends(get_auth_service),
+    auth_service=Depends(get_auth_service),
 ) -> dict[str, Any]:
-    """Эндпоинт создания заявки на регистрацию.
+    """Registration request creation endpoint.
 
-    Сохраняет заявку в базе данных со статусом PENDING.
-    Администратор должен одобрить или отклонить заявку.
+    Saves request to database with PENDING status.
+    Admin must approve or reject the request.
 
     Args:
-        request_data: Данные заявки (email).
-        request: Объект запроса для получения IP.
-        auth_service: Сервис аутентификации.
+        request_data: Request data (email).
+        request: Request object to get IP.
+        auth_service: Authentication service.
 
     Returns:
-        dict: Сообщение об успешном создании заявки.
+        dict: Success message.
 
     Raises:
-        HTTPException 422: Заявка уже существует.
+        HTTPException 422: Request already exists.
     """
-    # Получаем IP адрес клиента
+    # Get client IP address
     client_ip: str | None = None
     if request.client:
         client_ip = str(ip_address(request.client.host))
 
     logger.info(
-        "Попытка создания заявки на регистрацию: %s, IP: %s",
-        request_data.email,
-        client_ip,
+        "Registration request attempt",
+        extra={"email": request_data.email, "ip": client_ip},
     )
 
     try:
@@ -337,24 +307,25 @@ async def register_request(
         )
     except ValueError as e:
         logger.warning(
-            "Ошибка создания заявки на регистрацию %s: %s",
-            request_data.email,
-            e,
+            "Validation error creating registration request",
+            extra={"email": request_data.email, "error": str(e)},
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         ) from e
     except Exception as e:
         logger.error(
-            "Ошибка создания заявки на регистрацию %s: %s",
-            request_data.email,
-            e,
+            "Error creating registration request",
+            extra={"email": request_data.email, "error": str(e)},
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка создания заявки",
+            detail="Registration request error",
         ) from e
 
-    logger.info("Заявка на регистрацию создана: %s", request_data.email)
-    return {"message": "Заявка отправлена", "id": result["id"]}
+    logger.info(
+        "Registration request created",
+        extra={"email": request_data.email, "id": str(result["id"])},
+    )
+    return {"message": "Request submitted", "id": result["id"]}

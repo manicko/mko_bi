@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from datetime import datetime
-from uuid import uuid4, UUID
 from typing import TYPE_CHECKING
+from uuid import UUID, uuid4
 
 from sqlalchemy import (
     DateTime,
     ForeignKey,
     String,
     Text,
-    text,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -19,61 +19,61 @@ from mkobi.db.base import Base
 
 if TYPE_CHECKING:
     from mkobi.db.models.access import DashboardAccess
-    from mkobi.db.models.user import User
-    from mkobi.db.models.layout import Layout
-    from mkobi.db.models.graph import Graph
     from mkobi.db.models.aggregated_data import AggregatedData
     from mkobi.db.models.filters import Filter
+    from mkobi.db.models.graph import Graph
+    from mkobi.db.models.layout import Layout
     from mkobi.db.models.processing_configs import ProcessingConfig
     from mkobi.db.models.processing_logs import ProcessingLog
+    from mkobi.db.models.user import User
 
 
 class Dashboard(Base):
     __tablename__ = "dashboards"
-    
+
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
         primary_key=True,
         default=uuid4,
         server_default=text("gen_random_uuid()"),
     )
-    
+
     name: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
         unique=True,
     )
-    
+
     description: Mapped[str | None] = mapped_column(
         Text,
         nullable=True,
     )
-    
+
     layout_id: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("layouts.id", ondelete="SET NULL"),
         nullable=True,
     )
-    
+
     created_by: Mapped[UUID | None] = mapped_column(
         PG_UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="SET NULL"),
         nullable=True,
     )
-    
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=text("now()"),
     )
-    
+
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         nullable=False,
         server_default=text("now()"),
         onupdate=func.now(),
     )
-    
+
     # Связь с правами доступа
     accesses: Mapped[list[DashboardAccess]] = relationship(
         "DashboardAccess",
@@ -82,7 +82,7 @@ class Dashboard(Base):
         lazy="selectin",
         overlaps="dashboards",
     )
-    
+
     # Связь с пользователями через таблицу доступа
     users: Mapped[list[User]] = relationship(
         "User",
@@ -91,7 +91,7 @@ class Dashboard(Base):
         lazy="selectin",
         overlaps="accesses,user",
     )
-    
+
     # Связь с layout
     layout: Mapped[Layout] = relationship(
         "Layout",
@@ -142,6 +142,6 @@ class Dashboard(Base):
 
     def __repr__(self) -> str:
         return f"<Dashboard id={self.id} name={self.name}>"
-    
+
     def __str__(self) -> str:
         return self.name

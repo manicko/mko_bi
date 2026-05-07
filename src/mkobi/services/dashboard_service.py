@@ -1,684 +1,628 @@
-"""Сервис управления дашбордами.
+"""Dashboard management service.
 
-Предоставляет бизнес-логику для CRUD операций с дашбордами.
-Все операции выполняются через DashboardRepository и AccessRepository
-с валидацией, проверкой прав и логированием.
+Provides business logic for CRUD operations with dashboards.
 
-Реализует интерфейс IDashboardService для внедрения зависимостей.
+All operations are performed through injected repositories with validation,
+permission checking, and logging.
+
+Implements IDashboardService interface for dependency injection.
 """
-
-from typing import Any
 
 import json
 import logging
+from typing import Any
+from uuid import UUID
 
-from mkobi.db.models import dashboard as dashboard_model
-from mkobi.db.repositories.access_repo import AccessRepository
-from mkobi.db.repositories.dashboard_repo import DashboardRepository
-from mkobi.db.repositories.layout_repo import LayoutRepository
-from mkobi.db.session import get_session
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from mkobi.db.models import dashboard as dashboard_model
+from mkobi.db.models import access as access_model
+from mkobi.interfaces.service_interfaces import IDashboardService
+from mkobi.interfaces.repository_interfaces import (
+    IDashboardRepository,
+    IAccessRepository,
+)
+from mkobi.db.repositories.dashboard_repo import DashboardRepository
+from mkobi.db.repositories.access_repo import AccessRepository
 from mkobi.models.dashboard import (
     DashboardConfig,
     DashboardRead,
     DashboardUpdate,
 )
-from mkobi.models.user_roles import PermissionEnum, GraphTypeEnum
+from mkobi.models.enums import DashboardPermission, GraphType
 from mkobi.models.layout import LayoutRead
 
 logger = logging.getLogger(__name__)
 
-# Допустимые уровни доступа (берем из PermissionEnum)
 
+class DashboardService(IDashboardService):
+    """Dashboard service class."""
 
-def _validate_permission(permission: str) -> None:
-    """Проверяет, что уровень доступа является допустимым.
+    def __init__(
+        self,
+        dashboard_repo: IDashboardRepository,
+        access_repo: IAccessRepository,
+    ) -> None:
+        """Initialize service with injected repositories.
 
-    Args:
-        permission: Уровень доступа для проверки.
+        Args:
+            dashboard_repo: Dashboard repository instance.
+            access_repo: Access repository instance.
+        """
+        self.dashboard_repo = dashboard_repo
+        self.access_repo = access_repo
+        logger.debug("DashboardService initialized with injected repositories")
 
-    Raises:
-        ValueError: Если уровень доступа не входит в список допустимых.
-    """
-    # Нормализуем "read" -> "view", "write" -> "edit" для совместимости
-    normalized = permission
-    if permission == "read":
-        normalized = "view"
-    elif permission == "write":
-        normalized = "edit"
+    async def create_dashboard(
+        self,
+        name: str,
+        config: dict[str, Any],
+        owner_id: UUID,
+        db: AsyncSession,
+    ) -> DashboardRead:
+        """Create new dashboard.
 
-    try:
-        PermissionEnum(normalized)
-    except ValueError as err:
-        logger.error(
-            "Недопустимый уровень доступа: '%s'. Допустимые: %s",
-            permission,
-            sorted([e.value for e in PermissionEnum]),
-        )
-        raise ValueError(
-            f"Недопустимый уровень доступа: '{permission}'. "
-            f"Допустимые значения: {', '.join(sorted([e.value for e in PermissionEnum]))}"
-        ) from err
+        Args:
+            name: Dashboard name.
+            config: Dashboard configuration in JSON-compatible dict format.
+            owner_id: Owner user identifier.
+            db: Async database session.
 
+        Returns:
+            DashboardRead: Created dashboard model.
 
-def _validate_config(config: DashboardConfig) -> None:
-    """Проверяет валидность конфигурации дашборда.
+        Raises:
+            ValueError: If configuration is incorrect.
+            SQLAlchemyError: On database error.
+        """
+        if db is None:
+            raise ValueError("db session is required for create_dashboard")
+        config_obj = DashboardConfig(**config)
+        self._validate_config(config_obj)
 
-    Args:
-        config: Конфигурация дашборда для проверки.
-
-    Raises:
-        ValueError: Если конфигурация некорректна. 
-    """
-    if not config.graph_types:
-        logger.error("Конфигурация дашборда не содержит типов графиков")
-        raise ValueError(
-            "Конфигурация дашборда должна содержать хотя бы один тип графика"
-        )
-
-    for graph_type in config.graph_types:
         try:
-            GraphTypeEnum(graph_type)
-        except ValueError as err:
-            logger.error("Недопустимый тип графика: '%s'", graph_type)
-            raise ValueError(
-                f"Недопустимый тип графика: '{graph_type}'. "
-                f"Допустимые значения: {', '.join([e.value for e in GraphTypeEnum])}"
-            ) from err
+            # Create dashboard through repository
+            dashboard_obj = await self.dashboard_repo.create(
+                db=db,
+                name=name,
+                config=json.dumps(config_obj.model_dump()),
+                created_by=owner_id,
+            )
 
+            if dashboard_obj is None:
+                raise ValueError("Failed to create dashboard")
 
-async def _validate_dashboard_exists(
-    dashboard_id: int, db: AsyncSession
-) -> dashboard_model.Dashboard | None:
-    """Проверяет существование дашборда и возвращает его модель.
+            logger.info(
+                "Dashboard created: id=%s, name=%s",
+                dashboard_obj.id,
+                dashboard_obj.name,
+            )
 
-    Args:
-        dashboard_id: Идентификатор дашборда. 
-        db: Асинхронная сессия базы данных. 
+            # Grant admin permission to owner
+            await self.access_repo.grant_access(
+                db=db,
+                user_id=owner_id,
+                dashboard_id=dashboard_obj.id,
+                permission=DashboardPermission.admin,
+            )
 
-    Returns:
-        Модель дашборда или None, если не найден. 
-    """
-    dashboard_obj = await DashboardRepository.get(dashboard_id, db)
-    if dashboard_obj is None:
-        logger.warning("Дашборд не найден: id=%s", dashboard_id)
-    return dashboard_obj
+            logger.info(
+                "Admin access granted: user_id=%s, dashboard_id=%s",
+                owner_id,
+                dashboard_obj.id,
+            )
 
+            # Commit the transaction
+            await db.commit()
+            logger.info("Transaction committed for dashboard id=%s", dashboard_obj.id)
 
-async def _dashboard_to_read(dashboard_obj: dashboard_model.Dashboard) -> DashboardRead:
-    """Преобразует модель дашборда в Pydantic модель DashboardRead с layout данными.
+            # Convert to Pydantic model with layout data
+            return await self._dashboard_to_read(dashboard_obj, db)
 
-    Args:
-        dashboard_obj: Модель дашборда SQLAlchemy.
+        except ValueError:
+            # Validation errors don't require rollback (transaction not started)
+            raise
+        except Exception as e:
+            await db.rollback()
+            logger.error(
+                "Error creating dashboard name=%s, owner_id=%s: %s",
+                name,
+                owner_id,
+                e,
+            )
+            raise
 
-    Returns:
-        DashboardRead с заполненными layout данными.
-    """
-    dashboard_dict = {
-        "id": dashboard_obj.id,
-        "name": dashboard_obj.name,
-        "description": dashboard_obj.description,
-        "config": DashboardConfig(**dashboard_obj.config) if isinstance(dashboard_obj.config, dict) else DashboardConfig(**json.loads(dashboard_obj.config)),
-        "layout_id": dashboard_obj.layout_id,
-        "created_at": dashboard_obj.created_at,
-        "updated_at": dashboard_obj.updated_at,
-    }
-    # Добавляем layout если есть
-    if dashboard_obj.layout:
-        dashboard_dict["layout"] = LayoutRead.model_validate(dashboard_obj.layout)
-    return DashboardRead.model_validate(dashboard_dict)
+    async def get_dashboard(
+        self,
+        dashboard_id: UUID,
+        user_id: UUID,
+        db: AsyncSession,
+    ) -> DashboardRead | None:
+        """Get dashboard by ID with access check.
 
+        Args:
+            dashboard_id: Dashboard ID.
+            user_id: User ID requesting access.
+            db: Async database session.
 
-async def _check_owner_permission(dashboard_id: int, user_id: int, db: AsyncSession) -> bool:
-    """Проверяет, является ли пользователь владельцем дашборда (admin доступ).
+        Returns:
+            DashboardRead if access allowed, else None.
+        """
+        if db is None:
+            raise ValueError("db session is required for get_dashboard")
+        # Check dashboard existence
+        dashboard_obj = await self.dashboard_repo.get(dashboard_id, db)
+        if dashboard_obj is None:
+            logger.warning("Dashboard not found: id=%s", dashboard_id)
+            return None
 
-    Args:
-        dashboard_id: Идентификатор дашборда. 
-        user_id: Идентификатор пользователя. 
-        db: Асинхронная сессия базы данных. 
+        # Check user access
+        permission = await self.access_repo.check_access(user_id, dashboard_id, db)
+        if permission is None:
+            logger.warning(
+                "Access denied: user_id=%s, dashboard_id=%s",
+                user_id,
+                dashboard_id,
+            )
+            return None
 
-    Returns:
-        True, если пользователь является владельцем (admin), иначе False. 
-    """
-    permission = await AccessRepository.check_access(user_id, dashboard_id, db)
-    is_owner: bool = permission == PermissionEnum.admin
-    if not is_owner:
-        logger.warning(
-            "Пользователь id=%s не является владельцем дашборда id=%s (permission=%s)",
+        logger.info(
+            "Dashboard accessed: id=%s, user_id=%s, permission=%s",
+            dashboard_id,
+            user_id,
+            permission,
+        )
+
+        # Convert to Pydantic model with layout data
+        return await self._dashboard_to_read(dashboard_obj, db)
+
+    async def get_dashboard_by_name(
+        self,
+        name: str,
+        db: AsyncSession,
+    ) -> DashboardRead | None:
+        """Get dashboard by name.
+
+        Args:
+            name: Dashboard name.
+            db: Async database session.
+
+        Returns:
+            DashboardRead or None if not found.
+        """
+        dashboard = await self.dashboard_repo.get_by_name(name, db)
+        if dashboard is None:
+            return None
+        return await self._dashboard_to_read(dashboard, db)
+
+    async def get_user_dashboards(
+        self,
+        user_id: UUID,
+        db: AsyncSession,
+    ) -> list[DashboardRead]:
+        """Get user dashboards.
+
+        Args:
+            user_id: User ID.
+            db: Async database session.
+
+        Returns:
+            list[DashboardRead]: List of user dashboards.
+        """
+        dashboards = await self.dashboard_repo.get_by_user(user_id, db)
+        result = []
+        for dashboard in dashboards:
+            result.append(await self._dashboard_to_read(dashboard, db))
+        return result
+
+    async def update_dashboard(
+        self,
+        dashboard_id: UUID,
+        update_data: dict[str, Any] | None = None,
+        config: dict[str, Any] | None = None,
+        db: AsyncSession | None = None,
+    ) -> DashboardRead | None:
+        """Update dashboard.
+
+        Args:
+            dashboard_id: Dashboard ID.
+            update_data: Data for update (config, layout_id, etc.).
+            config: Configuration (optional, for backward compatibility).
+            db: Async database session.
+
+        Returns:
+            DashboardRead or None if not found.
+        """
+        if db is None:
+            raise ValueError("db session is required for update_dashboard")
+        # Handle config parameter if provided
+        if config is not None:
+            if update_data is None:
+                update_data = {"config": config}
+            elif isinstance(update_data, dict):
+                update_data["config"] = config
+            else:
+                update_data = update_data.model_dump(exclude_unset=True)
+                update_data["config"] = config
+
+        if not update_data:
+            logger.warning(
+                "No data for dashboard update: dashboard_id=%s", dashboard_id
+            )
+            return None
+
+        # Validate configuration if provided
+        config_to_validate = None
+        if update_data:
+            if isinstance(update_data, dict):
+                config_to_validate = update_data.get("config")
+            else:
+                config_to_validate = update_data.config
+
+        if config_to_validate:
+            if isinstance(config_to_validate, dict):
+                config_to_validate = DashboardConfig(**config_to_validate)
+            self._validate_config(config_to_validate)
+
+        updated = await self.dashboard_repo.update(
+            dashboard_id,
+            db,
+            **update_data,
+        )
+        if updated is None:
+            return None
+        await db.commit()
+
+        return await self._dashboard_to_read(updated, db)
+
+    async def delete_dashboard(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> bool:
+        """Delete dashboard.
+
+        Args:
+            dashboard_id: Dashboard ID.
+            db: Async database session.
+
+        Returns:
+            bool: True if deletion successful.
+        """
+        if db is None:
+            raise ValueError("db session is required for delete_dashboard")
+        result = await self.dashboard_repo.delete(dashboard_id, db)
+        await db.commit()
+        return bool(result)
+
+    async def get_all_dashboards(
+        self,
+        db: AsyncSession,
+    ) -> list[DashboardRead]:
+        """Get all dashboards.
+
+        Args:
+            db: Async database session.
+
+        Returns:
+            list[DashboardRead]: List of all dashboards.
+        """
+        dashboards = await self.dashboard_repo.get_all(db)
+        result = []
+        for dashboard in dashboards:
+            result.append(await self._dashboard_to_read(dashboard, db))
+        return result
+
+    async def grant_access(
+        self,
+        dashboard_id: UUID,
+        user_id: UUID,
+        permission: str,
+        db: AsyncSession,
+    ) -> bool:
+        """Grant user access to dashboard.
+
+        Args:
+            dashboard_id: Dashboard ID.
+            user_id: User ID.
+            permission: Access level.
+            db: Async database session.
+
+        Returns:
+            bool: True if access granted.
+        """
+        self._validate_permission(permission)
+
+        # Check dashboard existence
+        dashboard_obj = await self.dashboard_repo.get(dashboard_id, db)
+        if dashboard_obj is None:
+            raise ValueError(f"Dashboard with id={dashboard_id} not found")
+
+        # Grant access through repository
+        await self.access_repo.grant_access(
+            db=db,
+            user_id=user_id,
+            dashboard_id=dashboard_id,
+            permission=permission,
+        )
+
+        await db.commit()
+
+        logger.info(
+            "Access granted: user_id=%s, dashboard_id=%s, permission=%s",
             user_id,
             dashboard_id,
             permission,
         )
-    return is_owner
+
+        return True
+
+    async def revoke_access(
+        self,
+        dashboard_id: UUID,
+        user_id: UUID,
+        db: AsyncSession,
+    ) -> bool:
+        """Revoke user access to dashboard.
+
+        Args:
+            dashboard_id: Dashboard ID.
+            user_id: User ID.
+            db: Async database session.
+
+        Returns:
+            True if access was revoked, False if record not found.
+        """
+        result = await self.access_repo.revoke_access(
+            user_id=user_id, dashboard_id=dashboard_id, db=db
+        )
+
+        if result:
+            await db.commit()
+            logger.info(
+                "Access revoked: user_id=%s, dashboard_id=%s",
+                user_id,
+                dashboard_id,
+            )
+        else:
+            logger.warning(
+                "Access record not found for revocation: user_id=%s, dashboard_id=%s",
+                user_id,
+                dashboard_id,
+            )
+
+        return bool(result)
+
+    async def get_dashboard_access_list(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession,
+    ) -> list[dict[str, Any]]:
+        """Get all access records for a dashboard.
+
+        Args:
+            dashboard_id: Dashboard ID.
+            db: Database session.
+
+        Returns:
+            List of access records as dictionaries.
+        """
+        try:
+            result = await db.execute(
+                select(access_model.DashboardAccess).where(
+                    access_model.DashboardAccess.dashboard_id == dashboard_id
+                )
+            )
+            access_records = list(result.scalars().all())
+
+            return [
+                {
+                    "user_id": str(record.user_id),
+                    "dashboard_id": str(record.dashboard_id),
+                    "permission": record.permission,
+                }
+                for record in access_records
+            ]
+        except Exception as e:
+            logger.error(
+                "Error getting access list for dashboard id=%s: %s",
+                dashboard_id,
+                e,
+            )
+            raise
+
+    # --- Helper methods ---
+
+    def _validate_permission(self, permission: str) -> None:
+        """Validate that access level is allowed."""
+        normalized = permission
+        if permission == "read":
+            normalized = "view"
+        elif permission == "write":
+            normalized = "edit"
+
+        try:
+            DashboardPermission(normalized)
+        except ValueError as err:
+            logger.error(
+                "Invalid access level: '%s'. Allowed: %s",
+                permission,
+                sorted([e.value for e in DashboardPermission]),
+            )
+            raise ValueError(
+                f"Invalid access level: '{permission}'. "
+                f"Allowed values: {', '.join(sorted([e.value for e in DashboardPermission]))}"
+            ) from err
+
+    def _validate_config(self, config: DashboardConfig) -> None:
+        """Validate dashboard configuration."""
+        if not config.graph_types:
+            logger.error("Dashboard configuration missing graph types")
+            raise ValueError(
+                "Dashboard configuration must contain at least one graph type"
+            )
+
+        for graph_type in config.graph_types:
+            try:
+                GraphType(graph_type)
+            except ValueError as err:
+                logger.error("Invalid graph type: '%s'", graph_type)
+                raise ValueError(
+                    f"Invalid graph type: '{graph_type}'. "
+                    f"Allowed values: {', '.join([e.value for e in GraphType])}"
+                ) from err
+
+    async def _dashboard_to_read(
+        self, dashboard_obj: dashboard_model.Dashboard, db: AsyncSession
+    ) -> DashboardRead:
+        """Convert dashboard model to Pydantic DashboardRead model."""
+        # Handle config which might be None or a JSON string
+        config_data = getattr(dashboard_obj, "config", None)
+        if config_data is None:
+            config = DashboardConfig(graph_types=[], metrics=[], dimensions=[])
+        elif isinstance(config_data, dict):
+            config = DashboardConfig(**config_data)
+        else:
+            # Assume it's a JSON string
+            config = DashboardConfig(**json.loads(config_data))
+
+        dashboard_dict = {
+            "id": dashboard_obj.id,
+            "name": dashboard_obj.name,
+            "description": getattr(dashboard_obj, "description", None),
+            "config": config,
+            "layout_id": getattr(dashboard_obj, "layout_id", None),
+            "created_at": dashboard_obj.created_at,
+            "updated_at": getattr(dashboard_obj, "updated_at", None),
+        }
+        # Add layout if present
+        if getattr(dashboard_obj, "layout", None):
+            dashboard_dict["layout"] = LayoutRead.model_validate(dashboard_obj.layout)
+        return DashboardRead.model_validate(dashboard_dict)
+
+
+# --- Backward compatibility functions ---
 
 
 async def create_dashboard(
-    name: str, config: dict[str, Any], owner_id: int, db: AsyncSession | None = None
+    name: str,
+    config: dict[str, Any],
+    owner_id: UUID,
+    db: AsyncSession,
 ) -> DashboardRead:
-    """Создает новый дашборд с владельцем.
+    """Backward compatibility wrapper."""
+    from mkobi.db.repositories.dashboard_repo import DashboardRepository
+    from mkobi.db.repositories.access_repo import AccessRepository
 
-    Создает дашборд в базе данных и предоставляет владельцу
-    права администратора (admin) на управление дашбордом. 
-    Операция выполняется в транзакции: если предоставление прав 
-    доступа завершается ошибкой, создание дашборда откатывается. 
-    
-    Args:
-        name: Название дашборда. 
-        config: Конфигурация дашборда в формате JSON-совместимого dict. 
-        owner_id: Идентификатор пользователя-владельца. 
-        db: Опциональная сессия базы данных. Если не передана, создается новая. 
-        
-    Returns:
-        DashboardRead: Модель созданного дашборда. 
-        
-    Raises:
-        ValueError: Если конфигурация некорректна. 
-        SQLAlchemyError: При ошибке базы данных. 
-        
-    Example:
-        >>> dashboard = create_dashboard(
-        ...     name="Sales Dashboard",
-        ...     config={"graph_types": ["bar"], "charts": []},
-        ...     owner_id=1
-        ... )
-        >>> dashboard.name
-        'Sales Dashboard'
-    """
-    logger.info("Начало создания дашборда: name=%s, owner_id=%s", name, owner_id)
-
-    # Валидация конфигурации
-    config_obj = DashboardConfig(**config)
-    _validate_config(config_obj)
-
-    # Если сессия не передана, создаем новую
-    if db is None:
-        async with get_session() as db:
-            return await _create_dashboard_with_session(name, config_obj, owner_id, db)
-    else:
-        return await _create_dashboard_with_session(name, config_obj, owner_id, db)
-
-
-async def _create_dashboard_with_session(
-    name: str, config_obj: DashboardConfig, owner_id: int, db: AsyncSession
-) -> DashboardRead:
-    """Внутренняя функция для создания дашборда с использованием сессии."""
-    try:
-        # Создание дашборда через репозиторий
-        dashboard_obj = await DashboardRepository.create(
-            db=db,
-            name=name,
-            config=json.dumps(config_obj.model_dump()),
-            created_by=owner_id,
-        )
-        logger.info(
-            "Дашборд создан: id=%s, name=%s", dashboard_obj.id, dashboard_obj.name
-        )
-
-        # Предоставление прав администратора владельцу
-        await AccessRepository.grant_access(
-            db=db,
-            user_id=owner_id,
-            dashboard_id=dashboard_obj.id,
-            permission=PermissionEnum.admin,
-        )
-        logger.info(
-            "Права администратора предоставлены: user_id=%s, dashboard_id=%s",
-            owner_id,
-            dashboard_obj.id,
-        )
-        
-        # Commit the transaction
-        await db.commit()
-        logger.info("Транзакция коммичена для дашборда id=%s", dashboard_obj.id)
-
-        # Преобразование в Pydantic модель с layout данными
-        return await _dashboard_to_read(dashboard_obj)
-
-    except ValueError:
-        # Валидационные ошибки не требуют отката (транзакция еще не начата)
-        raise
-    except Exception as e:
-        await db.rollback()
-        logger.error(
-            "Ошибка при создании дашборда name=%s, owner_id=%s: %s",
-            name,
-            owner_id,
-            e,
-        )
-        raise
+    service = DashboardService(DashboardRepository(), AccessRepository())
+    return await service.create_dashboard(name, config, owner_id, db)
 
 
 async def get_dashboard(
-    dashboard_id: int, user_id: int, db: AsyncSession | None = None
+    dashboard_id: UUID,
+    user_id: UUID,
+    db: AsyncSession,
 ) -> DashboardRead | None:
-    """Получает дашборд по ID с проверкой доступа.
+    """Backward compatibility wrapper."""
+    from mkobi.db.repositories.dashboard_repo import DashboardRepository
+    from mkobi.db.repositories.access_repo import AccessRepository
 
-    Проверяет, есть ли у пользователя доступ к дашборду, 
-    и возвращает его данные только в случае наличия прав. 
-
-    Args:
-        dashboard_id: Идентификатор дашборда. 
-        user_id: Идентификатор пользователя, запрашивающего доступ. 
-        db: Опциональная сессия базы данных. Если не передана, создается новая. 
-
-    Returns:
-        DashboardRead: Модель дашборда, если доступ разрешен, иначе None. 
-
-    Raises:
-        SQLAlchemyError: При ошибке базы данных. 
-    """
-    logger.info("Запрос дашборда: dashboard_id=%s, user_id=%s", dashboard_id, user_id)
-
-    # Если сессия не передана, создаем новую
-    if db is None:
-        async with get_session() as db:
-            return await _get_dashboard_with_session(dashboard_id, user_id, db)
-    else:
-        return await _get_dashboard_with_session(dashboard_id, user_id, db)
+    service = DashboardService(DashboardRepository(), AccessRepository())
+    return await service.get_dashboard(dashboard_id, user_id, db)
 
 
-async def _get_dashboard_with_session(
-    dashboard_id: int, user_id: int, db: AsyncSession
+async def get_dashboard_by_name(
+    name: str,
+    db: AsyncSession,
 ) -> DashboardRead | None:
-    """Внутренняя функция для получения дашборда с использованием сессии."""
-    # Проверка существования дашборда
-    dashboard_obj = await _validate_dashboard_exists(dashboard_id, db)
-    if dashboard_obj is None:
-        return None
+    """Backward compatibility wrapper."""
+    from mkobi.db.repositories.dashboard_repo import DashboardRepository
 
-    # Проверка доступа пользователя
-    permission = await AccessRepository.check_access(user_id, dashboard_id, db)
-    if permission is None:
-        logger.warning(
-            "Отказ в доступе: user_id=%s, dashboard_id=%s", user_id, dashboard_id
-        )
-        return None
-
-    logger.info(
-        "Дашборд предоставлен: id=%s, user_id=%s, permission=%s",
-        dashboard_id,
-        user_id,
-        permission,
-    )
-
-    # Преобразование в Pydantic модель с layout данными
-    return await _dashboard_to_read(dashboard_obj)
+    service = DashboardService(DashboardRepository(), None)
+    return await service.get_dashboard_by_name(name, db)
 
 
-async def get_user_dashboards(user_id: int, db: AsyncSession | None = None) -> list[DashboardRead]:
-    """Получает все дашборды, доступные пользователю.
+async def get_user_dashboards(
+    user_id: UUID,
+    db: AsyncSession,
+) -> list[DashboardRead]:
+    """Backward compatibility wrapper."""
+    from mkobi.db.repositories.dashboard_repo import DashboardRepository
 
-    Фильтрует дашборды по правам доступа пользователя. 
-
-    Args:
-        user_id: Идентификатор пользователя. 
-        db: Опциональная сессия базы данных. Если не передана, создается новая. 
-
-    Returns:
-        List[DashboardRead]: Список моделей дашбордов, доступных пользователю. 
-
-    Raises:
-        SQLAlchemyError: При ошибке базы данных. 
-    """
-    logger.info("Получение дашбордов для пользователя: user_id=%s", user_id)
-
-    # Если сессия не передана, создаем новую
-    if db is None:
-        async with get_session() as db:
-            return await _get_user_dashboards_with_session(user_id, db)
-    else:
-        return await _get_user_dashboards_with_session(user_id, db)
-
-
-async def _get_user_dashboards_with_session(user_id: int, db: AsyncSession) -> list[DashboardRead]:
-    """Внутренняя функция для получения дашбордов пользователя."""
-    # Получение дашбордов через репозиторий
-    dashboard_objs = await AccessRepository.get_user_dashboards(user_id, db)
-
-    # Преобразование в Pydantic модели с layout данными
-    dashboards = []
-    for d in dashboard_objs:
-        dashboards.append(await _dashboard_to_read(d))
-
-    logger.info(
-        "Получено дашбордов для пользователя id=%s: %s",
-        user_id,
-        len(dashboards),
-    )
-
-    return dashboards
+    service = DashboardService(DashboardRepository(), None)
+    return await service.get_user_dashboards(user_id, db)
 
 
 async def update_dashboard(
-    dashboard_id: int,
+    dashboard_id: UUID,
     update_data: dict[str, Any] | DashboardUpdate | None = None,
     config: dict[str, Any] | None = None,
-    db: AsyncSession | None = None
+    db: AsyncSession | None = None,
 ) -> DashboardRead | None:
-    """Обновляет конфигурацию дашборда.
+    """Backward compatibility wrapper."""
+    from mkobi.db.repositories.dashboard_repo import DashboardRepository
+    from mkobi.db.repositories.access_repo import AccessRepository
 
-    Проверяет права доступа и обновляет конфигурацию дашборда. 
-    Только владелец (admin) может обновлять дашборд. 
-
-    Args:
-        dashboard_id: Идентификатор дашборда. 
-        update_data: Данные для обновления (config, layout_id и т.д.).
-        db: Опциональная сессия базы данных. Если не передана, создается новая. 
-
-    Returns:
-        DashboardRead: Обновленная модель дашборда, или None если не найден. 
-
-    Raises:
-        ValueError: Если конфигурация некорректна. 
-        SQLAlchemyError: При ошибке базы данных. 
-    """
-    logger.info("Обновление дашборда: dashboard_id=%s", dashboard_id)
-
-    # Handle config parameter if provided
-    if config is not None:
-        if update_data is None:
-            update_data = {'config': config}
-        elif isinstance(update_data, dict):
-            update_data['config'] = config
-        else:
-            update_data = update_data.model_dump(exclude_unset=True)
-            update_data['config'] = config
-
-    if not update_data:
-        logger.warning("Нет данных для обновления дашборда: dashboard_id=%s", dashboard_id)
-        return None
-
-    # Валидация конфигурации если она предоставлена
-    config_to_validate = None
-    if update_data:
-        if isinstance(update_data, dict):
-            config_to_validate = update_data.get('config')
-        else:
-            config_to_validate = update_data.config
-    if config_to_validate:
-        if isinstance(config_to_validate, dict):
-            config_to_validate = DashboardConfig(**config_to_validate)
-        _validate_config(config_to_validate)
-
-    # Если сессия не передана, создаем новую
-    if db is None:
-        async with get_session() as db:
-            return await _update_dashboard_with_session(dashboard_id, update_data, db)
-    else:
-        return await _update_dashboard_with_session(dashboard_id, update_data, db)
+    service = DashboardService(DashboardRepository(), AccessRepository())
+    return await service.update_dashboard(dashboard_id, update_data, config, db)
 
 
-async def _update_dashboard_with_session(
-    dashboard_id: int, update_data: dict[str, Any] | DashboardUpdate, db: AsyncSession
-) -> DashboardRead | None:
-    """Внутренняя функция для обновления дашборда с использованием сессии."""
-    # Проверка существования дашборда
-    dashboard_obj = await _validate_dashboard_exists(dashboard_id, db)
-    if dashboard_obj is None:
-        return None
+async def delete_dashboard(
+    dashboard_id: UUID,
+    db: AsyncSession,
+) -> bool:
+    """Backward compatibility wrapper."""
+    from mkobi.db.repositories.dashboard_repo import DashboardRepository
 
-    # Подготовка данных для обновления
-    update_kwargs = {}
-    # Extract fields from update_data (dict or DashboardUpdate)
-    if isinstance(update_data, dict):
-        config = update_data.get('config')
-        name = update_data.get('name')
-        description = update_data.get('description')
-        layout_id = update_data.get('layout_id')
-    else:
-        config = update_data.config
-        name = update_data.name
-        description = update_data.description
-        layout_id = update_data.layout_id
-
-    if config is not None:
-        if isinstance(config, dict):
-            config = DashboardConfig(**config)
-        update_kwargs["config"] = json.dumps(config.model_dump())
-    if name is not None:
-        update_kwargs["name"] = name
-    if description is not None:
-        update_kwargs["description"] = description
-    if layout_id is not None:
-        # Проверка существования layout если указан
-        layout = await LayoutRepository.get(layout_id, db)
-        if not layout:
-            logger.error("Layout не найден: id=%s", layout_id)
-            raise ValueError(f"Layout с id={layout_id} не найден")
-        update_kwargs["layout_id"] = layout_id
-
-    # Обновление через репозиторий
-    updated = await DashboardRepository.update(
-        db=db,
-        dashboard_id=dashboard_id,
-        **update_kwargs,
-    )
-
-    if updated:
-        logger.info("Дашборд обновлен: id=%s", dashboard_id)
-        await db.commit()
-        # Преобразование в Pydantic модель с layout данными
-        return await _dashboard_to_read(updated)
-    else:
-        logger.warning("Не удалось обновить дашборд: id=%s", dashboard_id)
-        return None
+    service = DashboardService(DashboardRepository(), None)
+    return await service.delete_dashboard(dashboard_id, db)
 
 
-async def delete_dashboard(dashboard_id: int, db: AsyncSession | None = None) -> bool:
-    """Удаляет дашборд и все связанные права доступа.
+async def get_all_dashboards(
+    db: AsyncSession,
+) -> list[DashboardRead]:
+    """Backward compatibility wrapper."""
+    from mkobi.db.repositories.dashboard_repo import DashboardRepository
 
-    Выполняет каскадное удаление дашборда и всех прав доступа к нему. 
-
-    Args:
-        dashboard_id: Идентификатор дашборда для удаления. 
-        db: Опциональная сессия базы данных. Если не передана, создается новая. 
-
-    Returns:
-        bool: True, если удаление успешно, False - если дашборд не найден. 
-
-    Raises:
-        SQLAlchemyError: При ошибке базы данных. 
-    """
-    logger.info("Удаление дашборда: dashboard_id=%s", dashboard_id)
-
-    # Если сессия не передана, создаем новую
-    if db is None:
-        async with get_session() as db:
-            return await _delete_dashboard_with_session(dashboard_id, db)
-    else:
-        return await _delete_dashboard_with_session(dashboard_id, db)
-
-
-async def _delete_dashboard_with_session(dashboard_id: int, db: AsyncSession) -> bool:
-    """Внутренняя функция для удаления дашборда с использованием сессии."""
-    # Удаление через репозиторий (каскадное удаление прав доступа)
-    result = await DashboardRepository.delete(dashboard_id, db)
-
-    if result:
-        logger.info("Дашборд успешно удален: id=%s", dashboard_id)
-    else:
-        logger.warning("Дашборд не найден для удаления: id=%s", dashboard_id)
-
-    return bool(result)
+    service = DashboardService(DashboardRepository(), None)
+    return await service.get_all_dashboards(db)
 
 
 async def grant_access(
-    dashboard_id: int,
-    user_id: int,
+    dashboard_id: UUID,
+    user_id: UUID,
     permission: str,
-    db: AsyncSession | None = None,
+    db: AsyncSession,
 ) -> bool:
-    """Предоставляет пользователю доступ к дашборду.
+    """Backward compatibility wrapper."""
+    from mkobi.db.repositories.dashboard_repo import DashboardRepository
+    from mkobi.db.repositories.access_repo import AccessRepository
 
-    Операция выполняется в транзакции: если предоставление прав 
-    доступа завершается ошибкой, транзакция откатывается. 
-
-    Args:
-        dashboard_id: Идентификатор дашборда. 
-        user_id: Идентификатор пользователя. 
-        permission: Уровень доступа (read/write/admin). 
-        db: Опциональная сессия базы данных. Если не передана, создается новая. 
-
-    Returns:
-        bool: True, если доступ успешно предоставлен. 
-
-    Raises:
-        ValueError: Если уровень доступа некорректен. 
-        SQLAlchemyError: При ошибке базы данных. 
-    """
-    logger.info(
-        "Предоставление доступа: dashboard_id=%s, user_id=%s, permission=%s",
-        dashboard_id,
-        user_id,
-        permission,
-    )
-
-    # Валидация уровня доступа
-    _validate_permission(permission)
-
-    # Если сессия не передана, создаем новую
-    if db is None:
-        async with get_session() as db:
-            return await _grant_access_with_session(dashboard_id, user_id, permission, db)
-    else:
-        return await _grant_access_with_session(dashboard_id, user_id, permission, db)
-
-
-async def _grant_access_with_session(
-    dashboard_id: int, user_id: int, permission: str, db: AsyncSession
-) -> bool:
-    """Внутренняя функция для предоставления доступа с использованием сессии."""
-    # Проверка существования дашборда
-    dashboard_obj = await _validate_dashboard_exists(dashboard_id, db)
-    if dashboard_obj is None:
-        raise ValueError(f"Дашборд с id={dashboard_id} не найден")
-
-    # Предоставление доступа через репозиторий
-    await AccessRepository.grant_access(
-        db=db,
-        user_id=user_id,
-        dashboard_id=dashboard_id,
-        permission=permission,
-    )
-
-    # Commit if we own the session
-    await db.commit()
-
-    logger.info(
-        "Доступ успешно предоставлен: user_id=%s, dashboard_id=%s, permission=%s",
-        user_id,
-        dashboard_id,
-        permission,
-    )
-
-    return True
+    service = DashboardService(DashboardRepository(), AccessRepository())
+    return await service.grant_access(dashboard_id, user_id, permission, db)
 
 
 async def revoke_access(
-    dashboard_id: int, user_id: int, db: AsyncSession | None = None
+    dashboard_id: UUID,
+    user_id: UUID,
+    db: AsyncSession,
 ) -> bool:
-    """Revoke user's access to a dashboard.
+    """Backward compatibility wrapper."""
+    from mkobi.db.repositories.dashboard_repo import DashboardRepository
+    from mkobi.db.repositories.access_repo import AccessRepository
 
-    Args:
-        dashboard_id: Dashboard ID.
-        user_id: User ID whose access to revoke.
-        db: Optional database session.
-
-    Returns:
-        True if access was revoked, False if record not found.
-
-    Raises:
-        SQLAlchemyError: On database error.
-    """
-    logger.info(
-        "Revoking access: dashboard_id=%s, user_id=%s",
-        dashboard_id,
-        user_id,
-    )
-
-    if db is None:
-        async with get_session() as db:
-            return await _revoke_access_with_session(dashboard_id, user_id, db)
-    else:
-        return await _revoke_access_with_session(dashboard_id, user_id, db)
-
-
-async def _revoke_access_with_session(
-    dashboard_id: int, user_id: int, db: AsyncSession
-) -> bool:
-    """Internal function for revoking access using session."""
-    result = await AccessRepository.revoke_access(
-        user_id=user_id, dashboard_id=dashboard_id, db=db
-    )
-
-    if result:
-        await db.commit()
-        logger.info(
-            "Access revoked: user_id=%s, dashboard_id=%s",
-            user_id,
-            dashboard_id,
-        )
-    else:
-        logger.warning(
-            "Access record not found for revocation: user_id=%s, dashboard_id=%s",
-            user_id,
-            dashboard_id,
-        )
-
-    return bool(result)
+    service = DashboardService(DashboardRepository(), AccessRepository())
+    return await service.revoke_access(dashboard_id, user_id, db)
 
 
 async def get_dashboard_access_list(
-    dashboard_id: int, db: AsyncSession | None = None
+    dashboard_id: UUID,
+    db: AsyncSession,
 ) -> list[dict[str, Any]]:
-    """Get all access records for a dashboard.
+    """Backward compatibility wrapper."""
+    from mkobi.db.repositories.dashboard_repo import DashboardRepository
+    from mkobi.db.repositories.access_repo import AccessRepository
 
-    Args:
-        dashboard_id: Dashboard ID.
-        db: Optional database session.
-
-    Returns:
-        List of access records as dictionaries.
-
-    Raises:
-        SQLAlchemyError: On database error.
-    """
-    logger.info("Getting access list for dashboard: dashboard_id=%s", dashboard_id)
-
-    if db is None:
-        async with get_session() as db:
-            return await _get_dashboard_access_list_with_session(dashboard_id, db)
-    else:
-        return await _get_dashboard_access_list_with_session(dashboard_id, db)
-
-
-async def _get_dashboard_access_list_with_session(
-    dashboard_id: int, db: AsyncSession
-) -> list[dict[str, Any]]:
-    """Internal function for getting access list using session."""
-    from mkobi.db.models import access as access_model
-
-    try:
-        result = await db.execute(
-            select(access_model.DashboardAccess).where(
-                access_model.DashboardAccess.dashboard_id == dashboard_id
-            )
-        )
-        access_records = list(result.scalars().all())
-
-        return [
-            {
-                "user_id": str(record.user_id),
-                "dashboard_id": str(record.dashboard_id),
-                "permission": record.permission,
-            }
-            for record in access_records
-        ]
-    except Exception as e:
-        logger.error(
-            "Error getting access list for dashboard id=%s: %s",
-            dashboard_id,
-            e,
-        )
-        raise
+    service = DashboardService(DashboardRepository(), AccessRepository())
+    return await service.get_dashboard_access_list(dashboard_id, db)

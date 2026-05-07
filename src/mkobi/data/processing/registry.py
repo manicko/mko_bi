@@ -1,7 +1,7 @@
-"""Оркестрация пайплайна обработки данных.
+"""Data processing pipeline orchestration.
 
-Содержит класс DataPipeline, который управляет последовательностью
-трансформации, агрегации, сохранения и обновления статусов.
+Contains DataPipeline class that manages sequential
+data transformation, aggregation, saving and status updates.
 """
 
 import logging
@@ -11,35 +11,54 @@ import polars as pl
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.data.processing.transformations import (
-    apply_transformations,
     aggregate_data,
+    apply_transformations,
 )
 from mkobi.data.storage.manager import StorageManager
+from mkobi.interfaces.repository_interfaces import IGraphRepository
+from mkobi.interfaces.service_interfaces import (
+    IProcessingConfigService,
+    IProcessingLogService,
+)
 from mkobi.models.enums import ProcessingStatus, UploadMode
 from mkobi.models.processing_logs import ProcessingLogRead
-from mkobi.services.processing_config_service import get_by_dashboard_id
 
 logger = logging.getLogger(__name__)
 
 
 class DataPipeline:
-    """Оркестрация обработки данных.
+    """Data processing orchestration.
 
-    Управляет последовательностью шагов: трансформация,
-    агрегация, сохранение и обновление статуса.
+    Manages sequential steps: transformation,
+    aggregation, saving and status updates.
 
     Attributes:
-        storage_manager: Менеджер для сохранения агрегированных данных.
+        storage_manager: Manager for saving aggregated data.
+        graph_repo: Injected graph repository.
+        config_service: Injected processing config service.
+        log_service: Injected processing log service.
     """
 
-    def __init__(self, storage_manager: StorageManager) -> None:
-        """Инициализация пайплайна.
+    def __init__(
+        self,
+        storage_manager: StorageManager,
+        graph_repo: IGraphRepository,
+        config_service: IProcessingConfigService,
+        log_service: IProcessingLogService,
+    ) -> None:
+        """Initialize pipeline with dependency injection.
 
         Args:
-            storage_manager: Экземпляр менеджера хранения данных.
+            storage_manager: Storage manager instance.
+            graph_repo: Graph repository instance.
+            config_service: Processing config service instance.
+            log_service: Processing log service instance.
         """
         self.storage_manager = storage_manager
-        logger.debug("DataPipeline инициализирован")
+        self.graph_repo = graph_repo
+        self.config_service = config_service
+        self.log_service = log_service
+        logger.debug("DataPipeline initialized with injected dependencies")
 
     async def run(
         self,
@@ -48,46 +67,45 @@ class DataPipeline:
         mode: UploadMode,
         db: AsyncSession,
     ) -> ProcessingLogRead:
-        """Запускает пайплайн обработки данных.
+        """Run data processing pipeline.
 
         Args:
-            df: Исходный DataFrame с данными.
-            dashboard_id: Идентификатор дашборда.
-            mode: Режим загрузки (overwrite/append).
-            db: Асинхронная сессия БД.
+            df: Input DataFrame with raw data.
+            dashboard_id: Dashboard identifier.
+            mode: Upload mode (overwrite/append).
+            db: Async database session.
 
         Returns:
-            ProcessingLogRead: Результат выполнения с статусом.
+            ProcessingLogRead: Execution result with status.
         """
-        from mkobi.services.processing_log_service import create_log, update_log_status
-        from mkobi.db.repositories.graph_repo import GraphRepository
-
         log_entry = None
         try:
             logger.info(
-                "Запуск пайплайна для dashboard_id=%s, mode=%s",
+                "Starting pipeline for dashboard_id=%s, mode=%s",
                 dashboard_id,
                 mode,
             )
 
-            # Создаем запись в логе
-            log_entry = await create_log(
+            # Step 1: Create log entry
+            log_entry = await self.log_service.create_processing_log(
                 dashboard_id=dashboard_id,
-                status=ProcessingStatus.STARTED,
+                status=ProcessingStatus.STARTED.value,
+                message="Upload started",
                 db=db,
             )
 
-            # Шаг 1: Получаем конфиг и трансформируем
-            logger.info("Шаг 1: Трансформация данных")
-            config_response = await get_by_dashboard_id(dashboard_id, db)
+            # Step 2: Get config and transform data
+            logger.info("Step 1: Transforming data")
+            config_response = await self.config_service.get_processing_config_by_dashboard(
+                dashboard_id, db
+            )
             config = config_response.settings if config_response else {}
-            
             transformed_df = apply_transformations(df, config)
-            logger.info("Трансформация завершена: %d строк", transformed_df.shape[0])
+            logger.info("Transformation complete: %d rows", transformed_df.shape[0])
 
-            # Шаг 2: Получаем графики и агрегируем
-            logger.info("Шаг 2: Агрегация данных")
-            graphs = await GraphRepository.get_by_dashboard(dashboard_id, db)
+            # Step 3: Get graphs and aggregate data
+            logger.info("Step 2: Aggregating data")
+            graphs = await self.graph_repo.get_by_dashboard_id(dashboard_id, db)
             graph_configs = [
                 {
                     "dimensions": g.dimensions,
@@ -95,66 +113,39 @@ class DataPipeline:
                 }
                 for g in graphs
             ]
-            
-            aggregates = aggregate_data(transformed_df, graph_configs)
-            
-            # Добавляем graph_id к каждому агрегату
-            for agg, g in zip(aggregates, graphs, strict=False):
-                agg["graph_id"] = g.id
-            
-            logger.info("Агрегация завершена: %d записей", len(aggregates))
 
-            # Шаг 3: Сохранение
-            logger.info("Шаг 3: Сохранение данных")
-            clear_old = mode == UploadMode.OVERWRITE
-            await self.storage_manager.save_aggregates(
+            aggregates = aggregate_data(transformed_df, graph_configs)
+
+            # Step 4: Save results
+            logger.info("Step 3: Saving data")
+            await self.storage_manager.save(
                 dashboard_id=dashboard_id,
                 aggregates=aggregates,
-                clear_old=clear_old,
-            )
-            logger.info("Сохранение завершено")
-
-            # Обновляем статус лога
-            updated_log = await update_log_status(
-                log_id=log_entry.id,
-                status=ProcessingStatus.COMPLETED,
+                mode=mode,
                 db=db,
             )
-            logger.info("Пайплайн успешно завершен")
-            return updated_log
+
+            # Update status to SUCCESS
+            await self.log_service.update_processing_log(
+                log_id=log_entry.id,
+                status=ProcessingStatus.SUCCESS.value,
+                message="Processing completed successfully",
+                finished_at=None,
+                db=db,
+            )
+
+            log_entry.status = ProcessingStatus.SUCCESS
+            logger.info("Pipeline completed successfully: dashboard_id=%s", dashboard_id)
+            return log_entry
 
         except Exception as e:
-            logger.error("Ошибка в пайплайне: %s", e)
+            logger.error("Pipeline error: %s", e)
             if log_entry:
-                await update_log_status(
+                await self.log_service.update_processing_log(
                     log_id=log_entry.id,
-                    status=ProcessingStatus.FAILED,
-                    db=db,
+                    status=ProcessingStatus.FAILED.value,
                     message=str(e),
+                    finished_at=None,
+                    db=db,
                 )
             raise
-
-    async def _update_status(
-        self,
-        log_id: UUID,
-        status: ProcessingStatus,
-        db: AsyncSession,
-        message: str | None = None,
-    ) -> None:
-        """Обновляет статус в логе обработки.
-
-        Args:
-            log_id: Идентификатор записи в логе.
-            status: Новый статус.
-            db: Асинхронная сессия БД.
-            message: Опциональное сообщение об ошибке.
-        """
-        from mkobi.services.processing_log_service import update_log_status
-
-        logger.debug("Обновление статуса log_id=%s: %s", log_id, status)
-        await update_log_status(
-            log_id=log_id,
-            status=status,
-            db=db,
-            message=message,
-        )

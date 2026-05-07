@@ -1,19 +1,19 @@
-import type { PlotlyData } from '../../../../shared/types/api.types'
+interface TableChartData {
+  columns?: string[]
+  rows: Record<string, unknown>[]
+}
 
 interface TableChartProps {
-  data: PlotlyData
+  data: TableChartData
   title?: string
 }
 
 export function TableChart({ data, title }: TableChartProps) {
-  const columns = data.columns as string[] | undefined
-  const rows = data.rows as Record<string, unknown>[] | undefined
+  const displayColumns = data.columns || Object.keys(data.rows[0] || {})
 
-  if (!rows || rows.length === 0) {
+  if (!data.rows || data.rows.length === 0) {
     return <p>No data available</p>
   }
-
-  const displayColumns = columns || Object.keys(rows[0] || {})
 
   return (
     <div>
@@ -29,7 +29,7 @@ export function TableChart({ data, title }: TableChartProps) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, idx) => (
+          {data.rows.map((row, idx) => (
             <tr key={idx}>
               {displayColumns.map((col) => (
                 <td key={col} style={{ border: '1px solid #ddd', padding: '8px' }}>

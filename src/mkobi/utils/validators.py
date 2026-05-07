@@ -8,7 +8,7 @@ import logging
 import re
 from uuid import UUID
 
-from mkobi.models.user_roles import UserRoleEnum
+from mkobi.models.enums import UserRole
 
 logger = logging.getLogger(__name__)
 
@@ -42,11 +42,11 @@ def validate_email(email: str) -> bool:
     return True
 
 
-def validate_role(role: str | UserRoleEnum) -> bool:
+def validate_role(role: str | UserRole) -> bool:
     """Проверить, является ли роль допустимой.
 
     Args:
-        role: Роль для проверки (строка или UserRoleEnum).
+        role: Роль для проверки (строка или UserRole).
 
     Returns:
         True, если роль допустима, иначе False.
@@ -58,9 +58,9 @@ def validate_role(role: str | UserRoleEnum) -> bool:
         False
     """
     try:
-        if isinstance(role, UserRoleEnum):
+        if isinstance(role, UserRole):
             return True
-        UserRoleEnum(role)
+        UserRole(role)
         return True
     except (ValueError, TypeError):
         logger.warning("Недопустимая роль: %s", role)

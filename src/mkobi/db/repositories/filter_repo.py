@@ -1,7 +1,7 @@
-"""Репозиторий для работы с фильтрами.
+"""Repository for filter operations.
 
-Предоставляет методы CRUD для модели Filter.
-Все методы используют контекстный менеджер сессий и обрабатывают ошибки.
+Provides CRUD methods for Filter model.
+All methods use contextual session management and handle errors.
 """
 
 import logging
@@ -9,64 +9,62 @@ from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.db.models import filters as filter_model
-from sqlalchemy.ext.asyncio import AsyncSession
+from mkobi.interfaces.repository_interfaces import IFilterRepository
 
 logger = logging.getLogger(__name__)
 
 
-class FilterRepository:
-    """Репозиторий для операций с фильтрами.
-    
-    Предоставляет методы для создания, чтения, обновления и удаления
-    фильтров в базе данных. Все операции выполняются в рамках
-    отдельной сессии базы данных с автоматическим управлением транзакциями.
+class FilterRepository(IFilterRepository):
+    """Repository for filter operations.
+
+    Provides methods for creating, reading, updating and deleting
+    filters in the database. All operations are performed within a
+    separate database session with automatic transaction management.
+    Implements IFilterRepository interface.
     """
-    
+
     @classmethod
-    async def get(cls, filter_id: UUID, db: AsyncSession) -> filter_model.Filter | None:
-        """Получить фильтр по ID.
-        
+    async def get(cls, id: UUID, db: AsyncSession) -> filter_model.Filter | None:
+        """Get filter by ID.
+
         Args:
-            filter_id: Идентификатор фильтра (UUID).
-            db: Асинхронная сессия базы данных.
-        
+            id: Filter identifier (UUID).
+            db: Async database session.
+
         Returns:
-            Модель фильтра или None, если не найден.
-        
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            Filter model or None if not found.
         """
         try:
             result = await db.execute(
                 select(filter_model.Filter).where(
-                    filter_model.Filter.id == filter_id
+                    filter_model.Filter.id == id
                 )
             )
             filter_obj = result.scalar_one_or_none()
             if filter_obj:
-                logger.info("Фильтр получен: id=%s", filter_id)
+                logger.info("Filter retrieved: id=%s", id)
             else:
-                logger.warning("Фильтр не найден: id=%s", filter_id)
+                logger.warning("Filter not found: id=%s", id)
             return filter_obj
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении фильтра id=%s: %s", filter_id, e)
+            logger.error("Error getting filter id=%s: %s", id, e)
             raise
-    
+
     @classmethod
-    async def get_by_name(cls, name: str, db: AsyncSession) -> filter_model.Filter | None:
-        """Получить фильтр по имени.
-        
+    async def get_by_name(
+        cls, name: str, db: AsyncSession
+    ) -> filter_model.Filter | None:
+        """Get filter by name.
+
         Args:
-            name: Имя фильтра.
-            db: Асинхронная сессия базы данных.
-        
+            name: Filter name.
+            db: Async database session.
+
         Returns:
-            Модель фильтра или None, если не найден.
-        
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            Filter model or None if not found.
         """
         try:
             result = await db.execute(
@@ -76,27 +74,24 @@ class FilterRepository:
             )
             filter_obj = result.scalar_one_or_none()
             if filter_obj:
-                logger.info("Фильтр получен по имени: %s", name)
+                logger.info("Filter retrieved by name: %s", name)
             else:
-                logger.warning("Фильтр не найден по имени: %s", name)
+                logger.warning("Filter not found by name: %s", name)
             return filter_obj
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении фильтра name=%s: %s", name, e)
+            logger.error("Error getting filter name=%s: %s", name, e)
             raise
-    
+
     @classmethod
     async def create(cls, db: AsyncSession, **kwargs) -> filter_model.Filter | None:
-        """Создать новый фильтр.
-        
+        """Create new filter.
+
         Args:
-            db: Асинхронная сессия базы данных.
-            **kwargs: Параметры фильтра (name, type, config).
-        
+            db: Async database session.
+            **kwargs: Filter parameters (name, type, config).
+
         Returns:
-            Модель созданного фильтра с ID или None при ошибке.
-        
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            Created filter model with ID or None on error.
         """
         try:
             filter_obj = filter_model.Filter(**kwargs)
@@ -104,101 +99,92 @@ class FilterRepository:
             await db.flush()
             await db.refresh(filter_obj)
             logger.info(
-                "Фильтр создан: id=%s, name=%s", filter_obj.id, filter_obj.name
+                "Filter created: id=%s, name=%s", filter_obj.id, filter_obj.name
             )
             return filter_obj
         except SQLAlchemyError as e:
-            logger.error("Ошибка при создании фильтра: %s", e)
+            logger.error("Error creating filter: %s", e)
             raise
-    
+
     @classmethod
     async def update(
-        cls, filter_id: UUID, db: AsyncSession, **kwargs
+        cls, id: UUID, db: AsyncSession, **kwargs
     ) -> filter_model.Filter | None:
-        """Обновить данные фильтра.
-        
+        """Update filter data.
+
         Args:
-            filter_id: Идентификатор фильтра (UUID).
-            db: Асинхронная сессия базы данных.
-            **kwargs: Поля для обновления.
-        
+            id: Filter identifier (UUID).
+            db: Async database session.
+            **kwargs: Fields to update.
+
         Returns:
-            Обновленная модель фильтра или None, если не найден.
-        
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            Updated filter model or None if not found.
         """
         try:
             result = await db.execute(
                 select(filter_model.Filter).where(
-                    filter_model.Filter.id == filter_id
+                    filter_model.Filter.id == id
                 )
             )
             filter_obj = result.scalar_one_or_none()
             if not filter_obj:
-                logger.warning("Фильтр не найден для обновления: id=%s", filter_id)
+                logger.warning("Filter not found for update: id=%s", id)
                 return None
             for key, value in kwargs.items():
                 if hasattr(filter_obj, key):
                     setattr(filter_obj, key, value)
             await db.flush()
             await db.refresh(filter_obj)
-            logger.info("Фильтр обновлен: id=%s", filter_id)
+            logger.info("Filter updated: id=%s", id)
             return filter_obj
         except SQLAlchemyError as e:
-            logger.error("Ошибка при обновлении фильтра id=%s: %s", filter_id, e)
+            logger.error("Error updating filter id=%s: %s", id, e)
             raise
-    
+
     @classmethod
-    async def delete(cls, filter_id: UUID, db: AsyncSession) -> bool:
-        """Удалить фильтр.
-        
+    async def delete(cls, id: UUID, db: AsyncSession) -> bool:
+        """Delete filter.
+
         Args:
-            filter_id: Идентификатор фильтра (UUID).
-            db: Асинхронная сессия базы данных.
-        
+            id: Filter identifier (UUID).
+            db: Async database session.
+
         Returns:
-            True, если удаление успешно, False - если фильтр не найден.
-        
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            True if deletion successful, False if filter not found.
         """
         try:
             result = await db.execute(
                 select(filter_model.Filter).where(
-                    filter_model.Filter.id == filter_id
+                    filter_model.Filter.id == id
                 )
             )
             filter_obj = result.scalar_one_or_none()
             if not filter_obj:
-                logger.warning("Фильтр не найден для удаления: id=%s", filter_id)
+                logger.warning("Filter not found for deletion: id=%s", id)
                 return False
-            db.delete(filter_obj)  # type: ignore[unused-coroutine]
+            await db.delete(filter_obj)
             await db.flush()
-            logger.info("Фильтр удален: id=%s", filter_id)
+            logger.info("Filter deleted: id=%s", id)
             return True
         except SQLAlchemyError as e:
-            logger.error("Ошибка при удалении фильтра id=%s: %s", filter_id, e)
+            logger.error("Error deleting filter id=%s: %s", id, e)
             raise
-    
+
     @classmethod
     async def get_all(cls, db: AsyncSession) -> list[filter_model.Filter]:
-        """Получить все фильтры.
-        
+        """Get all filters.
+
         Args:
-            db: Асинхронная сессия базы данных.
-        
+            db: Async database session.
+
         Returns:
-            Список всех фильтров.
-        
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            List of all filters.
         """
         try:
             result = await db.execute(select(filter_model.Filter))
             filters = list(result.scalars().all())
-            logger.info("Получен список фильтров, количество: %s", len(filters))
+            logger.info("Filters list retrieved, count: %s", len(filters))
             return filters
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении списка фильтров: %s", e)
+            logger.error("Error getting filters list: %s", e)
             raise

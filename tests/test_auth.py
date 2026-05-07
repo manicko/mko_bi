@@ -3,7 +3,9 @@
 from fastapi import status
 from httpx import AsyncClient
 
-from mkobi.db.repositories.registration_request_repo import RegistrationRequestRepository
+from mkobi.db.repositories.registration_request_repo import (
+    RegistrationRequestRepository,
+)
 from mkobi.models.enums import UserRole
 
 
@@ -64,14 +66,15 @@ class TestRegisterRequest:
         )
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
-        assert data["message"] == "Заявка отправлена"
+        assert data["message"] == "Request submitted"
         assert "id" in data
 
         # Cleanup
-        repo = RegistrationRequestRepository()
-        request = await repo.get_by_email(async_db_session, "new_user@example.com")
+        repo = RegistrationRequestRepository
+        request = await repo.get_by_email("new_user@example.com", async_db_session)
         if request:
-            await repo.delete(async_db_session, request.id)
+            await repo.delete(request.id, async_db_session)
+            await async_db_session.commit()
             await async_db_session.commit()
 
     async def test_register_request_duplicate(
@@ -91,13 +94,13 @@ class TestRegisterRequest:
             "/auth/register-request",
             json={"email": email},
         )
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
         # Cleanup
-        repo = RegistrationRequestRepository()
-        request = await repo.get_by_email(async_db_session, email)
+        repo = RegistrationRequestRepository
+        request = await repo.get_by_email(email, async_db_session)
         if request:
-            await repo.delete(async_db_session, request.id)
+            await repo.delete(request.id, async_db_session)
             await async_db_session.commit()
 
 

@@ -16,12 +16,12 @@ export function LineChart({
   xAxisLabel,
   yAxisLabel,
 }: LineChartProps) {
-  const chartLayout: PlotlyLayout = {
-    title: title || '',
-    xaxis: { title: xAxisLabel || '' },
-    yaxis: { title: yAxisLabel || '' },
+  const chartLayout: Partial<PlotlyLayout> = {
+    title: { text: title || '' },
+    xaxis: { title: { text: xAxisLabel || '' } },
+    yaxis: { title: { text: yAxisLabel || '' } },
     ...layout,
   }
 
-  return <PlotlyChart data={{ ...data, type: 'scatter', mode: 'lines+markers' }} layout={chartLayout} />
+  return <PlotlyChart data={{ ...data, type: 'scatter', mode: 'lines+markers' } as PlotlyData} layout={chartLayout as PlotlyLayout} />
 }

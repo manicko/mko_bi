@@ -1,46 +1,51 @@
-"""Маршруты для управления дашбордами.
+"""Dashboard management routes.
 
-Этот модуль предоставляет эндпоинты для CRUD операций с дашбордами.
-Доступ к большинству операций ограничен и требует аутентификации.
-Операции создания, обновления и удаления доступны только владельцам.
+This module provides endpoints for CRUD operations with dashboards.
+
+Access to most operations is restricted and requires authentication.
+Create, update and delete operations are available only to owners.
 """
 
 import logging
-from uuid import UUID
-
 from typing import Any
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
+    CurrentUser,
     get_db_dependency,
     require_admin_role,
     require_viewer_role,
-    CurrentUser,
 )
 from mkobi.core.permissions import check_dashboard_access
+from mkobi.db.repositories.dashboard_filter_repo import DashboardFilterRepository
+from mkobi.db.repositories.filter_repo import FilterRepository
+from mkobi.db.repositories.graph_repo import GraphRepository
+from mkobi.models.access import AccessGrant
 from mkobi.models.dashboard import (
     DashboardCreate,
     DashboardRead,
     DashboardUpdate,
 )
-from mkobi.models.access import AccessGrant
 from mkobi.models.graph import GraphCreate, GraphRead
 from mkobi.services.dashboard_service import (
     create_dashboard,
-    get_dashboard,
-    get_user_dashboards,
-    update_dashboard,
     delete_dashboard,
+    get_dashboard,
+    get_dashboard_access_list,
+    get_user_dashboards,
     grant_access,
     revoke_access,
-    get_dashboard_access_list,
+    update_dashboard,
 )
-from mkobi.db.repositories.dashboard_filter_repo import DashboardFilterRepository
-from mkobi.db.repositories.filter_repo import FilterRepository
 
 logger = logging.getLogger(__name__)
+
+# Initialize repository
+_graph_repo = GraphRepository()
+
 
 router = APIRouter(prefix="/dashboards", tags=["dashboards"])
 
@@ -49,8 +54,8 @@ router = APIRouter(prefix="/dashboards", tags=["dashboards"])
     "/",
     response_model=DashboardRead,
     status_code=status.HTTP_201_CREATED,
-    summary="Создание дашборда",
-    description="Создает новый дашборд. Доступно только администраторам.",
+    summary="Create dashboard",
+    description="Creates new dashboard. Available only to admins.",
     dependencies=[Depends(require_admin_role)],
 )
 async def create_dashboard_endpoint(
@@ -58,22 +63,22 @@ async def create_dashboard_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
 ) -> DashboardRead:
-    """Создает новый дашборд.
+    """Create new dashboard.
 
-    Текущий аутентифицированный пользователь автоматически становится
-    владельцем (admin) созданного дашборда.
+    Current authenticated user automatically becomes
+    the owner (admin) of the created dashboard.
 
     Args:
-        dashboard: Модель с данными для создания дашборда.
-        current_user: Текущий аутентифицированный пользователь.
-        db: Сессия базы данных.
+        dashboard: Dashboard creation data model.
+        current_user: Current authenticated user.
+        db: Database session.
 
     Returns:
-        DashboardRead: Модель созданного дашборда.
+        DashboardRead: Model of the created dashboard.
 
     Raises:
-        HTTPException 422: Если данные не прошли валидацию.
-        HTTPException 500: При ошибке базы данных.
+        HTTPException 422: If data validation failed.
+        HTTPException 500: On database error.
     """
     dashboard = DashboardCreate(
         name=dashboard_data.name,
@@ -82,7 +87,7 @@ async def create_dashboard_endpoint(
     )
 
     logger.info(
-        "Создание дашборда: name=%s, owner_id=%s",
+        "Creating dashboard: name=%s, owner_id=%s",
         dashboard.name,
         current_user.id,
     )
@@ -96,27 +101,26 @@ async def create_dashboard_endpoint(
         )
 
         logger.info(
-            "Дашборд успешно создан: id=%s, name=%s",
+            "Dashboard created successfully: id=%s, name=%s",
             result.id,
             result.name,
         )
         return result
-
     except ValueError as e:
-        logger.warning("Ошибка валидации при создании дашборда: %s", e)
+        logger.warning("Validation error creating dashboard: %s", e)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         ) from e
     except Exception as e:
         logger.error(
-            "Ошибка при создании дашборда name=%s: %s",
+            "Error creating dashboard name=%s: %s",
             dashboard.name,
             e,
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка при создании дашборда",
+            detail="Dashboard creation error",
         ) from e
 
 
@@ -124,47 +128,49 @@ async def create_dashboard_endpoint(
     "/my",
     response_model=list[DashboardRead],
     status_code=status.HTTP_200_OK,
-    summary="Список дашбордов пользователя",
-    description="Возвращает список дашбордов, доступных текущему пользователю.",
+    summary="Get user dashboards",
+    description="Returns list of dashboards available to current user.",
 )
 async def get_my_dashboards_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
 ) -> list[DashboardRead]:
-    """Получает список всех дашбордов, доступных пользователю.
+    """Get list of all dashboards available to user.
 
     Args:
-        current_user: Текущий аутентифицированный пользователь.
-        db: Сессия базы данных.
+        current_user: Current authenticated user.
+        db: Database session.
 
     Returns:
-        list[DashboardRead]: Список моделей дашбордов.
+        list[DashboardRead]: List of dashboard models.
 
     Raises:
-        HTTPException 500: При ошибке базы данных.
+        HTTPException 500: On database error.
     """
     logger.info(
-        "Получение списка дашбордов для пользователя: user_id=%s",
+        "Getting dashboards for user: user_id=%s",
         current_user.id,
     )
 
     try:
-        dashboards = await get_user_dashboards(user_id=current_user.id, db=db)
+        dashboards: list[DashboardRead] = await get_user_dashboards(
+            user_id=current_user.id, db=db
+        )
         logger.info(
-            "Получено дашбордов для пользователя id=%s: %s",
+            "Retrieved dashboards for user id=%s: %s",
             current_user.id,
             len(dashboards),
         )
-        return dashboards  # type: ignore[no-any-return]
+        return dashboards
     except Exception as e:
         logger.error(
-            "Ошибка при получении списка дашбордов для пользователя id=%s: %s",
+            "Error getting dashboards for user id=%s: %s",
             current_user.id,
             e,
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка при получении списка дашбордов",
+            detail="Error getting dashboards",
         ) from e
 
 
@@ -172,8 +178,8 @@ async def get_my_dashboards_endpoint(
     "/{dashboard_id}",
     response_model=DashboardRead,
     status_code=status.HTTP_200_OK,
-    summary="Получение дашборда по ID",
-    description="Возвращает данные дашборда по его ID с проверкой доступа.",
+    summary="Get dashboard by ID",
+    description="Returns dashboard data by its ID with access check.",
     dependencies=[Depends(require_viewer_role)],
 )
 async def get_dashboard_endpoint(
@@ -181,40 +187,40 @@ async def get_dashboard_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
 ) -> DashboardRead:
-    """Получает дашборд по ID с проверкой доступа.
+    """Get dashboard by ID with access check.
 
     Args:
-        dashboard_id: ID дашборда.
-        current_user: Текущий аутентифицированный пользователь.
-        db: Сессия базы данных.
+        dashboard_id: Dashboard ID.
+        current_user: Current authenticated user.
+        db: Database session.
 
     Returns:
-        DashboardRead: Модель дашборда.
+        DashboardRead: Dashboard model.
 
     Raises:
-        HTTPException 403: Если у пользователя нет доступа.
-        HTTPException 404: Если дашборд не найден.
-        HTTPException 500: При ошибке базы данных.
+        HTTPException 403: If user has no access.
+        HTTPException 404: If dashboard not found.
+        HTTPException 500: On database error.
     """
     logger.info(
-        "Запрос дашборда: dashboard_id=%s, user_id=%s",
+        "Dashboard request: dashboard_id=%s, user_id=%s",
         dashboard_id,
         current_user.id,
     )
 
     try:
-        dashboard = await get_dashboard(dashboard_id, db)
+        dashboard = await get_dashboard(dashboard_id, user_id=current_user.id, db=db)
         if dashboard is None:
             logger.warning(
-                "Дашборд не найден: dashboard_id=%s",
+                "Dashboard not found: dashboard_id=%s",
                 dashboard_id,
             )
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Дашборд не найден",
+                detail="Dashboard not found",
             )
 
-        # Проверяем доступ на чтение
+        # Check read access
         has_access = await check_dashboard_access(
             user_id=current_user.id,
             dashboard_id=dashboard_id,
@@ -223,33 +229,32 @@ async def get_dashboard_endpoint(
         )
         if not has_access:
             logger.warning(
-                "Нет прав на чтение дашборда: dashboard_id=%s, user_id=%s",
+                "Access denied: dashboard_id=%s, user_id=%s",
                 dashboard_id,
                 current_user.id,
             )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="У вас нет прав на чтение этого дашборда",
+                detail="You don't have access to this dashboard",
             )
 
         logger.info(
-            "Дашборд успешно получен: id=%s, name=%s",
+            "Dashboard retrieved: id=%s, name=%s",
             dashboard.id,
             dashboard.name,
         )
         return dashboard
-
     except HTTPException:
         raise
     except Exception as e:
         logger.error(
-            "Ошибка при получении дашборда dashboard_id=%s: %s",
+            "Error getting dashboard dashboard_id=%s: %s",
             dashboard_id,
             e,
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка при получении дашборда",
+            detail="Error getting dashboard",
         ) from e
 
 
@@ -257,8 +262,8 @@ async def get_dashboard_endpoint(
     "/{dashboard_id}",
     response_model=DashboardRead,
     status_code=status.HTTP_200_OK,
-    summary="Обновление дашборда",
-    description="Обновляет конфигурацию дашборда. Доступно только администраторам.",
+    summary="Update dashboard",
+    description="Updates dashboard configuration. Available only to admins.",
     dependencies=[Depends(require_admin_role)],
 )
 async def update_dashboard_endpoint(
@@ -267,35 +272,35 @@ async def update_dashboard_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
 ) -> DashboardRead:
-    """Обновляет конфигурацию дашборда.
+    """Update dashboard.
 
-    Доступно только владельцу дашборда (пользователю с правами admin).
+    Available only to dashboard owner (user with admin permission).
 
     Args:
-        dashboard_id: ID дашборда для обновления.
-        dashboard_update: Модель с новыми данными.
-        current_user: Текущий аутентифицированный пользователь.
-        db: Сессия базы данных.
+        dashboard_id: Dashboard ID to update.
+        dashboard_update: Model with new data.
+        current_user: Current authenticated user.
+        db: Database session.
 
     Returns:
-        DashboardRead: Модель обновленного дашборда.
+        DashboardRead: Updated dashboard model.
 
     Raises:
-        HTTPException 403: Если у пользователя нет прав на обновление.
-        HTTPException 404: Если дашборд не найден.
-        HTTPException 422: Если данные не прошли валидацию.
-        HTTPException 500: При ошибке базы данных.
+        HTTPException 403: If user has no update rights.
+        HTTPException 404: If dashboard not found.
+        HTTPException 422: If data validation failed.
+        HTTPException 500: On database error.
     """
     logger.info(
-        "Обновление дашборда: dashboard_id=%s, user_id=%s",
+        "Updating dashboard: dashboard_id=%s, user_id=%s",
         dashboard_id,
         current_user.id,
     )
 
     try:
-        # Проверяем доступ на запись (требуется роль admin для этого дашборда)
+        # Check edit access (requires admin role for this dashboard)
         from mkobi.core.permissions import check_dashboard_access
-        
+
         if not await check_dashboard_access(
             user_id=current_user.id,
             dashboard_id=dashboard_id,
@@ -303,29 +308,31 @@ async def update_dashboard_endpoint(
             db=db,
         ):
             logger.warning(
-                "Нет прав на обновление дашборда: dashboard_id=%s, user_id=%s",
+                "Access denied for update: dashboard_id=%s, user_id=%s",
                 dashboard_id,
                 current_user.id,
             )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="У вас нет прав на обновление этого дашборда",
+                detail="You don't have rights to update this dashboard",
             )
-        
+
         updated = await update_dashboard(
             dashboard_id=dashboard_id,
-            config=dashboard_update.config.model_dump() if dashboard_update.config else None,
+            config=dashboard_update.config.model_dump()
+            if dashboard_update.config
+            else None,
             db=db,
         )
         if updated is None:
-            logger.warning("Дашборд не найден для обновления: id=%s", dashboard_id)
+            logger.warning("Dashboard not found for update: id=%s", dashboard_id)
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Дашборд не найден",
+                detail="Dashboard not found",
             )
         return updated
     except ValueError as e:
-        logger.warning("Ошибка валидации при обновлении дашборда: %s", e)
+        logger.warning("Validation error updating dashboard: %s", e)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
@@ -333,18 +340,18 @@ async def update_dashboard_endpoint(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Ошибка при обновлении дашборда id=%s: %s", dashboard_id, e)
+        logger.error("Error updating dashboard id=%s: %s", dashboard_id, e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка при обновлении дашборда",
+            detail="Dashboard update error",
         ) from e
 
 
 @router.delete(
     "/{dashboard_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    summary="Удаление дашборда",
-    description="Удаляет дашборд. Доступно только администраторам.",
+    summary="Delete dashboard",
+    description="Deletes dashboard. Available only to admins.",
     dependencies=[Depends(require_admin_role)],
 )
 async def delete_dashboard_endpoint(
@@ -352,28 +359,28 @@ async def delete_dashboard_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
 ) -> None:
-    """Удаляет дашборд.
+    """Delete dashboard.
 
-    Доступно только владельцу дашборда (пользователю с правами admin).
+    Available only to dashboard owner (user with admin permission).
 
     Args:
-        dashboard_id: ID дашборда для удаления.
-        current_user: Текущий аутентифицированный пользователь.
-        db: Сессия базы данных.
+        dashboard_id: Dashboard ID to delete.
+        current_user: Current authenticated user.
+        db: Database session.
 
     Raises:
-        HTTPException 403: Если у пользователя нет прав на удаление.
-        HTTPException 404: Если дашборд не найден.
-        HTTPException 500: При ошибке базы данных.
+        HTTPException 403: If user has no deletion rights.
+        HTTPException 404: If dashboard not found.
+        HTTPException 500: On database error.
     """
     logger.info(
-        "Удаление дашборда: dashboard_id=%s, user_id=%s",
+        "Deleting dashboard: dashboard_id=%s, user_id=%s",
         dashboard_id,
         current_user.id,
     )
 
     try:
-        # Проверяем доступ на запись (требуется роль admin для этого дашборда)
+        # Check edit access (requires admin role for this dashboard)
         from mkobi.core.permissions import check_dashboard_access
 
         if not await check_dashboard_access(
@@ -383,37 +390,37 @@ async def delete_dashboard_endpoint(
             db=db,
         ):
             logger.warning(
-                "Нет прав на удаление дашборда: dashboard_id=%s, user_id=%s",
+                "Access denied for deletion: dashboard_id=%s, user_id=%s",
                 dashboard_id,
                 current_user.id,
             )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="У вас нет прав на удаление этого дашборда",
+                detail="You don't have rights to delete this dashboard",
             )
-        
+
         result = await delete_dashboard(dashboard_id=dashboard_id, db=db)
         if not result:
-            logger.warning("Дашборд не найден для удаления: id=%s", dashboard_id)
+            logger.warning("Dashboard not found for deletion: id=%s", dashboard_id)
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Дашборд не найден",
+                detail="Dashboard not found",
             )
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Ошибка при удалении дашборда id=%s: %s", dashboard_id, e)
+        logger.error("Error deleting dashboard id=%s: %s", dashboard_id, e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка при удалении дашборда",
+            detail="Dashboard deletion error",
         ) from e
 
 
 @router.post(
     "/{dashboard_id}/access",
     status_code=status.HTTP_200_OK,
-    summary="Предоставление доступа к дашборду",
-    description="Предоставляет пользователю доступ к дашборду. Доступно только владельцу.",
+    summary="Grant dashboard access",
+    description="Grants user access to dashboard. Available only to owners.",
     dependencies=[Depends(require_viewer_role)],
 )
 async def grant_dashboard_access_endpoint(
@@ -422,34 +429,34 @@ async def grant_dashboard_access_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
 ) -> dict[str, Any]:
-    """Предоставляет пользователю доступ к дашборду.
+    """Grant user access to dashboard.
 
-    Доступно только владельцу дашборда (пользователю с правами admin).
+    Available only to dashboard owner (user with admin permission).
 
     Args:
-        dashboard_id: ID дашборда.
-        access_grant: Модель с данными для предоставления доступа.
-        current_user: Текущий аутентифицированный пользователь.
-        db: Сессия базы данных.
+        dashboard_id: Dashboard ID.
+        access_grant: Model with access grant data.
+        current_user: Current authenticated user.
+        db: Database session.
 
     Returns:
-        dict: Сообщение об успешном предоставлении доступа.
+        dict: Success message.
 
     Raises:
-        HTTPException 403: Если у пользователя нет прав на предоставление доступа.
-        HTTPException 404: Если дашборд не найден.
-        HTTPException 422: Если данные не прошли валидацию.
-        HTTPException 500: При ошибке базы данных.
+        HTTPException 403: If user has no access management rights.
+        HTTPException 404: If dashboard not found.
+        HTTPException 422: If data validation failed.
+        HTTPException 500: On database error.
     """
     logger.info(
-        "Предоставление доступа: dashboard_id=%s, user_id=%s, permission=%s",
+        "Granting access: dashboard_id=%s, user_id=%s, permission=%s",
         dashboard_id,
         access_grant.user_id,
         access_grant.permission_level,
     )
 
     try:
-        # Проверяем, что текущий пользователь имеет права на управление доступом
+        # Check that current user has access management rights
         from mkobi.core.permissions import check_dashboard_access
 
         if not await check_dashboard_access(
@@ -459,27 +466,27 @@ async def grant_dashboard_access_endpoint(
             db=db,
         ):
             logger.warning(
-                "Нет прав на управление доступом: dashboard_id=%s, user_id=%s",
+                "Access denied for management: dashboard_id=%s, user_id=%s",
                 dashboard_id,
                 current_user.id,
             )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="У вас нет прав на управление доступом к этому дашборду",
+                detail="You don't have rights to manage access to this dashboard",
             )
-        
-        # Проверяем, что dashboard_id из пути совпадает с dashboard_id в теле запроса
+
+        # Check that dashboard_id from path matches body
         if str(access_grant.dashboard_id) != str(dashboard_id):
             logger.warning(
-                "Несовпадение dashboard_id: path=%s, body=%s",
+                "Mismatch dashboard_id: path=%s, body=%s",
                 dashboard_id,
                 access_grant.dashboard_id,
             )
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="dashboard_id в теле запроса не совпадает с dashboard_id в URL",
+                detail="dashboard_id in body doesn't match URL",
             )
-        
+
         result = await grant_access(
             dashboard_id=dashboard_id,
             user_id=access_grant.user_id,
@@ -489,13 +496,13 @@ async def grant_dashboard_access_endpoint(
 
         if result:
             logger.info(
-                "Доступ успешно предоставлен: dashboard_id=%s, user_id=%s, permission=%s",
+                "Access granted: dashboard_id=%s, user_id=%s, permission=%s",
                 dashboard_id,
                 access_grant.user_id,
                 access_grant.permission_level,
             )
             return {
-                "message": "Доступ успешно предоставлен",
+                "message": "Access granted",
                 "dashboard_id": str(dashboard_id),
                 "user_id": str(access_grant.user_id),
                 "permission": access_grant.permission_level,
@@ -503,10 +510,10 @@ async def grant_dashboard_access_endpoint(
         else:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Дашборд не найден",
+                detail="Dashboard not found",
             )
     except ValueError as e:
-        logger.warning("Ошибка валидации при предоставлении доступа: %s", e)
+        logger.warning("Validation error granting access: %s", e)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
@@ -515,13 +522,13 @@ async def grant_dashboard_access_endpoint(
         raise
     except Exception as e:
         logger.error(
-            "Ошибка при предоставлении доступа к дашборду id=%s: %s",
+            "Error granting access to dashboard id=%s: %s",
             dashboard_id,
             e,
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Ошибка при предоставлении доступа",
+            detail="Access grant error",
         ) from e
 
 
@@ -542,12 +549,16 @@ async def bind_filter_endpoint(
     db: AsyncSession = Depends(get_db_dependency),
 ) -> dict[str, Any]:
     """Bind a filter to a dashboard."""
-    logger.info("Binding filter to dashboard: dashboard_id=%s, filter_id=%s", dashboard_id, filter_id)
+    logger.info(
+        "Binding filter to dashboard: dashboard_id=%s, filter_id=%s",
+        dashboard_id,
+        filter_id,
+    )
     try:
         filter_obj = FilterRepository.get(filter_id, db)
         if not filter_obj:
             raise HTTPException(status_code=404, detail="Filter not found")
-        
+
         result = await DashboardFilterRepository.bind_filter(
             dashboard_id=dashboard_id, filter_id=filter_id, db=db
         )
@@ -572,7 +583,11 @@ async def unbind_filter_endpoint(
     db: AsyncSession = Depends(get_db_dependency),
 ) -> dict[str, Any]:
     """Unbind a filter from a dashboard."""
-    logger.info("Unbinding filter from dashboard: dashboard_id=%s, filter_id=%s", dashboard_id, filter_id)
+    logger.info(
+        "Unbinding filter from dashboard: dashboard_id=%s, filter_id=%s",
+        dashboard_id,
+        filter_id,
+    )
     try:
         result = await DashboardFilterRepository.unbind_filter(
             dashboard_id=dashboard_id, filter_id=filter_id, db=db
@@ -581,7 +596,9 @@ async def unbind_filter_endpoint(
         if result:
             return {"message": "Filter unbound from dashboard"}
         else:
-            raise HTTPException(status_code=404, detail="Filter not bound to this dashboard")
+            raise HTTPException(
+                status_code=404, detail="Filter not bound to this dashboard"
+            )
     except Exception as e:
         await db.rollback()
         raise HTTPException(status_code=500, detail=str(e)) from e
@@ -629,10 +646,10 @@ async def get_dashboard_access_endpoint(
     """Get all access records for a dashboard."""
     logger.info("Getting access list for dashboard: dashboard_id=%s", dashboard_id)
     try:
-        access_list = await get_dashboard_access_list(
+        access_list: list[dict[str, Any]] = await get_dashboard_access_list(
             dashboard_id=dashboard_id, db=db
         )
-        return access_list  # type: ignore[no-any-return]
+        return access_list
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -646,16 +663,14 @@ async def get_dashboard_access_endpoint(
 )
 async def revoke_dashboard_access_endpoint(
     dashboard_id: UUID,
-    user_id: int,
+    user_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
 ) -> dict[str, Any]:
     """Revoke a user's access to a dashboard."""
     logger.info("Revoking access: dashboard_id=%s, user_id=%s", dashboard_id, user_id)
     try:
-        result = await revoke_access(
-            dashboard_id=dashboard_id, user_id=user_id, db=db
-        )
+        result = await revoke_access(dashboard_id=dashboard_id, user_id=user_id, db=db)
         await db.commit()
         if result:
             return {"message": "Access revoked successfully"}
@@ -687,7 +702,7 @@ async def create_dashboard_graph_endpoint(
 
     Args:
         dashboard_id: Dashboard ID.
-        graph: Model with data for creating the graph.
+        graph: Model with graph data.
         current_user: Current authenticated user.
         db: Database session.
 
@@ -699,8 +714,6 @@ async def create_dashboard_graph_endpoint(
         HTTPException 422: If data validation failed.
         HTTPException 500: On database error.
     """
-    from mkobi.db.repositories.graph_repo import GraphRepository
-
     logger.info(
         "Creating graph for dashboard: name=%s, dashboard_id=%s, user_id=%s",
         graph.name,
@@ -709,7 +722,7 @@ async def create_dashboard_graph_endpoint(
     )
 
     try:
-        result = await GraphRepository.create(
+        result = await _graph_repo.create(
             db=db,
             name=graph.name,
             type=graph.type,
@@ -760,12 +773,10 @@ async def get_dashboard_graphs_endpoint(
     Raises:
         HTTPException 500: On database error.
     """
-    from mkobi.db.repositories.graph_repo import GraphRepository
-
     logger.info("Getting graphs for dashboard: dashboard_id=%s", dashboard_id)
 
     try:
-        graphs = await GraphRepository.get_by_dashboard(
+        graphs = await _graph_repo.get_by_dashboard_id(
             dashboard_id=dashboard_id, db=db
         )
         return [GraphRead.model_validate(g) for g in graphs]

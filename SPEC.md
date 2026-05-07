@@ -567,6 +567,32 @@ FastAPI
 
 При старте приложения FastAPI выполняется автоматическая проверка и инициализация схемы БД через модуль `DatabaseStarter` (lifespan). Миграции применяются согласно окружению (`ENV`) с соблюдением production-ограничений.
 
+**Поведение при первом запуске в Docker:**
+
+1. **Основная БД** (`bidb`):
+   - Проверка существования БД
+   - Применение миграций Alembic (если `AUTO_MIGRATE=true`)
+
+2. **Тестовая БД** (`bidb_test`):
+   - Автоматическое создание при `RECREATE_TEST_DB=true`
+   - Применение миграций Alembic к тестовой БД
+   - Необходимо для запуска `uv run pytest tests/` в Docker
+
+**Конфигурация через переменные окружения:**
+
+```yaml
+# docker-compose.yml (app service environment)
+ENV: development|test|production
+DATABASE__DBNAME: bidb
+DATABASE__TEST_DBNAME: bidb_test  # опционально
+AUTO_MIGRATE: "true"
+RECREATE_TEST_DB: "true"  # для test env
+```
+
+**Реализация:** `src/mkobi/db/starter.py`
+- `DatabaseStarter.startup()` - инициализация основной БД
+- `DatabaseStarter.recreate_test_database()` - создание и миграция тестовой БД
+
 ---
 
 ## 20. Logging

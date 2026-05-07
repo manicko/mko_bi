@@ -3,6 +3,8 @@
 Предоставляет бизнес-логику для CRUD операций с фильтрами.
 Все операции выполняются через FilterRepository с валидацией,
 проверкой прав и логированием.
+
+Реализует интерфейс IFilterService для внедрения зависимостей.
 """
 
 from typing import Any
@@ -10,414 +12,288 @@ from typing import Any
 import logging
 import re
 
+from sqlalchemy.orm import Session
+
 from mkobi.db.models import filters as filter_model
 from mkobi.db.repositories.filter_repo import FilterRepository
-from sqlalchemy.orm import Session
 from mkobi.db.session import get_session
+from mkobi.interfaces.service_interfaces import IFilterService
 from mkobi.models.filters import FilterRead
-from mkobi.models.user_roles import FilterTypeEnum
+from mkobi.models.enums import FilterType
 
 logger = logging.getLogger(__name__)
 
-# Допустимые типы фильтров (берем из FilterTypeEnum)
 
+class FilterService(IFilterService):
+    """Класс сервиса для управления фильтрами."""
 
-def _validate_filter_type(filter_type: str) -> None:
-    """Проверяет, что тип фильтра является допустимым.
+    def __init__(self, db: Session | None = None):
+        """Инициализация сервиса.
 
-    Args:
-        filter_type: Тип фильтра для проверки.
+        Args:
+            db: Сессия базы данных (опционально).
+        """
+        self._db = db
 
-    Raises:
-        ValueError: Если тип фильтра не входит в список допустимых.
-    """
-    try:
-        FilterTypeEnum(filter_type)
-    except ValueError:
-        logger.error(
-            "Недопустимый тип фильтра: '%s'. Допустимые: %s",
-            filter_type,
-            sorted([e.value for e in FilterTypeEnum]),
-        )
-        raise ValueError(
-            f"Недопустимый тип фильтра: '{filter_type}'. "
-            f"Допустимые значения: {', '.join(sorted([e.value for e in FilterTypeEnum]))}"
-        ) from None
+    def _validate_filter_type(self, filter_type: str) -> None:
+        """Проверяет, что тип фильтра является допустимым."""
+        try:
+            FilterType(filter_type)
+        except ValueError:
+            logger.error(
+                "Недопустимый тип фильтра: '%s'. Допустимые: %s",
+                filter_type,
+                sorted([e.value for e in FilterType]),
+            )
+            raise ValueError(
+                f"Недопустимый тип фильтра: '{filter_type}'. "
+                f"Допустимые значения: {', '.join(sorted([e.value for e in FilterType]))}"
+            ) from None
 
+    def _validate_filter_name(self, name: str) -> None:
+        """Проверяет валидность имени фильтра."""
+        if not name or not name.strip():
+            logger.error("Имя фильтра не может быть пустым")
+            raise ValueError("Имя фильтра не может быть пустым")
 
-def _validate_filter_name(name: str) -> None:
-    """Проверяет валидность имени фильтра.
+        if len(name) > 255:
+            logger.error("Имя фильтра слишком длинное: %s (длина: %s)", name, len(name))
+            raise ValueError("Имя фильтра не должно превышать 255 символов")
 
-    Имя должно быть непустой строкой, не превышать 255 символов
-    и содержать только допустимые символы.
+        if not re.match(r'^[a-zA-Zа-яА-Я0-9\s\-_.]+$', name):
+            logger.error("Некорректные символы в имени фильтра: %s", name)
+            raise ValueError(
+                "Имя фильтра может содержать только буквы, цифры, "
+                "пробелы, дефисы, подчеркивания и точки"
+            )
 
-    Args:
-        name: Имя фильтра для проверки.
+    def _validate_filter_config(self, config: dict[str, Any]) -> None:
+        """Проверяет валидность конфигурации фильтра."""
+        if not isinstance(config, dict):
+            logger.error("Конфигурация фильтра должна быть словарем")
+            raise ValueError("Конфигурация фильтра должна быть словарем")
 
-    Raises:
-        ValueError: Если имя некорректно.
-    """
-    if not name or not name.strip():
-        logger.error("Имя фильтра не может быть пустым")
-        raise ValueError("Имя фильтра не может быть пустым")
+        if not config:
+            logger.error("Конфигурация фильтра не может быть пустой")
+            raise ValueError("Конфигурация фильтра не может быть пустой")
 
-    if len(name) > 255:
-        logger.error("Имя фильтра слишком длинное: %s (длина: %s)", name, len(name))
-        raise ValueError("Имя фильтра не должно превышать 255 символов")
+        if 'field' not in config:
+            logger.error("В конфигурации фильтра отсутствует обязательное поле 'field'")
+            raise ValueError(
+                "Конфигурация фильтра должна содержать поле 'field' "
+                "с указанием поля для фильтрации"
+            )
 
-    # Проверяем, что имя содержит только допустимые символы
-    # (буквы, цифры, пробелы, дефисы, подчеркивания, точки)
-    if not re.match(r'^[a-zA-Zа-яА-Я0-9\s\-_.]+$', name):
-        logger.error("Некорректные символы в имени фильтра: %s", name)
-        raise ValueError(
-            "Имя фильтра может содержать только буквы, цифры, "
-            "пробелы, дефисы, подчеркивания и точки"
-        )
-
-
-def _validate_filter_config(config: dict[str, Any]) -> None:
-    """Проверяет валидность конфигурации фильтра.
-
-    Args:
-        config: Конфигурация фильтра для проверки.
-
-    Raises:
-        ValueError: Если конфигурация некорректна.
-    """
-    if not isinstance(config, dict):
-        logger.error("Конфигурация фильтра должна быть словарем")
-        raise ValueError("Конфигурация фильтра должна быть словарем")
-
-    # Базовая проверка: конфиг должен содержать хотя бы одно поле
-    if not config:
-        logger.error("Конфигурация фильтра не может быть пустой")
-        raise ValueError("Конфигурация фильтра не может быть пустой")
-
-    # Проверяем наличие обязательных полей в зависимости от типа фильтра
-    # Для всех типов требуется хотя бы поле 'field'
-    if 'field' not in config:
-        logger.error("В конфигурации фильтра отсутствует обязательное поле 'field'")
-        raise ValueError(
-            "Конфигурация фильтра должна содержать поле 'field' "
-            "с указанием поля для фильтрации"
-        )
-
-
-def _validate_filter_exists(
-    filter_id: int, db: Session
-) -> filter_model.Filter | None:
-    """Проверяет существование фильтра и возвращает его модель.
-
-    Args:
-        filter_id: ID фильтра.
-        db: Сессия базы данных.
-
-    Returns:
-        Модель фильтра или None, если не найден.
-    """
-    filter_obj = FilterRepository.get(filter_id, db)
-    if filter_obj is None:
-        logger.warning("Фильтр не найден: id=%s", filter_id)
-    return filter_obj
-
-
-def _check_filter_name_uniqueness(name: str, db: Session, exclude_id: int | None = None) -> None:
-    """Проверяет уникальность имени фильтра.
-
-    Args:
-        name: Имя фильтра для проверки.
-        db: Сессия базы данных.
-        exclude_id: ID фильтра, который нужно исключить из проверки
-            (используется при обновлении фильтра).
-
-    Raises:
-        ValueError: Если фильтр с таким именем уже существует.
-    """
-    existing = FilterRepository.get_by_name(name, db)
-    if existing and (exclude_id is None or existing.id != exclude_id):
-        logger.warning("Фильтр с таким именем уже существует: name=%s", name)
-        raise ValueError(f"Фильтр с именем '{name}' уже существует")
-
-
-def create_filter(
-    name: str, type: str,     config: dict[str, Any], db: Session | None = None
-) -> FilterRead:
-    """Создает новый глобальный фильтр.
-
-    Выполняет валидацию имени, типа и конфигурации фильтра,
-    проверяет уникальность имени и сохраняет фильтр в базе данных.
-
-    Args:
-        name: Имя фильтра. Должно быть уникальным.
-        type: Тип фильтра (select, multiselect, range, date).
-        config: Конфигурация фильтра в формате JSON-совместимого dict.
-        db: Опциональная сессия базы данных. Если не передана, создается новая.
-
-    Returns:
-        FilterRead: Модель созданного фильтра.
-
-    Raises:
-        ValueError: Если данные некорректны или фильтр с таким именем уже существует.
-        SQLAlchemyError: При ошибке базы данных.
-
-    Example:
-        >>> filter_obj = create_filter(
-        ...     name="Year Filter",
-        ...     type="select",
-        ...     config={"field": "year", "source": "dims", "multi": False},
-        ... )
-        >>> filter_obj.name
-        'Year Filter'
-    """
-    logger.info("Начало создания фильтра: name=%s, type=%s", name, type)
-
-    # Валидация данных
-    _validate_filter_name(name)
-    _validate_filter_type(type)
-    _validate_filter_config(config)
-
-    # Если сессия не передана, создаем новую
-    local_session = False
-    if db is None:
-        db = get_session().__enter__()
-        local_session = True
-
-    try:
-        # Проверка уникальности имени
-        _check_filter_name_uniqueness(name, db)
-
-        # Создание фильтра через репозиторий
-        filter_obj = FilterRepository.create(
-            db=db,
-            name=name,
-            type=type,
-            config=config,
-        )
-        logger.info(
-            "Фильтр успешно создан: id=%s, name=%s, type=%s",
-            filter_obj.id,
-            filter_obj.name,
-            filter_obj.type,
-        )
-
-        # Преобразование в Pydantic модель
-        return FilterRead.model_validate(filter_obj)
-
-    except ValueError:
-        # Валидационные ошибки не требуют отката (транзакция еще не начата)
-        raise
-    except Exception as e:
-        if local_session:
-            db.rollback()
-        logger.error(
-            "Ошибка при создании фильтра name=%s, type=%s: %s",
-            name,
-            type,
-            e,
-        )
-        raise
-    finally:
-        if local_session:
-            db.close()
-
-
-def get_filter(filter_id: int, db: Session | None = None) -> FilterRead | None:
-    """Получает фильтр по ID.
-
-    Args:
-        filter_id: ID фильтра.
-        db: Опциональная сессия базы данных. Если не передана, создается новая.
-
-    Returns:
-        FilterRead: Модель фильтра, или None если не найден.
-
-    Raises:
-        SQLAlchemyError: При ошибке базы данных.
-    """
-    logger.info("Запрос фильтра: id=%s", filter_id)
-
-    # Если сессия не передана, создаем новую
-    local_session = False
-    if db is None:
-        db = get_session().__enter__()
-        local_session = True
-
-    try:
+    def _validate_filter_exists(
+        self, filter_id: int, db: Session
+    ) -> filter_model.Filter | None:
+        """Проверяет существование фильтра."""
         filter_obj = FilterRepository.get(filter_id, db)
         if filter_obj is None:
             logger.warning("Фильтр не найден: id=%s", filter_id)
-            return None
+        return filter_obj
 
-        logger.info("Фильтр получен: id=%s, name=%s", filter_id, filter_obj.name)
+    def _check_filter_name_uniqueness(
+        self, name: str, db: Session, exclude_id: int | None = None
+    ) -> None:
+        """Проверяет уникальность имени фильтра."""
+        existing = FilterRepository.get_by_name(name, db)
+        if existing and (exclude_id is None or existing.id != exclude_id):
+            logger.warning("Фильтр с таким именем уже существует: name=%s", name)
+            raise ValueError(f"Фильтр с именем '{name}' уже существует")
+
+    def create_filter(
+        self,
+        name: str,
+        type_: str,
+        config: dict[str, Any],
+        db: Session | None = None,
+    ) -> FilterRead:
+        """Создает новый глобальный фильтр."""
+        actual_db = db or self._db
+        if actual_db is None:
+            with get_session() as session:
+                return self._create_filter_with_session(name, type_, config, session)
+        return self._create_filter_with_session(name, type_, config, actual_db)
+
+    def _create_filter_with_session(
+        self, name: str, type_: str, config: dict[str, Any], db: Session
+    ) -> FilterRead:
+        """Внутренний метод создания фильтра."""
+        self._validate_filter_name(name)
+        self._validate_filter_type(type_)
+        self._validate_filter_config(config)
+        self._check_filter_name_uniqueness(name, db)
+
+        try:
+            filter_obj = FilterRepository.create(
+                db=db,
+                name=name,
+                type=type_,
+                config=config,
+            )
+            logger.info(
+                "Фильтр успешно создан: id=%s, name=%s, type=%s",
+                filter_obj.id,
+                filter_obj.name,
+                filter_obj.type,
+            )
+            return FilterRead.model_validate(filter_obj)
+        except ValueError:
+            raise
+        except Exception as e:
+            logger.error(
+                "Ошибка при создании фильтра name=%s, type=%s: %s",
+                name,
+                type_,
+                e,
+            )
+            raise
+
+    def get_filter(
+        self, filter_id: int, db: Session | None = None
+    ) -> FilterRead | None:
+        """Получает фильтр по ID."""
+        actual_db = db or self._db
+        if actual_db is None:
+            with get_session() as session:
+                return self._get_filter_with_session(filter_id, session)
+        return self._get_filter_with_session(filter_id, actual_db)
+
+    def _get_filter_with_session(
+        self, filter_id: int, db: Session
+    ) -> FilterRead | None:
+        """Внутренний метод получения фильтра."""
+        filter_obj = FilterRepository.get(filter_id, db)
+        if filter_obj is None:
+            return None
         return FilterRead.model_validate(filter_obj)
 
-    except Exception as e:
-        logger.error("Ошибка при получении фильтра id=%s: %s", filter_id, e)
-        raise
-    finally:
-        if local_session:
-            db.close()
+    def get_filters(self, db: Session | None = None) -> list[FilterRead]:
+        """Получает все фильтры."""
+        actual_db = db or self._db
+        if actual_db is None:
+            with get_session() as session:
+                return self._get_filters_with_session(session)
+        return self._get_filters_with_session(actual_db)
+
+    def _get_filters_with_session(self, db: Session) -> list[FilterRead]:
+        """Внутренний метод получения всех фильтров."""
+        filters = FilterRepository.get_all(db)
+        return [FilterRead.model_validate(f) for f in filters]
+
+    def update_filter(
+        self,
+        filter_id: int,
+        name: str | None = None,
+        type_: str | None = None,
+        config: dict[str, Any] | None = None,
+        db: Session | None = None,
+    ) -> FilterRead | None:
+        """Обновляет фильтр."""
+        actual_db = db or self._db
+        if actual_db is None:
+            with get_session() as session:
+                return self._update_filter_with_session(
+                    filter_id, name, type_, config, session
+                )
+        return self._update_filter_with_session(
+            filter_id, name, type_, config, actual_db
+        )
+
+    def _update_filter_with_session(
+        self,
+        filter_id: int,
+        name: str | None,
+        type_: str | None,
+        config: dict[str, Any] | None,
+        db: Session,
+    ) -> FilterRead | None:
+        """Внутренний метод обновления фильтра."""
+        filter_obj = self._validate_filter_exists(filter_id, db)
+        if filter_obj is None:
+            return None
+
+        if name is not None:
+            self._validate_filter_name(name)
+            self._check_filter_name_uniqueness(name, db, exclude_id=filter_id)
+            FilterRepository.update(filter_id, {"name": name}, db)
+
+        if type_ is not None:
+            self._validate_filter_type(type_)
+            FilterRepository.update(filter_id, {"type": type_}, db)
+
+        if config is not None:
+            self._validate_filter_config(config)
+            FilterRepository.update(filter_id, {"config": config}, db)
+
+        db.commit()
+
+        updated = FilterRepository.get(filter_id, db)
+        if updated:
+            return FilterRead.model_validate(updated)
+        return None
+
+    def delete_filter(
+        self, filter_id: int, db: Session | None = None
+    ) -> bool:
+        """Удаляет фильтр."""
+        actual_db = db or self._db
+        if actual_db is None:
+            with get_session() as session:
+                return self._delete_filter_with_session(filter_id, session)
+        return self._delete_filter_with_session(filter_id, actual_db)
+
+    def _delete_filter_with_session(self, filter_id: int, db: Session) -> bool:
+        """Внутренний метод удаления фильтра."""
+        result = FilterRepository.delete(filter_id, db)
+        db.commit()
+        if result:
+            logger.info("Фильтр успешно удален: id=%s", filter_id)
+        else:
+            logger.warning("Фильтр не найден для удаления: id=%s", filter_id)
+        return bool(result)
+
+
+# --- Backward compatibility functions ---
+
+def create_filter(
+    name: str, type_: str, config: dict[str, Any], db: Session | None = None
+) -> FilterRead:
+    """Backward compatibility wrapper."""
+    service = FilterService()
+    return service.create_filter(name, type_, config, db)
+
+
+def get_filter(
+    filter_id: int, db: Session | None = None
+) -> FilterRead | None:
+    """Backward compatibility wrapper."""
+    service = FilterService()
+    return service.get_filter(filter_id, db)
 
 
 def get_filters(db: Session | None = None) -> list[FilterRead]:
-    """Получает список всех фильтров.
-
-    Args:
-        db: Опциональная сессия базы данных. Если не передана, создается новая.
-
-    Returns:
-        list[FilterRead]: Список моделей фильтров.
-
-    Raises:
-        SQLAlchemyError: При ошибке базы данных.
-    """
-    logger.info("Получение списка всех фильтров")
-
-    # Если сессия не передана, создаем новую
-    local_session = False
-    if db is None:
-        db = get_session().__enter__()
-        local_session = True
-
-    try:
-        filters = FilterRepository.get_all(db)
-        logger.info("Получено фильтров: %s", len(filters))
-
-        # Преобразование в Pydantic модели
-        return [FilterRead.model_validate(f) for f in filters]
-
-    except Exception as e:
-        logger.error("Ошибка при получении списка фильтров: %s", e)
-        raise
-    finally:
-        if local_session:
-            db.close()
+    """Backward compatibility wrapper."""
+    service = FilterService()
+    return service.get_filters(db)
 
 
 def update_filter(
     filter_id: int,
     name: str | None = None,
-    type: str | None = None,
+    type_: str | None = None,
     config: dict[str, Any] | None = None,
     db: Session | None = None,
 ) -> FilterRead | None:
-    """Обновляет данные фильтра.
-
-    Проверяет валидность новых данных и уникальность имени (если оно изменяется).
-    Обновляет только те поля, которые переданы (не None).
-
-    Args:
-        filter_id: ID фильтра для обновления.
-        name: Новое имя фильтра (опционально).
-        type: Новый тип фильтра (опционально).
-        config: Новая конфигурация фильтра (опционально).
-        db: Опциональная сессия базы данных. Если не передана, создается новая.
-
-    Returns:
-        FilterRead: Модель обновленного фильтра, или None если не найден.
-
-    Raises:
-        ValueError: Если данные некорректны или имя уже занято.
-        SQLAlchemyError: При ошибке базы данных.
-    """
-    logger.info("Обновление фильтра: id=%s", filter_id)
-
-    # Валидация переданных данных (если они есть)
-    if name is not None:
-        _validate_filter_name(name)
-    if type is not None:
-        _validate_filter_type(type)
-    if config is not None:
-        _validate_filter_config(config)
-
-    # Если сессия не передана, создаем новую
-    local_session = False
-    if db is None:
-        db = get_session().__enter__()
-        local_session = True
-
-    try:
-        # Проверка существования фильтра
-        filter_obj = _validate_filter_exists(filter_id, db)
-        if filter_obj is None:
-            return None
-
-        # Проверка уникальности имени (если оно меняется)
-        if name is not None and name != filter_obj.name:
-            _check_filter_name_uniqueness(name, db, exclude_id=filter_id)
-
-        # Подготовка данных для обновления
-        update_data: dict[str, str | dict[str, Any]] = {}
-        if name is not None:
-            update_data["name"] = name
-        if type is not None:
-            update_data["type"] = type
-        if config is not None:
-            update_data["config"] = config
-
-        # Обновление через репозиторий
-        updated = FilterRepository.update(filter_id, db, **update_data)
-        if updated is None:
-            logger.warning("Не удалось обновить фильтр: id=%s", filter_id)
-            return None
-
-        logger.info("Фильтр успешно обновлен: id=%s", filter_id)
-        return FilterRead.model_validate(updated)
-
-    except ValueError:
-        raise
-    except Exception as e:
-        if local_session:
-            db.rollback()
-        logger.error("Ошибка при обновлении фильтра id=%s: %s", filter_id, e)
-        raise
-    finally:
-        if local_session:
-            db.close()
+    """Backward compatibility wrapper."""
+    service = FilterService()
+    return service.update_filter(filter_id, name, type_, config, db)
 
 
-def delete_filter(filter_id: int, db: Session | None = None) -> bool:
-    """Удаляет фильтр.
-
-    Args:
-        filter_id: ID фильтра для удаления.
-        db: Опциональная сессия базы данных. Если не передана, создается новая.
-
-    Returns:
-        bool: True, если удаление успешно, False - если фильтр не найден.
-
-    Raises:
-        SQLAlchemyError: При ошибке базы данных.
-    """
-    logger.info("Удаление фильтра: id=%s", filter_id)
-
-    # Если сессия не передана, создаем новую
-    local_session = False
-    if db is None:
-        db = get_session().__enter__()
-        local_session = True
-
-    try:
-        # Проверка существования фильтра
-        filter_obj = _validate_filter_exists(filter_id, db)
-        if filter_obj is None:
-            return False
-
-        # Удаление через репозиторий
-        result: bool = FilterRepository.delete(filter_id, db)
-
-        if result:
-            logger.info("Фильтр успешно удален: id=%s", filter_id)
-        else:
-            logger.warning("Не удалось удалить фильтр: id=%s", filter_id)
-
-        return result
-
-    except Exception as e:
-        if local_session:
-            db.rollback()
-        logger.error("Ошибка при удалении фильтра id=%s: %s", filter_id, e)
-        raise
-    finally:
-        if local_session:
-            db.close()
+def delete_filter(
+    filter_id: int, db: Session | None = None
+) -> bool:
+    """Backward compatibility wrapper."""
+    service = FilterService()
+    return service.delete_filter(filter_id, db)

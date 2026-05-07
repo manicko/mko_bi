@@ -1,19 +1,21 @@
-"""Модуль безопасности для хеширования паролей и работы с JWT токенами."""
+"""Security module for password hashing and JWT token handling."""
 
 import logging
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import bcrypt
 import redis
+import redis.asyncio as aioredis
 from jose import JWTError, jwt
 
 from mkobi.config import get_config
+from uuid import UUID
 
 logger = logging.getLogger(__name__)
 
 
-# Константы
+# Constants
 SALT_ROUNDS: int = 12
 MAX_PASSWORD_LENGTH: int = 72
 
@@ -35,23 +37,40 @@ class RateLimiter:
         return True
 
 
-def _truncate_password(password: str) -> str:
-    """Обрезает пароль до максимальной длины для bcrypt (72 байта).
+class AsyncRateLimiter:
+    def __init__(self, redis_client: aioredis.Redis) -> None:
+        self._redis = redis_client
 
-    Bcrypt имеет ограничение на длину пароля - 72 байта.
-    Если пароль длиннее, он обрезается до этой длины.
+    async def check_rate_limit(self, key: str, max_attempts: int, ttl: int) -> bool:
+        attempts = await self._redis.get(key)
+        if attempts is not None and int(str(attempts)) >= max_attempts:
+            logger.warning("Rate limit exceeded for key: %s", key)
+            return False
+
+        async with self._redis.pipeline() as pipeline:
+            await pipeline.incr(key)
+            await pipeline.expire(key, ttl)
+            await pipeline.execute()
+        return True
+
+
+def _truncate_password(password: str) -> str:
+    """Truncate password to maximum length for bcrypt (72 bytes).
+
+    Bcrypt has a limitation on password length - 72 bytes.
+    If password is longer, it will be truncated to that length.
 
     Args:
-        password: Исходный пароль.
+        password: Original password.
 
     Returns:
-        str: Пароль, обрезанный до 72 байт при необходимости.
+        str: Password truncated to 72 bytes if necessary.
     """
     encoded = password.encode("utf-8")
     if len(encoded) > MAX_PASSWORD_LENGTH:
         truncated = encoded[:MAX_PASSWORD_LENGTH].decode("utf-8", errors="ignore")
         logger.warning(
-            "Пароль длиннее %d байт и был обрезан до %d байт",
+            "Password longer than %d bytes, truncated to %d bytes",
             len(encoded),
             MAX_PASSWORD_LENGTH,
         )
@@ -60,17 +79,17 @@ def _truncate_password(password: str) -> str:
 
 
 def hash_password(password: str) -> str:
-    """Хеширует пароль с использованием bcrypt.
+    """Hash password using bcrypt.
 
-    Использует алгоритм bcrypt с заданным числом раундов соли (SALT_ROUNDS=12).
-    Пароль обрезается до 72 байт перед хешированием, так как bcrypt имеет
-    ограничение на максимальную длину пароля.
+    Uses bcrypt algorithm with specified number of salt rounds (SALT_ROUNDS=12).
+    Password is truncated to 72 bytes before hashing, as bcrypt has
+    a limitation on maximum password length.
 
     Args:
-        password: Пароль в виде обычной строки.
+        password: Password as a regular string.
 
     Returns:
-        str: Хеш пароля в формате bcrypt.
+        str: Password hash in bcrypt format.
 
     Example:
         >>> hash = hash_password("my_secure_password")
@@ -81,22 +100,22 @@ def hash_password(password: str) -> str:
     password_bytes = truncated_password.encode("utf-8")
     salt = bcrypt.gensalt(rounds=SALT_ROUNDS)
     password_hash = bcrypt.hashpw(password_bytes, salt)
-    logger.info("Пароль успешно захеширован")
+    logger.info("Password hashed successfully")
     return password_hash.decode("latin-1")
 
 
 def verify_password(password: str, hashed_password: str) -> bool:
-    """Проверяет соответствие пароля хешу.
+    """Verify password against hash.
 
-    Сравнивает переданный пароль с сохраненным хешем bcrypt.
-    Пароль обрезается до 72 байт перед проверкой.
+    Compares provided password with stored bcrypt hash.
+    Password is truncated to 72 bytes before verification.
 
     Args:
-        password: Пароль в виде обычной строки для проверки.
-        hashed_password: Хеш пароля, сохраненный в базе данных.
+        password: Password as a regular string to verify.
+        hashed_password: Password hash stored in database.
 
     Returns:
-        bool: True, если пароль соответствует хешу, иначе False.
+        bool: True if password matches hash, False otherwise.
 
     Example:
         >>> hash = hash_password("my_password")
@@ -111,29 +130,31 @@ def verify_password(password: str, hashed_password: str) -> bool:
     try:
         result = bcrypt.checkpw(password_bytes, hash_bytes)
         if result:
-            logger.info("Пароль успешно верифицирован")
+            logger.info("Password verified successfully")
         else:
-            logger.warning("Неудачная попытка верификации пароля")
+            logger.warning("Password verification failed")
         return result
     except (ValueError, TypeError) as e:
-        logger.error("Ошибка при верификации пароля: %s", e)
+        logger.error("Error verifying password: %s", e)
         return False
 
 
-def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = None) -> str:
-    """Создает JWT токен доступа с указанными данными.
+def create_access_token(
+    data: dict[str, Any], expires_delta: timedelta | None = None
+) -> str:
+    """Create JWT access token with specified data.
 
-    Токен содержит переданные данные и время истечения (exp).
-    Если expires_delta не указан, используется значение из конфигурации
-    (по умолчанию 30 минут).
+    Token contains provided data and expiration time (exp).
+    If expires_delta is not specified, uses value from config
+    (default 30 minutes).
 
     Args:
-        data: Данные для включения в токен (например, user_id, email).
-        expires_delta: Дополнительное время жизни токена.
-            Если None, используется значение из конфигурации.
+        data: Data to include in the token (e.g., user_id, email).
+        expires_delta: Additional token lifetime.
+            If None, uses value from config.
 
     Returns:
-        str: Закодированный JWT токен.
+        str: Encoded JWT token.
 
     Example:
         >>> token = create_access_token({"user_id": 1, "email": "user@example.com"})
@@ -141,12 +162,11 @@ def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = 
         True
     """
     to_encode = data.copy()
-    # Конвертируем UUID объекты в строки для JWT сериализации
+    # Convert UUID objects to strings for JWT serialization
     for key, value in to_encode.items():
-        from uuid import UUID
         if isinstance(value, UUID):
             to_encode[key] = str(value)
-    
+
     if expires_delta:
         expire = datetime.now(UTC) + expires_delta
     else:
@@ -160,22 +180,22 @@ def create_access_token(data: dict[str, Any], expires_delta: timedelta | None = 
         get_config().jwt.secret_key,
         algorithm=get_config().jwt.algorithm,
     )
-    logger.info("JWT токен успешно создан")
+    logger.info("JWT token created successfully")
     return encoded_jwt
 
 
 def decode_token(token: str) -> dict[str, Any] | None:
-    """Декодирует и валидирует JWT токен.
+    """Decode and validate JWT token.
 
-    Проверяет подпись токена и время его действия (exp).
-    В случае ошибки декодирования или валидации возвращает None.
+    Verifies token signature and expiration time (exp).
+    Returns None on decode or validation error.
 
     Args:
-        token: JWT токен для декодирования.
+        token: JWT token to decode.
 
     Returns:
-        dict[str, Any] | None: Декодированные данные токена или None,
-            если токен недействителен.
+        dict[str, Any] | None: Decoded token data or None,
+            if token is invalid.
 
     Example:
         >>> token = create_access_token({"user_id": 1})
@@ -191,41 +211,41 @@ def decode_token(token: str) -> dict[str, Any] | None:
             get_config().jwt.secret_key,
             algorithms=[get_config().jwt.algorithm],
         )
-        logger.info("JWT токен успешно декодирован")
+        logger.info("JWT token decoded successfully")
         return payload
     except JWTError as e:
-        logger.error("Ошибка декодирования JWT токена: %s", e)
+        logger.error("JWT token decode error: %s", e)
         return None
     except Exception as e:
-        logger.error("Непредвиденная ошибка при декодировании токена: %s", e)
+        logger.error("Unexpected error decoding token: %s", e)
         return None
 
 
 def decode_access_token(token: str) -> dict[str, Any] | None:
-    """Декодирует и валидирует JWT токен (alias для decode_token).
+    """Decode and validate JWT token (alias for decode_token).
 
     Args:
-        token: JWT токен для декодирования.
+        token: JWT token to decode.
 
     Returns:
-        dict[str, Any] | None: Декодированные данные токена или None.
+        dict[str, Any] | None: Decoded token data or None.
     """
     return decode_token(token)
 
 
 def get_current_user(token: str) -> dict[str, Any] | None:
-    """Получить данные текущего пользователя из JWT токена.
+    """Get current user data from JWT token.
 
-    Декодирует токен и возвращает данные пользователя.
+    Decodes token and returns user data.
 
     Args:
-        token: JWT токен доступа.
+        token: JWT access token.
 
     Returns:
-        dict[str, Any] | None: Данные пользователя из токена или None.
+        dict[str, Any] | None: User data from token or None.
     """
     return decode_token(token)
 
 
-# Alias для обратной совместимости
+# Alias for backward compatibility
 generate_password_hash = hash_password

@@ -9,10 +9,12 @@ C:\py_dev\mkobi
 │       ├── 57f43a5c499d_change_json_to_jsonb_for_postgresql.py
 │       ├── 840a99edb818_standardize_index_naming.py
 │       ├── 7130ecb0388c_true_initial_migration.py
+│       ├── 20260507141843_add_updated_at_to_users.py
 │       ├── a1b2c3d4e5f6_add_config_to_dashboards.py
 │       ├── a1e404502aac_add_registration_requests_table.py
 │       ├── ce58bba5d461_add_db_constraints_and_fix_schema_issues.py
-│       └── e86f3c8f7324_schema_adjustments.py
+│       ├── e86f3c8f7324_schema_adjustments.py
+│       └── f50a4054569c_merge_heads.py
 ├── alembic.ini
 ├── best_llm_models.md
 ├── bidb_schema.sql
@@ -28,8 +30,6 @@ C:\py_dev\mkobi
 ├── DBSTR.md
 ├── docker-compose.yml
 ├── Dockerfile
-├── fix_tests.py
-├── fix_tests_simple.py
 ├── frontend
 │   ├── eslint.config.js
 │   ├── index.html
@@ -121,6 +121,8 @@ C:\py_dev\mkobi
 ├── instructions
 │   └── RUN.md
 ├── mypy.ini
+├── mypy_errors.txt
+├── mypy_output.txt
 ├── nginx
 │   └── nginx.conf
 ├── PRODUCTION_CHECKLIST.md
@@ -154,23 +156,6 @@ C:\py_dev\mkobi
 │       │   ├── permissions.py
 │       │   ├── security.py
 │       │   └── task_queue.py
-│       ├── dash_app.py
-│       ├── dashboards
-│       │   ├── base.py
-│       │   ├── components
-│       │   │   ├── buttons.py
-│       │   │   ├── charts
-│       │   │   │   ├── bar.py
-│       │   │   │   ├── base.py
-│       │   │   │   ├── line.py
-│       │   │   │   ├── pie.py
-│       │   │   │   └── table.py
-│       │   │   ├── filters.py
-│       │   │   └── layout.py
-│       │   ├── implementations
-│       │   │   ├── dashboard_1.py
-│       │   │   └── dashboard_2.py
-│       │   └── registry.py
 │       ├── data
 │       │   ├── loaders
 │       │   │   ├── loader.py
@@ -252,11 +237,9 @@ C:\py_dev\mkobi
 ├── STRUCT.md
 ├── TASK_TEMPLATE.md
 ├── TASKS_TEMPLATE.md
+├── test_output.txt
 ├── tests
 │   ├── conftest.py
-│   ├── services
-│   │   ├── test_data_service.py
-│   │   └── test_user_service.py
 │   ├── test_auth.py
 │   ├── test_config.py
 │   ├── test_dashboards_api.py
@@ -288,6 +271,14 @@ C:\py_dev\mkobi
 │   │   ├── TASK_050_architecture_audit.md
 │   │   └── TEST_036_test_audit_arch.md
 │   ├── DEV
+│   │   ├── 03_mypy_type_errors.md
+│   │   ├── 13_dependency_injection_fixes.md
+│   │   ├── 13_frontend_typescript_fixes.md
+│   │   ├── 14_config_module_fixes.md
+│   │   ├── 15_code_quality_tools.md
+│   │   ├── 16_logging_improvements_DONE.md
+│   │   ├── 17_security_improvements.md
+│   │   ├── 18_data_pipeline_fixes.md
 │   │   └── DOCKER_PLAN.md
 │   ├── DONE
 │   │   ├── TASK_001_sync_async_unification.md

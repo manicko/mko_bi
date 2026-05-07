@@ -8,9 +8,9 @@ import pytest
 from fastapi import status
 from httpx import AsyncClient
 
-from mkobi.db.repositories.dashboard_repo import DashboardRepository
-from mkobi.db.repositories.access_repo import AccessRepository
 from mkobi.db.models.dashboard import Dashboard
+from mkobi.db.repositories.access_repo import AccessRepository
+from mkobi.db.repositories.dashboard_repo import DashboardRepository
 from mkobi.models.enums import DashboardPermission
 
 
@@ -20,8 +20,7 @@ class TestUploadCSV:
     @pytest.fixture
     async def test_dashboard(self, async_db_session) -> Dashboard:
         """Create a test dashboard for upload tests."""
-        repo = DashboardRepository()
-        dashboard = await repo.create(
+        dashboard = await DashboardRepository.create(
             db=async_db_session,
             name="test_upload_dashboard",
             description="Dashboard for upload tests",
@@ -37,7 +36,7 @@ class TestUploadCSV:
     @pytest.fixture
     def csv_file(self, csv_content: bytes) -> Path:
         """Create a temporary CSV file."""
-        with tempfile.NamedTemporaryFile(mode='wb', suffix='.csv', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False) as f:
             f.write(csv_content)
             path = Path(f.name)
         yield path
@@ -61,7 +60,7 @@ class TestUploadCSV:
         )
         await async_db_session.commit()
 
-        with open(csv_file, 'rb') as f:
+        with open(csv_file, "rb") as f:
             response = await authenticated_client.post(
                 f"/upload/{test_dashboard.id}",
                 files={"file": ("test.csv", f, "text/csv")},
@@ -80,8 +79,10 @@ class TestUploadCSV:
         csv_content: bytes,
     ) -> None:
         """Test successful CSV.gz file upload."""
-        with tempfile.NamedTemporaryFile(mode='wb', suffix='.csv.gz', delete=False) as f:
-            with gzip.GzipFile(fileobj=f, mode='wb') as gz:
+        with tempfile.NamedTemporaryFile(
+            mode="wb", suffix=".csv.gz", delete=False
+        ) as f:
+            with gzip.GzipFile(fileobj=f, mode="wb") as gz:
                 gz.write(csv_content)
             gz_path = Path(f.name)
 
@@ -95,7 +96,7 @@ class TestUploadCSV:
             )
             await async_db_session.commit()
 
-            with open(gz_path, 'rb') as f:
+            with open(gz_path, "rb") as f:
                 response = await authenticated_client.post(
                     f"/upload/{test_dashboard.id}",
                     files={"file": ("test.csv.gz", f, "application/gzip")},
@@ -112,12 +113,12 @@ class TestUploadCSV:
         test_dashboard: Dashboard,
     ) -> None:
         """Test upload with wrong file extension (should return 415)."""
-        with tempfile.NamedTemporaryFile(mode='wb', suffix='.txt', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".txt", delete=False) as f:
             f.write(b"some text")
             txt_path = Path(f.name)
 
         try:
-            with open(txt_path, 'rb') as f:
+            with open(txt_path, "rb") as f:
                 response = await authenticated_client.post(
                     f"/upload/{test_dashboard.id}",
                     files={"file": ("test.txt", f, "text/plain")},
@@ -135,7 +136,7 @@ class TestUploadCSV:
         csv_file: Path,
     ) -> None:
         """Test upload with wrong MIME type (should return 415)."""
-        with open(csv_file, 'rb') as f:
+        with open(csv_file, "rb") as f:
             response = await authenticated_client.post(
                 f"/upload/{test_dashboard.id}",
                 files={"file": ("test.csv", f, "application/octet-stream")},
@@ -151,15 +152,16 @@ class TestUploadCSV:
     ) -> None:
         """Test upload of file exceeding max size (should return 413)."""
         from mkobi.config import get_config
+
         config = get_config()
         max_size = config.max_file_size
 
-        with tempfile.NamedTemporaryFile(mode='wb', suffix='.csv', delete=False) as f:
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False) as f:
             f.write(b"x" * (max_size + 1))
             large_file = Path(f.name)
 
         try:
-            with open(large_file, 'rb') as f:
+            with open(large_file, "rb") as f:
                 response = await authenticated_client.post(
                     f"/upload/{test_dashboard.id}",
                     files={"file": ("large.csv", f, "text/csv")},
@@ -175,7 +177,7 @@ class TestUploadCSV:
         csv_file: Path,
     ) -> None:
         """Test upload without authentication (should return 401)."""
-        with open(csv_file, 'rb') as f:
+        with open(csv_file, "rb") as f:
             response = await async_client.post(
                 f"/upload/{test_dashboard.id}",
                 files={"file": ("test.csv", f, "text/csv")},

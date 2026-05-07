@@ -1,287 +1,497 @@
-"""Абстрактные интерфейсы для сервисов.
+"""Abstract interfaces for services.
 
-Определяет контракты для всех сервисов в системе.
+Defines contracts for all services in the system.
 """
 
 import abc
-from datetime import datetime
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from mkobi.models.user import UserRead
-from mkobi.models.enums import UserRole
 from mkobi.models.dashboard import DashboardRead
-from mkobi.models.graph import GraphRead
+from mkobi.models.data import ProcessingResultData, UploadResponse
+from mkobi.models.enums import UserRole
 from mkobi.models.filters import FilterRead
+from mkobi.models.graph import GraphRead
 from mkobi.models.processing_configs import ProcessingConfigRead
 from mkobi.models.processing_logs import ProcessingLogRead
-from mkobi.models.types import TokenData, LoginResponse, AggregatedRecordModel, GraphConfigDict, FilterConfigDict, ProcessingSettingsDict
+from mkobi.models.types import (
+    FilterConfigDict,
+    ProcessingSettingsDict,
+)
+from mkobi.models.user import UserRead
 
 
 class IAuthService(abc.ABC):
-    """Интерфейс сервиса аутентификации."""
+    """Authentication service interface."""
 
     @abc.abstractmethod
-    def register_user(self, email: str, password: str, role: str, db: Session | None = None) -> UserRead:
-        """Зарегистрировать нового пользователя."""
+    async def register_user(
+        self, email: str, password: str, role: str, db: AsyncSession | None = None
+    ) -> UserRead:
+        """Register new user."""
         pass
 
     @abc.abstractmethod
-    def authenticate_user(self, email: str, password: str, db: Session | None = None) -> UserRead | None:
-        """Аутентифицировать пользователя и вернуть данные."""
+    async def authenticate_user(
+        self, email: str, password: str, db: AsyncSession | None = None
+    ) -> UserRead | None:
+        """Authenticate user and return data."""
         pass
 
     @abc.abstractmethod
-    def login_user(self, email: str, password: str, db: Session | None = None) -> LoginResponse:
-        """Выполнить вход и вернуть JWT токен."""
+    async def login_user(
+        self, email: str, password: str, db: AsyncSession | None = None
+    ) -> dict[str, Any]:
+        """Perform login and return JWT token."""
         pass
 
     @abc.abstractmethod
-    def refresh_token(self, user_id: UUID, email: str, role: str, db: Session | None = None) -> LoginResponse:
-        """Обновить JWT токен."""
+    async def refresh_token(
+        self, user_id: UUID, email: str, role: str, db: AsyncSession | None = None
+    ) -> dict[str, Any]:
+        """Refresh JWT token."""
         pass
 
     @abc.abstractmethod
     def create_access_token(self, user_id: UUID, role: str) -> str:
-        """Создать access токен для пользователя."""
+        """Create access token for user."""
         pass
 
     @abc.abstractmethod
-    def verify_token(self, token: str) -> TokenData | None:
-        """Проверить JWT токен и вернуть данные."""
+    def verify_token(self, token: str) -> dict[str, Any] | None:
+        """Verify JWT token and return data."""
         pass
 
     @abc.abstractmethod
-    async def register_request(self, email: str, ip: str | None, db: Session | None = None) -> dict[str, Any]:
-        """Создать заявку на регистрацию."""
+    async def register_request(
+        self, email: str, ip: str | None, db: AsyncSession | None = None
+    ) -> dict[str, Any]:
+        """Create registration request."""
         pass
 
     @abc.abstractmethod
-    async def get_user_by_id(self, user_id: UUID, db: Session | None = None) -> UserRead | None:
-        """Получить пользователя по ID."""
+    async def get_user_by_id(
+        self, user_id: UUID, db: AsyncSession | None = None
+    ) -> UserRead | None:
+        """Get user by ID."""
         pass
 
     @abc.abstractmethod
-    async def get_user_by_email(self, email: str, db: Session | None = None) -> UserRead | None:
-        """Получить пользователя по email."""
+    async def get_user_by_email(
+        self, email: str, db: AsyncSession | None = None
+    ) -> UserRead | None:
+        """Get user by email."""
         pass
 
 
 class IUserService(abc.ABC):
-    """Интерфейс сервиса пользователей."""
+    """User service interface."""
 
     @abc.abstractmethod
-    def create_user(self, email: str, password: str, role: UserRole) -> UserRead:
-        """Создать нового пользователя."""
+    async def create_user(
+        self, email: str, password: str, role: UserRole, db: AsyncSession
+    ) -> UserRead:
+        """Create new user."""
         pass
 
     @abc.abstractmethod
-    def get_user_by_id(self, user_id: UUID) -> UserRead | None:
-        """Получить пользователя по ID."""
+    async def get_user_by_id(self, user_id: UUID, db: AsyncSession) -> UserRead | None:
+        """Get user by ID."""
         pass
 
     @abc.abstractmethod
-    def get_user_by_email(self, email: str) -> UserRead | None:
-        """Получить пользователя по email."""
+    async def get_user_by_email(self, email: str, db: AsyncSession) -> UserRead | None:
+        """Get user by email."""
         pass
 
     @abc.abstractmethod
-    def update_user_role(self, user_id: UUID, new_role: UserRole) -> UserRead | None:
-        """Обновить роль пользователя."""
+    async def update_user_role(
+        self, user_id: UUID, role: UserRole, db: AsyncSession
+    ) -> UserRead | None:
+        """Update user role."""
         pass
 
     @abc.abstractmethod
-    def delete_user(self, user_id: UUID) -> bool:
-        """Удалить пользователя."""
+    async def delete_user(self, user_id: UUID, db: AsyncSession) -> bool:
+        """Delete user."""
         pass
 
     @abc.abstractmethod
-    def get_all_users(self) -> list[UserRead]:
-        """Получить всех пользователей."""
+    async def get_all_users(self, db: AsyncSession) -> list[UserRead]:
+        """Get all users."""
         pass
 
 
 class IDashboardService(abc.ABC):
-    """Интерфейс сервиса дашбордов."""
+    """Dashboard service interface."""
 
     @abc.abstractmethod
-    def create_dashboard(self, name: str, description: str | None, layout_id: UUID, created_by: UUID) -> DashboardRead:
-        """Создать новый дашборд."""
+    async def create_dashboard(
+        self,
+        name: str,
+        config: dict[str, Any],
+        owner_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> DashboardRead:
+        """Create new dashboard."""
         pass
 
     @abc.abstractmethod
-    def get_dashboard_by_id(self, dashboard_id: UUID) -> DashboardRead | None:
-        """Получить дашборд по ID."""
+    async def get_dashboard(
+        self,
+        dashboard_id: UUID,
+        user_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> DashboardRead | None:
+        """Get dashboard by ID with access check."""
         pass
 
     @abc.abstractmethod
-    def get_dashboard_by_name(self, name: str) -> DashboardRead | None:
-        """Получить дашборд по имени."""
+    async def get_dashboard_by_name(
+        self,
+        name: str,
+        db: AsyncSession | None = None,
+    ) -> DashboardRead | None:
+        """Get dashboard by name."""
         pass
 
     @abc.abstractmethod
-    def get_dashboards_by_user(self, user_id: UUID) -> list[DashboardRead]:
-        """Получить дашборды по создателю."""
+    async def get_user_dashboards(
+        self,
+        user_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> list[DashboardRead]:
+        """Get user dashboards."""
         pass
 
     @abc.abstractmethod
-    def update_dashboard(self, dashboard_id: UUID, name: str | None, description: str | None, layout_id: UUID | None) -> DashboardRead | None:
-        """Обновить дашборд."""
+    async def update_dashboard(
+        self,
+        dashboard_id: UUID,
+        update_data: dict[str, Any] | None = None,
+        config: dict[str, Any] | None = None,
+        db: AsyncSession | None = None,
+    ) -> DashboardRead | None:
+        """Update dashboard."""
         pass
 
     @abc.abstractmethod
-    def delete_dashboard(self, dashboard_id: UUID) -> bool:
-        """Удалить дашборд."""
+    async def delete_dashboard(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> bool:
+        """Delete dashboard."""
         pass
 
     @abc.abstractmethod
-    def get_all_dashboards(self) -> list[DashboardRead]:
-        """Получить все дашборды."""
+    async def get_all_dashboards(
+        self,
+        db: AsyncSession | None = None,
+    ) -> list[DashboardRead]:
+        """Get all dashboards."""
+        pass
+
+    @abc.abstractmethod
+    async def grant_access(
+        self,
+        dashboard_id: UUID,
+        user_id: UUID,
+        permission: str,
+        db: AsyncSession | None = None,
+    ) -> bool:
+        """Grant access to dashboard."""
+        pass
+
+    @abc.abstractmethod
+    async def revoke_access(
+        self,
+        dashboard_id: UUID,
+        user_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> bool:
+        """Revoke access to dashboard."""
+        pass
+
+    @abc.abstractmethod
+    async def get_dashboard_access_list(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> list[dict[str, Any]]:
+        """Get access list for dashboard."""
         pass
 
 
 class IGraphService(abc.ABC):
-    """Интерфейс сервиса графиков."""
+    """Graph service interface."""
 
     @abc.abstractmethod
-    def create_graph(self, dashboard_id: UUID, name: str, type_: str, config: GraphConfigDict, dimensions: list[str], metrics: list[str]) -> GraphRead:
-        """Создать новый график."""
+    async def create_graph(
+        self,
+        dashboard_id: UUID,
+        name: str,
+        type_: str,
+        config: dict[str, Any],
+        dimensions: list[str],
+        metrics: list[str],
+        db: AsyncSession | None = None,
+    ) -> GraphRead:
+        """Create new graph."""
         pass
 
     @abc.abstractmethod
-    def get_graph_by_id(self, graph_id: UUID) -> GraphRead | None:
-        """Получить график по ID."""
+    async def get_graph_by_id(
+        self,
+        graph_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> GraphRead | None:
+        """Get graph by ID."""
         pass
 
     @abc.abstractmethod
-    def get_graph_by_name_and_dashboard(self, name: str, dashboard_id: UUID) -> GraphRead | None:
-        """Получить график по имени и ID дашборда."""
+    async def get_graph_by_name_and_dashboard(
+        self,
+        name: str,
+        dashboard_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> GraphRead | None:
+        """Get graph by name and dashboard ID."""
         pass
 
     @abc.abstractmethod
-    def get_graphs_by_dashboard(self, dashboard_id: UUID) -> list[GraphRead]:
-        """Получить графики по ID дашборда."""
+    async def get_graphs_by_dashboard(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> list[GraphRead]:
+        """Get graphs by dashboard ID."""
         pass
 
     @abc.abstractmethod
-    def update_graph(self, graph_id: UUID, name: str | None, type_: str | None, config: GraphConfigDict | None, dimensions: list[str] | None, metrics: list[str] | None) -> GraphRead | None:
-        """Обновить график."""
+    async def update_graph(
+        self,
+        graph_id: UUID,
+        name: str | None,
+        type_: str | None,
+        config: dict[str, Any] | None,
+        dimensions: list[str] | None,
+        metrics: list[str] | None,
+        db: AsyncSession | None = None,
+    ) -> GraphRead | None:
+        """Update graph."""
         pass
 
     @abc.abstractmethod
-    def delete_graph(self, graph_id: UUID) -> bool:
-        """Удалить график."""
+    async def delete_graph(
+        self,
+        graph_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> bool:
+        """Delete graph."""
         pass
 
 
 class IFilterService(abc.ABC):
-    """Интерфейс сервиса фильтров."""
+    """Filter service interface."""
 
     @abc.abstractmethod
-    def create_filter(self, name: str, type_: str, config: FilterConfigDict) -> FilterRead:
-        """Создать новый фильтр."""
+    async def create_filter(
+        self,
+        name: str,
+        type_: str,
+        config: FilterConfigDict,
+        db: AsyncSession | None = None,
+    ) -> FilterRead:
+        """Create new filter."""
         pass
 
     @abc.abstractmethod
-    def get_filter_by_id(self, filter_id: UUID) -> FilterRead | None:
-        """Получить фильтр по ID."""
+    async def get_filter_by_id(
+        self,
+        filter_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> FilterRead | None:
+        """Get filter by ID."""
         pass
 
     @abc.abstractmethod
-    def get_filter_by_name(self, name: str) -> FilterRead | None:
-        """Получить фильтр по имени."""
+    async def get_filter_by_name(
+        self,
+        name: str,
+        db: AsyncSession | None = None,
+    ) -> FilterRead | None:
+        """Get filter by name."""
         pass
 
     @abc.abstractmethod
-    def update_filter(self, filter_id: UUID, name: str | None, type_: str | None, config: FilterConfigDict | None) -> FilterRead | None:
-        """Обновить фильтр."""
+    async def update_filter(
+        self,
+        filter_id: UUID,
+        name: str | None,
+        type_: str | None,
+        config: FilterConfigDict | None,
+        db: AsyncSession | None = None,
+    ) -> FilterRead | None:
+        """Update filter."""
         pass
 
     @abc.abstractmethod
-    def delete_filter(self, filter_id: UUID) -> bool:
-        """Удалить фильтр."""
+    async def delete_filter(
+        self,
+        filter_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> bool:
+        """Delete filter."""
         pass
 
     @abc.abstractmethod
-    def get_all_filters(self) -> list[FilterRead]:
-        """Получить все фильтры."""
+    async def get_all_filters(
+        self,
+        db: AsyncSession | None = None,
+    ) -> list[FilterRead]:
+        """Get all filters."""
         pass
 
 
 class IDataService(abc.ABC):
-    """Интерфейс сервиса данных."""
+    """Data service interface."""
 
     @abc.abstractmethod
-    def process_upload(self, file_content: bytes, dashboard_id: UUID) -> bool:
-        """Обработать загруженный файл и сохранить агрегаты."""
+    async def process_upload(
+        self,
+        file_content: bytes,
+        dashboard_id: UUID,
+        user_id: UUID | None = None,
+        filename: str | None = None,
+        content_type: str | None = None,
+        db: AsyncSession | None = None,
+    ) -> UploadResponse:
+        """Process uploaded file and save aggregates."""
         pass
 
     @abc.abstractmethod
-    def get_aggregated_data(self, dashboard_id: UUID, graph_id: UUID) -> list[AggregatedRecordModel]:
-        """Получить агрегированные данные для графика."""
+    async def get_aggregated_data(
+        self,
+        dashboard_id: UUID,
+        graph_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> list[ProcessingResultData]:
+        """Get aggregated data for graph."""
         pass
 
     @abc.abstractmethod
-    def get_available_metrics(self, dashboard_id: UUID) -> list[str]:
-        """Получить список доступных метрик для дашборда."""
+    async def get_available_metrics(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> list[str]:
+        """Get available metrics for dashboard."""
         pass
 
     @abc.abstractmethod
-    def get_available_dimensions(self, dashboard_id: UUID) -> list[str]:
-        """Получить список доступных измерений для дашборда."""
+    async def get_available_dimensions(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> list[str]:
+        """Get available dimensions for dashboard."""
         pass
 
 
 class IProcessingConfigService(abc.ABC):
-    """Интерфейс сервиса настроек обработки."""
+    """Processing config service interface."""
 
     @abc.abstractmethod
-    def create_processing_config(self, dashboard_id: UUID, settings: ProcessingSettingsDict) -> ProcessingConfigRead:
-        """Создать настройки обработки для дашборда."""
+    async def create_processing_config(
+        self,
+        dashboard_id: UUID,
+        settings: ProcessingSettingsDict,
+        db: AsyncSession | None = None,
+    ) -> ProcessingConfigRead:
+        """Create processing config for dashboard."""
         pass
 
     @abc.abstractmethod
-    def get_processing_config_by_dashboard(self, dashboard_id: UUID) -> ProcessingConfigRead | None:
-        """Получить настройки обработки по ID дашборда."""
+    async def get_processing_config_by_dashboard(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> ProcessingConfigRead | None:
+        """Get processing config by dashboard ID."""
         pass
 
     @abc.abstractmethod
-    def update_processing_config(self, dashboard_id: UUID, settings: ProcessingSettingsDict) -> ProcessingConfigRead | None:
-        """Обновить настройки обработки."""
+    async def update_processing_config(
+        self,
+        dashboard_id: UUID,
+        settings: ProcessingSettingsDict,
+        db: AsyncSession | None = None,
+    ) -> ProcessingConfigRead | None:
+        """Update processing config."""
         pass
 
     @abc.abstractmethod
-    def delete_processing_config(self, dashboard_id: UUID) -> bool:
-        """Удалить настройки обработки."""
+    async def delete_processing_config(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> bool:
+        """Delete processing config."""
         pass
 
 
 class IProcessingLogService(abc.ABC):
-    """Интерфейс сервиса логов обработки."""
+    """Processing log service interface."""
 
     @abc.abstractmethod
-    def create_processing_log(self, dashboard_id: UUID, status: str, message: str | None = None) -> ProcessingLogRead:
-        """Создать запись лога обработки."""
+    async def create_processing_log(
+        self,
+        dashboard_id: UUID,
+        status: str,
+        message: str | None = None,
+        db: AsyncSession | None = None,
+    ) -> ProcessingLogRead:
+        """Create processing log entry."""
         pass
 
     @abc.abstractmethod
-    def get_processing_logs_by_dashboard(self, dashboard_id: UUID) -> list[ProcessingLogRead]:
-        """Получить логи обработки по ID дашборда."""
+    async def get_processing_logs_by_dashboard(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> list[ProcessingLogRead]:
+        """Get processing logs by dashboard ID."""
         pass
 
     @abc.abstractmethod
-    def get_processing_logs_by_status(self, status: str) -> list[ProcessingLogRead]:
-        """Получить логи обработки по статусу."""
+    async def get_processing_logs_by_status(
+        self,
+        status: str,
+        db: AsyncSession | None = None,
+    ) -> list[ProcessingLogRead]:
+        """Get processing logs by status."""
         pass
 
     @abc.abstractmethod
-    def update_processing_log(self, log_id: UUID, status: str | None, message: str | None, finished_at: datetime | None) -> ProcessingLogRead | None:
-        """Обновить запись лога обработки."""
+    async def update_processing_log(
+        self,
+        log_id: UUID,
+        status: str | None,
+        message: str | None,
+        finished_at: str | None,
+        db: AsyncSession | None = None,
+    ) -> ProcessingLogRead | None:
+        """Update processing log entry."""
         pass
 
     @abc.abstractmethod
-    def delete_processing_log(self, log_id: UUID) -> bool:
-        """Удалить запись лога обработки."""
+    async def delete_processing_log(
+        self,
+        log_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> bool:
+        """Delete processing log entry."""
         pass

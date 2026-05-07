@@ -11,7 +11,7 @@ from typing import Any
 
 import polars as pl
 
-from mkobi.models.enums import AggregationFunctionEnum
+from mkobi.models.enums import AggregationFunctionEnum, FilterOperatorEnum
 
 logger = logging.getLogger(__name__)
 
@@ -134,17 +134,17 @@ def _apply_filters(
         # Handle operator from FilterOperatorEnum or string
         op_value = operator.value if hasattr(operator, 'value') else operator
 
-        if op_value == "eq" or op_value == "==":
+        if op_value == FilterOperatorEnum.EQ.value:
             result = result.filter(pl.col(column) == value)
-        elif op_value == "ne" or op_value == "!=":
+        elif op_value == FilterOperatorEnum.NE.value:
             result = result.filter(pl.col(column) != value)
-        elif op_value == "gt" or op_value == ">":
+        elif op_value == FilterOperatorEnum.GT.value:
             result = result.filter(pl.col(column) > value)
-        elif op_value == "lt" or op_value == "<":
+        elif op_value == FilterOperatorEnum.LT.value:
             result = result.filter(pl.col(column) < value)
-        elif op_value == "gte" or op_value == ">=":
+        elif op_value == FilterOperatorEnum.GTE.value:
             result = result.filter(pl.col(column) >= value)
-        elif op_value == "lte" or op_value == "<=":
+        elif op_value == FilterOperatorEnum.LTE.value:
             result = result.filter(pl.col(column) <= value)
         elif op_value == "in" and isinstance(value, list):
             result = result.filter(pl.col(column).is_in(value))
@@ -199,8 +199,6 @@ def _apply_dtypes(
     Returns:
         pl.DataFrame: DataFrame с приведенными типами.
     """
-    import polars as pl
-
     cast_exprs = []
     for col, dtype_str in dtype_map.items():
         try:

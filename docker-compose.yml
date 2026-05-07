@@ -29,6 +29,7 @@ services:
       DATABASE__USER: postgres
       DATABASE__PASSWORD: ${DATABASE__PASSWORD:-1234}
       DATABASE__DBNAME: bidb
+      DATABASE__TEST_DBNAME: bidb_test
       JWT__SECRET_KEY: ${JWT__SECRET_KEY:-change-me-in-production}
       JWT__ALGORITHM: HS256
       UPLOAD__TEMP_DIR: /app/data/tmp_uploads
@@ -36,6 +37,7 @@ services:
       CORS_ORIGINS: '["http://localhost"]'
       LOGGING__LEVEL: INFO
       AUTO_MIGRATE: "true"
+      RECREATE_TEST_DB: "true"
     ports:
       - "8000:8000"
     volumes:

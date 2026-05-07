@@ -6,13 +6,13 @@
 
 import logging
 from contextlib import asynccontextmanager
+
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse, FileResponse, Response
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
-from asgiref.wsgi import WsgiToAsgi
 from pydantic import ValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -20,10 +20,14 @@ from mkobi.api import routes
 from mkobi.config import get_config
 from mkobi.core.logging_config import setup_logging
 from mkobi.db.starter import DatabaseStarter
-from mkobi.dash_app import create_dash_app
 
-# Настройка логирования
-setup_logging()
+# Получаем конфигурацию и настраиваем логирование
+config = get_config()
+setup_logging(
+    log_level=config.log_level,
+    log_file=config.log_file,
+    json_logging=config.logging.json_logging,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +39,7 @@ async def lifespan(app: FastAPI):
     try:
         await starter.startup()
     except Exception as e:
-        logger.error(f"Failed to initialize database: {e}")
+        logger.error("Failed to initialize database: %s", e)
         raise
     yield
     await starter.shutdown()
@@ -63,7 +67,7 @@ def create_app() -> FastAPI:
     )
 
     # Настройка CORS middleware
-    logger.info(f"Configuring CORS with allowed origins: {config.cors_origins}")
+    logger.info("Configuring CORS with allowed origins: %s", config.cors_origins)
     application.add_middleware(
         CORSMiddleware,
         allow_origins=config.cors_origins,
@@ -78,22 +82,18 @@ def create_app() -> FastAPI:
         minimum_size=1000,
     )
 
-    # Регистрация роутеров
-    application.include_router(routes.auth.router)
-    application.include_router(routes.users.router)
-    application.include_router(routes.dashboards.router)
-    application.include_router(routes.upload.router)
-    application.include_router(routes.data.router)
-    application.include_router(routes.filters.router)
-    application.include_router(routes.processing_configs.router)
-    application.include_router(routes.processing_logs.router)
-    application.include_router(routes.admin.router)
-
-    # Создание и монтирование Dash приложения
-    logger.info("Mounting Dash application at /dashboards")
-    dash_app = create_dash_app(prefix="/dashboards/")
-    asgi_dash = WsgiToAsgi(dash_app.server)
-    application.mount("/dashboards", asgi_dash)
+    # Регистрация роутеров с префиксом /api/v1
+    api_router = FastAPI()
+    api_router.include_router(routes.auth.router)
+    api_router.include_router(routes.users.router)
+    api_router.include_router(routes.dashboards.router)
+    api_router.include_router(routes.upload.router)
+    api_router.include_router(routes.data.router)
+    api_router.include_router(routes.filters.router)
+    api_router.include_router(routes.processing_configs.router)
+    api_router.include_router(routes.processing_logs.router)
+    api_router.include_router(routes.admin.router)
+    application.mount("/api/v1", api_router)
 
     # Настройка раздачи статических файлов React SPA (после всех API роутов)
     _setup_static_files(application)
@@ -115,7 +115,9 @@ def create_app() -> FastAPI:
 
     # Обработчики исключений
     @application.exception_handler(StarletteHTTPException)
-    async def http_exception_handler(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+    async def http_exception_handler(
+        request: Request, exc: StarletteHTTPException
+    ) -> JSONResponse:
         """Обработчик HTTP исключений."""
         return JSONResponse(
             status_code=exc.status_code,
@@ -126,7 +128,9 @@ def create_app() -> FastAPI:
         )
 
     @application.exception_handler(RequestValidationError)
-    async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    async def validation_exception_handler(
+        request: Request, exc: RequestValidationError
+    ) -> JSONResponse:
         """Обработчик ошибок валидации запросов."""
         return JSONResponse(
             status_code=422,
@@ -138,7 +142,9 @@ def create_app() -> FastAPI:
         )
 
     @application.exception_handler(ValidationError)
-    async def pydantic_validation_exception_handler(request: Request, exc: ValidationError) -> JSONResponse:
+    async def pydantic_validation_exception_handler(
+        request: Request, exc: ValidationError
+    ) -> JSONResponse:
         """Обработчик ошибок валидации Pydantic."""
         return JSONResponse(
             status_code=500,
@@ -164,7 +170,7 @@ def _setup_static_files(application: FastAPI) -> None:
 
     # Проверяем существование директории со сборкой React
     if os.path.isdir(static_dir):
-        logger.info(f"Mounting static files from {static_dir}")
+        logger.info("Mounting static files from %s", static_dir)
         application.mount(
             "/",
             StaticFiles(directory=static_dir, html=True),
@@ -172,8 +178,9 @@ def _setup_static_files(application: FastAPI) -> None:
         )
     else:
         logger.warning(
-            f"Static directory '{static_dir}' not found. "
-            "React SPA will not be served. Run 'cd frontend && npm run build' first."
+            "Static directory '%s' not found. "
+            "React SPA will not be served. Run 'cd frontend && npm run build' first.",
+            static_dir,
         )
 
         # Fallback: SPA routing для разработки или если сборка не найдена
@@ -185,5 +192,7 @@ def _setup_static_files(application: FastAPI) -> None:
                 return FileResponse(index_path)
             return JSONResponse(
                 status_code=404,
-                content={"detail": "React SPA not built. Run 'cd frontend && npm run build'"},
+                content={
+                    "detail": "React SPA not built. Run 'cd frontend && npm run build'"
+                },
             )

@@ -1,19 +1,19 @@
-"""Модуль управления доступом и проверки прав.
+"""Access control and permission checking module.
 
-Предоставляет функции и зависимости для проверки прав доступа пользователей
-к дашбордам и операциям в системе BI Dashboard.
+Provides functions and dependencies for checking user access rights
+to dashboards and operations in the BI Dashboard system.
 
-Иерархия ролей:
+Role hierarchy:
     admin > editor > viewer
 
-Где admin имеет все права, editor может читать и писать,
-viewer только читать.
+Where admin has all rights, editor can read and write,
+viewer can only read.
 """
 
 import logging
-from functools import lru_cache
 from collections.abc import AsyncGenerator
-from typing import Any, cast
+from functools import lru_cache
+from typing import Any
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
@@ -25,61 +25,65 @@ from mkobi.core.security import decode_token
 from mkobi.db.repositories.access_repo import AccessRepository
 from mkobi.db.repositories.user_repo import UserRepository
 from mkobi.db.session import get_session
+from mkobi.models.enums import DashboardPermission, UserRole
 from mkobi.models.user import UserDB
-from mkobi.models.user_roles import PermissionEnum, UserRoleEnum, UserRole
 
 
 class RolePermissions:
-    """Класс для проверки прав доступа на основе ролей.
+    """Class for checking access rights based on roles.
 
-    Определяет, какие роли имеют доступ к определенным операциям.
+    Determines which roles have access to certain operations.
     """
 
     CAN_CREATE_DASHBOARDS: list[UserRole] = [UserRole.ADMIN]
     CAN_EDIT_DASHBOARDS: list[UserRole] = [UserRole.ADMIN, UserRole.EDITOR]
-    CAN_VIEW_DASHBOARDS: list[UserRole] = [UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER]
+    CAN_VIEW_DASHBOARDS: list[UserRole] = [
+        UserRole.ADMIN,
+        UserRole.EDITOR,
+        UserRole.VIEWER,
+    ]
     CAN_MANAGE_USERS: list[UserRole] = [UserRole.ADMIN]
     CAN_UPLOAD_DATA: list[UserRole] = [UserRole.ADMIN, UserRole.EDITOR]
 
     @classmethod
     def can_create_dashboards(cls, user_role: UserRole) -> bool:
-        """Проверить, может ли пользователь создавать дашборды."""
+        """Check if user can create dashboards."""
         return user_role in cls.CAN_CREATE_DASHBOARDS
 
     @classmethod
     def can_edit_dashboards(cls, user_role: UserRole) -> bool:
-        """Проверить, может ли пользователь редактировать дашборды."""
+        """Check if user can edit dashboards."""
         return user_role in cls.CAN_EDIT_DASHBOARDS
 
     @classmethod
     def can_view_dashboards(cls, user_role: UserRole) -> bool:
-        """Проверить, может ли пользователь просматривать дашборды."""
+        """Check if user can view dashboards."""
         return user_role in cls.CAN_VIEW_DASHBOARDS
 
     @classmethod
     def can_manage_users(cls, user_role: UserRole) -> bool:
-        """Проверить, может ли пользователь управлять пользователями."""
+        """Check if user can manage users."""
         return user_role in cls.CAN_MANAGE_USERS
 
     @classmethod
     def can_upload_data(cls, user_role: UserRole) -> bool:
-        """Проверить, может ли пользователь загружать данные."""
+        """Check if user can upload data."""
         return user_role in cls.CAN_UPLOAD_DATA
 
 
 def check_permission(user_role: UserRole, required: list[UserRole]) -> bool:
-    """Проверить, имеет ли пользователь требуемые права.
+    """Check if user has required permissions.
 
     Args:
-        user_role: Роль пользователя.
-        required: Список ролей, имеющих доступ.
+        user_role: User's role.
+        required: List of roles that have access.
 
     Returns:
-        bool: True, если пользователь имеет доступ, иначе False.
+        bool: True if user has access, False otherwise.
     """
     result = user_role in required
     logger.debug(
-        "Проверка прав: user_role=%s, required=%s -> %s",
+        "Permission check: user_role=%s, required=%s -> %s",
         user_role,
         [r.value for r in required],
         result,
@@ -88,104 +92,98 @@ def check_permission(user_role: UserRole, required: list[UserRole]) -> bool:
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """FastAPI зависимость для получения сессии базы данных.
-    
-    Создает новую асинхронную сессию для каждого запроса и закрывает её после завершения.
-    
+    """FastAPI dependency for getting database session.
+
+    Creates a new async session for each request and closes it after completion.
+
     Yields:
-        AsyncSession: Асинхронная сессия SQLAlchemy.
+        AsyncSession: Async SQLAlchemy session.
     """
     async with get_session() as db:
         try:
             yield db
         finally:
-            # Явное закрытие для гарантии
+            # Explicit close for guarantee
             await db.close()
+
 
 logger = logging.getLogger(__name__)
 
 
-# --- Констанны ---
+# --- Constants ---
 
 
-# Иерархия ролей (чем выше значение, тем больше прав)
-# Используем UserRoleEnum - значения уже определяют порядок
-ROLE_LEVELS: dict[UserRoleEnum, int] = {
-    UserRoleEnum.VIEWER: 1,
-    UserRoleEnum.EDITOR: 2,
-    UserRoleEnum.ADMIN: 3,
+# Role hierarchy (from junior to senior)
+ROLE_HIERARCHY: list[UserRole] = [UserRole.VIEWER, UserRole.EDITOR, UserRole.ADMIN]
+
+# Access levels - use DashboardPermission
+PERMISSION_LEVELS: dict[DashboardPermission, int] = {
+    DashboardPermission.VIEW: 1,
+    DashboardPermission.EDIT: 2,
+    DashboardPermission.ADMIN: 3,
 }
-
-# Уровни доступа - используем PermissionEnum
-PERMISSION_LEVELS: dict[str, int] = {
-    "view": 1,
-    "edit": 2,
-    "admin": 3,
-    "read": 1,  # Для обратной совместимости
-}
-# Для обратной совместимости также принимаем "read" как "view" и "write" как "edit"
+# For backward compatibility also accept "read" as "view" and "write" as "edit"
 
 
-# --- Исключения ---
+# --- Exceptions ---
 
 
 class PermissionError(Exception):
-    """Исключение, выбрасываемое при отсутствии прав доступа."""
+    """Exception raised when access rights are insufficient."""
 
     pass
 
 
 class AuthenticationError(Exception):
-    """Исключение, выбрасываемое при ошибке аутентификации."""
+    """Exception raised on authentication error."""
 
     pass
 
 
-# --- Вспомогательные функции ---
+# --- Helper functions ---
 
 
-def _get_role_level(role: str) -> int:
-    """Получить числовой уровень роли.
+def _get_role_level(role: UserRole) -> int:
+    """Get role index in hierarchy.
 
     Args:
-        role: Строковое представление роли (viewer, editor, admin).
+        role: User role (UserRole).
 
     Returns:
-        int: Числовой уровень роли.
+        int: Role index in hierarchy (higher = more rights).
 
     Raises:
-        ValueError: Если роль неизвестна.
+        ValueError: If role is unknown.
     """
     try:
-        role_enum = UserRoleEnum(role)
-        return ROLE_LEVELS[role_enum]
+        return ROLE_HIERARCHY.index(role)
     except ValueError as err:
-        logger.error("Неизвестная роль: %s", role)
-        raise ValueError(f"Неизвестная роль: '{role}'") from err
+        logger.error("Unknown role: %s", role)
+        raise ValueError(f"Unknown role: '{role}'") from err
 
 
-# --- Основные функции проверки прав ---
+# --- Main permission check functions ---
 
 
-def check_role(user_role: str, required_role: str) -> bool:
-    """Проверить, достаточно ли роли пользователя для выполнения операции.
+def check_role(user_role: UserRole, required_role: UserRole) -> bool:
+    """Check if user role is sufficient for the operation.
 
-    Сравнивает уровень роли пользователя с требуемым уровнем.
-    Использует иерархию: admin > editor > viewer.
+    Compares user role level with required level.
+    Uses hierarchy: admin > editor > viewer.
 
     Args:
-        user_role: Роль пользователя (viewer, editor, admin).
-        required_role: Минимально требуемая роль.
+        user_role: User's role (UserRole).
+        required_role: Minimum required role (UserRole).
 
     Returns:
-        bool: True, если роль пользователя достаточна, иначе False.
+        bool: True if user role is sufficient, False otherwise.
 
     Example:
-        >>> check_role("admin", "viewer")
+        >>> check_role(UserRole.ADMIN, UserRole.VIEWER)
         True
-        >>> check_role("editor", "admin")
+        >>> check_role(UserRole.EDITOR, UserRole.ADMIN)
         False
-        >>> check_role("viewer", "viewer")
+        >>> check_role(UserRole.VIEWER, UserRole.VIEWER)
         True
     """
     try:
@@ -193,8 +191,7 @@ def check_role(user_role: str, required_role: str) -> bool:
         required_level = _get_role_level(required_role)
         has_access = user_level >= required_level
         logger.debug(
-            "Проверка роли: user_role=%s (уровень %d), "
-            "required_role=%s (уровень %d) -> %s",
+            "Role check: user_role=%s (level %d), required_role=%s (level %d) -> %s",
             user_role,
             user_level,
             required_role,
@@ -203,7 +200,7 @@ def check_role(user_role: str, required_role: str) -> bool:
         )
         return has_access
     except ValueError as e:
-        logger.error("Ошибка при проверке роли: %s", e)
+        logger.error("Error checking role: %s", e)
         return False
 
 
@@ -213,31 +210,29 @@ async def check_dashboard_access(
     required_permission: str = "view",
     db: AsyncSession | None = None,
 ) -> bool:
-    """Проверяет, есть ли у пользователя доступ к дашборду.
+    """Check if user has access to dashboard.
 
     Args:
-        user_id: Идентификатор пользователя.
-        dashboard_id: Идентификатор дашборда.
-        required_permission: Требуемый уровень доступа (view/edit/admin).
-        db: Асинхронная сессия базы данных. Если не передана, создается новая.
+        user_id: User identifier.
+        dashboard_id: Dashboard identifier.
+        required_permission: Required access level (view/edit/admin).
+        db: Async database session. If not provided, a new one is created.
 
     Returns:
-        True, если доступ есть, иначе False.
+        True if access exists, False otherwise.
     """
     logger.info(
-        "Проверка доступа: user_id=%s, dashboard_id=%s, required=%s",
+        "Checking access: user_id=%s, dashboard_id=%s, required=%s",
         user_id,
         dashboard_id,
         required_permission,
     )
 
-    # Валидация требуемого разрешения
-    if required_permission not in [e.value for e in PermissionEnum]:
-        raise ValueError(
-            f"Допустимые значения: {[e.value for e in PermissionEnum]}"
-        )
+    # Validate required permission
+    if required_permission not in [e.value for e in DashboardPermission]:
+        raise ValueError(f"Allowed values: {[e.value for e in DashboardPermission]}")
 
-    # Если сессия не передана, создаем новую через контекстный менеджер
+    # If session is not provided, create a new one via context manager
     if db is None:
         async with get_session() as session:
             return await _check_access_with_session(
@@ -255,19 +250,19 @@ async def _check_access_with_session(
     required_permission: str,
     db: AsyncSession,
 ) -> bool:
-    """Внутренняя функция для проверки доступа с использованием сессии.
+    """Internal function to check access using session.
 
     Args:
-        user_id: Идентификатор пользователя.
-        dashboard_id: Идентификатор дашборда.
-        required_permission: Требуемый уровень доступа.
-        db: Асинхронная сессия базы данных.
+        user_id: User identifier.
+        dashboard_id: Dashboard identifier.
+        required_permission: Required access level.
+        db: Async database session.
 
     Returns:
-        True, если доступ есть, иначе False.
+        True if access exists, False otherwise.
     """
     try:
-        # Получаем уровень доступа пользователя
+        # Get user access level
         permission = await AccessRepository.check_access(
             user_id=user_id,
             dashboard_id=dashboard_id,
@@ -276,26 +271,36 @@ async def _check_access_with_session(
 
         if permission is None:
             logger.warning(
-                "Доступ отсутствует: user_id=%s, dashboard_id=%s",
+                "Access not found: user_id=%s, dashboard_id=%s",
                 user_id,
                 dashboard_id,
             )
             return False
 
-        # Иерархия разрешений: admin > edit > view
-        # Нормализуем названия для совместимости (read->view, write->edit)
-        perm_map = {"view": "view", "edit": "edit", "admin": "admin"}
+        # Permission hierarchy: admin > edit > view
+        # Normalize names for compatibility (read->view, write->edit)
+        perm_map = {
+            DashboardPermission.VIEW.value: DashboardPermission.VIEW.value,
+            DashboardPermission.EDIT.value: DashboardPermission.EDIT.value,
+            DashboardPermission.ADMIN.value: DashboardPermission.ADMIN.value,
+            "read": DashboardPermission.VIEW.value,
+            "write": DashboardPermission.EDIT.value,
+        }
         permission_normalized = perm_map.get(permission, permission)
         required_normalized = perm_map.get(required_permission, required_permission)
 
-        permission_levels = {"view": 1, "edit": 2, "admin": 3}
+        permission_levels = {
+            DashboardPermission.VIEW.value: 1,
+            DashboardPermission.EDIT.value: 2,
+            DashboardPermission.ADMIN.value: 3,
+        }
         has_access = (
             permission_levels[permission_normalized]
             >= permission_levels[required_normalized]
         )
 
         logger.info(
-            "Проверка доступа: user_id=%s, dashboard_id=%s, "
+            "Access check: user_id=%s, dashboard_id=%s, "
             "permission=%s, required=%s -> %s",
             user_id,
             dashboard_id,
@@ -308,7 +313,7 @@ async def _check_access_with_session(
 
     except Exception as e:
         logger.error(
-            "Ошибка при проверке доступа user_id=%s, dashboard_id=%s: %s",
+            "Error checking access user_id=%s, dashboard_id=%s: %s",
             user_id,
             dashboard_id,
             e,
@@ -318,40 +323,40 @@ async def _check_access_with_session(
 
 @lru_cache(maxsize=128)
 def _decode_token_cached(token: str) -> dict[str, Any] | None:
-    """Кэшированное декодирование токена.
+    """Cached token decoding.
 
     Args:
-        token: JWT токен.
+        token: JWT token.
 
     Returns:
-        dict[str, Any] | None: Декодированные данные токена или None.
+        dict[str, Any] | None: Decoded token data or None.
     """
     result = decode_token(token)
     if result is None:
         return None
-    return cast(dict[str, Any], result)
+    return result
 
 
 async def get_current_user(
     token: str,
     db: AsyncSession | None = None,
 ) -> UserDB:
-    """Получить текущего пользователя по токену.
+    """Get current user by token.
 
-    Декодирует JWT токен, извлекает user_id и получает
-    данные пользователя из базы.
+    Decodes JWT token, extracts user_id and gets
+    user data from database.
 
     Args:
-        token: JWT токен доступа.
-        db: Асинхронная сессия базы данных. Если не передана, создается новая.
+        token: JWT access token.
+        db: Async database session. If not provided, a new one is created.
 
     Returns:
-        UserDB: Модель пользователя с данными из базы.
+        UserDB: User model with data from database.
 
     Raises:
-        AuthenticationError: Если токен недействителен или пользователь не найден.
+        AuthenticationError: If token is invalid or user not found.
     """
-    # Если сессия не передана, создаем новую через контекстный менеджер
+    # If session is not provided, create a new one via context manager
     if db is None:
         async with get_session() as session:
             return await _get_current_user_with_session(token, session)
@@ -363,105 +368,107 @@ async def _get_current_user_with_session(
     token: str,
     db: AsyncSession,
 ) -> UserDB:
-    """Внутренняя функция для получения пользователя с использованием сессии.
+    """Internal function to get user using session.
 
     Args:
-        token: JWT токен доступа.
-        db: Асинхронная сессия базы данных.
+        token: JWT access token.
+        db: Async database session.
 
     Returns:
-        UserDB: Модель пользователя.
+        UserDB: User model.
 
     Raises:
-        AuthenticationError: Если токен недействителен или пользователь не найден.
+        AuthenticationError: If token is invalid or user not found.
     """
     try:
-        # Декодируем токен (с кэшированием)
+        # Decode token (with caching)
         payload = _decode_token_cached(token)
         if payload is None:
-            logger.warning("Недействительный токен")
-            raise AuthenticationError("Недействительный токен")
+            logger.warning("Invalid token")
+            raise AuthenticationError("Invalid token")
 
         user_id_raw = payload.get("user_id")
         if user_id_raw is None:
-            logger.warning("В токене отсутствует user_id")
-            raise AuthenticationError("Некорректный токен")
+            logger.warning("Token missing user_id")
+            raise AuthenticationError("Invalid token")
 
         user_id: UUID = UUID(str(user_id_raw))
 
-        # Получаем пользователя из базы
-        user = await UserRepository.get(user_id, db)
+        # Get user from database
+        repo = UserRepository()
+        user = await repo.get(id=user_id, db=db)
         if user is None:
-            logger.warning("Пользователь не найден: user_id=%s", user_id)
-            raise AuthenticationError("Пользователь не найден")
+            logger.warning("User not found: user_id=%s", user_id)
+            raise AuthenticationError("User not found")
 
-        logger.info("Пользователь аутентифицирован: user_id=%s", user_id)
+        logger.info("User authenticated: user_id=%s", user_id)
         return UserDB.model_validate(user)
 
     except JWTError as e:
-        logger.error("Ошибка декодирования JWT: %s", e)
-        raise AuthenticationError("Ошибка декодирования токена") from e
+        logger.error("JWT decode error: %s", e)
+        raise AuthenticationError("Token decode error") from e
     except Exception as e:
         if not isinstance(e, AuthenticationError):
-            logger.error("Ошибка при получении пользователя: %s", e)
+            logger.error("Error getting user: %s", e)
         raise
 
 
-# --- FastAPI зависимости ---
+# --- FastAPI dependencies ---
+
 
 security = HTTPBearer()
 
 
-def get_current_user_dependency(
+async def get_current_user_dependency(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: AsyncSession = Depends(get_db),
 ) -> UserDB:
-    """FastAPI зависимость для получения текущего пользователя.
+    """FastAPI dependency for getting current user.
 
-    Извлекает токен из заголовка Authorization, декодирует его
-    и возвращает данные пользователя.
+    Extracts token from Authorization header, decodes it
+    and returns user data.
 
     Args:
-        credentials: Учетные данные из заголовка Authorization.
-        db: Сессия базы данных.
+        credentials: Credentials from Authorization header.
+        db: Database session.
 
     Returns:
-        UserDB: Модель аутентифицированного пользователя.
+        UserDB: Authenticated user model.
 
     Raises:
-        HTTPException: Если токен недействителен или пользователь не найден.
+        HTTPException: If token is invalid or user not found.
     """
     try:
-        user = get_current_user(credentials.credentials, db)
-        # Сохраняем пользователя в state запроса для последующего использования
-        # (будет доступно через request.state.user)
+        user = await get_current_user(credentials.credentials, db)
+        # Save user in request state for later use
+        # (will be available via request.state.user)
         return user
     except AuthenticationError as e:
-        logger.warning("Ошибка аутентификации: %s", e)
+        logger.warning("Authentication error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=str(e),
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
     except Exception as e:
-        logger.error("Неожиданная ошибка аутентификации: %s", e)
+        logger.error("Unexpected authentication error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Внутренняя ошибка сервера",
+            detail="Internal server error",
         ) from e
 
 
 def require_role(required_roles: list[UserRole]):
-    """Создает FastAPI зависимость для проверки роли пользователя.
+    """Create FastAPI dependency for checking user role.
 
     Args:
-        required_roles: Список ролей, имеющих доступ.
+        required_roles: List of roles that have access.
 
     Returns:
-        Callable: Зависимость FastAPI.
+        Callable: FastAPI dependency.
 
     Raises:
-        HTTPException: Если у пользователя недостаточно прав.
+        HTTPException: If user has insufficient rights.
 
     Example:
         @app.get("/admin")
@@ -473,17 +480,17 @@ def require_role(required_roles: list[UserRole]):
     """
 
     def role_checker(user: UserDB = Depends(get_current_user_dependency)) -> UserDB:
-        """Проверяет роль пользователя и возвращает его при успехе."""
+        """Check user role and return it on success."""
         if not check_permission(user.role, required_roles):
             logger.warning(
-                "Недостаточно прав: user_id=%s, user_role=%s, required_roles=%s",
+                "Insufficient permissions: user_id=%s, user_role=%s, required_roles=%s",
                 user.id,
                 user.role,
                 [r.value for r in required_roles],
             )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Требуются роли: {[r.value for r in required_roles]}",
+                detail=f"Required roles: {[r.value for r in required_roles]}",
             )
         return user
 
@@ -493,20 +500,20 @@ def require_role(required_roles: list[UserRole]):
 def require_dashboard_access(
     required_permission: str = "read",
 ):
-    """Создает FastAPI зависимость для проверки доступа к дашборду.
+    """Create FastAPI dependency for checking dashboard access.
 
-    Проверяет, есть ли у пользователя доступ к указанному дашборду
-    с требуемым уровнем разрешения.
+    Checks if user has access to specified dashboard
+    with required permission level.
 
     Args:
-        required_permission: Требуемый уровень доступа (read/write/admin).
-            По умолчанию "read".
+        required_permission: Required access level (read/write/admin).
+            Default is "read".
 
     Returns:
-        Callable: Зависимость FastAPI.
+        Callable: FastAPI dependency.
 
     Raises:
-        HTTPException: Если у пользователя нет доступа.
+        HTTPException: If user has no access.
 
     Example:
         @app.get("/dashboards/{dashboard_id}")
@@ -523,7 +530,7 @@ def require_dashboard_access(
         user: UserDB = Depends(get_current_user_dependency),
         db: AsyncSession = Depends(get_db),
     ) -> UserDB:
-        """Проверяет доступ пользователя к дашборду."""
+        """Check user access to dashboard."""
         if not await check_dashboard_access(
             user_id=user.id,
             dashboard_id=dashboard_id,
@@ -531,14 +538,14 @@ def require_dashboard_access(
             db=db,
         ):
             logger.warning(
-                "Отказано в доступе: user_id=%s, dashboard_id=%s, required=%s",
+                "Access denied: user_id=%s, dashboard_id=%s, required=%s",
                 user.id,
                 dashboard_id,
                 required_permission,
             )
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="У вас нет доступа к этому дашборду",
+                detail="You don't have access to this dashboard",
             )
         return user
 

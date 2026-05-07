@@ -4,18 +4,18 @@
 
 ### TASK: Устранение ошибок mypy (235 ошибок)
 
-FILE: `src/mkobi/**/*.py`, `tests/**/*.py`
+FILE: все файлы
 
 GOAL: Исправить все ошибки типизации для прохождения `uv run mypy .`
 
 FINDINGS (TASK_02 + TASK_03 + actual check):
-- 235 ошибок mypy
 - Категории ошибок:
   1. Return type errors: `Returning Any from function declared to return "..."`
   2. Unused "type: ignore" comments
   3. Type annotation issues: `Need type annotation for "prepared"`
   4. Argument type mismatches: UUID vs int
   5. Attr-defined errors: `YoyModeEnum` has no attribute `percent`
+ и другие 
 
 IMPLEMENT (по приоритету):
 
@@ -43,7 +43,7 @@ DONE:
 
 * [ ] `uv run mypy .` проходит без ошибок (или допустимое количество)
 * [ ] Return type errors устранены
-* [ ] UUID vs int mismatches исправлены
+* [ ] UUID vs int mismatches исправлены 
 * [ ] Enum attribute access исправлен
 
 ---

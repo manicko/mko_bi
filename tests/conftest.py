@@ -1,5 +1,4 @@
 """Common fixtures for tests."""
-
 import os
 from uuid import uuid4
 
@@ -22,13 +21,18 @@ os.environ["JWT__SECRET_KEY"] = "test_secret_key_change_in_production"
 os.environ["REDIS__HOST"] = "localhost"
 os.environ["REDIS__PORT"] = "6379"
 
-from mkobi.main import app
-from mkobi.core.security import hash_password, create_access_token
-from mkobi.db.repositories.user_repo import UserRepository
+# Test database URL for DatabaseStarter
+os.environ["TEST_DATABASE_URL"] = (
+    "postgresql+asyncpg://postgres:1234@localhost:5432/bidb_test"
+)
+os.environ["RECREATE_TEST_DB"] = "false"
 
 # Test PostgreSQL database (async)
 # Use get_config() to be consistent with the app
 from mkobi.config import get_config
+from mkobi.core.security import create_access_token, hash_password
+from mkobi.db.repositories.user_repo import UserRepository
+from mkobi.main import app
 
 _config = get_config()
 TEST_ASYNC_DB_URL = str(_config.database.database_url).replace(
@@ -48,54 +52,78 @@ from mkobi.db.models import (  # noqa: E402, F401
     User,
 )
 
-
 # Mock Redis for rate limiter tests
+import asyncio
+from unittest.mock import AsyncMock
+
+
 class MockRedis:
     """Mock Redis client for testing rate limiter without real Redis."""
 
     def __init__(self):
         self._data = {}
+        self._pipeline_data = {}
 
-    def get(self, key):
+    async def get(self, key):
         return self._data.get(key)
 
     def pipeline(self):
-        return self
+        return MockPipeline(self)
 
-    def incr(self, key):
+    async def incr(self, key):
         val = int(self._data.get(key, 0)) + 1
         self._data[key] = str(val)
         return val
 
-    def expire(self, key, ttl):
+    async def expire(self, key, ttl):
         pass
 
-    def execute(self):
+    async def execute(self):
         pass
 
-    def close(self):
+    async def close(self):
         pass
+
+
+class MockPipeline:
+    """Mock pipeline that supports async with."""
+
+    def __init__(self, redis_client):
+        self._redis = redis_client
+        self._commands = []
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, exc_type, exc, tb):
+        return False
+
+    async def incr(self, key):
+        return await self._redis.incr(key)
+
+    async def expire(self, key, ttl):
+        return await self._redis.expire(key, ttl)
 
 
 @pytest.fixture(autouse=True)
 def mock_redis(monkeypatch):
     """Mock Redis client for all tests to avoid requiring real Redis."""
-    from mkobi.core.security import RateLimiter
+    from mkobi.core.security import AsyncRateLimiter
 
     mock_redis_client = MockRedis()
 
-    # Patch get_redis_client to return mock
+    # Patch get_async_redis_client to return mock
     import mkobi.config as config_module
 
-    def mock_get_redis_client():
+    def mock_get_async_redis_client():
         return mock_redis_client
 
-    monkeypatch.setattr(config_module, "get_redis_client", mock_get_redis_client)
+    monkeypatch.setattr(config_module, "get_async_redis_client", mock_get_async_redis_client)
 
     # Patch the rate limiter instances in data_service
     import mkobi.services.data_service as data_service_module
 
-    data_service_module._upload_rate_limiter = RateLimiter(mock_redis_client)
+    data_service_module._upload_rate_limiter = AsyncRateLimiter(mock_redis_client)
 
     # Patch auth service rate limiter
     import mkobi.services.auth_service as auth_service_module
@@ -104,59 +132,26 @@ def mock_redis(monkeypatch):
 
     def patched_init(self, *args, **kwargs):
         original_init(self, *args, **kwargs)
-        self._rate_limiter = RateLimiter(mock_redis_client)
+        # Make check_rate_limit always return True (allow all)
+        async def always_true(*a, **kw):
+            return True
+        self._rate_limiter.check_rate_limit = always_true
 
     monkeypatch.setattr(auth_service_module.AuthService, "__init__", patched_init)
 
 
 def pytest_sessionstart(session):
-    """Setup before test session starts using Alembic migrations."""
+    """Setup before test session starts using DatabaseStarter."""
     import asyncio
-    import subprocess
-    from mkobi.db.base import Base
 
-    async def run_migrations():
-        # Drop all tables and enums to start with clean state
-        engine = create_async_engine(
-            TEST_ASYNC_DB_URL,
-            echo=False,
-        )
-        async with engine.begin() as conn:
-            # Drop all tables
-            await conn.run_sync(Base.metadata.drop_all)
-            # Drop alembic_version table if exists
-            await conn.execute(text("DROP TABLE IF EXISTS alembic_version"))
-            # Drop enum types
-            await conn.execute(text("DROP TYPE IF EXISTS processing_status CASCADE"))
-            await conn.execute(text("DROP TYPE IF EXISTS user_role CASCADE"))
-            await conn.execute(
-                text("DROP TYPE IF EXISTS dashboard_permission_level CASCADE")
-            )
-            await conn.execute(text("DROP TYPE IF EXISTS graph_type CASCADE"))
-            await conn.execute(text("DROP TYPE IF EXISTS filter_type CASCADE"))
-        await engine.dispose()
+    from mkobi.db.starter import DatabaseStarter
 
-    asyncio.run(run_migrations())
+    async def init_test_db():
+        starter = DatabaseStarter()
+        # Skip recreation - tests will use existing test DB
+        # await starter.recreate_test_database()
 
-    # Run alembic migrations using subprocess to avoid event loop conflicts
-    sync_db_url = TEST_ASYNC_DB_URL.replace("postgresql+asyncpg://", "postgresql://")
-    result = subprocess.run(
-        [
-            "uv",
-            "run",
-            "alembic",
-            "-x",
-            f"sqlalchemy.url={sync_db_url}",
-            "upgrade",
-            "head",
-        ],
-        cwd="C:\\py_exp\\mkobi",
-        capture_output=True,
-        text=True,
-    )
-    if result.returncode != 0:
-        print(f"Alembic upgrade failed: {result.stderr}")
-        raise RuntimeError(f"Alembic upgrade failed: {result.stderr}")
+    asyncio.run(init_test_db())
 
 
 @pytest.fixture(scope="session")
@@ -208,7 +203,7 @@ async def async_client():
 
     transport = ASGITransport(app=app)
     async with httpx.AsyncClient(
-        transport=transport, base_url="http://testserver"
+        transport=transport, base_url="http://testserver/api/v1"
     ) as client:
         yield client
 
@@ -225,7 +220,9 @@ async def test_user(async_db_session) -> dict[str, str | object]:
     """Creates test user and returns data with token."""
     unique_id = str(uuid4())[:8]
 
-    user = await UserRepository.create(
+    # UserRepository doesn't store db - it's passed to each method
+    repo = UserRepository()
+    user = await repo.create(
         db=async_db_session,
         email=f"test_{unique_id}@example.com",
         password_hash=hash_password("TestPass123!"),

@@ -1,16 +1,25 @@
 """Admin routes for user management and registration requests."""
 
 import logging
-from uuid import UUID
 from typing import Any, cast
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mkobi.api.deps import get_db_dependency, require_admin_role, CurrentUser
-from mkobi.models.enums import UserRole, RegistrationStatus
+from mkobi.api.deps import (
+    CurrentUser,
+    get_auth_service,
+    get_db_dependency,
+    get_user_service,
+    require_admin_role,
+)
+from mkobi.db.repositories.registration_request_repo import (
+    RegistrationRequestRepository,
+)
+from mkobi.models.enums import RegistrationStatus, UserRole
 from mkobi.models.user import UserRead
-from mkobi.services.user_service import UserService
+from mkobi.services.auth_service import AuthService
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +38,7 @@ router = APIRouter(prefix="/admin", tags=["admin"])
     dependencies=[Depends(require_admin_role)],
 )
 async def get_users_admin_endpoint(
-    user_service: UserService = Depends(),
+    user_service=Depends(get_user_service),
 ) -> list[UserRead]:
     """Get all users (admin endpoint)."""
     logger.info("Admin: getting all users")
@@ -55,7 +64,7 @@ async def get_users_admin_endpoint(
 async def update_user_role_admin_endpoint(
     user_id: UUID,
     new_role: UserRole,
-    user_service: UserService = Depends(),
+    user_service=Depends(get_user_service),
 ) -> UserRead:
     """Update user role (admin endpoint)."""
     logger.info("Admin: updating user role: id=%s, new_role=%s", user_id, new_role)
@@ -89,7 +98,7 @@ async def update_user_role_admin_endpoint(
 )
 async def delete_user_admin_endpoint(
     user_id: UUID,
-    user_service: UserService = Depends(),
+    user_service=Depends(get_user_service),
 ) -> None:
     """Delete user (admin endpoint)."""
     logger.info("Admin: deleting user: id=%s", user_id)
@@ -130,8 +139,6 @@ async def get_registration_requests_admin_endpoint(
     """Get all registration requests (admin endpoint)."""
     logger.info("Admin: getting registration requests")
     try:
-        from mkobi.db.repositories.registration_request_repo import RegistrationRequestRepository
-
         repo = RegistrationRequestRepository(db)
         requests = await repo.get_all()
         return cast(list[dict[str, Any]], requests)
@@ -158,8 +165,6 @@ async def approve_registration_request_admin_endpoint(
     """Approve registration request (admin endpoint)."""
     logger.info("Admin: approving registration request: id=%s", request_id)
     try:
-        from mkobi.db.repositories.registration_request_repo import RegistrationRequestRepository
-
         # Get the request
         repo = RegistrationRequestRepository(db)
         req = await repo.get_by_id(request_id)
@@ -176,8 +181,6 @@ async def approve_registration_request_admin_endpoint(
             )
 
         # Create user
-        from mkobi.services.auth_service import AuthService
-
         auth_service = AuthService(db)
         user = await auth_service.create_user(
             email=req["email"],
@@ -220,8 +223,6 @@ async def reject_registration_request_admin_endpoint(
     """Reject registration request (admin endpoint)."""
     logger.info("Admin: rejecting registration request: id=%s", request_id)
     try:
-        from mkobi.db.repositories.registration_request_repo import RegistrationRequestRepository
-
         repo = RegistrationRequestRepository(db)
         req = await repo.get_by_id(request_id)
         if not req:

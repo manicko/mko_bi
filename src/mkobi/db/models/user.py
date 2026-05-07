@@ -23,9 +23,10 @@ if TYPE_CHECKING:
 
 
 class User(Base):
-    """Модель пользователя системы BI Dashboard."""
+    """User model for BI Dashboard system."""
 
     __tablename__ = "users"
+    __table_args__ = (Index("ix_users_role", "role"),)
 
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
@@ -69,6 +70,13 @@ class User(Base):
         server_default=text("now()"),
     )
 
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("now()"),
+        onupdate=text("now()"),
+    )
+
     # Связь с правами доступа
     accesses: Mapped[list["DashboardAccess"]] = relationship(
         "DashboardAccess",
@@ -99,7 +107,3 @@ class User(Base):
 
     def __str__(self) -> str:
         return self.email
-
-
-# Индекс на роль (если часто фильтруешь пользователей по ролям)
-Index("ix_users_role", User.role)

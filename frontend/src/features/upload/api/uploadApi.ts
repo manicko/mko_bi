@@ -1,12 +1,12 @@
 import axiosInstance from '../../../shared/api/axiosInstance'
 import type { UploadResponse, ProcessingStatusResponse, ProcessingResult } from '../../../shared/types/api.types'
-import type { UploadMode } from '../../../shared/types/api.types'
+import { UploadMode } from '../../../shared/types/enums'
 
 export const uploadApi = {
   uploadFile: async (
     dashboardId: string,
     file: File,
-    mode: UploadMode = 'overwrite',
+    mode: UploadMode = UploadMode.OVERWRITE,
     onProgress?: (percent: number) => void
   ): Promise<UploadResponse> => {
     const formData = new FormData()

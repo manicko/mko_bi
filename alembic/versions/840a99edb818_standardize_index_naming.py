@@ -23,39 +23,49 @@ def upgrade() -> None:
     op.execute("""
         DO $$ BEGIN
             IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_email_key') THEN
-                ALTER TABLE users RENAME CONSTRAINT users_email_key TO idx_users_email;
+                IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_users_email' AND relkind = 'i') THEN
+                    ALTER TABLE users RENAME CONSTRAINT users_email_key TO idx_users_email;
+                END IF;
             END IF;
         END $$;
     """)
-    
+
     op.execute("""
         DO $$ BEGIN
             IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'layouts_name_key') THEN
-                ALTER TABLE layouts RENAME CONSTRAINT layouts_name_key TO idx_layouts_name;
+                IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_layouts_name' AND relkind = 'i') THEN
+                    ALTER TABLE layouts RENAME CONSTRAINT layouts_name_key TO idx_layouts_name;
+                END IF;
             END IF;
         END $$;
     """)
-    
+
     op.execute("""
         DO $$ BEGIN
             IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'dashboards_name_key') THEN
-                ALTER TABLE dashboards RENAME CONSTRAINT dashboards_name_key TO idx_dashboards_name;
+                IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_dashboards_name' AND relkind = 'i') THEN
+                    ALTER TABLE dashboards RENAME CONSTRAINT dashboards_name_key TO idx_dashboards_name;
+                END IF;
             END IF;
         END $$;
     """)
-    
+
     op.execute("""
         DO $$ BEGIN
             IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'uq_graph_dashboard_name') THEN
-                ALTER TABLE graphs RENAME CONSTRAINT uq_graph_dashboard_name TO idx_graphs_dashboard_name;
+                IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_graphs_dashboard_name' AND relkind = 'i') THEN
+                    ALTER TABLE graphs RENAME CONSTRAINT uq_graph_dashboard_name TO idx_graphs_dashboard_name;
+                END IF;
             END IF;
         END $$;
     """)
-    
+
     op.execute("""
         DO $$ BEGIN
             IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'filters_name_key') THEN
-                ALTER TABLE filters RENAME CONSTRAINT filters_name_key TO idx_filters_name;
+                IF NOT EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_filters_name' AND relkind = 'i') THEN
+                    ALTER TABLE filters RENAME CONSTRAINT filters_name_key TO idx_filters_name;
+                END IF;
             END IF;
         END $$;
     """)
@@ -133,12 +143,12 @@ def downgrade() -> None:
         op.execute("ALTER INDEX idx_dashboard_filters_dashboard_filter RENAME TO idx_dashboard_filter")
     except Exception:
         pass
-    
+
     try:
         op.execute("ALTER INDEX idx_dashboard_access_dashboard RENAME TO idx_access_dashboard")
     except Exception:
         pass
-    
+
     try:
         op.execute("ALTER INDEX idx_users_role RENAME TO ix_users_role")
     except Exception:
@@ -149,22 +159,22 @@ def downgrade() -> None:
         op.execute("ALTER TABLE filters RENAME CONSTRAINT idx_filters_name TO filters_name_key")
     except Exception:
         pass
-    
+
     try:
         op.execute("ALTER TABLE graphs RENAME CONSTRAINT idx_graphs_dashboard_name TO uq_graph_dashboard_name")
     except Exception:
         pass
-    
+
     try:
         op.execute("ALTER TABLE dashboards RENAME CONSTRAINT idx_dashboards_name TO dashboards_name_key")
     except Exception:
         pass
-    
+
     try:
         op.execute("ALTER TABLE layouts RENAME CONSTRAINT idx_layouts_name TO layouts_name_key")
     except Exception:
         pass
-    
+
     try:
         op.execute("ALTER TABLE users RENAME CONSTRAINT idx_users_email TO users_email_key")
     except Exception:

@@ -1,80 +1,71 @@
-"""Репозиторий для работы с дашбордами.
+"""Repository for working with dashboards.
 
-Предоставляет методы CRUD для модели Dashboard.
-Все методы используют контекстный менеджер сессий и обрабатывают ошибки.
+Provides CRUD methods for Dashboard model.
+All methods use contextual session management and handle errors.
 """
 
-import logging
 from uuid import UUID
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-
-from mkobi.db.models import dashboard as dashboard_model
 from sqlalchemy.ext.asyncio import AsyncSession
 
-logger = logging.getLogger(__name__)
+from mkobi.core.logging_config import get_logger
+from mkobi.db.models import access as access_model
+from mkobi.db.models import dashboard as dashboard_model
+from mkobi.interfaces.repository_interfaces import IDashboardRepository
+
+logger = get_logger(__name__)
 
 
-class DashboardRepository:
-    """Репозиторий для операций с дашбордами.
+class DashboardRepository(IDashboardRepository):
+    """Repository for operations with dashboards.
 
-    Предоставляет методы для создания, чтения, обновления и удаления
-    дашбордов в базе данных. Все операции выполняются в рамках
-    отдельной сессии базы данных с автоматическим управлением транзакциями.
+    Provides methods for creating, reading, updating and deleting
+    dashboards in the database. All operations are performed within a
+    separate database session with automatic transaction management.
+    Implements IDashboardRepository interface.
     """
 
-    @classmethod
-    async def get(
-        cls, dashboard_id: UUID, db: AsyncSession
-    ) -> dashboard_model.Dashboard | None:
-        """Получить дашборд по ID.
+    async def get(self, id: UUID, db: AsyncSession) -> dashboard_model.Dashboard | None:
+        """Get dashboard by ID.
 
         Args:
-            dashboard_id: Идентификатор дашборда (UUID).
-            db: Асинхронная сессия базы данных.
+            id: Dashboard identifier (UUID).
 
         Returns:
-            Модель дашборда или None, если не найден.
-
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            Dashboard model or None if not found.
         """
         try:
             result = await db.execute(
                 select(dashboard_model.Dashboard).where(
-                    dashboard_model.Dashboard.id == dashboard_id
+                    dashboard_model.Dashboard.id == id
                 )
             )
             dashboard = result.scalar_one_or_none()
             if dashboard:
-                logger.info("Дашборд получен: id=%s", dashboard_id)
+                logger.info("Dashboard retrieved", extra={"id": str(id)})
             else:
-                logger.warning("Дашборд не найден: id=%s", dashboard_id)
+                logger.warning("Dashboard not found", extra={"id": str(id)})
             return dashboard
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении дашборда id=%s: %s", dashboard_id, e)
+            logger.error(
+                "Error getting dashboard", extra={"id": str(id), "error": str(e)}
+            )
             raise
 
-    @classmethod
     async def get_by_user(
-        cls, user_id: UUID, db: AsyncSession
+        self, user_id: UUID, db: AsyncSession
     ) -> list[dashboard_model.Dashboard]:
-        """Получить все дашборды, доступные пользователю.
+        """Get all dashboards available to user.
 
         Args:
-            user_id: Идентификатор пользователя (UUID).
-            db: Асинхронная сессия базы данных.
+            user_id: User identifier (UUID).
 
         Returns:
-            Список дашбордов, доступных пользователю.
-
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            List of dashboards available to user.
         """
         try:
-            from mkobi.db.models import access as access_model
-
             result = await db.execute(
                 select(dashboard_model.Dashboard)
                 .join(access_model.DashboardAccess)
@@ -82,30 +73,28 @@ class DashboardRepository:
             )
             dashboards = list(result.scalars().all())
             logger.info(
-                "Получены дашборды для пользователя id=%s, количество: %s",
-                user_id,
-                len(dashboards),
+                "Dashboards retrieved for user",
+                extra={"user_id": str(user_id), "count": len(dashboards)},
             )
             return dashboards
         except SQLAlchemyError as e:
             logger.error(
-                "Ошибка при получении дашбордов для пользователя id=%s: %s", user_id, e
+                "Error getting dashboards for user",
+                extra={"user_id": str(user_id), "error": str(e)},
             )
             raise
 
-    @classmethod
-    async def create(cls, db: AsyncSession, **kwargs) -> dashboard_model.Dashboard | None:
-        """Создать новый дашборд.
+    async def create(
+        self, db: AsyncSession, **kwargs
+    ) -> dashboard_model.Dashboard | None:
+        """Create new dashboard.
 
         Args:
-            db: Асинхронная сессия базы данных.
-            **kwargs: Параметры дашборда (name, config).
+            db: Async database session.
+            **kwargs: Dashboard parameters (name, config).
 
         Returns:
-            Модель созданного дашборда с ID или None при ошибке.
-
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            Created dashboard model with ID or None on error.
         """
         try:
             dashboard_obj = dashboard_model.Dashboard(**kwargs)
@@ -113,101 +102,138 @@ class DashboardRepository:
             await db.flush()
             await db.refresh(dashboard_obj)
             logger.info(
-                "Дашборд создан: id=%s, name=%s", dashboard_obj.id, dashboard_obj.name
+                "Dashboard created",
+                extra={"id": str(dashboard_obj.id), "name": dashboard_obj.name},
             )
             return dashboard_obj
         except SQLAlchemyError as e:
-            logger.error("Ошибка при создании дашборда: %s", e)
+            logger.error("Error creating dashboard", extra={"error": str(e)})
             raise
 
-    @classmethod
     async def update(
-        cls, dashboard_id: UUID, db: AsyncSession, **kwargs
+        self, id: UUID, db: AsyncSession, **kwargs
     ) -> dashboard_model.Dashboard | None:
-        """Обновить данные дашборда.
+        """Update dashboard data.
 
         Args:
-            dashboard_id: Идентификатор дашборда (UUID).
-            db: Асинхронная сессия базы данных.
-            **kwargs: Поля для обновления.
+            id: Dashboard identifier (UUID).
+            db: Async database session.
+            **kwargs: Fields to update.
 
         Returns:
-            Обновленная модель дашборда или None, если не найден.
-
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            Updated dashboard model or None if not found.
         """
         try:
             result = await db.execute(
                 select(dashboard_model.Dashboard).where(
-                    dashboard_model.Dashboard.id == dashboard_id
+                    dashboard_model.Dashboard.id == id
                 )
             )
             dashboard_obj = result.scalar_one_or_none()
             if not dashboard_obj:
-                logger.warning("Дашборд не найден для обновления: id=%s", dashboard_id)
+                logger.warning(
+                    "Dashboard not found for update",
+                    extra={"id": str(id)},
+                )
                 return None
             for key, value in kwargs.items():
                 if hasattr(dashboard_obj, key):
                     setattr(dashboard_obj, key, value)
             await db.flush()
             await db.refresh(dashboard_obj)
-            logger.info("Дашборд обновлен: id=%s", dashboard_id)
+            logger.info("Dashboard updated", extra={"id": str(id)})
             return dashboard_obj
         except SQLAlchemyError as e:
-            logger.error("Ошибка при обновлении дашборда id=%s: %s", dashboard_id, e)
+            logger.error(
+                "Error updating dashboard",
+                extra={"id": str(id), "error": str(e)},
+            )
             raise
 
-    @classmethod
-    async def delete(cls, dashboard_id: UUID, db: AsyncSession) -> bool:
-        """Удалить дашборд.
+    async def delete(self, id: UUID, db: AsyncSession) -> bool:
+        """Delete dashboard.
 
         Args:
-            dashboard_id: Идентификатор дашборда (UUID).
-            db: Асинхронная сессия базы данных.
+            id: Dashboard identifier (UUID).
+            db: Async database session.
 
         Returns:
-            True, если удаление успешно, False - если дашборд не найден.
-
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            True if deletion successful, False if dashboard not found.
         """
         try:
             result = await db.execute(
                 select(dashboard_model.Dashboard).where(
-                    dashboard_model.Dashboard.id == dashboard_id
+                    dashboard_model.Dashboard.id == id
                 )
             )
             dashboard_obj = result.scalar_one_or_none()
             if not dashboard_obj:
-                logger.warning("Дашборд не найден для удаления: id=%s", dashboard_id)
+                logger.warning(
+                    "Dashboard not found for deletion",
+                    extra={"id": str(id)},
+                )
                 return False
             await db.delete(dashboard_obj)
             await db.flush()
-            logger.info("Дашборд удален: id=%s", dashboard_id)
+            logger.info("Dashboard deleted", extra={"id": str(id)})
             return True
         except SQLAlchemyError as e:
-            logger.error("Ошибка при удалении дашборда id=%s: %s", dashboard_id, e)
+            logger.error(
+                "Error deleting dashboard",
+                extra={"id": str(id), "error": str(e)},
+            )
             raise
 
-    @classmethod
-    async def get_all(cls, db: AsyncSession) -> list[dashboard_model.Dashboard]:
-        """Получить все дашборды.
+    async def get_all(self, db: AsyncSession) -> list[dashboard_model.Dashboard]:
+        """Get all dashboards.
 
         Args:
-            db: Асинхронная сессия базы данных.
+            db: Async database session.
 
         Returns:
-            Список всех дашбордов.
-
-        Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            List of all dashboards.
         """
         try:
             result = await db.execute(select(dashboard_model.Dashboard))
             dashboards = list(result.scalars().all())
-            logger.info("Получен список дашбордов, количество: %s", len(dashboards))
+            logger.info(
+                "Dashboards list retrieved",
+                extra={"count": len(dashboards)},
+            )
             return dashboards
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении списка дашбордов: %s", e)
+            logger.error(
+                "Error getting dashboards list",
+                extra={"error": str(e)},
+            )
+            raise
+
+    async def get_by_name(
+        self, name: str, db: AsyncSession
+    ) -> dashboard_model.Dashboard | None:
+        """Get dashboard by name.
+
+        Args:
+            name: Dashboard name.
+
+        Returns:
+            Dashboard model or None if not found.
+        """
+        try:
+            result = await db.execute(
+                select(dashboard_model.Dashboard).where(
+                    dashboard_model.Dashboard.name == name
+                )
+            )
+            dashboard = result.scalar_one_or_none()
+            if dashboard:
+                logger.info("Dashboard found by name", extra={"name": name})
+            else:
+                logger.warning("Dashboard not found by name", extra={"name": name})
+            return dashboard
+        except SQLAlchemyError as e:
+            logger.error(
+                "Error getting dashboard by name",
+                extra={"name": name, "error": str(e)},
+            )
             raise

@@ -1,19 +1,26 @@
+import type { UserRole, DashboardPermission, GraphType, FilterType, ProcessingStatus, RegistrationStatus } from './enums'
+import type { Data, Layout } from 'plotly.js'
+
+// Re-export Plotly types for convenience
+export type PlotlyData = Data
+export type PlotlyLayout = Layout
+
 export interface UserProfile {
   id: string
   email: string
-  role: 'admin' | 'editor' | 'viewer'
+  role: UserRole
 }
 
 export interface DashboardSummary {
   id: string
   name: string
   description: string | null
-  permission: 'view' | 'edit' | 'admin'
+  permission: DashboardPermission
 }
 
 export interface GraphData {
   graph_id: string
-  data: unknown // Plotly data format
+  data: Data[] // Plotly data format
 }
 
 export interface LoginRequest {
@@ -31,14 +38,14 @@ export interface Dashboard {
   id: string
   name: string
   description: string | null
-  config: unknown
+  config: DashboardConfig
 }
 
 export interface Filter {
   id: string
   name: string
-  type: 'select' | 'multiselect' | 'range' | 'date'
-  options?: unknown
+  type: FilterType
+  options?: Record<string, unknown>
 }
 
 export interface UploadResponse {
@@ -62,7 +69,7 @@ export interface DashboardDetail {
   name: string
   description: string | null
   config: DashboardConfig
-  permission: 'view' | 'edit' | 'admin'
+  permission: DashboardPermission
 }
 
 export interface DashboardConfig {
@@ -87,7 +94,7 @@ export interface GridItem {
 
 export interface ChartConfig {
   id: string
-  type: 'bar' | 'line' | 'pie' | 'table'
+  type: GraphType
   title: string
   config: Record<string, unknown>
 }
@@ -95,7 +102,7 @@ export interface ChartConfig {
 export interface GraphConfig {
   id: string
   name: string
-  type: 'bar' | 'line' | 'pie' | 'table'
+  type: GraphType
   config: Record<string, unknown>
   dimensions: string[]
   metrics: string[]
@@ -109,7 +116,7 @@ export interface FilterBinding {
 export interface FilterDetail {
   id: string
   name: string
-  type: 'select' | 'multiselect' | 'range' | 'date'
+  type: FilterType
   config: FilterConfig
 }
 
@@ -133,33 +140,14 @@ export interface AggregatedDataResponse {
 
 export interface GraphDataWithConfig {
   graph_id: string
-  type: 'bar' | 'line' | 'pie' | 'table'
+  type: GraphType
   name: string
-  data: PlotlyData
-  layout?: PlotlyLayout
-}
-
-export interface PlotlyData {
-  x?: unknown[]
-  y?: unknown[]
-  z?: unknown[]
-  labels?: unknown[]
-  values?: unknown[]
-  type?: string
-  marker?: Record<string, unknown>
-  line?: Record<string, unknown>
-  [key: string]: unknown
-}
-
-export interface PlotlyLayout {
-  title?: string
-  xaxis?: Record<string, unknown>
-  yaxis?: Record<string, unknown>
-  [key: string]: unknown
+  data: Data[]
+  layout?: Layout
 }
 
 // Upload types
-export type UploadMode = 'overwrite' | 'append'
+// UploadMode is now imported from './enums'
 
 export interface UploadResponse {
   message: string
@@ -167,7 +155,7 @@ export interface UploadResponse {
 }
 
 export interface ProcessingStatusResponse {
-  status: 'started' | 'uploaded' | 'processing' | 'success' | 'failed' | 'completed'
+  status: ProcessingStatus
   message?: string
   started_at?: string
   finished_at?: string
@@ -175,7 +163,7 @@ export interface ProcessingStatusResponse {
 
 export interface ProcessingResult {
   rows_processed: number
-  status: string
+  status: ProcessingStatus
   message?: string
 }
 
@@ -183,19 +171,19 @@ export interface ProcessingResult {
 export interface AdminUser {
   id: string
   email: string
-  role: 'admin' | 'editor' | 'viewer'
+  role: UserRole
   is_active: boolean
   created_at: string
 }
 
 export interface UpdateUserRoleRequest {
-  role: 'admin' | 'editor' | 'viewer'
+  role: UserRole
 }
 
 export interface RegistrationRequestItem {
   id: string
   email: string
-  status: 'pending' | 'approved' | 'rejected'
+  status: RegistrationStatus
   requested_by_ip?: string
   reviewed_by?: string
   reviewed_at?: string
@@ -224,19 +212,19 @@ export interface UpdateDashboardRequest {
 export interface DashboardAccess {
   user_id: string
   dashboard_id: string
-  permission: 'view' | 'edit' | 'admin'
+  permission: DashboardPermission
 }
 
 export interface GrantAccessRequest {
   user_id: string
-  permission: 'view' | 'edit' | 'admin'
+  permission: DashboardPermission
 }
 
 export interface ProcessingLog {
   id: string
   dashboard_id: string | null
   dashboard_name?: string
-  status: 'started' | 'uploaded' | 'processing' | 'success' | 'failed' | 'completed'
+  status: ProcessingStatus
   message?: string
   started_at: string
   finished_at?: string

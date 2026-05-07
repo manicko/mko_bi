@@ -64,7 +64,7 @@ class ProcessingLog(Base):
     )
 
     # Связь с дашбордом
-    dashboard: Mapped["Dashboard"] = relationship(  # type: ignore[name-defined]
+    dashboard: Mapped["Dashboard"] = relationship(
         "Dashboard",
         back_populates="processing_logs",
         lazy="selectin",

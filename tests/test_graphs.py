@@ -1,13 +1,12 @@
 """Tests for graphs API."""
 
-
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mkobi.core.security import create_access_token, hash_password
 from mkobi.db.models import graphs as graph_model
 from mkobi.db.models.dashboard import Dashboard
 from mkobi.db.repositories.user_repo import UserRepository
-from mkobi.core.security import hash_password, create_access_token
 
 
 class TestGraphsAPI:
@@ -18,7 +17,8 @@ class TestGraphsAPI:
     ) -> None:
         """Test that creating graph requires admin role."""
         # Create a viewer user (not admin)
-        user = await UserRepository.create(
+        user_repo = UserRepository()
+        user = await user_repo.create(
             db=async_db_session,
             email="viewer@example.com",
             password_hash=hash_password("TestPass123!"),
@@ -54,7 +54,8 @@ class TestGraphsAPI:
     ) -> None:
         """Test getting graphs for a dashboard."""
         # Create admin user
-        user = await UserRepository.create(
+        user_repo = UserRepository()
+        user = await user_repo.create(
             db=async_db_session,
             email="admin@example.com",
             password_hash=hash_password("TestPass123!"),

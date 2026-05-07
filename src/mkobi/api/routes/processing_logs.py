@@ -1,7 +1,7 @@
-"""Маршруты для работы с логами обработки.
+"""Routes for processing log operations.
 
-Предоставляет endpoints для просмотра логов обработки данных.
-Соответствует требованиям SPEC.md п.14.4 и задаче 011_processing_logs.md.
+Provides endpoints for viewing data processing logs.
+Complies with SPEC.md section 14.4 and task 011_processing_logs.md.
 """
 
 from datetime import datetime
@@ -21,45 +21,45 @@ router = APIRouter(prefix="/admin/logs", tags=["admin", "processing_logs"])
 @router.get(
     "/",
     response_model=list[ProcessingLogRead],
-    summary="Получить список логов обработки",
-    description="Получает список логов обработки с фильтрацией и пагинацией. Только для администраторов.",
+    summary="Get processing logs",
+    description="Returns list of processing logs with filtering and pagination. Admin only.",
 )
 async def get_logs_endpoint(
     dashboard_id: UUID | None = Query(
         None,
-        description="Фильтр по ID дашборда",
+        description="Filter by dashboard ID",
     ),
     status_filter: ProcessingStatus | None = Query(
         None,
-        description="Фильтр по статусу (STARTED, UPLOADED, PROCESSING, SUCCESS, FAILED)",
+        description="Filter by status (STARTED, UPLOADED, PROCESSING, SUCCESS, FAILED)",
     ),
     date_from: datetime | None = Query(
         None,
-        description="Фильтр по начальной дате (started_at)",
+        description="Filter by start date (started_at)",
     ),
     date_to: datetime | None = Query(
         None,
-        description="Фильтр по конечной дате (started_at)",
+        description="Filter by end date (started_at)",
     ),
     skip: int = Query(
         0,
         ge=0,
-        description="Количество пропускаемых записей для пагинации",
+        description="Number of records to skip for pagination",
     ),
     limit: int = Query(
         100,
         ge=1,
         le=1000,
-        description="Максимальное количество записей (макс. 1000)",
+        description="Maximum number of records (max. 1000)",
     ),
     _current_user=Depends(require_admin_role),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> list[ProcessingLogRead]:
-    """Получает список логов обработки с фильтрацией.
+    """Get list of processing logs with filtering.
 
-    Доступно только для администраторов.
-    Поддерживает фильтрацию по dashboard_id, status, date range.
-    Сортировка по started_at DESC.
+    Admin-only operation.
+    Supports filtering by dashboard_id, status, date range.
+    Sorted by started_at DESC.
     """
     try:
         filters = ProcessingLogFilter(
@@ -77,24 +77,24 @@ async def get_logs_endpoint(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ошибка при получении списка логов: {str(e)}",
+            detail=f"Error getting log list: {str(e)}",
         ) from e
 
 
 @router.get(
     "/{log_id}",
     response_model=ProcessingLogRead,
-    summary="Получить лог по ID",
-    description="Получает детали лога обработки по его ID. Только для администраторов.",
+    summary="Get log by ID",
+    description="Returns processing log details by ID. Admin only.",
 )
 async def get_log_endpoint(
     log_id: UUID,
     _current_user=Depends(require_admin_role),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> ProcessingLogRead:
-    """Получает лог обработки по его ID.
+    """Get processing log by ID.
 
-    Доступно только для администраторов.
+    Admin-only operation.
     """
     try:
         from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
@@ -104,7 +104,7 @@ async def get_log_endpoint(
         if log is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Лог обработки не найден",
+                detail="Processing log not found",
             )
         return ProcessingLogRead.model_validate(log)
     except HTTPException:
@@ -112,5 +112,5 @@ async def get_log_endpoint(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Ошибка при получении лога: {str(e)}",
+            detail=f"Error getting log: {str(e)}",
         ) from e

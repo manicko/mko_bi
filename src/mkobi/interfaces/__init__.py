@@ -14,6 +14,7 @@ from mkobi.interfaces.repository_interfaces import (
     IFilterRepository,
     IProcessingConfigRepository,
     IProcessingLogRepository,
+    IGraphRepository,
 )
 
 from mkobi.interfaces.service_interfaces import (
@@ -36,6 +37,7 @@ __all__ = [
     "IFilterRepository",
     "IProcessingConfigRepository",
     "IProcessingLogRepository",
+    "IGraphRepository",
     # Service interfaces
     "IAuthService",
     "IUserService",

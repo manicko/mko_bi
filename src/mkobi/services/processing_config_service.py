@@ -1,228 +1,206 @@
-"""Сервис управления настройками обработки.
+"""Processing configuration service.
 
-Предоставляет бизнес-логику для операций с настройками обработки данных.
-Все операции выполняются асинхронно через ProcessingConfigRepository.
+Provides business logic for operations with processing settings.
+
+All operations are performed asynchronously through ProcessingConfigRepository.
 """
 
 import logging
+from typing import cast
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.db.repositories.processing_config_repo import ProcessingConfigRepository
+from mkobi.db.session import get_session
 from mkobi.interfaces.service_interfaces import IProcessingConfigService
-from mkobi.models.processing_configs import (
-    ProcessingConfigRead,
-)
+from mkobi.models.processing_configs import ProcessingConfigRead
 from mkobi.models.types import ProcessingSettingsDict
 
 logger = logging.getLogger(__name__)
 
 
 class ProcessingConfigService(IProcessingConfigService):
-    """Сервис управления настройками обработки.
+    """Processing configuration management service."""
 
-    Реализует интерфейс IProcessingConfigService и предоставляет
-    методы для создания, получения, обновления и удаления настроек.
-
-    Attributes:
-        db: Асинхронная сессия базы данных.
-    """
-
-    def __init__(self, db: AsyncSession) -> None:
-        """Инициализация сервиса.
+    def __init__(self, db: AsyncSession | None = None) -> None:
+        """Initialize service.
 
         Args:
-            db: Асинхронная сессия базы данных.
+            db: Optional async database session.
         """
-        self.db = db
+        self._db = db
+
+    async def _validate_settings(self, settings: ProcessingSettingsDict) -> None:
+        """Validate processing settings structure.
+
+        Args:
+            settings: Processing settings.
+
+        Raises:
+            ValueError: If settings structure is incorrect.
+        """
+        if not isinstance(settings, dict):
+            raise ValueError("Settings must be a dictionary")
+
+        if not settings:
+            raise ValueError("Settings cannot be empty")
+
+        required_fields = ["loader", "date_column", "timezone"]
+        missing_fields = [field for field in required_fields if field not in settings]
+        if missing_fields:
+            raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
+
+        for field in required_fields:
+            if not isinstance(settings.get(field), str) or not settings[field].strip():
+                raise ValueError(f"Field '{field}' must be a non-empty string")
 
     async def get_by_dashboard_id(
-        self,
-        dashboard_id: UUID,
+        self, dashboard_id: UUID, db: AsyncSession | None = None
     ) -> ProcessingConfigRead | None:
-        """Получает настройки обработки по ID дашборда.
+        """Get processing config by dashboard ID.
 
         Args:
-            dashboard_id: Идентификатор дашборда.
+            dashboard_id: Dashboard identifier.
+            db: Optional database session.
 
         Returns:
-            ProcessingConfigRead или None, если не найдены.
+            ProcessingConfigRead or None if not found.
         """
-        logger.info("Запрос настроек: dashboard_id=%s", dashboard_id)
-        config_obj = await ProcessingConfigRepository.get(dashboard_id, self.db)
+        logger.info("Getting config: dashboard_id=%s", dashboard_id)
+
+        if db is None:
+            db = self._db
+
+        if db is None:
+            async with get_session() as db:
+                return await self.get_by_dashboard_id(dashboard_id, db)
+
+        config_obj = await ProcessingConfigRepository.get(dashboard_id, db)
         if config_obj is None:
-            logger.warning("Настройки не найдены: dashboard_id=%s", dashboard_id)
+            logger.warning("Config not found: dashboard_id=%s", dashboard_id)
             return None
 
-        logger.info("Настройки предоставлены: dashboard_id=%s", dashboard_id)
-        return ProcessingConfigRead.model_validate(config_obj.__dict__)
+        logger.info("Config retrieved: dashboard_id=%s", dashboard_id)
+        return cast(
+            ProcessingConfigRead, ProcessingConfigRead.model_validate(config_obj)
+        )
 
     async def upsert(
         self,
         dashboard_id: UUID,
         settings: ProcessingSettingsDict,
+        db: AsyncSession | None = None,
     ) -> ProcessingConfigRead:
-        """Создает или обновляет настройки обработки.
+        """Create or update processing config.
 
         Args:
-            dashboard_id: Идентификатор дашборда.
-            settings: Настройки обработки.
+            dashboard_id: Dashboard identifier.
+            settings: Processing settings.
+            db: Optional database session.
 
         Returns:
-            ProcessingConfigRead: Модель настроек.
+            ProcessingConfigRead: Config model.
 
         Raises:
-            ValueError: Если структура настроек некорректна.
+            ValueError: If settings structure is incorrect.
         """
-        logger.info("Upsert настроек: dashboard_id=%s", dashboard_id)
-        _validate_settings(settings)
+        logger.info("Upsert config: dashboard_id=%s", dashboard_id)
+        self._validate_settings(settings)
 
-        existing = await ProcessingConfigRepository.get(dashboard_id, self.db)
+        if db is None:
+            db = self._db
+
+        if db is None:
+            async with get_session() as db:
+                return await self.upsert(dashboard_id, settings, db)
+
+        existing = await ProcessingConfigRepository.get(dashboard_id, db)
         if existing:
             updated = await ProcessingConfigRepository.update(
                 dashboard_id=dashboard_id,
-                db=self.db,
+                db=db,
                 settings=settings,
             )
             if updated is None:
-                raise ValueError(f"Не удалось обновить настройки для дашборда {dashboard_id}")
-            logger.info("Настройки обновлены: dashboard_id=%s", dashboard_id)
-            return ProcessingConfigRead.model_validate(updated.__dict__)
+                raise ValueError(
+                    f"Failed to update config for dashboard {dashboard_id}"
+                )
+            logger.info("Config updated: dashboard_id=%s", dashboard_id)
+            return cast(
+                ProcessingConfigRead, ProcessingConfigRead.model_validate(updated)
+            )
         else:
             created = await ProcessingConfigRepository.create(
-                db=self.db,
+                db=db,
                 dashboard_id=dashboard_id,
                 settings=settings,
             )
             if created is None:
-                raise ValueError(f"Не удалось создать настройки для дашборда {dashboard_id}")
-            logger.info("Настройки созданы: dashboard_id=%s", dashboard_id)
-            return ProcessingConfigRead.model_validate(created.__dict__)
+                raise ValueError(
+                    f"Failed to create config for dashboard {dashboard_id}"
+                )
+            logger.info("Config created: dashboard_id=%s", dashboard_id)
+            return cast(
+                ProcessingConfigRead, ProcessingConfigRead.model_validate(created)
+            )
 
-    async def delete(
-        self,
-        dashboard_id: UUID,
-    ) -> bool:
-        """Удаляет настройки обработки.
+    async def delete(self, dashboard_id: UUID, db: AsyncSession | None = None) -> bool:
+        """Delete processing config.
 
         Args:
-            dashboard_id: Идентификатор дашборда.
+            dashboard_id: Dashboard identifier.
+            db: Optional database session.
 
         Returns:
-            True, если удаление успешно.
+            True if deletion successful.
         """
-        logger.info("Удаление настроек: dashboard_id=%s", dashboard_id)
-        result: bool = await ProcessingConfigRepository.delete(dashboard_id, self.db)
+        logger.info("Deleting config: dashboard_id=%s", dashboard_id)
+
+        if db is None:
+            db = self._db
+
+        if db is None:
+            async with get_session() as db:
+                return await self.delete(dashboard_id, db)
+
+        result: bool = await ProcessingConfigRepository.delete(dashboard_id, db)
         if result:
-            logger.info("Настройки удалены: dashboard_id=%s", dashboard_id)
+            logger.info("Config deleted: dashboard_id=%s", dashboard_id)
         else:
-            logger.warning("Настройки не найдены для удаления: dashboard_id=%s", dashboard_id)
+            logger.warning(
+                "Config not found for deletion: dashboard_id=%s", dashboard_id
+            )
         return result
 
-    # ========== Методы интерфейса IProcessingConfigService ==========
+    # ========= IProcessingConfigService interface methods =========
 
     async def create_processing_config(
-        self, dashboard_id: UUID, settings: ProcessingSettingsDict
+        self,
+        dashboard_id: UUID,
+        settings: ProcessingSettingsDict,
+        db: AsyncSession | None = None,
     ) -> ProcessingConfigRead:
-        """Создает настройки обработки для дашборда."""
-        return await self.upsert(dashboard_id, settings)
+        """Create processing config for dashboard."""
+        return await self.upsert(dashboard_id, settings, db)
 
     async def get_processing_config_by_dashboard(
-        self, dashboard_id: UUID
+        self, dashboard_id: UUID, db: AsyncSession | None = None
     ) -> ProcessingConfigRead | None:
-        """Получает настройки обработки по ID дашборда."""
-        return await self.get_by_dashboard_id(dashboard_id)
+        """Get processing config by dashboard ID."""
+        return await self.get_by_dashboard_id(dashboard_id, db)
 
     async def update_processing_config(
-        self, dashboard_id: UUID, settings: ProcessingSettingsDict
+        self,
+        dashboard_id: UUID,
+        settings: ProcessingSettingsDict,
+        db: AsyncSession | None = None,
     ) -> ProcessingConfigRead | None:
-        """Обновляет настройки обработки."""
-        return await self.upsert(dashboard_id, settings)
+        """Update processing config."""
+        return await self.upsert(dashboard_id, settings, db)
 
-    async def delete_processing_config(self, dashboard_id: UUID) -> bool:
-        """Удаляет настройки обработки."""
-        return await self.delete(dashboard_id)
-
-
-# ========== Функции для обратной совместимости ==========
-
-async def get_by_dashboard_id(
-    dashboard_id: UUID,
-    db: AsyncSession,
-) -> ProcessingConfigRead | None:
-    """Получает настройки обработки по ID дашборда.
-
-    Args:
-        dashboard_id: Идентификатор дашборда.
-        db: Асинхронная сессия БД.
-
-    Returns:
-        ProcessingConfigRead или None, если не найдены.
-    """
-    service = ProcessingConfigService(db)
-    return await service.get_by_dashboard_id(dashboard_id)
-
-
-async def upsert(
-    dashboard_id: UUID,
-    settings: ProcessingSettingsDict,
-    db: AsyncSession,
-) -> ProcessingConfigRead:
-    """Создает или обновляет настройки обработки.
-
-    Args:
-        dashboard_id: Идентификатор дашборда.
-        settings: Настройки обработки.
-        db: Асинхронная сессия БД.
-
-    Returns:
-        ProcessingConfigRead: Модель настроек.
-
-    Raises:
-        ValueError: Если структура настроек некорректна.
-    """
-    service = ProcessingConfigService(db)
-    return await service.upsert(dashboard_id, settings)
-
-
-async def delete(
-    dashboard_id: UUID,
-    db: AsyncSession,
-) -> bool:
-    """Удаляет настройки обработки.
-
-    Args:
-        dashboard_id: Идентификатор дашборда.
-        db: Асинхронная сессия БД.
-
-    Returns:
-        True, если удаление успешно.
-    """
-    service = ProcessingConfigService(db)
-    return await service.delete(dashboard_id)
-
-
-def _validate_settings(settings: ProcessingSettingsDict) -> None:
-    """Проверяет валидность структуры настроек.
-
-    Args:
-        settings: Настройки обработки.
-
-    Raises:
-        ValueError: Если структура настроек некорректна.
-    """
-    if not isinstance(settings, dict):
-        raise ValueError("Настройки должны быть словарем")
-
-    if not settings:
-        raise ValueError("Настройки не могут быть пустыми")
-
-    required_fields = ["loader", "date_column", "timezone"]
-    missing_fields = [field for field in required_fields if field not in settings]
-    if missing_fields:
-        raise ValueError(f"Отсутствуют обязательные поля: {', '.join(missing_fields)}")
-
-    for field in required_fields:
-        if not isinstance(settings.get(field), str) or not settings[field].strip():
-            raise ValueError(f"Поле '{field}' должно быть непустой строкой")
+    async def delete_processing_config(
+        self, dashboard_id: UUID, db: AsyncSession | None = None
+    ) -> bool:
+        """Delete processing config."""
+        return await self.delete(dashboard_id, db)

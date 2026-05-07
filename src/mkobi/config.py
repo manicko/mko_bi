@@ -1,15 +1,17 @@
+import logging
+import os
 from pathlib import Path
 from typing import Any
 
-import logging
 import redis
+import redis.asyncio as aioredis
+import yaml
+from pydantic import BaseModel, Field, PostgresDsn
+from pydantic.fields import FieldInfo
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
 from pydantic_settings.sources import PydanticBaseSettingsSource
-from pydantic import BaseModel, PostgresDsn, Field
 
 from mkobi.models.enums import EnvironmentEnum, FileExtensionEnum, MimeTypeEnum
-
-from pydantic.fields import FieldInfo
 
 logger = logging.getLogger(__name__)
 
@@ -27,8 +29,6 @@ class SecretsFileSource(PydanticBaseSettingsSource):
 
     def __call__(self) -> dict[str, Any]:
         """Read secrets from file-based environment variables."""
-        import os
-
         result: dict[str, Any] = {}
 
         # Look for environment variables ending with _FILE
@@ -366,10 +366,9 @@ class Settings(BaseSettings):
         """
         yaml_file_path = Path(__file__).parent / "settings" / "app.yaml"
         if yaml_file_path.exists():
-            import yaml
-
             with open(yaml_file_path) as f:
-                return yaml.safe_load(f)  # type: ignore[no-any-return]
+                result: Any = yaml.safe_load(f)
+                return result if isinstance(result, dict) else {}
         return {}
 
 
@@ -393,15 +392,30 @@ def get_config() -> Settings:
 
 
 def get_redis_client() -> "redis.Redis":
-    """Возвращает клиент Redis на основе настроек.
+    """Возвращает синхронный клиент Redis на основе настроек.
 
     Returns:
-        redis.Redis: Клиент Redis.
+        redis.Redis: Синхронный клиент Redis.
     """
-    import redis
-
     config = get_config()
     return redis.Redis(
+        host=config.redis.host,
+        port=config.redis.port,
+        db=config.redis.db,
+        password=config.redis.password,
+        decode_responses=True,
+    )
+
+
+def get_async_redis_client() -> "redis.asyncio.Redis":
+    """Возвращает асинхронный клиент Redis на основе настроек.
+
+    Returns:
+        redis.asyncio.Redis: Асинхронный клиент Redis.
+    """
+
+    config = get_config()
+    return aioredis.Redis(
         host=config.redis.host,
         port=config.redis.port,
         db=config.redis.db,

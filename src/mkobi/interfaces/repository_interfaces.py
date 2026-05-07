@@ -1,7 +1,7 @@
-"""Абстрактные интерфейсы для репозиториев.
+"""Abstract interfaces for repositories.
 
-Определяет контракты для всех репозиториев в системе.
-Используются для внедрения зависимостей и разрыва циклических импортов.
+Defines contracts for all repositories in the system.
+Used for dependency injection and breaking cyclic imports.
 """
 
 import abc
@@ -12,59 +12,63 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class IRepository(abc.ABC):
-    """Базовый интерфейс репозитория."""
+    """Base repository interface."""
 
     @abc.abstractmethod
     async def get(self, id: UUID, db: AsyncSession) -> Any | None:
-        """Получить объект по ID."""
+        """Get object by ID."""
         pass
 
     @abc.abstractmethod
     async def get_all(self, db: AsyncSession) -> list[Any]:
-        """Получить все объекты."""
+        """Get all objects."""
         pass
 
     @abc.abstractmethod
     async def create(self, db: AsyncSession, **kwargs) -> Any | None:
-        """Создать новый объект."""
+        """Create new object."""
         pass
 
     @abc.abstractmethod
     async def update(self, id: UUID, db: AsyncSession, **kwargs) -> Any | None:
-        """Обновить объект."""
+        """Update object."""
         pass
 
     @abc.abstractmethod
     async def delete(self, id: UUID, db: AsyncSession) -> bool:
-        """Удалить объект."""
+        """Delete object."""
         pass
 
 
 class IUserRepository(IRepository):
-    """Интерфейс репозитория пользователей."""
+    """User repository interface."""
 
     @abc.abstractmethod
     async def get_by_email(self, email: str, db: AsyncSession) -> Any | None:
-        """Получить пользователя по email."""
+        """Get user by email."""
         pass
 
 
 class IDashboardRepository(IRepository):
-    """Интерфейс репозитория дашбордов."""
+    """Dashboard repository interface."""
 
     @abc.abstractmethod
-    async def get_by_name(self, name: str, db: AsyncSession) -> Any | None:
-        """Получить дашборд по имени."""
+    async def get_by_user(
+        self, user_id: UUID, db: AsyncSession
+    ) -> list[Any]:
+        """Get dashboards by user (dashboards available to user)."""
         pass
 
     @abc.abstractmethod
-    async def get_by_user(self, user_id: UUID, db: AsyncSession) -> list[Any]:
-        """Получить дашборды по пользователю (доступные пользователю)."""
+    async def get_by_name(
+        self, name: str, db: AsyncSession
+    ) -> Any | None:
+        """Get dashboard by name."""
         pass
 
 
 class IAccessRepository(abc.ABC):
-    """Интерфейс репозитория прав доступа."""
+    """Access repository interface."""
 
     @abc.abstractmethod
     async def grant_access(
@@ -74,105 +78,140 @@ class IAccessRepository(abc.ABC):
         dashboard_id: UUID,
         permission: str = "view",
     ) -> Any | None:
-        """Предоставить пользователю доступ к дашборду."""
+        """Grant user access to dashboard."""
         pass
 
     @abc.abstractmethod
     async def revoke_access(
         self, user_id: UUID, dashboard_id: UUID, db: AsyncSession
     ) -> bool:
-        """Отозвать доступ пользователя к дашборду."""
+        """Revoke user access to dashboard."""
         pass
 
     @abc.abstractmethod
     async def check_access(
         self, user_id: UUID, dashboard_id: UUID, db: AsyncSession
     ) -> str | None:
-        """Проверить уровень доступа пользователя к дашборду."""
+        """Check user access level to dashboard."""
         pass
 
     @abc.abstractmethod
     async def get_user_dashboards(
         self, user_id: UUID, db: AsyncSession
     ) -> list[Any]:
-        """Получить все дашборды, доступные пользователю."""
+        """Get all dashboards available to user."""
         pass
 
     @abc.abstractmethod
     async def get_all(self, db: AsyncSession) -> list[Any]:
-        """Получить все права доступа."""
+        """Get all access records."""
         pass
 
 
 class IAggregatedDataRepository(IRepository):
-    """Интерфейс репозитория агрегированных данных."""
+    """Aggregated data repository interface."""
 
     @abc.abstractmethod
     async def get_by_dashboard_id(
         self, dashboard_id: UUID, db: AsyncSession
     ) -> list[Any]:
-        """Получить агрегированные данные по ID дашборда."""
+        """Get aggregated data by dashboard ID."""
         pass
 
     @abc.abstractmethod
     async def get_by_graph_id(
         self, graph_id: UUID, db: AsyncSession
     ) -> list[Any]:
-        """Получить агрегированные данные по ID графика."""
+        """Get aggregated data by graph ID."""
         pass
 
 
 class IFilterRepository(IRepository):
-    """Интерфейс репозитория фильтров."""
+    """Filter repository interface."""
 
     @abc.abstractmethod
-    async def get_by_name(self, name: str, db: AsyncSession) -> Any | None:
-        """Получить фильтр по имени."""
+    async def get_by_name(
+        self, name: str, db: AsyncSession
+    ) -> Any | None:
+        """Get filter by name."""
         pass
 
 
 class IGraphRepository(IRepository):
-    """Интерфейс репозитория графиков."""
+    """Graph repository interface."""
 
     @abc.abstractmethod
     async def get_by_dashboard_id(
         self, dashboard_id: UUID, db: AsyncSession
     ) -> list[Any]:
-        """Получить графики по ID дашборда."""
-        pass
-
-    @abc.abstractmethod
-    async def get_by_name_and_dashboard(
-        self, name: str, dashboard_id: UUID, db: AsyncSession
-    ) -> Any | None:
-        """Получить график по имени и ID дашборда."""
+        """Get graphs by dashboard ID."""
         pass
 
 
 class IProcessingConfigRepository(IRepository):
-    """Интерфейс репозитория настроек обработки."""
+    """Processing config repository interface."""
+
+    # Inherits get(id, db), get_all(db), create(db, **kwargs), update(id, db, **kwargs), delete(id, db)
+    # Processing configs are retrieved via get(id) where id is dashboard_id
+
+
+class IProcessingLogRepository(abc.ABC):
+    """Processing log repository interface."""
 
     @abc.abstractmethod
-    async def get_by_dashboard_id(
-        self, dashboard_id: UUID, db: AsyncSession
+    async def create_log(
+        self,
+        dashboard_id: UUID | None,
+        status: Any,
+        message: str | None,
+        db: AsyncSession,
+    ) -> Any:
+        """Create new processing log."""
+        pass
+
+    @abc.abstractmethod
+    async def update_status(
+        self,
+        log_id: UUID,
+        status: Any,
+        message: str | None,
+        db: AsyncSession,
+    ) -> None:
+        """Update processing log status."""
+        pass
+
+    @abc.abstractmethod
+    async def get_by_dashboard(
+        self,
+        dashboard_id: UUID | None,
+        db: AsyncSession,
+    ) -> list[Any]:
+        """Get all processing logs for dashboard."""
+        pass
+
+    @abc.abstractmethod
+    async def get_filtered(
+        self,
+        filters: Any,
+        db: AsyncSession,
+    ) -> list[Any]:
+        """Get processing logs with filtering."""
+        pass
+
+    @abc.abstractmethod
+    async def get_latest_by_dashboard(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession,
     ) -> Any | None:
-        """Получить настройки обработки по ID дашборда."""
-        pass
-
-
-class IProcessingLogRepository(IRepository):
-    """Интерфейс репозитория логов обработки."""
-
-    @abc.abstractmethod
-    async def get_by_dashboard_id(
-        self, dashboard_id: UUID, db: AsyncSession
-    ) -> list[Any]:
-        """Получить логи обработки по ID дашборда."""
+        """Get latest processing log for dashboard."""
         pass
 
     @abc.abstractmethod
-    async def get_by_status(
-        self, status: str, db: AsyncSession
-    ) -> list[Any]:
-        """Получить логи обработки по статусу."""
+    async def get_by_id(
+        self,
+        log_id: UUID,
+        db: AsyncSession,
+    ) -> Any | None:
+        """Get log by ID."""
         pass

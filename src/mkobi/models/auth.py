@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, EmailStr
 from uuid import UUID
 
-from mkobi.models.user_roles import UserRoleEnum
+from mkobi.models.enums import UserRole
 
 
 class LoginRequest(BaseModel):
@@ -60,7 +60,7 @@ class RegisterRequest(BaseModel):
 
     email: EmailStr
     password: str
-    role: UserRoleEnum = UserRoleEnum.VIEWER
+    role: UserRole = UserRole.VIEWER
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -68,7 +68,7 @@ class RegisterRequest(BaseModel):
             "example": {
                 "email": "user@example.com",
                 "password": "secure_password123",
-                "role": UserRoleEnum.VIEWER,
+                "role": UserRole.VIEWER,
             }
         },
     )
