@@ -14,28 +14,33 @@ from sqlalchemy.ext.asyncio import AsyncSession
 class IRepository(abc.ABC):
     """Base repository interface."""
 
+    @classmethod
     @abc.abstractmethod
-    async def get(self, id: UUID, db: AsyncSession) -> Any | None:
+    async def get(cls, id: UUID, db: AsyncSession) -> Any | None:
         """Get object by ID."""
         pass
 
+    @classmethod
     @abc.abstractmethod
-    async def get_all(self, db: AsyncSession) -> list[Any]:
+    async def get_all(cls, db: AsyncSession) -> list[Any]:
         """Get all objects."""
         pass
 
+    @classmethod
     @abc.abstractmethod
-    async def create(self, db: AsyncSession, **kwargs) -> Any | None:
+    async def create(cls, db: AsyncSession, **kwargs) -> Any | None:
         """Create new object."""
         pass
 
+    @classmethod
     @abc.abstractmethod
-    async def update(self, id: UUID, db: AsyncSession, **kwargs) -> Any | None:
+    async def update(cls, id: UUID, db: AsyncSession, **kwargs) -> Any | None:
         """Update object."""
         pass
 
+    @classmethod
     @abc.abstractmethod
-    async def delete(self, id: UUID, db: AsyncSession) -> bool:
+    async def delete(cls, id: UUID, db: AsyncSession) -> bool:
         """Delete object."""
         pass
 
@@ -43,8 +48,9 @@ class IRepository(abc.ABC):
 class IUserRepository(IRepository):
     """User repository interface."""
 
+    @classmethod
     @abc.abstractmethod
-    async def get_by_email(self, email: str, db: AsyncSession) -> Any | None:
+    async def get_by_email(cls, email: str, db: AsyncSession) -> Any | None:
         """Get user by email."""
         pass
 
@@ -52,17 +58,15 @@ class IUserRepository(IRepository):
 class IDashboardRepository(IRepository):
     """Dashboard repository interface."""
 
+    @classmethod
     @abc.abstractmethod
-    async def get_by_user(
-        self, user_id: UUID, db: AsyncSession
-    ) -> list[Any]:
+    async def get_by_user(cls, user_id: UUID, db: AsyncSession) -> list[Any]:
         """Get dashboards by user (dashboards available to user)."""
         pass
 
+    @classmethod
     @abc.abstractmethod
-    async def get_by_name(
-        self, name: str, db: AsyncSession
-    ) -> Any | None:
+    async def get_by_name(cls, name: str, db: AsyncSession) -> Any | None:
         """Get dashboard by name."""
         pass
 
@@ -70,9 +74,10 @@ class IDashboardRepository(IRepository):
 class IAccessRepository(abc.ABC):
     """Access repository interface."""
 
+    @classmethod
     @abc.abstractmethod
     async def grant_access(
-        self,
+        cls,
         db: AsyncSession,
         user_id: UUID,
         dashboard_id: UUID,
@@ -81,29 +86,31 @@ class IAccessRepository(abc.ABC):
         """Grant user access to dashboard."""
         pass
 
+    @classmethod
     @abc.abstractmethod
     async def revoke_access(
-        self, user_id: UUID, dashboard_id: UUID, db: AsyncSession
+        cls, user_id: UUID, dashboard_id: UUID, db: AsyncSession
     ) -> bool:
         """Revoke user access to dashboard."""
         pass
 
+    @classmethod
     @abc.abstractmethod
     async def check_access(
-        self, user_id: UUID, dashboard_id: UUID, db: AsyncSession
+        cls, user_id: UUID, dashboard_id: UUID, db: AsyncSession
     ) -> str | None:
         """Check user access level to dashboard."""
         pass
 
+    @classmethod
     @abc.abstractmethod
-    async def get_user_dashboards(
-        self, user_id: UUID, db: AsyncSession
-    ) -> list[Any]:
+    async def get_user_dashboards(cls, user_id: UUID, db: AsyncSession) -> list[Any]:
         """Get all dashboards available to user."""
         pass
 
+    @classmethod
     @abc.abstractmethod
-    async def get_all(self, db: AsyncSession) -> list[Any]:
+    async def get_all(cls, db: AsyncSession) -> list[Any]:
         """Get all access records."""
         pass
 
@@ -111,17 +118,17 @@ class IAccessRepository(abc.ABC):
 class IAggregatedDataRepository(IRepository):
     """Aggregated data repository interface."""
 
+    @classmethod
     @abc.abstractmethod
     async def get_by_dashboard_id(
-        self, dashboard_id: UUID, db: AsyncSession
+        cls, dashboard_id: UUID, db: AsyncSession
     ) -> list[Any]:
         """Get aggregated data by dashboard ID."""
         pass
 
+    @classmethod
     @abc.abstractmethod
-    async def get_by_graph_id(
-        self, graph_id: UUID, db: AsyncSession
-    ) -> list[Any]:
+    async def get_by_graph_id(cls, graph_id: UUID, db: AsyncSession) -> list[Any]:
         """Get aggregated data by graph ID."""
         pass
 
@@ -129,10 +136,9 @@ class IAggregatedDataRepository(IRepository):
 class IFilterRepository(IRepository):
     """Filter repository interface."""
 
+    @classmethod
     @abc.abstractmethod
-    async def get_by_name(
-        self, name: str, db: AsyncSession
-    ) -> Any | None:
+    async def get_by_name(cls, name: str, db: AsyncSession) -> Any | None:
         """Get filter by name."""
         pass
 
@@ -140,9 +146,10 @@ class IFilterRepository(IRepository):
 class IGraphRepository(IRepository):
     """Graph repository interface."""
 
+    @classmethod
     @abc.abstractmethod
     async def get_by_dashboard_id(
-        self, dashboard_id: UUID, db: AsyncSession
+        cls, dashboard_id: UUID, db: AsyncSession
     ) -> list[Any]:
         """Get graphs by dashboard ID."""
         pass
@@ -158,9 +165,10 @@ class IProcessingConfigRepository(IRepository):
 class IProcessingLogRepository(abc.ABC):
     """Processing log repository interface."""
 
+    @classmethod
     @abc.abstractmethod
     async def create_log(
-        self,
+        cls,
         dashboard_id: UUID | None,
         status: Any,
         message: str | None,
@@ -169,9 +177,10 @@ class IProcessingLogRepository(abc.ABC):
         """Create new processing log."""
         pass
 
+    @classmethod
     @abc.abstractmethod
     async def update_status(
-        self,
+        cls,
         log_id: UUID,
         status: Any,
         message: str | None,
@@ -180,36 +189,40 @@ class IProcessingLogRepository(abc.ABC):
         """Update processing log status."""
         pass
 
+    @classmethod
     @abc.abstractmethod
     async def get_by_dashboard(
-        self,
+        cls,
         dashboard_id: UUID | None,
         db: AsyncSession,
     ) -> list[Any]:
         """Get all processing logs for dashboard."""
         pass
 
+    @classmethod
     @abc.abstractmethod
     async def get_filtered(
-        self,
+        cls,
         filters: Any,
         db: AsyncSession,
     ) -> list[Any]:
         """Get processing logs with filtering."""
         pass
 
+    @classmethod
     @abc.abstractmethod
     async def get_latest_by_dashboard(
-        self,
+        cls,
         dashboard_id: UUID,
         db: AsyncSession,
     ) -> Any | None:
         """Get latest processing log for dashboard."""
         pass
 
+    @classmethod
     @abc.abstractmethod
     async def get_by_id(
-        self,
+        cls,
         log_id: UUID,
         db: AsyncSession,
     ) -> Any | None:

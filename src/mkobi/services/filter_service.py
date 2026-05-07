@@ -15,7 +15,6 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mkobi.db.models import filters as filter_model
 from mkobi.db.repositories.filter_repo import FilterRepository
 from mkobi.interfaces.service_interfaces import IFilterService
 from mkobi.models.filters import FilterRead

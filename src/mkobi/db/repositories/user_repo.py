@@ -26,7 +26,8 @@ class UserRepository(IUserRepository):
     Implements IUserRepository interface.
     """
 
-    async def get(self, id: UUID, db: AsyncSession) -> user_model.User | None:
+    @classmethod
+    async def get(cls, id: UUID, db: AsyncSession) -> user_model.User | None:
         """Get user by ID.
 
         Args:
@@ -50,7 +51,8 @@ class UserRepository(IUserRepository):
             logger.error("Error getting user id=%s: %s", id, e)
             raise
 
-    async def get_by_email(self, email: str, db: AsyncSession) -> user_model.User | None:
+    @classmethod
+    async def get_by_email(cls, email: str, db: AsyncSession) -> user_model.User | None:
         """Get user by email.
 
         Args:
@@ -74,7 +76,8 @@ class UserRepository(IUserRepository):
             logger.error("Error getting user email=%s: %s", email, e)
             raise
 
-    async def get_all(self, db: AsyncSession) -> list[user_model.User]:
+    @classmethod
+    async def get_all(cls, db: AsyncSession) -> list[user_model.User]:
         """Get all users.
 
         Args:
@@ -92,7 +95,8 @@ class UserRepository(IUserRepository):
             logger.error("Error getting users list: %s", e)
             raise
 
-    async def create(self, db: AsyncSession, **kwargs) -> user_model.User | None:
+    @classmethod
+    async def create(cls, db: AsyncSession, **kwargs) -> user_model.User | None:
         """Create new user.
 
         Args:
@@ -113,8 +117,9 @@ class UserRepository(IUserRepository):
             logger.error("Error creating user: %s", e)
             raise
 
+    @classmethod
     async def update(
-        self, id: UUID, db: AsyncSession, **kwargs
+        cls, id: UUID, db: AsyncSession, **kwargs
     ) -> user_model.User | None:
         """Update user data.
 
@@ -145,7 +150,8 @@ class UserRepository(IUserRepository):
             logger.error("Error updating user id=%s: %s", id, e)
             raise
 
-    async def delete(self, id: UUID, db: AsyncSession) -> bool:
+    @classmethod
+    async def delete(cls, id: UUID, db: AsyncSession) -> bool:
         """Delete user.
 
         Args:

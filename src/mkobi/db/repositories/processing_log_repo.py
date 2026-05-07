@@ -1,7 +1,7 @@
 """Repository for processing log operations.
 
 Provides methods for working with data processing logs.
-Inherits from BaseRepository to get basic CRUD operations.
+Implements IProcessingLogRepository interface.
 """
 
 import logging
@@ -29,8 +29,9 @@ class ProcessingLogRepository(IProcessingLogRepository):
     Implements IProcessingLogRepository interface.
     """
 
+    @classmethod
     async def create_log(
-        self,
+        cls,
         dashboard_id: UUID | None,
         status: ProcessingStatus,
         message: str | None,
@@ -69,8 +70,9 @@ class ProcessingLogRepository(IProcessingLogRepository):
             logger.error("Error creating log: %s", e)
             raise
 
+    @classmethod
     async def update_status(
-        self,
+        cls,
         log_id: UUID,
         status: ProcessingStatus,
         message: str | None,
@@ -109,8 +111,9 @@ class ProcessingLogRepository(IProcessingLogRepository):
             logger.error("Error updating log status id=%s: %s", log_id, e)
             raise
 
+    @classmethod
     async def get_by_dashboard(
-        self,
+        cls,
         dashboard_id: UUID | None,
         db: AsyncSession,
     ) -> list[ProcessingLogRead]:
@@ -146,8 +149,9 @@ class ProcessingLogRepository(IProcessingLogRepository):
             logger.error("Error getting logs dashboard_id=%s: %s", dashboard_id, e)
             raise
 
+    @classmethod
     async def get_filtered(
-        self,
+        cls,
         filters: ProcessingLogFilter,
         db: AsyncSession,
     ) -> list[ProcessingLogRead]:
@@ -203,8 +207,9 @@ class ProcessingLogRepository(IProcessingLogRepository):
             logger.error("Error getting filtered logs: %s", e)
             raise
 
+    @classmethod
     async def get_latest_by_dashboard(
-        self,
+        cls,
         dashboard_id: UUID,
         db: AsyncSession,
     ) -> ProcessingLogRead | None:
@@ -243,8 +248,9 @@ class ProcessingLogRepository(IProcessingLogRepository):
             )
             raise
 
+    @classmethod
     async def get_by_id(
-        self,
+        cls,
         log_id: UUID,
         db: AsyncSession,
     ) -> ProcessingLogRead | None:

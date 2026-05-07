@@ -11,8 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.core.logging_config import get_logger
-from mkobi.db.models import access as access_model
-from mkobi.db.models import dashboard as dashboard_model
+from mkobi.db.models import access as access_model, dashboard as dashboard_model
 from mkobi.interfaces.repository_interfaces import IDashboardRepository
 
 logger = get_logger(__name__)
@@ -27,7 +26,8 @@ class DashboardRepository(IDashboardRepository):
     Implements IDashboardRepository interface.
     """
 
-    async def get(self, id: UUID, db: AsyncSession) -> dashboard_model.Dashboard | None:
+    @classmethod
+    async def get(cls, id: UUID, db: AsyncSession) -> dashboard_model.Dashboard | None:
         """Get dashboard by ID.
 
         Args:
@@ -54,8 +54,9 @@ class DashboardRepository(IDashboardRepository):
             )
             raise
 
+    @classmethod
     async def get_by_user(
-        self, user_id: UUID, db: AsyncSession
+        cls, user_id: UUID, db: AsyncSession
     ) -> list[dashboard_model.Dashboard]:
         """Get all dashboards available to user.
 
@@ -84,8 +85,9 @@ class DashboardRepository(IDashboardRepository):
             )
             raise
 
+    @classmethod
     async def create(
-        self, db: AsyncSession, **kwargs
+        cls, db: AsyncSession, **kwargs
     ) -> dashboard_model.Dashboard | None:
         """Create new dashboard.
 
@@ -103,15 +105,19 @@ class DashboardRepository(IDashboardRepository):
             await db.refresh(dashboard_obj)
             logger.info(
                 "Dashboard created",
-                extra={"id": str(dashboard_obj.id), "dashboard_name": dashboard_obj.name},
+                extra={
+                    "id": str(dashboard_obj.id),
+                    "dashboard_name": dashboard_obj.name,
+                },
             )
             return dashboard_obj
         except SQLAlchemyError as e:
             logger.error("Error creating dashboard", extra={"error": str(e)})
             raise
 
+    @classmethod
     async def update(
-        self, id: UUID, db: AsyncSession, **kwargs
+        cls, id: UUID, db: AsyncSession, **kwargs
     ) -> dashboard_model.Dashboard | None:
         """Update dashboard data.
 
@@ -150,7 +156,8 @@ class DashboardRepository(IDashboardRepository):
             )
             raise
 
-    async def delete(self, id: UUID, db: AsyncSession) -> bool:
+    @classmethod
+    async def delete(cls, id: UUID, db: AsyncSession) -> bool:
         """Delete dashboard.
 
         Args:
@@ -184,7 +191,8 @@ class DashboardRepository(IDashboardRepository):
             )
             raise
 
-    async def get_all(self, db: AsyncSession) -> list[dashboard_model.Dashboard]:
+    @classmethod
+    async def get_all(cls, db: AsyncSession) -> list[dashboard_model.Dashboard]:
         """Get all dashboards.
 
         Args:
@@ -208,8 +216,9 @@ class DashboardRepository(IDashboardRepository):
             )
             raise
 
+    @classmethod
     async def get_by_name(
-        self, name: str, db: AsyncSession
+        cls, name: str, db: AsyncSession
     ) -> dashboard_model.Dashboard | None:
         """Get dashboard by name.
 
@@ -229,7 +238,9 @@ class DashboardRepository(IDashboardRepository):
             if dashboard:
                 logger.info("Dashboard found by name", extra={"dashboard_name": name})
             else:
-                logger.warning("Dashboard not found by name", extra={"dashboard_name": name})
+                logger.warning(
+                    "Dashboard not found by name", extra={"dashboard_name": name}
+                )
             return dashboard
         except SQLAlchemyError as e:
             logger.error(

@@ -26,9 +26,8 @@ class GraphRepository(IGraphRepository):
     Implements IGraphRepository interface.
     """
 
-    async def get(
-        self, id: UUID, db: AsyncSession
-    ) -> graph_model.Graph | None:
+    @classmethod
+    async def get(cls, id: UUID, db: AsyncSession) -> graph_model.Graph | None:
         """Get graph by ID.
 
         Args:
@@ -40,9 +39,7 @@ class GraphRepository(IGraphRepository):
         """
         try:
             result = await db.execute(
-                select(graph_model.Graph).where(
-                    graph_model.Graph.id == id
-                )
+                select(graph_model.Graph).where(graph_model.Graph.id == id)
             )
             graph = result.scalar_one_or_none()
             if graph:
@@ -54,8 +51,9 @@ class GraphRepository(IGraphRepository):
             logger.error("Error getting graph id=%s: %s", id, e)
             raise
 
+    @classmethod
     async def get_by_dashboard_id(
-        self, dashboard_id: UUID, db: AsyncSession
+        cls, dashboard_id: UUID, db: AsyncSession
     ) -> list[graph_model.Graph]:
         """Get all graphs for dashboard.
 
@@ -68,8 +66,9 @@ class GraphRepository(IGraphRepository):
         """
         try:
             result = await db.execute(
-                select(graph_model.Graph)
-                .where(graph_model.Graph.dashboard_id == dashboard_id)
+                select(graph_model.Graph).where(
+                    graph_model.Graph.dashboard_id == dashboard_id
+                )
             )
             graphs = list(result.scalars().all())
             logger.info(
@@ -79,12 +78,11 @@ class GraphRepository(IGraphRepository):
             )
             return graphs
         except SQLAlchemyError as e:
-            logger.error(
-                "Error getting graphs dashboard_id=%s: %s", dashboard_id, e
-            )
+            logger.error("Error getting graphs dashboard_id=%s: %s", dashboard_id, e)
             raise
 
-    async def create(self, db: AsyncSession, **kwargs) -> graph_model.Graph | None:
+    @classmethod
+    async def create(cls, db: AsyncSession, **kwargs) -> graph_model.Graph | None:
         """Create new graph.
 
         Args:
@@ -99,16 +97,15 @@ class GraphRepository(IGraphRepository):
             db.add(graph_obj)
             await db.flush()
             await db.refresh(graph_obj)
-            logger.info(
-                "Graph created: id=%s, name=%s", graph_obj.id, graph_obj.name
-            )
+            logger.info("Graph created: id=%s, name=%s", graph_obj.id, graph_obj.name)
             return graph_obj
         except SQLAlchemyError as e:
             logger.error("Error creating graph: %s", e)
             raise
 
+    @classmethod
     async def update(
-        self, id: UUID, db: AsyncSession, **kwargs
+        cls, id: UUID, db: AsyncSession, **kwargs
     ) -> graph_model.Graph | None:
         """Update graph data.
 
@@ -122,9 +119,7 @@ class GraphRepository(IGraphRepository):
         """
         try:
             result = await db.execute(
-                select(graph_model.Graph).where(
-                    graph_model.Graph.id == id
-                )
+                select(graph_model.Graph).where(graph_model.Graph.id == id)
             )
             graph_obj = result.scalar_one_or_none()
             if not graph_obj:
@@ -141,7 +136,8 @@ class GraphRepository(IGraphRepository):
             logger.error("Error updating graph id=%s: %s", id, e)
             raise
 
-    async def delete(self, id: UUID, db: AsyncSession) -> bool:
+    @classmethod
+    async def delete(cls, id: UUID, db: AsyncSession) -> bool:
         """Delete graph.
 
         Args:
@@ -153,9 +149,7 @@ class GraphRepository(IGraphRepository):
         """
         try:
             result = await db.execute(
-                select(graph_model.Graph).where(
-                    graph_model.Graph.id == id
-                )
+                select(graph_model.Graph).where(graph_model.Graph.id == id)
             )
             graph_obj = result.scalar_one_or_none()
             if not graph_obj:
@@ -169,7 +163,8 @@ class GraphRepository(IGraphRepository):
             logger.error("Error deleting graph id=%s: %s", id, e)
             raise
 
-    async def get_all(self, db: AsyncSession) -> list[graph_model.Graph]:
+    @classmethod
+    async def get_all(cls, db: AsyncSession) -> list[graph_model.Graph]:
         """Get all graphs.
 
         Args:

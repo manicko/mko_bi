@@ -77,7 +77,7 @@ async def create_filter_endpoint(
         result = await create_filter(
             name=filter_data.name,
             type_=filter_data.type,
-            config=filter_data.config.model_dump(),
+            config=filter_data.config,
             db=db,
         )
         return result
@@ -264,7 +264,7 @@ async def update_filter_endpoint(
             filter_id=filter_id,
             name=filter_update.name,
             type_=filter_update.type,
-            config=filter_update.config.model_dump() if filter_update.config else None,
+            config=filter_update.config if filter_update.config else None,
             db=db,
         )
         if updated is None:

@@ -38,8 +38,8 @@ Medium - unawaited coroutines can lead to unexpected behavior
 
 ### STATUS
 
-- [ ] Issue identified
-- [ ] Fix applied
-- [ ] Warnings resolved
+- [x] Issue identified
+- [x] Fix applied
+- [x] Warnings resolved
 
 ---
