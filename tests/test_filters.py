@@ -33,7 +33,7 @@ class TestFiltersAPI:
         viewer_client.headers["Authorization"] = f"Bearer {token}"
 
         response = await viewer_client.post(
-            "/filters",
+            "/filters/",
             json={
                 "name": "test_filter",
                 "type": "select",
@@ -47,7 +47,7 @@ class TestFiltersAPI:
     ) -> None:
         """Test creating filter as admin (success)."""
         response = await authenticated_client.post(
-            "/filters",
+            "/filters/",
             json={
                 "name": "admin_filter",
                 "type": "select",
@@ -73,7 +73,7 @@ class TestFiltersAPI:
         )
         await async_db_session.commit()
 
-        response = await authenticated_client.get("/filters")
+        response = await authenticated_client.get("/filters/")
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert isinstance(data, list)

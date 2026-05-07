@@ -51,11 +51,13 @@ class DashboardAccess(Base):
     user: Mapped["User"] = relationship(
         "User",
         back_populates="accesses",
+        overlaps="dashboards",
     )
 
     dashboard: Mapped["Dashboard"] = relationship(
         "Dashboard",
         back_populates="accesses",
+        overlaps="users",
     )
 
     __table_args__ = (

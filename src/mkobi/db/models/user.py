@@ -83,7 +83,7 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
         lazy="selectin",
-        overlaps="dashboards",
+        overlaps="users",
     )
 
     # Связь с дашбордами через таблицу доступа

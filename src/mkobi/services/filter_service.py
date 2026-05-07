@@ -1,299 +1,383 @@
-"""Сервис управления глобальными фильтрами.
+"""Filter management service.
 
-Предоставляет бизнес-логику для CRUD операций с фильтрами.
-Все операции выполняются через FilterRepository с валидацией,
-проверкой прав и логированием.
+Provides business logic for CRUD operations with filters.
 
-Реализует интерфейс IFilterService для внедрения зависимостей.
+All operations are performed through FilterRepository with validation,
+permission checking, and logging.
+
+Implements IFilterService interface for dependency injection.
 """
-
-from typing import Any
 
 import logging
 import re
+from typing import Any
+from uuid import UUID
 
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.db.models import filters as filter_model
 from mkobi.db.repositories.filter_repo import FilterRepository
-from mkobi.db.session import get_session
 from mkobi.interfaces.service_interfaces import IFilterService
 from mkobi.models.filters import FilterRead
 from mkobi.models.enums import FilterType
+from mkobi.models.types import FilterConfigDict
 
 logger = logging.getLogger(__name__)
 
 
 class FilterService(IFilterService):
-    """Класс сервиса для управления фильтрами."""
+    """Service class for managing filters."""
 
-    def __init__(self, db: Session | None = None):
-        """Инициализация сервиса.
+    def __init__(self) -> None:
+        """Initialize service."""
+        logger.debug("FilterService initialized")
 
-        Args:
-            db: Сессия базы данных (опционально).
-        """
-        self._db = db
-
-    def _validate_filter_type(self, filter_type: str) -> None:
-        """Проверяет, что тип фильтра является допустимым."""
-        try:
-            FilterType(filter_type)
-        except ValueError:
-            logger.error(
-                "Недопустимый тип фильтра: '%s'. Допустимые: %s",
-                filter_type,
-                sorted([e.value for e in FilterType]),
-            )
-            raise ValueError(
-                f"Недопустимый тип фильтра: '{filter_type}'. "
-                f"Допустимые значения: {', '.join(sorted([e.value for e in FilterType]))}"
-            ) from None
-
-    def _validate_filter_name(self, name: str) -> None:
-        """Проверяет валидность имени фильтра."""
-        if not name or not name.strip():
-            logger.error("Имя фильтра не может быть пустым")
-            raise ValueError("Имя фильтра не может быть пустым")
-
-        if len(name) > 255:
-            logger.error("Имя фильтра слишком длинное: %s (длина: %s)", name, len(name))
-            raise ValueError("Имя фильтра не должно превышать 255 символов")
-
-        if not re.match(r'^[a-zA-Zа-яА-Я0-9\s\-_.]+$', name):
-            logger.error("Некорректные символы в имени фильтра: %s", name)
-            raise ValueError(
-                "Имя фильтра может содержать только буквы, цифры, "
-                "пробелы, дефисы, подчеркивания и точки"
-            )
-
-    def _validate_filter_config(self, config: dict[str, Any]) -> None:
-        """Проверяет валидность конфигурации фильтра."""
-        if not isinstance(config, dict):
-            logger.error("Конфигурация фильтра должна быть словарем")
-            raise ValueError("Конфигурация фильтра должна быть словарем")
-
-        if not config:
-            logger.error("Конфигурация фильтра не может быть пустой")
-            raise ValueError("Конфигурация фильтра не может быть пустой")
-
-        if 'field' not in config:
-            logger.error("В конфигурации фильтра отсутствует обязательное поле 'field'")
-            raise ValueError(
-                "Конфигурация фильтра должна содержать поле 'field' "
-                "с указанием поля для фильтрации"
-            )
-
-    def _validate_filter_exists(
-        self, filter_id: int, db: Session
-    ) -> filter_model.Filter | None:
-        """Проверяет существование фильтра."""
-        filter_obj = FilterRepository.get(filter_id, db)
-        if filter_obj is None:
-            logger.warning("Фильтр не найден: id=%s", filter_id)
-        return filter_obj
-
-    def _check_filter_name_uniqueness(
-        self, name: str, db: Session, exclude_id: int | None = None
-    ) -> None:
-        """Проверяет уникальность имени фильтра."""
-        existing = FilterRepository.get_by_name(name, db)
-        if existing and (exclude_id is None or existing.id != exclude_id):
-            logger.warning("Фильтр с таким именем уже существует: name=%s", name)
-            raise ValueError(f"Фильтр с именем '{name}' уже существует")
-
-    def create_filter(
+    async def create_filter(
         self,
         name: str,
         type_: str,
-        config: dict[str, Any],
-        db: Session | None = None,
+        config: FilterConfigDict,
+        db: AsyncSession | None = None,
     ) -> FilterRead:
-        """Создает новый глобальный фильтр."""
-        actual_db = db or self._db
-        if actual_db is None:
-            with get_session() as session:
-                return self._create_filter_with_session(name, type_, config, session)
-        return self._create_filter_with_session(name, type_, config, actual_db)
+        """Create new global filter.
 
-    def _create_filter_with_session(
-        self, name: str, type_: str, config: dict[str, Any], db: Session
-    ) -> FilterRead:
-        """Внутренний метод создания фильтра."""
-        self._validate_filter_name(name)
+        Args:
+            name: Filter name.
+            type_: Filter type.
+            config: Filter configuration.
+            db: Async database session.
+
+        Returns:
+            FilterRead: Created filter model.
+
+        Raises:
+            ValueError: If validation fails.
+        """
+        if db is None:
+            raise ValueError("db session is required for create_filter")
+
         self._validate_filter_type(type_)
+        self._validate_filter_name(name)
         self._validate_filter_config(config)
-        self._check_filter_name_uniqueness(name, db)
+
+        # Check name uniqueness
+        existing = await FilterRepository.get_by_name(name, db)
+        if existing:
+            logger.warning("Filter with name already exists: name=%s", name)
+            raise ValueError(f"Filter with name '{name}' already exists")
 
         try:
-            filter_obj = FilterRepository.create(
+            filter_obj = await FilterRepository.create(
                 db=db,
                 name=name,
                 type=type_,
                 config=config,
             )
+
+            if filter_obj is None:
+                raise ValueError("Failed to create filter")
+
             logger.info(
-                "Фильтр успешно создан: id=%s, name=%s, type=%s",
+                "Filter created: id=%s, name=%s, type=%s",
                 filter_obj.id,
                 filter_obj.name,
                 filter_obj.type,
             )
+
             return FilterRead.model_validate(filter_obj)
+
         except ValueError:
             raise
         except Exception as e:
-            logger.error(
-                "Ошибка при создании фильтра name=%s, type=%s: %s",
-                name,
-                type_,
-                e,
-            )
+            logger.error("Error creating filter name=%s: %s", name, e)
             raise
 
-    def get_filter(
-        self, filter_id: int, db: Session | None = None
-    ) -> FilterRead | None:
-        """Получает фильтр по ID."""
-        actual_db = db or self._db
-        if actual_db is None:
-            with get_session() as session:
-                return self._get_filter_with_session(filter_id, session)
-        return self._get_filter_with_session(filter_id, actual_db)
-
-    def _get_filter_with_session(
-        self, filter_id: int, db: Session
-    ) -> FilterRead | None:
-        """Внутренний метод получения фильтра."""
-        filter_obj = FilterRepository.get(filter_id, db)
-        if filter_obj is None:
-            return None
-        return FilterRead.model_validate(filter_obj)
-
-    def get_filters(self, db: Session | None = None) -> list[FilterRead]:
-        """Получает все фильтры."""
-        actual_db = db or self._db
-        if actual_db is None:
-            with get_session() as session:
-                return self._get_filters_with_session(session)
-        return self._get_filters_with_session(actual_db)
-
-    def _get_filters_with_session(self, db: Session) -> list[FilterRead]:
-        """Внутренний метод получения всех фильтров."""
-        filters = FilterRepository.get_all(db)
-        return [FilterRead.model_validate(f) for f in filters]
-
-    def update_filter(
+    async def get_filter_by_id(
         self,
-        filter_id: int,
+        filter_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> FilterRead | None:
+        """Get filter by ID.
+
+        Args:
+            filter_id: Filter identifier.
+            db: Async database session.
+
+        Returns:
+            FilterRead or None if not found.
+        """
+        if db is None:
+            raise ValueError("db session is required for get_filter_by_id")
+
+        try:
+            filter_obj = await FilterRepository.get(filter_id, db)
+            if filter_obj is None:
+                logger.warning("Filter not found: id=%s", filter_id)
+                return None
+            return FilterRead.model_validate(filter_obj)
+        except Exception as e:
+            logger.error("Error getting filter id=%s: %s", filter_id, e)
+            raise
+
+    async def get_filter_by_name(
+        self,
+        name: str,
+        db: AsyncSession | None = None,
+    ) -> FilterRead | None:
+        """Get filter by name.
+
+        Args:
+            name: Filter name.
+            db: Async database session.
+
+        Returns:
+            FilterRead or None if not found.
+        """
+        if db is None:
+            raise ValueError("db session is required for get_filter_by_name")
+
+        try:
+            filter_obj = await FilterRepository.get_by_name(name, db)
+            if filter_obj is None:
+                logger.warning("Filter not found by name: name=%s", name)
+                return None
+            return FilterRead.model_validate(filter_obj)
+        except Exception as e:
+            logger.error("Error getting filter by name=%s: %s", name, e)
+            raise
+
+    async def get_all_filters(
+        self,
+        db: AsyncSession | None = None,
+    ) -> list[FilterRead]:
+        """Get all filters.
+
+        Args:
+            db: Async database session.
+
+        Returns:
+            list[FilterRead]: List of all filters.
+        """
+        if db is None:
+            raise ValueError("db session is required for get_all_filters")
+
+        try:
+            filters = await FilterRepository.get_all(db)
+            return [FilterRead.model_validate(f) for f in filters]
+        except Exception as e:
+            logger.error("Error getting all filters: %s", e)
+            raise
+
+    async def update_filter(
+        self,
+        filter_id: UUID,
         name: str | None = None,
         type_: str | None = None,
-        config: dict[str, Any] | None = None,
-        db: Session | None = None,
+        config: FilterConfigDict | None = None,
+        db: AsyncSession | None = None,
     ) -> FilterRead | None:
-        """Обновляет фильтр."""
-        actual_db = db or self._db
-        if actual_db is None:
-            with get_session() as session:
-                return self._update_filter_with_session(
-                    filter_id, name, type_, config, session
-                )
-        return self._update_filter_with_session(
-            filter_id, name, type_, config, actual_db
-        )
+        """Update filter.
 
-    def _update_filter_with_session(
-        self,
-        filter_id: int,
-        name: str | None,
-        type_: str | None,
-        config: dict[str, Any] | None,
-        db: Session,
-    ) -> FilterRead | None:
-        """Внутренний метод обновления фильтра."""
-        filter_obj = self._validate_filter_exists(filter_id, db)
-        if filter_obj is None:
+        Args:
+            filter_id: Filter identifier.
+            name: New name (optional).
+            type_: New type (optional).
+            config: New config (optional).
+            db: Async database session.
+
+        Returns:
+            FilterRead or None if not found.
+        """
+        if db is None:
+            raise ValueError("db session is required for update_filter")
+
+        # Check if filter exists
+        existing = await FilterRepository.get(filter_id, db)
+        if existing is None:
+            logger.warning("Filter not found for update: id=%s", filter_id)
             return None
 
+        # Validate inputs
         if name is not None:
             self._validate_filter_name(name)
-            self._check_filter_name_uniqueness(name, db, exclude_id=filter_id)
-            FilterRepository.update(filter_id, {"name": name}, db)
+            # Check name uniqueness (excluding current filter)
+            name_check = await FilterRepository.get_by_name(name, db)
+            if name_check and name_check.id != filter_id:
+                raise ValueError(f"Filter with name '{name}' already exists")
 
         if type_ is not None:
             self._validate_filter_type(type_)
-            FilterRepository.update(filter_id, {"type": type_}, db)
 
         if config is not None:
             self._validate_filter_config(config)
-            FilterRepository.update(filter_id, {"config": config}, db)
 
-        db.commit()
+        # Build update data
+        update_data: dict[str, Any] = {}
+        if name is not None:
+            update_data["name"] = name
+        if type_ is not None:
+            update_data["type"] = type_
+        if config is not None:
+            update_data["config"] = config
 
-        updated = FilterRepository.get(filter_id, db)
-        if updated:
+        if not update_data:
+            logger.warning("No data for filter update: id=%s", filter_id)
+            return FilterRead.model_validate(existing)
+
+        try:
+            updated = await FilterRepository.update(filter_id, db, **update_data)
+            if updated is None:
+                return None
+
+            await db.commit()
+
+            logger.info("Filter updated: id=%s", filter_id)
             return FilterRead.model_validate(updated)
-        return None
 
-    def delete_filter(
-        self, filter_id: int, db: Session | None = None
+        except Exception as e:
+            await db.rollback()
+            logger.error("Error updating filter id=%s: %s", filter_id, e)
+            raise
+
+    async def delete_filter(
+        self,
+        filter_id: UUID,
+        db: AsyncSession | None = None,
     ) -> bool:
-        """Удаляет фильтр."""
-        actual_db = db or self._db
-        if actual_db is None:
-            with get_session() as session:
-                return self._delete_filter_with_session(filter_id, session)
-        return self._delete_filter_with_session(filter_id, actual_db)
+        """Delete filter.
 
-    def _delete_filter_with_session(self, filter_id: int, db: Session) -> bool:
-        """Внутренний метод удаления фильтра."""
-        result = FilterRepository.delete(filter_id, db)
-        db.commit()
-        if result:
-            logger.info("Фильтр успешно удален: id=%s", filter_id)
-        else:
-            logger.warning("Фильтр не найден для удаления: id=%s", filter_id)
-        return bool(result)
+        Args:
+            filter_id: Filter identifier.
+            db: Async database session.
+
+        Returns:
+            bool: True if deletion successful.
+        """
+        if db is None:
+            raise ValueError("db session is required for delete_filter")
+
+        try:
+            result = await FilterRepository.delete(filter_id, db)
+            await db.commit()
+
+            if result:
+                logger.info("Filter deleted: id=%s", filter_id)
+            else:
+                logger.warning("Filter not found for deletion: id=%s", filter_id)
+
+            return bool(result)
+
+        except Exception as e:
+            await db.rollback()
+            logger.error("Error deleting filter id=%s: %s", filter_id, e)
+            raise
+
+    def _validate_filter_type(self, filter_type: str) -> None:
+        """Validate filter type."""
+        try:
+            FilterType(filter_type)
+        except ValueError:
+            logger.error(
+                "Invalid filter type: '%s'. Allowed: %s",
+                filter_type,
+                sorted([e.value for e in FilterType]),
+            )
+            raise ValueError(
+                f"Invalid filter type: '{filter_type}'. "
+                f"Allowed values: {', '.join(sorted([e.value for e in FilterType]))}"
+            ) from None
+
+    def _validate_filter_name(self, name: str) -> None:
+        """Validate filter name."""
+        if not name or not name.strip():
+            logger.error("Filter name cannot be empty")
+            raise ValueError("Filter name cannot be empty")
+
+        if len(name) > 255:
+            logger.error("Filter name too long: %s (length: %s)", name, len(name))
+            raise ValueError("Filter name must not exceed 255 characters")
+
+        if not re.match(r'^[a-zA-Zа-яА-Я0-9\s\-_.]+$', name):
+            logger.error("Invalid characters in filter name: %s", name)
+            raise ValueError(
+                "Filter name can only contain letters, digits, "
+                "spaces, hyphens, underscores and dots"
+            )
+
+    def _validate_filter_config(self, config: dict[str, Any]) -> None:
+        """Validate filter config."""
+        if not isinstance(config, dict):
+            logger.error("Filter config must be a dictionary")
+            raise ValueError("Filter config must be a dictionary")
+
+        if not config:
+            logger.error("Filter config cannot be empty")
+            raise ValueError("Filter config cannot be empty")
+
+        if 'field' not in config:
+            logger.error("Filter config missing required field 'field'")
+            raise ValueError(
+                "Filter config must contain 'field' "
+                "specifying the field to filter"
+            )
 
 
 # --- Backward compatibility functions ---
 
-def create_filter(
-    name: str, type_: str, config: dict[str, Any], db: Session | None = None
+
+async def create_filter(
+    name: str,
+    type_: str,
+    config: dict[str, Any],
+    db: AsyncSession | None = None,
 ) -> FilterRead:
     """Backward compatibility wrapper."""
     service = FilterService()
-    return service.create_filter(name, type_, config, db)
+    return await service.create_filter(name, type_, config, db)
 
 
-def get_filter(
-    filter_id: int, db: Session | None = None
+async def get_filter_by_id(
+    filter_id: UUID,
+    db: AsyncSession | None = None,
 ) -> FilterRead | None:
     """Backward compatibility wrapper."""
     service = FilterService()
-    return service.get_filter(filter_id, db)
+    return await service.get_filter_by_id(filter_id, db)
 
 
-def get_filters(db: Session | None = None) -> list[FilterRead]:
+async def get_filter_by_name(
+    name: str,
+    db: AsyncSession | None = None,
+) -> FilterRead | None:
     """Backward compatibility wrapper."""
     service = FilterService()
-    return service.get_filters(db)
+    return await service.get_filter_by_name(name, db)
 
 
-def update_filter(
-    filter_id: int,
+async def get_all_filters(
+    db: AsyncSession | None = None,
+) -> list[FilterRead]:
+    """Backward compatibility wrapper."""
+    service = FilterService()
+    return await service.get_all_filters(db)
+
+
+async def update_filter(
+    filter_id: UUID,
     name: str | None = None,
     type_: str | None = None,
     config: dict[str, Any] | None = None,
-    db: Session | None = None,
+    db: AsyncSession | None = None,
 ) -> FilterRead | None:
     """Backward compatibility wrapper."""
     service = FilterService()
-    return service.update_filter(filter_id, name, type_, config, db)
+    return await service.update_filter(filter_id, name, type_, config, db)
 
 
-def delete_filter(
-    filter_id: int, db: Session | None = None
+async def delete_filter(
+    filter_id: UUID,
+    db: AsyncSession | None = None,
 ) -> bool:
     """Backward compatibility wrapper."""
     service = FilterService()
-    return service.delete_filter(filter_id, db)
+    return await service.delete_filter(filter_id, db)

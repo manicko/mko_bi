@@ -1,0 +1,14 @@
+ImportError while loading conftest 'c:\py_dev\mkobi\tests\conftest.py'.
+tests\conftest.py:35: in <module>
+    from mkobi.main import app
+src\mkobi\main.py:6: in <module>
+    from mkobi.app import create_app
+src\mkobi\app.py:19: in <module>
+    from mkobi.api import routes
+src\mkobi\api\__init__.py:3: in <module>
+    from mkobi.api import routes
+src\mkobi\api\routes\__init__.py:3: in <module>
+    from mkobi.api.routes import (
+src\mkobi\api\routes\filters.py:25: in <module>
+    from mkobi.services.filter_service import (
+E   ImportError: cannot import name 'get_filter' from 'mkobi.services.filter_service' (c:\py_dev\mkobi\src\mkobi\services\filter_service.py)

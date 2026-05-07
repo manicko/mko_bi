@@ -9,7 +9,7 @@ import logging
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
     get_db,
@@ -24,15 +24,15 @@ from mkobi.models.filters import (
 )
 from mkobi.services.filter_service import (
     create_filter,
-    get_filter,
-    get_filters,
+    get_filter_by_id,
+    get_all_filters,
     update_filter,
     delete_filter,
 )
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/filters", tags=["filters"])
+router = APIRouter(tags=["filters"])
 
 
 @router.post(
@@ -46,7 +46,7 @@ router = APIRouter(prefix="/filters", tags=["filters"])
 async def create_filter_endpoint(
     filter_data: FilterCreate,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> FilterRead:
     """Create a new global filter.
 
@@ -74,9 +74,9 @@ async def create_filter_endpoint(
     )
 
     try:
-        result = create_filter(
+        result = await create_filter(
             name=filter_data.name,
-            type=filter_data.type,
+            type_=filter_data.type,
             config=filter_data.config.model_dump(),
             db=db,
         )
@@ -118,7 +118,7 @@ async def create_filter_endpoint(
 )
 async def get_filters_endpoint(
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> list[FilterRead]:
     """Get list of all global filters.
 
@@ -140,7 +140,7 @@ async def get_filters_endpoint(
     )
 
     try:
-        filters: list[FilterRead] = get_filters(db=db)
+        filters: list[FilterRead] = await get_all_filters(db=db)
         logger.info(
             "Retrieved filters for user id=%s: %s",
             current_user.id,
@@ -170,7 +170,7 @@ async def get_filters_endpoint(
 async def get_filter_endpoint(
     filter_id: UUID,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> FilterRead:
     """Get filter by ID.
 
@@ -195,7 +195,7 @@ async def get_filter_endpoint(
     )
 
     try:
-        filter_obj = get_filter(filter_id=filter_id, db=db)
+        filter_obj = await get_filter_by_id(filter_id=filter_id, db=db)
         if filter_obj is None:
             logger.warning(
                 "Filter not found: filter_id=%s, user_id=%s",
@@ -233,7 +233,7 @@ async def update_filter_endpoint(
     filter_id: UUID,
     filter_update: FilterUpdate,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> FilterRead:
     """Update filter data.
 
@@ -260,10 +260,10 @@ async def update_filter_endpoint(
     )
 
     try:
-        updated = update_filter(
+        updated = await update_filter(
             filter_id=filter_id,
             name=filter_update.name,
-            type=filter_update.type,
+            type_=filter_update.type,
             config=filter_update.config.model_dump() if filter_update.config else None,
             db=db,
         )
@@ -311,7 +311,7 @@ async def update_filter_endpoint(
 async def delete_filter_endpoint(
     filter_id: UUID,
     current_user: CurrentUser,
-    db: Session = Depends(get_db),
+    db: AsyncSession = Depends(get_db),
 ) -> None:
     """Delete filter.
 
@@ -333,7 +333,7 @@ async def delete_filter_endpoint(
     )
 
     try:
-        result = delete_filter(filter_id=filter_id, db=db)
+        result = await delete_filter(filter_id=filter_id, db=db)
         if not result:
             logger.warning(
                 "Filter not found for deletion: filter_id=%s",
