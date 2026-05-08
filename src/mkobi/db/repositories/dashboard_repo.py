@@ -5,6 +5,7 @@ All methods use contextual session management and handle errors.
 """
 
 from uuid import UUID
+from typing import cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -46,7 +47,7 @@ class DashboardRepository(IDashboardRepository):
                 logger.info("Dashboard retrieved", extra={"id": str(id)})
             else:
                 logger.warning("Dashboard not found", extra={"id": str(id)})
-            return dashboard
+            return cast(dashboard_model.Dashboard | None, dashboard)
         except SQLAlchemyError as e:
             logger.error(
                 "Error getting dashboard", extra={"id": str(id), "error": str(e)}
@@ -75,7 +76,7 @@ class DashboardRepository(IDashboardRepository):
                 "Dashboards retrieved for user",
                 extra={"user_id": str(user_id), "count": len(dashboards)},
             )
-            return dashboards
+            return cast(list[dashboard_model.Dashboard], dashboards)
         except SQLAlchemyError as e:
             logger.error(
                 "Error getting dashboards for user",
@@ -107,7 +108,7 @@ class DashboardRepository(IDashboardRepository):
                     "dashboard_name": dashboard_obj.name,
                 },
             )
-            return dashboard_obj
+            return cast(dashboard_model.Dashboard | None, dashboard_obj)
         except SQLAlchemyError as e:
             logger.error("Error creating dashboard", extra={"error": str(e)})
             raise
@@ -144,7 +145,7 @@ class DashboardRepository(IDashboardRepository):
             await db.flush()
             await db.refresh(dashboard_obj)
             logger.info("Dashboard updated", extra={"id": str(id)})
-            return dashboard_obj
+            return cast(dashboard_model.Dashboard | None, dashboard_obj)
         except SQLAlchemyError as e:
             logger.error(
                 "Error updating dashboard",
@@ -202,7 +203,7 @@ class DashboardRepository(IDashboardRepository):
                 "Dashboards list retrieved",
                 extra={"count": len(dashboards)},
             )
-            return dashboards
+            return cast(list[dashboard_model.Dashboard], dashboards)
         except SQLAlchemyError as e:
             logger.error(
                 "Error getting dashboards list",
@@ -234,7 +235,7 @@ class DashboardRepository(IDashboardRepository):
                 logger.warning(
                     "Dashboard not found by name", extra={"dashboard_name": name}
                 )
-            return dashboard
+            return cast(dashboard_model.Dashboard | None, dashboard)
         except SQLAlchemyError as e:
             logger.error(
                 "Error getting dashboard by name",

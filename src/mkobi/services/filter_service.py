@@ -10,7 +10,7 @@ Implements IFilterService interface for dependency injection.
 
 import logging
 import re
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -94,7 +94,7 @@ class FilterService(IFilterService):
                 filter_obj.type,
             )
 
-            return FilterRead.model_validate(filter_obj)
+            return cast(FilterRead, FilterRead.model_validate(filter_obj))
 
         except ValueError:
             raise
@@ -121,10 +121,10 @@ class FilterService(IFilterService):
 
         try:
             filter_obj = await self.filter_repo.get(filter_id, db)
-            if filter_obj is None:
-                logger.warning("Filter not found: id=%s", filter_id)
-                return None
-            return FilterRead.model_validate(filter_obj)
+             if filter_obj is None:
+                 logger.warning("Filter not found: id=%s", filter_id)
+                 return None
+             return cast(FilterRead, FilterRead.model_validate(filter_obj))
         except Exception as e:
             logger.error("Error getting filter id=%s: %s", filter_id, e)
             raise
@@ -148,10 +148,10 @@ class FilterService(IFilterService):
 
         try:
             filter_obj = await self.filter_repo.get_by_name(name, db)
-            if filter_obj is None:
-                logger.warning("Filter not found by name: name=%s", name)
-                return None
-            return FilterRead.model_validate(filter_obj)
+             if filter_obj is None:
+                 logger.warning("Filter not found by name: name=%s", name)
+                 return None
+             return cast(FilterRead, FilterRead.model_validate(filter_obj))
         except Exception as e:
             logger.error("Error getting filter by name %s: %s", name, e)
             raise
@@ -232,7 +232,7 @@ class FilterService(IFilterService):
 
         if not update_data:
             logger.warning("No data for filter update: id=%s", filter_id)
-            return FilterRead.model_validate(existing)
+            return cast(FilterRead, FilterRead.model_validate(existing))
 
         try:
             updated = await self.filter_repo.update(filter_id, db, **update_data)
@@ -242,7 +242,7 @@ class FilterService(IFilterService):
             await db.commit()
 
             logger.info("Filter updated: id=%s", filter_id)
-            return FilterRead.model_validate(updated)
+            return cast(FilterRead, FilterRead.model_validate(updated))
 
         except Exception as e:
             await db.rollback()
@@ -328,7 +328,7 @@ class FilterService(IFilterService):
                 "spaces, hyphens, underscores and dots"
             )
 
-    def _validate_filter_config(self, config: dict[str, Any]) -> None:
+    def _validate_filter_config(self, config: FilterConfigDict) -> None:
         """Validate filter config.
 
         Args:
@@ -359,7 +359,7 @@ class FilterService(IFilterService):
 async def create_filter(
     name: str,
     type_: str,
-    config: dict[str, Any],
+    config: FilterConfigDict,
     db: AsyncSession | None = None,
 ) -> FilterRead:
     """Backward compatibility wrapper."""
@@ -397,7 +397,7 @@ async def update_filter(
     filter_id: UUID,
     name: str | None = None,
     type_: str | None = None,
-    config: dict[str, Any] | None = None,
+    config: FilterConfigDict | None = None,
     db: AsyncSession | None = None,
 ) -> FilterRead | None:
     """Backward compatibility wrapper."""

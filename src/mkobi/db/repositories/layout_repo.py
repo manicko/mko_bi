@@ -6,6 +6,7 @@
 
 import logging
 from uuid import UUID
+from typing import cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -45,7 +46,7 @@ class LayoutRepository:
                 logger.info("Layout получен: id=%s", layout_id)
             else:
                 logger.warning("Layout не найден: id=%s", layout_id)
-            return layout
+            return cast(layout_model.Layout | None, layout)
         except SQLAlchemyError as e:
             logger.error("Ошибка при получении layout id=%s: %s", layout_id, e)
             raise
@@ -71,7 +72,7 @@ class LayoutRepository:
                 logger.info("Layout получен по имени: name=%s", name)
             else:
                 logger.warning("Layout не найден по имени: name=%s", name)
-            return layout
+            return cast(layout_model.Layout | None, layout)
         except SQLAlchemyError as e:
             logger.error("Ошибка при получении layout по имени %s: %s", name, e)
             raise
@@ -91,7 +92,7 @@ class LayoutRepository:
             result = await db.execute(select(layout_model.Layout))
             layouts = list(result.scalars().all())
             logger.info("Получен список layout-ов, количество: %s", len(layouts))
-            return layouts
+            return cast(list[layout_model.Layout], layouts)
         except SQLAlchemyError as e:
             logger.error("Ошибка при получении списка layout-ов: %s", e)
             raise
@@ -114,7 +115,7 @@ class LayoutRepository:
             await db.flush()
             await db.refresh(layout_obj)
             logger.info("Layout создан: id=%s, name=%s", layout_obj.id, layout_obj.name)
-            return layout_obj
+            return cast(layout_model.Layout | None, layout_obj)
         except SQLAlchemyError as e:
             logger.error("Ошибка при создании layout: %s", e)
             raise
@@ -148,7 +149,7 @@ class LayoutRepository:
             await db.flush()
             await db.refresh(layout_obj)
             logger.info("Layout обновлен: id=%s", layout_id)
-            return layout_obj
+            return cast(layout_model.Layout | None, layout_obj)
         except SQLAlchemyError as e:
             logger.error("Ошибка при обновлении layout id=%s: %s", layout_id, e)
             raise

@@ -5,6 +5,8 @@ Access to most operations is restricted and requires authentication.
 Create, update, and delete operations are admin-only.
 """
 
+from typing import cast
+
 import logging
 from uuid import UUID
 
@@ -12,7 +14,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
-    get_db,
+    get_db_dependency as get_db,
     require_admin_role,
     CurrentUser,
 )
@@ -160,14 +162,14 @@ async def get_graph_endpoint(
     logger.info("Requesting graph: graph_id=%s", graph_id)
 
     try:
-        graph = await _graph_repo.get(graph_id=graph_id, db=db)
+        graph = await _graph_repo.get(id=graph_id, db=db)
         if graph is None:
             logger.warning("Graph not found: id=%s", graph_id)
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Graph not found",
             )
-        return GraphRead.model_validate(graph)
+        return cast(GraphRead, GraphRead.model_validate(graph))
     except HTTPException:
         raise
     except Exception as e:
@@ -229,7 +231,7 @@ async def update_graph_endpoint(
             update_data["metrics"] = graph_update.metrics
 
         result = await _graph_repo.update(
-            graph_id=graph_id, db=db, **update_data
+            graph_id, db, **update_data
         )
         if result is None:
             logger.warning("Graph not found for update: id=%s", graph_id)
@@ -286,7 +288,7 @@ async def delete_graph_endpoint(
     )
 
     try:
-        result = await _graph_repo.delete(graph_id=graph_id, db=db)
+        result = await _graph_repo.delete(graph_id, db)
         if not result:
             logger.warning("Graph not found for deletion: id=%s", graph_id)
             raise HTTPException(

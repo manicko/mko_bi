@@ -9,13 +9,12 @@ import logging
 import os
 import subprocess
 import sys
-from asyncio import to_thread
-
-from alembic.config import Config
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
+from datetime import datetime, timedelta
+from anyio import to_thread
 
 from alembic import command
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from mkobi.config import get_config
 from mkobi.models.enums import EnvironmentEnum
 
@@ -73,6 +72,7 @@ class DatabaseStarter:
 
         # Create main engine
         self._main_engine = create_async_engine(main_url)
+        assert self._main_engine is not None
 
         # Check if database exists
         try:
@@ -84,6 +84,7 @@ class DatabaseStarter:
 
         # Check if schema exists (check for alembic_version table)
         try:
+            assert self._main_engine is not None
             async with self._main_engine.connect() as conn:
                 result = await conn.execute(
                     text(
@@ -102,6 +103,7 @@ class DatabaseStarter:
 
         # Apply migrations if needed
         if self._config.auto_migrate:
+            assert self._main_engine is not None
             await self._apply_migrations(main_url)
 
         # Handle test database

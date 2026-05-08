@@ -6,6 +6,7 @@ All methods use contextual session management and handle errors.
 
 import logging
 from uuid import UUID
+from typing import cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -46,7 +47,7 @@ class FilterRepository(IFilterRepository):
                 logger.info("Filter retrieved: id=%s", id)
             else:
                 logger.warning("Filter not found: id=%s", id)
-            return filter_obj
+            return cast(filter_model.Filter | None, filter_obj)
         except SQLAlchemyError as e:
             logger.error("Error getting filter id=%s: %s", id, e)
             raise
@@ -73,7 +74,7 @@ class FilterRepository(IFilterRepository):
                 logger.info("Filter retrieved by name: %s", name)
             else:
                 logger.warning("Filter not found by name: %s", name)
-            return filter_obj
+            return cast(filter_model.Filter | None, filter_obj)
         except SQLAlchemyError as e:
             logger.error("Error getting filter name=%s: %s", name, e)
             raise
@@ -95,7 +96,7 @@ class FilterRepository(IFilterRepository):
             logger.info(
                 "Filter created: id=%s, name=%s", filter_obj.id, filter_obj.name
             )
-            return filter_obj
+            return cast(filter_model.Filter | None, filter_obj)
         except SQLAlchemyError as e:
             logger.error("Error creating filter: %s", e)
             raise
@@ -128,7 +129,7 @@ class FilterRepository(IFilterRepository):
             await db.flush()
             await db.refresh(filter_obj)
             logger.info("Filter updated: id=%s", id)
-            return filter_obj
+            return cast(filter_model.Filter | None, filter_obj)
         except SQLAlchemyError as e:
             logger.error("Error updating filter id=%s: %s", id, e)
             raise
@@ -172,7 +173,7 @@ class FilterRepository(IFilterRepository):
             result = await db.execute(select(filter_model.Filter))
             filters = list(result.scalars().all())
             logger.info("Filters list retrieved, count: %s", len(filters))
-            return filters
+            return cast(list[filter_model.Filter], filters)
         except SQLAlchemyError as e:
             logger.error("Error getting filters list: %s", e)
             raise

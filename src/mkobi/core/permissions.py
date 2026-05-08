@@ -11,10 +11,10 @@ viewer can only read.
 """
 
 import logging
+from typing import Any, cast
 from collections.abc import AsyncGenerator
-from functools import lru_cache
-from typing import Any
 from uuid import UUID
+from functools import lru_cache
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -403,7 +403,7 @@ async def _get_current_user_with_session(
             raise AuthenticationError("User not found")
 
         logger.info("User authenticated: user_id=%s", user_id)
-        return UserDB.model_validate(user)
+        return cast(UserDB, UserDB.model_validate(user))
 
     except JWTError as e:
         logger.error("JWT decode error: %s", e)

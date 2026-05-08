@@ -31,8 +31,12 @@ ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app
 
-# Create non-root user
-RUN addgroup --system app && adduser --system --group app
+# Create non-root user with proper home directory
+RUN addgroup --system app && adduser --system --group app --home /app/app_home
+# Ensure home directory exists and is writable
+RUN mkdir -p /app/app_home/.cache/uv && chown -R app:app /app/app_home
+ENV HOME=/app/app_home
+ENV UV_CACHE_DIR=/app/app_home/.cache/uv
 
 # Use system Python for uv (skip venv creation)
 ENV UV_SYSTEM_PYTHON=1

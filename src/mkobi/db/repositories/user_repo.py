@@ -6,6 +6,7 @@ All methods use contextual session management and handle errors.
 
 import logging
 from uuid import UUID
+from typing import cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -44,7 +45,7 @@ class UserRepository(IUserRepository):
                 logger.info("User retrieved: id=%s", id)
             else:
                 logger.warning("User not found: id=%s", id)
-            return user
+            return cast(user_model.User | None, user)
         except SQLAlchemyError as e:
             logger.error("Error getting user id=%s: %s", id, e)
             raise
@@ -67,7 +68,7 @@ class UserRepository(IUserRepository):
                 logger.info("User retrieved by email: %s", email)
             else:
                 logger.warning("User not found by email: %s", email)
-            return user
+            return cast(user_model.User | None, user)
         except SQLAlchemyError as e:
             logger.error("Error getting user email=%s: %s", email, e)
             raise
@@ -84,7 +85,7 @@ class UserRepository(IUserRepository):
             result = await db.execute(select(user_model.User))
             users = list(result.scalars().all())
             logger.info("Users list retrieved, count: %s", len(users))
-            return users
+            return cast(list[user_model.User], users)
         except SQLAlchemyError as e:
             logger.error("Error getting users list: %s", e)
             raise
@@ -104,7 +105,7 @@ class UserRepository(IUserRepository):
             await db.flush()
             await db.refresh(user_obj)
             logger.info("User created: id=%s, email=%s", user_obj.id, user_obj.email)
-            return user_obj
+            return cast(user_model.User | None, user_obj)
         except SQLAlchemyError as e:
             logger.error("Error creating user: %s", e)
             raise
@@ -135,7 +136,7 @@ class UserRepository(IUserRepository):
             await db.flush()
             await db.refresh(user_obj)
             logger.info("User updated: id=%s", id)
-            return user_obj
+            return cast(user_model.User | None, user_obj)
         except SQLAlchemyError as e:
             logger.error("Error updating user id=%s: %s", id, e)
             raise

@@ -29,6 +29,9 @@ from mkobi.core.permissions import (
     AuthenticationError,
 )
 from mkobi.db.session import get_db, get_session  # noqa: F401 - re-exported for backwards compatibility
+
+# Explicitly export get_db for use in API routes
+__all__ = ["get_db", "get_db_dependency", "get_current_user_dependency"]
 from mkobi.models.user import UserDB
 from mkobi.models.enums import UserRole
 

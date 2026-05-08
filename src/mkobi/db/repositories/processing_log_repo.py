@@ -7,6 +7,7 @@ Implements IProcessingLogRepository interface.
 import logging
 from datetime import datetime
 from uuid import UUID
+from typing import cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -226,7 +227,7 @@ class ProcessingLogRepository(IProcessingLogRepository):
                     dashboard_id,
                     log.id,
                 )
-                return ProcessingLogRead.model_validate(log)
+                return cast(ProcessingLogRead | None, ProcessingLogRead.model_validate(log))
             else:
                 logger.info("No logs found for dashboard_id=%s", dashboard_id)
                 return None
@@ -260,7 +261,7 @@ class ProcessingLogRepository(IProcessingLogRepository):
             log = result.scalar_one_or_none()
             if log:
                 logger.info("Log retrieved: id=%s", log_id)
-                return ProcessingLogRead.model_validate(log)
+                return cast(ProcessingLogRead | None, ProcessingLogRead.model_validate(log))
             else:
                 logger.info("Log not found: id=%s", log_id)
                 return None

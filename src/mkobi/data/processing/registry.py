@@ -116,7 +116,7 @@ class DataPipeline:
             config_response = await self.config_service.get_processing_config_by_dashboard(
                 dashboard_id, db
             )
-            config = config_response.settings if config_response else {}
+            config = config_response.settings if config_response else None
 
             try:
                 transformed_df = apply_transformations(df, config)
@@ -126,6 +126,7 @@ class DataPipeline:
                     log_id=log_entry.id,
                     status=ProcessingStatus.FAILED.value,
                     message=f"Transformation error: {e}",
+                    finished_at=None,
                     db=db,
                 )
                 raise ValueError(f"Data transformation failed: {e}") from None

@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.db.models import dashboard as dashboard_model
 from mkobi.db.models import access as access_model
+from mkobi.db.session import get_session
 from mkobi.interfaces.service_interfaces import IDashboardService
 from mkobi.interfaces.repository_interfaces import (
     IDashboardRepository,
@@ -42,13 +43,13 @@ class DashboardService(IDashboardService):
     def __init__(
         self,
         dashboard_repo: IDashboardRepository,
-        access_repo: IAccessRepository,
+        access_repo: IAccessRepository | None = None,
     ) -> None:
         """Initialize service with injected repositories.
 
         Args:
             dashboard_repo: Dashboard repository instance.
-            access_repo: Access repository instance.
+            access_repo: Access repository instance (optional).
         """
         self.dashboard_repo = dashboard_repo
         self.access_repo = access_repo
@@ -59,7 +60,7 @@ class DashboardService(IDashboardService):
         name: str,
         config: dict[str, Any],
         owner_id: UUID,
-        db: AsyncSession,
+        db: AsyncSession | None = None,
     ) -> DashboardRead:
         """Create new dashboard.
 
@@ -77,7 +78,9 @@ class DashboardService(IDashboardService):
             SQLAlchemyError: On database error.
         """
         if db is None:
-            raise ValueError("db session is required for create_dashboard")
+            async with get_session() as db:
+                return await self.create_dashboard(name, config, owner_id, db)
+
         config_obj = DashboardConfig(**config)
         self._validate_config(config_obj)
 
@@ -99,13 +102,14 @@ class DashboardService(IDashboardService):
                 dashboard_obj.name,
             )
 
-            # Grant admin permission to owner
-            await self.access_repo.grant_access(
-                db=db,
-                user_id=owner_id,
-                dashboard_id=dashboard_obj.id,
-                permission=DashboardPermission.admin,
-            )
+            # Grant admin permission to owner if access_repo is available
+            if self.access_repo is not None:
+                await self.access_repo.grant_access(
+                    db=db,
+                    user_id=owner_id,
+                    dashboard_id=dashboard_obj.id,
+                    permission=DashboardPermission.ADMIN,
+                )
 
             logger.info(
                 "Admin access granted: user_id=%s, dashboard_id=%s",
@@ -137,7 +141,7 @@ class DashboardService(IDashboardService):
         self,
         dashboard_id: UUID,
         user_id: UUID,
-        db: AsyncSession,
+        db: AsyncSession | None = None,
     ) -> DashboardRead | None:
         """Get dashboard by ID with access check.
 
@@ -150,15 +154,20 @@ class DashboardService(IDashboardService):
             DashboardRead if access allowed, else None.
         """
         if db is None:
-            raise ValueError("db session is required for get_dashboard")
+            async with get_session() as db:
+                return await self.get_dashboard(dashboard_id, user_id, db)
+        
         # Check dashboard existence
         dashboard_obj = await self.dashboard_repo.get(dashboard_id, db)
         if dashboard_obj is None:
             logger.warning("Dashboard not found: id=%s", dashboard_id)
             return None
 
-        # Check user access
-        permission = await self.access_repo.check_access(user_id, dashboard_id, db)
+        # Check user access if access_repo is available
+        permission = None
+        if self.access_repo is not None:
+            permission = await self.access_repo.check_access(user_id, dashboard_id, db)
+        
         if permission is None:
             logger.warning(
                 "Access denied: user_id=%s, dashboard_id=%s",
@@ -180,7 +189,7 @@ class DashboardService(IDashboardService):
     async def get_dashboard_by_name(
         self,
         name: str,
-        db: AsyncSession,
+        db: AsyncSession | None = None,
     ) -> DashboardRead | None:
         """Get dashboard by name.
 
@@ -191,6 +200,10 @@ class DashboardService(IDashboardService):
         Returns:
             DashboardRead or None if not found.
         """
+        if db is None:
+            async with get_session() as db:
+                return await self.get_dashboard_by_name(name, db)
+        
         dashboard = await self.dashboard_repo.get_by_name(name, db)
         if dashboard is None:
             return None
@@ -199,7 +212,7 @@ class DashboardService(IDashboardService):
     async def get_user_dashboards(
         self,
         user_id: UUID,
-        db: AsyncSession,
+        db: AsyncSession | None = None,
     ) -> list[DashboardRead]:
         """Get user dashboards.
 
@@ -210,6 +223,10 @@ class DashboardService(IDashboardService):
         Returns:
             list[DashboardRead]: List of user dashboards.
         """
+        if db is None:
+            async with get_session() as db:
+                return await self.get_user_dashboards(user_id, db)
+        
         dashboards = await self.dashboard_repo.get_by_user(user_id, db)
         result = []
         for dashboard in dashboards:
@@ -235,7 +252,9 @@ class DashboardService(IDashboardService):
             DashboardRead or None if not found.
         """
         if db is None:
-            raise ValueError("db session is required for update_dashboard")
+            async with get_session() as db:
+                return await self.update_dashboard(dashboard_id, update_data, config, db)
+        
         # Handle config parameter if provided
         if config is not None:
             if update_data is None:
@@ -291,14 +310,16 @@ class DashboardService(IDashboardService):
             bool: True if deletion successful.
         """
         if db is None:
-            raise ValueError("db session is required for delete_dashboard")
+            async with get_session() as db:
+                return await self.delete_dashboard(dashboard_id, db)
+        
         result = await self.dashboard_repo.delete(dashboard_id, db)
         await db.commit()
         return bool(result)
 
     async def get_all_dashboards(
         self,
-        db: AsyncSession,
+        db: AsyncSession | None = None,
     ) -> list[DashboardRead]:
         """Get all dashboards.
 
@@ -308,6 +329,10 @@ class DashboardService(IDashboardService):
         Returns:
             list[DashboardRead]: List of all dashboards.
         """
+        if db is None:
+            async with get_session() as db:
+                return await self.get_all_dashboards(db)
+        
         dashboards = await self.dashboard_repo.get_all(db)
         result = []
         for dashboard in dashboards:
@@ -319,7 +344,7 @@ class DashboardService(IDashboardService):
         dashboard_id: UUID,
         user_id: UUID,
         permission: str,
-        db: AsyncSession,
+        db: AsyncSession | None = None,
     ) -> bool:
         """Grant user access to dashboard.
 
@@ -332,12 +357,19 @@ class DashboardService(IDashboardService):
         Returns:
             bool: True if access granted.
         """
+        if db is None:
+            async with get_session() as db:
+                return await self.grant_access(dashboard_id, user_id, permission, db)
+        
         self._validate_permission(permission)
 
         # Check dashboard existence
         dashboard_obj = await self.dashboard_repo.get(dashboard_id, db)
         if dashboard_obj is None:
             raise ValueError(f"Dashboard with id={dashboard_id} not found")
+
+        if self.access_repo is None:
+            raise ValueError("access_repo is required for grant_access")
 
         # Grant access through repository
         await self.access_repo.grant_access(
@@ -362,7 +394,7 @@ class DashboardService(IDashboardService):
         self,
         dashboard_id: UUID,
         user_id: UUID,
-        db: AsyncSession,
+        db: AsyncSession | None = None,
     ) -> bool:
         """Revoke user access to dashboard.
 
@@ -374,6 +406,13 @@ class DashboardService(IDashboardService):
         Returns:
             True if access was revoked, False if record not found.
         """
+        if db is None:
+            async with get_session() as db:
+                return await self.revoke_access(dashboard_id, user_id, db)
+        
+        if self.access_repo is None:
+            raise ValueError("access_repo is required for revoke_access")
+
         result = await self.access_repo.revoke_access(
             user_id=user_id, dashboard_id=dashboard_id, db=db
         )
@@ -397,7 +436,7 @@ class DashboardService(IDashboardService):
     async def get_dashboard_access_list(
         self,
         dashboard_id: UUID,
-        db: AsyncSession,
+        db: AsyncSession | None = None,
     ) -> list[dict[str, Any]]:
         """Get all access records for a dashboard.
 
@@ -408,6 +447,10 @@ class DashboardService(IDashboardService):
         Returns:
             List of access records as dictionaries.
         """
+        if db is None:
+            async with get_session() as db:
+                return await self.get_dashboard_access_list(dashboard_id, db)
+        
         try:
             result = await db.execute(
                 select(access_model.DashboardAccess).where(

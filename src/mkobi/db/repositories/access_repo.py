@@ -6,6 +6,7 @@ All methods use contextual session management and handle errors.
 
 import logging
 from uuid import UUID
+from typing import cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -59,7 +60,7 @@ class AccessRepository(IAccessRepository):
                     user_id,
                     dashboard_id,
                 )
-                return existing
+                return cast(access_model.DashboardAccess | None, existing)
 
             access_obj = access_model.DashboardAccess(
                 user_id=user_id,
@@ -75,7 +76,7 @@ class AccessRepository(IAccessRepository):
                 dashboard_id,
                 permission,
             )
-            return access_obj
+            return cast(access_model.DashboardAccess | None, access_obj)
         except SQLAlchemyError as e:
             logger.error(
                 "Error granting access user_id=%s, dashboard_id=%s: %s",
@@ -197,7 +198,7 @@ class AccessRepository(IAccessRepository):
                 user_id,
                 len(dashboards),
             )
-            return dashboards
+            return cast(list[dashboard_model.Dashboard], dashboards)
         except SQLAlchemyError as e:
             logger.error(
                 "Error getting dashboards for user id=%s: %s",

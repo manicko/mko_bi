@@ -43,7 +43,7 @@ class IAuthService(abc.ABC):
     @abc.abstractmethod
     async def login_user(
         self, email: str, password: str, db: AsyncSession | None = None
-    ) -> dict[str, Any]:
+    ) -> dict[str, Any] | None:
         """Perform login and return JWT token."""
         pass
 

@@ -138,8 +138,8 @@ async def get_registration_requests_admin_endpoint(
     """Get all registration requests (admin endpoint)."""
     logger.info("Admin: getting registration requests")
     try:
-        repo = RegistrationRequestRepository(db)
-        requests = await repo.get_all()
+        repo = RegistrationRequestRepository()
+        requests = await repo.get_all(db)
         return cast(list[dict[str, Any]], requests)
     except Exception as e:
         logger.error("Error getting registration requests: %s", e)
@@ -165,8 +165,8 @@ async def approve_registration_request_admin_endpoint(
     logger.info("Admin: approving registration request: id=%s", request_id)
     try:
         # Get the request
-        repo = RegistrationRequestRepository(db)
-        req = await repo.get_by_id(request_id)
+        repo = RegistrationRequestRepository()
+        req = await repo.get_by_id(request_id, db)
         if not req:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -180,17 +180,19 @@ async def approve_registration_request_admin_endpoint(
             )
 
         # Create user
-        auth_service = AuthService(db)
+        auth_service = AuthService()
         user = await auth_service.create_user(
             email=req["email"],
             password="temppass123",  # TODO: generate random password and send email
             role=UserRole.VIEWER,
+            db=db,
         )
 
         # Update request status
         await repo.update_status(
             request_id=request_id,
             status=RegistrationStatus.APPROVED,
+            db=db,
             reviewed_by=current_user.id,
         )
         await db.commit()
@@ -222,8 +224,8 @@ async def reject_registration_request_admin_endpoint(
     """Reject registration request (admin endpoint)."""
     logger.info("Admin: rejecting registration request: id=%s", request_id)
     try:
-        repo = RegistrationRequestRepository(db)
-        req = await repo.get_by_id(request_id)
+        repo = RegistrationRequestRepository()
+        req = await repo.get_by_id(request_id, db)
         if not req:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

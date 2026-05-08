@@ -14,6 +14,7 @@ from pydantic import ValidationError
 
 from mkobi.models.enums import AggregationFunctionEnum, FilterOperatorEnum
 from mkobi.models.transformation_configs import TransformationConfig
+from mkobi.models.types import ProcessingSettingsDict
 
 logger = logging.getLogger(__name__)
 
@@ -34,7 +35,7 @@ AGG_FUNC_MAP = {
 
 def apply_transformations(
     df: pl.DataFrame,
-    config: dict[str, Any] | None = None,
+    config: ProcessingSettingsDict | None = None,
     filters: list[dict[str, Any]] | None = None,
     groupby: list[str] | None = None,
     sort_by: str | None = None,

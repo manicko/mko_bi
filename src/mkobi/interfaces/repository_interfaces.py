@@ -102,19 +102,63 @@ class IAccessRepository(abc.ABC):
         pass
 
 
-class IAggregatedDataRepository(IRepository):
+class IAggregatedDataRepository(abc.ABC):
     """Aggregated data repository interface."""
+
+    @abc.abstractmethod
+    async def bulk_insert(
+        self,
+        db: AsyncSession,
+        dashboard_id: UUID,
+        records: list[dict[str, Any]],
+        clear_old: bool = True,
+    ) -> int:
+        """Perform batch insert of aggregated data."""
+        pass
 
     @abc.abstractmethod
     async def get_by_dashboard_id(
         self, dashboard_id: UUID, db: AsyncSession
     ) -> list[Any]:
-        """Get aggregated data by dashboard ID."""
+        """Get aggregated data for dashboard."""
         pass
 
     @abc.abstractmethod
-    async def get_by_graph_id(self, graph_id: UUID, db: AsyncSession) -> list[Any]:
-        """Get aggregated data by graph ID."""
+    async def get_by_graph_id(
+        self,
+        graph_id: UUID,
+        db: AsyncSession,
+        filters: dict[str, Any] | None = None,
+    ) -> list[Any]:
+        """Get aggregated data for graph."""
+        pass
+
+    @abc.abstractmethod
+    async def delete_by_graph_id(
+        self,
+        graph_id: UUID,
+        db: AsyncSession,
+    ) -> int:
+        """Delete aggregated data for graph."""
+        pass
+
+    @abc.abstractmethod
+    async def delete_by_dashboard_id(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession,
+    ) -> int:
+        """Delete all aggregated data for dashboard."""
+        pass
+
+    @abc.abstractmethod
+    async def get_dims_values(
+        self,
+        graph_id: UUID,
+        dim_name: str,
+        db: AsyncSession,
+    ) -> list[str]:
+        """Get unique dimension values for graph."""
         pass
 
 

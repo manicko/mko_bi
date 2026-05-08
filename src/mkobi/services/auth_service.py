@@ -185,15 +185,11 @@ class AuthService(IAuthService):
         repo = UserRepository()
         user_obj = await repo.get_by_email(email=email, db=db)
         if user_obj is None:
-            logger.warning(
-                "User not found during authentication", extra={"email": email}
-            )
             return None
-
+        
         if not verify_password(password, user_obj.password_hash):
-            logger.warning("Invalid password for user", extra={"email": email})
             return None
-
+        
         logger.info("User successfully authenticated", extra={"email": email})
         return {
             "access_token": create_access_token({
@@ -247,7 +243,7 @@ class AuthService(IAuthService):
         return create_access_token({"user_id": str(user_id), "email": "", "role": role})
 
     async def refresh_token(
-        self, user_id: str, email: str, role: str
+        self, user_id: UUID, email: str, role: str
     ) -> dict[str, Any]:
         """Refresh JWT token.
 
@@ -269,7 +265,7 @@ class AuthService(IAuthService):
             "token_type": "bearer",
         }
 
-    async def verify_token(self, token: str) -> dict[str, Any] | None:
+    def verify_token(self, token: str) -> dict[str, Any] | None:
         """Verify JWT token.
 
         Args:
@@ -305,7 +301,7 @@ class AuthService(IAuthService):
             async with get_session() as db:
                 return await self.get_user_by_id(user_id, db)
 
-        user_obj = await repo.get_by_id(id=user_id, db=db)
+        user_obj = await repo.get(user_id, db)
         if user_obj is None:
             logger.warning("User not found", extra={"user_id": str(user_id)})
             return None
@@ -337,6 +333,26 @@ class AuthService(IAuthService):
             return None
 
         return cast(UserRead, UserRead.model_validate(user_obj))
+
+    async def create_user(
+        self,
+        email: str,
+        password: str,
+        role: UserRole,
+        db: AsyncSession | None = None,
+    ) -> UserRead:
+        """Create new user (admin only).
+
+        Args:
+            email: User email.
+            password: User password.
+            role: User role.
+            db: Optional database session.
+
+        Returns:
+            UserRead: Created user model.
+        """
+        return await self.register_user(email, password, role, db)
 
     async def register_request(
         self, email: str, ip: str | None, db: AsyncSession | None = None

@@ -6,6 +6,7 @@ All methods use contextual session management and handle errors.
 
 import logging
 from uuid import UUID
+from typing import cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -45,7 +46,7 @@ class GraphRepository(IGraphRepository):
                 logger.info("Graph retrieved: id=%s", id)
             else:
                 logger.warning("Graph not found: id=%s", id)
-            return graph
+            return cast(graph_model.Graph | None, graph)
         except SQLAlchemyError as e:
             logger.error("Error getting graph id=%s: %s", id, e)
             raise
@@ -74,7 +75,7 @@ class GraphRepository(IGraphRepository):
                 dashboard_id,
                 len(graphs),
             )
-            return graphs
+            return cast(list[graph_model.Graph], graphs)
         except SQLAlchemyError as e:
             logger.error("Error getting graphs dashboard_id=%s: %s", dashboard_id, e)
             raise
@@ -95,7 +96,7 @@ class GraphRepository(IGraphRepository):
             await db.flush()
             await db.refresh(graph_obj)
             logger.info("Graph created: id=%s, name=%s", graph_obj.id, graph_obj.name)
-            return graph_obj
+            return cast(graph_model.Graph | None, graph_obj)
         except SQLAlchemyError as e:
             logger.error("Error creating graph: %s", e)
             raise
@@ -127,7 +128,7 @@ class GraphRepository(IGraphRepository):
             await db.flush()
             await db.refresh(graph_obj)
             logger.info("Graph updated: id=%s", id)
-            return graph_obj
+            return cast(graph_model.Graph | None, graph_obj)
         except SQLAlchemyError as e:
             logger.error("Error updating graph id=%s: %s", id, e)
             raise
@@ -171,7 +172,7 @@ class GraphRepository(IGraphRepository):
             result = await db.execute(select(graph_model.Graph))
             graphs = list(result.scalars().all())
             logger.info("Graphs list retrieved, count: %s", len(graphs))
-            return graphs
+            return cast(list[graph_model.Graph], graphs)
         except SQLAlchemyError as e:
             logger.error("Error getting graphs list: %s", e)
             raise
