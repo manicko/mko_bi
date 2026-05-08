@@ -7,19 +7,20 @@ services:
   app:
     build:
       target: dev
+    user: root
     environment:
       ENV: development
       LOGGING__LEVEL: DEBUG
       AUTO_MIGRATE: "true"
       RECREATE_TEST_DB: "true"
     volumes:
-      # Mount source code for hot reload
-      - ./src:/app/src:ro
-      - ./alembic:/app/alembic:ro
-      - ./tests:/app/tests:ro
-      - ./pyproject.toml:/app/pyproject.toml:ro
-      - ./uv.lock:/app/uv.lock:ro
-    command: ["uv", "run", "uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+      # Mount source code for hot reload (writable for egg-info generation)
+      - ./src:/app/src
+      - ./alembic:/app/alembic
+      - ./tests:/app/tests
+      - ./pyproject.toml:/app/pyproject.toml
+      - ./uv.lock:/app/uv.lock
+    command: ["uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     # Remove healthcheck in dev for faster startup
     healthcheck:
       disable: true

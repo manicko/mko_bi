@@ -10,6 +10,7 @@ Implements IUserService interface for dependency injection.
 
 import logging
 from uuid import UUID
+from typing import Any, cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -125,7 +126,7 @@ class UserService(IUserService):
         user_obj = await self.user_repo.get(user_id, db)
         if user_obj:
             logger.info("User retrieved: id=%s", user_id)
-            return UserRead.model_validate(user_obj)
+            return cast(UserRead, UserRead.model_validate(user_obj))
         else:
             logger.warning("User not found: id=%s", user_id)
             return None
@@ -143,7 +144,7 @@ class UserService(IUserService):
         user_obj = await self.user_repo.get_by_email(email, db)
         if user_obj:
             logger.info("User found by email: %s", email)
-            return UserRead.model_validate(user_obj)
+            return cast(UserRead, UserRead.model_validate(user_obj))
         else:
             logger.warning("User not found by email: %s", email)
             return None
@@ -200,7 +201,7 @@ class UserService(IUserService):
         )
 
         # Convert to Pydantic model (without password_hash)
-        return UserRead.model_validate(user_obj)
+        return cast(UserRead, UserRead.model_validate(user_obj))
 
     async def update_user_role(
         self, user_id: UUID, role: UserRole, db: AsyncSession
@@ -239,7 +240,7 @@ class UserService(IUserService):
                 user_obj.role,
                 role,
             )
-            return UserRead.model_validate(updated_user)
+            return cast(UserRead, UserRead.model_validate(updated_user))
         else:
             logger.warning("Failed to update user role: id=%s", user_id)
             return None

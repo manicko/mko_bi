@@ -74,7 +74,7 @@ async def update_user_role_admin_endpoint(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found",
             )
-        return updated
+        return cast(UserRead, updated)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

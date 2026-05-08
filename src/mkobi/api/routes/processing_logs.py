@@ -6,6 +6,7 @@ Complies with SPEC.md section 14.4 and task 011_processing_logs.md.
 
 from datetime import datetime
 from uuid import UUID
+from typing import cast
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -99,14 +100,14 @@ async def get_log_endpoint(
     try:
         from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
 
-        repo = ProcessingLogRepository(db)
-        log = await repo.get_by_id(log_id)
+        repo = ProcessingLogRepository()
+        log = await repo.get_by_id(log_id, db)
         if log is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail="Processing log not found",
+                 detail="Processing log not found",
             )
-        return ProcessingLogRead.model_validate(log)
+        return cast(ProcessingLogRead, ProcessingLogRead.model_validate(log))
     except HTTPException:
         raise
     except Exception as e:

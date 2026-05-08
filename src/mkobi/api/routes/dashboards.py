@@ -7,8 +7,7 @@ Create, update and delete operations are available only to owners.
 """
 
 import logging
-from typing import Any
-from uuid import UUID
+from typing import Any, cast
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -736,7 +735,7 @@ async def create_dashboard_graph_endpoint(
             metrics=graph.metrics,
         )
         await db.commit()
-        return GraphRead.model_validate(result)
+        return cast(GraphRead, GraphRead.model_validate(result))
     except ValueError as e:
         logger.warning("Validation error creating graph: %s", e)
         raise HTTPException(

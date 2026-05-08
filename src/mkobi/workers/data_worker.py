@@ -8,6 +8,7 @@ import asyncio
 import logging
 from datetime import datetime
 from pathlib import Path
+from typing import cast
 from typing import Any
 from uuid import UUID
 
@@ -134,9 +135,9 @@ def _process_csv_file_sync_impl(
             # Apply transformations
             df = apply_transformations(
                 df,
-                filters=config.filters,
+                filters=cast(list[dict[str, Any]] | None, config.filters),
                 groupby=config.groupby if not config.aggregations else None,
-                sort_by=config.sort_by,
+                sort_by=cast(str | None, config.sort_by),
                 descending=config.descending,
                 limit=config.limit,
             )
@@ -151,10 +152,10 @@ def _process_csv_file_sync_impl(
                 df = calculate_aggregations(
                     df,
                     groupby=config.groupby,
-                    aggregations=config.aggregations,
+                    aggregations=cast(list[dict[str, Any]] | None, config.aggregations),
                     yoy_config=config.yoy_config,
                     share_config=config.share_config,
-                    custom_metrics=config.custom_metrics,
+                    custom_metrics=cast(list[dict[str, Any]] | None, config.custom_metrics),
                 )
 
         # Save aggregated data to database

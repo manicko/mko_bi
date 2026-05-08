@@ -121,10 +121,10 @@ class FilterService(IFilterService):
 
         try:
             filter_obj = await self.filter_repo.get(filter_id, db)
-             if filter_obj is None:
-                 logger.warning("Filter not found: id=%s", filter_id)
-                 return None
-             return cast(FilterRead, FilterRead.model_validate(filter_obj))
+            if filter_obj is None:
+                logger.warning("Filter not found: id=%s", filter_id)
+                return None
+            return cast(FilterRead, FilterRead.model_validate(filter_obj))
         except Exception as e:
             logger.error("Error getting filter id=%s: %s", filter_id, e)
             raise
@@ -148,10 +148,10 @@ class FilterService(IFilterService):
 
         try:
             filter_obj = await self.filter_repo.get_by_name(name, db)
-             if filter_obj is None:
-                 logger.warning("Filter not found by name: name=%s", name)
-                 return None
-             return cast(FilterRead, FilterRead.model_validate(filter_obj))
+            if filter_obj is None:
+                logger.warning("Filter not found by name: name=%s", name)
+                return None
+            return cast(FilterRead, FilterRead.model_validate(filter_obj))
         except Exception as e:
             logger.error("Error getting filter by name %s: %s", name, e)
             raise

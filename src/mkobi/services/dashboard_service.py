@@ -10,7 +10,7 @@ Implements IDashboardService interface for dependency injection.
 
 import json
 import logging
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from sqlalchemy import select
@@ -542,7 +542,7 @@ class DashboardService(IDashboardService):
         # Add layout if present
         if getattr(dashboard_obj, "layout", None):
             dashboard_dict["layout"] = LayoutRead.model_validate(dashboard_obj.layout)
-        return DashboardRead.model_validate(dashboard_dict)
+        return cast(DashboardRead, DashboardRead.model_validate(dashboard_dict))
 
 
 # --- Backward compatibility functions ---

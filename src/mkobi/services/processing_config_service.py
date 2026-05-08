@@ -51,9 +51,15 @@ class ProcessingConfigService(IProcessingConfigService):
         if missing_fields:
             raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
 
-        for field in required_fields:
-            if not isinstance(settings.get(field), str) or not settings[field].strip():
-                raise ValueError(f"Field '{field}' must be a non-empty string")
+        loader = settings.get("loader")
+        if not isinstance(loader, str) or not loader.strip():
+            raise ValueError("Field 'loader' must be a non-empty string")
+        date_column = settings.get("date_column")
+        if not isinstance(date_column, str) or not date_column.strip():
+            raise ValueError("Field 'date_column' must be a non-empty string")
+        timezone = settings.get("timezone")
+        if not isinstance(timezone, str) or not timezone.strip():
+            raise ValueError("Field 'timezone' must be a non-empty string")
 
     async def get_by_dashboard_id(
         self, dashboard_id: UUID, db: AsyncSession | None = None
@@ -107,7 +113,7 @@ class ProcessingConfigService(IProcessingConfigService):
             ValueError: If settings structure is incorrect.
         """
         logger.info("Upsert config: dashboard_id=%s", dashboard_id)
-        self._validate_settings(settings)
+        await self._validate_settings(settings)
 
         if db is None:
             db = self._db
@@ -120,9 +126,7 @@ class ProcessingConfigService(IProcessingConfigService):
         existing = await config_repo.get(dashboard_id, db)
         if existing:
             updated = await config_repo.update(
-                dashboard_id=dashboard_id,
-                db=db,
-                settings=settings,
+                dashboard_id, db, settings=settings
             )
             if updated is None:
                 raise ValueError(
@@ -166,6 +170,7 @@ class ProcessingConfigService(IProcessingConfigService):
             async with get_session() as db:
                 return await self.delete(dashboard_id, db)
 
+        config_repo = ProcessingConfigRepository()
         result: bool = await config_repo.delete(dashboard_id, db)
         if result:
             logger.info("Config deleted: dashboard_id=%s", dashboard_id)

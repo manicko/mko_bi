@@ -7,7 +7,7 @@ sorting, YoY calculation and share calculation.
 
 import logging
 import re
-from typing import Any
+from typing import Any, cast
 
 import polars as pl
 from pydantic import ValidationError
@@ -35,7 +35,7 @@ AGG_FUNC_MAP = {
 
 def apply_transformations(
     df: pl.DataFrame,
-    config: ProcessingSettingsDict | None = None,
+    config: dict[str, Any] | None = None,
     filters: list[dict[str, Any]] | None = None,
     groupby: list[str] | None = None,
     sort_by: str | None = None,
@@ -70,7 +70,7 @@ def apply_transformations(
     result = df
 
     # 1. Row filtering (where conditions)
-    filter_list = filters if filters is not None else config.get("filters")
+    filter_list: list[Any] | None = filters if filters is not None else config.get("filters") if config else None
     if filter_list:
         logger.debug("Applying filters: %s", filter_list)
         result = _apply_filters(result, filter_list)
@@ -91,10 +91,10 @@ def apply_transformations(
         result = result.head(limit)
 
     # 5. Computed fields
-    computed_fields = config.get("computed_fields")
+    computed_fields = config.get("computed_fields") if config else None
     if computed_fields:
         logger.debug("Adding computed fields: %s", computed_fields)
-        result = _add_computed_fields(result, computed_fields)
+        result = _add_computed_fields(result, cast(list[dict[str, Any]], computed_fields))
 
     # 6. Column renaming
     rename_map = config.get("rename")
@@ -103,10 +103,10 @@ def apply_transformations(
         result = result.rename(rename_map)
 
     # 7. Column type casting
-    dtype_map = config.get("dtype")
+    dtype_map = config.get("dtype") if config else None
     if dtype_map:
         logger.debug("Casting column types: %s", dtype_map)
-        result = _apply_dtypes(result, dtype_map)
+        result = _apply_dtypes(result, cast(dict[str, str], dtype_map))
 
     logger.info("Transformations applied: %d rows", result.shape[0])
     return result

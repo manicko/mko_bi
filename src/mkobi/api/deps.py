@@ -13,11 +13,12 @@ Typical usage scenarios:
 from __future__ import annotations
 
 import logging
-from typing import Annotated, Any
+from typing import Annotated, Any, cast
 from collections.abc import AsyncGenerator
 from uuid import UUID
 
 from fastapi import Depends, HTTPException, status
+from mkobi.models.enums import UserRole
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import ExpiredSignatureError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -256,7 +257,7 @@ def get_token_from_header(
             detail="Invalid authentication scheme",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return credentials.credentials
+    return cast(str, credentials.credentials)
 
 
 async def get_current_user_dependency(
@@ -431,7 +432,7 @@ def require_role_dependency(required_role: str):
     def role_checker(
         user: UserDB = Depends(get_current_user_dependency),
     ) -> UserDB:
-        if not check_role(user.role, required_role):
+        if not check_role(cast(UserRole, user.role), required_role):
             logger.warning(
                 "Insufficient permissions: user_id=%s, user_role=%s, required_role=%s",
                 user.id,

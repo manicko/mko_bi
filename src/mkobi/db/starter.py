@@ -11,8 +11,10 @@ import subprocess
 import sys
 from datetime import datetime, timedelta
 from anyio import to_thread
+from typing import cast
 
 from alembic import command
+from alembic.config import Config
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from mkobi.config import get_config
@@ -194,7 +196,7 @@ class DatabaseStarter:
                 return
 
             # Insert into alembic_version
-            async with self._main_engine.connect() as conn:
+            async with cast(AsyncEngine, self._main_engine).connect() as conn:
                 await conn.execute(
                     text(
                         "INSERT INTO alembic_version (version_num) "
@@ -215,7 +217,7 @@ class DatabaseStarter:
 
         cutoff_date = datetime.now() - timedelta(days=self._config.logs_retention_days)
 
-        async with self._main_engine.connect() as conn:
+        async with cast(AsyncEngine, self._main_engine).connect() as conn:
             result = await conn.execute(
                 text(
                     "DELETE FROM processing_logs "

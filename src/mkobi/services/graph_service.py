@@ -94,8 +94,9 @@ class GraphService(IGraphService):
             async with get_session() as db:
                 return await self.create(data, db=db)
 
-        repo = self._repository_cls(db)
+        repo = self._repository_cls()
         graph_obj = await repo.create(
+            db,
             name=data.name,
             type=data.type,
             dashboard_id=data.dashboard_id,
@@ -103,6 +104,8 @@ class GraphService(IGraphService):
             dimensions=data.dimensions,
             metrics=data.metrics,
         )
+        if graph_obj is None:
+            raise ValueError("Failed to create graph")
         await db.commit()
         logger.info("Graph created: id=%s, name=%s", graph_obj.id, graph_obj.name)
         return await self._to_read_model(graph_obj)
@@ -125,8 +128,8 @@ class GraphService(IGraphService):
             async with get_session() as db:
                 return await self.get(graph_id, db=db)
 
-        repo = self._repository_cls(db)
-        graph_obj = await repo.get(graph_id)
+        repo = self._repository_cls()
+        graph_obj = await repo.get(graph_id, db)
         if graph_obj is None:
             logger.warning("Graph not found: id=%s", graph_id)
             return None
@@ -151,8 +154,8 @@ class GraphService(IGraphService):
             async with get_session() as db:
                 return await self.update(graph_id, data, db=db)
 
-        repo = self._repository_cls(db)
-        update_data = {}
+        repo = self._repository_cls()
+        update_data: dict[str, Any] = {}
         if data.name is not None:
             update_data["name"] = data.name
         if data.type is not None:
@@ -188,8 +191,8 @@ class GraphService(IGraphService):
             async with get_session() as db:
                 return await self.delete(graph_id, db=db)
 
-        repo = self._repository_cls(db)
-        result: bool = await repo.delete(graph_id)
+        repo = self._repository_cls()
+        result: bool = await repo.delete(graph_id, db)
         if result:
             await db.commit()
             logger.info("Graph deleted: id=%s", graph_id)
@@ -215,8 +218,8 @@ class GraphService(IGraphService):
             async with get_session() as db:
                 return await self.list_by_dashboard(dashboard_id, db=db)
 
-        repo = self._repository_cls(db)
-        graph_objs = await repo.get_by_dashboard_id(dashboard_id)
+        repo = self._repository_cls()
+        graph_objs = await repo.get_by_dashboard_id(dashboard_id, db)
         return [await self._to_read_model(g) for g in graph_objs]
 
     # Implementation of IGraphService interface methods
@@ -259,8 +262,8 @@ class GraphService(IGraphService):
                     name, dashboard_id, db=db
                 )
 
-        repo = self._repository_cls(db)
-        graph_obj = await repo.get_by_name_and_dashboard(name, dashboard_id)
+        repo = self._repository_cls()
+        graph_obj = await repo.get_by_name_and_dashboard(name, dashboard_id, db)
         if graph_obj is None:
             logger.warning(
                 "Graph not found: name=%s, dashboard_id=%s", name, dashboard_id

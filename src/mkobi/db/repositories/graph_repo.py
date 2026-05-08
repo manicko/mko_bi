@@ -176,3 +176,43 @@ class GraphRepository(IGraphRepository):
         except SQLAlchemyError as e:
             logger.error("Error getting graphs list: %s", e)
             raise
+
+    async def get_by_name_and_dashboard(
+        self, name: str, dashboard_id: UUID, db: AsyncSession
+    ) -> graph_model.Graph | None:
+        """Get graph by name and dashboard ID.
+
+        Args:
+            name: Graph name.
+            dashboard_id: Dashboard identifier.
+            db: Async database session.
+
+        Returns:
+            Graph model or None if not found.
+        """
+        try:
+            result = await db.execute(
+                select(graph_model.Graph).where(
+                    graph_model.Graph.name == name,
+                    graph_model.Graph.dashboard_id == dashboard_id,
+                )
+            )
+            graph = result.scalar_one_or_none()
+            if graph:
+                logger.info(
+                    "Graph found by name and dashboard: name=%s, dashboard_id=%s",
+                    name,
+                    dashboard_id,
+                )
+            else:
+                logger.warning(
+                    "Graph not found by name and dashboard: name=%s, dashboard_id=%s",
+                    name,
+                    dashboard_id,
+                )
+            return cast(graph_model.Graph | None, graph)
+        except SQLAlchemyError as e:
+            logger.error(
+                "Error getting graph by name and dashboard: %s", e
+            )
+            raise

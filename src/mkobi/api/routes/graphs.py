@@ -5,7 +5,7 @@ Access to most operations is restricted and requires authentication.
 Create, update, and delete operations are admin-only.
 """
 
-from typing import cast
+from typing import Any, cast
 
 import logging
 from uuid import UUID
@@ -218,7 +218,7 @@ async def update_graph_endpoint(
 
     try:
         # Prepare update data
-        update_data = {}
+        update_data: dict[str, Any] = {}
         if graph_update.name is not None:
             update_data["name"] = graph_update.name
         if graph_update.type is not None:
@@ -229,6 +229,10 @@ async def update_graph_endpoint(
             update_data["dimensions"] = graph_update.dimensions
         if graph_update.metrics is not None:
             update_data["metrics"] = graph_update.metrics
+
+        result = await _graph_repo.update(
+            graph_id, db, **update_data
+        )
 
         result = await _graph_repo.update(
             graph_id, db, **update_data

@@ -152,7 +152,7 @@ class AuthService(IAuthService):
                 "User successfully registered",
                 extra={"id": str(user.id), "email": email, "role": role},
             )
-            return UserRead.model_validate(user)
+            return cast(UserRead, UserRead.model_validate(user))
         except Exception as e:
             logger.error(
                 "Error during user registration",
@@ -228,7 +228,7 @@ class AuthService(IAuthService):
         
         if user_obj is None:
             return None
-        return UserRead.model_validate(user_obj)
+        return cast(UserRead, UserRead.model_validate(user_obj))
 
     def create_access_token(self, user_id: UUID, role: str) -> str:
         """Create access token for user.
@@ -243,7 +243,7 @@ class AuthService(IAuthService):
         return create_access_token({"user_id": str(user_id), "email": "", "role": role})
 
     async def refresh_token(
-        self, user_id: UUID, email: str, role: str
+        self, user_id: UUID, email: str, role: str, db: Any | None = None
     ) -> dict[str, Any]:
         """Refresh JWT token.
 

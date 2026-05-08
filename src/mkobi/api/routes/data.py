@@ -10,7 +10,7 @@ All operations require authentication and appropriate permissions.
 
 import json
 import logging
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -79,10 +79,10 @@ async def get_aggregated_data_endpoint(
                     detail=f"Invalid JSON in filters: {e}",
                 ) from e
 
-        # Get data through service with applied filters
-        result: dict[str, Any] = await data_service.get_filtered_data(
+        # Get data through service
+        result: list[ProcessingResultData] = await data_service.get_aggregated_data(
             dashboard_id=dashboard_id,
-            filters=filters_dict,
+            graph_id=graph_id,
         )
 
         logger.info(

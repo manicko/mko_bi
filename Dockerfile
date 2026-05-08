@@ -25,57 +25,55 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv via official installer (latest version, no version pinning)
+# Install uv via official installer
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app
 
-# Create non-root user with proper home directory
-RUN addgroup --system app && adduser --system --group app --home /app/app_home
-# Ensure home directory exists and is writable
-RUN mkdir -p /app/app_home/.cache/uv && chown -R app:app /app/app_home
-ENV HOME=/app/app_home
-ENV UV_CACHE_DIR=/app/app_home/.cache/uv
-
-# Use system Python for uv (skip venv creation)
-ENV UV_SYSTEM_PYTHON=1
+# Create non-root user
+RUN addgroup --system app && adduser --system --group app
 
 # -----------------------------------------------------------------------------
 # Stage: dev - Development with HOT RELOAD (--reload flag)
 # -----------------------------------------------------------------------------
 FROM base AS dev
 
-# Copy dependency files and source code (uv sync needs src/ to build package)
-COPY pyproject.toml uv.lock ./
+# Copy dependency files FIRST for layer caching
+COPY pyproject.toml uv.lock README.md ./
 COPY src/ ./src/
 
-# Install all dependencies including dev (system Python, no venv)
+# Install all dependencies including dev (creates .venv)
 RUN uv sync --frozen
+
+# Add venv to PATH so uvicorn/uvicorn are found
+ENV PATH="/app/.venv/bin:${PATH}"
 
 # Copy remaining files
 COPY alembic/ ./alembic/
 COPY alembic.ini ./
 
-# Create data directories
+# Create data directories with proper permissions
 RUN mkdir -p /app/data/uploads /app/data/logs /app/data/tmp_uploads && \
     chown -R app:app /app/data
 
-USER app
+# Run as root in dev mode (needed for writable mounted volumes with egg-info)
+# This allows setuptools to create src/mkobi.egg-info
 
 EXPOSE 8000
 
 # Hot reload enabled for development
-CMD ["uv", "run", "uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+CMD ["uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
 
 # -----------------------------------------------------------------------------
 # Stage: test - Testing environment
 # -----------------------------------------------------------------------------
 FROM base AS test
 
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml uv.lock README.md ./
 COPY src/ ./src/
 RUN uv sync --frozen
+ENV PATH="/app/.venv/bin:${PATH}"
 
 COPY tests/ ./tests/
 COPY alembic/ ./alembic/
@@ -89,19 +87,19 @@ USER app
 ENV ENV=test \
     DATABASE__DBNAME=bidb_test
 
-CMD ["uv", "run", "pytest", "tests/", "-v"]
+CMD ["pytest", "tests/", "-v"]
 
 # -----------------------------------------------------------------------------
 # Stage: prod - Production (DEFAULT target - faster rebuilds)
 # -----------------------------------------------------------------------------
 FROM base AS prod
 
-# Copy dependency files and source code (uv sync needs src/ to build package)
-COPY pyproject.toml uv.lock ./
+COPY pyproject.toml uv.lock README.md ./
 COPY src/ ./src/
 
-# Install only production dependencies (system Python, no venv)
+# Install only production dependencies
 RUN uv sync --frozen --no-dev
+ENV PATH="/app/.venv/bin:${PATH}"
 
 # Copy remaining files
 COPY alembic/ ./alembic/
@@ -114,4 +112,4 @@ USER app
 
 EXPOSE 8000
 
-CMD ["uv", "run", "uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]
+CMD ["uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

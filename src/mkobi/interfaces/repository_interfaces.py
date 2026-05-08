@@ -181,6 +181,13 @@ class IGraphRepository(IRepository):
         """Get graphs by dashboard ID."""
         pass
 
+    @abc.abstractmethod
+    async def get_by_name_and_dashboard(
+        self, name: str, dashboard_id: UUID, db: AsyncSession
+    ) -> Any | None:
+        """Get graph by name and dashboard ID."""
+        pass
+
 
 class IProcessingConfigRepository(IRepository):
     """Processing config repository interface."""

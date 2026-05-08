@@ -6,7 +6,7 @@ data transformation, aggregation, saving and status updates.
 
 import logging
 import tenacity
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 import polars as pl
@@ -119,7 +119,7 @@ class DataPipeline:
             config = config_response.settings if config_response else None
 
             try:
-                transformed_df = apply_transformations(df, config)
+                transformed_df = apply_transformations(df, cast(dict[str, Any] | None, config))
             except pl.PolarsError as e:
                 logger.error("Polars transformation error: %s", e)
                 await self.log_service.update_processing_log(
@@ -136,6 +136,7 @@ class DataPipeline:
                     log_id=log_entry.id,
                     status=ProcessingStatus.FAILED.value,
                     message=f"Unexpected transformation error: {e}",
+                    finished_at=None,
                     db=db,
                 )
                 raise

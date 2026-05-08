@@ -9,7 +9,7 @@
 
 import logging
 from uuid import UUID
-from typing import Any
+from typing import Any, cast
 
 from mkobi.db.repositories.layout_repo import LayoutRepository
 from mkobi.db.session import get_session
@@ -59,9 +59,12 @@ async def _create_layout_with_session(
     try:
         layout_obj = await layout_repo.create(db=db, name=name, definition=definition)
         await db.commit()
-        logger.info("Layout создан: id=%s, name=%s", layout_obj.id, layout_obj.name)
 
-        return LayoutRead.model_validate(layout_obj)
+        if layout_obj is None:
+            raise ValueError("Failed to create layout")
+
+        logger.info("Layout создан: id=%s, name=%s", layout_obj.id, layout_obj.name)
+        return cast(LayoutRead, LayoutRead.model_validate(layout_obj))
     except Exception as e:
         await db.rollback()
         logger.error("Ошибка при создании layout name=%s: %s", name, e)
@@ -97,7 +100,7 @@ async def _get_layout_with_session(
     layout_obj = await layout_repo.get(layout_id, db)
     if not layout_obj:
         return None
-    return LayoutRead.model_validate(layout_obj)
+    return cast(LayoutRead, LayoutRead.model_validate(layout_obj))
 
 
 async def get_all_layouts(db: AsyncSession | None = None) -> list[LayoutRead]:
@@ -166,7 +169,7 @@ async def _update_layout_with_session(
             raise ValueError(f"Layout с именем '{update_data.name}' уже существует")
 
     # Подготовка данных для обновления
-    update_kwargs = {}
+    update_kwargs: dict[str, Any] = {}
     if update_data.name is not None:
         update_kwargs["name"] = update_data.name
     if update_data.definition is not None:
@@ -178,7 +181,7 @@ async def _update_layout_with_session(
             return None
         await db.commit()
         logger.info("Layout обновлен: id=%s", layout_id)
-        return LayoutRead.model_validate(updated)
+        return cast(LayoutRead, LayoutRead.model_validate(updated))
     except Exception as e:
         await db.rollback()
         logger.error("Ошибка при обновлении layout id=%s: %s", layout_id, e)

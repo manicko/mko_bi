@@ -147,7 +147,7 @@ class ProcessingLogService(IProcessingLogService):
         log = await repo.create_log(
             dashboard_id, ProcessingStatus.STARTED, "Processing started", db
         )
-        return ProcessingLogRead.model_validate(log)
+        return cast(ProcessingLogRead, ProcessingLogRead.model_validate(log))
 
     @staticmethod
     async def update_to_uploaded(

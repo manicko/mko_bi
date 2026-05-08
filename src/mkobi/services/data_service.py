@@ -24,10 +24,10 @@ from mkobi.interfaces.service_interfaces import IDataService
 from mkobi.models.data import (
     ProcessingConfig,
     ProcessingResult,
-    ProcessingResultData,
     ProcessingStatusResponse,
     UploadResponse,
 )
+from mkobi.models.types import ProcessingResultData
 from mkobi.models.enums import MimeTypeEnum, ProcessingStatus, UploadMode
 from mkobi.services.processing_log_service import get_by_id
 
@@ -40,6 +40,7 @@ class DataService(IDataService):
     def __init__(self, db: AsyncSession | None = None):
         """Initialize service."""
         self._db = db
+        self._upload_rate_limiter: RateLimiter | None = None
         # Try to initialize Redis, but don't fail if Redis is unavailable
         try:
             self._upload_rate_limiter = RateLimiter(get_redis_client())
@@ -141,8 +142,9 @@ class DataService(IDataService):
         await db.commit()
 
         # Enqueue job
+        from mkobi.workers.data_worker import process_csv_background
         await enqueue_job(
-            "process_upload_task",
+            process_csv_background,
             file_path=str(temp_file_path),
             dashboard_id=str(dashboard_id),
             task_id=str(task_id),
@@ -193,17 +195,18 @@ class DataService(IDataService):
     ) -> list[ProcessingResultData]:
         """Internal method to get aggregated data."""
         agg_repo = AggregatedDataRepository()
-        records = await agg_repo.get_by_graph(
-            db=db,
-            graph_id=graph_id,
+        records = await agg_repo.get_by_graph_id(
+            graph_id, db,
         )
 
         result = []
         for record in records:
             result.append(
                 ProcessingResultData(
-                    dims=record.dims,
-                    metrics=record.metrics,
+                    columns=list(record.dims.keys()) + list(record.metrics.keys()),
+                    rows=1,
+                    dashboard_id=record.dashboard_id,
+                    preview=[{**record.dims, **record.metrics}],
                 )
             )
         return result
@@ -238,8 +241,8 @@ class DataService(IDataService):
         """Internal method to get available metrics."""
         from mkobi.db.repositories.graph_repo import GraphRepository
 
-        repo = GraphRepository(db)
-        graphs = await repo.get_by_dashboard(dashboard_id)
+        repo = GraphRepository()
+        graphs = await repo.get_by_dashboard_id(dashboard_id, db)
 
         metrics: set[str] = set()
         for graph in graphs:
@@ -280,8 +283,8 @@ class DataService(IDataService):
         """Internal method to get available dimensions."""
         from mkobi.db.repositories.graph_repo import GraphRepository
 
-        repo = GraphRepository(db)
-        graphs = await repo.get_by_dashboard(dashboard_id)
+        repo = GraphRepository()
+        graphs = await repo.get_by_dashboard_id(dashboard_id, db)
 
         dimensions: set[str] = set()
         for graph in graphs:
@@ -443,10 +446,11 @@ async def get_processing_result(
         raise ValueError(f"Task {task_id} not found")
 
     # Get aggregated data
+    if log.dashboard_id is None:
+        raise ValueError(f"Task {task_id} has no dashboard_id")
     agg_repo = AggregatedDataRepository()
-    records = await agg_repo.get_by_dashboard(
-        db=db,
-        dashboard_id=log.dashboard_id,
+    records = await agg_repo.get_by_dashboard_id(
+        log.dashboard_id, db,
     )
 
     return ProcessingResult(
