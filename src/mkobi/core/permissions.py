@@ -26,7 +26,9 @@ from mkobi.db.repositories.access_repo import AccessRepository
 from mkobi.db.repositories.user_repo import UserRepository
 from mkobi.db.session import get_session
 from mkobi.models.enums import DashboardPermission, UserRole
-from mkobi.models.user import UserDB
+from mkobi.models.user import UserRead
+
+logger = logging.getLogger(__name__)
 
 
 class RolePermissions:
@@ -105,9 +107,6 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
         finally:
             # Explicit close for guarantee
             await db.close()
-
-
-logger = logging.getLogger(__name__)
 
 
 # --- Constants ---
@@ -341,7 +340,7 @@ def _decode_token_cached(token: str) -> dict[str, Any] | None:
 async def get_current_user(
     token: str,
     db: AsyncSession | None = None,
-) -> UserDB:
+) -> UserRead:
     """Get current user by token.
 
     Decodes JWT token, extracts user_id and gets
@@ -352,7 +351,7 @@ async def get_current_user(
         db: Async database session. If not provided, a new one is created.
 
     Returns:
-        UserDB: User model with data from database.
+        UserRead: User model with data from database (without password hash).
 
     Raises:
         AuthenticationError: If token is invalid or user not found.
@@ -368,7 +367,7 @@ async def get_current_user(
 async def _get_current_user_with_session(
     token: str,
     db: AsyncSession,
-) -> UserDB:
+) -> UserRead:
     """Internal function to get user using session.
 
     Args:
@@ -376,7 +375,7 @@ async def _get_current_user_with_session(
         db: Async database session.
 
     Returns:
-        UserDB: User model.
+        UserRead: User model (without password hash).
 
     Raises:
         AuthenticationError: If token is invalid or user not found.
@@ -403,7 +402,8 @@ async def _get_current_user_with_session(
             raise AuthenticationError("User not found")
 
         logger.info("User authenticated: user_id=%s", user_id)
-        return cast(UserDB, UserDB.model_validate(user))
+        # repo.get() already returns UserRead, so just return it
+        return user
 
     except JWTError as e:
         logger.error("JWT decode error: %s", e)
@@ -423,7 +423,7 @@ security = HTTPBearer()
 async def get_current_user_dependency(
     credentials: HTTPAuthorizationCredentials = Depends(security),
     db: AsyncSession = Depends(get_db),
-) -> UserDB:
+) -> UserRead:
     """FastAPI dependency for getting current user.
 
     Extracts token from Authorization header, decodes it
@@ -434,7 +434,7 @@ async def get_current_user_dependency(
         db: Database session.
 
     Returns:
-        UserDB: Authenticated user model.
+        UserRead: Authenticated user model.
 
     Raises:
         HTTPException: If token is invalid or user not found.
@@ -474,13 +474,13 @@ def require_role(required_roles: list[UserRole]):
     Example:
         @app.get("/admin")
         async def admin_route(
-            user: UserDB = Depends(get_current_user_dependency),
+            user: UserRead = Depends(get_current_user_dependency),
             _: None = Depends(require_role([UserRole.ADMIN])),
         ):
             return {"message": "Admin area"}
     """
 
-    def role_checker(user: UserDB = Depends(get_current_user_dependency)) -> UserDB:
+    def role_checker(user: UserRead = Depends(get_current_user_dependency)) -> UserRead:
         """Check user role and return it on success."""
         if not check_permission(user.role, required_roles):
             logger.warning(
@@ -520,7 +520,7 @@ def require_dashboard_access(
         @app.get("/dashboards/{dashboard_id}")
         async def get_dashboard(
             dashboard_id: int,
-            user: UserDB = Depends(get_current_user_dependency),
+            user: UserRead = Depends(get_current_user_dependency),
             _: None = Depends(require_dashboard_access("read")),
         ):
             return {"message": "Dashboard data"}
@@ -528,9 +528,9 @@ def require_dashboard_access(
 
     async def access_checker(
         dashboard_id: UUID,
-        user: UserDB = Depends(get_current_user_dependency),
+        user: UserRead = Depends(get_current_user_dependency),
         db: AsyncSession = Depends(get_db),
-    ) -> UserDB:
+    ) -> UserRead:
         """Check user access to dashboard."""
         if not await check_dashboard_access(
             user_id=user.id,

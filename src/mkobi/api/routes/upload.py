@@ -16,6 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
     CurrentUser,
+    EditorUser,
     get_db,
 )
 from mkobi.config import get_config
@@ -48,7 +49,7 @@ logger = get_logger(__name__)
 )
 async def upload_file_endpoint(
     dashboard_id: UUID,
-    current_user: CurrentUser,
+    current_user: EditorUser,
     file: UploadFile = File(...),
     mode: UploadMode = UploadMode.OVERWRITE,
     db: AsyncSession = Depends(get_db),
@@ -195,7 +196,7 @@ async def upload_file_endpoint(
 async def process_file_endpoint(
     task_id: UUID,
     dashboard_id: UUID,
-    current_user: CurrentUser,
+    current_user: EditorUser,
     db: AsyncSession = Depends(get_db),
     config: ProcessingConfig | None = None,
 ) -> ProcessingStatusResponse:
@@ -254,7 +255,7 @@ async def process_file_endpoint(
 )
 async def get_status_endpoint(
     task_id: UUID,
-    current_user: CurrentUser,
+    current_user: EditorUser,
     db: AsyncSession = Depends(get_db),
 ) -> ProcessingStatusResponse:
     """Get current processing status of file."""
@@ -306,7 +307,7 @@ async def get_status_endpoint(
 )
 async def get_result_endpoint(
     task_id: UUID,
-    current_user: CurrentUser,
+    current_user: EditorUser,
     db: AsyncSession = Depends(get_db),
 ) -> ProcessingResult:
     """Get processing result of file."""

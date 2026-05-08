@@ -184,7 +184,17 @@ class DashboardService(IDashboardService):
         )
 
         # Convert to Pydantic model with layout data
-        return await self._dashboard_to_read(dashboard_obj, db)
+        try:
+            dashboard_read = await self._dashboard_to_read(dashboard_obj, db)
+            return dashboard_read
+        except Exception as e:
+            logger.error(
+                "Error in get_dashboard for dashboard_id=%s: %s",
+                dashboard_obj.id,
+                e,
+                exc_info=True,
+            )
+            raise
 
     async def get_dashboard_by_name(
         self,

@@ -81,7 +81,7 @@ async def create_graph_endpoint(
             metrics=graph.metrics,
         )
         await db.commit()
-        return GraphRead.model_validate(result)
+        return cast(GraphRead, GraphRead.model_validate(result))
     except ValueError as e:
         logger.warning("Validation error creating graph: %s", e)
         raise HTTPException(
@@ -244,7 +244,7 @@ async def update_graph_endpoint(
                 detail="Graph not found",
             )
         await db.commit()
-        return GraphRead.model_validate(result)
+        return cast(GraphRead, GraphRead.model_validate(result))
     except ValueError as e:
         logger.warning("Validation error updating graph: %s", e)
         raise HTTPException(

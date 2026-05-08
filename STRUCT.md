@@ -13,12 +13,14 @@ C:\py_dev\mkobi
 │       ├── 20260507141843_add_updated_at_to_users.py
 │       ├── a1b2c3d4e5f6_add_config_to_dashboards.py
 │       ├── a1e404502aac_add_registration_requests_table.py
+│       ├── a2b3c4d5e6f7_fix_unique_constraint_aggregated_data.py
 │       ├── ce58bba5d461_add_db_constraints_and_fix_schema_issues.py
 │       ├── e86f3c8f7324_schema_adjustments.py
 │       └── f50a4054569c_merge_heads.py
 ├── alembic.ini
 ├── best_llm_models.md
 ├── bidb_schema.sql
+├── check_db.py
 ├── check_paths.py
 ├── check_tables.py
 ├── create_db.sql
@@ -136,6 +138,8 @@ C:\py_dev\mkobi
 ├── pyproject.toml
 ├── README.md
 ├── README_DOCKER.md
+├── recreate_test_db.py
+├── setup_test_db.py
 ├── SPEC.md
 ├── SPEC_FRONTEND.md
 ├── src
@@ -271,18 +275,18 @@ C:\py_dev\mkobi
 │   │   ├── TASK_050_architecture_audit.md
 │   │   └── TEST_036_test_audit_arch.md
 │   ├── DEV
-│   │   ├── 03_mypy_type_errors.md
+│   │   ├── 03_mypy_type_errors_DONE.md
 │   │   ├── 15_code_quality_tools.md
-│   │   ├── 21_storage_manager_unique_constraint.md
+│   │   ├── 21_storage_manager_unique_constraint_DONE.md
+│   │   ├── 22_unrelated_test_failures.md
 │   │   ├── DOCKER_PLAN.md
 │   │   ├── TASK_006_repository_instance_methods_fix.md
 │   │   ├── TASK_006_storage_manager_methods_fix.md
-│   │   ├── TASK_007_aggregated_data_unique_constraint_fix_DONE.md
 │   │   ├── TASK_007_dashboard_creation_fix.md
-│   │   ├── TASK_008_fix_uuid_import_dashboards.md
 │   │   ├── TASK_008_test_messages_english_fix.md
-│   │   ├── TASK_009_postgresql_connection_fix.md
-│   │   └── TASK_009_upload_api_auth_fix.md
+│   │   ├── TASK_009_upload_api_auth_fix.md
+│   │   ├── TASK_010_test_database_setup_fix_DONE.md
+│   │   └── TASK_010_test_database_setup_fix_IN_PROGRESS.md
 │   └── DONE
 │       ├── TASK_001_sync_async_unification.md
 │       ├── TASK_014_dash_modern_component_architecture_DONE.md

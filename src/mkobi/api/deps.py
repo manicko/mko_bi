@@ -13,12 +13,9 @@ Typical usage scenarios:
 from __future__ import annotations
 
 import logging
-from typing import Annotated, Any, cast
-from collections.abc import AsyncGenerator
-from uuid import UUID
+from typing import Annotated, Any
 
 from fastapi import Depends, HTTPException, status
-from mkobi.models.enums import UserRole
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import ExpiredSignatureError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -30,21 +27,19 @@ from mkobi.core.permissions import (
     AuthenticationError,
 )
 from mkobi.db.session import get_db, get_session  # noqa: F401 - re-exported for backwards compatibility
-
-# Explicitly export get_db for use in API routes
-__all__ = ["get_db", "get_db_dependency", "get_current_user_dependency"]
-from mkobi.models.user import UserDB
 from mkobi.models.enums import UserRole
+from mkobi.models.user import UserRead
 
 logger = logging.getLogger(__name__)
 
 
 # --- Base dependencies ---
 
+
 security = HTTPBearer()
 
 
-async def get_db_dependency() -> AsyncGenerator[AsyncSession, None]:
+async def get_db_dependency() -> AsyncSession:
     """Database session dependency for FastAPI routes.
 
     Creates a new session for each request and closes it after completion.
@@ -257,13 +252,13 @@ def get_token_from_header(
             detail="Invalid authentication scheme",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return cast(str, credentials.credentials)
+    return credentials.credentials
 
 
 async def get_current_user_dependency(
     token: str = Depends(get_token_from_header),
     db: AsyncSession = Depends(get_db_dependency),
-) -> UserDB:
+) -> UserRead:
     """Get current authenticated user.
 
     Decodes JWT token, extracts user_id and retrieves user
@@ -274,14 +269,14 @@ async def get_current_user_dependency(
         db: Async database session.
 
     Returns:
-        UserDB: Authenticated user model.
+        UserRead: Authenticated user model (without password hash).
 
     Raises:
         HTTPException: If token is invalid, expired or user not found.
 
     Example:
         @app.get("/users/me")
-        async def read_users_me(user: UserDB = Depends(get_current_user_dependency)):
+        async def read_users_me(user: UserRead = Depends(get_current_user_dependency)):
             return user
     """
     try:
@@ -314,15 +309,15 @@ async def get_current_user_dependency(
 
 
 def require_admin_role(
-    user: UserDB = Depends(get_current_user_dependency),
-) -> UserDB:
+    user: UserRead = Depends(get_current_user_dependency),
+) -> UserRead:
     """Require admin role.
 
     Args:
         user: User (obtained via get_current_user_dependency).
 
     Returns:
-        UserDB: User if has admin role.
+        UserRead: User if has admin role.
 
     Raises:
         HTTPException: If user does not have admin role.
@@ -331,7 +326,7 @@ def require_admin_role(
         @app.post("/users/")
         async def create_user(
             user_data: UserCreate,
-            _: UserDB = Depends(require_admin_role),
+            _: UserRead = Depends(require_admin_role),
         ):
             return create_user(user_data)
     """
@@ -349,15 +344,15 @@ def require_admin_role(
 
 
 def require_editor_role(
-    user: UserDB = Depends(get_current_user_dependency),
-) -> UserDB:
+    user: UserRead = Depends(get_current_user_dependency),
+) -> UserRead:
     """Require editor role or higher (editor, admin).
 
     Args:
         user: User (obtained via get_current_user_dependency).
 
     Returns:
-        UserDB: User if has editor or admin role.
+        UserRead: User if has editor or admin role.
 
     Raises:
         HTTPException: If user has insufficient permissions.
@@ -365,7 +360,7 @@ def require_editor_role(
     Example:
         @app.post("/upload/")
         async def upload_file(
-            _: UserDB = Depends(require_editor_role),
+            _: UserRead = Depends(require_editor_role),
         ):
             return {"message": "Upload allowed"}
     """
@@ -383,8 +378,8 @@ def require_editor_role(
 
 
 def require_viewer_role(
-    user: UserDB = Depends(get_current_user_dependency),
-) -> UserDB:
+    user: UserRead = Depends(get_current_user_dependency),
+) -> UserRead:
     """Require viewer role or higher (viewer, editor, admin).
 
     Essentially checks that user is authenticated,
@@ -394,12 +389,12 @@ def require_viewer_role(
         user: User (obtained via get_current_user_dependency).
 
     Returns:
-        UserDB: User.
+        UserRead: User.
 
     Example:
         @app.get("/dashboards/")
         async def list_dashboards(
-            user: UserDB = Depends(require_viewer_role),
+            user: UserRead = Depends(require_viewer_role),
         ):
             return {"message": "Access granted"}
     """
@@ -424,15 +419,15 @@ def require_role_dependency(required_role: str):
     Example:
         @app.get("/admin-only")
         async def admin_only(
-            user: UserDB = Depends(require_role_dependency(UserRole.ADMIN)),
+            user: UserRead = Depends(require_role_dependency(UserRole.ADMIN)),
         ):
             return {"message": "Admin area"}
     """
 
     def role_checker(
-        user: UserDB = Depends(get_current_user_dependency),
-    ) -> UserDB:
-        if not check_role(cast(UserRole, user.role), required_role):
+        user: UserRead = Depends(get_current_user_dependency),
+    ) -> UserRead:
+        if not check_role(user.role, required_role):
             logger.warning(
                 "Insufficient permissions: user_id=%s, user_role=%s, required_role=%s",
                 user.id,
@@ -453,9 +448,9 @@ def require_role_dependency(required_role: str):
 
 async def require_dashboard_read_access(
     dashboard_id: UUID,
-    user: UserDB = Depends(get_current_user_dependency),
+    user: UserRead = Depends(get_current_user_dependency),
     db: AsyncSession = Depends(get_db_dependency),
-) -> UserDB:
+) -> UserRead:
     """Require read access to dashboard.
 
     Args:
@@ -464,7 +459,7 @@ async def require_dashboard_read_access(
         db: Async database session.
 
     Returns:
-        UserDB: User if has access.
+        UserRead: User if has access.
 
     Raises:
         HTTPException: If user has no read access.
@@ -473,7 +468,7 @@ async def require_dashboard_read_access(
         @app.get("/dashboards/{dashboard_id}")
         async def get_dashboard(
             dashboard_id: UUID,
-            user: UserDB = Depends(require_dashboard_read_access),
+            user: UserRead = Depends(require_dashboard_read_access),
         ):
             return {"message": "Dashboard data"}
     """
@@ -497,9 +492,9 @@ async def require_dashboard_read_access(
 
 async def require_dashboard_write_access(
     dashboard_id: UUID,
-    user: UserDB = Depends(get_current_user_dependency),
+    user: UserRead = Depends(get_current_user_dependency),
     db: AsyncSession = Depends(get_db_dependency),
-) -> UserDB:
+) -> UserRead:
     """Require write (edit) access to dashboard.
 
     Args:
@@ -508,7 +503,7 @@ async def require_dashboard_write_access(
         db: Async database session.
 
     Returns:
-        UserDB: User if has write access.
+        UserRead: User if has write access.
 
     Raises:
         HTTPException: If user has no write access.
@@ -517,7 +512,7 @@ async def require_dashboard_write_access(
         @app.put("/dashboards/{dashboard_id}")
         async def update_dashboard(
             dashboard_id: UUID,
-            user: UserDB = Depends(require_dashboard_write_access),
+            user: UserRead = Depends(require_dashboard_write_access),
         ):
             return {"message": "Update allowed"}
     """
@@ -541,9 +536,9 @@ async def require_dashboard_write_access(
 
 async def require_dashboard_admin_access(
     dashboard_id: UUID,
-    user: UserDB = Depends(get_current_user_dependency),
+    user: UserRead = Depends(get_current_user_dependency),
     db: AsyncSession = Depends(get_db_dependency),
-) -> UserDB:
+) -> UserRead:
     """Require admin access to dashboard.
 
     Args:
@@ -552,7 +547,7 @@ async def require_dashboard_admin_access(
         db: Async database session.
 
     Returns:
-        UserDB: User if has admin access.
+        UserRead: User if has admin access.
 
     Raises:
         HTTPException: If user has no admin access.
@@ -561,7 +556,7 @@ async def require_dashboard_admin_access(
         @app.delete("/dashboards/{dashboard_id}")
         async def delete_dashboard(
             dashboard_id: UUID,
-            user: UserDB = Depends(require_dashboard_admin_access),
+            user: UserRead = Depends(require_dashboard_admin_access),
         ):
             return {"message": "Delete allowed"}
     """
@@ -586,15 +581,15 @@ async def require_dashboard_admin_access(
 # --- Combined dependencies ---
 
 # Typed aliases for convenience
-CurrentUser = Annotated[UserDB, Depends(get_current_user_dependency)]
-AdminUser = Annotated[UserDB, Depends(require_admin_role)]
-EditorUser = Annotated[UserDB, Depends(require_editor_role)]
-ViewerUser = Annotated[UserDB, Depends(require_viewer_role)]
+CurrentUser = Annotated[UserRead, Depends(get_current_user_dependency)]
+AdminUser = Annotated[UserRead, Depends(require_admin_role)]
+EditorUser = Annotated[UserRead, Depends(require_editor_role)]
+ViewerUser = Annotated[UserRead, Depends(require_viewer_role)]
 
 
 async def get_dashboard_permissions(
     dashboard_id: UUID,
-    user: UserDB = Depends(get_current_user_dependency),
+    user: UserRead = Depends(get_current_user_dependency),
     db: AsyncSession = Depends(get_db_dependency),
     access_repo=Depends(get_access_repository),
 ) -> dict[str, Any]:

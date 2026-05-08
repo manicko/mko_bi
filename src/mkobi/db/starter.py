@@ -10,7 +10,7 @@ import os
 import subprocess
 import sys
 from datetime import datetime, timedelta
-from anyio import to_thread
+from anyio.to_thread import run_sync as to_thread_run
 from typing import cast
 
 from alembic import command
@@ -123,27 +123,49 @@ class DatabaseStarter:
 
         logger.info("Recreating test database...")
 
-        # Create test engine with autocommit mode
-        # (required for DROP/CREATE DATABASE in PostgreSQL)
-        self._test_engine = create_async_engine(
-            test_url,
+        # Parse the test URL to get the base connection details
+        # Connect to 'postgres' database to be able to drop/create bidb_test
+        base_url = test_url.rsplit("/", 1)[0] + "/postgres"
+
+        # Create engine connected to 'postgres' database with autocommit
+        admin_engine = create_async_engine(
+            base_url,
             isolation_level="AUTOCOMMIT",
         )
 
         # Drop and recreate test database
         try:
-            async with self._test_engine.connect() as conn:
-                await conn.execute(text("DROP DATABASE IF EXISTS test_bidb"))
-                await conn.execute(text("CREATE DATABASE test_bidb"))
+            async with admin_engine.connect() as conn:
+                await conn.execute(text("DROP DATABASE IF EXISTS bidb_test"))
+                await conn.execute(text("CREATE DATABASE bidb_test"))
+            await admin_engine.dispose()
         except Exception as e:
             logger.error("Failed to recreate test database: %s", e)
+            await admin_engine.dispose()
             raise
 
         # Apply migrations to test database
-        # (use a new engine without autocommit for migrations)
         migration_engine = create_async_engine(test_url)
         await self._apply_migrations(test_url)
         await migration_engine.dispose()
+
+        # Ensure config column exists (migration might have failed silently)
+        verify_engine = create_async_engine(test_url)
+        async with verify_engine.connect() as conn:
+            result = await conn.execute(
+                text(
+                    "SELECT column_name FROM information_schema.columns "
+                    "WHERE table_name='dashboards' AND column_name='config'"
+                )
+            )
+            if not result.fetchone():
+                logger.warning("Config column not found, adding it manually...")
+                await conn.execute(
+                    text("ALTER TABLE dashboards ADD COLUMN config JSONB DEFAULT '{}'::jsonb")
+                )
+                await conn.commit()
+                logger.info("Config column added manually")
+        await verify_engine.dispose()
 
         logger.info("Test database recreated successfully")
 
@@ -162,7 +184,7 @@ class DatabaseStarter:
             command.upgrade(config, "head")
 
         logger.info(f"Running migrations for {db_url}...")
-        await to_thread(_sync_migrate)
+        await to_thread_run(_sync_migrate)
         logger.info("Migrations applied successfully")
 
     async def _populate_alembic_version(self) -> None:
@@ -229,6 +251,16 @@ class DatabaseStarter:
 
             if result.rowcount > 0:
                 logger.info(f"Cleaned up {result.rowcount} old processing logs")
+
+    async def shutdown(self) -> None:
+        """Dispose database engines on application shutdown."""
+        if self._main_engine:
+            await self._main_engine.dispose()
+            self._main_engine = None
+        if self._test_engine:
+            await self._test_engine.dispose()
+            self._test_engine = None
+        logger.info("Database engines disposed")
 
 
 def main() -> None:

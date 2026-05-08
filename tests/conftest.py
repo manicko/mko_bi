@@ -25,7 +25,7 @@ os.environ["REDIS__PORT"] = "6379"
 os.environ["TEST_DATABASE_URL"] = (
     "postgresql+asyncpg://postgres:1234@localhost:5432/bidb_test"
 )
-os.environ["RECREATE_TEST_DB"] = "false"
+os.environ["RECREATE_TEST_DB"] = "true"
 
 # Test PostgreSQL database (async)
 # Use get_config() to be consistent with the app
@@ -143,11 +143,11 @@ def mock_redis(monkeypatch):
 def pytest_sessionstart(session):
     """Setup before test session starts using DatabaseStarter."""
     import asyncio
+    from mkobi.db.starter import DatabaseStarter
 
     async def init_test_db():
-        # Skip recreation - tests will use existing test DB
-        # await DatabaseStarter().recreate_test_database()
-        pass
+        # Recreate test database with proper schema
+        await DatabaseStarter().recreate_test_database()
 
     asyncio.run(init_test_db())
 

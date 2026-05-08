@@ -65,11 +65,13 @@ def upgrade() -> None:
     op.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_layouts_name ON layouts (name)")
 
     # Create dashboards table
+    op.execute("DROP TABLE IF EXISTS dashboards CASCADE")
     op.execute("""
-        CREATE TABLE IF NOT EXISTS dashboards (
+        CREATE TABLE dashboards (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name TEXT NOT NULL,
             description TEXT,
+            config JSONB,
             layout_id UUID REFERENCES layouts(id) ON DELETE SET NULL,
             created_by UUID REFERENCES users(id) ON DELETE SET NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT now(),

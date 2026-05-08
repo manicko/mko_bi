@@ -5,7 +5,7 @@ Revises: f50a4054569c
 Create Date: 2026-05-07 20:35:07.146278
 
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
 from alembic import op
 import sqlalchemy as sa
@@ -13,24 +13,25 @@ import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
 revision: str = '91f5436a3098'
-down_revision: Union[str, Sequence[str], None] = 'f50a4054569c'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: Sequence[str] | str | None = 'f50a4054569c'
+branch_labels: Sequence[str] | str | None = None
+depends_on: Sequence[str] | str | None = None
 
 
 def upgrade() -> None:
     """Upgrade schema."""
-    op.create_unique_constraint(
-        "uq_aggregated_data_dashboard_graph_dims",
-        "aggregated_data",
-        ["dashboard_id", "graph_id", "dims"],
+    # Create unique index for UPSERT support
+    # Note: dims is JSONB, so we need to cast to text for uniqueness
+    # Use raw SQL since PostgreSQL requires parentheses around expressions in indexes
+    op.execute(
+        "CREATE UNIQUE INDEX uq_aggregated_data_dashboard_graph_dims "
+        "ON aggregated_data (dashboard_id, graph_id, (dims::text))"
     )
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_constraint(
+    op.drop_index(
         "uq_aggregated_data_dashboard_graph_dims",
-        "aggregated_data",
-        type_="unique",
+        table_name="aggregated_data",
     )

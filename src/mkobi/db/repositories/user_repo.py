@@ -14,6 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.db.models import user as user_model
 from mkobi.interfaces.repository_interfaces import IUserRepository
+from mkobi.models.user import UserRead
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,7 @@ class UserRepository(IUserRepository):
     separate database session with automatic transaction management.
     Implements IUserRepository interface.
     """
-    async def get(self, id: UUID, db: AsyncSession) -> user_model.User | None:
+    async def get(self, id: UUID, db: AsyncSession) -> UserRead | None:
         """Get user by ID.
 
         Args:
@@ -34,7 +35,7 @@ class UserRepository(IUserRepository):
             db: Async database session.
 
         Returns:
-            User model or None if not found.
+            UserRead model or None if not found.
         """
         try:
             result = await db.execute(
@@ -43,13 +44,13 @@ class UserRepository(IUserRepository):
             user = result.scalar_one_or_none()
             if user:
                 logger.info("User retrieved: id=%s", id)
-            else:
-                logger.warning("User not found: id=%s", id)
-            return cast(user_model.User | None, user)
+                return cast(UserRead, UserRead.model_validate(user))
+            logger.warning("User not found: id=%s", id)
+            return None
         except SQLAlchemyError as e:
             logger.error("Error getting user id=%s: %s", id, e)
             raise
-    async def get_by_email(self, email: str, db: AsyncSession) -> user_model.User | None:
+    async def get_by_email(self, email: str, db: AsyncSession) -> UserRead | None:
         """Get user by email.
 
         Args:
@@ -57,7 +58,7 @@ class UserRepository(IUserRepository):
             db: Async database session.
 
         Returns:
-            User model or None if not found.
+            UserRead model or None if not found.
         """
         try:
             result = await db.execute(
@@ -66,30 +67,30 @@ class UserRepository(IUserRepository):
             user = result.scalar_one_or_none()
             if user:
                 logger.info("User retrieved by email: %s", email)
-            else:
-                logger.warning("User not found by email: %s", email)
-            return cast(user_model.User | None, user)
+                return cast(UserRead, UserRead.model_validate(user))
+            logger.warning("User not found by email: %s", email)
+            return None
         except SQLAlchemyError as e:
             logger.error("Error getting user email=%s: %s", email, e)
             raise
-    async def get_all(self, db: AsyncSession) -> list[user_model.User]:
+    async def get_all(self, db: AsyncSession) -> list[UserRead]:
         """Get all users.
 
         Args:
             db: Async database session.
 
         Returns:
-            List of all users.
+            List of all UserRead models.
         """
         try:
             result = await db.execute(select(user_model.User))
             users = list(result.scalars().all())
             logger.info("Users list retrieved, count: %s", len(users))
-            return cast(list[user_model.User], users)
+            return [UserRead.model_validate(u) for u in users]
         except SQLAlchemyError as e:
             logger.error("Error getting users list: %s", e)
             raise
-    async def create(self, db: AsyncSession, **kwargs) -> user_model.User | None:
+    async def create(self, db: AsyncSession, **kwargs) -> UserRead | None:
         """Create new user.
 
         Args:
@@ -97,7 +98,7 @@ class UserRepository(IUserRepository):
             **kwargs: User parameters (email, password_hash, role).
 
         Returns:
-            Created user model with ID or None on error.
+            Created UserRead model with ID or None on error.
         """
         try:
             user_obj = user_model.User(**kwargs)
@@ -105,13 +106,13 @@ class UserRepository(IUserRepository):
             await db.flush()
             await db.refresh(user_obj)
             logger.info("User created: id=%s, email=%s", user_obj.id, user_obj.email)
-            return cast(user_model.User | None, user_obj)
+            return cast(UserRead, UserRead.model_validate(user_obj))
         except SQLAlchemyError as e:
             logger.error("Error creating user: %s", e)
             raise
     async def update(
         self, id: UUID, db: AsyncSession, **kwargs
-    ) -> user_model.User | None:
+    ) -> UserRead | None:
         """Update user data.
 
         Args:
@@ -120,7 +121,7 @@ class UserRepository(IUserRepository):
             **kwargs: Fields to update.
 
         Returns:
-            Updated user model or None if not found.
+            Updated UserRead model or None if not found.
         """
         try:
             result = await db.execute(
@@ -136,7 +137,7 @@ class UserRepository(IUserRepository):
             await db.flush()
             await db.refresh(user_obj)
             logger.info("User updated: id=%s", id)
-            return cast(user_model.User | None, user_obj)
+            return cast(UserRead, UserRead.model_validate(user_obj))
         except SQLAlchemyError as e:
             logger.error("Error updating user id=%s: %s", id, e)
             raise

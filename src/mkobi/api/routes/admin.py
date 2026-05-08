@@ -242,6 +242,7 @@ async def reject_registration_request_admin_endpoint(
         await repo.update_status(
             request_id=request_id,
             status=RegistrationStatus.REJECTED,
+            db=db,
             reviewed_by=current_user.id,
         )
         await db.commit()

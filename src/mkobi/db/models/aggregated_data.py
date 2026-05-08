@@ -9,7 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     BigInteger,
     Index,
-    UniqueConstraint,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.engine.interfaces import Dialect
@@ -51,11 +51,13 @@ class AggregatedData(Base):
         Index("idx_aggregated_data_dashboard_id", "dashboard_id"),
         Index("idx_aggregated_data_dashboard_graph", "dashboard_id", "graph_id"),
         Index("idx_aggregated_data_dims_gin", "dims", postgresql_using="gin"),
-        UniqueConstraint(
+        # Unique index for UPSERT support (JSONB requires cast to text for uniqueness)
+        Index(
+            "uq_aggregated_data_dashboard_graph_dims",
             "dashboard_id",
             "graph_id",
-            "dims",
-            name="uq_aggregated_data_dashboard_graph_dims",
+            text("dims::text"),
+            unique=True,
         ),
     )
 

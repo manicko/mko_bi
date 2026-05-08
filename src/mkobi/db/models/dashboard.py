@@ -12,7 +12,7 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.dialects.postgresql import UUID as PG_UUID
+from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mkobi.db.base import Base
@@ -46,6 +46,11 @@ class Dashboard(Base):
 
     description: Mapped[str | None] = mapped_column(
         Text,
+        nullable=True,
+    )
+
+    config: Mapped[str | None] = mapped_column(
+        JSONB,
         nullable=True,
     )
 

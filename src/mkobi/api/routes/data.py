@@ -20,6 +20,7 @@ from mkobi.api.deps import (
     require_viewer_role,
     get_data_service,
 )
+from mkobi.models.data import ProcessingResultData
 from mkobi.services.data_service import DataService
 
 logger = logging.getLogger(__name__)
@@ -39,6 +40,7 @@ async def get_aggregated_data_endpoint(
     current_user: CurrentUser,
     data_service: DataService = Depends(get_data_service),
     dashboard_id: UUID = Query(..., description="Dashboard ID"),
+    graph_id: UUID = Query(..., description="Graph ID"),
     filters: str | None = Query(default=None, description="JSON string with filters"),
 ) -> dict[str, Any]:
     """Get aggregated data for dashboard.
@@ -86,11 +88,12 @@ async def get_aggregated_data_endpoint(
         )
 
         logger.info(
-            "Aggregated data retrieved: dashboard_id=%s, charts_count=%d",
+            "Aggregated data retrieved: dashboard_id=%s, graph_id=%s, records_count=%d",
             dashboard_id,
-            len(result.get("graphs", [])),
+            graph_id,
+            len(result),
         )
-        return result
+        return {"graphs": [{"graph_id": str(graph_id), "data": result}]}
 
     except ValueError as e:
         logger.warning("Error getting data: %s", e)
