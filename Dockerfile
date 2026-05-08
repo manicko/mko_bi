@@ -5,6 +5,23 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
+# Stage: frontend-builder - Build React SPA inside Docker
+# -----------------------------------------------------------------------------
+FROM node:20-alpine AS frontend-builder
+
+WORKDIR /app/frontend
+
+# Copy package files first for layer caching
+COPY frontend/package*.json ./
+
+# Install dependencies (use npm install as package-lock.json may be excluded)
+RUN npm install
+
+# Copy frontend source and build
+COPY frontend/ ./
+RUN npm run build
+
+# -----------------------------------------------------------------------------
 # Stage: base - Stable Python 3.12 on Debian Bookworm (FAST mirrors)
 # -----------------------------------------------------------------------------
 FROM python:3.12-slim-bookworm AS base
@@ -100,6 +117,9 @@ COPY src/ ./src/
 # Install only production dependencies
 RUN uv sync --frozen --no-dev
 ENV PATH="/app/.venv/bin:${PATH}"
+
+# Copy frontend build artifacts from frontend-builder stage
+COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 
 # Copy remaining files
 COPY alembic/ ./alembic/

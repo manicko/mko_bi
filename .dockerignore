@@ -63,7 +63,7 @@ data/.gitkeep
 
 # Frontend build artifacts and dependencies
 frontend/node_modules/
-frontend/dist/
+# frontend/dist/ - NEEDED for production Docker builds
 frontend/build/
 frontend/.eslintcache
 frontend/package-lock.json

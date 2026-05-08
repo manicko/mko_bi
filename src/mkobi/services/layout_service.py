@@ -171,9 +171,9 @@ class LayoutService(ILayoutService):
             return cast(LayoutRead, LayoutRead.model_validate(existing))
 
         logger.info("Updating layout: id=%s, update_data=%s", layout_id, update_data_dict)
-
+        
         try:
-            updated = await self.layout_repo.update(db=db, layout_id=layout_id, **update_data_dict)
+            updated = await self.layout_repo.update(id=layout_id, db=db, **update_data_dict)
             if not updated:
                 return None
             await db.commit()
