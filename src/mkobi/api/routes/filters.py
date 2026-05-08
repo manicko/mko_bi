@@ -267,9 +267,7 @@ async def update_filter_endpoint(
     try:
         updated = await filter_service.update_filter(
             filter_id=filter_id,
-            name=filter_update.name,
-            type_=filter_update.type,
-            config=filter_update.config if filter_update.config else None,
+            update_data=filter_update.model_dump(exclude_unset=True),
             db=db,
         )
         if updated is None:

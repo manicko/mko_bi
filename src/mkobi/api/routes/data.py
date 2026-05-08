@@ -10,7 +10,7 @@ All operations require authentication and appropriate permissions.
 
 import json
 import logging
-from typing import Any, cast
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status

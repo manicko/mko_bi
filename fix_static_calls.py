@@ -1,6 +1,5 @@
 """Fix static calls to repositories by adding instantiation."""
 
-import re
 from pathlib import Path
 
 src_dir = Path("C:/py_dev/mkobi/src/mkobi")

@@ -14,7 +14,6 @@ from pydantic import ValidationError
 
 from mkobi.models.enums import AggregationFunctionEnum, FilterOperatorEnum
 from mkobi.models.transformation_configs import TransformationConfig
-from mkobi.models.types import ProcessingSettingsDict
 
 logger = logging.getLogger(__name__)
 

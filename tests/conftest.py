@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
+from sqlalchemy.pool import NullPool
 
 # Set required environment variables BEFORE importing any mkobi modules
 # Use pydantic-settings nested env vars (double underscore)
@@ -143,22 +144,35 @@ def mock_redis(monkeypatch):
 def pytest_sessionstart(session):
     """Setup before test session starts using DatabaseStarter."""
     import asyncio
-    from mkobi.db.starter import DatabaseStarter
+    from mkobi.db.starter import DatabaseStarter, DatabaseStarterConfig
 
     async def init_test_db():
+        # Create config with test database URL from environment
+        config = DatabaseStarterConfig(
+            test_database_url=os.environ.get("TEST_DATABASE_URL"),
+            recreate_test_db=True,
+        )
         # Recreate test database with proper schema
-        await DatabaseStarter().recreate_test_database()
+        await DatabaseStarter(config).recreate_test_database()
 
     asyncio.run(init_test_db())
 
 
 @pytest.fixture(scope="session")
 async def async_test_engine():
-    """Fixture for creating async test DB engine."""
+    """Fixture for creating async test DB engine.
+    
+    Uses NullPool to prevent connection pooling issues in tests:
+    - Avoids zombie connections
+    - Prevents "database is being accessed by other users" errors
+    - Eliminates asyncpg stale connection issues
+    - Reduces intermittent CI failures
+    """
     engine = create_async_engine(
         TEST_ASYNC_DB_URL,
         echo=False,
         pool_pre_ping=True,
+        poolclass=NullPool,
     )
     return engine
 

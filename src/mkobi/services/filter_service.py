@@ -181,18 +181,14 @@ class FilterService(IFilterService):
     async def update_filter(
         self,
         filter_id: UUID,
-        name: str | None = None,
-        type_: str | None = None,
-        config: FilterConfigDict | None = None,
+        update_data: dict[str, Any] | None = None,
         db: AsyncSession | None = None,
     ) -> FilterRead | None:
         """Update filter.
 
         Args:
             filter_id: Filter identifier.
-            name: New name (optional).
-            type_: New type (optional).
-            config: New config (optional).
+            update_data: Dictionary with fields to update (from Pydantic model_dump).
             db: Async database session.
 
         Returns:
@@ -207,28 +203,20 @@ class FilterService(IFilterService):
             logger.warning("Filter not found for update: id=%s", filter_id)
             return None
 
-        # Validate inputs
-        if name is not None:
-            self._validate_filter_name(name)
-            # Check name uniqueness (excluding current filter)
-            name_check = await self.filter_repo.get_by_name(name, db)
-            if name_check and name_check.id != filter_id:
-                raise ValueError(f"Filter with name '{name}' already exists")
+        # Validate inputs if provided
+        if update_data:
+            if "name" in update_data and update_data["name"] is not None:
+                self._validate_filter_name(update_data["name"])
+                # Check name uniqueness (excluding current filter)
+                name_check = await self.filter_repo.get_by_name(update_data["name"], db)
+                if name_check and name_check.id != filter_id:
+                    raise ValueError(f"Filter with name '{update_data['name']}' already exists")
 
-        if type_ is not None:
-            self._validate_filter_type(type_)
+            if "type" in update_data and update_data["type"] is not None:
+                self._validate_filter_type(update_data["type"])
 
-        if config is not None:
-            self._validate_filter_config(config)
-
-        # Build update data
-        update_data: dict[str, Any] = {}
-        if name is not None:
-            update_data["name"] = name
-        if type_ is not None:
-            update_data["type"] = type_
-        if config is not None:
-            update_data["config"] = config
+            if "config" in update_data and update_data["config"] is not None:
+                self._validate_filter_config(update_data["config"])
 
         if not update_data:
             logger.warning("No data for filter update: id=%s", filter_id)
@@ -395,14 +383,12 @@ async def get_all_filters(
 
 async def update_filter(
     filter_id: UUID,
-    name: str | None = None,
-    type_: str | None = None,
-    config: FilterConfigDict | None = None,
+    update_data: dict[str, Any] | None = None,
     db: AsyncSession | None = None,
 ) -> FilterRead | None:
     """Backward compatibility wrapper."""
     service = FilterService()
-    return await service.update_filter(filter_id, name, type_, config, db)
+    return await service.update_filter(filter_id, update_data, db)
 
 
 async def delete_filter(

@@ -10,7 +10,7 @@ Implements IUserService interface for dependency injection.
 
 import logging
 from uuid import UUID
-from typing import Any, cast
+from typing import cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 

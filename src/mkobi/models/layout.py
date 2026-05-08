@@ -1,7 +1,7 @@
-"""Pydantic модели для layout-ов.
+"""Pydantic models for layouts.
 
-Предоставляет модели для валидации данных layout-ов
-при создании, обновлении и чтении из API.
+Provides models for layout data validation
+during creation, update and reading from API.
 """
 
 from datetime import datetime
@@ -12,7 +12,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class LayoutBase(BaseModel):
-    """Базовая модель layout-а."""
+    """Base layout model."""
 
     name: str
     definition: dict[str, Any]
@@ -46,7 +46,7 @@ class LayoutBase(BaseModel):
 
 
 class LayoutCreate(LayoutBase):
-    """Модель для создания нового layout-а."""
+    """Model for creating a new layout."""
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -64,7 +64,7 @@ class LayoutCreate(LayoutBase):
 
 
 class LayoutUpdate(BaseModel):
-    """Модель для обновления layout-а."""
+    """Model for updating a layout."""
 
     name: str | None = None
     definition: dict[str, Any] | None = None
@@ -85,10 +85,11 @@ class LayoutUpdate(BaseModel):
 
 
 class LayoutRead(LayoutBase):
-    """Модель для чтения данных layout-а."""
+    """Model for reading layout data."""
 
     id: UUID
     created_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -102,6 +103,7 @@ class LayoutRead(LayoutBase):
                     ],
                 },
                 "created_at": "2026-05-04T18:00:00+03:00",
+                "updated_at": "2026-05-04T18:00:00+03:00",
             }
         },
     )

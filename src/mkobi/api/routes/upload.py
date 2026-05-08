@@ -15,7 +15,6 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
-    CurrentUser,
     EditorUser,
     get_db,
 )

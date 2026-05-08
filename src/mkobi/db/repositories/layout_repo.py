@@ -1,7 +1,7 @@
-"""Репозиторий для работы с layout-ами.
+"""Repository for layouts.
 
-Предоставляет методы CRUD для модели Layout.
-Все методы используют асинхронную сессию и обрабатывают ошибки.
+Provides CRUD methods for Layout model.
+All methods use async session and handle errors.
 """
 
 import logging
@@ -18,24 +18,25 @@ logger = logging.getLogger(__name__)
 
 
 class LayoutRepository:
-    """Репозиторий для операций с layout-ами.
+    """Repository for layout operations.
 
-    Предоставляет методы для создания, чтения, обновления и удаления
-    layout-ов в базе данных. Все операции выполняются в рамках
-    асинхронной сессии с обработкой ошибок.
+    Provides methods for creating, reading, updating and deleting
+    layouts in the database. All operations are performed within an
+    async session with error handling.
     """
+
     async def get(self, layout_id: UUID, db: AsyncSession) -> layout_model.Layout | None:
-        """Получить layout по ID.
+        """Get layout by ID.
 
         Args:
-            layout_id: Идентификатор layout (UUID).
-            db: Асинхронная сессия базы данных.
+            layout_id: Layout identifier (UUID).
+            db: Async database session.
 
         Returns:
-            Модель layout или None, если не найден.
+            Layout model or None if not found.
 
         Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            SQLAlchemyError: On database error.
         """
         try:
             result = await db.execute(
@@ -43,26 +44,26 @@ class LayoutRepository:
             )
             layout = result.scalar_one_or_none()
             if layout:
-                logger.info("Layout получен: id=%s", layout_id)
+                logger.info("Layout retrieved: id=%s", layout_id)
             else:
-                logger.warning("Layout не найден: id=%s", layout_id)
+                logger.warning("Layout not found: id=%s", layout_id)
             return cast(layout_model.Layout | None, layout)
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении layout id=%s: %s", layout_id, e)
+            logger.error("Error getting layout id=%s: %s", layout_id, e)
             raise
 
     async def get_by_name(self, name: str, db: AsyncSession) -> layout_model.Layout | None:
-        """Получить layout по имени.
+        """Get layout by name.
 
         Args:
-            name: Имя layout.
-            db: Асинхронная сессия базы данных.
+            name: Layout name.
+            db: Async database session.
 
         Returns:
-            Модель layout или None, если не найден.
+            Layout model or None if not found.
 
         Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            SQLAlchemyError: On database error.
         """
         try:
             result = await db.execute(
@@ -70,74 +71,74 @@ class LayoutRepository:
             )
             layout = result.scalar_one_or_none()
             if layout:
-                logger.info("Layout получен по имени: name=%s", name)
+                logger.info("Layout found by name: name=%s", name)
             else:
-                logger.warning("Layout не найден по имени: name=%s", name)
+                logger.warning("Layout not found by name: name=%s", name)
             return cast(layout_model.Layout | None, layout)
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении layout по имени %s: %s", name, e)
+            logger.error("Error getting layout by name %s: %s", name, e)
             raise
 
     async def get_all(self, db: AsyncSession) -> list[layout_model.Layout]:
-        """Получить все layout-ы.
+        """Get all layouts.
 
         Args:
-            db: Асинхронная сессия базы данных.
+            db: Async database session.
 
         Returns:
-            Список всех layout-ов.
+            List of all layouts.
 
         Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            SQLAlchemyError: On database error.
         """
         try:
             result = await db.execute(select(layout_model.Layout))
             layouts = list(result.scalars().all())
-            logger.info("Получен список layout-ов, количество: %s", len(layouts))
-            return cast(list[layout_model.Layout], layouts)
+            logger.info("Layouts list retrieved, count: %s", len(layouts))
+            return layouts
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении списка layout-ов: %s", e)
+            logger.error("Error getting layouts list: %s", e)
             raise
 
     async def create(self, db: AsyncSession, **kwargs) -> layout_model.Layout | None:
-        """Создать новый layout.
+        """Create new layout.
 
         Args:
-            db: Асинхронная сессия базы данных.
-            **kwargs: Параметры layout (name, definition).
+            db: Async database session.
+            **kwargs: Layout parameters (name, definition).
 
         Returns:
-            Модель созданного layout с ID или None при ошибке.
+            Created layout model with ID or None on error.
 
         Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            SQLAlchemyError: On database error.
         """
         try:
             layout_obj = layout_model.Layout(**kwargs)
             db.add(layout_obj)
             await db.flush()
             await db.refresh(layout_obj)
-            logger.info("Layout создан: id=%s, name=%s", layout_obj.id, layout_obj.name)
+            logger.info("Layout created: id=%s, name=%s", layout_obj.id, layout_obj.name)
             return cast(layout_model.Layout | None, layout_obj)
         except SQLAlchemyError as e:
-            logger.error("Ошибка при создании layout: %s", e)
+            logger.error("Error creating layout: %s", e)
             raise
 
     async def update(
         self, layout_id: UUID, db: AsyncSession, **kwargs
     ) -> layout_model.Layout | None:
-        """Обновить данные layout.
+        """Update layout data.
 
         Args:
-            layout_id: Идентификатор layout (UUID).
-            db: Асинхронная сессия базы данных.
-            **kwargs: Поля для обновления.
+            layout_id: Layout identifier (UUID).
+            db: Async database session.
+            **kwargs: Fields to update.
 
         Returns:
-            Обновленная модель layout или None, если не найден.
+            Updated layout model or None if not found.
 
         Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            SQLAlchemyError: On database error.
         """
         try:
             result = await db.execute(
@@ -145,31 +146,31 @@ class LayoutRepository:
             )
             layout_obj = result.scalar_one_or_none()
             if not layout_obj:
-                logger.warning("Layout не найден для обновления: id=%s", layout_id)
+                logger.warning("Layout not found for update: id=%s", layout_id)
                 return None
             for key, value in kwargs.items():
                 if hasattr(layout_obj, key):
                     setattr(layout_obj, key, value)
             await db.flush()
             await db.refresh(layout_obj)
-            logger.info("Layout обновлен: id=%s", layout_id)
+            logger.info("Layout updated: id=%s", layout_id)
             return cast(layout_model.Layout | None, layout_obj)
         except SQLAlchemyError as e:
-            logger.error("Ошибка при обновлении layout id=%s: %s", layout_id, e)
+            logger.error("Error updating layout id=%s: %s", layout_id, e)
             raise
 
     async def delete(self, layout_id: UUID, db: AsyncSession) -> bool:
-        """Удалить layout.
+        """Delete layout.
 
         Args:
-            layout_id: Идентификатор layout (UUID).
-            db: Асинхронная сессия базы данных.
+            layout_id: Layout identifier (UUID).
+            db: Async database session.
 
         Returns:
-            True, если удаление успешно, False - если layout не найден.
+            True if deletion successful, False if layout not found.
 
         Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            SQLAlchemyError: On database error.
         """
         try:
             result = await db.execute(
@@ -177,12 +178,12 @@ class LayoutRepository:
             )
             layout_obj = result.scalar_one_or_none()
             if not layout_obj:
-                logger.warning("Layout не найден для удаления: id=%s", layout_id)
+                logger.warning("Layout not found for deletion: id=%s", layout_id)
                 return False
             await db.delete(layout_obj)
             await db.flush()
-            logger.info("Layout удален: id=%s", layout_id)
+            logger.info("Layout deleted: id=%s", layout_id)
             return True
         except SQLAlchemyError as e:
-            logger.error("Ошибка при удалении layout id=%s: %s", layout_id, e)
+            logger.error("Error deleting layout id=%s: %s", layout_id, e)
             raise

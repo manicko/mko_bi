@@ -20,9 +20,13 @@ if TYPE_CHECKING:
 
 
 class DashboardAccess(Base):
-    """Модель прав доступа пользователя к дашборду."""
+    """Dashboard access rights model."""
 
     __tablename__ = "dashboard_access"
+
+    __mapper_args__ = {
+        "confirm_deleted_rows": False,
+    }
 
     user_id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
@@ -47,7 +51,7 @@ class DashboardAccess(Base):
         server_default=text("'view'"),
     )
 
-    # Связи
+    # Relationships
     user: Mapped["User"] = relationship(
         "User",
         back_populates="accesses",
@@ -77,6 +81,5 @@ class DashboardAccess(Base):
             f"permission={self.permission.value}>"
         )
 
-
-# Псевдоним для обратной совместимости
+# Alias for backward compatibility
 Access = DashboardAccess

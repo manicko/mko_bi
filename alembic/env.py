@@ -33,10 +33,14 @@ from mkobi.db.base import Base  # noqa: E402
 
 target_metadata = Base.metadata
 
-# Get database URL from environment or app config
-db_url = os.environ.get("DATABASE_URL")
+# Get database URL from alembic config first (set by _apply_migrations)
+# If not set, fall back to environment or app config
+db_url = config.get_main_option("sqlalchemy.url")
+if db_url is None:
+    db_url = os.environ.get("DATABASE_URL")
 if db_url is None:
     from mkobi.config import get_config
+
     app_config = get_config()
     db_url = app_config.DATABASE_URL
 

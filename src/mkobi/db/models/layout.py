@@ -14,15 +14,16 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from mkobi.db.base import Base
 
+
 if TYPE_CHECKING:
     from mkobi.db.models.dashboard import Dashboard
 
 
 class Layout(Base):
-    """Модель UI компоновки дашборда.
+    """UI layout model.
     
-    Хранит структуру UI дашборда (grid, graphs, filters, bindings)
-    в формате JSON.
+    Stores dashboard UI structure (grid, graphs, filters, bindings)
+    in JSON format.
     """
     
     __tablename__ = "layouts"
@@ -52,7 +53,14 @@ class Layout(Base):
         server_default=text("now()"),
     )
     
-    # Связь с дашбордами
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        server_default=text("now()"),
+        onupdate=text("now()"),
+    )
+    
+    # Relationship with dashboards
     dashboards: Mapped[list[Dashboard]] = relationship(
         "Dashboard",
         back_populates="layout",
