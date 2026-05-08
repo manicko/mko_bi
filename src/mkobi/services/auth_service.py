@@ -183,7 +183,7 @@ class AuthService(IAuthService):
                 return await self.login_user(email, password, db)
 
         repo = UserRepository()
-        user_obj = await repo.get_by_email(email=email, db=db)
+        user_obj = await repo.get_by_email_with_hash(email=email, db=db)
         if user_obj is None:
             return None
         
@@ -240,7 +240,7 @@ class AuthService(IAuthService):
         Returns:
             str: JWT token string.
         """
-        return create_access_token({"user_id": str(user_id), "email": "", "role": role})
+        return str(create_access_token({"user_id": str(user_id), "email": "", "role": role}))
 
     async def refresh_token(
         self, user_id: UUID, email: str, role: str, db: Any | None = None
@@ -280,7 +280,7 @@ class AuthService(IAuthService):
             return None
 
         logger.info("Token verified", extra={"user_id": payload.get("user_id")})
-        return payload
+        return dict(payload)
 
     async def get_user_by_id(
         self, user_id: UUID, db: AsyncSession | None = None

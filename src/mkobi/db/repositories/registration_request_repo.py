@@ -1,59 +1,74 @@
-"""Репозиторий для работы с заявками на регистрацию.
+"""Repository for registration request operations.
 
-Предоставляет методы для создания и чтения заявок на регистрацию.
+Provides methods for creating, reading, updating and deleting
+registration requests in the database.
 """
 
-import logging
 from uuid import UUID
 from typing import cast
 from datetime import datetime
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
-
-from mkobi.db.models.registration_request import RegistrationRequest
 from sqlalchemy.ext.asyncio import AsyncSession
 
-logger = logging.getLogger(__name__)
+from mkobi.core.logging_config import get_logger
+from mkobi.db.models.registration_request import RegistrationRequest
+
+logger = get_logger(__name__)
 
 
 class RegistrationRequestRepository:
-    """Репозиторий для операций с заявками на регистрацию."""
+    """Repository for registration request operations.
+
+    Provides methods for creating, reading, updating and deleting
+    registration requests in the database.
+    """
+
     async def create(
-        cls, email: str, ip: str | None, db: AsyncSession
+        self, email: str, ip: str | None, db: AsyncSession
     ) -> RegistrationRequest | None:
-        """Создать новую заявку на регистрацию.
+        """Create new registration request.
 
         Args:
-            email: Email заявителя.
-            ip: IP-адрес заявителя.
-            db: Асинхронная сессия базы данных.
+            email: Requester email.
+            ip: Requester IP address.
+            db: Async database session.
 
         Returns:
-            Модель созданной заявки или None при ошибке.
+            Created registration request model or None on error.
 
         Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            SQLAlchemyError: On database error.
         """
         try:
             req = RegistrationRequest(email=email, requested_by_ip=ip)
             db.add(req)
             await db.flush()
             await db.refresh(req)
-            logger.info("Заявка на регистрацию создана: id=%s, email=%s", req.id, email)
+            logger.info(
+                "Registration request created",
+                extra={"id": str(req.id), "email": email},
+            )
             return req
         except SQLAlchemyError as e:
-            logger.error("Ошибка при создании заявки на регистрацию %s: %s", email, e)
+            logger.error(
+                "Error creating registration request",
+                extra={"email": email, "error": str(e)},
+            )
             raise
-    async def get_by_email(self, email: str, db: AsyncSession) -> RegistrationRequest | None:
-        """Получить заявку по email.
+
+    async def get_by_email(
+        self, email: str, db: AsyncSession
+    ) -> RegistrationRequest | None:
+        """Get registration request by email.
 
         Args:
-            email: Email для поиска.
-            db: Асинхронная сессия базы данных.
+            email: Email to search.
+            db: Async database session.
 
         Returns:
-            Модель заявки или None, если не найдена.
+            Registration request model or None if not found.
         """
         try:
             result = await db.execute(
@@ -61,24 +76,34 @@ class RegistrationRequestRepository:
             )
             req = result.scalar_one_or_none()
             if req:
-                logger.info("Заявка найдена: email=%s, status=%s", email, req.status)
+                logger.info(
+                    "Registration request found",
+                    extra={"email": email, "status": req.status},
+                )
             else:
-                logger.info("Заявка не найдена: email=%s", email)
+                logger.info(
+                    "Registration request not found",
+                    extra={"email": email},
+                )
             return cast(RegistrationRequest | None, req)
         except SQLAlchemyError as e:
-            logger.error("Ошибка при поиске заявки %s: %s", email, e)
+            logger.error(
+                "Error getting registration request",
+                extra={"email": email, "error": str(e)},
+            )
             raise
+
     async def get_by_id(
         self, request_id: UUID, db: AsyncSession
     ) -> RegistrationRequest | None:
-        """Получить заявку по ID.
+        """Get registration request by ID.
 
         Args:
-            request_id: ID заявки.
-            db: Асинхронная сессия базы данных.
+            request_id: Request identifier (UUID).
+            db: Async database session.
 
         Returns:
-            Модель заявки или None, если не найдена.
+            Registration request model or None if not found.
         """
         try:
             result = await db.execute(
@@ -86,24 +111,35 @@ class RegistrationRequestRepository:
             )
             req = result.scalar_one_or_none()
             if req:
-                logger.info("Заявка найдена: id=%s, status=%s", request_id, req.status)
+                logger.info(
+                    "Registration request found",
+                    extra={"id": str(request_id), "status": req.status},
+                )
             else:
-                logger.info("Заявка не найдена: id=%s", request_id)
+                logger.info(
+                    "Registration request not found",
+                    extra={"id": str(request_id)},
+                )
             return cast(RegistrationRequest | None, req)
         except SQLAlchemyError as e:
-            logger.error("Ошибка при поиске заявки id=%s: %s", request_id, e)
+            logger.error(
+                "Error getting registration request",
+                extra={"id": str(request_id), "error": str(e)},
+            )
             raise
-        """Удалить заявку по ID.
+
+    async def delete(self, request_id: UUID, db: AsyncSession) -> bool:
+        """Delete registration request by ID.
 
         Args:
-            request_id: ID заявки.
-            db: Асинхронная сессия базы данных.
+            request_id: Request identifier (UUID).
+            db: Async database session.
 
         Returns:
-            True, если удаление успешно, False - если заявка не найдена.
+            True if deletion successful, False if request not found.
 
         Raises:
-            SQLAlchemyError: При ошибке базы данных.
+            SQLAlchemyError: On database error.
         """
         try:
             result = await db.execute(
@@ -111,47 +147,66 @@ class RegistrationRequestRepository:
             )
             req = result.scalar_one_or_none()
             if not req:
-                logger.warning("Заявка не найдена для удаления: id=%s", request_id)
+                logger.warning(
+                    "Registration request not found for deletion",
+                    extra={"id": str(request_id)},
+                )
                 return False
             await db.delete(req)
             await db.flush()
-            logger.info("Заявка удалена: id=%s", request_id)
+            logger.info(
+                "Registration request deleted",
+                extra={"id": str(request_id)},
+            )
             return True
         except SQLAlchemyError as e:
-            logger.error("Ошибка при удалении заявки id=%s: %s", request_id, e)
+            logger.error(
+                "Error deleting registration request",
+                extra={"id": str(request_id), "error": str(e)},
+            )
             raise
 
     async def get_all(self, db: AsyncSession) -> list[RegistrationRequest]:
-        """Получить все заявки.
+        """Get all registration requests.
 
         Args:
-            db: Асинхронная сессия базы данных.
+            db: Async database session.
 
         Returns:
-            Список всех заявок.
+            List of all registration requests.
         """
         try:
             result = await db.execute(select(RegistrationRequest))
             requests = list(result.scalars().all())
-            logger.info("Получен список заявок, количество: %s", len(requests))
-            return cast(list[RegistrationRequest], requests)
+            logger.info(
+                "Registration requests list retrieved",
+                extra={"count": len(requests)},
+            )
+            return requests
         except SQLAlchemyError as e:
-            logger.error("Ошибка при получении списка заявок: %s", e)
+            logger.error(
+                "Error getting registration requests list",
+                extra={"error": str(e)},
+            )
             raise
 
     async def update_status(
-        self, request_id: UUID, status: str, db: AsyncSession, reviewed_by: UUID | None = None
+        self,
+        request_id: UUID,
+        status: str,
+        db: AsyncSession,
+        reviewed_by: UUID | None = None,
     ) -> RegistrationRequest | None:
-        """Обновить статус заявки.
+        """Update registration request status.
 
         Args:
-            request_id: ID заявки.
-            status: Новый статус.
-            db: Асинхронная сессия базы данных.
-            reviewed_by: ID пользователя, рассмотревшего заявку.
+            request_id: Request identifier (UUID).
+            status: New status.
+            db: Async database session.
+            reviewed_by: ID of user who reviewed the request.
 
         Returns:
-            Обновленная модель заявки или None, если не найдена.
+            Updated registration request model or None if not found.
         """
         try:
             result = await db.execute(
@@ -159,7 +214,10 @@ class RegistrationRequestRepository:
             )
             req = result.scalar_one_or_none()
             if not req:
-                logger.warning("Заявка не найдена для обновления: id=%s", request_id)
+                logger.warning(
+                    "Registration request not found for update",
+                    extra={"id": str(request_id)},
+                )
                 return None
             req.status = status
             if reviewed_by is not None:
@@ -167,8 +225,14 @@ class RegistrationRequestRepository:
                 req.reviewed_at = datetime.now()
             await db.flush()
             await db.refresh(req)
-            logger.info("Статус заявки обновлен: id=%s, status=%s", request_id, status)
+            logger.info(
+                "Registration request status updated",
+                extra={"id": str(request_id), "status": status},
+            )
             return cast(RegistrationRequest | None, req)
         except SQLAlchemyError as e:
-            logger.error("Ошибка при обновлении статуса заявки id=%s: %s", request_id, e)
+            logger.error(
+                "Error updating registration request status",
+                extra={"id": str(request_id), "error": str(e)},
+            )
             raise

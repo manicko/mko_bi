@@ -67,7 +67,7 @@ async def _create_layout_with_session(
         return cast(LayoutRead, LayoutRead.model_validate(layout_obj))
     except Exception as e:
         await db.rollback()
-        logger.error("Ошибка при создании layout name=%s: %s", name, e)
+        logger.error("Ошибка при создании layout name=%s: %s", name, e, exc_info=True)
         raise
 
 
@@ -175,6 +175,8 @@ async def _update_layout_with_session(
     if update_data.definition is not None:
         update_kwargs["definition"] = update_data.definition
 
+    logger.info("Updating layout: id=%s, update_kwargs=%s", layout_id, update_kwargs)
+
     try:
         updated = await layout_repo.update(db=db, layout_id=layout_id, **update_kwargs)
         if not updated:
@@ -184,7 +186,7 @@ async def _update_layout_with_session(
         return cast(LayoutRead, LayoutRead.model_validate(updated))
     except Exception as e:
         await db.rollback()
-        logger.error("Ошибка при обновлении layout id=%s: %s", layout_id, e)
+        logger.error("Ошибка при обновлении layout id=%s: %s", layout_id, e, exc_info=True)
         raise
 
 
@@ -220,5 +222,5 @@ async def _delete_layout_with_session(layout_id: UUID, db: AsyncSession) -> bool
         return result
     except Exception as e:
         await db.rollback()
-        logger.error("Ошибка при удалении layout id=%s: %s", layout_id, e)
+        logger.error("Ошибка при удалении layout id=%s: %s", layout_id, e, exc_info=True)
         raise

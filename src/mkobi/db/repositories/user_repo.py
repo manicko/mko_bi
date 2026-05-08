@@ -73,6 +73,30 @@ class UserRepository(IUserRepository):
         except SQLAlchemyError as e:
             logger.error("Error getting user email=%s: %s", email, e)
             raise
+    async def get_by_email_with_hash(self, email: str, db: AsyncSession) -> user_model.User | None:
+        """Get user by email with password hash for authentication.
+
+        Args:
+            email: User email.
+            db: Async database session.
+
+        Returns:
+            User DB model with password_hash or None if not found.
+        """
+        try:
+            result = await db.execute(
+                select(user_model.User).where(user_model.User.email == email)
+            )
+            user = result.scalar_one_or_none()
+            if user:
+                logger.info("User retrieved by email (with hash): %s", email)
+                return user
+            logger.warning("User not found by email: %s", email)
+            return None
+        except SQLAlchemyError as e:
+            logger.error("Error getting user email=%s: %s", email, e)
+            raise
+
     async def get_all(self, db: AsyncSession) -> list[UserRead]:
         """Get all users.
 

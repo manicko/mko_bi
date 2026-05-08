@@ -50,6 +50,7 @@ class LayoutRepository:
         except SQLAlchemyError as e:
             logger.error("Ошибка при получении layout id=%s: %s", layout_id, e)
             raise
+
     async def get_by_name(self, name: str, db: AsyncSession) -> layout_model.Layout | None:
         """Получить layout по имени.
 
@@ -76,6 +77,7 @@ class LayoutRepository:
         except SQLAlchemyError as e:
             logger.error("Ошибка при получении layout по имени %s: %s", name, e)
             raise
+
     async def get_all(self, db: AsyncSession) -> list[layout_model.Layout]:
         """Получить все layout-ы.
 
@@ -96,6 +98,7 @@ class LayoutRepository:
         except SQLAlchemyError as e:
             logger.error("Ошибка при получении списка layout-ов: %s", e)
             raise
+
     async def create(self, db: AsyncSession, **kwargs) -> layout_model.Layout | None:
         """Создать новый layout.
 
@@ -119,8 +122,9 @@ class LayoutRepository:
         except SQLAlchemyError as e:
             logger.error("Ошибка при создании layout: %s", e)
             raise
+
     async def update(
-        cls, layout_id: UUID, db: AsyncSession, **kwargs
+        self, layout_id: UUID, db: AsyncSession, **kwargs
     ) -> layout_model.Layout | None:
         """Обновить данные layout.
 
@@ -153,6 +157,7 @@ class LayoutRepository:
         except SQLAlchemyError as e:
             logger.error("Ошибка при обновлении layout id=%s: %s", layout_id, e)
             raise
+
     async def delete(self, layout_id: UUID, db: AsyncSession) -> bool:
         """Удалить layout.
 
