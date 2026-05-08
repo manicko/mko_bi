@@ -1,13 +1,13 @@
-"""Перечисления для компонентов приложения.
+"""Enumerations for application components.
 
-Используется StrEnum для типобезопасности и удобства сериализации.
+Uses StrEnum for type safety and easy serialization.
 """
 
 from enum import StrEnum
 
 
 class UserRole(StrEnum):
-    """Роли пользователей системы."""
+    """System user roles."""
 
     ADMIN = "admin"
     EDITOR = "editor"
@@ -15,7 +15,7 @@ class UserRole(StrEnum):
 
 
 class DashboardPermission(StrEnum):
-    """Уровни доступа к дашбордам."""
+    """Dashboard access levels."""
 
     VIEW = "view"
     EDIT = "edit"
@@ -23,7 +23,7 @@ class DashboardPermission(StrEnum):
 
 
 class GraphType(StrEnum):
-    """Типы графиков."""
+    """Chart types."""
 
     BAR = "bar"
     LINE = "line"
@@ -32,7 +32,7 @@ class GraphType(StrEnum):
 
 
 class FilterType(StrEnum):
-    """Типы фильтров."""
+    """Filter types."""
 
     SELECT = "select"
     MULTISELECT = "multiselect"
@@ -41,7 +41,7 @@ class FilterType(StrEnum):
 
 
 class RegistrationStatus(StrEnum):
-    """Статусы заявок на регистрацию."""
+    """Registration request statuses."""
 
     PENDING = "pending"
     APPROVED = "approved"
@@ -49,14 +49,14 @@ class RegistrationStatus(StrEnum):
 
 
 class UploadMode(StrEnum):
-    """Режимы загрузки данных."""
+    """Data upload modes."""
 
     OVERWRITE = "overwrite"
     APPEND = "append"
 
 
 class ProcessingStatus(StrEnum):
-    """Статусы обработки данных."""
+    """Data processing statuses."""
 
     STARTED = "started"
     UPLOADED = "uploaded"
@@ -66,12 +66,8 @@ class ProcessingStatus(StrEnum):
     COMPLETED = "completed"
 
 
-# Alias for backwards compatibility
-ProcessingStatusEnum = ProcessingStatus
-
-
 class EnvironmentEnum(StrEnum):
-    """Окружения приложения."""
+    """Application environments."""
 
     PRODUCTION = "production"
     STAGING = "staging"
@@ -80,7 +76,7 @@ class EnvironmentEnum(StrEnum):
 
 
 class MimeTypeEnum(StrEnum):
-    """Разрешенные MIME-типы для загружаемых файлов."""
+    """Allowed MIME types for uploaded files."""
 
     TEXT_CSV = "text/csv"
     APPLICATION_GZIP = "application/gzip"
@@ -88,27 +84,27 @@ class MimeTypeEnum(StrEnum):
 
     @classmethod
     def allowed_values(cls) -> list[str]:
-        """Возвращает список разрешенных MIME-типов."""
+        """Returns list of allowed MIME types."""
         return [member.value for member in cls]
 
 
 class FileExtensionEnum(StrEnum):
-    """Разрешенные расширения файлов."""
+    """Allowed file extensions."""
 
     CSV = "csv"
     CSV_GZ = "csv.gz"
 
     @classmethod
     def allowed_values(cls) -> list[str]:
-        """Возвращает список разрешенных расширений."""
+        """Returns list of allowed file extensions."""
         return [member.value for member in cls]
 
 
-# Остальные enum-ы, используемые в дашбордах (Dash components)
+# Additional enums used in dashboards
 
 
 class ButtonVariant(StrEnum):
-    """Варианты стилей кнопок."""
+    """Button style variants."""
 
     PRIMARY = "primary"
     SECONDARY = "secondary"
@@ -121,7 +117,7 @@ class ButtonVariant(StrEnum):
 
 
 class ComponentSize(StrEnum):
-    """Размеры компонентов."""
+    """Component sizes."""
 
     SMALL = "sm"
     MEDIUM = "md"
@@ -129,28 +125,28 @@ class ComponentSize(StrEnum):
 
 
 class OrientationEnum(StrEnum):
-    """Ориентация графика."""
+    """Chart orientation."""
 
     VERTICAL = "v"
     HORIZONTAL = "h"
 
 
 class BarmodeEnum(StrEnum):
-    """Режим отображения столбчатых диаграмм."""
+    """Bar chart display mode."""
 
     GROUP = "group"
     STACK = "stack"
 
 
 class YoyModeEnum(StrEnum):
-    """Режим отображения год-к-году сравнения."""
+    """Year-over-year comparison display mode."""
 
     ABSOLUTE = "absolute"
     PERCENT = "percent"
 
 
 class AggregationFunctionEnum(StrEnum):
-    """Функции агрегации данных."""
+    """Data aggregation functions."""
 
     SUM = "sum"
     MEAN = "mean"
@@ -165,7 +161,7 @@ class AggregationFunctionEnum(StrEnum):
 
 
 class FilterOperatorEnum(StrEnum):
-    """Операторы для фильтрации данных."""
+    """Data filtering operators."""
 
     EQ = "=="
     NE = "!="

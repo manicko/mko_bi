@@ -1,4 +1,4 @@
-"""Модель логов обработки данных."""
+"""Processing logs model for data processing."""
 
 from datetime import datetime
 from uuid import uuid4, UUID
@@ -7,6 +7,7 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Index,
     String,
     text,
 )
@@ -18,10 +19,10 @@ from mkobi.models.enums import ProcessingStatus
 
 
 class ProcessingLog(Base):
-    """Модель логов обработки данных дашбордов.
+    """Processing logs model for dashboards.
 
-    Хранит историю обработки данных: когда запускалась обработка,
-    какой был статус, сообщения об ошибках и т.д.
+    Stores data processing history: when processing was started,
+    what status it had, error messages, etc.
     """
 
     __tablename__ = "processing_logs"
@@ -63,7 +64,11 @@ class ProcessingLog(Base):
         nullable=True,
     )
 
-    # Связь с дашбордом
+    __table_args__ = (
+        Index("idx_processing_logs_dashboard_id", "dashboard_id"),
+    )
+
+    # Relationship with dashboard
     dashboard: Mapped["Dashboard"] = relationship(
         "Dashboard",
         back_populates="processing_logs",

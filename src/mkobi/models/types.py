@@ -1,12 +1,14 @@
-"""Конкретные типы для замены Any.
+"""Concrete types to replace Any.
 
-Содержит TypedDict и Pydantic модели для типизации структур,
-которые ранее использовали dict[str, Any] или Any.
+Contains TypedDict and Pydantic models for typing structures
+that previously used dict[str, Any] or Any.
 """
 
 from typing import TypedDict
 
 from pydantic import BaseModel, Field
+
+from mkobi.models.enums import YoyModeEnum
 
 
 # ==================== Aggregated Data Types ====================
@@ -118,11 +120,11 @@ class ChartLayoutConfig(TypedDict, total=False):
 
 
 class YoYConfig(TypedDict, total=False):
-    """Настройки год-к-году сравнения."""
+    """Year-over-year comparison settings."""
 
     enabled: bool
     metric: str
-    mode: str  # "percent", "absolute"
+    mode: YoyModeEnum  # YoyModeEnum.PERCENT or YoyModeEnum.ABSOLUTE
     year_field: str
 
 

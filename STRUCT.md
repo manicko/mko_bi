@@ -7,6 +7,7 @@ C:\py_dev\mkobi
 │   └── versions
 │       ├── 2aa835fe1fac_add_composite_index_on_aggregated_data.py
 │       ├── 3f7a1b2c9d0e_add_processing_logs_dashboard_id_index.py
+│       ├── 4bfb28b3732d_add_processing_logs_dashboard_id_index.py
 │       ├── 57f43a5c499d_change_json_to_jsonb_for_postgresql.py
 │       ├── 91f5436a3098_add_unique_constraint_on_aggregated_.py
 │       ├── 840a99edb818_standardize_index_naming.py
@@ -16,6 +17,7 @@ C:\py_dev\mkobi
 │       ├── a1b2c3d4e5f6_add_config_to_dashboards.py
 │       ├── a1e404502aac_add_registration_requests_table.py
 │       ├── a2b3c4d5e6f7_fix_unique_constraint_aggregated_data.py
+│       ├── c3cc391beded_add_config_column_and_fix_indexes.py
 │       ├── ce58bba5d461_add_db_constraints_and_fix_schema_issues.py
 │       ├── e86f3c8f7324_schema_adjustments.py
 │       └── f50a4054569c_merge_heads.py
@@ -127,7 +129,8 @@ C:\py_dev\mkobi
 │   │       │   └── RoleBasedAccess.tsx
 │   │       └── types
 │   │           ├── api.types.ts
-│   │           └── enums.ts
+│   │           ├── enums.ts
+│   │           └── formSchemas.ts
 │   ├── tsconfig.app.json
 │   ├── tsconfig.json
 │   ├── tsconfig.node.json
@@ -226,8 +229,7 @@ C:\py_dev\mkobi
 │       │   ├── style.py
 │       │   ├── transformation_configs.py
 │       │   ├── types.py
-│       │   ├── user.py
-│       │   └── user_roles.py
+│       │   └── user.py
 │       ├── py.typed
 │       ├── services
 │       │   ├── auth_service.py
@@ -282,16 +284,25 @@ C:\py_dev\mkobi
 │   │   └── TEST_036_test_audit_arch.md
 │   ├── DEV
 │   │   ├── 03_mypy_type_errors_DONE.md
-│   │   ├── 15_code_quality_tools.md
+│   │   ├── 034_fix_database_test_deadlocks.md
+│   │   ├── 035_fix_test_foreign_key_violations.md
+│   │   ├── 036_fix_test_fixture_cleanup.md
+│   │   ├── 05_mypy_type_errors_fix.md
+│   │   ├── 06_test_quality_improvement.md
+│   │   ├── 07_ruff_linting_fix.md
+│   │   ├── 08_docker_devops_improvements.md
+│   │   ├── 13_security_improvements.md
+│   │   ├── 20_code_cleanup_and_fixes.md
+│   │   ├── 910_logging_improvements_DONE.md
 │   │   ├── LATER_TASK_032_frontend_token_storage_security.md
 │   │   ├── 'NONEED TASK_033_enable_typescript_strict_mode.md'
-│   │   ├── TASK_008_test_messages_english_fix_DONE.md
 │   │   ├── TASK_014_linter_issues_fix.md
 │   │   └── TASK_024_test_coverage_improvement.md
-│   └── DONE
-│       ├── TASK_001_sync_async_unification.md
-│       ├── TASK_014_dash_modern_component_architecture_DONE.md
-│       ├── TASK_051_di_and_interfaces.md
-│       ├── TASK_052_secrets_management_DONE.md
-│       └── TASK_DB_REPRODUCER_MAIN.md
+│   ├── DONE
+│   │   ├── TASK_001_sync_async_unification.md
+│   │   ├── TASK_014_dash_modern_component_architecture_DONE.md
+│   │   ├── TASK_051_di_and_interfaces.md
+│   │   ├── TASK_052_secrets_management_DONE.md
+│   │   └── TASK_DB_REPRODUCER_MAIN.md
+│   └── TASK_031_analysis_report.md
 └── uv.lock

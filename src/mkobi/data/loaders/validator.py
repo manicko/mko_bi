@@ -1,7 +1,7 @@
-"""Валидатор данных.
+"""Data validator.
 
-Этот модуль предоставляет класс для валидации структуры и типов данных,
-а также проверки обязательных полей в загруженных данных.
+This module provides a class for validating data structure and types,
+as well as checking required fields in loaded data.
 """
 
 import logging
@@ -16,44 +16,44 @@ logger = logging.getLogger(__name__)
 
 
 class DataValidator:
-    """Валидатор структуры и типов данных.
+    """Validator for data structure and types.
 
-    Отвечает за проверку структуры данных, типов колонок,
-    наличия обязательных полей и качества данных.
+    Responsible for checking data structure, column types,
+    presence of required fields and data quality.
 
     Attributes:
-        config: Конфигурация валидатора.
+        config: Validator configuration.
     """
 
     def __init__(self, config: LoaderConfig | None = None) -> None:
-        """Инициализация валидатора.
+        """Initialize validator.
 
         Args:
-            config: Опциональная конфигурация валидатора.
+            config: Optional validator configuration.
         """
         self.config = config or LoaderConfig()
-        logger.debug("DataValidator инициализирован с config=%s", self.config)
+        logger.debug("DataValidator initialized with config=%s", self.config)
 
     def validate(self, df: pl.DataFrame) -> ValidationResult:
-        """Выполняет полную валидацию DataFrame.
+        """Perform full DataFrame validation.
 
-        Проверяет структуру данных, типы колонок, наличие
-        обязательных полей и качество данных.
+        Checks data structure, column types, presence
+        of required fields and data quality.
 
         Args:
-            df: DataFrame для валидации.
+            df: DataFrame to validate.
 
         Returns:
-            ValidationResult: Результат валидации.
+            ValidationResult: Validation result.
         """
-        logger.info("Начало валидации данных: %d строк, %d колонок", df.shape[0], df.shape[1])
+        logger.info("Starting data validation: %d rows, %d columns", df.shape[0], df.shape[1])
 
         errors: list[str] = []
         warnings: list[str] = []
 
-        # Проверка на пустой DataFrame
+        # Check for empty DataFrame
         if df.shape[0] == 0:
-            error_msg = "DataFrame пустой (нет строк)"
+            error_msg = "DataFrame is empty (no rows)"
             logger.error(error_msg)
             errors.append(error_msg)
             return ValidationResult(
@@ -64,20 +64,20 @@ class DataValidator:
                 column_count=df.shape[1],
             )
 
-        # Проверка обязательных колонок
+        # Check required columns
         missing_columns = self._validate_required_columns(df)
         errors.extend(missing_columns)
 
-        # Проверка типов колонок
+        # Check column types
         type_errors, type_warnings = self._validate_column_types(df)
         errors.extend(type_errors)
         warnings.extend(type_warnings)
 
-        # Проверка качества данных
+        # Check data quality
         quality_warnings = self._validate_data_quality(df)
         warnings.extend(quality_warnings)
 
-        # Проверка дубликатов
+        # Check duplicates
         duplicate_warnings = self._validate_duplicates(df)
         warnings.extend(duplicate_warnings)
 
@@ -93,23 +93,23 @@ class DataValidator:
         )
 
         if is_valid:
-            logger.info("Валидация пройдена успешно")
+            logger.info("Validation passed successfully")
         else:
-            logger.error("Валидация завершилась с ошибками: %s", errors)
+            logger.error("Validation failed with errors: %s", errors)
 
         if warnings:
-            logger.warning("Валидация: %d предупреждений", len(warnings))
+            logger.warning("Validation: %d warnings", len(warnings))
 
         return result
 
     def _validate_required_columns(self, df: pl.DataFrame) -> list[str]:
-        """Проверяет наличие обязательных колонок.
+        """Check presence of required columns.
 
         Args:
-            df: DataFrame для проверки.
+            df: DataFrame to check.
 
         Returns:
-            list[str]: Список ошибок (пустой, если все колонки есть).
+            list[str]: List of errors (empty if all columns present).
         """
         errors: list[str] = []
 
@@ -122,25 +122,25 @@ class DataValidator:
 
         if missing_columns:
             error_msg = (
-                f"Отсутствуют обязательные колонки: {', '.join(missing_columns)}"
+                f"Missing required columns: {', '.join(missing_columns)}"
             )
             logger.error(error_msg)
             errors.append(error_msg)
         else:
-            logger.debug("Все обязательные колонки присутствуют")
+            logger.debug("All required columns present")
 
         return errors
 
     def _validate_column_types(
         self, df: pl.DataFrame
     ) -> tuple[list[str], list[str]]:
-        """Проверяет типы колонок.
+        """Check column types.
 
         Args:
-            df: DataFrame для проверки.
+            df: DataFrame to check.
 
         Returns:
-            tuple: (ошибки, предупреждения)
+            tuple: (errors, warnings)
         """
         errors: list[str] = []
         warnings: list[str] = []
@@ -154,7 +154,7 @@ class DataValidator:
 
             actual_type = str(df[column_name].dtype)
 
-            # Проверяем соответствие типов
+            # Check type correspondence
             type_mapping = {
                 "int": ["Int64", "Int32", "Int16", "Int8", "UInt64", "UInt32", "UInt16", "UInt8"],
                 "float": ["Float64", "Float32"],
@@ -168,15 +168,15 @@ class DataValidator:
                 valid_types = type_mapping[expected_type]
                 if actual_type not in valid_types:
                     warning_msg = (
-                        f"Колонка '{column_name}': ожидался тип '{expected_type}', "
-                        f"фактический тип '{actual_type}'"
+                        f"Column '{column_name}': expected type '{expected_type}', "
+                        f"actual type '{actual_type}'"
                     )
                     logger.warning(warning_msg)
                     warnings.append(warning_msg)
             else:
                 warning_msg = (
-                    f"Неизвестный ожидаемый тип '{expected_type}' "
-                    f"для колонки '{column_name}'"
+                    f"Unknown expected type '{expected_type}' "
+                    f"for column '{column_name}'"
                 )
                 logger.warning(warning_msg)
                 warnings.append(warning_msg)
@@ -184,35 +184,35 @@ class DataValidator:
         return errors, warnings
 
     def _validate_data_quality(self, df: pl.DataFrame) -> list[str]:
-        """Проверяет качество данных.
+        """Check data quality.
 
         Args:
-            df: DataFrame для проверки.
+            df: DataFrame to check.
 
         Returns:
-            list[str]: Список предупреждений о качестве данных.
+            list[str]: List of data quality warnings.
         """
         warnings = []
 
-        # Проверка null-значений в обязательных колонках
+        # Check null values in required columns
         if self.config.required_columns:
             for column in self.config.required_columns:
                 if column in df.columns:
                     null_count = df[column].null_count()
                     if null_count > 0:
                         warning_msg = (
-                            f"Колонка '{column}': найдено {null_count} null-значений"
+                            f"Column '{column}': found {null_count} null values"
                         )
                         logger.warning(warning_msg)
                         warnings.append(warning_msg)
 
-        # Проверка пустых строк в текстовых колонках
+        # Check empty strings in text columns
         for column in df.columns:
             if df[column].dtype == pl.Utf8:
                 empty_count = df.filter(pl.col(column) == "").shape[0]
                 if empty_count > 0:
                     warning_msg = (
-                        f"Колонка '{column}': найдено {empty_count} пустых строк"
+                        f"Column '{column}': found {empty_count} empty strings"
                     )
                     logger.warning(warning_msg)
                     warnings.append(warning_msg)
@@ -220,28 +220,28 @@ class DataValidator:
         return warnings
 
     def _validate_duplicates(self, df: pl.DataFrame) -> list[str]:
-        """Проверяет наличие дубликатов.
+        """Check for duplicates.
 
         Args:
-            df: DataFrame для проверки.
+            df: DataFrame to check.
 
         Returns:
-            list[str]: Список предупреждений о дубликатах.
+            list[str]: List of duplicate warnings.
         """
         warnings = []
 
-        # Проверяем дубликаты по всем колонкам
+        # Check duplicates across all columns
         duplicate_count = df.shape[0] - df.unique().shape[0]
 
         if duplicate_count > 0:
             warning_msg = (
-                f"Найдено {duplicate_count} дубликатов строк "
-                f"({duplicate_count / df.shape[0] * 100:.1f}% от общего числа)"
+                f"Found {duplicate_count} duplicate rows "
+                f"({duplicate_count / df.shape[0] * 100:.1f}% of total)"
             )
             logger.warning(warning_msg)
             warnings.append(warning_msg)
 
-        # Проверяем дубликаты по ключевым колонкам, если они заданы
+        # Check duplicates by key columns if specified
         if self.config.required_columns:
             try:
                 duplicate_count_key = (
@@ -249,13 +249,13 @@ class DataValidator:
                 )
                 if duplicate_count_key > 0:
                     warning_msg = (
-                        f"Найдено {duplicate_count_key} дубликатов "
-                        f"по обязательным колонкам: {', '.join(self.config.required_columns)}"
+                        f"Found {duplicate_count_key} duplicates "
+                        f"by required columns: {', '.join(self.config.required_columns)}"
                     )
                     logger.warning(warning_msg)
                     warnings.append(warning_msg)
             except Exception as e:
-                logger.debug("Не удалось проверить дубликаты по ключевым колонкам: %s", e)
+                logger.debug("Failed to check duplicates by key columns: %s", e)
 
         return warnings
 
@@ -264,53 +264,53 @@ class DataValidator:
         df: pl.DataFrame,
         expected_columns: list[str],
     ) -> tuple[bool, list[str]]:
-        """Проверяет соответствие схемы данных ожидаемой.
+        """Check if data schema matches expected.
 
         Args:
-            df: DataFrame для проверки.
-            expected_columns: Ожидаемые колонки.
+            df: DataFrame to check.
+            expected_columns: Expected columns.
 
         Returns:
-            tuple: (валидно ли, список ошибок)
+            tuple: (is_valid, list of errors)
         """
         errors = []
 
-        # Проверяем наличие всех ожидаемых колонок
+        # Check presence of all expected columns
         missing = [col for col in expected_columns if col not in df.columns]
         if missing:
-            error_msg = f"Отсутствуют колонки: {', '.join(missing)}"
+            error_msg = f"Missing columns: {', '.join(missing)}"
             errors.append(error_msg)
 
-        # Проверяем лишние колонки (если это важно)
+        # Check extra columns (if important)
         if self.config.strict_schema:
             extra = [col for col in df.columns if col not in expected_columns]
             if extra:
-                error_msg = f"Лишние колонки: {', '.join(extra)}"
+                error_msg = f"Extra columns: {', '.join(extra)}"
                 errors.append(error_msg)
 
         return len(errors) == 0, errors
 
     def get_validation_summary(self, result: ValidationResult) -> str:
-        """Формирует текстовое описание результата валидации.
+        """Generate text description of validation result.
 
         Args:
-            result: Результат валидации.
+            result: Validation result.
 
         Returns:
-            str: Текстовое описание.
+            str: Text description.
         """
         lines = [
-            f"Результат валидации: {'ПASSED' if result.is_valid else 'FAILED'}",
-            f"Строк: {result.row_count}, Колонок: {result.column_count}",
+            f"Validation result: {'PASSED' if result.is_valid else 'FAILED'}",
+            f"Rows: {result.row_count}, Columns: {result.column_count}",
         ]
 
         if result.errors:
-            lines.append(f"Ошибки ({len(result.errors)}):")
+            lines.append(f"Errors ({len(result.errors)}):")
             for error in result.errors:
                 lines.append(f"  - {error}")
 
         if result.warnings:
-            lines.append(f"Предупреждения ({len(result.warnings)}):")
+            lines.append(f"Warnings ({len(result.warnings)}):")
             for warning in result.warnings:
                 lines.append(f"  - {warning}")
 

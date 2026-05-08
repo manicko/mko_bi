@@ -1,7 +1,7 @@
-"""Утилиты для валидации данных.
+"""Utilities for data validation.
 
-Предоставляет функции для проверки email, ролей, UUID и строк.
-Используется для централизованной валидации во всем приложении.
+Provides functions for checking email, roles, UUIDs and strings.
+Used for centralized validation throughout the application.
 """
 
 import logging
@@ -12,18 +12,18 @@ from mkobi.models.enums import UserRole
 
 logger = logging.getLogger(__name__)
 
-# Регулярное выражение для валидации email
+# Regular expression for email validation
 EMAIL_REGEX = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
 
 
 def validate_email(email: str) -> bool:
-    """Проверить валидность email адреса.
+    """Check email address validity.
 
     Args:
-        email: Email адрес для проверки.
+        email: Email address to validate.
 
     Returns:
-        True, если email валиден, иначе False.
+        True if email is valid, False otherwise.
 
     Example:
         >>> validate_email("user@example.com")
@@ -32,24 +32,24 @@ def validate_email(email: str) -> bool:
         False
     """
     if not email or not isinstance(email, str):
-        logger.warning("Email пустой или не является строкой")
+        logger.warning("Email is empty or not a string")
         return False
 
     if not EMAIL_REGEX.match(email):
-        logger.warning("Невалидный формат email: %s", email)
+        logger.warning("Invalid email format: %s", email)
         return False
 
     return True
 
 
 def validate_role(role: str | UserRole) -> bool:
-    """Проверить, является ли роль допустимой.
+    """Check if role is valid.
 
     Args:
-        role: Роль для проверки (строка или UserRole).
+        role: Role to validate (string or UserRole).
 
     Returns:
-        True, если роль допустима, иначе False.
+        True if role is valid, False otherwise.
 
     Example:
         >>> validate_role("admin")
@@ -63,18 +63,18 @@ def validate_role(role: str | UserRole) -> bool:
         UserRole(role)
         return True
     except (ValueError, TypeError):
-        logger.warning("Недопустимая роль: %s", role)
+        logger.warning("Invalid role: %s", role)
         return False
 
 
 def validate_uuid(uuid_str: str) -> bool:
-    """Проверить, является ли строка валидным UUID.
+    """Check if string is a valid UUID.
 
     Args:
-        uuid_str: Строка для проверки.
+        uuid_str: String to validate.
 
     Returns:
-        True, если строка является валидным UUID, иначе False.
+        True if string is a valid UUID, False otherwise.
 
     Example:
         >>> validate_uuid("550e8400-e29b-41d4-a716-446655440000")
@@ -86,7 +86,7 @@ def validate_uuid(uuid_str: str) -> bool:
         UUID(uuid_str)
         return True
     except (ValueError, AttributeError):
-        logger.warning("Невалидный UUID: %s", uuid_str)
+        logger.warning("Invalid UUID: %s", uuid_str)
         return False
 
 
@@ -96,16 +96,16 @@ def validate_string(
     max_length: int | None = None,
     required: bool = True,
 ) -> bool:
-    """Проверить строку на соответствие критериям.
+    """Check string against criteria.
 
     Args:
-        value: Строка для проверки.
-        min_length: Минимальная длина строки.
-        max_length: Максимальная длина строки (None - без ограничений).
-        required: Обязательно ли поле.
+        value: String to validate.
+        min_length: Minimum string length.
+        max_length: Maximum string length (None - no limit).
+        required: Whether field is required.
 
     Returns:
-        True, если строка валидна, иначе False.
+        True if string is valid, False otherwise.
 
     Example:
         >>> validate_string("hello", min_length=1, max_length=10)
@@ -115,27 +115,27 @@ def validate_string(
     """
     if value is None:
         if required:
-            logger.warning("Строка обязательна, но получено None")
+            logger.warning("String is required but None was received")
             return False
         return True
 
     if not isinstance(value, str):
-        logger.warning("Значение не является строкой: %s", type(value))
+        logger.warning("Value is not a string: %s", type(value))
         return False
 
     if required and len(value) == 0:
-        logger.warning("Строка не может быть пустой")
+        logger.warning("String cannot be empty")
         return False
 
     if len(value) < min_length:
         logger.warning(
-            "Строка слишком короткая: %s < %s", len(value), min_length
+            "String too short: %s < %s", len(value), min_length
         )
         return False
 
     if max_length is not None and len(value) > max_length:
         logger.warning(
-            "Строка слишком длинная: %s > %s", len(value), max_length
+            "String too long: %s > %s", len(value), max_length
         )
         return False
 
@@ -143,14 +143,14 @@ def validate_string(
 
 
 def validate_password(password: str, min_length: int = 8) -> bool:
-    """Проверить сложность пароля.
+    """Check password strength.
 
     Args:
-        password: Пароль для проверки.
-        min_length: Минимальная длина пароля.
+        password: Password to validate.
+        min_length: Minimum password length.
 
     Returns:
-        True, если пароль соответствует требованиям, иначе False.
+        True if password meets requirements, False otherwise.
 
     Example:
         >>> validate_password("SecurePass123")
@@ -159,38 +159,38 @@ def validate_password(password: str, min_length: int = 8) -> bool:
         False
     """
     if not password or not isinstance(password, str):
-        logger.warning("Пароль пустой или не является строкой")
+        logger.warning("Password is empty or not a string")
         return False
 
     if len(password) < min_length:
         logger.warning(
-            "Пароль слишком короткий: %s < %s", len(password), min_length
+            "Password too short: %s < %s", len(password), min_length
         )
         return False
 
-    # Проверка на наличие хотя бы одной цифры и одной буквы
+    # Check for at least one digit and one letter
     if not re.search(r"\d", password):
-        logger.warning("Пароль должен содержать хотя бы одну цифру")
+        logger.warning("Password must contain at least one digit")
         return False
 
     if not re.search(r"[a-zA-Z]", password):
-        logger.warning("Пароль должен содержать хотя бы одну букву")
+        logger.warning("Password must contain at least one letter")
         return False
 
     return True
 
 
 def raise_if_invalid(condition: bool, message: str, exception_type: type = ValueError) -> None:
-    """Выбросить исключение, если условие ложно.
+    """Raise exception if condition is false.
 
     Args:
-        condition: Условие для проверки.
-        message: Сообщение об ошибке.
-        exception_type: Тип исключения.
+        condition: Condition to check.
+        message: Error message.
+        exception_type: Exception type.
 
     Raises:
-        exception_type: Если condition is False.
+        exception_type: If condition is False.
     """
     if not condition:
-        logger.error("Ошибка валидации: %s", message)
+        logger.error("Validation error: %s", message)
         raise exception_type(message)

@@ -24,7 +24,7 @@ from mkobi.models.user import UserRead
 logger = logging.getLogger(__name__)
 
 
-# Allowed roles in the system (taken from UserRoleEnum)
+# Allowed roles in the system (defined in UserRole)
 def _validate_role(role: UserRole) -> None:
     """Validate that role is allowed.
 

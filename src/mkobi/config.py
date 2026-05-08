@@ -70,7 +70,7 @@ class SecretsFileSource(PydanticBaseSettingsSource):
 
 
 class DatabaseSettings(BaseModel):
-    """Настройки подключения к базе данных."""
+    """Database connection settings."""
 
     host: str = "localhost"
     port: int = 5432
@@ -81,7 +81,7 @@ class DatabaseSettings(BaseModel):
 
     @property
     def database_url(self) -> PostgresDsn:
-        """Формирует URL для подключения к PostgreSQL с использованием asyncpg."""
+        """Build PostgreSQL connection URL using asyncpg."""
         return PostgresDsn.build(
             scheme="postgresql+asyncpg",
             username=self.user,
@@ -93,7 +93,7 @@ class DatabaseSettings(BaseModel):
 
 
 class JWTSettings(BaseModel):
-    """Настройки JWT аутентификации."""
+    """JWT authentication settings."""
 
     secret_key: str | None = None
     algorithm: str = "HS256"
@@ -101,7 +101,7 @@ class JWTSettings(BaseModel):
 
 
 class RedisSettings(BaseModel):
-    """Настройки Redis."""
+    """Redis settings."""
 
     host: str = "localhost"
     port: int = 6379
@@ -110,14 +110,14 @@ class RedisSettings(BaseModel):
 
 
 class AppSettings(BaseModel):
-    """Настройки приложения."""
+    """Application settings."""
 
     name: str = "mkobi"
     version: str = "1.0.0"
 
 
 class UploadSettings(BaseModel):
-    """Настройки загрузки файлов."""
+    """File upload settings."""
 
     temp_dir: str = "data/tmp_uploads"
     temp_dir_prefix: str = "mkobi_upload"
@@ -136,19 +136,19 @@ class UploadSettings(BaseModel):
 
 
 class EmailSettings(BaseModel):
-    """Настройки email."""
+    """Email settings."""
 
     blocked_domains: list[str] = ["tempmail.com", "throwaway.email"]
 
 
 class DashboardSettings(BaseModel):
-    """Настройки дашбордов."""
+    """Dashboard settings."""
 
     default_items_per_page: int = 20
 
 
 class LoggingSettings(BaseModel):
-    """Настройки логирования."""
+    """Logging settings."""
 
     format: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     level: str = "INFO"
@@ -157,7 +157,7 @@ class LoggingSettings(BaseModel):
 
 
 class ChartsSettings(BaseModel):
-    """Настройки графиков."""
+    """Chart settings."""
 
     default_colors: list[str] = [
         "#1f77b4",
@@ -171,7 +171,7 @@ class ChartsSettings(BaseModel):
     ]
 
     class YOYSettings(BaseModel):
-        """Настройки сравнения год-к-году."""
+        """Year-over-year comparison settings."""
 
         class CurrentYearStyle(BaseModel):
             line: dict[str, Any] = {"dash": "solid", "width": 3}
@@ -192,10 +192,10 @@ class ChartsSettings(BaseModel):
 
 
 class Settings(BaseSettings):
-    """Конфигурация приложения с использованием pydantic-settings.
+    """Application configuration using pydantic-settings.
 
-    Все настройки загружаются из переменных окружения, .env файла,
-    Docker secrets и YAML файла с соблюдением приоритета.
+    All settings are loaded from environment variables, .env file,
+    Docker secrets and YAML file with proper priority.
     """
 
     # --- App ---
@@ -312,18 +312,18 @@ class Settings(BaseSettings):
             logger.debug("Debug mode is enabled")
 
     def _ensure_upload_dir(self) -> None:
-        """Создаёт директорию для временных файлов загрузок, если её нет."""
+        """Create directory for temporary upload files if it doesn't exist."""
         upload_path = Path(self.upload.temp_dir)
         upload_path.mkdir(parents=True, exist_ok=True)
 
     @property
     def DATABASE_URL(self) -> str:
-        """Формирует URL для подключения к PostgreSQL."""
+        """Build PostgreSQL connection URL."""
         return str(self.database.database_url)
 
     @property
     def TEST_DATABASE_URL(self) -> str | None:
-        """Constructs test database URL from database settings with test dbname."""
+        """Construct test database URL from database settings with test dbname."""
         if not self.database.password:
             return None
         return str(
@@ -344,54 +344,54 @@ class Settings(BaseSettings):
 
     @property
     def jwt_secret_key(self) -> str | None:
-        """Алиас для JWT_SECRET_KEY."""
+        """Alias for JWT_SECRET_KEY."""
         return self.jwt.secret_key
 
     @property
     def jwt_algorithm(self) -> str:
-        """Алиас для JWT_ALGORITHM."""
+        """Alias for JWT_ALGORITHM."""
         return self.jwt.algorithm
 
     @property
     def upload_temp_dir(self) -> str:
-        """Алиас для UPLOAD_TEMP_DIR."""
+        """Alias for UPLOAD_TEMP_DIR."""
         return self.upload.temp_dir
 
     @property
     def allowed_file_types(self) -> list[str]:
-        """Возвращает список разрешённых расширений файлов."""
+        """Return list of allowed file extensions."""
         return [ext.value for ext in self.upload.allowed_extensions]
 
     @property
     def allowed_mime_types(self) -> list[str]:
-        """Возвращает список разрешённых MIME-типов."""
+        """Return list of allowed MIME types."""
         return [mime.value for mime in self.upload.allowed_mime_types]
 
     @property
     def lazy_threshold_mb(self) -> float:
-        """Порог в МБ для использования lazy evaluation."""
+        """Threshold in MB for using lazy evaluation."""
         return self.upload.lazy_threshold_mb
 
     @property
     def max_file_size(self) -> int:
-        """Возвращает максимальный размер файла в байтах."""
+        """Return maximum file size in bytes."""
         return self.upload.max_file_size_mb * 1024 * 1024
 
     @property
     def log_level(self) -> str:
-        """Алиас для уровня логирования."""
+        """Alias for logging level."""
         return self.logging.level
 
     @property
     def log_file(self) -> str | None:
-        """Алиас для файла логирования."""
+        """Alias for logging file."""
         return self.logging.log_file
 
     def load_yaml_config(self) -> dict[str, Any]:
-        """Загружает и возвращает конфигурацию из app.yaml.
+        """Load and return configuration from app.yaml.
 
         Returns:
-            dict[str, Any]: Словарь с настройками из YAML файла.
+            dict[str, Any]: Dictionary with settings from YAML file.
         """
         yaml_file_path = Path(__file__).parent / "settings" / "app.yaml"
         if yaml_file_path.exists():
@@ -401,18 +401,18 @@ class Settings(BaseSettings):
         return {}
 
 
-# Кэшированный экземпляр конфигурации
+# Cached configuration instance
 _settings: Settings | None = None
 
 
 def get_config() -> Settings:
-    """Возвращает экземпляр конфигурации.
+    """Return configuration instance.
 
-    Использует паттерн синглтон с кэшированием для обеспечения
-    единого источника конфигурации в приложении.
+    Uses singleton pattern with caching to ensure
+    a single configuration source in the application.
 
     Returns:
-        Settings: Экземпляр конфигурации.
+        Settings: Configuration instance.
     """
     global _settings
     if _settings is None:

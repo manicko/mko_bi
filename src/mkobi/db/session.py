@@ -15,20 +15,20 @@ _SessionLocal = None
 
 
 async def get_async_engine():
-    """Возвращает инициализированный SQLAlchemy async engine (создаёт при первом вызове).
-    
+    """Return initialized SQLAlchemy async engine (creates on first call).
+
     Returns:
-        AsyncEngine: SQLAlchemy async engine для работы с базой данных.
+        AsyncEngine: SQLAlchemy async engine for database operations.
     """
     global _engine
     if _engine is None:
         config = get_config()
         DATABASE_URL = config.DATABASE_URL
-        
+
         # Replace postgresql:// with postgresql+asyncpg://
         if DATABASE_URL.startswith("postgresql://"):
             DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)
-        
+
         logger.info("Initializing async engine for %s", DATABASE_URL.split("@")[-1])
         _engine = create_async_engine(
             DATABASE_URL,
@@ -42,10 +42,10 @@ async def get_async_engine():
 
 
 async def get_async_sessionlocal() -> async_sessionmaker[AsyncSession]:
-    """Возвращает инициализированный async_sessionmaker (создаёт при первом вызове).
-    
+    """Return initialized async_sessionmaker (creates on first call).
+
     Returns:
-        async_sessionmaker: Сконфигурированный фабрика асинхронных сессий.
+        async_sessionmaker: Configured factory for async sessions.
     """
     global _SessionLocal
     if _SessionLocal is None:
@@ -62,18 +62,18 @@ async def get_async_sessionlocal() -> async_sessionmaker[AsyncSession]:
 
 @asynccontextmanager
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
-    """Асинхронный контекстный менеджер для сессий базы данных.
-    
-    Создаёт новую асинхронную сессию и гарантирует её закрытие после использования.
-    
+    """Async context manager for database sessions.
+
+    Creates a new async session and ensures it is closed after use.
+
     Example:
         ```python
         async with get_session() as db:
             result = await db.execute(select(User))
         ```
-    
+
     Yields:
-        AsyncSession: Асинхронная сессия SQLAlchemy.
+        AsyncSession: SQLAlchemy async session.
     """
     SessionLocal = await get_async_sessionlocal()
     async with SessionLocal() as db:
@@ -81,21 +81,21 @@ async def get_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """Генератор асинхронных сессий для использования в зависимостях FastAPI.
-    
+    """Generator for async sessions to be used in FastAPI dependencies.
+
     Yields:
-        AsyncSession: Асинхронная сессия SQLAlchemy.
+        AsyncSession: SQLAlchemy async session.
     """
     async with get_session() as db:
         yield db
 
 
 async def init_db() -> None:
-    """Создаёт все таблицы, определённые в моделях.
-    
+    """Create all tables defined in the models.
+
     Note:
-        В продакшене предпочтительнее использовать миграции (например, Alembic)
-        вместо автоматического создания таблиц.
+        In production, it is preferable to use migrations (e.g., Alembic)
+        instead of automatic table creation.
     """
     logger.info("Initializing database tables...")
     engine = await get_async_engine()
@@ -105,11 +105,11 @@ async def init_db() -> None:
 
 
 async def drop_db() -> None:
-    """Удаляет все таблицы, определённые в моделях.
+    """Drop all tables defined in the models.
 
     Warning:
-        Операция разрушительная! Использовать только для тестов
-        или при полной переинициализации базы данных.
+        Destructive operation! Use only for tests
+        or when completely reinitializing the database.
     """
     logger.warning("Dropping all database tables!")
     engine = await get_async_engine()

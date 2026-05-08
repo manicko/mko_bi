@@ -4,7 +4,7 @@ import pytest
 from uuid import uuid4
 from datetime import datetime
 
-from mkobi.models.enums import ProcessingStatusEnum
+from mkobi.models.enums import ProcessingStatus
 from mkobi.models.processing_logs import ProcessingLogFilter, ProcessingLogRead, ProcessingLogCreate
 from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
 from mkobi.services.processing_log_service import ProcessingLogService
@@ -28,12 +28,12 @@ class TestProcessingLogFilter:
         dashboard_id = uuid4()
         filter_obj = ProcessingLogFilter(
             dashboard_id=dashboard_id,
-            status=ProcessingStatusEnum.STARTED,
+            status=ProcessingStatus.STARTED,
             skip=10,
             limit=50,
         )
         assert filter_obj.dashboard_id == dashboard_id
-        assert filter_obj.status == ProcessingStatusEnum.STARTED
+        assert filter_obj.status == ProcessingStatus.STARTED
         assert filter_obj.skip == 10
         assert filter_obj.limit == 50
 
@@ -44,11 +44,11 @@ class TestProcessingLogModels:
     def test_create_model(self):
         """Test ProcessingLogCreate model."""
         create_obj = ProcessingLogCreate(
-            status=ProcessingStatusEnum.STARTED,
+            status=ProcessingStatus.STARTED,
             message="Test message",
         )
         assert create_obj.dashboard_id is None
-        assert create_obj.status == ProcessingStatusEnum.STARTED
+        assert create_obj.status == ProcessingStatus.STARTED
         assert create_obj.message == "Test message"
 
     def test_read_model(self):
@@ -56,13 +56,13 @@ class TestProcessingLogModels:
         log_id = uuid4()
         read_obj = ProcessingLogRead(
             id=log_id,
-            status=ProcessingStatusEnum.SUCCESS,
+            status=ProcessingStatus.SUCCESS,
             message="Success",
             started_at=datetime.now(),
             finished_at=datetime.now(),
         )
         assert read_obj.id == log_id
-        assert read_obj.status == ProcessingStatusEnum.SUCCESS
+        assert read_obj.status == ProcessingStatus.SUCCESS
 
 
 class TestProcessingLogRepository:
@@ -75,13 +75,13 @@ class TestProcessingLogRepository:
 
         log = await repo.create_log(
             dashboard_id=None,
-            status=ProcessingStatusEnum.STARTED,
+            status=ProcessingStatus.STARTED,
             message="Test log",
             db=async_db_session,
         )
 
         assert log.dashboard_id is None
-        assert log.status == ProcessingStatusEnum.STARTED
+        assert log.status == ProcessingStatus.STARTED
         assert log.message == "Test log"
         assert log.started_at is not None
 
@@ -92,14 +92,14 @@ class TestProcessingLogRepository:
 
         log = await repo.create_log(
             dashboard_id=None,
-            status=ProcessingStatusEnum.STARTED,
+            status=ProcessingStatus.STARTED,
             message="Test",
             db=async_db_session,
         )
 
         await repo.update_status(
             log_id=log.id,
-            status=ProcessingStatusEnum.SUCCESS,
+            status=ProcessingStatus.SUCCESS,
             message="Completed",
             db=async_db_session,
         )
@@ -107,7 +107,7 @@ class TestProcessingLogRepository:
         # Verify update
         updated = await repo.get_by_id(log.id, db=async_db_session)
         assert updated is not None
-        assert updated.status == ProcessingStatusEnum.SUCCESS
+        assert updated.status == ProcessingStatus.SUCCESS
         assert updated.message == "Completed"
         assert updated.finished_at is not None
 
@@ -119,13 +119,13 @@ class TestProcessingLogRepository:
         # Create multiple logs with None dashboard_id
         await repo.create_log(
             dashboard_id=None,
-            status=ProcessingStatusEnum.STARTED,
+            status=ProcessingStatus.STARTED,
             message="Test1",
             db=async_db_session,
         )
         await repo.create_log(
             dashboard_id=None,
-            status=ProcessingStatusEnum.SUCCESS,
+            status=ProcessingStatus.SUCCESS,
             message="Test2",
             db=async_db_session,
         )
@@ -140,24 +140,24 @@ class TestProcessingLogRepository:
 
         await repo.create_log(
             dashboard_id=None,
-            status=ProcessingStatusEnum.STARTED,
+            status=ProcessingStatus.STARTED,
             message="Test1",
             db=async_db_session,
         )
         await repo.create_log(
             dashboard_id=None,
-            status=ProcessingStatusEnum.SUCCESS,
+            status=ProcessingStatus.SUCCESS,
             message="Test2",
             db=async_db_session,
         )
 
         filters = ProcessingLogFilter(
-            status=ProcessingStatusEnum.SUCCESS,
+            status=ProcessingStatus.SUCCESS,
         )
 
         logs = await repo.get_filtered(filters, db=async_db_session)
         assert len(logs) == 1
-        assert logs[0].status == ProcessingStatusEnum.SUCCESS
+        assert logs[0].status == ProcessingStatus.SUCCESS
 
 
 class TestProcessingLogService:
@@ -177,7 +177,7 @@ class TestProcessingLogService:
 
         assert isinstance(result, ProcessingLogRead)
         assert result.dashboard_id is None
-        assert result.status == ProcessingStatusEnum.STARTED
+        assert result.status == ProcessingStatus.STARTED
 
     @pytest.mark.asyncio
     async def test_update_to_success(self, service, async_db_session):
@@ -191,7 +191,7 @@ class TestProcessingLogService:
         )
 
         assert result is not None
-        assert result.status == ProcessingStatusEnum.SUCCESS
+        assert result.status == ProcessingStatus.SUCCESS
         assert result.message == "All good"
 
     @pytest.mark.asyncio
@@ -206,7 +206,7 @@ class TestProcessingLogService:
         )
 
         assert result is not None
-        assert result.status == ProcessingStatusEnum.FAILED
+        assert result.status == ProcessingStatus.FAILED
         assert result.message == "Error occurred"
 
     @pytest.mark.asyncio
@@ -222,9 +222,9 @@ class TestProcessingLogService:
         await service.create_started_log(None, async_db_session)
 
         filters = ProcessingLogFilter(
-            status=ProcessingStatusEnum.SUCCESS,
+            status=ProcessingStatus.SUCCESS,
         )
 
         logs = await service.get_filtered(filters, async_db_session)
         assert len(logs) == 1
-        assert logs[0].status == ProcessingStatusEnum.SUCCESS
+        assert logs[0].status == ProcessingStatus.SUCCESS

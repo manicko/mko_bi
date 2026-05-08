@@ -70,7 +70,8 @@ class DashboardAccess(Base):
             "dashboard_id",
             name="dashboard_access_pkey",
         ),
-        Index("idx_access_dashboard", "dashboard_id"),
+        Index("idx_dashboard_access_user", "user_id"),
+        Index("idx_dashboard_access_dashboard", "dashboard_id"),
     )
 
     def __repr__(self) -> str:

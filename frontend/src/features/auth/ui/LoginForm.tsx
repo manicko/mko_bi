@@ -1,17 +1,10 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../'
 import { Box, Button, TextField, Typography, Alert } from '@mui/material'
 import { useState } from 'react'
-
-const loginSchema = z.object({
-  email: z.string().email('Invalid email format'),
-  password: z.string().min(1, 'Password is required'),
-})
-
-type LoginFormData = z.infer<typeof loginSchema>
+import { loginSchema, type LoginFormData } from '../../../shared/types/formSchemas'
 
 export function LoginForm() {
   const { login, isLoading } = useAuth()

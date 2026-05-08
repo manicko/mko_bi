@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
   Box,
@@ -12,8 +12,8 @@ import {
 } from '@mui/material'
 import { toast } from 'react-hot-toast'
 import { FileDropzone } from './FileDropzone'
-import { uploadApi } from '../api/uploadApi'
-import { UploadMode, FileUploadStatus } from '../../../shared/types/enums'
+import { uploadApi, useProcessingStatus } from '../api/uploadApi'
+import { UploadMode, FileUploadStatus, ProcessingStatus } from '../../../shared/types/enums'
 
 interface FileUploadState {
   file: File
@@ -21,6 +21,7 @@ interface FileUploadState {
   status: FileUploadStatus
   error?: string
   processingLogId?: string
+  processingStatus?: ProcessingStatus
 }
 
 export function UploadPage() {
@@ -32,6 +33,31 @@ export function UploadPage() {
   const [fileStates, setFileStates] = useState<FileUploadState[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [uploadComplete, setUploadComplete] = useState(false)
+
+  // Get the first file's processing log ID for polling
+  const processingLogId = fileStates.length > 0 ? fileStates[0].processingLogId ?? null : null
+  const { data: statusData } = useProcessingStatus(processingLogId, uploadComplete)
+
+  // Update processing status when polling returns data
+  useEffect(() => {
+    if (statusData?.status) {
+      setFileStates((prev) =>
+        prev.map((f) =>
+          f.processingLogId
+            ? { ...f, processingStatus: statusData.status, status: statusData.status === 'failed' ? FileUploadStatus.ERROR : f.status }
+            : f
+        )
+      )
+
+      // Navigate when processing is complete
+      if (statusData.status === 'completed' || statusData.status === 'success') {
+        toast.success('Processing complete!')
+        setTimeout(() => {
+          navigate(`/dashboard/${dashboardId}`)
+        }, 1500)
+      }
+    }
+  }, [statusData, dashboardId, navigate])
 
   const handleModeChange = (_: React.MouseEvent<HTMLElement>, newMode: UploadMode | null) => {
     if (newMode !== null) {
@@ -113,11 +139,7 @@ export function UploadPage() {
 
     setIsUploading(false)
     setUploadComplete(true)
-    toast.success('All files uploaded successfully!')
-
-    setTimeout(() => {
-      navigate(`/dashboard/${dashboardId}`)
-    }, 1500)
+    toast.success('All files uploaded! Processing...')
   }
 
   return (

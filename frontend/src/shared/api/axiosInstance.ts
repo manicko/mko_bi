@@ -1,5 +1,6 @@
 import axios, { AxiosError } from 'axios'
 import { toast } from 'react-hot-toast'
+import { getTokenWithExpirationCheck, removeToken } from '../../features/auth/model/authToken'
 
 export const axiosInstance = axios.create({
   baseURL: '/api/v1',
@@ -9,12 +10,15 @@ export const axiosInstance = axios.create({
   },
 })
 
-// Request interceptor - add JWT token
+// Request interceptor - add JWT token with expiration check
 axiosInstance.interceptors.request.use(
   (config) => {
-    const token = sessionStorage.getItem('access_token')
+    const token = getTokenWithExpirationCheck()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
+    } else if (getTokenWithExpirationCheck() === null) {
+      // Token was expired and removed
+      removeToken()
     }
     return config
   },
@@ -26,7 +30,7 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      sessionStorage.removeItem('access_token')
+      removeToken()
       toast.error('Session expired. Please login again.')
       window.location.href = '/login'
     }

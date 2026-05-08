@@ -37,7 +37,7 @@ __all__ = [
 
 
 class DataUpload(BaseModel):
-    """Модель для загрузки данных."""
+    """Model for data upload."""
 
     file: bytes
     filename: str
@@ -55,7 +55,7 @@ class DataUpload(BaseModel):
 
 
 class UploadResponse(BaseModel):
-    """Модель ответа при загрузке файла."""
+    """Model for upload response."""
 
     task_id: UUID
     filename: str
@@ -80,7 +80,7 @@ class UploadResponse(BaseModel):
 
 
 class ProcessingStatusResponse(BaseModel):
-    """Модель статуса обработки."""
+    """Model for processing status."""
 
     task_id: UUID
     filename: str
@@ -109,14 +109,13 @@ class ProcessingStatusResponse(BaseModel):
 
 
 class ProcessingConfig(BaseModel):
-    """Модель конфигурации обработки данных."""
+    """Model for processing configuration."""
 
     filters: list[FilterConfig] | None = None
     groupby: list[str] | None = None
     aggregations: list[AggregationConfig] | None = None
     sort_by: list[str] | None = None
     descending: bool = False
-    limit: int | None = None
     yoy_config: YoyConfig | None = None
     share_config: ShareConfig | None = None
     custom_metrics: list[CustomMetricConfig] | None = None
@@ -151,7 +150,7 @@ class ProcessingConfig(BaseModel):
 
 
 class ProcessingResult(BaseModel):
-    """Модель результата обработки данных."""
+    """Model for processing result."""
 
     success: bool
     task_id: UUID
@@ -176,7 +175,7 @@ class ProcessingResult(BaseModel):
 
 
 class AggregatedData(BaseModel):
-    """Модель агрегированных данных для дашборда."""
+    """Model for aggregated data for dashboard."""
 
     dashboard_id: UUID
     chart_type: GraphType
@@ -200,9 +199,9 @@ class AggregatedData(BaseModel):
 
 
 class DataFilter(BaseModel):
-    """Модель фильтров для агрегированных данных.
+    """Model for filtering aggregated data.
 
-    Используется для фильтрации данных по году, категории, бренду и другим параметрам.
+    Used to filter data by year, category, brand and other parameters.
     """
 
     dashboard_id: UUID
@@ -229,9 +228,9 @@ class DataFilter(BaseModel):
 
 
 class ChartDataRequest(BaseModel):
-    """Модель запроса данных для конкретных графиков.
+    """Model for requesting data for specific charts.
 
-    Используется для получения данных только для указанных графиков дашборда.
+    Used to get data only for specified charts of the dashboard.
     """
 
     dashboard_id: UUID
@@ -252,32 +251,32 @@ class ChartDataRequest(BaseModel):
 
 
 class LoaderConfig(BaseModel):
-    """Конфигурация загрузчика CSV данных.
+    """Configuration for CSV data loader.
 
-    Используется для настройки параметров загрузки и валидации данных.
+    Used to configure data loading and validation parameters.
     """
 
     required_columns: list[str] = Field(
         default_factory=list,
-        description="Список обязательных колонок",
+        description="List of required columns",
     )
     column_types: dict[str, str] = Field(
         default_factory=dict,
-        description="Сопоставление колонок с ожидаемыми типами данных",
+        description="Mapping columns to expected data types",
     )
     strict_schema: bool = Field(
         default=False,
-        description="Проверять ли строгое соответствие схемы",
+        description="Whether to check strict schema compliance",
     )
     max_file_size: int = Field(
         default=100 * 1024 * 1024,
-        description="Максимальный размер файла в байтах",
+        description="Maximum file size in bytes",
         ge=1,
         le=1024 * 1024 * 1024,  # 1GB max
     )
     allowed_file_types: list[FileExtensionEnum] = Field(
         default_factory=lambda: [FileExtensionEnum.CSV, FileExtensionEnum.CSV_GZ],
-        description="Разрешенные типы файлов",
+        description="Allowed file types",
     )
 
     model_config = ConfigDict(
@@ -299,10 +298,10 @@ class LoaderConfig(BaseModel):
 
 
 class ValidationResult(BaseModel):
-    """Результат валидации данных.
+    """Validation result for data.
 
-    Содержит информацию о том, прошли ли данные валидацию,
-    а также список ошибок и предупреждений.
+    Contains information about whether data passed validation,
+    as well as list of errors and warnings.
     """
 
     is_valid: bool
@@ -318,7 +317,7 @@ class ValidationResult(BaseModel):
             "example": {
                 "is_valid": True,
                 "errors": [],
-                "warnings": ["Найдено 5 null-значений в колонке 'category'"],
+                "warnings": ["Found 5 null values in column 'category'"],
                 "row_count": 1000,
                 "column_count": 5,
                 "columns": ["date", "category", "revenue", "region", "brand"],
@@ -328,10 +327,10 @@ class ValidationResult(BaseModel):
 
 
 class ChartData(BaseModel):
-    """Модель данных для графика.
+    """Model for chart data.
 
-    Содержит список словарей с данными, где каждый словарь
-    представляет одну точку данных с измерениями и метриками.
+    Contains list of dictionaries with data, where each dictionary
+    represents one data point with dimensions and metrics.
     """
 
     data: list[dict[str, int | float | str]]
@@ -350,10 +349,10 @@ class ChartData(BaseModel):
 
 
 class ChartConfig(BaseModel):
-    """Модель конфигурации графика.
+    """Model for chart configuration.
 
-    Определяет параметры визуализации: оси, цвета, режимы отображения
-    и дополнительные настройки макета.
+    Defines visualization parameters: axes, colors, display modes
+    and additional layout settings.
     """
 
     x: str
@@ -365,7 +364,7 @@ class ChartConfig(BaseModel):
     layout: ChartLayoutConfig | None = Field(default=None)
     yoy: YoyConfig | None = Field(
         default=None,
-        description="Настройки год-к-году сравнения",
+        description="Year-over-year comparison settings",
     )
 
     model_config = ConfigDict(
@@ -391,10 +390,10 @@ class ChartConfig(BaseModel):
 
 
 class FilterState(BaseModel):
-    """Модель состояния фильтров дашборда.
+    """Model for dashboard filter state.
 
-    Хранит текущие значения фильтров в виде словаря,
-    где ключ - имя фильтра, значение - список выбранных значений.
+    Stores current filter values as a dictionary,
+    where key is filter name, value is list of selected values.
     """
 
     filters: dict[str, list[int | str]] = Field(default_factory=dict)

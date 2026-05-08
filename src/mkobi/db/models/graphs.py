@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-"""Модель определений графиков дашбордов."""
+"""Graph definitions model for dashboards."""
 
 from datetime import datetime
 from uuid import uuid4, UUID
@@ -10,6 +10,7 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Index,
     String,
     text,
     UniqueConstraint,
@@ -26,10 +27,10 @@ if TYPE_CHECKING:
 
 
 class Graph(Base):
-    """Модель определений графиков дашбордов.
+    """Graph definitions model for dashboards.
 
-    Хранит конфигурацию графиков: тип, настройки визуализации,
-    измерения и метрики.
+    Stores graph configurations: type, visualization settings,
+    dimensions, and metrics.
     """
 
     __tablename__ = "graphs"
@@ -85,14 +86,14 @@ class Graph(Base):
         server_default=text("now()"),
     )
 
-    # Связь с дашбордом
+    # Relationship with dashboard
     dashboard: Mapped[Dashboard] = relationship(
         "Dashboard",
         back_populates="graphs",
         lazy="selectin",
     )
 
-    # Связь с агрегированными данными
+    # Relationship with aggregated data
     aggregated_data: Mapped[list[AggregatedData]] = relationship(
         "AggregatedData",
         back_populates="graph",
@@ -101,8 +102,10 @@ class Graph(Base):
     )
 
     __table_args__ = (
-        # Уникальное ограничение: комбинация dashboard_id и name должна быть уникальной
-        UniqueConstraint("dashboard_id", "name", name="uq_graph_dashboard_name"),
+        # Unique constraint: combination of dashboard_id and name must be unique
+        UniqueConstraint("dashboard_id", "name", name="idx_graphs_dashboard_name"),
+        # Index for dashboard lookup performance
+        Index("idx_graphs_dashboard", "dashboard_id"),
     )
 
     def __repr__(self) -> str:

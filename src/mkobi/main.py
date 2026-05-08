@@ -1,9 +1,9 @@
-"""Главный файл приложения FastAPI.
+"""Main FastAPI application file.
 
-Создает и конфигурирует приложение FastAPI через factory pattern.
+Creates and configures the FastAPI application using factory pattern.
 """
 
 from mkobi.app import create_app
 
-# Создаем экземпляр приложения через factory
+# Create application instance via factory
 app = create_app()

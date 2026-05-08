@@ -1,16 +1,13 @@
-"""Модуль воспроизведения структуры БД.
+"""Database schema reproduction module.
 
-Автоматически проверяет состояние БД при старте FastAPI
-и применяет миграции Alembic в соответствии с окружением.
+Automatically checks database state on FastAPI startup
+and applies Alembic migrations according to the environment.
 """
 
 import asyncio
 import logging
-import os
-import subprocess
 import sys
 from datetime import datetime, timedelta
-from anyio.to_thread import run_sync as to_thread_run
 from typing import cast
 
 from alembic import command
@@ -24,15 +21,15 @@ logger = logging.getLogger(__name__)
 
 
 class DatabaseNotFoundError(Exception):
-    """База данных не найдена."""
+    """Database not found."""
 
 
 class SchemaNotFoundError(Exception):
-    """Схема БД не найдена."""
+    """Database schema not found."""
 
 
 class DatabaseStarterConfig:
-    """Конфигурация модуля воспроизведения БД."""
+    """Database starter configuration."""
 
     def __init__(
         self,
@@ -92,7 +89,7 @@ class DatabaseStarter:
                     text(
                         "SELECT EXISTS ("
                         "SELECT FROM information_schema.tables "
-                        "WHERE table_name = 'alembic_version'"
+                        "WHERE table_name = 'alembic_version')"
                     )
                 )
                 schema_exists = result.scalar()
@@ -157,24 +154,6 @@ class DatabaseStarter:
         await self._apply_migrations(test_url)
         await migration_engine.dispose()
 
-        # Ensure config column exists (migration might have failed silently)
-        verify_engine = create_async_engine(test_url)
-        async with verify_engine.connect() as conn:
-            result = await conn.execute(
-                text(
-                    "SELECT column_name FROM information_schema.columns "
-                    "WHERE table_name='dashboards' AND column_name='config'"
-                )
-            )
-            if not result.fetchone():
-                logger.warning("Config column not found, adding it manually...")
-                await conn.execute(
-                    text("ALTER TABLE dashboards ADD COLUMN config JSONB DEFAULT '{}'::jsonb")
-                )
-                await conn.commit()
-                logger.info("Config column added manually")
-        await verify_engine.dispose()
-
         logger.info("Test database recreated successfully")
 
     async def _apply_migrations(self, db_url: str) -> None:
@@ -191,54 +170,9 @@ class DatabaseStarter:
             # Run migrations
             command.upgrade(config, "head")
 
-        logger.info(f"Running migrations for {db_url}...")
-        await to_thread_run(_sync_migrate)
+        logger.info("Running migrations for %s...", db_url)
+        await asyncio.to_thread(_sync_migrate)
         logger.info("Migrations applied successfully")
-
-    async def _populate_alembic_version(self) -> None:
-        """Populate alembic_version with current HEAD version.
-
-        TASK-DB-001: Fix alembic_version table - populate with current version.
-        """
-        # Get HEAD revision from alembic
-        alembic_ini = self._config.alembic_ini_path
-
-        try:
-            result = subprocess.run(
-                ["uv", "run", "alembic", "-c", alembic_ini, "heads"],
-                capture_output=True,
-                text=True,
-                cwd=os.getcwd(),
-            )
-
-            if result.returncode != 0:
-                logger.error(f"Failed to get alembic heads: {result.stderr}")
-                return
-
-            # Parse the head revision (format: "revision (head), description")
-            head_line = (
-                result.stdout.strip().split("\n")[0] if result.stdout.strip() else ""
-            )
-            revision = head_line.split(" ")[0] if head_line else ""
-
-            if not revision:
-                logger.warning("Could not determine alembic head revision")
-                return
-
-            # Insert into alembic_version
-            async with cast(AsyncEngine, self._main_engine).connect() as conn:
-                await conn.execute(
-                    text(
-                        "INSERT INTO alembic_version (version_num) "
-                        "VALUES (:revision) ON CONFLICT DO NOTHING"
-                    ),
-                    {"revision": revision},
-                )
-                await conn.commit()
-
-            logger.info(f"Alembic version populated with revision: {revision}")
-        except Exception as e:
-            logger.error(f"Failed to populate alembic_version: {e}")
 
     async def cleanup_old_logs(self) -> None:
         """Clean up old processing logs based on retention policy."""
@@ -258,7 +192,7 @@ class DatabaseStarter:
             await conn.commit()
 
             if result.rowcount > 0:
-                logger.info(f"Cleaned up {result.rowcount} old processing logs")
+                logger.info("Cleaned up %d old processing logs", result.rowcount)
 
     async def shutdown(self) -> None:
         """Dispose database engines on application shutdown."""
@@ -272,13 +206,13 @@ class DatabaseStarter:
 
 
 def main() -> None:
-    """Точка входа для пересоздания тестовой БД через CLI."""
+    """Entry point for recreating test database via CLI."""
     if "--recreate-test-db" in sys.argv:
         starter = DatabaseStarter()
 
         asyncio.run(starter.recreate_test_database())
     else:
-        print("Usage: python -m mkobi.db.starter --recreate-test-db")
+        logger.error("Usage: python -m mkobi.db.starter --recreate-test-db")
 
 
 if __name__ == "__main__":

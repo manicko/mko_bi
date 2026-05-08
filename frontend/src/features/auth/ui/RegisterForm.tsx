@@ -1,24 +1,10 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../'
 import { Box, Button, TextField, Typography, Alert } from '@mui/material'
 import { useState } from 'react'
-
-const BLOCKED_DOMAINS = ['tempmail.com', 'throwawaymail.com']
-
-const registerSchema = z.object({
-  email: z
-    .string()
-    .email('Invalid email format')
-    .refine((email) => {
-      const domain = email.split('@')[1]
-      return domain && !BLOCKED_DOMAINS.includes(domain)
-    }, 'This email domain is not allowed'),
-})
-
-type RegisterFormData = z.infer<typeof registerSchema>
+import { registerSchema, type RegisterFormData } from '../../../shared/types/formSchemas'
 
 export function RegisterForm() {
   const { registerRequest, isLoading } = useAuth()

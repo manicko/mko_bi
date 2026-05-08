@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
+import aiofiles
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.config import get_config
@@ -172,7 +173,8 @@ class DataService(IDataService):
         temp_file_path = upload_dir / f"{log.id}{file_ext}"
 
         try:
-            temp_file_path.write_bytes(file_content)
+            async with aiofiles.open(temp_file_path, mode='wb') as f:
+                await f.write(file_content)
             logger.info("File saved: path=%s, mode=%s", temp_file_path, mode)
         except Exception as e:
             logger.error("File save error: %s", e)

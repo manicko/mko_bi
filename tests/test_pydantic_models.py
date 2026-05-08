@@ -228,7 +228,7 @@ class TestDataModels:
             AggregationConfig,
             FilterConfig,
         )
-        from mkobi.models.user_roles import (
+        from mkobi.models.enums import (
             AggregationFunctionEnum,
             FilterOperatorEnum,
         )

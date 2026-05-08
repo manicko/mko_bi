@@ -1,4 +1,4 @@
-"""Модель глобальных фильтров."""
+"""Global filters model."""
 
 from datetime import datetime
 from typing import Any
@@ -22,10 +22,10 @@ from mkobi.models.enums import FilterType
 
 
 class Filter(Base):
-    """Модель глобальных фильтров дашбордов.
+    """Global filters model for dashboards.
 
-    Фильтры не принадлежат конкретному дашборду, они переиспользуются
-    между дашбордами через связи многие-ко-многим.
+    Filters don't belong to a specific dashboard, they are reusable
+    across dashboards via many-to-many relationships.
     """
 
     __tablename__ = "filters"
@@ -64,7 +64,7 @@ class Filter(Base):
         server_default=text("now()"),
     )
 
-    # Связь с дашбордами через промежуточную таблицу
+    # Relationship with dashboards through intermediate table
     dashboards: Mapped[list["Dashboard"]] = relationship(  # type: ignore[name-defined]
         "Dashboard",
         secondary="dashboard_filters",
@@ -79,11 +79,11 @@ class Filter(Base):
         return self.name
 
 
-# Промежуточная таблица для связи многие-ко-многим между дашбордами и фильтрами
+# Intermediate table for many-to-many relationship between dashboards and filters
 dashboard_filters = Table(
     "dashboard_filters",
     Base.metadata,
     Column("dashboard_id", PG_UUID(as_uuid=True), ForeignKey("dashboards.id", ondelete="CASCADE"), primary_key=True),
     Column("filter_id", PG_UUID(as_uuid=True), ForeignKey("filters.id", ondelete="CASCADE"), primary_key=True),
-    Index("idx_dashboard_filter", "dashboard_id", "filter_id"),
+    Index("idx_dashboard_filters_dashboard_filter", "dashboard_id", "filter_id"),
 )

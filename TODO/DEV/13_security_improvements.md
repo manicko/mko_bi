@@ -21,7 +21,7 @@ IMPLEMENT:
   - bcrypt usage (not md5, SHA, plaintext)
   - Password hash stored in DB (not plaintext)
   - No password logging
-  - Password strength validation (optional)
+ 
 
 * **Upload Security** (src/mkobi/api/routes/upload.py):
   - Path traversal protection (../../file.csv)

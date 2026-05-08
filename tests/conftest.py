@@ -55,7 +55,6 @@ class MockRedis:
 
     def __init__(self):
         self._data = {}
-        self._pipeline_data = {}
 
     async def get(self, key):
         return self._data.get(key)
@@ -188,23 +187,17 @@ async def async_session_maker(async_test_engine):
 
 @pytest.fixture(scope="function")
 async def async_db_session(async_test_engine, async_session_maker):
-    """Fixture for creating async DB session for tests."""
+    """Fixture for creating async DB session for tests.
+    
+    Uses nested transaction pattern for test isolation:
+    - Creates a savepoint at the start
+    - Rolls back to savepoint at the end
+    - No TRUNCATE needed, no deadlocks
+    """
     async with async_session_maker() as session:
-        yield session
-    # Clean up after test
-    async with async_test_engine.begin() as conn:
-        from sqlalchemy import inspect
-
-        table_names = await conn.run_sync(
-            lambda sync_conn: inspect(sync_conn).get_table_names()
-        )
-        if table_names:
-            tables_sql = ", ".join(f'"{table}"' for table in table_names)
-            await conn.execute(text(f"TRUNCATE TABLE {tables_sql} CASCADE"))
-            # Reset sequences after TRUNCATE
-            await conn.execute(
-                text("ALTER SEQUENCE IF EXISTS aggregated_data_id_seq RESTART WITH 1")
-            )
+        # Start a nested transaction (savepoint)
+        async with session.begin_nested():
+            yield session
 
 
 @pytest.fixture
@@ -240,7 +233,7 @@ async def test_user(async_db_session) -> dict[str, str | object]:
         password_hash=hash_password("TestPass123!"),
         role="admin",
     )
-    await async_db_session.commit()
+    await async_db_session.flush()
 
     token = create_access_token({"user_id": str(user.id), "email": user.email})
 
