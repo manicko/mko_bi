@@ -8,6 +8,7 @@ Create, update and delete operations are available only to owners.
 
 import logging
 from typing import Any, cast
+from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -298,8 +299,6 @@ async def update_dashboard_endpoint(
 
     try:
         # Check edit access (requires admin role for this dashboard)
-        from mkobi.core.permissions import check_dashboard_access
-
         if not await check_dashboard_access(
             user_id=current_user.id,
             dashboard_id=dashboard_id,
@@ -380,8 +379,6 @@ async def delete_dashboard_endpoint(
 
     try:
         # Check edit access (requires admin role for this dashboard)
-        from mkobi.core.permissions import check_dashboard_access
-
         if not await check_dashboard_access(
             user_id=current_user.id,
             dashboard_id=dashboard_id,
@@ -455,9 +452,7 @@ async def grant_dashboard_access_endpoint(
     )
 
     try:
-        # Check that current user has access management rights
-        from mkobi.core.permissions import check_dashboard_access
-
+        # Check edit access (requires admin role for this dashboard)
         if not await check_dashboard_access(
             user_id=current_user.id,
             dashboard_id=dashboard_id,
@@ -555,7 +550,7 @@ async def bind_filter_endpoint(
     )
     try:
         filter_repo = FilterRepository()
-        filter_obj = filter_repo.get(filter_id, db)
+        filter_obj = await filter_repo.get(filter_id, db)
         if not filter_obj:
             raise HTTPException(status_code=404, detail="Filter not found")
 
