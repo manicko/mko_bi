@@ -1,4 +1,8 @@
-"""True initial migration - creates all tables from scratch
+"""True initial migration - creates all tables from scratch.
+
+Uses Alembic's proper API for idempotent migrations.
+Enum types are created using postgresql.ENUM with checkfirst=True.
+Tables use CREATE TABLE IF NOT EXISTS for idempotency.
 
 Revision ID: 7130ecb0388c
 Revises:
@@ -8,6 +12,7 @@ Create Date: 2026-05-03 17:10:00.000000
 from collections.abc import Sequence
 
 from alembic import op
+from sqlalchemy.dialects.postgresql import ENUM
 
 # revision identifiers, used by Alembic.
 revision: str = '7130ecb0388c'
@@ -18,26 +23,24 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     """Create all tables from scratch according to SPEC.md."""
-    # Create enum types (with existence check for idempotency)
-    op.execute("""
-        DO $$ BEGIN
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
-                CREATE TYPE user_role AS ENUM ('admin', 'editor', 'viewer');
-            END IF;
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'dashboard_permission_level') THEN
-                CREATE TYPE dashboard_permission_level AS ENUM ('view', 'edit', 'admin');
-            END IF;
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'graph_type') THEN
-                CREATE TYPE graph_type AS ENUM ('bar', 'line', 'pie', 'table');
-            END IF;
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'filter_type') THEN
-                CREATE TYPE filter_type AS ENUM ('select', 'multiselect', 'range', 'date');
-            END IF;
-            IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'processing_status') THEN
-                CREATE TYPE processing_status AS ENUM ('started', 'uploaded', 'processing', 'success', 'failed', 'completed');
-            END IF;
-        END $$;
-    """)
+    # Create enum types using Alembic's proper API (idempotent with checkfirst)
+    user_role_enum = ENUM('admin', 'editor', 'viewer', name='user_role')
+    user_role_enum.create(op.get_bind(), checkfirst=True)
+
+    dashboard_permission_enum = ENUM('view', 'edit', 'admin', name='dashboard_permission_level')
+    dashboard_permission_enum.create(op.get_bind(), checkfirst=True)
+
+    graph_type_enum = ENUM('bar', 'line', 'pie', 'table', name='graph_type')
+    graph_type_enum.create(op.get_bind(), checkfirst=True)
+
+    filter_type_enum = ENUM('select', 'multiselect', 'range', 'date', name='filter_type')
+    filter_type_enum.create(op.get_bind(), checkfirst=True)
+
+    processing_status_enum = ENUM(
+        'started', 'uploaded', 'processing', 'success', 'failed', 'completed',
+        name='processing_status'
+    )
+    processing_status_enum.create(op.get_bind(), checkfirst=True)
 
     # Create users table (with existence check)
     op.execute("""
@@ -64,10 +67,9 @@ def upgrade() -> None:
     """)
     op.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_layouts_name ON layouts (name)")
 
-    # Create dashboards table
-    op.execute("DROP TABLE IF EXISTS dashboards CASCADE")
+    # Create dashboards table (idempotent with IF NOT EXISTS)
     op.execute("""
-        CREATE TABLE dashboards (
+        CREATE TABLE IF NOT EXISTS dashboards (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             name TEXT NOT NULL,
             description TEXT,
@@ -180,9 +182,18 @@ def downgrade() -> None:
     op.execute("DROP TABLE IF EXISTS processing_configs CASCADE")
     op.execute("DROP TABLE IF EXISTS processing_logs CASCADE")
 
-    # Drop enum types
-    op.execute("DROP TYPE IF EXISTS processing_status")
-    op.execute("DROP TYPE IF EXISTS filter_type")
-    op.execute("DROP TYPE IF EXISTS graph_type")
-    op.execute("DROP TYPE IF EXISTS dashboard_permission_level")
-    op.execute("DROP TYPE IF EXISTS user_role")
+    # Drop enum types using Alembic's proper API (idempotent with checkfirst)
+    user_role_enum = ENUM(name='user_role')
+    user_role_enum.drop(op.get_bind(), checkfirst=True)
+
+    dashboard_permission_enum = ENUM(name='dashboard_permission_level')
+    dashboard_permission_enum.drop(op.get_bind(), checkfirst=True)
+
+    graph_type_enum = ENUM(name='graph_type')
+    graph_type_enum.drop(op.get_bind(), checkfirst=True)
+
+    filter_type_enum = ENUM(name='filter_type')
+    filter_type_enum.drop(op.get_bind(), checkfirst=True)
+
+    processing_status_enum = ENUM(name='processing_status')
+    processing_status_enum.drop(op.get_bind(), checkfirst=True)

@@ -15,7 +15,7 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 
-from mkobi.api.deps import get_auth_service, get_current_user_dependency
+from mkobi.api.deps import get_auth_service, get_current_user_dependency, require_admin_role
 from mkobi.core.logging_config import get_logger
 from mkobi.core import redis_client
 from mkobi.core.security import AsyncRateLimiter
@@ -108,30 +108,36 @@ async def login_form(
     "/register",
     response_model=Token,
     status_code=status.HTTP_201_CREATED,
-    summary="User registration",
-    description="Creates new user and returns JWT token.",
+    summary="User registration (admin-only, deprecated for public)",
+    description="Creates new user directly. Admin only. Public users should use /register-request instead.",
 )
 async def register(
     register_data: RegisterRequest,
     auth_service=Depends(get_auth_service),
+    admin_user: UserRead = Depends(require_admin_role),
 ) -> Token:
-    """User registration endpoint.
+    """Admin-only user registration endpoint (deprecated for public use).
 
-    Accepts email, password and role, creates user and returns
-    JWT access token.
+    Creates user directly and returns JWT access token.
+    For public registration, use /auth/register-request instead.
 
     Args:
         register_data: Model with registration data.
         auth_service: Authentication service.
+        admin_user: Current admin user (injected dependency).
 
     Returns:
         Token: Model with access_token and token_type.
 
     Raises:
-        HTTPException 400: User with this email already exists.
+        HTTPException 403: If user is not admin.
         HTTPException 422: Data validation error.
+        HTTPException 500: Registration or token creation error.
     """
-    logger.info("Registration attempt", extra={"email": register_data.email})
+    logger.warning(
+        "Deprecated /auth/register endpoint called. Use /auth/register-request for public registration.",
+        extra={"email": register_data.email, "admin_user": admin_user.email},
+    )
 
     try:
         user = await auth_service.register_user(
@@ -170,7 +176,7 @@ async def register(
             detail="Token creation error",
         ) from e
 
-    logger.info("User registered successfully", extra={"email": register_data.email})
+    logger.info("User registered successfully by admin", extra={"email": register_data.email, "admin": admin_user.email})
     return Token(access_token=access_token, token_type="bearer")
 
 

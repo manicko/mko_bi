@@ -27,15 +27,15 @@ class GraphService(IGraphService):
     for data access.
     """
 
-    def __init__(self, repository_cls: type[IGraphRepository]):
-        """Initialize service with repository class.
+    def __init__(self, graph_repo: IGraphRepository) -> None:
+        """Initialize service with injected repository.
 
         Args:
-            repository_cls: Graph repository class.
+            graph_repo: Graph repository instance implementing IGraphRepository.
         """
-        self._repository_cls = repository_cls
+        self.graph_repo = graph_repo
         logger.info(
-            "GraphService initialized with repository: %s", repository_cls.__name__
+            "GraphService initialized with injected repository"
         )
 
     async def _to_read_model(self, graph_obj) -> GraphRead:
@@ -94,8 +94,7 @@ class GraphService(IGraphService):
             async with get_session() as db:
                 return await self.create(data, db=db)
 
-        repo = self._repository_cls()
-        graph_obj = await repo.create(
+        graph_obj = await self.graph_repo.create(
             db,
             name=data.name,
             type=data.type,
@@ -128,8 +127,7 @@ class GraphService(IGraphService):
             async with get_session() as db:
                 return await self.get(graph_id, db=db)
 
-        repo = self._repository_cls()
-        graph_obj = await repo.get(graph_id, db)
+        graph_obj = await self.graph_repo.get(graph_id, db)
         if graph_obj is None:
             logger.warning("Graph not found: id=%s", graph_id)
             return None
@@ -154,7 +152,6 @@ class GraphService(IGraphService):
             async with get_session() as db:
                 return await self.update(graph_id, data, db=db)
 
-        repo = self._repository_cls()
         update_data: dict[str, Any] = {}
         if data.name is not None:
             update_data["name"] = data.name
@@ -167,7 +164,7 @@ class GraphService(IGraphService):
         if data.metrics is not None:
             update_data["metrics"] = data.metrics
 
-        graph_obj = await repo.update(graph_id, **update_data)
+        graph_obj = await self.graph_repo.update(graph_id, db, **update_data)
         if graph_obj is None:
             logger.warning("Graph not found for update: id=%s", graph_id)
             return None
@@ -191,8 +188,7 @@ class GraphService(IGraphService):
             async with get_session() as db:
                 return await self.delete(graph_id, db=db)
 
-        repo = self._repository_cls()
-        result: bool = await repo.delete(graph_id, db)
+        result: bool = await self.graph_repo.delete(graph_id, db)
         if result:
             await db.commit()
             logger.info("Graph deleted: id=%s", graph_id)
@@ -218,11 +214,15 @@ class GraphService(IGraphService):
             async with get_session() as db:
                 return await self.list_by_dashboard(dashboard_id, db=db)
 
-        repo = self._repository_cls()
-        graph_objs = await repo.get_by_dashboard_id(dashboard_id, db)
-        return [await self._to_read_model(g) for g in graph_objs]
+        graph_objs = await self.graph_repo.get_by_dashboard_id(dashboard_id, db)
+        return [await self._to_read_model(obj) for obj in graph_objs]
 
-    # Implementation of IGraphService interface methods
+    async def get_graphs_by_dashboard(
+        self, dashboard_id: UUID, db: AsyncSession | None = None
+    ) -> list[GraphRead]:
+        """Get graphs by dashboard ID (IGraphService interface method)."""
+        return await self.list_by_dashboard(dashboard_id, db=db)
+
     async def create_graph(
         self,
         dashboard_id: UUID,
@@ -233,7 +233,7 @@ class GraphService(IGraphService):
         metrics: list[str],
         db: AsyncSession | None = None,
     ) -> GraphRead:
-        """Create new graph (IgraphService interface method)."""
+        """Create new graph (IGraphService interface method)."""
         data = GraphCreate(
             name=name,
             type=type_,
@@ -247,35 +247,36 @@ class GraphService(IGraphService):
     async def get_graph_by_id(
         self, graph_id: UUID, db: AsyncSession | None = None
     ) -> GraphRead | None:
-        """Get graph by ID (IgraphService interface method)."""
+        """Get graph by ID (IGraphService interface method)."""
         return await self.get(graph_id, db=db)
 
     async def get_graph_by_name_and_dashboard(
-        self, name: str, dashboard_id: UUID, db: AsyncSession | None = None
+        self,
+        name: str,
+        dashboard_id: UUID,
+        db: AsyncSession | None = None,
     ) -> GraphRead | None:
-        """Get graph by name and dashboard ID (IgraphService interface method)."""
-        logger.info("Getting graph: name=%s, dashboard_id=%s", name, dashboard_id)
-
+        """Get graph by name and dashboard ID (IGraphService interface method)."""
+        logger.info(
+            "Getting graph by name and dashboard: name=%s, dashboard_id=%s",
+            name,
+            dashboard_id,
+        )
         if db is None:
             async with get_session() as db:
                 return await self.get_graph_by_name_and_dashboard(
                     name, dashboard_id, db=db
                 )
 
-        repo = self._repository_cls()
-        graph_obj = await repo.get_by_name_and_dashboard(name, dashboard_id, db)
+        graph_obj = await self.graph_repo.get_by_name_and_dashboard(
+            name, dashboard_id, db
+        )
         if graph_obj is None:
             logger.warning(
                 "Graph not found: name=%s, dashboard_id=%s", name, dashboard_id
             )
             return None
         return await self._to_read_model(graph_obj)
-
-    async def get_graphs_by_dashboard(
-        self, dashboard_id: UUID, db: AsyncSession | None = None
-    ) -> list[GraphRead]:
-        """Get graphs by dashboard ID (IgraphService interface method)."""
-        return await self.list_by_dashboard(dashboard_id, db=db)
 
     async def update_graph(
         self,
@@ -287,7 +288,7 @@ class GraphService(IGraphService):
         metrics: list[str] | None,
         db: AsyncSession | None = None,
     ) -> GraphRead | None:
-        """Update graph (IgraphService interface method)."""
+        """Update graph (IGraphService interface method)."""
         data = GraphUpdate(
             name=name,
             type=type_,
@@ -300,5 +301,5 @@ class GraphService(IGraphService):
     async def delete_graph(
         self, graph_id: UUID, db: AsyncSession | None = None
     ) -> bool:
-        """Delete graph (IgraphService interface method)."""
+        """Delete graph (IGraphService interface method)."""
         return await self.delete(graph_id, db=db)

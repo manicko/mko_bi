@@ -30,7 +30,5 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_index(
-        "uq_aggregated_data_dashboard_graph_dims",
-        table_name="aggregated_data",
-    )
+    # Use IF EXISTS to handle cases where index might have been dropped already
+    op.execute("DROP INDEX IF EXISTS uq_aggregated_data_dashboard_graph_dims")

@@ -1,7 +1,7 @@
-"""CSV загрузчик данных.
+"""CSV data loader.
 
-Этот модуль предоставляет класс для загрузки и чтения CSV файлов,
-включая поддержку сжатых .csv.gz файлов.
+This module provides a class for loading and reading CSV files,
+including support for compressed .csv.gz files.
 """
 
 import asyncio
@@ -14,26 +14,27 @@ import polars as pl
 
 from mkobi.config import get_config
 from mkobi.models.data import LoaderConfig
+from mkobi.models.enums import FileExtensionEnum
 
 logger = logging.getLogger(__name__)
 
 
 async def load_csv(filepath: Path, config: dict[str, Any] | None = None) -> pl.DataFrame:
-    """Асинхронная загрузка CSV файла.
+    """Load CSV file asynchronously.
 
-    Обертка над синхронным CSVLoader для использования в асинхронном коде.
-    Поддерживает .csv и .csv.gz файлы, UTF-8 кодировку.
+    Wrapper around synchronous CSVLoader for use in async code.
+    Supports .csv and .csv.gz files with UTF-8 encoding.
 
     Args:
-        filepath: Путь к CSV файлу.
-        config: Опциональная конфигурация для чтения (separator, has_header, etc.).
+        filepath: Path to CSV file.
+        config: Optional configuration for reading (separator, has_header, etc.).
 
     Returns:
-        pl.DataFrame: Загруженные данные.
+        pl.DataFrame: Loaded data.
 
     Raises:
-        FileNotFoundError: Если файл не существует.
-        ValueError: Если файл не может быть прочитан.
+        FileNotFoundError: If file does not exist.
+        ValueError: If file cannot be read.
     """
     loader = CSVLoader()
     if config:
@@ -41,42 +42,51 @@ async def load_csv(filepath: Path, config: dict[str, Any] | None = None) -> pl.D
     return await asyncio.to_thread(loader.load_csv, filepath, config)
 
 
-def detect_file_type(filename: str) -> str:
-    """Detect file type based on filename extension.
+def detect_file_type(filename: str) -> FileExtensionEnum:
+    """Detect file type from filename extension.
 
     Args:
         filename: Name of the file.
 
     Returns:
-        str: "csv" for .csv files, "csv_gz" for .csv.gz files, "unknown" otherwise.
+        File extension type as FileExtensionEnum.
+
+    Raises:
+        ValueError: If file type is not supported.
     """
-    if filename.endswith(".csv.gz"):
-        return "csv_gz"
-    elif filename.endswith(".csv"):
-        return "csv"
+    filename_lower = filename.lower()
+
+    if filename_lower.endswith(".csv.gz"):
+        logger.debug("Detected file type: %s for file: %s", FileExtensionEnum.CSV_GZ, filename)
+        return FileExtensionEnum.CSV_GZ
+    elif filename_lower.endswith(".csv"):
+        logger.debug("Detected file type: %s for file: %s", FileExtensionEnum.CSV, filename)
+        return FileExtensionEnum.CSV
     else:
-        return "unknown"
+        error_msg = f"Unsupported file type: {filename}"
+        logger.error(error_msg)
+        raise ValueError(error_msg)
 
 
 class CSVLoader:
-    """Загрузчик CSV файлов.
+    """CSV file loader.
 
-    Отвечает за чтение CSV файлов (включая сжатые .csv.gz),
-    проверку структуры данных и преобразование типов.
-    Поддерживает lazy loading для больших файлов.
+    Responsible for reading CSV files (including compressed .csv.gz),
+    validating data structure and transforming types.
+    Supports lazy loading for large files.
 
     Attributes:
-        config: Конфигурация загрузчика.
+        config: Loader configuration.
     """
 
     def __init__(self, config: LoaderConfig | None = None) -> None:
-        """Инициализация загрузчика.
+        """Initialize loader.
 
         Args:
-            config: Опциональная конфигурация загрузчика.
+            config: Optional loader configuration.
         """
         self.config = config or LoaderConfig()
-        logger.debug("CSVLoader инициализирован с config=%s", self.config)
+        logger.debug("CSVLoader initialized with config=%s", self.config)
 
     def load_csv(
         self,
@@ -84,105 +94,105 @@ class CSVLoader:
         config: dict[str, Any] | None = None,
         lazy_threshold_mb: float | None = None,
     ) -> pl.DataFrame:
-        """Загружает CSV файл с поддержкой lazy loading для больших файлов.
+        """Load CSV file with lazy loading support for large files.
 
-        Читает CSV файл (поддерживает .csv и .csv.gz).
-        Для файлов больше lazy_threshold_mb использует lazy evaluation.
-        Выполняет валидацию размера файла.
+        Reads CSV file (supports .csv and .csv.gz).
+        Uses lazy evaluation for files larger than lazy_threshold_mb.
+        Performs file size validation.
 
         Args:
-            file_path: Путь к CSV файлу.
-            config: Опциональная конфигурация для чтения CSV (separator, has_header, encoding, etc.).
-            lazy_threshold_mb: Порог в МБ для lazy loading.
-                Если None, берется из конфигурации приложения.
+            file_path: Path to CSV file.
+            config: Optional configuration for reading CSV (separator, has_header, encoding, etc.).
+            lazy_threshold_mb: Threshold in MB for lazy loading.
+                If None, uses application configuration.
 
         Returns:
-            pl.DataFrame: Загруженные данные.
+            pl.DataFrame: Loaded data.
 
         Raises:
-            FileNotFoundError: Если файл не существует.
-            ValueError: Если файл слишком большой или не может быть прочитан.
+            FileNotFoundError: If file does not exist.
+            ValueError: If file is too large or cannot be read.
         """
-        logger.info("Загрузка CSV файла: %s", file_path)
+        logger.info("Loading CSV file: %s", file_path)
 
         if not file_path.exists():
-            logger.error("Файл не найден: %s", file_path)
-            raise FileNotFoundError(f"Файл не найден: {file_path}")
+            logger.error("File not found: %s", file_path)
+            raise FileNotFoundError(f"File not found: {file_path}")
 
-        # Валидация размера файла
+        # Validate file size
         self._validate_file_size(file_path)
 
-        # Определение порога для lazy loading
+        # Determine threshold for lazy loading
         if lazy_threshold_mb is None:
             app_config = get_config()
             lazy_threshold_mb = app_config.lazy_threshold_mb
 
         file_size_mb = self._get_file_size_mb(file_path)
 
-        # Чтение файла
+        # Read file
         try:
             if file_size_mb > lazy_threshold_mb:
                 logger.info(
-                    "Используется lazy evaluation для файла %.2f MB (порог: %.2f MB)",
+                    "Using lazy evaluation for file %.2f MB (threshold: %.2f MB)",
                     file_size_mb,
                     lazy_threshold_mb,
                 )
                 df = self._read_csv_lazy(file_path, config)
             else:
                 logger.info(
-                    "Используется обычное чтение для файла %.2f MB (порог: %.2f MB)",
+                    "Using normal reading for file %.2f MB (threshold: %.2f MB)",
                     file_size_mb,
                     lazy_threshold_mb,
                 )
                 df = self._read_csv(file_path, config)
 
             logger.info(
-                "Файл прочитан: %d строк, %d колонок",
+                "File read: %d rows, %d columns",
                 df.shape[0],
                 df.shape[1],
             )
 
-            # Применяем преобразования типов
+            # Apply type transformations
             if self.config.column_types:
                 df = self._apply_type_transformations(df)
 
-            # Проверяем обязательные колонки
+            # Check required columns
             if self.config.required_columns:
                 self._validate_required_columns(df)
 
             return df
 
         except Exception as e:
-            logger.error("Ошибка при загрузке файла %s: %s", file_path, e)
-            raise ValueError(f"Не удалось загрузить файл {file_path}: {e}") from e
+            logger.error("Error loading file %s: %s", file_path, e)
+            raise ValueError(f"Failed to load file {file_path}: {e}") from e
 
     def load(self, file_path: Path) -> pl.DataFrame:
-        """Загружает CSV файл и возвращает DataFrame.
+        """Load CSV file and return DataFrame.
 
-        Читает CSV файл (поддерживает .csv.gz), применяет
-        преобразования типов данных согласно конфигурации.
+        Reads CSV file (supports .csv.gz), applies
+        data type transformations according to configuration.
 
         Args:
-            file_path: Путь к CSV файлу.
+            file_path: Path to CSV file.
 
         Returns:
-            pl.DataFrame: Загруженные данные.
+            pl.DataFrame: Loaded data.
 
         Raises:
-            FileNotFoundError: Если файл не существует.
-            ValueError: Если файл не может быть прочитан.
+            FileNotFoundError: If file does not exist.
+            ValueError: If file cannot be read.
         """
         return self.load_csv(file_path)
 
     def _read_csv_lazy(self, file_path: Path, config: dict[str, Any] | None = None) -> pl.DataFrame:
-        """Читает CSV файл с использованием lazy evaluation.
+        """Read CSV file using lazy evaluation.
 
         Args:
-            file_path: Путь к CSV файлу.
-            config: Опциональная конфигурация для чтения CSV.
+            file_path: Path to CSV file.
+            config: Optional configuration for reading CSV.
 
         Returns:
-            pl.DataFrame: Прочитанные данные.
+            pl.DataFrame: Read data.
         """
         try:
             read_kwargs = {}
@@ -195,45 +205,45 @@ class CSVLoader:
                     read_kwargs["encoding"] = config["encoding"]
 
             if file_path.suffix == ".gz" or file_path.name.endswith(".csv.gz"):
-                logger.debug("Чтение gzipped CSV файла (lazy): %s", file_path)
+                logger.debug("Reading gzipped CSV file (lazy): %s", file_path)
                 return pl.scan_csv(file_path, **read_kwargs).collect()
             else:
-                logger.debug("Чтение обычного CSV файла (lazy): %s", file_path)
+                logger.debug("Reading normal CSV file (lazy): %s", file_path)
                 return pl.scan_csv(file_path, **read_kwargs).collect()
         except Exception as e:
-            logger.error("Ошибка чтения CSV файла (lazy) %s: %s", file_path, e)
+            logger.error("Error reading CSV file (lazy) %s: %s", file_path, e)
             raise
 
     def _get_file_size_mb(self, file_path: Path) -> float:
-        """Получает размер файла в мегабайтах.
+        """Get file size in megabytes.
 
         Args:
-            file_path: Путь к файлу.
+            file_path: Path to file.
 
         Returns:
-            float: Размер файла в МБ.
+            float: File size in MB.
 
         Raises:
-            FileNotFoundError: Если файл не найден.
+            FileNotFoundError: If file not found.
         """
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
         return file_path.stat().st_size / (1024 * 1024)
 
     def _validate_file_size(self, file_path: Path, max_size_mb: float | None = None) -> float:
-        """Проверяет размер файла.
+        """Validate file size.
 
         Args:
-            file_path: Путь к файлу.
-            max_size_mb: Максимальный размер в МБ.
-                Если None, берется из конфигурации загрузчика.
+            file_path: Path to file.
+            max_size_mb: Maximum size in MB.
+                If None, uses loader configuration.
 
         Returns:
-            float: Размер файла в МБ.
+            float: File size in MB.
 
         Raises:
-            ValueError: Если файл слишком большой.
-            FileNotFoundError: Если файл не найден.
+            ValueError: If file is too large.
+            FileNotFoundError: If file not found.
         """
         file_size_mb = self._get_file_size_mb(file_path)
 
@@ -242,7 +252,7 @@ class CSVLoader:
 
         if file_size_mb > max_size_mb:
             logger.error(
-                "Файл превышает максимальный размер: %s (%.2f > %.2f MB)",
+                "File exceeds maximum size: %s (%.2f > %.2f MB)",
                 file_path,
                 file_size_mb,
                 max_size_mb,
@@ -252,18 +262,18 @@ class CSVLoader:
                 f"(max: {int(max_size_mb * 1024 * 1024)} bytes)"
             )
 
-        logger.info("Размер файла %s: %.2f MB", file_path, file_size_mb)
+        logger.info("File size %s: %.2f MB", file_path, file_size_mb)
         return file_size_mb
 
     def _read_csv(self, file_path: Path, config: dict[str, Any] | None = None) -> pl.DataFrame:
-        """Читает CSV файл (поддерживает gzip сжатие).
+        """Read CSV file (supports gzip compression).
 
         Args:
-            file_path: Путь к CSV файлу.
-            config: Опциональная конфигурация для чтения CSV.
+            file_path: Path to CSV file.
+            config: Optional configuration for reading CSV.
 
         Returns:
-            pl.DataFrame: Прочитанные данные.
+            pl.DataFrame: Read data.
         """
         try:
             read_kwargs = {}
@@ -274,29 +284,29 @@ class CSVLoader:
                     read_kwargs["has_header"] = config["has_header"]
 
             if file_path.suffix == ".gz" or file_path.name.endswith(".csv.gz"):
-                logger.debug("Чтение gzipped CSV файла: %s", file_path)
+                logger.debug("Reading gzipped CSV file: %s", file_path)
                 encoding = config.get("encoding", "utf-8") if config else "utf-8"
                 with gzip.open(file_path, "rt", encoding=encoding) as f:
                     return pl.read_csv(f, **read_kwargs)
             else:
-                logger.debug("Чтение обычного CSV файла: %s", file_path)
+                logger.debug("Reading normal CSV file: %s", file_path)
                 if config and "encoding" in config:
                     read_kwargs["encoding"] = config["encoding"]
                 return pl.read_csv(file_path, **read_kwargs)
         except Exception as e:
-            logger.error("Ошибка чтения CSV файла %s: %s", file_path, e)
+            logger.error("Error reading CSV file %s: %s", file_path, e)
             raise
 
     def _apply_type_transformations(self, df: pl.DataFrame) -> pl.DataFrame:
-        """Применяет преобразования типов колонок.
+        """Apply column type transformations.
 
         Args:
-            df: Исходный DataFrame.
+            df: Source DataFrame.
 
         Returns:
-            pl.DataFrame: DataFrame с преобразованными типами.
+            pl.DataFrame: DataFrame with transformed types.
         """
-        logger.debug("Применение преобразований типов")
+        logger.debug("Applying type transformations")
 
         for column_name, target_type in self.config.column_types.items():
             if column_name in df.columns:
@@ -315,40 +325,40 @@ class CSVLoader:
                         df = df.with_columns(pl.col(column_name).cast(pl.Boolean))
                     else:
                         logger.warning(
-                            "Неизвестный тип данных '%s' для колонки '%s'",
+                            "Unknown data type '%s' for column '%s'",
                             target_type,
                             column_name,
                         )
                         continue
 
                     logger.debug(
-                        "Колонка '%s' преобразована в тип '%s'",
+                        "Column '%s' transformed to type '%s'",
                         column_name,
                         target_type,
                     )
                 except Exception as e:
                     logger.warning(
-                        "Не удалось преобразовать колонку '%s' в тип '%s': %s",
+                        "Failed to transform column '%s' to type '%s': %s",
                         column_name,
                         target_type,
                         e,
                     )
             else:
                 logger.warning(
-                    "Колонка '%s' не найдена в данных, пропуск преобразования",
+                    "Column '%s' not found in data, skipping transformation",
                     column_name,
                 )
 
         return df
 
     def _validate_required_columns(self, df: pl.DataFrame) -> None:
-        """Проверяет наличие обязательных колонок.
+        """Validate presence of required columns.
 
         Args:
-            df: DataFrame для проверки.
+            df: DataFrame to check.
 
         Raises:
-            ValueError: Если обязательные колонки отсутствуют.
+            ValueError: If required columns are missing.
         """
         missing_columns = [
             col for col in self.config.required_columns if col not in df.columns
@@ -356,21 +366,21 @@ class CSVLoader:
 
         if missing_columns:
             error_msg = (
-                f"Отсутствуют обязательные колонки: {', '.join(missing_columns)}"
+                f"Missing required columns: {', '.join(missing_columns)}"
             )
             logger.error(error_msg)
             raise ValueError(error_msg)
 
-        logger.debug("Все обязательные колонки присутствуют")
+        logger.debug("All required columns present")
 
     def get_summary(self, df: pl.DataFrame) -> dict[str, Any]:
-        """Возвращает сводную информацию о DataFrame.
+        """Return summary information about DataFrame.
 
         Args:
-            df: DataFrame для анализа.
+            df: DataFrame to analyze.
 
         Returns:
-            dict: Сводная информация о данных.
+            dict: Summary information about data.
         """
         return {
             "rows": df.shape[0],
@@ -385,20 +395,20 @@ class CSVLoader:
         df: pl.DataFrame,
         conditions: list[dict[str, Any]],
     ) -> pl.DataFrame:
-        """Применяет фильтры к данным.
+        """Apply filters to data.
 
         Args:
-            df: Исходный DataFrame.
-            conditions: Список условий фильтрации.
-                Каждое условие - словарь с ключами:
-                - column: имя колонки
-                - operator: оператор (==, !=, >, <, >=, <=)
-                - value: значение для сравнения
+            df: Source DataFrame.
+            conditions: List of filter conditions.
+                Each condition is a dict with keys:
+                - column: column name
+                - operator: operator (==, !=, >, <, >=, <=)
+                - value: value for comparison
 
         Returns:
-            pl.DataFrame: Отфильтрованные данные.
+            pl.DataFrame: Filtered data.
         """
-        logger.debug("Применение фильтров: %s", conditions)
+        logger.debug("Applying filters: %s", conditions)
 
         result = df
         for condition in conditions:
@@ -419,10 +429,10 @@ class CSVLoader:
             elif operator == "<=":
                 result = result.filter(pl.col(column) <= value)
             else:
-                logger.warning("Неизвестный оператор фильтрации: %s", operator)
+                logger.warning("Unknown filter operator: %s", operator)
                 continue
 
-            logger.debug("Применен фильтр: %s %s %s", column, operator, value)
+            logger.debug("Applied filter: %s %s %s", column, operator, value)
 
         return result
 
@@ -432,22 +442,22 @@ class CSVLoader:
         groupby: list[str],
         aggregations: list[dict[str, Any]],
     ) -> pl.DataFrame:
-        """Выполняет группировку и агрегацию данных.
+        """Perform grouping and data aggregation.
 
         Args:
-            df: Исходный DataFrame.
-            groupby: Список колонок для группировки.
-            aggregations: Список агрегаций.
-                Каждая агрегация - словарь с ключами:
-                - column: имя колонки
-                - function: функция агрегации (sum, mean, count, min, max)
-                - alias: опциональное имя результирующей колонки
+            df: Source DataFrame.
+            groupby: List of columns to group by.
+            aggregations: List of aggregations.
+                Each aggregation is a dict with keys:
+                - column: column name
+                - function: aggregation function (sum, mean, count, min, max)
+                - alias: optional result column name
 
         Returns:
-            pl.DataFrame: Агрегированные данные.
+            pl.DataFrame: Aggregated data.
         """
         logger.debug(
-            "Агрегация: группировка по %s, агрегации %s",
+            "Aggregation: group by %s, aggregations %s",
             groupby,
             aggregations,
         )
@@ -469,14 +479,14 @@ class CSVLoader:
             elif function == "max":
                 expr = pl.col(column).max().alias(alias)
             else:
-                logger.warning("Неизвестная функция агрегации: %s", function)
+                logger.warning("Unknown aggregation function: %s", function)
                 continue
 
             agg_exprs.append(expr)
 
         result = df.group_by(groupby).agg(agg_exprs)
         logger.info(
-            "Агрегация выполнена: %d групп, %d колонок",
+            "Aggregation completed: %d groups, %d columns",
             result.shape[0],
             result.shape[1],
         )

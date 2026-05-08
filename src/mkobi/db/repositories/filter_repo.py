@@ -52,7 +52,7 @@ class FilterRepository(IFilterRepository):
             logger.error("Error getting filter id=%s: %s", id, e)
             raise
     async def get_by_name(
-        cls, name: str, db: AsyncSession
+        self, name: str, db: AsyncSession
     ) -> filter_model.Filter | None:
         """Get filter by name.
 
@@ -101,7 +101,7 @@ class FilterRepository(IFilterRepository):
             logger.error("Error creating filter: %s", e)
             raise
     async def update(
-        cls, id: UUID, db: AsyncSession, **kwargs
+        self, id: UUID, db: AsyncSession, **kwargs
     ) -> filter_model.Filter | None:
         """Update filter data.
 
@@ -173,7 +173,7 @@ class FilterRepository(IFilterRepository):
             result = await db.execute(select(filter_model.Filter))
             filters = list(result.scalars().all())
             logger.info("Filters list retrieved, count: %s", len(filters))
-            return cast(list[filter_model.Filter], filters)
+            return filters
         except SQLAlchemyError as e:
             logger.error("Error getting filters list: %s", e)
             raise

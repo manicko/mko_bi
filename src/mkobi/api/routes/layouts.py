@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mkobi.api.deps import (
     get_db_dependency,
     CurrentUser,
+    get_layout_service,
 )
 from mkobi.models.layout import (
     LayoutRead,
@@ -20,13 +21,7 @@ from mkobi.models.layout import (
     LayoutCreate,
 )
 from mkobi.models.enums import UserRole
-from mkobi.services.layout_service import (
-    create_layout,
-    get_layout,
-    get_all_layouts,
-    update_layout,
-    delete_layout,
-)
+from mkobi.services.layout_service import LayoutService
 
 logger = logging.getLogger(__name__)
 
@@ -44,6 +39,7 @@ async def create_layout_endpoint(
     layout: LayoutCreate,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    layout_service: LayoutService = Depends(get_layout_service),
 ) -> LayoutRead:
     """Create a new layout.
 
@@ -51,6 +47,7 @@ async def create_layout_endpoint(
         layout: Model with layout creation data.
         current_user: Current authenticated user.
         db: Database session.
+        layout_service: Injected layout service.
 
     Returns:
         LayoutRead: Model of the created layout.
@@ -79,7 +76,7 @@ async def create_layout_endpoint(
     )
 
     try:
-        result = await create_layout(
+        result = await layout_service.create_layout(
             name=layout.name,
             definition=layout.definition,
             db=db,
@@ -114,12 +111,14 @@ async def create_layout_endpoint(
 async def get_layouts_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    layout_service: LayoutService = Depends(get_layout_service),
 ) -> list[LayoutRead]:
     """Get list of all layouts.
 
     Args:
         current_user: Current authenticated user.
         db: Database session.
+        layout_service: Injected layout service.
 
     Returns:
         list[LayoutRead]: List of layout models.
@@ -130,7 +129,7 @@ async def get_layouts_endpoint(
     logger.info("Getting layout list")
 
     try:
-        layouts: list[LayoutRead] = await get_all_layouts(db=db)
+        layouts: list[LayoutRead] = await layout_service.get_all_layouts(db=db)
         logger.info("Retrieved layouts: %s", len(layouts))
         return layouts
     except Exception as e:
@@ -152,6 +151,7 @@ async def get_layout_endpoint(
     layout_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    layout_service: LayoutService = Depends(get_layout_service),
 ) -> LayoutRead:
     """Get layout by ID.
 
@@ -159,6 +159,7 @@ async def get_layout_endpoint(
         layout_id: Layout ID.
         current_user: Current authenticated user.
         db: Database session.
+        layout_service: Injected layout service.
 
     Returns:
         LayoutRead: Layout model.
@@ -170,7 +171,7 @@ async def get_layout_endpoint(
     logger.info("Layout request: layout_id=%s", layout_id)
 
     try:
-        layout = await get_layout(layout_id=layout_id, db=db)
+        layout = await layout_service.get_layout(layout_id=layout_id, db=db)
         if layout is None:
             logger.warning("Layout not found: id=%s", layout_id)
             raise HTTPException(
@@ -200,6 +201,7 @@ async def update_layout_endpoint(
     layout_update: LayoutUpdate,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    layout_service: LayoutService = Depends(get_layout_service),
 ) -> LayoutRead:
     """Update layout.
 
@@ -210,6 +212,7 @@ async def update_layout_endpoint(
         layout_update: Model with new data.
         current_user: Current authenticated user.
         db: Database session.
+        layout_service: Injected layout service.
 
     Returns:
         LayoutRead: Model of the updated layout.
@@ -239,7 +242,7 @@ async def update_layout_endpoint(
     )
 
     try:
-        updated = await update_layout(
+        updated = await layout_service.update_layout(
             layout_id=layout_id,
             update_data=layout_update,
             db=db,
@@ -277,6 +280,7 @@ async def delete_layout_endpoint(
     layout_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    layout_service: LayoutService = Depends(get_layout_service),
 ) -> None:
     """Delete layout.
 
@@ -286,6 +290,7 @@ async def delete_layout_endpoint(
         layout_id: Layout ID to delete.
         current_user: Current authenticated user.
         db: Database session.
+        layout_service: Injected layout service.
 
     Raises:
         HTTPException 403: If user is not an admin.
@@ -311,7 +316,7 @@ async def delete_layout_endpoint(
     )
 
     try:
-        result = await delete_layout(layout_id=layout_id, db=db)
+        result = await layout_service.delete_layout(layout_id=layout_id, db=db)
         if not result:
             logger.warning("Layout not found for deletion: id=%s", layout_id)
             raise HTTPException(

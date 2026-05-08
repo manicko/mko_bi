@@ -29,4 +29,5 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_index('idx_agg_dashboard_graph', table_name='aggregated_data')
+    # Use IF EXISTS since the index might have been renamed by later migrations
+    op.execute("DROP INDEX IF EXISTS idx_agg_dashboard_graph")

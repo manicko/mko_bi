@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mkobi.api.deps import (
     CurrentUser,
     get_db,
+    get_processing_config_service,
     require_editor_role,
     require_viewer_role,
 )
@@ -33,10 +34,10 @@ async def get_config_endpoint(
     dashboard_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
+    processing_config_service: ProcessingConfigService = Depends(get_processing_config_service),
 ) -> ProcessingConfigRead:
     try:
-        service = ProcessingConfigService(db=db)
-        config = await service.get_by_dashboard_id(dashboard_id)
+        config = await processing_config_service.get_by_dashboard_id(dashboard_id)
         if config is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -64,6 +65,7 @@ async def upsert_config_endpoint(
     config_update: ProcessingConfigUpdate,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
+    processing_config_service: ProcessingConfigService = Depends(get_processing_config_service),
 ) -> ProcessingConfigRead:
     try:
         if config_update.settings is None:
@@ -71,8 +73,7 @@ async def upsert_config_endpoint(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Settings cannot be empty",
             )
-        service = ProcessingConfigService(db=db)
-        config = await service.upsert(
+        config = await processing_config_service.upsert(
             dashboard_id=dashboard_id,
             settings=config_update.settings,
         )
@@ -99,10 +100,10 @@ async def delete_config_endpoint(
     dashboard_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
+    processing_config_service: ProcessingConfigService = Depends(get_processing_config_service),
 ) -> None:
     try:
-        service = ProcessingConfigService(db=db)
-        await service.delete(dashboard_id)
+        await processing_config_service.delete(dashboard_id)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

@@ -13,12 +13,21 @@ Typical usage scenarios:
 from __future__ import annotations
 
 import logging
-from typing import Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import ExpiredSignatureError
 from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import UUID
+
+if TYPE_CHECKING:
+    from mkobi.services.data_service import DataService
+    from mkobi.services.filter_service import FilterService
+    from mkobi.services.graph_service import GraphService
+    from mkobi.services.layout_service import LayoutService
+    from mkobi.services.processing_config_service import ProcessingConfigService
+    from mkobi.services.processing_log_service import ProcessingLogService
 
 from mkobi.core.permissions import (
     get_current_user,
@@ -29,8 +38,44 @@ from mkobi.core.permissions import (
 from mkobi.db.session import get_db, get_session  # noqa: F401 - re-exported for backwards compatibility
 from mkobi.models.enums import UserRole
 from mkobi.models.user import UserRead
+from mkobi.services.auth_service import AuthService
 
 logger = logging.getLogger(__name__)
+
+# Explicitly define exports for mypy
+__all__ = [
+    "get_db",
+    "get_session",
+    "get_current_user_dependency",
+    "get_db_dependency",
+    "require_admin_role",
+    "require_editor_role",
+    "require_viewer_role",
+    "get_dashboard_service",
+    "CurrentUser",
+    "AdminUser",
+    "EditorUser",
+    "ViewerUser",
+    "get_dashboard_permissions",
+    "get_user_repository",
+    "get_dashboard_repository",
+    "get_access_repository",
+    "get_aggregated_data_repository",
+    "get_layout_repository",
+    "get_filter_repository",
+    "get_processing_config_repository",
+    "get_processing_log_repository",
+    "get_graph_repository",
+    "get_auth_service",
+    "get_user_service",
+    "get_dashboard_service",
+    "get_filter_service",
+    "get_layout_service",
+    "get_data_service",
+    "get_processing_config_service",
+    "get_processing_log_service",
+    "get_token_from_header",
+]
 
 
 # --- Base dependencies ---
@@ -103,6 +148,16 @@ def get_aggregated_data_repository():
     return AggregatedDataRepository()
 
 
+def get_layout_repository():
+    """DI factory for layout repository.
+
+    Returns:
+        LayoutRepository: Layout repository implementation.
+    """
+    from mkobi.db.repositories.layout_repo import LayoutRepository
+    return LayoutRepository()
+
+
 def get_filter_repository():
     """DI factory for filter repository.
 
@@ -133,6 +188,16 @@ def get_processing_log_repository():
     return ProcessingLogRepository()
 
 
+def get_registration_request_repository():
+    """DI factory for registration request repository.
+
+    Returns:
+        RegistrationRequestRepository: Registration request repository implementation.
+    """
+    from mkobi.db.repositories.registration_request_repo import RegistrationRequestRepository
+    return RegistrationRequestRepository()
+
+
 def get_graph_repository():
     """DI factory for graph repository.
 
@@ -146,14 +211,21 @@ def get_graph_repository():
 # --- Dependency Injection for services ---
 
 
-def get_auth_service():
+def get_auth_service(
+    user_repo=Depends(get_user_repository),
+    reg_request_repo=Depends(get_registration_request_repository),
+) -> AuthService:
     """DI factory for authentication service.
+
+    Args:
+        user_repo: Injected user repository.
+        reg_request_repo: Injected registration request repository.
 
     Returns:
         AuthService: Authentication service implementation.
     """
     from mkobi.services.auth_service import AuthService
-    return AuthService()
+    return AuthService(user_repo, reg_request_repo)
 
 
 def get_user_service(
@@ -188,44 +260,98 @@ def get_dashboard_service(
     return DashboardService(dashboard_repo, access_repo)
 
 
-def get_filter_service():
+def get_filter_service(
+    filter_repo=Depends(get_filter_repository),
+) -> FilterService:
     """DI factory for filter service.
+
+    Args:
+        filter_repo: Injected filter repository.
 
     Returns:
         FilterService: Filter service implementation.
     """
     from mkobi.services.filter_service import FilterService
-    return FilterService()
+    return FilterService(filter_repo)
 
 
-def get_data_service():
+def get_layout_service(
+    layout_repo=Depends(get_layout_repository),
+) -> LayoutService:
+    """DI factory for layout service.
+
+    Args:
+        layout_repo: Injected layout repository.
+
+    Returns:
+        LayoutService: Layout service implementation.
+    """
+    from mkobi.services.layout_service import LayoutService
+    return LayoutService(layout_repo)
+
+
+def get_data_service(
+    agg_repo=Depends(get_aggregated_data_repository),
+    log_repo=Depends(get_processing_log_repository),
+    graph_repo=Depends(get_graph_repository),
+) -> DataService:
     """DI factory for data service.
+
+    Args:
+        agg_repo: Injected aggregated data repository.
+        log_repo: Injected processing log repository.
+        graph_repo: Injected graph repository.
 
     Returns:
         DataService: Data service implementation.
     """
     from mkobi.services.data_service import DataService
-    return DataService()
+    return DataService(agg_repo, log_repo, graph_repo)
 
 
-def get_processing_config_service():
+def get_graph_service(
+    graph_repo=Depends(get_graph_repository),
+) -> GraphService:
+    """DI factory for graph service.
+
+    Args:
+        graph_repo: Injected graph repository.
+
+    Returns:
+        GraphService: Graph service implementation.
+    """
+    from mkobi.services.graph_service import GraphService
+    return GraphService(graph_repo)
+
+
+def get_processing_config_service(
+    config_repo=Depends(get_processing_config_repository),
+) -> ProcessingConfigService:
     """DI factory for processing config service.
+
+    Args:
+        config_repo: Injected processing config repository.
 
     Returns:
         ProcessingConfigService: Processing config service implementation.
     """
     from mkobi.services.processing_config_service import ProcessingConfigService
-    return ProcessingConfigService()
+    return ProcessingConfigService(config_repo)
 
 
-def get_processing_log_service():
+def get_processing_log_service(
+    log_repo=Depends(get_processing_log_repository),
+) -> ProcessingLogService:
     """DI factory for processing log service.
+
+    Args:
+        log_repo: Injected processing log repository.
 
     Returns:
         ProcessingLogService: Processing log service implementation.
     """
     from mkobi.services.processing_log_service import ProcessingLogService
-    return ProcessingLogService()
+    return ProcessingLogService(log_repo)
 
 
 # --- Authentication ---
@@ -252,7 +378,7 @@ def get_token_from_header(
             detail="Invalid authentication scheme",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return credentials.credentials
+    return str(credentials.credentials)
 
 
 async def get_current_user_dependency(
@@ -266,46 +392,48 @@ async def get_current_user_dependency(
 
     Args:
         token: JWT access token.
-        db: Async database session.
+        db: Database session.
 
     Returns:
-        UserRead: Authenticated user model (without password hash).
+        UserRead: Current user data.
 
     Raises:
-        HTTPException: If token is invalid, expired or user not found.
-
-    Example:
-        @app.get("/users/me")
-        async def read_users_me(user: UserRead = Depends(get_current_user_dependency)):
-            return user
+        HTTPException: If token is invalid or user not found.
     """
     try:
-        user = await get_current_user(token, db)
-        logger.debug("User authenticated: user_id=%s", user.id)
+        user = await get_current_user(token=token, db=db)
+        if user is None:
+            logger.warning("User not found for token")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
         return user
-    except ExpiredSignatureError:
-        logger.warning("Expired token")
+    except ExpiredSignatureError as e:
+        logger.warning("Token expired")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token has expired",
+            detail="Token expired",
             headers={"WWW-Authenticate": "Bearer"},
-        ) from None
-    except AuthenticationError:
-        # AuthenticationError already logged in get_current_user
+        ) from e
+    except AuthenticationError as e:
+        logger.warning("Authentication error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Could not authenticate user",
+            detail=str(e),
             headers={"WWW-Authenticate": "Bearer"},
-        ) from None
+        ) from e
     except Exception as e:
-        logger.error("Unexpected authentication error: %s", e)
+        logger.error("Error getting current user: %s", e, exc_info=True)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authentication failed",
+            headers={"WWW-Authenticate": "Bearer"},
         ) from e
 
 
-# --- Authorization (role checks) ---
+# --- Role checks ---
 
 
 def require_admin_role(
@@ -314,31 +442,23 @@ def require_admin_role(
     """Require admin role.
 
     Args:
-        user: User (obtained via get_current_user_dependency).
+        user: Current authenticated user.
 
     Returns:
         UserRead: User if has admin role.
 
     Raises:
-        HTTPException: If user does not have admin role.
-
-    Example:
-        @app.post("/users/")
-        async def create_user(
-            user_data: UserCreate,
-            _: UserRead = Depends(require_admin_role),
-        ):
-            return create_user(user_data)
+        HTTPException: If user is not admin.
     """
     if not check_role(user.role, UserRole.ADMIN):
         logger.warning(
-            "Admin role required for user: user_id=%s, role=%s",
+            "Admin access denied: user_id=%s, role=%s",
             user.id,
             user.role,
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin role required",
+            detail="Admin access required",
         )
     return user
 
@@ -346,33 +466,26 @@ def require_admin_role(
 def require_editor_role(
     user: UserRead = Depends(get_current_user_dependency),
 ) -> UserRead:
-    """Require editor role or higher (editor, admin).
+    """Require editor role or higher.
 
     Args:
-        user: User (obtained via get_current_user_dependency).
+        user: Current authenticated user.
 
     Returns:
-        UserRead: User if has editor or admin role.
+        UserRead: User if has editor role or higher.
 
     Raises:
         HTTPException: If user has insufficient permissions.
-
-    Example:
-        @app.post("/upload/")
-        async def upload_file(
-            _: UserRead = Depends(require_editor_role),
-        ):
-            return {"message": "Upload allowed"}
     """
     if not check_role(user.role, UserRole.EDITOR):
         logger.warning(
-            "Editor role or higher required for user: user_id=%s, role=%s",
+            "Editor access denied: user_id=%s, role=%s",
             user.id,
             user.role,
         )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Editor role or higher required",
+            detail="Editor access required",
         )
     return user
 
@@ -380,29 +493,22 @@ def require_editor_role(
 def require_viewer_role(
     user: UserRead = Depends(get_current_user_dependency),
 ) -> UserRead:
-    """Require viewer role or higher (viewer, editor, admin).
-
-    Essentially checks that user is authenticated,
-    since viewer is the minimum role.
+    """Require viewer role or higher (any authenticated user).
 
     Args:
-        user: User (obtained via get_current_user_dependency).
+        user: Current authenticated user.
 
     Returns:
-        UserRead: User.
+        UserRead: User if authenticated.
 
-    Example:
-        @app.get("/dashboards/")
-        async def list_dashboards(
-            user: UserRead = Depends(require_viewer_role),
-        ):
-            return {"message": "Access granted"}
+    Raises:
+        HTTPException: If user is not authenticated.
     """
     # All authenticated users have at least viewer role
     return user
 
 
-def require_role_dependency(required_role: str):
+def require_role_dependency(required_role: UserRole):
     """Create dependency for checking specific role.
 
     Universal dependency for checking any role.
@@ -421,15 +527,15 @@ def require_role_dependency(required_role: str):
         async def admin_only(
             user: UserRead = Depends(require_role_dependency(UserRole.ADMIN)),
         ):
-            return {"message": "Admin area"}
+            return {"message": "Access granted"}
     """
 
-    def role_checker(
+    async def role_checker(
         user: UserRead = Depends(get_current_user_dependency),
     ) -> UserRead:
         if not check_role(user.role, required_role):
             logger.warning(
-                "Insufficient permissions: user_id=%s, user_role=%s, required_role=%s",
+                "Role check failed: user_id=%s, role=%s, required=%s",
                 user.id,
                 user.role,
                 required_role,

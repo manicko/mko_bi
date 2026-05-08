@@ -2,7 +2,7 @@
 
 Provides business logic for operations with processing settings.
 
-All operations are performed asynchronously through ProcessingConfigRepository.
+All operations are performed asynchronously through IProcessingConfigRepository.
 """
 
 import logging
@@ -11,8 +11,8 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mkobi.db.repositories.processing_config_repo import ProcessingConfigRepository
 from mkobi.db.session import get_session
+from mkobi.interfaces.repository_interfaces import IProcessingConfigRepository
 from mkobi.interfaces.service_interfaces import IProcessingConfigService
 from mkobi.models.processing_configs import ProcessingConfigRead
 from mkobi.models.types import ProcessingSettingsDict
@@ -23,13 +23,14 @@ logger = logging.getLogger(__name__)
 class ProcessingConfigService(IProcessingConfigService):
     """Processing configuration management service."""
 
-    def __init__(self, db: AsyncSession | None = None) -> None:
-        """Initialize service.
+    def __init__(self, config_repo: IProcessingConfigRepository) -> None:
+        """Initialize service with injected repository.
 
         Args:
-            db: Optional async database session.
+            config_repo: Processing config repository instance.
         """
-        self._db = db
+        self.config_repo = config_repo
+        logger.info("ProcessingConfigService initialized with injected repository")
 
     async def _validate_settings(self, settings: ProcessingSettingsDict) -> None:
         """Validate processing settings structure.
@@ -76,14 +77,10 @@ class ProcessingConfigService(IProcessingConfigService):
         logger.info("Getting config: dashboard_id=%s", dashboard_id)
 
         if db is None:
-            db = self._db
-
-        if db is None:
             async with get_session() as db:
                 return await self.get_by_dashboard_id(dashboard_id, db)
 
-        config_repo = ProcessingConfigRepository()
-        config_obj = await config_repo.get(dashboard_id, db)
+        config_obj = await self.config_repo.get(dashboard_id, db)
         if config_obj is None:
             logger.warning("Config not found: dashboard_id=%s", dashboard_id)
             return None
@@ -116,16 +113,12 @@ class ProcessingConfigService(IProcessingConfigService):
         await self._validate_settings(settings)
 
         if db is None:
-            db = self._db
-
-        if db is None:
             async with get_session() as db:
                 return await self.upsert(dashboard_id, settings, db)
 
-        config_repo = ProcessingConfigRepository()
-        existing = await config_repo.get(dashboard_id, db)
+        existing = await self.config_repo.get(dashboard_id, db)
         if existing:
-            updated = await config_repo.update(
+            updated = await self.config_repo.update(
                 dashboard_id, db, settings=settings
             )
             if updated is None:
@@ -137,7 +130,7 @@ class ProcessingConfigService(IProcessingConfigService):
                 ProcessingConfigRead, ProcessingConfigRead.model_validate(updated)
             )
         else:
-            created = await config_repo.create(
+            created = await self.config_repo.create(
                 db=db,
                 dashboard_id=dashboard_id,
                 settings=settings,
@@ -164,14 +157,10 @@ class ProcessingConfigService(IProcessingConfigService):
         logger.info("Deleting config: dashboard_id=%s", dashboard_id)
 
         if db is None:
-            db = self._db
-
-        if db is None:
             async with get_session() as db:
                 return await self.delete(dashboard_id, db)
 
-        config_repo = ProcessingConfigRepository()
-        result: bool = await config_repo.delete(dashboard_id, db)
+        result: bool = await self.config_repo.delete(dashboard_id, db)
         if result:
             logger.info("Config deleted: dashboard_id=%s", dashboard_id)
         else:

@@ -11,7 +11,11 @@ from typing import cast
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mkobi.api.deps import get_db_dependency, require_admin_role
+from mkobi.api.deps import (
+    get_db_dependency,
+    get_processing_log_service,
+    require_admin_role,
+)
 from mkobi.models.enums import ProcessingStatus
 from mkobi.models.processing_logs import ProcessingLogFilter, ProcessingLogRead
 from mkobi.services.processing_log_service import ProcessingLogService
@@ -55,6 +59,7 @@ async def get_logs_endpoint(
     ),
     _current_user=Depends(require_admin_role),
     db: AsyncSession = Depends(get_db_dependency),
+    log_service: ProcessingLogService = Depends(get_processing_log_service),
 ) -> list[ProcessingLogRead]:
     """Get list of processing logs with filtering.
 
@@ -71,7 +76,7 @@ async def get_logs_endpoint(
             skip=skip,
             limit=limit,
         )
-        logs: list[ProcessingLogRead] = await ProcessingLogService.get_filtered(
+        logs: list[ProcessingLogRead] = await log_service.get_filtered(
             filters=filters, db=db
         )
         return logs

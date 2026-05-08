@@ -19,11 +19,8 @@ from mkobi.core.security import (
     hash_password,
     verify_password,
 )
-from mkobi.db.repositories.registration_request_repo import (
-    RegistrationRequestRepository,
-)
-from mkobi.db.repositories.user_repo import UserRepository
 from mkobi.db.session import get_session
+from mkobi.interfaces.repository_interfaces import IRegistrationRequestRepository, IUserRepository
 from mkobi.interfaces.service_interfaces import IAuthService
 from mkobi.models.enums import UserRole
 from mkobi.models.user import UserRead
@@ -41,7 +38,13 @@ class AuthService(IAuthService):
     for all authentication and registration operations.
     """
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        user_repo: IUserRepository,
+        reg_request_repo: IRegistrationRequestRepository,
+    ) -> None:
+        self.user_repo = user_repo
+        self.reg_request_repo = reg_request_repo
         self._rate_limiter = AsyncRateLimiter(get_async_redis_client())
 
     def _validate_role(self, role: str) -> None:
@@ -92,8 +95,7 @@ class AuthService(IAuthService):
         Raises:
             ValueError: If user with such email already exists.
         """
-        repo = UserRepository()
-        existing_user = await repo.get_by_email(email=email, db=db)
+        existing_user = await self.user_repo.get_by_email(email=email, db=db)
         if existing_user is not None:
             logger.warning(
                 "Registration attempt with existing email", extra={"email": email}
@@ -136,8 +138,7 @@ class AuthService(IAuthService):
             password_hash = hash_password(password)
             logger.info("Password successfully hashed", extra={"email": email})
 
-            repo = UserRepository()
-            user = await repo.create(
+            user = await self.user_repo.create(
                 db=db,
                 email=email,
                 password_hash=password_hash,
@@ -182,8 +183,7 @@ class AuthService(IAuthService):
             async with get_session() as db:
                 return await self.login_user(email, password, db)
 
-        repo = UserRepository()
-        user_obj = await repo.get_by_email_with_hash(email=email, db=db)
+        user_obj = await self.user_repo.get_by_email_with_hash(email=email, db=db)
         if user_obj is None:
             return None
         
@@ -219,12 +219,11 @@ class AuthService(IAuthService):
             return None
         
         # Get user by email to return UserRead
-        repo = UserRepository()
         if db is None:
             async with get_session() as db:
-                user_obj = await repo.get_by_email(email=email, db=db)
+                user_obj = await self.user_repo.get_by_email(email=email, db=db)
         else:
-            user_obj = await repo.get_by_email(email=email, db=db)
+            user_obj = await self.user_repo.get_by_email(email=email, db=db)
         
         if user_obj is None:
             return None
@@ -296,12 +295,11 @@ class AuthService(IAuthService):
         """
         logger.info("Getting user by id", extra={"user_id": str(user_id)})
 
-        repo = UserRepository()
         if db is None:
             async with get_session() as db:
                 return await self.get_user_by_id(user_id, db)
 
-        user_obj = await repo.get(user_id, db)
+        user_obj = await self.user_repo.get(user_id, db)
         if user_obj is None:
             logger.warning("User not found", extra={"user_id": str(user_id)})
             return None
@@ -322,12 +320,11 @@ class AuthService(IAuthService):
         """
         logger.info("Getting user by email", extra={"email": email})
 
-        repo = UserRepository()
         if db is None:
             async with get_session() as db:
                 return await self.get_user_by_email(email, db)
 
-        user_obj = await repo.get_by_email(email=email, db=db)
+        user_obj = await self.user_repo.get_by_email(email=email, db=db)
         if user_obj is None:
             logger.warning("User not found", extra={"email": email})
             return None
@@ -377,8 +374,7 @@ class AuthService(IAuthService):
                 return await self.register_request(email, ip, db)
 
         # Check if request with this email already exists
-        reg_req_repo = RegistrationRequestRepository()
-        existing_request = await reg_req_repo.get_by_email(email, db)
+        existing_request = await self.reg_request_repo.get_by_email(email, db)
         if existing_request is not None:
             logger.warning(
                 "Registration request already exists", extra={"email": email}
@@ -388,14 +384,13 @@ class AuthService(IAuthService):
             )
 
         # Check if user with this email already exists
-        repo = UserRepository()
-        existing_user = await repo.get_by_email(email=email, db=db)
+        existing_user = await self.user_repo.get_by_email(email=email, db=db)
         if existing_user is not None:
             logger.warning("User already exists", extra={"email": email})
             raise ValueError(f"User with email '{email}' already exists")
 
         try:
-            req = await reg_req_repo.create(email, ip, db)
+            req = await self.reg_request_repo.create(email, ip, db)
             if req is None:
                 raise ValueError("Error creating registration request")
 

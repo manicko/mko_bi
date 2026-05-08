@@ -18,8 +18,8 @@ from mkobi.api.deps import (
     get_db_dependency,
     require_admin_role,
     require_viewer_role,
+    get_dashboard_service,
 )
-from mkobi.core.permissions import check_dashboard_access
 from mkobi.db.repositories.dashboard_filter_repo import DashboardFilterRepository
 from mkobi.db.repositories.filter_repo import FilterRepository
 from mkobi.db.repositories.graph_repo import GraphRepository
@@ -30,16 +30,7 @@ from mkobi.models.dashboard import (
     DashboardUpdate,
 )
 from mkobi.models.graph import GraphCreate, GraphRead
-from mkobi.services.dashboard_service import (
-    create_dashboard,
-    delete_dashboard,
-    get_dashboard,
-    get_dashboard_access_list,
-    get_user_dashboards,
-    grant_access,
-    revoke_access,
-    update_dashboard,
-)
+from mkobi.services.dashboard_service import DashboardService
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +53,7 @@ async def create_dashboard_endpoint(
     dashboard_data: DashboardCreate,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    dashboard_service: DashboardService = Depends(get_dashboard_service),
 ) -> DashboardRead:
     """Create new dashboard.
 
@@ -72,6 +64,7 @@ async def create_dashboard_endpoint(
         dashboard: Dashboard creation data model.
         current_user: Current authenticated user.
         db: Database session.
+        dashboard_service: Injected dashboard service.
 
     Returns:
         DashboardRead: Model of the created dashboard.
@@ -93,7 +86,7 @@ async def create_dashboard_endpoint(
     )
 
     try:
-        result = await create_dashboard(
+        result = await dashboard_service.create_dashboard(
             name=dashboard.name,
             config=dashboard.config.model_dump(),
             owner_id=current_user.id,
@@ -135,43 +128,43 @@ async def create_dashboard_endpoint(
 async def get_my_dashboards_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    dashboard_service: DashboardService = Depends(get_dashboard_service),
 ) -> list[DashboardRead]:
-    """Get list of all dashboards available to user.
+    """Get user dashboards.
 
     Args:
         current_user: Current authenticated user.
         db: Database session.
+        dashboard_service: Injected dashboard service.
 
     Returns:
-        list[DashboardRead]: List of dashboard models.
+        list[DashboardRead]: List of dashboards available to user.
 
     Raises:
         HTTPException 500: On database error.
     """
-    logger.info(
-        "Getting dashboards for user: user_id=%s",
-        current_user.id,
-    )
+    logger.info("Getting user dashboards: user_id=%s", current_user.id)
 
     try:
-        dashboards: list[DashboardRead] = await get_user_dashboards(
+        dashboards = await dashboard_service.get_user_dashboards(
             user_id=current_user.id, db=db
         )
         logger.info(
-            "Retrieved dashboards for user id=%s: %s",
+            "Retrieved dashboards for user: user_id=%s, count=%s",
             current_user.id,
             len(dashboards),
         )
         return dashboards
     except Exception as e:
         logger.error(
-            "Error getting dashboards for user id=%s: %s",
+            "Error getting user dashboards user_id=%s: %s",
             current_user.id,
             e,
+            exc_info=True,
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error getting dashboards",
+            detail=f"Error getting user dashboards: {str(e)}",
         ) from e
 
 
@@ -187,6 +180,7 @@ async def get_dashboard_endpoint(
     dashboard_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    dashboard_service: DashboardService = Depends(get_dashboard_service),
 ) -> DashboardRead:
     """Get dashboard by ID with access check.
 
@@ -194,6 +188,7 @@ async def get_dashboard_endpoint(
         dashboard_id: Dashboard ID.
         current_user: Current authenticated user.
         db: Database session.
+        dashboard_service: Injected dashboard service.
 
     Returns:
         DashboardRead: Dashboard model.
@@ -210,7 +205,9 @@ async def get_dashboard_endpoint(
     )
 
     try:
-        dashboard = await get_dashboard(dashboard_id, user_id=current_user.id, db=db)
+        dashboard = await dashboard_service.get_dashboard(
+            dashboard_id, user_id=current_user.id, db=db
+        )
         if dashboard is None:
             logger.warning(
                 "Dashboard not found: dashboard_id=%s",
@@ -219,24 +216,6 @@ async def get_dashboard_endpoint(
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Dashboard not found",
-            )
-
-        # Check read access
-        has_access = await check_dashboard_access(
-            user_id=current_user.id,
-            dashboard_id=dashboard_id,
-            required_permission="view",
-            db=db,
-        )
-        if not has_access:
-            logger.warning(
-                "Access denied: dashboard_id=%s, user_id=%s",
-                dashboard_id,
-                current_user.id,
-            )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have access to this dashboard",
             )
 
         logger.info(
@@ -273,6 +252,7 @@ async def update_dashboard_endpoint(
     dashboard_update: DashboardUpdate,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    dashboard_service: DashboardService = Depends(get_dashboard_service),
 ) -> DashboardRead:
     """Update dashboard.
 
@@ -283,6 +263,7 @@ async def update_dashboard_endpoint(
         dashboard_update: Model with new data.
         current_user: Current authenticated user.
         db: Database session.
+        dashboard_service: Injected dashboard service.
 
     Returns:
         DashboardRead: Updated dashboard model.
@@ -300,24 +281,7 @@ async def update_dashboard_endpoint(
     )
 
     try:
-        # Check edit access (requires admin role for this dashboard)
-        if not await check_dashboard_access(
-            user_id=current_user.id,
-            dashboard_id=dashboard_id,
-            required_permission="edit",
-            db=db,
-        ):
-            logger.warning(
-                "Access denied for update: dashboard_id=%s, user_id=%s",
-                dashboard_id,
-                current_user.id,
-            )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have rights to update this dashboard",
-            )
-
-        updated = await update_dashboard(
+        updated = await dashboard_service.update_dashboard(
             dashboard_id=dashboard_id,
             update_data=dashboard_update.model_dump(exclude_unset=True),
             db=db,
@@ -356,6 +320,7 @@ async def delete_dashboard_endpoint(
     dashboard_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    dashboard_service: DashboardService = Depends(get_dashboard_service),
 ) -> None:
     """Delete dashboard.
 
@@ -365,6 +330,7 @@ async def delete_dashboard_endpoint(
         dashboard_id: Dashboard ID to delete.
         current_user: Current authenticated user.
         db: Database session.
+        dashboard_service: Injected dashboard service.
 
     Raises:
         HTTPException 403: If user has no deletion rights.
@@ -378,24 +344,9 @@ async def delete_dashboard_endpoint(
     )
 
     try:
-        # Check edit access (requires admin role for this dashboard)
-        if not await check_dashboard_access(
-            user_id=current_user.id,
-            dashboard_id=dashboard_id,
-            required_permission="edit",
-            db=db,
-        ):
-            logger.warning(
-                "Access denied for deletion: dashboard_id=%s, user_id=%s",
-                dashboard_id,
-                current_user.id,
-            )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have rights to delete this dashboard",
-            )
-
-        result = await delete_dashboard(dashboard_id=dashboard_id, db=db)
+        result = await dashboard_service.delete_dashboard(
+            dashboard_id=dashboard_id, db=db
+        )
         if not result:
             logger.warning("Dashboard not found for deletion: id=%s", dashboard_id)
             raise HTTPException(
@@ -424,6 +375,7 @@ async def grant_dashboard_access_endpoint(
     access_grant: AccessGrant,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    dashboard_service: DashboardService = Depends(get_dashboard_service),
 ) -> dict[str, Any]:
     """Grant user access to dashboard.
 
@@ -434,6 +386,7 @@ async def grant_dashboard_access_endpoint(
         access_grant: Model with access grant data.
         current_user: Current authenticated user.
         db: Database session.
+        dashboard_service: Injected dashboard service.
 
     Returns:
         dict: Success message.
@@ -452,23 +405,6 @@ async def grant_dashboard_access_endpoint(
     )
 
     try:
-        # Check edit access (requires admin role for this dashboard)
-        if not await check_dashboard_access(
-            user_id=current_user.id,
-            dashboard_id=dashboard_id,
-            required_permission="admin",
-            db=db,
-        ):
-            logger.warning(
-                "Access denied for management: dashboard_id=%s, user_id=%s",
-                dashboard_id,
-                current_user.id,
-            )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have rights to manage access to this dashboard",
-            )
-
         # Check that dashboard_id from path matches body
         if str(access_grant.dashboard_id) != str(dashboard_id):
             logger.warning(
@@ -481,7 +417,7 @@ async def grant_dashboard_access_endpoint(
                 detail="dashboard_id in body doesn't match URL",
             )
 
-        result = await grant_access(
+        result = await dashboard_service.grant_access(
             dashboard_id=dashboard_id,
             user_id=access_grant.user_id,
             permission=access_grant.permission_level,
@@ -640,11 +576,12 @@ async def get_dashboard_access_endpoint(
     dashboard_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    dashboard_service: DashboardService = Depends(get_dashboard_service),
 ) -> list[dict[str, Any]]:
     """Get all access records for a dashboard."""
     logger.info("Getting access list for dashboard: dashboard_id=%s", dashboard_id)
     try:
-        access_list: list[dict[str, Any]] = await get_dashboard_access_list(
+        access_list = await dashboard_service.get_dashboard_access_list(
             dashboard_id=dashboard_id, db=db
         )
         return access_list
@@ -664,11 +601,14 @@ async def revoke_dashboard_access_endpoint(
     user_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    dashboard_service: DashboardService = Depends(get_dashboard_service),
 ) -> dict[str, Any]:
     """Revoke a user's access to a dashboard."""
     logger.info("Revoking access: dashboard_id=%s, user_id=%s", dashboard_id, user_id)
     try:
-        result = await revoke_access(dashboard_id=dashboard_id, user_id=user_id, db=db)
+        result = await dashboard_service.revoke_access(
+            dashboard_id=dashboard_id, user_id=user_id, db=db
+        )
         await db.commit()
         if result:
             return {"message": "Access revoked successfully"}

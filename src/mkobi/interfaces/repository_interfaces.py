@@ -48,6 +48,11 @@ class IUserRepository(IRepository):
         """Get user by email."""
         pass
 
+    @abc.abstractmethod
+    async def get_by_email_with_hash(self, email: str, db: AsyncSession) -> Any | None:
+        """Get user by email with password hash."""
+        pass
+
 
 class IDashboardRepository(IRepository):
     """Dashboard repository interface."""
@@ -99,6 +104,39 @@ class IAccessRepository(abc.ABC):
     @abc.abstractmethod
     async def get_all(self, db: AsyncSession) -> list[Any]:
         """Get all access records."""
+        pass
+
+
+class IRegistrationRequestRepository(abc.ABC):
+    """Registration request repository interface."""
+
+    @abc.abstractmethod
+    async def create(
+        self, email: str, ip: str | None, db: AsyncSession
+    ) -> Any | None:
+        """Create new registration request."""
+        pass
+
+    @abc.abstractmethod
+    async def get_by_email(self, email: str, db: AsyncSession) -> Any | None:
+        """Get registration request by email."""
+        pass
+
+    @abc.abstractmethod
+    async def get_all(self, db: AsyncSession) -> list[Any]:
+        """Get all registration requests."""
+        pass
+
+    @abc.abstractmethod
+    async def update_status(
+        self, request_id: UUID, status: str, db: AsyncSession
+    ) -> Any | None:
+        """Update registration request status."""
+        pass
+
+    @abc.abstractmethod
+    async def delete(self, request_id: UUID, db: AsyncSession) -> bool:
+        """Delete registration request."""
         pass
 
 
@@ -159,6 +197,15 @@ class IAggregatedDataRepository(abc.ABC):
         db: AsyncSession,
     ) -> list[str]:
         """Get unique dimension values for graph."""
+        pass
+
+
+class ILayoutRepository(IRepository):
+    """Layout repository interface."""
+
+    @abc.abstractmethod
+    async def get_by_name(self, name: str, db: AsyncSession) -> Any | None:
+        """Get layout by name."""
         pass
 
 
@@ -255,4 +302,13 @@ class IProcessingLogRepository(abc.ABC):
         db: AsyncSession,
     ) -> Any | None:
         """Get log by ID."""
+        pass
+
+    @abc.abstractmethod
+    async def delete(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession,
+    ) -> bool:
+        """Delete processing logs by dashboard ID."""
         pass

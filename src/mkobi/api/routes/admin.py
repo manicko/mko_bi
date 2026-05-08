@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
     CurrentUser,
+    get_auth_service,
     get_db_dependency,
     get_user_service,
     require_admin_role,
@@ -160,6 +161,7 @@ async def approve_registration_request_admin_endpoint(
     request_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    auth_service: AuthService = Depends(get_auth_service),
 ) -> dict[str, Any]:
     """Approve registration request (admin endpoint)."""
     logger.info("Admin: approving registration request: id=%s", request_id)
@@ -180,7 +182,6 @@ async def approve_registration_request_admin_endpoint(
             )
 
         # Create user
-        auth_service = AuthService()
         user = await auth_service.create_user(
             email=req["email"],
             password="temppass123",  # TODO: generate random password and send email

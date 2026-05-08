@@ -38,10 +38,10 @@ from mkobi.models.access import (
 
 
 class TestUserModels:
-    """Тесты для Pydantic моделей пользователя."""
+    """Tests for Pydantic user models."""
 
     def test_user_create_valid(self):
-        """Проверяет создание валидного пользователя."""
+        """Test valid user creation."""
         user = UserCreate(
             email="test@example.com",
             password="secure_password123",
@@ -52,7 +52,7 @@ class TestUserModels:
         assert user.role == UserRole.VIEWER
 
     def test_user_create_invalid_email(self):
-        """Проверяет валидацию неверного email."""
+        """Test validation of invalid email."""
         with pytest.raises(ValidationError):
             UserCreate(
                 email="invalid-email",
@@ -61,7 +61,7 @@ class TestUserModels:
             )
 
     def test_user_create_invalid_role(self):
-        """Проверяет валидацию неверной роли."""
+        """Test validation of invalid role."""
         with pytest.raises(ValidationError):
             UserCreate(
                 email="test@example.com",
@@ -70,7 +70,7 @@ class TestUserModels:
             )
 
     def test_user_create_missing_password(self):
-        """Проверяет обязательность пароля."""
+        """Test password requirement."""
         with pytest.raises(ValidationError):
             UserCreate(
                 email="test@example.com",
@@ -78,7 +78,7 @@ class TestUserModels:
             )
 
     def test_user_read_valid(self):
-        """Проверка создания модели чтения пользователя."""
+        """Test user read model creation."""
         user = UserRead(
             id="550e8400-e29b-41d4-a716-446655440000",
             email="test@example.com",
@@ -90,7 +90,7 @@ class TestUserModels:
         assert user.role == UserRole.ADMIN
 
     def test_user_db_valid(self):
-        """Проверка создания модели пользователя БД."""
+        """Test user DB model creation."""
         user = UserDB(
             id="550e8400-e29b-41d4-a716-446655440000",
             email="test@example.com",
@@ -103,14 +103,14 @@ class TestUserModels:
         assert user.role == UserRole.EDITOR
 
     def test_user_update_partial(self):
-        """Проверяет частичное обновление пользователя."""
+        """Test partial user update."""
         user = UserUpdate(email="new@example.com")
         assert user.email == "new@example.com"
         assert user.role is None
         assert user.password is None
 
     def test_user_update_all_fields(self):
-        """Проверяет обновление всех полей пользователя."""
+        """Test updating all user fields."""
         user = UserUpdate(
             email="new@example.com",
             role=UserRole.ADMIN,
@@ -121,13 +121,13 @@ class TestUserModels:
         assert user.password == "new_password"
 
     def test_user_base_config(self):
-        """Проверяет конфигурацию базовой модели."""
+        """Test base model configuration."""
         user = UserBase(email="test@example.com", role=UserRole.VIEWER)
         config = user.model_config
         assert config.get("from_attributes") is True
 
     def test_user_create_from_attributes(self):
-        """Проверяет создание модели из атрибутов."""
+        """Test model creation from attributes."""
         data = {
             "email": "test@example.com",
             "password": "pass",
@@ -139,10 +139,10 @@ class TestUserModels:
 
 
 class TestDashboardModels:
-    """Тесты для Pydantic моделей дашборда."""
+    """Tests for Pydantic dashboard models."""
 
     def test_dashboard_config_valid(self):
-        """Проверяет создание валидной конфигурации дашборда."""
+        """Test valid dashboard configuration."""
         config = DashboardConfig(
             graph_types=[GraphType.BAR, GraphType.LINE],
             filters=[{"field": "year", "type": FilterType.SELECT}],
@@ -151,17 +151,17 @@ class TestDashboardModels:
         assert config.graph_types == [GraphType.BAR, GraphType.LINE]
 
     def test_dashboard_config_minimal(self):
-        """Проверяет создание минимальной конфигурации."""
+        """Test minimal dashboard configuration."""
         config = DashboardConfig(graph_types=[GraphType.BAR])
         assert config.graph_types == [GraphType.BAR]
 
     def test_dashboard_config_invalid_graph_type(self):
-        """Проверяет валидацию неверного типа графика."""
+        """Test validation of invalid graph type."""
         with pytest.raises(ValidationError):
             DashboardConfig(graph_types=["invalid_type"])
 
     def test_dashboard_create_valid(self):
-        """Проверяет создание валидного дашборда."""
+        """Test valid dashboard creation."""
         dashboard = DashboardCreate(
             name="Sales Dashboard",
             config=DashboardConfig(
@@ -173,7 +173,7 @@ class TestDashboardModels:
         assert dashboard.config.graph_types == [GraphType.BAR, GraphType.LINE]
 
     def test_dashboard_read_valid(self):
-        """Проверка создания модели чтения дашборда."""
+        """Test dashboard read model creation."""
         dashboard = DashboardRead(
             id="550e8400-e29b-41d4-a716-446655440000",
             name="Sales Dashboard",
@@ -187,13 +187,13 @@ class TestDashboardModels:
         assert dashboard.config.graph_types == [GraphType.BAR]
 
     def test_dashboard_update_partial(self):
-        """Проверяет частичное обновление дашборда."""
+        """Test partial dashboard update."""
         update = DashboardUpdate(name="New Name")
         assert update.name == "New Name"
         assert update.config is None
 
     def test_dashboard_config_with_charts(self):
-        """Проверяет конфигурацию с графиками."""
+        """Test configuration with charts."""
         config = DashboardConfig(
             graph_types=[GraphType.BAR, GraphType.LINE, GraphType.PIE],
             charts=[
@@ -210,10 +210,10 @@ class TestDashboardModels:
 
 
 class TestDataModels:
-    """Тесты для Pydantic моделей данных."""
+    """Tests for Pydantic data models."""
 
     def test_data_upload_valid(self):
-        """Проверяет создание валидной загрузки данных."""
+        """Test valid data upload."""
         upload = DataUpload(
             file=b"test,data\n1,2\n3,4",
             filename="data.csv.gz",
@@ -223,7 +223,7 @@ class TestDataModels:
         assert str(upload.dashboard_id) == "550e8400-e29b-41d4-a716-446655440000"
 
     def test_processing_config_valid(self):
-        """Проверяет создание валидной конфигурации обработки."""
+        """Test valid processing configuration."""
         from mkobi.models.transformation_configs import (
             AggregationConfig,
             FilterConfig,
@@ -242,13 +242,13 @@ class TestDataModels:
         assert len(config.aggregations) == 1
 
     def test_processing_config_minimal(self):
-        """Проверяет создание минимальной конфигурации обработки."""
+        """Test minimal processing configuration."""
         config = ProcessingConfig()
         assert config.filters is None
         assert config.aggregations is None
 
     def test_processing_result_valid(self):
-        """Проверяет создание валидного результата обработки."""
+        """Test valid processing result."""
         result = ProcessingResult(
             success=True,
             task_id="550e8400-e29b-41d4-a716-446655440000",
@@ -262,7 +262,7 @@ class TestDataModels:
         assert result.rows_processed == 1000
 
     def test_processing_result_without_data(self):
-        """Проверяет результат обработки без дополнительных данных."""
+        """Test processing result without additional data."""
         result = ProcessingResult(
             success=True,
             task_id="550e8400-e29b-41d4-a716-446655440000",
@@ -273,7 +273,7 @@ class TestDataModels:
         assert result.data is None
 
     def test_aggregated_data_valid(self):
-        """Проверяет создание валидных агрегированных данных."""
+        """Test valid aggregated data."""
         data = AggregatedData(
             dashboard_id="550e8400-e29b-41d4-a716-446655440000",
             chart_type=GraphType.BAR,
@@ -287,7 +287,7 @@ class TestDataModels:
         assert len(data.data) == 2
 
     def test_aggregated_data_invalid_chart_type(self):
-        """Проверяет валидацию неверного типа графика."""
+        """Test validation of invalid chart type."""
         with pytest.raises(ValidationError):
             AggregatedData(
                 dashboard_id=1,
@@ -297,10 +297,10 @@ class TestDataModels:
 
 
 class TestAuthModels:
-    """Тесты для Pydantic моделей аутентификации."""
+    """Tests for Pydantic authentication models."""
 
     def test_login_request_valid(self):
-        """Проверяет создание валидного запроса на вход."""
+        """Test valid login request."""
         login = LoginRequest(
             email="user@example.com",
             password="secure_password123",
@@ -308,7 +308,7 @@ class TestAuthModels:
         assert login.email == "user@example.com"
 
     def test_login_request_invalid_email(self):
-        """Проверяет валидацию неверного email в запросе на вход."""
+        """Test validation of invalid email in login request."""
         with pytest.raises(ValidationError):
             LoginRequest(
                 email="not-an-email",
@@ -316,7 +316,7 @@ class TestAuthModels:
             )
 
     def test_token_valid(self):
-        """Проверка создания валидного токена."""
+        """Test valid token creation."""
         token = Token(
             access_token="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
             token_type="bearer",
@@ -324,7 +324,7 @@ class TestAuthModels:
         assert token.token_type == "bearer"
 
     def test_token_data_valid(self):
-        """Проверка создания валидных данных токена."""
+        """Test valid token data creation."""
         token_data = TokenData(
             email="user@example.com",
             user_id="550e8400-e29b-41d4-a716-446655440000",
@@ -332,12 +332,12 @@ class TestAuthModels:
         assert token_data.email == "user@example.com"
 
     def test_token_data_partial(self):
-        """Проверка создания данных токена с частичными данными."""
+        """Test token data creation with partial data."""
         token_data = TokenData(email="user@example.com")
         assert token_data.user_id is None
 
     def test_access_check_valid(self):
-        """Проверка создания валидной проверки доступа."""
+        """Test valid access check creation."""
         check = AccessCheck(
             user_id="550e8400-e29b-41d4-a716-446655440000",
             dashboard_id="550e8400-e29b-41d4-a716-446655440001",
@@ -346,7 +346,7 @@ class TestAuthModels:
         assert check.required_permission == DashboardPermission.VIEW
 
     def test_access_check_default_permission(self):
-        """Проверка значения разрешения по умолчанию."""
+        """Test default permission value."""
         check = AccessCheck(
             user_id="550e8400-e29b-41d4-a716-446655440000",
             dashboard_id="550e8400-e29b-41d4-a716-446655440001",
@@ -354,7 +354,7 @@ class TestAuthModels:
         assert check.required_permission == DashboardPermission.VIEW
 
     def test_access_grant_valid(self):
-        """Проверка создания валидного предоставления доступа."""
+        """Test valid access grant creation."""
         grant = AccessGrant(
             user_id="550e8400-e29b-41d4-a716-446655440000",
             dashboard_id="550e8400-e29b-41d4-a716-446655440001",
@@ -363,7 +363,7 @@ class TestAuthModels:
         assert grant.permission_level == DashboardPermission.EDIT
 
     def test_access_grant_default_permission(self):
-        """Проверка значения уровня доступа по умолчанию."""
+        """Test default access level value."""
         grant = AccessGrant(
             user_id="550e8400-e29b-41d4-a716-446655440000",
             dashboard_id="550e8400-e29b-41d4-a716-446655440001",

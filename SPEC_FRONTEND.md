@@ -453,32 +453,52 @@ app.add_middleware(
 
 ---
 
-## 8. Recommendations
+## 8. Code Standards
 
-### 8.1 Development Flow
+### 8.1 Language Requirement
+
+**All code comments and log messages MUST be in English** (NOT Russian or other languages).
+
+This applies to:
+- Python code (backend): comments, docstrings, log messages
+- TypeScript/JavaScript code (frontend): comments, console messages
+- Docstrings: Google style recommended
+- Log messages: INFO, WARNING, ERROR levels
+
+Examples:
+- GOOD: `logger.info("User logged in successfully")`
+- BAD: `logger.info("Пользователь вошел в систему")`
+- GOOD: `# Calculate year-over-year growth`
+- BAD: `# Рассчитать годовой рост`
+
+---
+
+## 9. Recommendations
+
+### 9.1 Development Flow
 1. Сначала расширить FastAPI (новые модели, эндпоинты, таблицы)
 2. Настроить CORS и тестировать API через curl/Postman
 3. Инициализировать React проект (Vite + TypeScript)
 4. Реализовать фичи по порядку: auth → dashboards → upload → admin
 
-### 8.2 Deployment
+### 9.2 Deployment
 - **Development**: React dev server (port 3000) + FastAPI (port 8000) с CORS
-- **Production**: 
+- **Production**:
   - Вариант А: FastAPI раздает собранные статические файлы React (`frontend/dist`)
   - Вариант Б: Nginx проксирует `/api` → FastAPI, остальное → React SPA
 
-### 8.3 No Overengineering
+### 9.3 No Overengineering
 - Не использовать Redux/Zustand (TanStack Query достаточно для серверного состояния)
 - Не создавать лишние слои абстракции (axiosInstance → прямые вызовы API)
 - Использовать существующие Pydantic модели (не дублировать логику)
 
-### 8.4 Миграция с Dash
+### 9.4 Миграция с Dash
 - Dash можно оставить как fallback для сложных графиков (iframe)
 - Или полностью заменить на Plotly.js React (предпочтительно)
 
 ---
 
-## 9. Next Steps
+## 10. Next Steps
 
 1. Создать миграции для `registration_requests`
 2. Обновить Pydantic models + Enums

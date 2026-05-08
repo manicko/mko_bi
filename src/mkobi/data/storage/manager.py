@@ -390,6 +390,34 @@ class StorageManager:
     # Compatibility API
     # =========================================================================
 
+    async def clear_graph_data(
+        self,
+        graph_id: UUID,
+    ) -> int:
+        """Delete aggregated data for a specific graph.
+
+        Args:
+            graph_id: Graph ID.
+
+        Returns:
+            Number of deleted records.
+        """
+        return await self.delete_by_graph(graph_id=graph_id)
+
+    async def clear_dashboard_data(
+        self,
+        dashboard_id: UUID,
+    ) -> int:
+        """Delete all aggregated data for a dashboard.
+
+        Args:
+            dashboard_id: Dashboard ID.
+
+        Returns:
+            Number of deleted records.
+        """
+        return await self.delete_by_dashboard(dashboard_id=dashboard_id)
+
     @classmethod
     async def save_aggregated_data(
         cls,
@@ -416,3 +444,39 @@ class StorageManager:
             aggregates=aggregates,
             clear_old=(mode == UploadMode.OVERWRITE),
         )
+
+    @classmethod
+    async def clear_graph_data_compat(
+        cls,
+        graph_id: UUID,
+        db: AsyncSession,
+    ) -> int:
+        """Compatibility method with db parameter.
+
+        Args:
+            graph_id: Graph ID.
+            db: Async SQLAlchemy session.
+
+        Returns:
+            Number of deleted records.
+        """
+        manager = cls(db)
+        return await manager.clear_graph_data(graph_id=graph_id)
+
+    @classmethod
+    async def clear_dashboard_data_compat(
+        cls,
+        dashboard_id: UUID,
+        db: AsyncSession,
+    ) -> int:
+        """Compatibility method with db parameter.
+
+        Args:
+            dashboard_id: Dashboard ID.
+            db: Async SQLAlchemy session.
+
+        Returns:
+            Number of deleted records.
+        """
+        manager = cls(db)
+        return await manager.clear_dashboard_data(dashboard_id=dashboard_id)

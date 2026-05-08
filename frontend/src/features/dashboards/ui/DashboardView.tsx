@@ -13,7 +13,7 @@ import { useDashboard, useAggregatedData, useInvalidateDashboard } from '../api/
 import { DashboardFilters } from './DashboardFilters'
 import { PlotlyChart } from './charts'
 import type { GraphDataWithConfig, FilterDetail } from '../../../shared/types/api.types'
-import { dashboardApi } from '../api/dashboardApi'
+import type { FilterType } from '../../../shared/types/enums'
 
 export function DashboardView() {
   const { id } = useParams<{ id: string }>()
@@ -37,19 +37,22 @@ export function DashboardView() {
 
   useEffect(() => {
     if (dashboard?.config?.filters && dashboard.config.filters.length > 0) {
-      const fetchFilters = async () => {
-        try {
-          const details = await Promise.all(
-            (dashboard.config.filters as string[]).map((filterId) =>
-              dashboardApi.getFilter(filterId)
-            )
-          )
-          setFilterDetails(details)
-        } catch {
-          console.error('Failed to load filters')
-        }
-      }
-      fetchFilters()
+      // Convert filter config items to FilterDetail format
+      const filterDetails: FilterDetail[] = dashboard.config.filters.map(
+        (filterConfig, index) => ({
+          id: `filter-${index}-${filterConfig.field}`,
+          name: filterConfig.field,
+          type: filterConfig.type as FilterType,
+          config: {
+            field: filterConfig.field,
+            source: filterConfig.source,
+            multi: filterConfig.multi,
+          },
+        })
+      )
+      setFilterDetails(filterDetails)
+    } else {
+      setFilterDetails([])
     }
   }, [dashboard?.config?.filters])
 

@@ -8,19 +8,18 @@ import asyncio
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import cast
 from typing import Any
+
 from uuid import UUID
 
 import polars as pl
-from sqlalchemy import delete, select, update
+from sqlalchemy import select, update
 
 from mkobi.data.loaders.loader import CSVLoader
 from mkobi.data.processing.transformations import (
     apply_transformations,
     calculate_aggregations,
 )
-from mkobi.db.models.aggregated_data import AggregatedData
 from mkobi.db.models.graphs import Graph
 from mkobi.db.models.processing_logs import ProcessingLog
 from mkobi.db.session import get_session
@@ -43,20 +42,25 @@ async def _update_processing_log_status(
         task_id: Task ID (UUID string).
         status: New status.
         message: Status message.
-        started_at: Processing start time.
+        started_at: Processing start time (only set if not already set).
         finished_at: Processing finish time.
     """
     async with get_session() as session:
         async with session.begin():
+            values: dict[str, Any] = {
+                "status": status,
+                "message": message,
+            }
+
+            if started_at is not None:
+                values["started_at"] = started_at
+            if status in (ProcessingStatus.SUCCESS, ProcessingStatus.FAILED):
+                values["finished_at"] = finished_at or datetime.now()
+
             stmt = (
                 update(ProcessingLog)
                 .where(ProcessingLog.id == UUID(task_id))
-                .values(
-                    status=status,
-                    message=message,
-                    started_at=started_at or datetime.now(),
-                    finished_at=finished_at,
-                )
+                .values(**values)
             )
             await session.execute(stmt)
             await session.commit()
@@ -65,45 +69,21 @@ async def _update_processing_log_status(
             )
 
 
-async def _process_csv_file_task_sync(
+async def _process_csv_file_async(
     file_path_str: str,
     task_id: str,
     dashboard_id_str: str,
     processing_config_dict: dict[str, Any] | None = None,
+    mode: str = "overwrite",
 ) -> dict[str, Any]:
-    """Process CSV file in background (async wrapper for sync processing).
+    """Async CSV processing implementation.
 
     Args:
         file_path_str: Path to CSV file as string.
         task_id: Task ID (UUID string).
         dashboard_id_str: Dashboard ID as string.
         processing_config_dict: Processing configuration dictionary.
-
-    Returns:
-        dict: Processing result.
-    """
-    return await asyncio.to_thread(
-        _process_csv_file_sync_impl,
-        file_path_str,
-        task_id,
-        dashboard_id_str,
-        processing_config_dict,
-    )
-
-
-def _process_csv_file_sync_impl(
-    file_path_str: str,
-    task_id: str,
-    dashboard_id_str: str,
-    processing_config_dict: dict[str, Any] | None = None,
-) -> dict[str, Any]:
-    """Synchronous CSV processing implementation.
-
-    Args:
-        file_path_str: Path to CSV file as string.
-        task_id: Task ID (UUID string).
-        dashboard_id_str: Dashboard ID as string.
-        processing_config_dict: Processing configuration dictionary.
+        mode: Upload mode (overwrite or append).
 
     Returns:
         dict: Processing result with status and data.
@@ -113,49 +93,47 @@ def _process_csv_file_sync_impl(
 
     try:
         # Update status to processing
-        async def _update_start():
-            await _update_processing_log_status(
-                task_id=task_id,
-                status=ProcessingStatus.PROCESSING,
-                message="Processing started (background task)",
-                started_at=datetime.now(),
-            )
+        await _update_processing_log_status(
+            task_id=task_id,
+            status=ProcessingStatus.PROCESSING,
+            message="Processing started (background task)",
+        )
 
-        asyncio.run(_update_start())
-
-        # Load and process CSV
+        # Load and process CSV (run in thread since Polars is sync)
         loader = CSVLoader()
-        df = loader.load_csv(file_path)
+        df = await asyncio.to_thread(loader.load_csv, file_path)
         logger.info("File loaded: %d rows, %d columns", df.shape[0], df.shape[1])
 
         # Apply processing config if provided
         if processing_config_dict:
             config = ProcessingConfig(**processing_config_dict)
 
-            # Apply transformations
-            df = apply_transformations(
-                df,
-                filters=cast(list[dict[str, Any]] | None, config.filters),
+            # Apply transformations in thread
+            df = await asyncio.to_thread(
+                apply_transformations,
+                df=df,
+                filters=config.filters,
                 groupby=config.groupby if not config.aggregations else None,
-                sort_by=cast(str | None, config.sort_by),
+                sort_by=config.sort_by,
                 descending=config.descending,
                 limit=config.limit,
             )
 
-            # Apply aggregations
+            # Apply aggregations in thread
             if (
                 config.aggregations
                 or config.yoy_config
                 or config.share_config
                 or config.custom_metrics
             ):
-                df = calculate_aggregations(
-                    df,
+                df = await asyncio.to_thread(
+                    calculate_aggregations,
+                    df=df,
                     groupby=config.groupby,
-                    aggregations=cast(list[dict[str, Any]] | None, config.aggregations),
+                    aggregations=config.aggregations,
                     yoy_config=config.yoy_config,
                     share_config=config.share_config,
-                    custom_metrics=cast(list[dict[str, Any]] | None, config.custom_metrics),
+                    custom_metrics=config.custom_metrics,
                 )
 
         # Save aggregated data to database
@@ -165,26 +143,20 @@ def _process_csv_file_sync_impl(
             "preview": df.head(10).to_dicts(),
         }
 
-        # Store aggregates in database
-        async def _save_aggregates():
-            await _store_aggregates(df, dashboard_id, task_id)
-
-        asyncio.run(_save_aggregates())
+        # Store aggregates in database with mode
+        await _store_aggregates(df, dashboard_id, task_id, mode)
 
         # Update status to success
-        async def _update_success():
-            await _update_processing_log_status(
-                task_id=task_id,
-                status=ProcessingStatus.SUCCESS,
-                message=f"Processing completed successfully: {result_data['rows']} rows processed",
-                finished_at=datetime.now(),
-            )
-
-        asyncio.run(_update_success())
+        await _update_processing_log_status(
+            task_id=task_id,
+            status=ProcessingStatus.SUCCESS,
+            message=f"Processing completed successfully: {result_data['rows']} rows processed",
+            finished_at=datetime.now(),
+        )
 
         # Clean up temp file
         if file_path.exists():
-            file_path.unlink()
+            await asyncio.to_thread(file_path.unlink)
             logger.info("Temp file deleted: %s", file_path)
 
         return {
@@ -195,23 +167,20 @@ def _process_csv_file_sync_impl(
 
     except Exception as e:
         error_msg = str(e)
-        logger.error("Processing failed: task_id=%s, error=%s", task_id, error_msg)
+        logger.exception("Processing failed: task_id=%s, error=%s", task_id, error_msg)
 
         # Update status to failed
-        async def _update_failed():
-            await _update_processing_log_status(
-                task_id=task_id,
-                status=ProcessingStatus.FAILED,
-                message=f"Processing failed: {error_msg}",
-                finished_at=datetime.now(),
-            )
-
-        asyncio.run(_update_failed())
+        await _update_processing_log_status(
+            task_id=task_id,
+            status=ProcessingStatus.FAILED,
+            message=f"Processing failed: {error_msg}",
+            finished_at=datetime.now(),
+        )
 
         # Clean up temp file on error
         if file_path.exists():
             try:
-                file_path.unlink()
+                await asyncio.to_thread(file_path.unlink)
             except Exception:
                 pass
 
@@ -225,6 +194,7 @@ async def _store_aggregates(
     df: pl.DataFrame,
     dashboard_id: UUID,
     task_id: str,
+    mode: str = "overwrite",
 ) -> None:
     """Store aggregated data to database.
 
@@ -232,10 +202,13 @@ async def _store_aggregates(
         df: Processed DataFrame.
         dashboard_id: Dashboard ID.
         task_id: Task ID for logging.
+        mode: Upload mode - "overwrite" clears old data, "append" keeps it.
     """
+    from mkobi.data.storage.manager import StorageManager
+    from mkobi.models.enums import UploadMode
+
     async with get_session() as session:
         async with session.begin():
-            # Get graphs for dashboard
             result = await session.execute(
                 select(Graph).where(Graph.dashboard_id == dashboard_id)
             )
@@ -245,68 +218,103 @@ async def _store_aggregates(
                 logger.warning("No graphs found for dashboard: %s", dashboard_id)
                 return
 
-            # Convert DataFrame to list of dicts
             rows = df.to_dicts()
 
-            # Store aggregates for each graph
-
-            # Clear old data
-            await session.execute(
-                delete(AggregatedData).where(
-                    AggregatedData.dashboard_id == dashboard_id
-                )
-            )
-
-            # Insert new data
+            aggregates = []
             for row in rows:
                 for graph in graphs:
-                    dims = {
-                        k: v for k, v in row.items() if k in df.columns[:3]
-                    }  # Simplified
+                    dims = {k: v for k, v in row.items() if k in df.columns[:3]}
                     metrics = {k: v for k, v in row.items() if k not in dims}
 
-                    agg = AggregatedData(
-                        dashboard_id=dashboard_id,
-                        graph_id=graph.id,
-                        dims=dims,
-                        metrics=metrics,
-                    )
-                    session.add(agg)
+                    aggregates.append({
+                        "graph_id": str(graph.id),
+                        "dims": dims,
+                        "metrics": metrics,
+                    })
 
-            await session.commit()
+            manager = StorageManager(session)
+            clear_old = (mode == UploadMode.OVERWRITE)
+            processed = await manager.save_aggregates(
+                dashboard_id=dashboard_id,
+                aggregates=aggregates,
+                clear_old=clear_old,
+            )
+
             logger.info(
-                "Aggregates stored: dashboard_id=%s, rows=%d", dashboard_id, len(rows)
+                "Aggregates stored: dashboard_id=%s, rows=%d, mode=%s, processed=%d",
+                dashboard_id,
+                len(rows),
+                mode,
+                processed,
             )
 
 
-def process_csv_background(
+async def process_csv_background(
     file_path_str: str,
     task_id: str,
     dashboard_id_str: str,
     processing_config_dict: dict[str, Any] | None = None,
+    mode: str = "overwrite",
 ) -> dict[str, Any]:
-    """RQ task entry point for CSV processing.
+    """Background task entry point for CSV processing.
 
-    This function is called by RQ worker in a separate process.
+    This function is called by the task queue (async) or RQ worker.
+    Uses asyncio.to_thread() for RQ compatibility.
 
     Args:
         file_path_str: Path to CSV file as string.
         task_id: Task ID (UUID string).
         dashboard_id_str: Dashboard ID as string.
         processing_config_dict: Processing configuration dictionary.
+        mode: Upload mode (overwrite or append).
 
     Returns:
         dict: Processing result.
     """
     logger.info(
-        "Starting background processing: task_id=%s, dashboard_id=%s",
+        "Starting background processing: task_id=%s, dashboard_id=%s, mode=%s",
         task_id,
         dashboard_id_str,
+        mode,
     )
 
-    return _process_csv_file_sync_impl(
-        file_path_str,
-        task_id,
-        dashboard_id_str,
-        processing_config_dict,
+    return await _process_csv_file_async(
+        file_path_str=file_path_str,
+        task_id=task_id,
+        dashboard_id_str=dashboard_id_str,
+        processing_config_dict=processing_config_dict,
+        mode=mode,
+    )
+
+
+def process_csv_background_sync(
+    file_path_str: str,
+    task_id: str,
+    dashboard_id_str: str,
+    processing_config_dict: dict[str, Any] | None = None,
+    mode: str = "overwrite",
+) -> dict[str, Any]:
+    """RQ worker entry point (sync wrapper).
+
+    This function is called by RQ worker in a separate process.
+    Runs the async implementation using asyncio.run().
+
+    Args:
+        file_path_str: Path to CSV file as string.
+        task_id: Task ID (UUID string).
+        dashboard_id_str: Dashboard ID as string.
+        processing_config_dict: Processing configuration dictionary.
+        mode: Upload mode (overwrite or append).
+
+    Returns:
+        dict: Processing result.
+    """
+    return asyncio.run(
+        process_csv_background(
+            file_path_str=file_path_str,
+            task_id=task_id,
+            dashboard_id_str=dashboard_id_str,
+            processing_config_dict=processing_config_dict,
+            mode=mode,
+        )
     )

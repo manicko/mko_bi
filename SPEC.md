@@ -610,6 +610,20 @@ RECREATE_TEST_DB: "true"  # для test env
 * WARNING
 * ERROR
 
+**Language Requirement**: All log messages MUST be in English (NOT Russian or other languages).
+
+---
+
+## 20.1 Code Comments
+
+**Language Requirement**: All code comments MUST be in English (NOT Russian or other languages).
+
+This applies to:
+* Python code (backend)
+* TypeScript/JavaScript code (frontend)
+* Docstrings (Google style recommended)
+* Inline comments
+
 ---
 
 ## 21. Testing

@@ -76,7 +76,7 @@ class DashboardRepository(IDashboardRepository):
                 "Dashboards retrieved for user",
                 extra={"user_id": str(user_id), "count": len(dashboards)},
             )
-            return cast(list[dashboard_model.Dashboard], dashboards)
+            return dashboards
         except SQLAlchemyError as e:
             logger.error(
                 "Error getting dashboards for user",
@@ -203,7 +203,7 @@ class DashboardRepository(IDashboardRepository):
                 "Dashboards list retrieved",
                 extra={"count": len(dashboards)},
             )
-            return cast(list[dashboard_model.Dashboard], dashboards)
+            return dashboards
         except SQLAlchemyError as e:
             logger.error(
                 "Error getting dashboards list",

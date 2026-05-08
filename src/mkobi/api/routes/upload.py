@@ -17,6 +17,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mkobi.api.deps import (
     EditorUser,
     get_db,
+    get_data_service,
 )
 from mkobi.config import get_config
 from mkobi.core.logging_config import get_logger
@@ -28,12 +29,7 @@ from mkobi.models.data import (
     ProcessingStatusResponse,
 )
 from mkobi.models.enums import UploadMode
-from mkobi.services.data_service import (
-    DataService,
-    get_processing_result,
-    get_processing_status,
-    trigger_processing,
-)
+from mkobi.services.data_service import DataService
 
 router = APIRouter(prefix="/upload", tags=["upload"])
 
@@ -52,6 +48,7 @@ async def upload_file_endpoint(
     file: UploadFile = File(...),
     mode: UploadMode = UploadMode.OVERWRITE,
     db: AsyncSession = Depends(get_db),
+    data_service: DataService = Depends(get_data_service),
 ) -> dict[str, str | UUID]:
     """Upload file for dashboard."""
     logger.info(
@@ -109,14 +106,14 @@ async def upload_file_endpoint(
         )
 
         # Call service (validation is in service layer)
-        service = DataService(db=db)
         try:
-            result = await service.process_upload(
+            result = await data_service.process_upload(
                 file_content=file_content,
                 dashboard_id=dashboard_id,
                 user_id=current_user.id,
                 filename=filename,
                 content_type=file.content_type,
+                mode=mode,
                 db=db,
             )
         except Exception as e:
@@ -197,6 +194,7 @@ async def process_file_endpoint(
     dashboard_id: UUID,
     current_user: EditorUser,
     db: AsyncSession = Depends(get_db),
+    data_service: DataService = Depends(get_data_service),
     config: ProcessingConfig | None = None,
 ) -> ProcessingStatusResponse:
     """Start processing of uploaded file."""
@@ -210,7 +208,7 @@ async def process_file_endpoint(
     )
 
     try:
-        result = await trigger_processing(
+        result = await data_service.trigger_processing(
             task_id=task_id,
             dashboard_id=dashboard_id,
             user_id=current_user.id,
@@ -256,6 +254,7 @@ async def get_status_endpoint(
     task_id: UUID,
     current_user: EditorUser,
     db: AsyncSession = Depends(get_db),
+    data_service: DataService = Depends(get_data_service),
 ) -> ProcessingStatusResponse:
     """Get current processing status of file."""
     logger.info(
@@ -264,7 +263,7 @@ async def get_status_endpoint(
     )
 
     try:
-        result = await get_processing_status(
+        result = await data_service.get_processing_status(
             task_id=task_id,
             user_id=current_user.id,
             db=db,
@@ -308,6 +307,7 @@ async def get_result_endpoint(
     task_id: UUID,
     current_user: EditorUser,
     db: AsyncSession = Depends(get_db),
+    data_service: DataService = Depends(get_data_service),
 ) -> ProcessingResult:
     """Get processing result of file."""
     logger.info(
@@ -316,7 +316,7 @@ async def get_result_endpoint(
     )
 
     try:
-        result = await get_processing_result(
+        result = await data_service.get_processing_result(
             task_id=task_id,
             user_id=current_user.id,
             db=db,

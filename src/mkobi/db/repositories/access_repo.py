@@ -198,7 +198,7 @@ class AccessRepository(IAccessRepository):
                 user_id,
                 len(dashboards),
             )
-            return cast(list[dashboard_model.Dashboard], dashboards)
+            return dashboards
         except SQLAlchemyError as e:
             logger.error(
                 "Error getting dashboards for user id=%s: %s",

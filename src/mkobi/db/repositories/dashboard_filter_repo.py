@@ -23,7 +23,7 @@ class DashboardFilterRepository:
     between dashboards and filters.
     """
     async def bind_filter(
-        cls, dashboard_id: UUID, filter_id: UUID, db: AsyncSession
+        self, dashboard_id: UUID, filter_id: UUID, db: AsyncSession
     ) -> bool:
         """Bind a filter to a dashboard.
 
@@ -78,7 +78,7 @@ class DashboardFilterRepository:
             )
             raise
     async def unbind_filter(
-        cls, dashboard_id: UUID, filter_id: UUID, db: AsyncSession
+        self, dashboard_id: UUID, filter_id: UUID, db: AsyncSession
     ) -> bool:
         """Unbind a filter from a dashboard.
 
@@ -124,7 +124,7 @@ class DashboardFilterRepository:
             )
             raise
     async def get_dashboard_filters(
-        cls, dashboard_id: UUID, db: AsyncSession
+        self, dashboard_id: UUID, db: AsyncSession
     ) -> list[UUID]:
         """Get all filter IDs bound to a dashboard.
 
@@ -159,7 +159,7 @@ class DashboardFilterRepository:
             )
             raise
     async def get_filter_dashboards(
-        cls, filter_id: UUID, db: AsyncSession
+        self, filter_id: UUID, db: AsyncSession
     ) -> list[UUID]:
         """Get all dashboard IDs that have a specific filter bound.
 

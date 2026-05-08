@@ -75,7 +75,7 @@ class GraphRepository(IGraphRepository):
                 dashboard_id,
                 len(graphs),
             )
-            return cast(list[graph_model.Graph], graphs)
+            return graphs
         except SQLAlchemyError as e:
             logger.error("Error getting graphs dashboard_id=%s: %s", dashboard_id, e)
             raise
@@ -172,7 +172,7 @@ class GraphRepository(IGraphRepository):
             result = await db.execute(select(graph_model.Graph))
             graphs = list(result.scalars().all())
             logger.info("Graphs list retrieved, count: %s", len(graphs))
-            return cast(list[graph_model.Graph], graphs)
+            return graphs
         except SQLAlchemyError as e:
             logger.error("Error getting graphs list: %s", e)
             raise

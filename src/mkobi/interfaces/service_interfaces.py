@@ -10,10 +10,11 @@ from uuid import UUID
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.models.dashboard import DashboardRead
-from mkobi.models.data import ProcessingResultData, UploadResponse
-from mkobi.models.enums import UserRole
-from mkobi.models.filters import FilterRead
+from mkobi.models.data import ProcessingResultData, ProcessingResult, ProcessingStatusResponse, UploadResponse
+from mkobi.models.enums import UploadMode, UserRole
+from mkobi.models.filters import FilterRead, FilterUpdate
 from mkobi.models.graph import GraphRead
+from mkobi.models.layout import LayoutRead, LayoutUpdate
 from mkobi.models.processing_configs import ProcessingConfigRead
 from mkobi.models.processing_logs import ProcessingLogRead
 from mkobi.models.types import (
@@ -330,9 +331,7 @@ class IFilterService(abc.ABC):
     async def update_filter(
         self,
         filter_id: UUID,
-        name: str | None,
-        type_: str | None,
-        config: FilterConfigDict | None,
+        updates: FilterUpdate,
         db: AsyncSession | None = None,
     ) -> FilterRead | None:
         """Update filter."""
@@ -367,9 +366,42 @@ class IDataService(abc.ABC):
         user_id: UUID | None = None,
         filename: str | None = None,
         content_type: str | None = None,
+        mode: UploadMode = UploadMode.OVERWRITE,
         db: AsyncSession | None = None,
     ) -> UploadResponse:
         """Process uploaded file and save aggregates."""
+        pass
+
+    @abc.abstractmethod
+    async def trigger_processing(
+        self,
+        task_id: UUID,
+        dashboard_id: UUID,
+        user_id: UUID,
+        processing_config: dict[str, Any] | None = None,
+        db: AsyncSession | None = None,
+    ) -> ProcessingStatusResponse:
+        """Trigger processing of uploaded file."""
+        pass
+
+    @abc.abstractmethod
+    async def get_processing_status(
+        self,
+        task_id: UUID,
+        user_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> ProcessingStatusResponse:
+        """Get processing status."""
+        pass
+
+    @abc.abstractmethod
+    async def get_processing_result(
+        self,
+        task_id: UUID,
+        user_id: UUID,
+        db: AsyncSession | None = None,
+    ) -> ProcessingResult:
+        """Get processing result."""
         pass
 
     @abc.abstractmethod
@@ -494,4 +526,49 @@ class IProcessingLogService(abc.ABC):
         db: AsyncSession | None = None,
     ) -> bool:
         """Delete processing log entry."""
+        pass
+
+
+class ILayoutService(abc.ABC):
+    """Layout service interface."""
+
+    @abc.abstractmethod
+    async def create_layout(
+        self,
+        name: str,
+        definition: dict[str, Any],
+        db: AsyncSession | None = None,
+    ) -> LayoutRead:
+        """Create new layout."""
+        pass
+
+    @abc.abstractmethod
+    async def get_layout(
+        self, layout_id: UUID, db: AsyncSession | None = None
+    ) -> LayoutRead | None:
+        """Get layout by ID."""
+        pass
+
+    @abc.abstractmethod
+    async def get_all_layouts(
+        self, db: AsyncSession | None = None
+    ) -> list[LayoutRead]:
+        """Get all layouts."""
+        pass
+
+    @abc.abstractmethod
+    async def update_layout(
+        self,
+        layout_id: UUID,
+        update_data: LayoutUpdate,
+        db: AsyncSession | None = None,
+    ) -> LayoutRead | None:
+        """Update layout."""
+        pass
+
+    @abc.abstractmethod
+    async def delete_layout(
+        self, layout_id: UUID, db: AsyncSession | None = None
+    ) -> bool:
+        """Delete layout."""
         pass

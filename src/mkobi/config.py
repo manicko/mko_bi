@@ -4,7 +4,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, Field, PostgresDsn
+from pydantic import BaseModel, Field, PostgresDsn, field_validator
 from pydantic.fields import FieldInfo
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
 from pydantic_settings.sources import PydanticBaseSettingsSource
@@ -230,6 +230,21 @@ class Settings(BaseSettings):
 
     # --- CORS ---
     cors_origins: list[str] = []
+
+    @field_validator("cors_origins")
+    @classmethod
+    def validate_cors_origins(cls, value: list[str]) -> list[str]:
+        """Validate CORS origins.
+
+        Args:
+            value: List of CORS origins (already parsed by pydantic-settings).
+
+        Returns:
+            list[str]: Validated list of CORS origins.
+        """
+        if not isinstance(value, list):
+            return []
+        return [str(origin) for origin in value]
 
     # --- Database Migrations ---
     auto_migrate: bool = False

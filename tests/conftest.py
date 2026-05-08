@@ -13,19 +13,16 @@ from sqlalchemy.pool import NullPool
 
 # Set required environment variables BEFORE importing any mkobi modules
 # Use pydantic-settings nested env vars (double underscore)
+os.environ["ENV"] = "test"
 os.environ["DATABASE__HOST"] = "localhost"
 os.environ["DATABASE__PORT"] = "5432"
 os.environ["DATABASE__DBNAME"] = "bidb_test"
 os.environ["DATABASE__USER"] = "postgres"
 os.environ["DATABASE__PASSWORD"] = "1234"
+os.environ["DATABASE__TEST_DBNAME"] = "bidb_test"
 os.environ["JWT__SECRET_KEY"] = "test_secret_key_change_in_production"
 os.environ["REDIS__HOST"] = "localhost"
 os.environ["REDIS__PORT"] = "6379"
-
-# Test database URL for DatabaseStarter
-os.environ["TEST_DATABASE_URL"] = (
-    "postgresql+asyncpg://postgres:1234@localhost:5432/bidb_test"
-)
 os.environ["RECREATE_TEST_DB"] = "true"
 
 # Test PostgreSQL database (async)
@@ -36,9 +33,8 @@ from mkobi.db.repositories.user_repo import UserRepository
 from mkobi.main import app
 
 _config = get_config()
-TEST_ASYNC_DB_URL = str(_config.database.database_url).replace(
-    "postgresql://", "postgresql+asyncpg://", 1
-)
+# Use TEST_DATABASE_URL for test async engine (explicitly for test database)
+TEST_ASYNC_DB_URL = str(_config.TEST_DATABASE_URL)
 
 # Import models for metadata registration
 from mkobi.db.models import (  # noqa: E402, F401
@@ -141,25 +137,28 @@ def mock_redis(monkeypatch):
     monkeypatch.setattr(auth_service_module.AuthService, "__init__", patched_init)
 
 
-def pytest_sessionstart(session):
-    """Setup before test session starts using DatabaseStarter."""
-    import asyncio
+@pytest.fixture(scope="session")
+async def setup_test_database():
+    """Fixture to set up test database before tests run.
+    
+    Uses pytest-asyncio event loop to avoid loop conflicts.
+    Recreates the test database and applies migrations.
+    This fixture has session scope to run once before all tests.
+    """
     from mkobi.db.starter import DatabaseStarter, DatabaseStarterConfig
 
-    async def init_test_db():
-        # Create config with test database URL from environment
-        config = DatabaseStarterConfig(
-            test_database_url=os.environ.get("TEST_DATABASE_URL"),
-            recreate_test_db=True,
-        )
-        # Recreate test database with proper schema
-        await DatabaseStarter(config).recreate_test_database()
-
-    asyncio.run(init_test_db())
+    config = DatabaseStarterConfig(
+        test_database_url=os.environ.get("TEST_DATABASE_URL"),
+        recreate_test_db=True,
+    )
+    await DatabaseStarter(config).recreate_test_database()
+    yield
+    # Optional: cleanup after all tests
+    # Could drop the test database here if needed
 
 
 @pytest.fixture(scope="session")
-async def async_test_engine():
+async def async_test_engine(setup_test_database):
     """Fixture for creating async test DB engine.
     
     Uses NullPool to prevent connection pooling issues in tests:
@@ -174,7 +173,8 @@ async def async_test_engine():
         pool_pre_ping=True,
         poolclass=NullPool,
     )
-    return engine
+    yield engine
+    await engine.dispose()
 
 
 @pytest.fixture(scope="session")

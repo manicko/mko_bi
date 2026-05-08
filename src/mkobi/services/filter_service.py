@@ -15,11 +15,10 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mkobi.db.repositories.filter_repo import FilterRepository
 from mkobi.interfaces.repository_interfaces import IFilterRepository
 from mkobi.interfaces.service_interfaces import IFilterService
 from mkobi.models.enums import FilterType
-from mkobi.models.filters import FilterRead
+from mkobi.models.filters import FilterRead, FilterUpdate
 from mkobi.models.types import FilterConfigDict
 
 logger = logging.getLogger(__name__)
@@ -32,14 +31,13 @@ class FilterService(IFilterService):
     Uses injected FilterRepository for data access.
     """
 
-    def __init__(self, filter_repo: IFilterRepository | None = None) -> None:
+    def __init__(self, filter_repo: IFilterRepository) -> None:
         """Initialize service with injected repository.
 
         Args:
             filter_repo: Filter repository instance implementing IFilterRepository.
-                        If None, creates a new FilterRepository().
         """
-        self.filter_repo = filter_repo if filter_repo is not None else FilterRepository()
+        self.filter_repo = filter_repo
         logger.debug("FilterService initialized with injected repository")
 
     async def create_filter(
@@ -181,14 +179,14 @@ class FilterService(IFilterService):
     async def update_filter(
         self,
         filter_id: UUID,
-        update_data: dict[str, Any] | None = None,
+        updates: FilterUpdate,
         db: AsyncSession | None = None,
     ) -> FilterRead | None:
         """Update filter.
 
         Args:
             filter_id: Filter identifier.
-            update_data: Dictionary with fields to update (from Pydantic model_dump).
+            updates: FilterUpdate model with fields to update.
             db: Async database session.
 
         Returns:
@@ -198,43 +196,50 @@ class FilterService(IFilterService):
             raise ValueError("db session is required for update_filter")
 
         # Check if filter exists
-        existing = await self.filter_repo.get(filter_id, db)
+        existing = await self.filter_repo.get(filter_id, db=db)
         if existing is None:
             logger.warning("Filter not found for update: id=%s", filter_id)
             return None
 
         # Validate inputs if provided
-        if update_data:
-            if "name" in update_data and update_data["name"] is not None:
-                self._validate_filter_name(update_data["name"])
-                # Check name uniqueness (excluding current filter)
-                name_check = await self.filter_repo.get_by_name(update_data["name"], db)
-                if name_check and name_check.id != filter_id:
-                    raise ValueError(f"Filter with name '{update_data['name']}' already exists")
+        if updates.name is not None:
+            self._validate_filter_name(updates.name)
+            # Check name uniqueness (excluding current filter)
+            name_check = await self.filter_repo.get_by_name(updates.name, db=db)
+            if name_check and name_check.id != filter_id:
+                raise ValueError(f"Filter with name '{updates.name}' already exists")
 
-            if "type" in update_data and update_data["type"] is not None:
-                self._validate_filter_type(update_data["type"])
+        if updates.type is not None:
+            self._validate_filter_type(updates.type.value)
 
-            if "config" in update_data and update_data["config"] is not None:
-                self._validate_filter_config(update_data["config"])
+        if updates.config is not None:
+            self._validate_filter_config(updates.config)
+
+        # Build update dict from FilterUpdate model
+        update_data: dict[str, Any] = {}
+        if updates.name is not None:
+            update_data["name"] = updates.name
+        if updates.type is not None:
+            update_data["type"] = updates.type.value
+        if updates.config is not None:
+            update_data["config"] = updates.config
 
         if not update_data:
-            logger.warning("No data for filter update: id=%s", filter_id)
+            logger.info("No fields to update for filter: id=%s", filter_id)
             return cast(FilterRead, FilterRead.model_validate(existing))
 
+        logger.info("Updating filter: id=%s, update_data=%s", filter_id, update_data)
+
         try:
-            updated = await self.filter_repo.update(filter_id, db, **update_data)
-            if updated is None:
+            updated = await self.filter_repo.update(filter_id, db=db, **update_data)
+            if not updated:
                 return None
-
             await db.commit()
-
             logger.info("Filter updated: id=%s", filter_id)
             return cast(FilterRead, FilterRead.model_validate(updated))
-
         except Exception as e:
             await db.rollback()
-            logger.error("Error updating filter id=%s: %s", filter_id, e)
+            logger.error("Error updating filter id=%s: %s", filter_id, e, exc_info=True)
             raise
 
     async def delete_filter(
@@ -341,60 +346,4 @@ class FilterService(IFilterService):
             )
 
 
-# --- Backward compatibility functions ---
 
-
-async def create_filter(
-    name: str,
-    type_: str,
-    config: FilterConfigDict,
-    db: AsyncSession | None = None,
-) -> FilterRead:
-    """Backward compatibility wrapper."""
-    service = FilterService()
-    return await service.create_filter(name, type_, config, db)
-
-
-async def get_filter_by_id(
-    filter_id: UUID,
-    db: AsyncSession | None = None,
-) -> FilterRead | None:
-    """Backward compatibility wrapper."""
-    service = FilterService()
-    return await service.get_filter_by_id(filter_id, db)
-
-
-async def get_filter_by_name(
-    name: str,
-    db: AsyncSession | None = None,
-) -> FilterRead | None:
-    """Backward compatibility wrapper."""
-    service = FilterService()
-    return await service.get_filter_by_name(name, db)
-
-
-async def get_all_filters(
-    db: AsyncSession | None = None,
-) -> list[FilterRead]:
-    """Backward compatibility wrapper."""
-    service = FilterService()
-    return await service.get_all_filters(db)
-
-
-async def update_filter(
-    filter_id: UUID,
-    update_data: dict[str, Any] | None = None,
-    db: AsyncSession | None = None,
-) -> FilterRead | None:
-    """Backward compatibility wrapper."""
-    service = FilterService()
-    return await service.update_filter(filter_id, update_data, db)
-
-
-async def delete_filter(
-    filter_id: UUID,
-    db: AsyncSession | None = None,
-) -> bool:
-    """Backward compatibility wrapper."""
-    service = FilterService()
-    return await service.delete_filter(filter_id, db)

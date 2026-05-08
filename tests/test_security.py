@@ -1,4 +1,4 @@
-"""Тесты для модуля безопасности (security.py)."""
+"""Tests for security module (security.py)."""
 
 from datetime import timedelta
 from unittest.mock import patch
@@ -15,65 +15,65 @@ from mkobi.config import get_config
 
 
 class TestTruncatePassword:
-    """Тесты для функции _truncate_password."""
+    """Tests for _truncate_password function."""
 
     def test_long_password_truncated(self):
-        """Пароль длиннее 72 байт должен обрезаться."""
+        """Password longer than 72 bytes should be truncated."""
         password = "a" * 100
         result = _truncate_password(password)
         assert len(result.encode("utf-8")) <= 72
         assert result == "a" * 72
 
     def test_unicode_password_truncated(self):
-        """Unicode пароль должен корректно обрезаться."""
-        password = "α" * 50  # Каждый символ - 2 байта в UTF-8
+        """Unicode password should be correctly truncated."""
+        password = "α" * 50  # Each character is 2 bytes in UTF-8
         result = _truncate_password(password)
         assert len(result.encode("utf-8")) <= 72
 
 
 class TestHashPassword:
-    """Тесты для функции hash_password."""
+    """Tests for hash_password function."""
 
     def test_hash_returns_string(self):
-        """Хеш должен быть строкой."""
+        """Hash should be a string."""
         result = hash_password("test_password")
         assert isinstance(result, str)
 
     def test_hash_starts_with_bcrypt_prefix(self):
-        """Хеш bcrypt должен начинаться с $2b$."""
+        """Bcrypt hash should start with $2b$."""
         result = hash_password("test_password")
         assert result.startswith("$2b$")
 
     def test_different_passwords_different_hashes(self):
-        """Разные пароли должны давать разные хеши."""
+        """Different passwords should produce different hashes."""
         hash1 = hash_password("password1")
         hash2 = hash_password("password2")
         assert hash1 != hash2
 
     def test_same_password_same_hash(self):
-        """Одинаковые пароли должны давать одинаковые хеши (с разной солью)."""
-        # Из-за случайной соли хеши будут разными, но проверка должна работать
+        """Same passwords should produce different hashes (due to salt)."""
+        # Due to random salt, hashes will be different, but verification should work
         hash1 = hash_password("same_password")
         hash2 = hash_password("same_password")
-        assert hash1 != hash2  # Соли разные, поэтому хеши разные
+        assert hash1 != hash2  # Salts are different, so hashes are different
         assert verify_password("same_password", hash1)
         assert verify_password("same_password", hash2)
 
     def test_hash_long_password(self):
-        """Хеширование длинного пароля (более 72 байт)."""
+        """Hash long password (more than 72 bytes)."""
         long_password = "a" * 100
         result = hash_password(long_password)
         assert isinstance(result, str)
         assert result.startswith("$2b$")
 
     def test_hash_empty_password(self):
-        """Хеширование пустого пароля."""
+        """Hash empty password."""
         result = hash_password("")
         assert isinstance(result, str)
         assert result.startswith("$2b$")
 
     def test_hash_special_characters(self):
-        """Хеширование пароля со специальными символами."""
+        """Hash password with special characters."""
         special_password = "p@ssw0rd!#$%^&*()"
         result = hash_password(special_password)
         assert isinstance(result, str)
@@ -81,64 +81,64 @@ class TestHashPassword:
 
 
 class TestVerifyPassword:
-    """Тесты для функции verify_password."""
+    """Tests for verify_password function."""
 
     def test_correct_password(self):
-        """Правильный пароль должен проходить проверку."""
+        """Correct password should pass verification."""
         password = "correct_password"
         hash_value = hash_password(password)
         assert verify_password(password, hash_value) is True
 
     def test_incorrect_password(self):
-        """Неправильный пароль не должен проходить проверку."""
+        """Incorrect password should not pass verification."""
         password = "correct_password"
         wrong_password = "wrong_password"
         hash_value = hash_password(password)
         assert verify_password(wrong_password, hash_value) is False
 
     def test_empty_password(self):
-        """Проверка пустого пароля."""
+        """Test empty password verification."""
         hash_value = hash_password("")
         assert verify_password("", hash_value) is True
         assert verify_password("not_empty", hash_value) is False
 
     def test_long_password_verification(self):
-        """Проверка длинного пароля."""
+        """Test long password verification."""
         long_password = "a" * 100
         hash_value = hash_password(long_password)
         assert verify_password(long_password, hash_value) is True
 
     def test_invalid_hash_format(self):
-        """Неверный формат хеша должен возвращать False."""
+        """Invalid hash format should return False."""
         assert verify_password("password", "invalid_hash") is False
 
     def test_empty_hash(self):
-        """Пустой хеш должен возвращать False."""
+        """Empty hash should return False."""
         assert verify_password("password", "") is False
 
     def test_unicode_password_verification(self):
-        """Проверка Unicode пароля."""
-        unicode_password = "пароль123αβγ"
+        """Test Unicode password verification."""
+        unicode_password = "password123αβγ"
         hash_value = hash_password(unicode_password)
         assert verify_password(unicode_password, hash_value) is True
 
 
 class TestCreateAccessToken:
-    """Тесты для функции create_access_token."""
+    """Tests for create_access_token function."""
 
     def test_token_is_string(self):
-        """Токен должен быть строкой."""
+        """Token should be a string."""
         token = create_access_token({"user_id": 1})
         assert isinstance(token, str)
 
     def test_token_contains_dot(self):
-        """JWT токен должен содержать точки (формат header.payload.signature)."""
+        """JWT token should contain dots (format header.payload.signature)."""
         token = create_access_token({"user_id": 1})
         parts = token.split(".")
         assert len(parts) == 3
 
     def test_token_with_user_data(self):
-        """Токен должен содержать переданные данные."""
+        """Token should contain the provided data."""
         data = {"user_id": 123, "email": "test@example.com"}
         token = create_access_token(data)
         decoded = decode_token(token)
@@ -147,7 +147,7 @@ class TestCreateAccessToken:
         assert decoded["email"] == "test@example.com"
 
     def test_token_with_custom_expiry(self):
-        """Токен с кастомным временем жизни."""
+        """Token with custom expiry time."""
         data = {"user_id": 1}
         expires_delta = timedelta(minutes=60)
         token = create_access_token(data, expires_delta=expires_delta)
@@ -156,20 +156,20 @@ class TestCreateAccessToken:
         assert "exp" in decoded
 
     def test_token_has_exp_claim(self):
-        """Токен должен содержать время истечения (exp)."""
+        """Token should contain expiration time (exp)."""
         token = create_access_token({"user_id": 1})
         decoded = decode_token(token)
         assert decoded is not None
         assert "exp" in decoded
 
     def test_different_tokens_for_different_data(self):
-        """Разные данные должны давать разные токены."""
+        """Different data should produce different tokens."""
         token1 = create_access_token({"user_id": 1})
         token2 = create_access_token({"user_id": 2})
         assert token1 != token2
 
     def test_empty_data_token(self):
-        """Токен с пустыми данными."""
+        """Token with empty data."""
         token = create_access_token({})
         decoded = decode_token(token)
         assert decoded is not None
@@ -177,10 +177,10 @@ class TestCreateAccessToken:
 
 
 class TestDecodeToken:
-    """Тесты для функции decode_token."""
+    """Tests for decode_token function."""
 
     def test_valid_token_decoding(self):
-        """Декодирование валидного токена."""
+        """Decode valid token."""
         token = create_access_token({"user_id": 1, "email": "test@example.com"})
         decoded = decode_token(token)
         assert decoded is not None
@@ -188,25 +188,25 @@ class TestDecodeToken:
         assert decoded["email"] == "test@example.com"
 
     def test_invalid_token_returns_none(self):
-        """Неверный токен должен возвращать None."""
+        """Invalid token should return None."""
         result = decode_token("invalid.token.here")
         assert result is None
 
     def test_empty_token_returns_none(self):
-        """Пустой токен должен возвращать None."""
+        """Empty token should return None."""
         result = decode_token("")
         assert result is None
 
     def test_malformed_token_returns_none(self):
-        """Некорректно сформированный токен должен возвращать None."""
+        """Malformed token should return None."""
         result = decode_token("not.a.token")
         assert result is None
 
     def test_token_with_wrong_signature(self):
-        """Токен с неверной подписью должен возвращать None."""
-        # Создаем токен с правильным ключом
+        """Token with wrong signature should return None."""
+        # Create token with correct key
         token = create_access_token({"user_id": 1})
-        # Пытаемся декодировать с другим ключом (имитация ошибки)
+        # Try to decode with different key (simulating an error)
         with patch("mkobi.core.security.get_config") as mock_get_config:
             mock_get_config.return_value.JWT_SECRET_KEY = "wrong_secret"
             mock_get_config.return_value.JWT_ALGORITHM = "HS256"
@@ -214,16 +214,16 @@ class TestDecodeToken:
             assert result is None
 
     def test_expired_token_returns_none(self):
-        """Истекший токен должен возвращать None."""
-        # Создаем токен с отрицательным временем жизни (уже истек)
+        """Expired token should return None."""
+        # Create token with negative expiry time (already expired)
         expired_delta = timedelta(seconds=-1)
         token = create_access_token({"user_id": 1}, expires_delta=expired_delta)
         result = decode_token(token)
         assert result is None
 
     def test_token_without_exp_claim(self):
-        """Токен без exp claim (если создать вручную) должен декодироваться."""
-        # Создаем токен вручную без exp
+        """Token without exp claim (if created manually) should be decoded."""
+        # Create token manually without exp
         payload = {"user_id": 1}
         token = jwt.encode(
             payload,
@@ -236,7 +236,7 @@ class TestDecodeToken:
         assert "exp" not in decoded
 
     def test_token_with_additional_claims(self):
-        """Токен с дополнительными полями."""
+        """Token with additional fields."""
         data = {
             "user_id": 1,
             "email": "test@example.com",
@@ -253,17 +253,17 @@ class TestDecodeToken:
 
 
 class TestIntegration:
-    """Интеграционные тесты."""
+    """Integration tests."""
 
     def test_full_password_hash_and_verify_cycle(self):
-        """Полный цикл: хеширование и проверка пароля."""
+        """Full cycle: hash and verify password."""
         original_password = "My$ecureP@ssw0rd!"
         hash_value = hash_password(original_password)
         assert verify_password(original_password, hash_value) is True
         assert verify_password("WrongPassword", hash_value) is False
 
     def test_full_token_create_and_decode_cycle(self):
-        """Полный цикл: создание и декодирование токена."""
+        """Full cycle: create and decode token."""
         user_data = {"user_id": 42, "email": "user42@example.com"}
         token = create_access_token(user_data)
         decoded = decode_token(token)
@@ -272,18 +272,18 @@ class TestIntegration:
         assert decoded["email"] == "user42@example.com"
 
     def test_token_expiration_from_config(self):
-        """Проверка, что время жизни токена берется из конфигурации."""
+        """Verify that token expiration is taken from configuration."""
         token = create_access_token({"user_id": 1})
         decoded = decode_token(token)
         assert decoded is not None
         assert "exp" in decoded
-        # exp должен быть в будущем
+        # exp should be in the future
         import time
 
         assert decoded["exp"] > time.time()
 
     def test_multiple_users_different_tokens(self):
-        """Разные пользователи должны иметь разные токены."""
+        """Different users should have different tokens."""
         token1 = create_access_token({"user_id": 1})
         token2 = create_access_token({"user_id": 2})
         token3 = create_access_token({"user_id": 3})
@@ -293,7 +293,7 @@ class TestIntegration:
         assert decode_token(token3)["user_id"] == 3
 
     def test_password_hash_uniqueness(self):
-        """Хеши одного и того же пароля должны быть разными (из-за соли)."""
+        """Hashes of the same password should be different (due to salt)."""
         password = "same_password"
         hash1 = hash_password(password)
         hash2 = hash_password(password)
@@ -302,7 +302,7 @@ class TestIntegration:
         assert verify_password(password, hash2)
 
     def test_token_with_user_id_only(self):
-        """Токен только с user_id."""
+        """Token with only user_id."""
         token = create_access_token({"user_id": 999})
         decoded = decode_token(token)
         assert decoded is not None

@@ -1,4 +1,5 @@
 C:\py_dev\mkobi
+├── add_cors_tests.py
 ├── alembic
 │   ├── env.py
 │   ├── README
@@ -11,6 +12,7 @@ C:\py_dev\mkobi
 │       ├── 840a99edb818_standardize_index_naming.py
 │       ├── 7130ecb0388c_true_initial_migration.py
 │       ├── 20260507141843_add_updated_at_to_users.py
+│       ├── 20260508145000_add_updated_at_to_layouts.py
 │       ├── a1b2c3d4e5f6_add_config_to_dashboards.py
 │       ├── a1e404502aac_add_registration_requests_table.py
 │       ├── a2b3c4d5e6f7_fix_unique_constraint_aggregated_data.py
@@ -34,6 +36,11 @@ C:\py_dev\mkobi
 ├── docker-compose.test.yml
 ├── docker-compose.yml
 ├── Dockerfile
+├── docs
+│   └── SWAGGER_README.md
+├── fix_config.py
+├── fix_cors_validator.py
+├── fix_mypy.py
 ├── fix_repositories.py
 ├── fix_static_calls.py
 ├── frontend
@@ -246,6 +253,7 @@ C:\py_dev\mkobi
 ├── STRUCT.md
 ├── TASK_TEMPLATE.md
 ├── TASKS_TEMPLATE.md
+├── test_cors_simple.py
 ├── tests
 │   ├── conftest.py
 │   ├── test_auth.py
@@ -258,6 +266,7 @@ C:\py_dev\mkobi
 │   ├── test_pydantic_models.py
 │   ├── test_repositories.py
 │   ├── test_security.py
+│   ├── test_storage_manager.py
 │   ├── test_upload_api.py
 │   └── test_users_api.py
 ├── TODO
@@ -266,7 +275,6 @@ C:\py_dev\mkobi
 │   │   ├── TASK_001_db_structure_module_dev.md
 │   │   ├── TASK_031_audit.md
 │   │   ├── TASK_031_audit_full.md
-│   │   ├── TASK_034_audit_old.md
 │   │   ├── TASK_037_test_audit.md
 │   │   ├── TASK_037_test_audit1.md
 │   │   ├── TASK_038_docker_audit.md
@@ -275,22 +283,11 @@ C:\py_dev\mkobi
 │   ├── DEV
 │   │   ├── 03_mypy_type_errors_DONE.md
 │   │   ├── 15_code_quality_tools.md
-│   │   ├── 22_unrelated_test_failures.md
-│   │   ├── DOCKER_PLAN.md
-│   │   ├── TASK_006_repository_instance_methods_fix.md
-│   │   ├── TASK_006_storage_manager_methods_fix.md
-│   │   ├── TASK_007_dashboard_creation_fix_DONE.md
-│   │   ├── TASK_008_test_messages_english_fix.md
-│   │   ├── TASK_009_upload_api_auth_fix.md
-│   │   ├── TASK_010_test_database_setup_fix_DONE.md
-│   │   ├── TASK_010_test_database_setup_fix_IN_PROGRESS.md
-│   │   ├── TASK_011_userread_password_hash_fix.md
-│   │   ├── TASK_012_layout_api_405_fix.md
-│   │   ├── TASK_013_registration_request_repo_delete.md
+│   │   ├── LATER_TASK_032_frontend_token_storage_security.md
+│   │   ├── 'NONEED TASK_033_enable_typescript_strict_mode.md'
+│   │   ├── TASK_008_test_messages_english_fix_DONE.md
 │   │   ├── TASK_014_linter_issues_fix.md
-│   │   ├── TASK_015_auth_password_hash_fix.md
-│   │   ├── TASK_016_layout_api_routes_fix.md
-│   │   └── TASK_017_dashboard_api_500_fix_DONE.md
+│   │   └── TASK_024_test_coverage_improvement.md
 │   └── DONE
 │       ├── TASK_001_sync_async_unification.md
 │       ├── TASK_014_dash_modern_component_architecture_DONE.md

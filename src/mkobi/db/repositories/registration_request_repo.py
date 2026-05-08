@@ -14,11 +14,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.core.logging_config import get_logger
 from mkobi.db.models.registration_request import RegistrationRequest
+from mkobi.interfaces.repository_interfaces import IRegistrationRequestRepository
 
 logger = get_logger(__name__)
 
 
-class RegistrationRequestRepository:
+class RegistrationRequestRepository(IRegistrationRequestRepository):
     """Repository for registration request operations.
 
     Provides methods for creating, reading, updating and deleting

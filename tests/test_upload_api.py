@@ -186,3 +186,85 @@ class TestUploadCSV:
                 files={"file": ("test.csv", f, "text/csv")},
             )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    async def test_upload_mode_overwrite(
+        self,
+        authenticated_client: AsyncClient,
+        async_db_session,
+        test_user: dict,
+        test_dashboard: Dashboard,
+        csv_file: Path,
+    ) -> None:
+        """Test upload with mode=overwrite (default behavior)."""
+        # Grant edit access to test user
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=test_user["id"],
+            dashboard_id=test_dashboard.id,
+            permission=DashboardPermission.EDIT,
+        )
+        await async_db_session.commit()
+
+        with open(csv_file, "rb") as f:
+            response = await authenticated_client.post(
+                f"/upload/{test_dashboard.id}?mode=overwrite",
+                files={"file": ("test.csv", f, "text/csv")},
+            )
+        assert response.status_code == status.HTTP_201_CREATED
+        data = response.json()
+        assert "processing_log_id" in data
+
+    async def test_upload_mode_append(
+        self,
+        authenticated_client: AsyncClient,
+        async_db_session,
+        test_user: dict,
+        test_dashboard: Dashboard,
+        csv_file: Path,
+    ) -> None:
+        """Test upload with mode=append."""
+        # Grant edit access to test user
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=test_user["id"],
+            dashboard_id=test_dashboard.id,
+            permission=DashboardPermission.EDIT,
+        )
+        await async_db_session.commit()
+
+        with open(csv_file, "rb") as f:
+            response = await authenticated_client.post(
+                f"/upload/{test_dashboard.id}?mode=append",
+                files={"file": ("test.csv", f, "text/csv")},
+            )
+        assert response.status_code == status.HTTP_201_CREATED
+        data = response.json()
+        assert "processing_log_id" in data
+
+    async def test_upload_mode_invalid(
+        self,
+        authenticated_client: AsyncClient,
+        async_db_session,
+        test_user: dict,
+        test_dashboard: Dashboard,
+        csv_file: Path,
+    ) -> None:
+        """Test upload with invalid mode (should return 422)."""
+        # Grant edit access to test user
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=test_user["id"],
+            dashboard_id=test_dashboard.id,
+            permission=DashboardPermission.EDIT,
+        )
+        await async_db_session.commit()
+
+        with open(csv_file, "rb") as f:
+            response = await authenticated_client.post(
+                f"/upload/{test_dashboard.id}?mode=invalid",
+                files={"file": ("test.csv", f, "text/csv")},
+            )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY

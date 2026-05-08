@@ -26,7 +26,6 @@ from mkobi.interfaces.repository_interfaces import (
 from mkobi.models.dashboard import (
     DashboardConfig,
     DashboardRead,
-    DashboardUpdate,
 )
 from mkobi.models.enums import DashboardPermission, GraphType
 from mkobi.models.layout import LayoutRead
@@ -40,13 +39,13 @@ class DashboardService(IDashboardService):
     def __init__(
         self,
         dashboard_repo: IDashboardRepository,
-        access_repo: IAccessRepository | None = None,
+        access_repo: IAccessRepository,
     ) -> None:
         """Initialize service with injected repositories.
 
         Args:
             dashboard_repo: Dashboard repository instance.
-            access_repo: Access repository instance (optional).
+            access_repo: Access repository instance.
         """
         self.dashboard_repo = dashboard_repo
         self.access_repo = access_repo
@@ -549,127 +548,4 @@ class DashboardService(IDashboardService):
         return cast(DashboardRead, DashboardRead.model_validate(dashboard_dict))
 
 
-# --- Backward compatibility functions ---
 
-
-async def create_dashboard(
-    name: str,
-    config: dict[str, Any],
-    owner_id: UUID,
-    db: AsyncSession,
-) -> DashboardRead:
-    """Backward compatibility wrapper."""
-    from mkobi.db.repositories.dashboard_repo import DashboardRepository
-    from mkobi.db.repositories.access_repo import AccessRepository
-
-    service = DashboardService(DashboardRepository(), AccessRepository())
-    return await service.create_dashboard(name, config, owner_id, db)
-
-
-async def get_dashboard(
-    dashboard_id: UUID,
-    user_id: UUID,
-    db: AsyncSession,
-) -> DashboardRead | None:
-    """Backward compatibility wrapper."""
-    from mkobi.db.repositories.dashboard_repo import DashboardRepository
-    from mkobi.db.repositories.access_repo import AccessRepository
-
-    service = DashboardService(DashboardRepository(), AccessRepository())
-    return await service.get_dashboard(dashboard_id, user_id, db)
-
-
-async def get_dashboard_by_name(
-    name: str,
-    db: AsyncSession,
-) -> DashboardRead | None:
-    """Backward compatibility wrapper."""
-    from mkobi.db.repositories.dashboard_repo import DashboardRepository
-
-    service = DashboardService(DashboardRepository(), None)
-    return await service.get_dashboard_by_name(name, db)
-
-
-async def get_user_dashboards(
-    user_id: UUID,
-    db: AsyncSession,
-) -> list[DashboardRead]:
-    """Backward compatibility wrapper."""
-    from mkobi.db.repositories.dashboard_repo import DashboardRepository
-
-    service = DashboardService(DashboardRepository(), None)
-    return await service.get_user_dashboards(user_id, db)
-
-
-async def update_dashboard(
-    dashboard_id: UUID,
-    update_data: dict[str, Any] | DashboardUpdate | None = None,
-    config: dict[str, Any] | None = None,
-    db: AsyncSession | None = None,
-) -> DashboardRead | None:
-    """Backward compatibility wrapper."""
-    from mkobi.db.repositories.dashboard_repo import DashboardRepository
-    from mkobi.db.repositories.access_repo import AccessRepository
-
-    service = DashboardService(DashboardRepository(), AccessRepository())
-    return await service.update_dashboard(dashboard_id, update_data, config, db)
-
-
-async def delete_dashboard(
-    dashboard_id: UUID,
-    db: AsyncSession,
-) -> bool:
-    """Backward compatibility wrapper."""
-    from mkobi.db.repositories.dashboard_repo import DashboardRepository
-
-    service = DashboardService(DashboardRepository(), None)
-    return await service.delete_dashboard(dashboard_id, db)
-
-
-async def get_all_dashboards(
-    db: AsyncSession,
-) -> list[DashboardRead]:
-    """Backward compatibility wrapper."""
-    from mkobi.db.repositories.dashboard_repo import DashboardRepository
-
-    service = DashboardService(DashboardRepository(), None)
-    return await service.get_all_dashboards(db)
-
-
-async def grant_access(
-    dashboard_id: UUID,
-    user_id: UUID,
-    permission: str,
-    db: AsyncSession,
-) -> bool:
-    """Backward compatibility wrapper."""
-    from mkobi.db.repositories.dashboard_repo import DashboardRepository
-    from mkobi.db.repositories.access_repo import AccessRepository
-
-    service = DashboardService(DashboardRepository(), AccessRepository())
-    return await service.grant_access(dashboard_id, user_id, permission, db)
-
-
-async def revoke_access(
-    dashboard_id: UUID,
-    user_id: UUID,
-    db: AsyncSession,
-) -> bool:
-    """Backward compatibility wrapper."""
-    from mkobi.db.repositories.dashboard_repo import DashboardRepository
-    from mkobi.db.repositories.access_repo import AccessRepository
-
-    service = DashboardService(DashboardRepository(), AccessRepository())
-    return await service.revoke_access(dashboard_id, user_id, db)
-
-
-async def get_dashboard_access_list(
-    dashboard_id: UUID,
-    db: AsyncSession,
-) -> list[dict[str, Any]]:
-    """Backward compatibility wrapper."""
-    from mkobi.db.repositories.dashboard_repo import DashboardRepository
-    from mkobi.db.repositories.access_repo import AccessRepository
-
-    service = DashboardService(DashboardRepository(), AccessRepository())
-    return await service.get_dashboard_access_list(dashboard_id, db)

@@ -30,7 +30,7 @@ class ProcessingLogRepository(IProcessingLogRepository):
     Implements IProcessingLogRepository interface.
     """
     async def create_log(
-        cls,
+        self,
         dashboard_id: UUID | None,
         status: ProcessingStatus,
         message: str | None,
@@ -69,7 +69,7 @@ class ProcessingLogRepository(IProcessingLogRepository):
             logger.error("Error creating log: %s", e)
             raise
     async def update_status(
-        cls,
+        self,
         log_id: UUID,
         status: ProcessingStatus,
         message: str | None,
@@ -108,7 +108,7 @@ class ProcessingLogRepository(IProcessingLogRepository):
             logger.error("Error updating log status id=%s: %s", log_id, e)
             raise
     async def get_by_dashboard(
-        cls,
+        self,
         dashboard_id: UUID | None,
         db: AsyncSession,
     ) -> list[ProcessingLogRead]:
@@ -144,7 +144,7 @@ class ProcessingLogRepository(IProcessingLogRepository):
             logger.error("Error getting logs dashboard_id=%s: %s", dashboard_id, e)
             raise
     async def get_filtered(
-        cls,
+        self,
         filters: ProcessingLogFilter,
         db: AsyncSession,
     ) -> list[ProcessingLogRead]:
@@ -200,7 +200,7 @@ class ProcessingLogRepository(IProcessingLogRepository):
             logger.error("Error getting filtered logs: %s", e)
             raise
     async def get_latest_by_dashboard(
-        cls,
+        self,
         dashboard_id: UUID,
         db: AsyncSession,
     ) -> ProcessingLogRead | None:
@@ -239,7 +239,7 @@ class ProcessingLogRepository(IProcessingLogRepository):
             )
             raise
     async def get_by_id(
-        cls,
+        self,
         log_id: UUID,
         db: AsyncSession,
     ) -> ProcessingLogRead | None:
@@ -267,4 +267,37 @@ class ProcessingLogRepository(IProcessingLogRepository):
                 return None
         except SQLAlchemyError as e:
             logger.error("Error getting log id=%s: %s", log_id, e)
+            raise
+
+    async def delete(
+        self,
+        dashboard_id: UUID,
+        db: AsyncSession,
+    ) -> bool:
+        """Delete processing logs by dashboard ID.
+
+        Args:
+            dashboard_id: Dashboard identifier.
+            db: Async database session.
+
+        Returns:
+            True if logs were deleted, False if none found.
+        """
+        try:
+            from sqlalchemy import delete
+
+            stmt = delete(processing_log_model.ProcessingLog).where(
+                processing_log_model.ProcessingLog.dashboard_id == dashboard_id
+            )
+            result = await db.execute(stmt)
+            rowcount: int = cast(int, result.rowcount)
+            deleted = rowcount > 0
+            await db.flush()
+            if deleted:
+                logger.info("Logs deleted for dashboard_id=%s", dashboard_id)
+            else:
+                logger.warning("No logs found to delete for dashboard_id=%s", dashboard_id)
+            return deleted
+        except SQLAlchemyError as e:
+            logger.error("Error deleting logs dashboard_id=%s: %s", dashboard_id, e)
             raise

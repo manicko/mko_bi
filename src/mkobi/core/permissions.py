@@ -331,7 +331,7 @@ def _decode_token_cached(token: str) -> dict[str, Any] | None:
     Returns:
         dict[str, Any] | None: Decoded token data or None.
     """
-    result = decode_token(token)
+    result: dict[str, Any] | None = decode_token(token)
     if result is None:
         return None
     return result

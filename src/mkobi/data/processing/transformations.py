@@ -35,9 +35,9 @@ AGG_FUNC_MAP = {
 def apply_transformations(
     df: pl.DataFrame,
     config: dict[str, Any] | None = None,
-    filters: list[dict[str, Any]] | None = None,
+    filters: list[Any] | None = None,
     groupby: list[str] | None = None,
-    sort_by: str | None = None,
+    sort_by: list[str] | None = None,
     descending: bool = False,
     limit: int | None = None,
 ) -> pl.DataFrame:
@@ -226,10 +226,10 @@ def _apply_dtypes(
 def calculate_aggregations(
     df: pl.DataFrame,
     groupby: list[str] | None = None,
-    aggregations: list[dict[str, Any]] | None = None,
+    aggregations: list[Any] | None = None,
     yoy_config: dict[str, Any] | None = None,
     share_config: dict[str, Any] | None = None,
-    custom_metrics: list[dict[str, Any]] | None = None,
+    custom_metrics: list[Any] | None = None,
 ) -> pl.DataFrame:
     """Calculate data aggregations with YoY and share support.
 

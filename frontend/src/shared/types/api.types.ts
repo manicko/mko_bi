@@ -75,8 +75,15 @@ export interface DashboardDetail {
 export interface DashboardConfig {
   layout: LayoutConfig
   graphs: GraphConfig[]
-  filters: string[] // filter IDs
+  filters: FilterConfigItem[]
   bindings: FilterBinding[]
+}
+
+export interface FilterConfigItem {
+  field: string
+  type: string
+  multi?: boolean
+  source?: string
 }
 
 export interface LayoutConfig {

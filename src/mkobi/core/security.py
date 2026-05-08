@@ -231,33 +231,3 @@ def decode_token(token: str) -> dict[str, Any] | None:
     except Exception as e:
         logger.error("Unexpected error decoding token: %s", e)
         return None
-
-
-def decode_access_token(token: str) -> dict[str, Any] | None:
-    """Decode and validate JWT token (alias for decode_token).
-
-    Args:
-        token: JWT token to decode.
-
-    Returns:
-        dict[str, Any] | None: Decoded token data or None.
-    """
-    return decode_token(token)
-
-
-def get_current_user(token: str) -> dict[str, Any] | None:
-    """Get current user data from JWT token.
-
-    Decodes token and returns user data.
-
-    Args:
-        token: JWT access token.
-
-    Returns:
-        dict[str, Any] | None: User data from token or None.
-    """
-    return decode_token(token)
-
-
-# Alias for backward compatibility
-generate_password_hash = hash_password

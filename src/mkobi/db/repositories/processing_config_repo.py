@@ -27,7 +27,7 @@ class ProcessingConfigRepository(IProcessingConfigRepository):
     Implements IProcessingConfigRepository interface.
     """
     async def get(
-        cls, id: UUID, db: AsyncSession
+        self, id: UUID, db: AsyncSession
     ) -> processing_config_model.ProcessingConfig | None:
         """Get processing config by dashboard ID.
 
@@ -61,7 +61,7 @@ class ProcessingConfigRepository(IProcessingConfigRepository):
             )
             raise
     async def create(
-        cls, db: AsyncSession, **kwargs
+        self, db: AsyncSession, **kwargs
     ) -> processing_config_model.ProcessingConfig | None:
         """Create new processing config.
 
@@ -85,7 +85,7 @@ class ProcessingConfigRepository(IProcessingConfigRepository):
             logger.error("Error creating processing config: %s", e)
             raise
     async def update(
-        cls, id: UUID, db: AsyncSession, **kwargs
+        self, id: UUID, db: AsyncSession, **kwargs
     ) -> processing_config_model.ProcessingConfig | None:
         """Update processing config.
 

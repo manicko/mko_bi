@@ -3,6 +3,10 @@
 import os
 import sys
 
+from alembic import command
+from alembic.config import Config
+from mkobi.config import get_config
+
 # Set environment variables for test database
 os.environ["DATABASE__HOST"] = "localhost"
 os.environ["DATABASE__PORT"] = "5432"
@@ -10,17 +14,12 @@ os.environ["DATABASE__DBNAME"] = "bidb_test"
 os.environ["DATABASE__USER"] = "postgres"
 os.environ["DATABASE__PASSWORD"] = "1234"
 
-# Now import and run migrations
-from alembic import command
-from alembic.config import Config
+# Get the database URL from our config
+config = get_config()
+db_url = str(config.DATABASE_URL)
 
 # Create alembic config
 alembic_cfg = Config("alembic.ini")
-
-# Get the database URL from our config
-from mkobi.config import get_config
-config = get_config()
-db_url = str(config.DATABASE_URL)
 
 # Set the URL directly in alembic config (bypassing interpolation issues)
 alembic_cfg.set_main_option("sqlalchemy.url", db_url)

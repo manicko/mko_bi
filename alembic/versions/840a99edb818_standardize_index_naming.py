@@ -9,6 +9,7 @@ from collections.abc import Sequence
 
 from alembic import op
 
+
 # revision identifiers, used by Alembic.
 revision: str = '840a99edb818'
 down_revision: str | Sequence[str] | None = '2aa835fe1fac'
@@ -130,52 +131,78 @@ def upgrade() -> None:
 def downgrade() -> None:
     """Downgrade schema."""
     # Revert aggregated_data indexes
-    op.drop_index('idx_aggregated_data_dims_gin', table_name='aggregated_data')
-    op.drop_index('idx_aggregated_data_graph_id', table_name='aggregated_data')
-    op.drop_index('idx_aggregated_data_dashboard_id', table_name='aggregated_data')
+    op.execute("DROP INDEX IF EXISTS idx_aggregated_data_dims_gin")
+    op.execute("DROP INDEX IF EXISTS idx_aggregated_data_graph_id")
+    op.execute("DROP INDEX IF EXISTS idx_aggregated_data_dashboard_id")
+    op.execute("DROP INDEX IF EXISTS idx_agg_dashboard_graph")
+    # Recreate the original composite index
     op.create_index('idx_agg_dashboard_graph', 'aggregated_data', ['dashboard_id', 'graph_id'], unique=False)
 
     # Drop created index on dashboard_access
-    op.drop_index('idx_dashboard_access_user', table_name='dashboard_access')
+    op.execute("DROP INDEX IF EXISTS idx_dashboard_access_user")
 
-    # Rename regular indexes back
-    try:
-        op.execute("ALTER INDEX idx_dashboard_filters_dashboard_filter RENAME TO idx_dashboard_filter")
-    except Exception:
-        pass
+    # Rename regular indexes back (use DO blocks for idempotency)
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_dashboard_filters_dashboard_filter' AND relkind = 'i') THEN
+                EXECUTE 'ALTER INDEX idx_dashboard_filters_dashboard_filter RENAME TO idx_dashboard_filter';
+            END IF;
+        END $$;
+    """)
 
-    try:
-        op.execute("ALTER INDEX idx_dashboard_access_dashboard RENAME TO idx_access_dashboard")
-    except Exception:
-        pass
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_dashboard_access_dashboard' AND relkind = 'i') THEN
+                EXECUTE 'ALTER INDEX idx_dashboard_access_dashboard RENAME TO idx_access_dashboard';
+            END IF;
+        END $$;
+    """)
 
-    try:
-        op.execute("ALTER INDEX idx_users_role RENAME TO ix_users_role")
-    except Exception:
-        pass
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_class WHERE relname = 'idx_users_role' AND relkind = 'i') THEN
+                EXECUTE 'ALTER INDEX idx_users_role RENAME TO ix_users_role';
+            END IF;
+        END $$;
+    """)
 
-    # Rename UNIQUE constraints back
-    try:
-        op.execute("ALTER TABLE filters RENAME CONSTRAINT idx_filters_name TO filters_name_key")
-    except Exception:
-        pass
+    # Rename UNIQUE constraints back (use DO blocks for idempotency)
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'idx_filters_name') THEN
+                ALTER TABLE filters RENAME CONSTRAINT idx_filters_name TO filters_name_key;
+            END IF;
+        END $$;
+    """)
 
-    try:
-        op.execute("ALTER TABLE graphs RENAME CONSTRAINT idx_graphs_dashboard_name TO uq_graph_dashboard_name")
-    except Exception:
-        pass
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'idx_graphs_dashboard_name') THEN
+                ALTER TABLE graphs RENAME CONSTRAINT idx_graphs_dashboard_name TO uq_graph_dashboard_name;
+            END IF;
+        END $$;
+    """)
 
-    try:
-        op.execute("ALTER TABLE dashboards RENAME CONSTRAINT idx_dashboards_name TO dashboards_name_key")
-    except Exception:
-        pass
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'idx_dashboards_name') THEN
+                ALTER TABLE dashboards RENAME CONSTRAINT idx_dashboards_name TO dashboards_name_key;
+            END IF;
+        END $$;
+    """)
 
-    try:
-        op.execute("ALTER TABLE layouts RENAME CONSTRAINT idx_layouts_name TO layouts_name_key")
-    except Exception:
-        pass
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'idx_layouts_name') THEN
+                ALTER TABLE layouts RENAME CONSTRAINT idx_layouts_name TO layouts_name_key;
+            END IF;
+        END $$;
+    """)
 
-    try:
-        op.execute("ALTER TABLE users RENAME CONSTRAINT idx_users_email TO users_email_key")
-    except Exception:
-        pass
+    op.execute("""
+        DO $$ BEGIN
+            IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'idx_users_email') THEN
+                ALTER TABLE users RENAME CONSTRAINT idx_users_email TO users_email_key;
+            END IF;
+        END $$;
+    """)

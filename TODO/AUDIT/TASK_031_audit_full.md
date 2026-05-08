@@ -391,14 +391,14 @@ Pipeline должен быть:
 
 ### Core Tables
 
-* `users`: id, email, password_hash, role (UserRole StrEnum), is_active, created_at
-* `layouts`: id, name, definition (JSONB), created_at
+* `users`: id, email, password_hash, role (UserRole StrEnum), is_active, created_at, updated_at
+* `layouts`: id, name, definition (JSONB), created_at, updated_at
 * `dashboards`: id, name, description, layout_id, created_by, created_at, updated_at
-* `graphs`: id, dashboard_id, name, type (GraphType StrEnum), config, dimensions, metrics
-* `filters`: id, name, type (FilterType StrEnum), config
+* `graphs`: id, dashboard_id, name, type (GraphType StrEnum), config, dimensions, metrics, created_at
+* `filters`: id, name, type (FilterType StrEnum), config, created_at
 * `dashboard_access`: user_id, dashboard_id, permission (DashboardPermission StrEnum)
 * `dashboard_filters`: dashboard_id, filter_id (many-to-many)
-* `processing_configs`: dashboard_id, settings (JSONB)
+* `processing_configs`: dashboard_id, settings (JSONB), updated_at
 * `aggregated_data`: id, dashboard_id, graph_id, dims (JSONB), metrics (JSONB)
 * `processing_logs`: id, dashboard_id, status (ProcessingStatus StrEnum), message, timestamps
 * `registration_requests`: id, email, status (RegistrationStatus StrEnum), ip, reviewed_by, timestamps
@@ -479,7 +479,7 @@ CREATE INDEX idx_dashboard_filters_dashboard_filter ON dashboard_filters(dashboa
 
 * **api**: axiosInstance с интерцепторами для JWT
 * **components**: ProtectedRoute, RoleBasedAccess, Layout (AppLayout, Header, Sidebar)
-* **types**: api.types.ts (общие типы User, Dashboard, etc.)
+* **types**: api.types.ts (общие типы User, Dashboard, etc.), enums.ts (TypeScript enums)
 
 ## 6.2 Type Safety
 
@@ -654,6 +654,16 @@ class GraphType(StrEnum):
 * Unclear naming (переименовывать)
 * Magic constants (выносить в константы или config)
 * Комментарии там, где сложная логика (НО не избыточные)
+* Comments MUST be in English (НЕ на русском)
+
+## 7.5 Logging Language
+
+Проверить:
+
+* Log messages are in English (НЕ на русском)
+* Exception messages are in English
+* Comments are in English
+* Example: `logger.info("User logged in")` (GOOD), `logger.info("Пользователь вошел")` (BAD)
 
 ## 7.5 Error Handling
 
@@ -730,6 +740,7 @@ logger = logging.getLogger(__name__)
 * Именование: PascalCase для компонентов, camelCase для переменных
 * Отсутствие закомментированного кода
 * Отсутствие console.log() в продакшене
+* Comments MUST be in English (НЕ на русском)
 
 ---
 
@@ -884,7 +895,7 @@ logger = logging.getLogger(__name__)
 ---
 
 # Формат отчета (ОБЯЗАТЕЛЬНО)
-
+ 
 Создать новый файл `TODO/TASK_<number>_analysis_report.md`
 вместо <number> - подставить номер, убедившись, что файл с таким номером не существует
 
@@ -1123,7 +1134,7 @@ Recommendations:
 
 ## Специфичные требования к mkobi
 
-* Package name: `mkobi` 
+* Package name: `mkobi`
 * StrEnum вместо dict/list для всех констант
 * Pydantic models в `src/mkobi/models/`
 * Logging через `logger = logging.getLogger(__name__)`
@@ -1132,3 +1143,4 @@ Recommendations:
 * FSD для frontend
 * Polars (НЕ pandas)
 * PostgreSQL + JSONB для агрегированных данных
+* Comments and logs MUST be in English (НЕ на русском)

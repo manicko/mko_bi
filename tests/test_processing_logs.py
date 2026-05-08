@@ -163,23 +163,30 @@ class TestProcessingLogRepository:
 class TestProcessingLogService:
     """Tests for ProcessingLogService."""
 
+    @pytest.fixture
+    def service(self, async_db_session):
+        """Create service with repository."""
+        from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
+        repo = ProcessingLogRepository()
+        return ProcessingLogService(repo)
+
     @pytest.mark.asyncio
-    async def test_create_started_log(self, async_db_session):
+    async def test_create_started_log(self, service, async_db_session):
         """Test creating started log via service."""
-        result = await ProcessingLogService.create_started_log(None, async_db_session)
+        result = await service.create_started_log(None, async_db_session)
 
         assert isinstance(result, ProcessingLogRead)
         assert result.dashboard_id is None
         assert result.status == ProcessingStatusEnum.STARTED
 
     @pytest.mark.asyncio
-    async def test_update_to_success(self, async_db_session):
+    async def test_update_to_success(self, service, async_db_session):
         """Test updating log to success."""
         # First create a log
-        log = await ProcessingLogService.create_started_log(None, async_db_session)
+        log = await service.create_started_log(None, async_db_session)
 
         # Update to success
-        result = await ProcessingLogService.update_to_success(
+        result = await service.update_to_success(
             log.id, "All good", async_db_session
         )
 
@@ -188,13 +195,13 @@ class TestProcessingLogService:
         assert result.message == "All good"
 
     @pytest.mark.asyncio
-    async def test_update_to_failed(self, async_db_session):
+    async def test_update_to_failed(self, service, async_db_session):
         """Test updating log to failed."""
         # First create a log
-        log = await ProcessingLogService.create_started_log(None, async_db_session)
+        log = await service.create_started_log(None, async_db_session)
 
         # Update to failed
-        result = await ProcessingLogService.update_to_failed(
+        result = await service.update_to_failed(
             log.id, "Error occurred", async_db_session
         )
 
@@ -203,21 +210,21 @@ class TestProcessingLogService:
         assert result.message == "Error occurred"
 
     @pytest.mark.asyncio
-    async def test_get_filtered(self, async_db_session):
+    async def test_get_filtered(self, service, async_db_session):
         """Test getting filtered logs via service."""
         # Create logs
-        log1 = await ProcessingLogService.create_started_log(None, async_db_session)
-        await ProcessingLogService.update_to_success(
+        log1 = await service.create_started_log(None, async_db_session)
+        await service.update_to_success(
             log1.id,
             "Done",
             async_db_session,
         )
-        await ProcessingLogService.create_started_log(None, async_db_session)
+        await service.create_started_log(None, async_db_session)
 
         filters = ProcessingLogFilter(
             status=ProcessingStatusEnum.SUCCESS,
         )
 
-        logs = await ProcessingLogService.get_filtered(filters, async_db_session)
+        logs = await service.get_filtered(filters, async_db_session)
         assert len(logs) == 1
         assert logs[0].status == ProcessingStatusEnum.SUCCESS

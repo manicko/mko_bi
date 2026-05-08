@@ -27,7 +27,7 @@ class AggregatedDataRepository(IAggregatedDataRepository):
     Implements IAggregatedDataRepository interface.
     """
     async def bulk_insert(
-        cls,
+        self,
         db: AsyncSession,
         dashboard_id: UUID,
         records: list[dict[str, Any]],
@@ -95,7 +95,7 @@ class AggregatedDataRepository(IAggregatedDataRepository):
             )
             raise
     async def get_by_dashboard_id(
-        cls, dashboard_id: UUID, db: AsyncSession
+        self, dashboard_id: UUID, db: AsyncSession
     ) -> list[aggregated_data_model.AggregatedData]:
         """Get aggregated data for dashboard.
 
@@ -126,7 +126,7 @@ class AggregatedDataRepository(IAggregatedDataRepository):
             )
             raise
     async def get_by_graph_id(
-        cls,
+        self,
         graph_id: UUID,
         db: AsyncSession,
         filters: dict[str, Any] | None = None,
@@ -169,7 +169,7 @@ class AggregatedDataRepository(IAggregatedDataRepository):
             )
             raise
     async def delete_by_graph_id(
-        cls,
+        self,
         graph_id: UUID,
         db: AsyncSession,
     ) -> int:
@@ -202,7 +202,7 @@ class AggregatedDataRepository(IAggregatedDataRepository):
             )
             raise
     async def delete_by_dashboard_id(
-        cls,
+        self,
         dashboard_id: UUID,
         db: AsyncSession,
     ) -> int:
@@ -235,7 +235,7 @@ class AggregatedDataRepository(IAggregatedDataRepository):
             )
             raise
     async def get_dims_values(
-        cls,
+        self,
         graph_id: UUID,
         dim_name: str,
         db: AsyncSession,

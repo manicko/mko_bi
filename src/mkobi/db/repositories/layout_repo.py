@@ -12,12 +12,14 @@ from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 
 from mkobi.db.models import layout as layout_model
+from mkobi.interfaces.repository_interfaces import ILayoutRepository
 from sqlalchemy.ext.asyncio import AsyncSession
+
 
 logger = logging.getLogger(__name__)
 
 
-class LayoutRepository:
+class LayoutRepository(ILayoutRepository):
     """Repository for layout operations.
 
     Provides methods for creating, reading, updating and deleting
@@ -125,12 +127,12 @@ class LayoutRepository:
             raise
 
     async def update(
-        self, layout_id: UUID, db: AsyncSession, **kwargs
+        self, id: UUID, db: AsyncSession, **kwargs
     ) -> layout_model.Layout | None:
         """Update layout data.
 
         Args:
-            layout_id: Layout identifier (UUID).
+            id: Layout identifier (UUID).
             db: Async database session.
             **kwargs: Fields to update.
 
@@ -142,28 +144,28 @@ class LayoutRepository:
         """
         try:
             result = await db.execute(
-                select(layout_model.Layout).where(layout_model.Layout.id == layout_id)
+                select(layout_model.Layout).where(layout_model.Layout.id == id)
             )
             layout_obj = result.scalar_one_or_none()
             if not layout_obj:
-                logger.warning("Layout not found for update: id=%s", layout_id)
+                logger.warning("Layout not found for update: id=%s", id)
                 return None
             for key, value in kwargs.items():
                 if hasattr(layout_obj, key):
                     setattr(layout_obj, key, value)
             await db.flush()
             await db.refresh(layout_obj)
-            logger.info("Layout updated: id=%s", layout_id)
+            logger.info("Layout updated: id=%s", id)
             return cast(layout_model.Layout | None, layout_obj)
         except SQLAlchemyError as e:
-            logger.error("Error updating layout id=%s: %s", layout_id, e)
+            logger.error("Error updating layout id=%s: %s", id, e)
             raise
 
-    async def delete(self, layout_id: UUID, db: AsyncSession) -> bool:
+    async def delete(self, id: UUID, db: AsyncSession) -> bool:
         """Delete layout.
 
         Args:
-            layout_id: Layout identifier (UUID).
+            id: Layout identifier (UUID).
             db: Async database session.
 
         Returns:
@@ -174,16 +176,16 @@ class LayoutRepository:
         """
         try:
             result = await db.execute(
-                select(layout_model.Layout).where(layout_model.Layout.id == layout_id)
+                select(layout_model.Layout).where(layout_model.Layout.id == id)
             )
             layout_obj = result.scalar_one_or_none()
             if not layout_obj:
-                logger.warning("Layout not found for deletion: id=%s", layout_id)
+                logger.warning("Layout not found for deletion: id=%s", id)
                 return False
             await db.delete(layout_obj)
             await db.flush()
-            logger.info("Layout deleted: id=%s", layout_id)
+            logger.info("Layout deleted: id=%s", id)
             return True
         except SQLAlchemyError as e:
-            logger.error("Error deleting layout id=%s: %s", layout_id, e)
+            logger.error("Error deleting layout id=%s: %s", id, e)
             raise

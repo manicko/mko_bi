@@ -87,7 +87,7 @@ class UserRepository(IUserRepository):
             result = await db.execute(
                 select(user_model.User).where(user_model.User.email == email)
             )
-            user = result.scalar_one_or_none()
+            user: user_model.User | None = cast(user_model.User | None, result.scalar_one_or_none())
             if user:
                 logger.info("User retrieved by email (with hash): %s", email)
                 return user
