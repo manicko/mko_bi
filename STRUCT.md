@@ -20,7 +20,6 @@ C:\py_dev\mkobi
 ├── alembic.ini
 ├── best_llm_models.md
 ├── bidb_schema.sql
-├── check_db.py
 ├── check_paths.py
 ├── check_tables.py
 ├── create_db.sql
@@ -138,7 +137,6 @@ C:\py_dev\mkobi
 ├── pyproject.toml
 ├── README.md
 ├── README_DOCKER.md
-├── recreate_test_db.py
 ├── setup_test_db.py
 ├── SPEC.md
 ├── SPEC_FRONTEND.md
@@ -277,16 +275,22 @@ C:\py_dev\mkobi
 │   ├── DEV
 │   │   ├── 03_mypy_type_errors_DONE.md
 │   │   ├── 15_code_quality_tools.md
-│   │   ├── 21_storage_manager_unique_constraint_DONE.md
 │   │   ├── 22_unrelated_test_failures.md
 │   │   ├── DOCKER_PLAN.md
 │   │   ├── TASK_006_repository_instance_methods_fix.md
 │   │   ├── TASK_006_storage_manager_methods_fix.md
-│   │   ├── TASK_007_dashboard_creation_fix.md
+│   │   ├── TASK_007_dashboard_creation_fix_DONE.md
 │   │   ├── TASK_008_test_messages_english_fix.md
 │   │   ├── TASK_009_upload_api_auth_fix.md
 │   │   ├── TASK_010_test_database_setup_fix_DONE.md
-│   │   └── TASK_010_test_database_setup_fix_IN_PROGRESS.md
+│   │   ├── TASK_010_test_database_setup_fix_IN_PROGRESS.md
+│   │   ├── TASK_011_userread_password_hash_fix.md
+│   │   ├── TASK_012_layout_api_405_fix.md
+│   │   ├── TASK_013_registration_request_repo_delete.md
+│   │   ├── TASK_014_linter_issues_fix.md
+│   │   ├── TASK_015_auth_password_hash_fix.md
+│   │   ├── TASK_016_layout_api_routes_fix.md
+│   │   └── TASK_017_dashboard_api_500_fix_DONE.md
 │   └── DONE
 │       ├── TASK_001_sync_async_unification.md
 │       ├── TASK_014_dash_modern_component_architecture_DONE.md

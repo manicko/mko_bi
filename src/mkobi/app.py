@@ -1,11 +1,12 @@
-"""Фабрика приложения FastAPI.
+"""Factory for FastAPI application.
 
-Этот модуль предоставляет функцию create_app() для создания
-экземпляра FastAPI с использованием factory pattern.
+This module provides the create_app() function to create
+a FastAPI instance using the factory pattern.
 """
 
 import logging
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -14,15 +15,17 @@ from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
+from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from mkobi.api import routes
 from mkobi.config import get_config
 from mkobi.core.logging_config import setup_logging
-from mkobi.db.starter import DatabaseStarter
+from mkobi.db.session import get_session
+from mkobi.db.starter import DatabaseStarter, DatabaseStarterConfig, DatabaseNotFoundError, SchemaNotFoundError
 from mkobi.models.enums import EnvironmentEnum
 
-# Получаем конфигурацию и настраиваем логирование
+# Get configuration and setup logging
 config = get_config()
 setup_logging(
     log_level=config.log_level,
@@ -35,27 +38,51 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Жизненный цикл приложения."""
-    starter = DatabaseStarter()
+    """Application lifecycle manager.
+    
+    Handles startup and shutdown events with proper error handling.
+    Logs all errors with context and ensures clean shutdown on startup failure.
+    """
+    config = get_config()
+    starter_config = DatabaseStarterConfig(
+        env=config.environment,
+        main_database_url=config.DATABASE_URL,
+        test_database_url=config.TEST_DATABASE_URL,
+        auto_migrate=config.auto_migrate,
+        migration_script_path=config.migration_script_path,
+        alembic_ini_path=config.alembic_ini_path,
+        recreate_test_db=config.recreate_test_db,
+    )
+    starter = DatabaseStarter(starter_config)
     try:
+        logger.info("Initializing application...")
         await starter.startup()
-    except Exception as e:
-        logger.error("Failed to initialize database: %s", e)
+        logger.info("Application initialized successfully")
+        yield
+    except DatabaseNotFoundError as e:
+        logger.error("Database not found: %s", e)
         raise
-    yield
-    await starter.shutdown()
+    except SchemaNotFoundError as e:
+        logger.error("Database schema not initialized: %s", e)
+        raise
+    except Exception as e:
+        logger.error("Failed to initialize application: %s", e, exc_info=True)
+        raise
+    finally:
+        logger.info("Shutting down application...")
+        await starter.shutdown()
 
 
 def create_app() -> FastAPI:
-    """Создает и конфигурирует приложение FastAPI.
+    """Creates and configures the FastAPI application.
 
-    Создает экземпляр FastAPI с использованием factory pattern,
-    настраивает middleware, обработчики ошибок и регистрирует маршруты.
+    Creates a FastAPI instance using the factory pattern,
+    configures middleware, error handlers, and registers routes.
 
     Returns:
-        FastAPI: Сконфигурированное приложение FastAPI.
+        FastAPI: Configured FastAPI application.
     """
-    # Создаем приложение
+    # Create application
     config = get_config()
 
     # Validate JWT secret key is configured
@@ -81,7 +108,7 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # Настройка CORS middleware
+    # Configure CORS middleware
     logger.info("Configuring CORS with allowed origins: %s", config.cors_origins)
     application.add_middleware(
         CORSMiddleware,
@@ -91,13 +118,13 @@ def create_app() -> FastAPI:
         allow_headers=["*"],
     )
 
-    # Настройка GZip middleware
+    # Configure GZip middleware
     application.add_middleware(
         GZipMiddleware,
         minimum_size=1000,
     )
 
-    # Регистрация роутеров с префиксом /api/v1
+    # Register routers with /api/v1 prefix
     application.include_router(routes.auth.router, prefix="/api/v1")
     application.include_router(routes.users.router, prefix="/api/v1")
     application.include_router(routes.dashboards.router, prefix="/api/v1")
@@ -108,13 +135,13 @@ def create_app() -> FastAPI:
     application.include_router(routes.processing_logs.router, prefix="/api/v1")
     application.include_router(routes.admin.router, prefix="/api/v1")
 
-    # Настройка раздачи статических файлов React SPA (после всех API роутов)
+    # Setup static files for React SPA (after all API routes)
     _setup_static_files(application)
 
-    # Корневой эндпоинт
+    # Root endpoint
     @application.get("/", tags=["health"])
     async def root() -> dict[str, str | int]:
-        """Корневой эндпоинт для проверки работы API."""
+        """Root endpoint for API health check."""
         return {
             "message": "BI Dashboard API",
             "status": "active",
@@ -122,16 +149,72 @@ def create_app() -> FastAPI:
         }
 
     @application.get("/health", tags=["health"])
-    async def health_check() -> dict[str, str]:
-        """Эндпоинт проверки здоровья приложения."""
-        return {"status": "healthy"}
+    async def health_check() -> Response:
+        """Application health check endpoint.
+        
+        Verifies database connectivity by executing a simple query.
+        Returns 503 if database is not accessible.
+        """
+        try:
+            # Quick DB connectivity check
+            async with get_session() as db:
+                await db.execute(text("SELECT 1"))
+            return JSONResponse(
+                content={"status": "healthy", "database": "connected"}
+            )
+        except Exception as e:
+            logger.error("Health check failed: %s", e)
+            return JSONResponse(
+                status_code=503,
+                content={"status": "unhealthy", "database": "disconnected"},
+            )
 
-    # Обработчики исключений
+    @application.get("/health/detailed", tags=["health"])
+    async def detailed_health_check() -> dict[str, Any]:
+        """Detailed health check with component status.
+        
+        Checks database connectivity and returns detailed status information.
+        This endpoint is intended for admin use and monitoring systems.
+        """
+        health_status: dict[str, Any] = {
+            "status": "healthy",
+            "components": {},
+        }
+        
+        components: dict[str, Any] = {}
+        
+        # Check database connectivity
+        try:
+            async with get_session() as db:
+                await db.execute(text("SELECT 1"))
+            components["database"] = {
+                "status": "connected",
+                "type": "postgresql",
+            }
+        except Exception as e:
+            logger.error("Database health check failed: %s", e)
+            health_status["status"] = "unhealthy"
+            components["database"] = {
+                "status": "disconnected",
+                "error": str(e),
+            }
+        
+        # Check if static files are mounted
+        import os
+        components["static_files"] = {
+            "status": "available" if os.path.isdir("frontend/dist") else "unavailable",
+            "path": "frontend/dist",
+        }
+        
+        health_status["components"] = components
+        return health_status
+
+    # Exception handlers
     @application.exception_handler(StarletteHTTPException)
     async def http_exception_handler(
         request: Request, exc: StarletteHTTPException
     ) -> JSONResponse:
-        """Обработчик HTTP исключений."""
+        """Handler for HTTP exceptions."""
         return JSONResponse(
             status_code=exc.status_code,
             content={
@@ -144,7 +227,7 @@ def create_app() -> FastAPI:
     async def validation_exception_handler(
         request: Request, exc: RequestValidationError
     ) -> JSONResponse:
-        """Обработчик ошибок валидации запросов."""
+        """Handler for request validation errors."""
         return JSONResponse(
             status_code=422,
             content={
@@ -158,7 +241,7 @@ def create_app() -> FastAPI:
     async def pydantic_validation_exception_handler(
         request: Request, exc: ValidationError
     ) -> JSONResponse:
-        """Обработчик ошибок валидации Pydantic."""
+        """Handler for Pydantic validation errors."""
         return JSONResponse(
             status_code=500,
             content={
@@ -172,16 +255,16 @@ def create_app() -> FastAPI:
 
 
 def _setup_static_files(application: FastAPI) -> None:
-    """Настраивает раздачу статических файлов React SPA.
+    """Sets up static file serving for React SPA.
 
-    Монтирует статические файлы из frontend/dist и настраивает
-    SPA fallback для всех не-API роутов.
+    Mounts static files from frontend/dist and configures
+    SPA fallback for all non-API routes.
     """
     import os
 
     static_dir = "frontend/dist"
 
-    # Проверяем существование директории со сборкой React
+    # Check if React build directory exists
     if os.path.isdir(static_dir):
         logger.info("Mounting static files from %s", static_dir)
         application.mount(
@@ -196,10 +279,10 @@ def _setup_static_files(application: FastAPI) -> None:
             static_dir,
         )
 
-        # Fallback: SPA routing для разработки или если сборка не найдена
+        # Fallback: SPA routing for development or if build not found
         @application.get("/{full_path:path}", include_in_schema=False)
         async def serve_spa(full_path: str) -> Response:
-            """SPA fallback - возвращает index.html для всех не-API роутов."""
+            """SPA fallback - returns index.html for all non-API routes."""
             index_path = os.path.join(static_dir, "index.html")
             if os.path.exists(index_path):
                 return FileResponse(index_path)

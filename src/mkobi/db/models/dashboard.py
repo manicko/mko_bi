@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import TYPE_CHECKING
+from typing import Any, TYPE_CHECKING
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
@@ -49,7 +49,7 @@ class Dashboard(Base):
         nullable=True,
     )
 
-    config: Mapped[str | None] = mapped_column(
+    config: Mapped[dict[str, Any] | None] = mapped_column(
         JSONB,
         nullable=True,
     )

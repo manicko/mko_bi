@@ -117,10 +117,11 @@ async def create_dashboard_endpoint(
             "Error creating dashboard name=%s: %s",
             dashboard.name,
             e,
+            exc_info=True,
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Dashboard creation error",
+            detail=f"Dashboard creation error: {str(e)}",
         ) from e
 
 
@@ -251,6 +252,7 @@ async def get_dashboard_endpoint(
             "Error getting dashboard dashboard_id=%s: %s",
             dashboard_id,
             e,
+            exc_info=True,
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -317,9 +319,7 @@ async def update_dashboard_endpoint(
 
         updated = await update_dashboard(
             dashboard_id=dashboard_id,
-            config=dashboard_update.config.model_dump()
-            if dashboard_update.config
-            else None,
+            update_data=dashboard_update.model_dump(exclude_unset=True),
             db=db,
         )
         if updated is None:

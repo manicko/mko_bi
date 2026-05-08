@@ -68,7 +68,7 @@ class DatabaseStarter:
         logger.info("Starting database initialization...")
 
         # Check main database
-        main_url = self._config.main_database_url or get_config().database.url
+        main_url = self._config.main_database_url or get_config().DATABASE_URL
         if not main_url:
             raise DatabaseNotFoundError("Main database URL not configured")
 
@@ -136,6 +136,14 @@ class DatabaseStarter:
         # Drop and recreate test database
         try:
             async with admin_engine.connect() as conn:
+                # Terminate existing connections to bidb_test
+                await conn.execute(
+                    text(
+                        "SELECT pg_terminate_backend(pid) "
+                        "FROM pg_stat_activity "
+                        "WHERE datname = 'bidb_test'"
+                    )
+                )
                 await conn.execute(text("DROP DATABASE IF EXISTS bidb_test"))
                 await conn.execute(text("CREATE DATABASE bidb_test"))
             await admin_engine.dispose()

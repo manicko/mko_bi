@@ -77,6 +77,7 @@ class DatabaseSettings(BaseModel):
     dbname: str = "bidb"
     user: str = "postgres"
     password: str | None = None
+    test_dbname: str = "bidb_test"
 
     @property
     def database_url(self) -> PostgresDsn:
@@ -234,7 +235,6 @@ class Settings(BaseSettings):
     auto_migrate: bool = False
     migration_script_path: str = "alembic"
     alembic_ini_path: str = "alembic.ini"
-    test_database_url: str | None = None
     recreate_test_db: bool = False
 
     model_config = {
@@ -307,9 +307,25 @@ class Settings(BaseSettings):
         return str(self.database.database_url)
 
     @property
-    def database_url(self) -> str:
-        """Алиас для DATABASE_URL."""
-        return self.DATABASE_URL
+    def TEST_DATABASE_URL(self) -> str | None:
+        """Constructs test database URL from database settings with test dbname."""
+        if not self.database.password:
+            return None
+        return str(
+            PostgresDsn.build(
+                scheme="postgresql+asyncpg",
+                username=self.database.user,
+                password=self.database.password,
+                host=self.database.host,
+                port=self.database.port,
+                path=self.database.test_dbname,
+            )
+        )
+
+    @property
+    def test_database_url(self) -> str | None:
+        """Alias for TEST_DATABASE_URL."""
+        return self.TEST_DATABASE_URL
 
     @property
     def jwt_secret_key(self) -> str | None:

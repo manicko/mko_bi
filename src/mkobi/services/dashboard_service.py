@@ -8,7 +8,6 @@ permission checking, and logging.
 Implements IDashboardService interface for dependency injection.
 """
 
-import json
 import logging
 from typing import Any, cast
 from uuid import UUID
@@ -24,8 +23,6 @@ from mkobi.interfaces.repository_interfaces import (
     IDashboardRepository,
     IAccessRepository,
 )
-from mkobi.db.repositories.dashboard_repo import DashboardRepository
-from mkobi.db.repositories.access_repo import AccessRepository
 from mkobi.models.dashboard import (
     DashboardConfig,
     DashboardRead,
@@ -89,7 +86,7 @@ class DashboardService(IDashboardService):
             dashboard_obj = await self.dashboard_repo.create(
                 db=db,
                 name=name,
-                config=json.dumps(config_obj.model_dump()),
+                config=config_obj.model_dump(),
                 created_by=owner_id,
             )
 
@@ -530,27 +527,24 @@ class DashboardService(IDashboardService):
         self, dashboard_obj: dashboard_model.Dashboard, db: AsyncSession
     ) -> DashboardRead:
         """Convert dashboard model to Pydantic DashboardRead model."""
-        # Handle config which might be None or a JSON string
-        config_data = getattr(dashboard_obj, "config", None)
-        if config_data is None:
-            config = DashboardConfig(graph_types=[], metrics=[], dimensions=[])
-        elif isinstance(config_data, dict):
-            config = DashboardConfig(**config_data)
+        # Handle config which might be None or empty dict
+        config_data = dashboard_obj.config
+        if config_data is None or config_data == {}:
+            config = DashboardConfig(graph_types=["bar"])
         else:
-            # Assume it's a JSON string
-            config = DashboardConfig(**json.loads(config_data))
+            config = DashboardConfig(**config_data)
 
         dashboard_dict = {
             "id": dashboard_obj.id,
             "name": dashboard_obj.name,
-            "description": getattr(dashboard_obj, "description", None),
+            "description": dashboard_obj.description,
             "config": config,
-            "layout_id": getattr(dashboard_obj, "layout_id", None),
+            "layout_id": dashboard_obj.layout_id,
             "created_at": dashboard_obj.created_at,
-            "updated_at": getattr(dashboard_obj, "updated_at", None),
+            "updated_at": dashboard_obj.updated_at,
         }
         # Add layout if present
-        if getattr(dashboard_obj, "layout", None):
+        if dashboard_obj.layout:
             dashboard_dict["layout"] = LayoutRead.model_validate(dashboard_obj.layout)
         return cast(DashboardRead, DashboardRead.model_validate(dashboard_dict))
 

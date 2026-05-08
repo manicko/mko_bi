@@ -145,10 +145,20 @@ class TestUpdateDashboard:
     ) -> None:
         """Test updating dashboard as admin (success)."""
         repo = DashboardRepository()
+        access_repo = AccessRepository()
         dashboard = await repo.create(
             db=async_db_session,
             name="update_test_dashboard",
             created_by=test_user["id"],
+        )
+        await async_db_session.commit()
+
+        # Grant access
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=test_user["id"],
+            dashboard_id=dashboard.id,
+            permission=DashboardPermission.EDIT,
         )
         await async_db_session.commit()
 
@@ -205,10 +215,20 @@ class TestDeleteDashboard:
     ) -> None:
         """Test deleting dashboard as admin (success)."""
         repo = DashboardRepository()
+        access_repo = AccessRepository()
         dashboard = await repo.create(
             db=async_db_session,
             name="delete_test_dashboard",
             created_by=test_user["id"],
+        )
+        await async_db_session.commit()
+
+        # Grant access
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=test_user["id"],
+            dashboard_id=dashboard.id,
+            permission=DashboardPermission.EDIT,
         )
         await async_db_session.commit()
 
