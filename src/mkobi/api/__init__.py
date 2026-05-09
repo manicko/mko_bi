@@ -1,4 +1,4 @@
-"""Пакет API."""
+"""API package."""
 
 from mkobi.api import routes
 

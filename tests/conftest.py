@@ -3,7 +3,6 @@ import os
 from uuid import uuid4
 
 import pytest
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -30,7 +29,6 @@ os.environ["RECREATE_TEST_DB"] = "true"
 from mkobi.config import get_config
 from mkobi.core.security import create_access_token, hash_password
 from mkobi.db.repositories.user_repo import UserRepository
-from mkobi.main import app
 
 _config = get_config()
 # Use TEST_DATABASE_URL for test async engine (explicitly for test database)
@@ -186,31 +184,49 @@ async def async_session_maker(async_test_engine):
 
 
 @pytest.fixture(scope="function")
-async def async_db_session(async_test_engine, async_session_maker):
+async def async_db_session(async_session_maker):
     """Fixture for creating async DB session for tests.
     
-    Uses nested transaction pattern for test isolation:
-    - Creates a savepoint at the start
-    - Rolls back to savepoint at the end
+    Uses simple rollback for test isolation:
+    - Creates a session
+    - Yields it for test use
+    - Rolls back at the end (undoing all changes)
     - No TRUNCATE needed, no deadlocks
     """
     async with async_session_maker() as session:
-        # Start a nested transaction (savepoint)
-        async with session.begin_nested():
-            yield session
+        yield session
+        # Rollback any uncommitted changes
+        await session.rollback()
+        # Close the session
+        await session.close()
 
 
 @pytest.fixture
-async def async_client():
-    """Fixture for creating async HTTP client."""
+async def async_client(async_db_session):
+    """Fixture for creating async HTTP client.
+    
+    Overrides the get_db_dependency to use the test's session.
+    This ensures the API and test use the same session.
+    """
+    from mkobi.api.deps import get_db_dependency
+    from mkobi.main import app
     import httpx
     from httpx import ASGITransport
+
+    # Override the database dependency to use test session
+    async def override_get_db() -> AsyncSession:
+        yield async_db_session
+
+    app.dependency_overrides[get_db_dependency] = override_get_db
 
     transport = ASGITransport(app=app)
     async with httpx.AsyncClient(
         transport=transport, base_url="http://testserver/api/v1"
     ) as client:
         yield client
+
+    # Clear overrides after test
+    app.dependency_overrides.clear()
 
 
 @pytest.fixture
@@ -233,7 +249,8 @@ async def test_user(async_db_session) -> dict[str, str | object]:
         password_hash=hash_password("TestPass123!"),
         role="admin",
     )
-    await async_db_session.flush()
+    # Commit the user so the API can see it
+    await async_db_session.commit()
 
     token = create_access_token({"user_id": str(user.id), "email": user.email})
 

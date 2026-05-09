@@ -8,7 +8,7 @@ from mkobi.models.layout import LayoutRead
 
 
 class DashboardConfig(BaseModel):
-    """Модель конфигурации дашборда."""
+    """Dashboard configuration model."""
 
     graph_types: list[GraphType]
     filters: list[dict[str, Any]] | None = None
@@ -46,7 +46,7 @@ class DashboardConfig(BaseModel):
 
 
 class DashboardCreate(BaseModel):
-    """Модель для создания нового дашборда."""
+    """Model for creating new dashboard."""
 
     name: str
     description: str | None = None
@@ -77,7 +77,7 @@ class DashboardCreate(BaseModel):
 
 
 class DashboardRead(BaseModel):
-    """Модель для чтения данных дашборда."""
+    """Model for reading dashboard data."""
 
     id: UUID
     name: str
@@ -114,7 +114,7 @@ class DashboardRead(BaseModel):
 
 
 class DashboardUpdate(BaseModel):
-    """Модель для обновления дашборда."""
+    """Model for updating dashboard."""
 
     name: str | None = None
     description: str | None = None

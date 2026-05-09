@@ -1,4 +1,4 @@
-"""Модель заявок на регистрацию."""
+"""Registration request model."""
 
 from __future__ import annotations
 
@@ -25,10 +25,10 @@ if TYPE_CHECKING:
 
 
 class RegistrationRequest(Base):
-    """Модель заявок на регистрацию пользователей.
+    """Registration request model for user signups.
 
-    Заявки создаются через /api/v1/auth/register-request
-    и обрабатываются администраторами.
+    Requests are created via /api/v1/auth/register-request
+    and processed by administrators.
     """
 
     __tablename__ = "registration_requests"
@@ -79,7 +79,7 @@ class RegistrationRequest(Base):
         server_default=text("now()"),
     )
 
-    # Связь с пользователем, который рассмотрел заявку
+    # Relationship with user who reviewed the request
     reviewer: Mapped[User | None] = relationship(
         "User",
         back_populates="reviewed_registration_requests",

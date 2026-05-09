@@ -1,8 +1,8 @@
-"""Абстрактные интерфейсы для внедрения зависимостей.
+"""Abstract interfaces for dependency injection.
 
-Содержит интерфейсы для репозиториев и сервисов,
-которые используются для разрыва циклических зависимостей
-и улучшения тестируемости кода.
+Contains interfaces for repositories and services,
+used to break circular dependencies
+and improve code testability.
 """
 
 from mkobi.interfaces.repository_interfaces import (

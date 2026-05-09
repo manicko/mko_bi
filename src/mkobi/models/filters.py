@@ -7,7 +7,7 @@ from mkobi.models.types import FilterConfigDict
 
 
 class FilterBase(BaseModel):
-    """Базовая модель для фильтров."""
+    """Base model for filters."""
 
     name: str
     type: FilterType
@@ -26,13 +26,13 @@ class FilterBase(BaseModel):
 
 
 class FilterCreate(FilterBase):
-    """Модель для создания фильтра."""
+    """Model for creating filter."""
 
     pass
 
 
 class FilterUpdate(BaseModel):
-    """Модель для обновления фильтра."""
+    """Model for updating filter."""
 
     name: str | None = None
     type: FilterType | None = None
@@ -51,7 +51,7 @@ class FilterUpdate(BaseModel):
 
 
 class FilterRead(FilterBase):
-    """Модель для чтения данных фильтра."""
+    """Model for reading filter data."""
 
     id: UUID
     created_at: datetime

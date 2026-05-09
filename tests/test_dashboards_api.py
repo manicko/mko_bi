@@ -22,7 +22,7 @@ class TestGetMyDashboards:
             name="test_my_dashboard",
             created_by=test_user["id"],
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Grant view access to test_user
         access_repo = AccessRepository()
@@ -32,7 +32,7 @@ class TestGetMyDashboards:
             dashboard_id=dashboard.id,
             permission=DashboardPermission.VIEW,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         response = await authenticated_client.get("/dashboards/my")
         assert response.status_code == status.HTTP_200_OK
@@ -54,7 +54,7 @@ class TestGetDashboardDetail:
             name="test_detail_dashboard",
             created_by=test_user["id"],
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Grant access
         access_repo = AccessRepository()
@@ -64,7 +64,7 @@ class TestGetDashboardDetail:
             dashboard_id=dashboard.id,
             permission=DashboardPermission.VIEW,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         response = await authenticated_client.get(f"/dashboards/{dashboard.id}")
         assert response.status_code == status.HTTP_200_OK
@@ -82,7 +82,7 @@ class TestGetDashboardDetail:
             name="test_no_access_dashboard",
             created_by=test_user["id"],
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # No access granted
         response = await authenticated_client.get(f"/dashboards/{dashboard.id}")
@@ -122,7 +122,7 @@ class TestCreateDashboard:
             password_hash="hash",
             role=UserRole.VIEWER,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Login as viewer
         from mkobi.core.security import create_access_token
@@ -151,7 +151,7 @@ class TestUpdateDashboard:
             name="update_test_dashboard",
             created_by=test_user["id"],
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Grant access
         await access_repo.grant_access(
@@ -160,7 +160,7 @@ class TestUpdateDashboard:
             dashboard_id=dashboard.id,
             permission=DashboardPermission.EDIT,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         response = await authenticated_client.put(
             f"/dashboards/{dashboard.id}",
@@ -184,7 +184,7 @@ class TestUpdateDashboard:
             password_hash="hash",
             role=UserRole.VIEWER,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         dashboard_repo = DashboardRepository()
         dashboard = await dashboard_repo.create(
@@ -192,7 +192,7 @@ class TestUpdateDashboard:
             name="update_forbidden_dashboard",
             created_by=user.id,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Login as viewer
         from mkobi.core.security import create_access_token
@@ -221,7 +221,7 @@ class TestDeleteDashboard:
             name="delete_test_dashboard",
             created_by=test_user["id"],
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Grant access
         await access_repo.grant_access(
@@ -230,7 +230,7 @@ class TestDeleteDashboard:
             dashboard_id=dashboard.id,
             permission=DashboardPermission.EDIT,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         response = await authenticated_client.delete(f"/dashboards/{dashboard.id}")
         assert response.status_code == status.HTTP_204_NO_CONTENT
@@ -249,7 +249,7 @@ class TestDeleteDashboard:
             password_hash="hash",
             role=UserRole.VIEWER,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         dashboard_repo = DashboardRepository()
         dashboard = await dashboard_repo.create(
@@ -257,7 +257,7 @@ class TestDeleteDashboard:
             name="delete_forbidden_dashboard",
             created_by=user.id,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Login as viewer
         from mkobi.core.security import create_access_token
@@ -282,7 +282,7 @@ class TestAccessControl:
             name="access_test_dashboard",
             created_by=test_user["id"],
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # No access granted
         response = await authenticated_client.get(f"/dashboards/{dashboard.id}")
@@ -298,7 +298,7 @@ class TestAccessControl:
             name="access_test_dashboard2",
             created_by=test_user["id"],
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Grant access
         access_repo = AccessRepository()
@@ -308,7 +308,7 @@ class TestAccessControl:
             dashboard_id=dashboard.id,
             permission=DashboardPermission.VIEW,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         response = await authenticated_client.get(f"/dashboards/{dashboard.id}")
         assert response.status_code == status.HTTP_200_OK

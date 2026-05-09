@@ -74,8 +74,8 @@ class TestRegisterRequest:
         request = await repo.get_by_email("new_user@example.com", async_db_session)
         if request:
             await repo.delete(request.id, async_db_session)
-            await async_db_session.commit()
-            await async_db_session.commit()
+            await async_db_session.flush()
+            await async_db_session.flush()
 
     async def test_register_request_duplicate(
         self, async_client: AsyncClient, async_db_session
@@ -101,7 +101,7 @@ class TestRegisterRequest:
         request = await repo.get_by_email(email, async_db_session)
         if request:
             await repo.delete(request.id, async_db_session)
-            await async_db_session.commit()
+            await async_db_session.flush()
 
 
 class TestGetMe:

@@ -1,5 +1,4 @@
 C:\py_dev\mkobi
-├── add_cors_tests.py
 ├── alembic
 │   ├── env.py
 │   ├── README
@@ -22,29 +21,19 @@ C:\py_dev\mkobi
 │       ├── e86f3c8f7324_schema_adjustments.py
 │       └── f50a4054569c_merge_heads.py
 ├── alembic.ini
-├── best_llm_models.md
 ├── bidb_schema.sql
-├── check_paths.py
-├── check_tables.py
 ├── create_db.sql
 ├── data
 │   ├── logs
 │   │   └── app.json.log.1
 │   ├── pgre
 │   └── tmp_uploads
-├── DB_STRUCTURE.md
-├── DBSTR.md
 ├── docker-compose.override.yml
 ├── docker-compose.test.yml
 ├── docker-compose.yml
 ├── Dockerfile
 ├── docs
 │   └── SWAGGER_README.md
-├── fix_config.py
-├── fix_cors_validator.py
-├── fix_mypy.py
-├── fix_repositories.py
-├── fix_static_calls.py
 ├── frontend
 │   ├── eslint.config.js
 │   ├── index.html
@@ -138,18 +127,12 @@ C:\py_dev\mkobi
 ├── instructions
 │   └── RUN.md
 ├── mypy.ini
-├── mypy_errors.txt
-├── mypy_output.txt
 ├── nginx
 │   └── nginx.conf
-├── PRODUCTION_CHECKLIST.md
-├── 'Pydantic TASKS.md'
 ├── pyproject.toml
 ├── README.md
 ├── README_DOCKER.md
-├── setup_test_db.py
 ├── SPEC.md
-├── SPEC_FRONTEND.md
 ├── src
 │   └── mkobi
 │       ├── api
@@ -253,9 +236,6 @@ C:\py_dev\mkobi
 │       └── workers
 │           └── data_worker.py
 ├── STRUCT.md
-├── TASK_TEMPLATE.md
-├── TASKS_TEMPLATE.md
-├── test_cors_simple.py
 ├── tests
 │   ├── conftest.py
 │   ├── test_auth.py
@@ -284,11 +264,11 @@ C:\py_dev\mkobi
 │   │   └── TEST_036_test_audit_arch.md
 │   ├── DEV
 │   │   ├── 03_mypy_type_errors_DONE.md
-│   │   ├── 034_fix_database_test_deadlocks.md
-│   │   ├── 035_fix_test_foreign_key_violations.md
-│   │   ├── 036_fix_test_fixture_cleanup.md
+│   │   ├── 034_fix_database_test_deadlocks_DONE.md
+│   │   ├── 035_fix_test_foreign_key_violations_DONE.md
+│   │   ├── 036_fix_test_fixture_cleanup_DONE.md
 │   │   ├── 05_mypy_type_errors_fix.md
-│   │   ├── 06_test_quality_improvement.md
+│   │   ├── 06_test_quality_improvement_DONE.md
 │   │   ├── 07_ruff_linting_fix.md
 │   │   ├── 08_docker_devops_improvements.md
 │   │   ├── 13_security_improvements.md

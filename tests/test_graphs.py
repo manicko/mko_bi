@@ -4,6 +4,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.core.security import create_access_token, hash_password
+import uuid
 from mkobi.db.models import graphs as graph_model
 from mkobi.db.models.dashboard import Dashboard
 from mkobi.db.repositories.user_repo import UserRepository
@@ -24,15 +25,15 @@ class TestGraphsAPI:
             password_hash=hash_password("TestPass123!"),
             role="viewer",
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         token = create_access_token({"user_id": str(user.id), "email": user.email})
         headers = {"Authorization": f"Bearer {token}"}
 
         # Create dashboard
-        dashboard = Dashboard(name="test_dashboard")
+        dashboard = Dashboard(name=f"test_dashboard_{uuid.uuid4().hex[:8]}")
         async_db_session.add(dashboard)
-        await async_db_session.commit()
+        await async_db_session.flush()
         await async_db_session.refresh(dashboard)
 
         response = await async_client.post(
@@ -61,15 +62,15 @@ class TestGraphsAPI:
             password_hash=hash_password("TestPass123!"),
             role="admin",
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         token = create_access_token({"user_id": str(user.id), "email": user.email})
         headers = {"Authorization": f"Bearer {token}"}
 
         # Create dashboard
-        dashboard = Dashboard(name="test_dashboard")
+        dashboard = Dashboard(name=f"test_dashboard_{uuid.uuid4().hex[:8]}")
         async_db_session.add(dashboard)
-        await async_db_session.commit()
+        await async_db_session.flush()
         await async_db_session.refresh(dashboard)
 
         # Create graph
@@ -82,7 +83,7 @@ class TestGraphsAPI:
             metrics=["sales"],
         )
         async_db_session.add(graph)
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         response = await async_client.get(
             f"/dashboards/{dashboard.id}/graphs",

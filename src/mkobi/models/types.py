@@ -15,19 +15,19 @@ from mkobi.models.enums import YoyModeEnum
 
 
 class DimensionData(TypedDict, total=False):
-    """Данные измерений для агрегированных записей."""
+    """Dimension data for aggregated records."""
 
     year: int
     month: int
     category: str
     brand: str
     region: str
-    # Дополнительные поля могут присутствовать
-    # в зависимости от конфигурации дашборда
+    # Additional fields may be present
+    # depending on dashboard configuration
 
 
 class MetricData(TypedDict, total=False):
-    """Данные метрик для агрегированных записей."""
+    """Metric data for aggregated records."""
 
     value: float
     sum: float
@@ -35,11 +35,11 @@ class MetricData(TypedDict, total=False):
     count: int
     min: float
     max: float
-    # Дополнительные метрики
+    # Additional metrics
 
 
 class AggregatedRecordModel(BaseModel):
-    """Pydantic модель для записи агрегированных данных."""
+    """Pydantic model for aggregated data record."""
 
     dims: dict[str, int | float | str] = Field(default_factory=dict)
     metrics: dict[str, int | float | str] = Field(default_factory=dict)
@@ -51,7 +51,7 @@ class AggregatedRecordModel(BaseModel):
 
 
 class FilterCondition(TypedDict):
-    """Условие фильтрации данных."""
+    """Data filter condition."""
 
     field: str
     operator: str  # ">=", "<=", "==", "!=", ">", "<"
@@ -59,34 +59,34 @@ class FilterCondition(TypedDict):
 
 
 class ChartFilterConfig(TypedDict):
-    """Конфигурация фильтра для графика."""
+    """Filter configuration for chart."""
 
     year: int | None
     category: str | None
     brand: str | None
     region: str | None
-    filters: dict[str, list[str | int]]  # Дополнительные фильтры
+    filters: dict[str, list[str | int]]  # Additional filters
 
 
 # ==================== Transformation Types ====================
 
 
 class TransformationConfig(TypedDict):
-    """Конфигурация трансформации данных."""
+    """Data transformation configuration."""
 
     type: str  # "filter", "map", "derive", etc.
-    condition: dict[str, dict[str, int | float | str]]  # Например: {"year": {"$gte": 2020}}
+    condition: dict[str, dict[str, int | float | str]]  # Example: {"year": {"$gte": 2020}}
 
 
 class AggregationConfig(TypedDict):
-    """Конфигурация агрегации."""
+    """Aggregation configuration."""
 
     type: str  # "sum", "avg", "count", "min", "max"
     field: str
 
 
 class ProcessingConfigData(TypedDict):
-    """Конфигурация обработки данных."""
+    """Data processing configuration."""
 
     transformations: list[TransformationConfig] | None
     aggregations: list[AggregationConfig] | None
@@ -99,7 +99,7 @@ class ProcessingConfigData(TypedDict):
 
 
 class AxisConfig(TypedDict, total=False):
-    """Конфигурация оси графика."""
+    """Chart axis configuration."""
 
     title: str
     label: str
@@ -108,7 +108,7 @@ class AxisConfig(TypedDict, total=False):
 
 
 class ChartLayoutConfig(TypedDict, total=False):
-    """Конфигурация макета графика."""
+    """Chart layout configuration."""
 
     title: str
     xaxis: AxisConfig | None
@@ -129,7 +129,7 @@ class YoYConfig(TypedDict, total=False):
 
 
 class GraphConfigDict(TypedDict, total=False):
-    """Конфигурация графика (config поле)."""
+    """Chart configuration (config field)."""
 
     x: str | None
     y: str | None
@@ -146,13 +146,13 @@ class GraphConfigDict(TypedDict, total=False):
 
 
 class FilterConfigDict(TypedDict, total=False):
-    """Конфигурация фильтра (config поле)."""
+    """Filter configuration (config field)."""
 
-    field: str  # Поле для фильтрации
+    field: str  # Field for filtering
     source: str  # "dims", "metrics", "custom"
-    multi: bool  # Множественный выбор
-    type: str | None  # Тип input ("select", "multiselect", "range", "date")
-    options: list[str | int] | None  # Доступные опции
+    multi: bool  # Multiple selection
+    type: str | None  # Input type ("select", "multiselect", "range", "date")
+    options: list[str | int] | None  # Available options
     default: str | int | list[str | int] | None
 
 
@@ -160,7 +160,7 @@ class FilterConfigDict(TypedDict, total=False):
 
 
 class ProcessingSettingsDict(TypedDict, total=False):
-    """Настройки обработки (settings поле)."""
+    """Processing settings (settings field)."""
 
     loader: str  # "sales_loader", etc.
     date_column: str | None
@@ -173,7 +173,7 @@ class ProcessingSettingsDict(TypedDict, total=False):
 
 
 class TokenData(TypedDict):
-    """Данные JWT токена."""
+    """JWT token data."""
 
     user_id: str
     email: str
@@ -182,7 +182,7 @@ class TokenData(TypedDict):
 
 
 class LoginResponse(TypedDict):
-    """Ответ при успешном логине."""
+    """Response on successful login."""
 
     access_token: str
     token_type: str
@@ -193,7 +193,7 @@ class LoginResponse(TypedDict):
 
 
 class ChartMetadata(TypedDict, total=False):
-    """Метаданные графика."""
+    """Chart metadata."""
 
     graph_id: str
     graph_name: str
@@ -202,7 +202,7 @@ class ChartMetadata(TypedDict, total=False):
 
 
 class ProcessingResultData(TypedDict, total=False):
-    """Данные результата обработки."""
+    """Processing result data."""
 
     columns: list[str]
     rows: int
@@ -214,7 +214,7 @@ class ProcessingResultData(TypedDict, total=False):
 
 
 class DimensionModel(BaseModel):
-    """Pydantic модель для измерений."""
+    """Pydantic model for dimensions."""
 
     year: int | None = None
     month: int | None = None
@@ -226,7 +226,7 @@ class DimensionModel(BaseModel):
 
 
 class MetricModel(BaseModel):
-    """Pydantic модель для метрик."""
+    """Pydantic model for metrics."""
 
     value: float | None = None
     sum: float | None = None
@@ -239,7 +239,7 @@ class MetricModel(BaseModel):
 
 
 class GraphConfigModel(BaseModel):
-    """Pydantic модель для конфигурации графика."""
+    """Pydantic model for chart configuration."""
 
     x: str | None = None
     y: str | None = None
@@ -255,7 +255,7 @@ class GraphConfigModel(BaseModel):
 
 
 class FilterConfigModel(BaseModel):
-    """Pydantic модель для конфигурации фильтра."""
+    """Pydantic model for filter configuration."""
 
     field: str | None = None
     source: str | None = None
@@ -268,7 +268,7 @@ class FilterConfigModel(BaseModel):
 
 
 class ProcessingSettingsModel(BaseModel):
-    """Pydantic модель для настроек обработки."""
+    """Pydantic model for processing settings."""
 
     loader: str | None = None
     date_column: str | None = None

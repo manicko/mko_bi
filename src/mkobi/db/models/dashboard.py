@@ -79,7 +79,7 @@ class Dashboard(Base):
         onupdate=func.now(),
     )
 
-    # Связь с правами доступа
+    # Relationship with access rights
     accesses: Mapped[list[DashboardAccess]] = relationship(
         "DashboardAccess",
         back_populates="dashboard",
@@ -87,7 +87,7 @@ class Dashboard(Base):
         lazy="selectin",
     )
 
-    # Связь с пользователями через таблицу доступа
+    # Relationship with users through access table
     users: Mapped[list[User]] = relationship(
         "User",
         secondary="dashboard_access",
@@ -96,14 +96,14 @@ class Dashboard(Base):
         overlaps="accesses,user",
     )
 
-    # Связь с layout
+    # Relationship with layout
     layout: Mapped[Layout] = relationship(
         "Layout",
         back_populates="dashboards",
         lazy="selectin",
     )
 
-    # Связь с графиками
+    # Relationship with charts
     graphs: Mapped[list[Graph]] = relationship(
         "Graph",
         back_populates="dashboard",
@@ -111,7 +111,7 @@ class Dashboard(Base):
         lazy="selectin",
     )
 
-    # Связь с агрегированными данными
+    # Relationship with aggregated data
     aggregated_data: Mapped[list[AggregatedData]] = relationship(
         "AggregatedData",
         back_populates="dashboard",
@@ -119,7 +119,7 @@ class Dashboard(Base):
         lazy="selectin",
     )
 
-    # Связь с фильтрами
+    # Relationship with filters
     filters: Mapped[list[Filter]] = relationship(
         "Filter",
         secondary="dashboard_filters",
@@ -127,7 +127,7 @@ class Dashboard(Base):
         lazy="selectin",
     )
 
-    # Связь с настройками обработки (один-к-одному)
+    # Relationship with processing settings (one-to-one)
     processing_config: Mapped[ProcessingConfig] = relationship(
         "ProcessingConfig",
         back_populates="dashboard",
@@ -136,7 +136,7 @@ class Dashboard(Base):
         lazy="selectin",
     )
 
-    # Связь с логами обработки
+    # Relationship with processing logs
     processing_logs: Mapped[list[ProcessingLog]] = relationship(
         "ProcessingLog",
         back_populates="dashboard",

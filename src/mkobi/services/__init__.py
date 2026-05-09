@@ -1,11 +1,11 @@
-"""Сервисы бизнес-логики.
+"""Business logic services.
 
-Содержит реализации сервисов для работы с бизнес-логикой приложения.
-Все сервисы реализуют соответствующие интерфейсы из модуля interfaces.
+Contains service implementations for application business logic.
+All services implement corresponding interfaces from the interfaces module.
 """
 
-# Импортируем только функции для обратной совместимости
-# Классы-реализации импортируются напрямую из модулей
+# Import only functions for backward compatibility
+# Implementation classes are imported directly from modules
 
 from mkobi.services.auth_service import AuthService
 from mkobi.services.user_service import UserService

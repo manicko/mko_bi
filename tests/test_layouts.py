@@ -23,7 +23,7 @@ class TestLayoutsAPI:
             password_hash="hash",
             role="viewer",
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Login as viewer
         from mkobi.core.security import create_access_token
@@ -60,7 +60,7 @@ class TestLayoutsAPI:
             name="list_test_layout",
             definition={"grid": []},
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         response = await authenticated_client.get("/layouts")
         assert response.status_code == status.HTTP_200_OK
@@ -78,7 +78,7 @@ class TestLayoutsAPI:
             name="detail_test_layout",
             definition={"grid": []},
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         response = await authenticated_client.get(f"/layouts/{layout.id}")
         assert response.status_code == status.HTTP_200_OK
@@ -99,7 +99,7 @@ class TestLayoutsAPI:
             password_hash="hash",
             role="viewer",
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         repo = LayoutRepository()
         layout = await repo.create(
@@ -107,7 +107,7 @@ class TestLayoutsAPI:
             name="update_test_layout",
             definition={"grid": []},
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Login as viewer
         from mkobi.core.security import create_access_token
@@ -131,7 +131,7 @@ class TestLayoutsAPI:
             name="update_success_layout",
             definition={"grid": []},
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         response = await authenticated_client.put(
             f"/layouts/{layout.id}",
@@ -154,7 +154,7 @@ class TestLayoutsAPI:
             password_hash="hash",
             role="viewer",
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         repo = LayoutRepository()
         layout = await repo.create(
@@ -162,7 +162,7 @@ class TestLayoutsAPI:
             name="delete_test_layout",
             definition={"grid": []},
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Login as viewer
         from mkobi.core.security import create_access_token
@@ -183,7 +183,7 @@ class TestLayoutsAPI:
             name="delete_success_layout",
             definition={"grid": []},
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         response = await authenticated_client.delete(f"/layouts/{layout.id}")
         assert response.status_code == status.HTTP_204_NO_CONTENT

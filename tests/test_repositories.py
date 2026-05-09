@@ -22,7 +22,7 @@ class TestUserRepository:
             password_hash="hashed_password",
             role=UserRole.VIEWER,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         assert user.id is not None
         assert user.email == "repo_test@example.com"
@@ -37,7 +37,7 @@ class TestUserRepository:
             password_hash="hashed_password",
             role=UserRole.EDITOR,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         retrieved = await repo.get(user.id, async_db_session)
         assert retrieved is not None
@@ -53,7 +53,7 @@ class TestUserRepository:
             password_hash="hashed_password",
             role=UserRole.ADMIN,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         retrieved = await repo.get_by_email("repo_email@example.com", async_db_session)
         assert retrieved is not None
@@ -68,12 +68,12 @@ class TestUserRepository:
             password_hash="hashed_password",
             role=UserRole.VIEWER,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         updated = await repo.update(
             user.id, db=async_db_session, role=UserRole.EDITOR
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         assert updated.role == UserRole.EDITOR
 
@@ -86,10 +86,10 @@ class TestUserRepository:
             password_hash="hashed_password",
             role=UserRole.VIEWER,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         result = await repo.delete(user.id, async_db_session)
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         assert result is True
         deleted = await repo.get(user.id, async_db_session)
@@ -108,7 +108,7 @@ class TestDashboardRepository:
             description="Test dashboard for repo tests",
             created_by=test_user["id"],
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         assert dashboard.id is not None
         assert dashboard.name == "repo_test_dashboard"
@@ -122,7 +122,7 @@ class TestDashboardRepository:
             name="repo_get_dashboard",
             created_by=test_user["id"],
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         retrieved = await repo.get(dashboard.id, async_db_session)
         assert retrieved is not None
@@ -136,7 +136,7 @@ class TestDashboardRepository:
             name="repo_user_dashboard",
             created_by=test_user["id"],
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Add access for test user
         access_repo = AccessRepository()
@@ -146,7 +146,7 @@ class TestDashboardRepository:
             dashboard_id=dashboard.id,
             permission=DashboardPermission.VIEW,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Verify access was granted (check via get_user_dashboards)
         dashboards = await access_repo.get_user_dashboards(
@@ -168,7 +168,7 @@ class TestGraphRepository:
             name="graph_test_dashboard",
             created_by=test_user["id"],
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Create graph
         graph_repo = GraphRepository()
@@ -181,7 +181,7 @@ class TestGraphRepository:
             dimensions=[],
             metrics=[],
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         assert graph.id is not None
         assert graph.name == "test_graph"
@@ -200,7 +200,7 @@ class TestFilterRepository:
             type=FilterType.SELECT,
             config={"field": "year"},
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         assert filter_obj.id is not None
         assert filter_obj.name == "test_filter"
@@ -218,7 +218,7 @@ class TestLayoutRepository:
             name="test_layout",
             definition={"grid": []},
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         assert layout.id is not None
         assert layout.name == "test_layout"
@@ -236,7 +236,7 @@ class TestAccessRepository:
             name="access_test_dashboard",
             created_by=test_user["id"],
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Grant access
         access_repo = AccessRepository()
@@ -246,7 +246,7 @@ class TestAccessRepository:
             dashboard_id=dashboard.id,
             permission=DashboardPermission.ADMIN,
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Verify access was granted (check via get_user_dashboards)
         dashboards = await access_repo.get_user_dashboards(

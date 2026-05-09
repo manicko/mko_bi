@@ -22,6 +22,7 @@ from mkobi.api.deps import (
 from mkobi.config import get_config
 from mkobi.core.logging_config import get_logger
 from mkobi.core import redis_client
+from mkobi.core.permissions import PermissionError as PermissionError
 from mkobi.core.security import AsyncRateLimiter
 from mkobi.models.data import (
     ProcessingConfig,
@@ -64,17 +65,17 @@ async def upload_file_endpoint(
         config = get_config()
 
         # Enforce file size limit before reading into memory
-        if file.size > config.max_file_size:
+        if file.size > config.max_file_size * 1024 * 1024:  # Convert MB to bytes
             logger.warning(
                 "File size exceeds limit",
                 extra={
                     "file_name": file.filename,
                     "size_bytes": file.size,
-                    "max_bytes": config.max_file_size,
+                    "max_bytes": config.max_file_size * 1024 * 1024,
                 },
             )
             raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,  # Use new constant
                 detail=f"File size exceeds maximum limit of {config.upload.max_file_size_mb}MB",
             )
 
@@ -116,6 +117,44 @@ async def upload_file_endpoint(
                 mode=mode,
                 db=db,
             )
+        except PermissionError as e:
+            logger.warning("Permission denied for upload: %s", e)
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=str(e),
+            ) from e
+        except ValueError as e:
+            error_msg = str(e).lower()
+            logger.warning("Validation error during upload: %s", e)
+            if "mime" in error_msg or "invalid mime" in error_msg:
+                raise HTTPException(
+                    status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                    detail=str(e),
+                ) from e
+            elif (
+                "format" in error_msg
+                or "invalid format" in error_msg
+                or "extension" in error_msg
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                    detail=str(e),
+                ) from e
+            elif "size" in error_msg or "exceeds" in error_msg or "max" in error_msg:
+                raise HTTPException(
+                    status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                    detail=str(e),
+                ) from e
+            elif "limit" in error_msg or "rate limit" in error_msg:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail=str(e),
+                ) from e
+            else:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                    detail=str(e),
+                ) from e
         except Exception as e:
             logger.error("Error during file processing: %s", e, exc_info=True)
             raise
@@ -155,7 +194,7 @@ async def upload_file_endpoint(
             ) from e
         elif "size" in error_msg or "exceeds" in error_msg or "max" in error_msg:
             raise HTTPException(
-                status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
                 detail=str(e),
             ) from e
         elif "limit" in error_msg or "rate limit" in error_msg:
@@ -165,7 +204,7 @@ async def upload_file_endpoint(
             ) from e
         else:
             raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
                 detail=str(e),
             ) from e
     except PermissionError as e:
@@ -226,7 +265,7 @@ async def process_file_endpoint(
     except ValueError as e:
         logger.warning("Error starting processing: %s", e)
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail=str(e),
         ) from e
     except PermissionError as e:
@@ -259,7 +298,10 @@ async def get_status_endpoint(
     """Get current processing status of file."""
     logger.info(
         "Status check requested",
-        extra={"task_id": str(task_id), "user_id": str(current_user.id)},
+        extra={
+            "task_id": str(task_id),
+            "user_id": str(current_user.id),
+        },
     )
 
     try:
@@ -312,7 +354,10 @@ async def get_result_endpoint(
     """Get processing result of file."""
     logger.info(
         "Result requested",
-        extra={"task_id": str(task_id), "user_id": str(current_user.id)},
+        extra={
+            "task_id": str(task_id),
+            "user_id": str(current_user.id),
+        },
     )
 
     try:

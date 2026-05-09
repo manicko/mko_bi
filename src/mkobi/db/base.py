@@ -2,8 +2,8 @@ from sqlalchemy.orm import DeclarativeBase
 
 
 class Base(DeclarativeBase):
-    """Базовый класс для всех моделей SQLAlchemy.
+    """Base class for all SQLAlchemy models.
 
-    Наследование от DeclarativeBase обеспечивает поддержку
-    декларативного стиля определения моделей.
+    Inheritance from DeclarativeBase provides support for
+    declarative style model definition.
     """

@@ -5,7 +5,7 @@ from mkobi.models.enums import UserRole
 
 
 class LoginRequest(BaseModel):
-    """Модель запроса на вход."""
+    """Login request model."""
 
     email: EmailStr
     password: str
@@ -22,7 +22,7 @@ class LoginRequest(BaseModel):
 
 
 class RegistrationRequestCreate(BaseModel):
-    """Модель запроса на регистрацию (заявка)."""
+    """Registration request model."""
 
     email: EmailStr
 
@@ -37,7 +37,7 @@ class RegistrationRequestCreate(BaseModel):
 
 
 class RegistrationRequestResponse(BaseModel):
-    """Модель ответа на создание заявки на регистрацию."""
+    """Registration request response model."""
 
     id: UUID
     email: EmailStr
@@ -56,7 +56,7 @@ class RegistrationRequestResponse(BaseModel):
 
 
 class RegisterRequest(BaseModel):
-    """Модель запроса на регистрацию."""
+    """Register request model."""
 
     email: EmailStr
     password: str
@@ -75,7 +75,7 @@ class RegisterRequest(BaseModel):
 
 
 class Token(BaseModel):
-    """Модель токена доступа."""
+    """Access token model."""
 
     access_token: str
     token_type: str
@@ -92,7 +92,7 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    """Модель данных токена."""
+    """Token data model."""
 
     email: EmailStr | None = None
     user_id: UUID | None = None
@@ -109,7 +109,7 @@ class TokenData(BaseModel):
 
 
 class RefreshRequest(BaseModel):
-    """Модель запроса на обновление токена."""
+    """Token refresh request model."""
 
     refresh_token: str
 

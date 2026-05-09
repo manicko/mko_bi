@@ -6,7 +6,7 @@ from mkobi.models.enums import UserRole
 
 
 class UserBase(BaseModel):
-    """Базовая модель пользователя."""
+    """Base user model."""
 
     email: EmailStr
     role: UserRole
@@ -23,7 +23,7 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
-    """Модель для создания нового пользователя."""
+    """Model for creating new user."""
 
     password: str
 
@@ -40,7 +40,7 @@ class UserCreate(UserBase):
 
 
 class UserRead(UserBase):
-    """Модель для чтения данных пользователя (без пароля)."""
+    """Model for reading user data (without password)."""
 
     id: UUID
     created_at: datetime
@@ -59,7 +59,7 @@ class UserRead(UserBase):
 
 
 class UserDB(UserBase):
-    """Модель пользователя для базы данных (с хэшем пароля)."""
+    """User model for database (with password hash)."""
 
     id: UUID
     password_hash: str
@@ -80,7 +80,7 @@ class UserDB(UserBase):
 
 
 class UserUpdate(BaseModel):
-    """Модель для обновления пользователя."""
+    """Model for updating user."""
 
     email: EmailStr | None = None
     role: UserRole | None = None

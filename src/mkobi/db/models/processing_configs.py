@@ -1,4 +1,4 @@
-"""Модель настроек обработки для дашбордов."""
+"""Processing configuration model for dashboards."""
 
 from datetime import datetime
 from typing import Any
@@ -17,10 +17,10 @@ from mkobi.db.base import Base
 
 
 class ProcessingConfig(Base):
-    """Модель настроек обработки данных для дашборда.
+    """Processing configuration model for dashboard data.
 
-    Хранит конфигурацию обработки данных, специфичную для каждого дашборда.
-    Связана с дашбордом отношением один-к-одному.
+    Stores data processing configuration specific to each dashboard.
+    Related to dashboard with one-to-one relationship.
     """
 
     __tablename__ = "processing_configs"
@@ -44,7 +44,7 @@ class ProcessingConfig(Base):
         onupdate=func.now(),
     )
 
-    # Связь с дашбордом
+    # Relationship with dashboard
     dashboard: Mapped["Dashboard"] = relationship(  # type: ignore[name-defined]
         "Dashboard",
         back_populates="processing_config",

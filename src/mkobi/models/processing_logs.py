@@ -6,7 +6,7 @@ from mkobi.models.enums import ProcessingStatus
 
 
 class ProcessingLogFilter(BaseModel):
-    """Модель для фильтрации логов обработки."""
+    """Model for filtering processing logs."""
 
     dashboard_id: UUID | None = None
     status: ProcessingStatus | None = None
@@ -31,7 +31,7 @@ class ProcessingLogFilter(BaseModel):
 
 
 class ProcessingLogCreate(BaseModel):
-    """Модель для создания лога обработки."""
+    """Model for creating processing log."""
 
     dashboard_id: UUID | None = None
     status: ProcessingStatus
@@ -50,7 +50,7 @@ class ProcessingLogCreate(BaseModel):
 
 
 class ProcessingLogUpdate(BaseModel):
-    """Модель для обновления лога обработки."""
+    """Model for updating processing log."""
 
     status: ProcessingStatus | None = None
     message: str | None = None
@@ -70,7 +70,7 @@ class ProcessingLogUpdate(BaseModel):
 
 
 class ProcessingLogRead(BaseModel):
-    """Модель для чтения данных лога обработки."""
+    """Model for reading processing log data."""
 
     id: UUID
     dashboard_id: UUID | None = None

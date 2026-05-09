@@ -77,7 +77,7 @@ class User(Base):
         onupdate=text("now()"),
     )
 
-    # Связь с правами доступа
+    # Relationship with access rights
     accesses: Mapped[list["DashboardAccess"]] = relationship(
         "DashboardAccess",
         back_populates="user",
@@ -86,7 +86,7 @@ class User(Base):
         overlaps="users",
     )
 
-    # Связь с дашбордами через таблицу доступа
+    # Relationship with dashboards through access table
     dashboards: Mapped[list["Dashboard"]] = relationship(
         "Dashboard",
         secondary="dashboard_access",
@@ -95,7 +95,7 @@ class User(Base):
         overlaps="accesses,dashboard",
     )
 
-    # Связь с заявками на регистрацию, которые рассмотрел пользователь
+    # Relationship with registration requests reviewed by user
     reviewed_registration_requests: Mapped[list["RegistrationRequest"]] = relationship(
         "RegistrationRequest",
         back_populates="reviewer",

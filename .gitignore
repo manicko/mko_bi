@@ -218,3 +218,22 @@ __marimo__/
 
 data/tmp_uploads/*
 !data/tmp_uploads/.gitkeep
+
+# Mypy output files
+mypy_errors.txt
+mypy_output.txt
+test_output.txt
+test_all_output.txt
+test_upload_output.txt
+auth_test_output.txt
+auth_test_full.txt
+auth_test2.txt
+auth_debug.txt
+best_llm_models.md
+DB_STRUCTURE.md
+DBSTR.md
+PRODUCTION_CHECKLIST.md
+Pydantic TASKS.md
+TASK_TEMPLATE.md
+TASKS_TEMPLATE.md
+SPEC_FRONTEND.md

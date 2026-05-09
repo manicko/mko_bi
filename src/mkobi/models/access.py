@@ -4,7 +4,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 class AccessCheck(BaseModel):
-    """Модель для проверки доступа к дашборду."""
+    """Model for checking dashboard access."""
 
     user_id: UUID
     dashboard_id: UUID
@@ -23,7 +23,7 @@ class AccessCheck(BaseModel):
 
 
 class AccessGrant(BaseModel):
-    """Модель для предоставления доступа к дашборду."""
+    """Model for granting dashboard access."""
 
     user_id: UUID
     dashboard_id: UUID

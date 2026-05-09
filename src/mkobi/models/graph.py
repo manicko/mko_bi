@@ -7,7 +7,7 @@ from mkobi.models.types import GraphConfigDict
 
 
 class GraphBase(BaseModel):
-    """Базовая модель для графиков."""
+    """Base model for charts."""
 
     name: str
     type: GraphType
@@ -32,13 +32,13 @@ class GraphBase(BaseModel):
 
 
 class GraphCreate(GraphBase):
-    """Модель для создания графика."""
+    """Model for creating chart."""
 
     pass
 
 
 class GraphUpdate(BaseModel):
-    """Модель для обновления графика."""
+    """Model for updating chart."""
 
     name: str | None = None
     type: GraphType | None = None
@@ -61,7 +61,7 @@ class GraphUpdate(BaseModel):
 
 
 class GraphRead(GraphBase):
-    """Модель для чтения данных графика."""
+    """Model for reading chart data."""
 
     id: UUID
     created_at: datetime

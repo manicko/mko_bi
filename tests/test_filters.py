@@ -24,7 +24,7 @@ class TestFiltersAPI:
             password_hash="hash",
             role="viewer",
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Login as viewer
         from mkobi.core.security import create_access_token
@@ -71,7 +71,7 @@ class TestFiltersAPI:
             type=FilterType.SELECT,
             config={"field": "year"},
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         response = await authenticated_client.get("/filters/")
         assert response.status_code == status.HTTP_200_OK
@@ -90,7 +90,7 @@ class TestFiltersAPI:
             type=FilterType.MULTISELECT,
             config={"field": "category"},
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         response = await authenticated_client.get(f"/filters/{filter_obj.id}")
         assert response.status_code == status.HTTP_200_OK
@@ -111,7 +111,7 @@ class TestFiltersAPI:
             password_hash="hash",
             role="viewer",
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         repo = FilterRepository()
         filter_obj = await repo.create(
@@ -120,7 +120,7 @@ class TestFiltersAPI:
             type=FilterType.SELECT,
             config={"field": "year"},
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Login as viewer
         from mkobi.core.security import create_access_token
@@ -145,7 +145,7 @@ class TestFiltersAPI:
             type=FilterType.SELECT,
             config={"field": "year"},
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         response = await authenticated_client.put(
             f"/filters/{filter_obj.id}",
@@ -168,7 +168,7 @@ class TestFiltersAPI:
             password_hash="hash",
             role="viewer",
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         repo = FilterRepository()
         filter_obj = await repo.create(
@@ -177,7 +177,7 @@ class TestFiltersAPI:
             type=FilterType.SELECT,
             config={"field": "year"},
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         # Login as viewer
         from mkobi.core.security import create_access_token
@@ -199,7 +199,7 @@ class TestFiltersAPI:
             type=FilterType.SELECT,
             config={"field": "year"},
         )
-        await async_db_session.commit()
+        await async_db_session.flush()
 
         response = await authenticated_client.delete(f"/filters/{filter_obj.id}")
         assert response.status_code == status.HTTP_204_NO_CONTENT

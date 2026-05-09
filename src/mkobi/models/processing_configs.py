@@ -6,7 +6,7 @@ from mkobi.models.types import ProcessingSettingsDict
 
 
 class ProcessingConfigBase(BaseModel):
-    """Базовая модель для настроек обработки."""
+    """Base model for processing settings."""
 
     settings: ProcessingSettingsDict
 
@@ -25,13 +25,13 @@ class ProcessingConfigBase(BaseModel):
 
 
 class ProcessingConfigCreate(ProcessingConfigBase):
-    """Модель для создания настроек обработки."""
+    """Model for creating processing settings."""
 
     pass
 
 
 class ProcessingConfigUpdate(BaseModel):
-    """Модель для обновления настроек обработки."""
+    """Model for updating processing settings."""
 
     settings: ProcessingSettingsDict | None = None
 
@@ -50,7 +50,7 @@ class ProcessingConfigUpdate(BaseModel):
 
 
 class ProcessingConfigRead(ProcessingConfigBase):
-    """Модель для чтения данных настроек обработки."""
+    """Model for reading processing settings data."""
 
     dashboard_id: UUID
     updated_at: datetime

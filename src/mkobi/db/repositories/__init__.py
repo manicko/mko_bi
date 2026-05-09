@@ -1,13 +1,13 @@
-"""Репозитории для работы с базой данных.
+"""Repositories for database operations.
 
-Содержит реализации паттерна Repository для всех моделей:
-- UserRepository: операции с пользователями
-- DashboardRepository: операции с дашбордами
-- AccessRepository: управление правами доступа
-- FilterRepository: управление фильтрами
-- ProcessingConfigRepository: управление настройками обработки
-- ProcessingLogRepository: управление логами обработки
-- AggregatedDataRepository: управление агрегированными данными
+Contains Repository pattern implementations for all models:
+- UserRepository: user operations
+- DashboardRepository: dashboard operations
+- AccessRepository: access rights management
+- FilterRepository: filter management
+- ProcessingConfigRepository: processing settings management
+- ProcessingLogRepository: processing log management
+- AggregatedDataRepository: aggregated data management
 """
 
 from mkobi.db.repositories.access_repo import AccessRepository

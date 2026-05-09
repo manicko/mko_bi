@@ -1,13 +1,13 @@
-"""Pydantic модели для стилизации компонентов.
+"""Pydantic models for component styling.
 
-Используются для валидации конфигурации стилей компонентов.
+Used for validating component style configuration.
 """
 
 from pydantic import BaseModel, Field
 
 
 class ComponentStyle(BaseModel):
-    """Базовая модель стилей компонента."""
+    """Base component style model."""
 
     width: int = 12
     height: int | None = None
@@ -18,7 +18,7 @@ class ComponentStyle(BaseModel):
 
 
 class ButtonStyle(ComponentStyle):
-    """Стиль для кнопок."""
+    """Style for buttons."""
 
     variant: str = "primary"
     size: str = ""
@@ -28,7 +28,7 @@ class ButtonStyle(ComponentStyle):
 
 
 class FilterStyle(ComponentStyle):
-    """Стиль для фильтров."""
+    """Style for filters."""
 
     label_width: int = 3
     control_width: int = 9
@@ -37,7 +37,7 @@ class FilterStyle(ComponentStyle):
 
 
 class ChartStyle(ComponentStyle):
-    """Стиль для графиков."""
+    """Style for charts."""
 
     graph_height: int = 400
     show_legend: bool = True
