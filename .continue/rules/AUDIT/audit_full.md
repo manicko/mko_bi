@@ -1,4 +1,12 @@
-# BI Dashboard System Full Audit Task
+---
+name: Full Audit Task
+alwaysApply: false
+description: Full Audit Task
+---
+
+
+
+# Full Audit Task
 
 ## Цель
 
@@ -744,59 +752,6 @@ logger = logging.getLogger(__name__)
 
 ---
 
-# BLOCK 9 — Testing
-
-## 9.1 pytest Usage
-
-Проверить `tests/`:
-
-* Используется pytest (НЕ unittest)
-* Фикстуры в conftest.py
-* Mocking где нужно (unittest.mock)
-
-## 9.2 Coverage
-
-Проверить наличие тестов для:
-
-* **Auth**: login, register-request, me endpoint
-* **API**: все endpoints (успех и ошибки)
-* **Processing**: loaders, transformations, aggregations
-* **Access Control**: permissions, roles
-* **Repositories**: DB operations
-* **Config**: loading, validation
-
-Проверить файлы:
-
-* `test_auth.py`
-* `test_dashboards_api.py`
-* `test_users_api.py`
-* `test_upload_api.py`
-* `test_data_processing.py`
-* `test_data_loader.py`
-* `test_models.py`
-* `test_repositories.py`
-* `test_security.py`
-* `test_filters.py`
-* `test_graphs.py`
-* `test_layouts.py`
-* `test_processing_logs.py`
-* `test_config.py`
-* `test_pydantic_models.py`
-* `test_storage_manager.py`
-* `test_yoy_calculation.py`
-* `test_share_calculation.py`
-
-## 9.3 Test Quality
-
-Проверить:
-
-* Edge cases (пустые данные, некорректный ввод)
-* Invalid input tests (wrong types, missing fields)
-* Permission tests (разные роли)
-* Error handling tests
-* Mocking внешних зависимостей
-
----
 
 # BLOCK 10 — Performance & Stability
 

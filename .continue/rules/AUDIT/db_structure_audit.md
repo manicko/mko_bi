@@ -1,3 +1,9 @@
+---
+name: db structure audit
+alwaysApply: false
+description: db_structure_audit
+---
+
 # Задание: аудит баз данных PostgreSQL в проекте (FastAPI)
 
 ## Состав команды для выполнения задания

@@ -1,0 +1,29 @@
+name: New MCP server
+version: 0.0.1
+schema: v1
+mcpServers:
+  - name: "server-filesystem"
+    command: npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-filesystem"
+      - "C:\\py_dev"  
+    env: {}
+  - name: "sequentialthinking"
+    command: npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-sequential-thinking"
+    env: {}
+  - name: "context7"
+    command: npx
+    args:
+      - "-y"
+      - "@upstash/context7-mcp"
+    env: {}
+  - name: "memory"
+    command: npx
+    args:
+      - "-y"
+      - "@modelcontextprotocol/server-memory"
+    env: {}
