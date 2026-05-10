@@ -1,7 +1,8 @@
 ---
-name: db structure audit
+name: audit db structure 
+description: audit db structure 
+agent: auditor
 alwaysApply: false
-description: db_structure_audit
 ---
 
 # Задание: аудит баз данных PostgreSQL в проекте (FastAPI)
@@ -392,7 +393,7 @@ Test Isolation Report:
 
 # 3. Результаты выполнения задания: 
 
-Новый файл `C:\py_exp\mkobi\TODO\DATABASES_AUDIT_REPORT_<number>.md` (number - уникальный номер файла) 
+Создать файл: `TODO/AUDIT/DB/audit_report_<number>.md` (свободный следующий номер)
 
 
 Содержание файла:

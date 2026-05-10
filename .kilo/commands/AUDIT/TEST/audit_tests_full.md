@@ -1,7 +1,7 @@
 ---
-name: Tests Audit Task
+name: audit tests full
+description: audit tests full
 alwaysApply: false
-description: Comprehensive audit of test quality, architecture alignment and coverage
 ---
 
 ## Аудит качества тестов
@@ -80,7 +80,7 @@ description: Comprehensive audit of test quality, architecture alignment and cov
 
 ### Формат результата аудита (обязательно)
 
-Создать файл: `TODO/TEST_analysis_report_<number>.md` (свободный следующий номер)
+Создать файл: `TODO/AUDIT/TESTS/audit_report_<number>.md` (свободный следующий номер)
 
 **Структура отчёта:**
 

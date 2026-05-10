@@ -1,7 +1,8 @@
 ---
-name: Full Audit Task
+name: audit project general
+description: audit implementation general
+agent: audit
 alwaysApply: false
-description: Full Audit Task
 ---
 
 
@@ -850,9 +851,7 @@ logger = logging.getLogger(__name__)
 ---
 
 # Формат отчета (ОБЯЗАТЕЛЬНО)
- 
-Создать новый файл `TODO/TASK_<number>_analysis_report.md`
-вместо <number> - подставить номер, убедившись, что файл с таким номером не существует
+Создать файл: `TODO/AUDIT/PROJECT/audit_report_<number>.md` (свободный следующий номер)
 
 ## 1. Executive Summary
 

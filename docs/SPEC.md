@@ -174,14 +174,14 @@
   * набор графиков
   * отдельная страница
 
-### Graph types (фиксировано)
+### Graph types (расширяемо)
 
 * bar
 * line
 * pie
 * table
 
-### Features
+### Features (расширяемо)
 
 * multi-axis
 * комбинированные графики
@@ -479,31 +479,39 @@ frontend/
 ## 18. UI Pages (React SPA)
 
 ### 18.1 Login Page (`/login`)
+- открывается по умолчанию (активный редирект с других страниц, кроме регистрации) если пользователь не вошел в систему (сессия отстутствует или устарела)
 - Поле email (валидация формата)
 - Поле password (type="password")
 - Кнопка "Войти"
 - Ссылка "Зарегистрироваться" → `/register`
 
 ### 18.2 Registration Page (`/register`)
+- переход со страницы Login по ссылке
 - Поле email (валидация через Zod)
 - Кнопка "Отправить заявку"
 - Заявка сохраняется в БД (`registration_requests`)
 
 ### 18.3 Dashboard List Page (`/dashboards`)
+- открывается после корректного логина
+- если сессия устарела - идет редирект на страницу логина 
 - Список доступных пользователю дашбордов
 - Каждая карточка: название, описание, ссылка "Открыть"
 - GET `/api/v1/dashboards/my`
+- ссылка на профиль пользователя profile вверху справа
 
 ### 18.4 Dashboard View Page (`/dashboard/:id`)
 - Заголовок дашборда
 - **Filters Panel**: Select/Range/Date фильтры (динамически по конфигу)
 - **Charts Grid**: Графики (Plotly.js React), таблицы
-- **Upload Button** (видна для роли `editor` и выше)
+- **Upload Button** (видна для роли `editor` и выше) - вверху слева
 - GET `/api/v1/data/aggregated?dashboard_id=:id&filters=...`
 
 ### 18.5 User Profile Page (`/profile`)
 - Email (read-only), роль (read-only)
 - Кнопка "Удалить аккаунт" (только для НЕ-админов)
+- Мои дашборды (ссылка на \dashboards)
+- ссылка на страницу /profile  присутствует на всех страницах кроме:
+    - логина
 
 ### 18.6 Admin Panel (`/admin`)
 - **User Management**: таблица пользователей, изменение ролей

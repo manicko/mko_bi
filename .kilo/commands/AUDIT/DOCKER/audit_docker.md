@@ -1,7 +1,8 @@
 ---
-name: Docker Audit Task
+name: audit implementation docker
+description: audit implementation docker
+agent: auditor
 alwaysApply: false
-description: Docker Audit Task
 ---
 
 # BLOCK 1.5 — Docker & Runtime Environment
@@ -108,8 +109,7 @@ description: Docker Audit Task
 
 # В отчет  добавить
 
-Создать файл отчета: `TODO/TASK_038_docker_audit_report.md`
-
+Создать файл: `TODO/AUDIT/DOCKER/audit_report_<number>.md` (свободный следующий номер)
 В `Findings`:
 
 | Severity | File       | Line | Problem                | Impact        | Recommendation    |

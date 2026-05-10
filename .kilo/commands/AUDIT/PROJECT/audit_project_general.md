@@ -1,7 +1,8 @@
 ---
-name: Full Audit Task
+name: audit implementation general
+description: audit implementation general
+agent: audit
 alwaysApply: false
-description: Comprehensive audit of the entire mkobi BI Dashboard system
 ---
 
 # Full Audit Task
@@ -149,7 +150,7 @@ description: Comprehensive audit of the entire mkobi BI Dashboard system
 
 ## Формат отчёта (ОБЯЗАТЕЛЬНО)
 
-Файл: `TODO/TASK_<number>_full_audit_report.md`
+Создать файл: `TODO/AUDIT/PROJECT/audit_report_<number>.md` (свободный следующий номер)
 
 ### Структура отчёта:
 
