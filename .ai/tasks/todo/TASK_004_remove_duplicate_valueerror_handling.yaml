@@ -1,0 +1,41 @@
+id: TASK_004_remove_duplicate_valueerror_handling
+title: Remove unreachable duplicate ValueError handler in upload route
+
+status: pending
+priority: medium
+
+depends_on: []
+
+description: >
+  The upload endpoint has duplicate except ValueError blocks - an inner block (lines 126-157)
+  and an outer block (lines 178-209). The inner block is unreachable because process_upload
+  never raises ValueError.
+
+goals:
+  - Remove unreachable inner except ValueError block
+  - Simplify error handling flow in upload_file_endpoint
+  - Ensure error handling still covers all actual exceptions
+
+files:
+  - path: src/mkobi/api/routes/upload.py
+    targets:
+      - type: function
+        name: upload_file_endpoint
+    semantic_anchors:
+      remove_inner_except:
+        type: except_block
+        value: ValueError
+
+changes:
+  - action: remove_code
+    description: Remove unreachable inner except ValueError block
+
+acceptance_criteria:
+  - Inner ValueError handler is removed
+  - Upload endpoint still handles all actual exceptions
+  - Migration to shared ValueError-to-HTTPException helper considered
+
+tests_to_run:
+  - pytest tests/test_upload_api.py -v
+
+risk_level: low

@@ -1,0 +1,64 @@
+id: TASK_006_implement_file_streaming_upload
+title: Implement streaming for large file uploads to reduce memory pressure
+
+status: pending
+priority: medium
+
+depends_on: []
+
+description: >
+  file_content = await file.read() loads entire uploaded file into memory. For files
+  near the 100MB limit, this causes memory pressure and potential OOM kills for
+  concurrent uploads.
+
+goals:
+  - Implement streaming for files above lazy_threshold_mb
+  - Use platformdirs temp directory for streaming
+  - Leverage existing _read_csv_lazy in loader.py
+
+files:
+  - path: src/mkobi/api/routes/upload.py
+    targets:
+      - type: function
+        name: upload_file_endpoint
+    semantic_anchors:
+      replace_read:
+        type: function_call
+        value: await file.read()
+
+  - path: src/mkobi/data/loaders/loader.py
+    targets:
+      - type: method
+        name: _read_csv_lazy
+    semantic_anchors:
+      reference:
+        type: method
+
+  - path: src/mkobi/config.py
+    targets:
+      - type: class
+        name: UploadSettings
+    semantic_anchors:
+      reference:
+        - type: attribute
+          name: lazy_threshold_mb
+        - type: attribute
+          name: upload_temp_dir
+
+changes:
+  - action: add_conditional
+    description: Check file size and use streaming for large files
+
+  - action: implement_streaming
+    description: Stream to temp file instead of memory for files > lazy_threshold_mb
+
+acceptance_criteria:
+  - Large files are streamed to temp file
+  - Memory usage stays bounded during upload
+  - Backward compatible with small file uploads
+
+tests_to_run:
+  - pytest tests/test_upload_api.py -v
+  - pytest tests/test_storage_manager.py -v
+
+risk_level: medium

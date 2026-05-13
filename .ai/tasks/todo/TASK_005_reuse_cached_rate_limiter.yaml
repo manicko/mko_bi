@@ -1,0 +1,57 @@
+id: TASK_005_reuse_cached_rate_limiter
+title: Reuse service-level cached rate limiter in login route
+
+status: pending
+priority: medium
+
+depends_on: []
+
+description: >
+  _handle_login() creates a new AsyncRateLimiter instance per login attempt instead
+  of reusing the cached instance in AuthService. This causes Redis connection churn
+  and potential rate-limit bypass.
+
+goals:
+  - Inject AuthService into _handle_login route
+  - Reuse AuthService._rate_limiter instead of creating new instance
+  - Ensure rate limiting state is shared between route and service
+
+files:
+  - path: src/mkobi/api/routes/auth.py
+    targets:
+      - type: function
+        name: _handle_login
+    semantic_anchors:
+      inject_auth_service:
+        type: parameter
+      replace_limiter:
+        type: variable
+        value: AsyncRateLimiter
+
+  - path: src/mkobi/services/auth_service.py
+    targets:
+      - type: class
+        name: AuthService
+      - type: attribute
+        name: _rate_limiter
+    semantic_anchors:
+      confirm_cache:
+        type: attribute
+
+changes:
+  - action: add_parameter
+    description: Add auth_service: AuthService parameter to _handle_login
+
+  - action: replace_instantiation
+    description: Use auth_service._rate_limiter instead of new AsyncRateLimiter()
+
+acceptance_criteria:
+  - AuthService is injected into _handle_login
+  - Rate limiter instance is reused, not recreated per request
+  - No API contract changes required
+
+tests_to_run:
+  - pytest tests/test_auth.py -v
+  - pytest tests/test_security.py -v
+
+risk_level: medium

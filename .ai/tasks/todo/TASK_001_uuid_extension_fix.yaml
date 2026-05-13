@@ -1,0 +1,77 @@
+id: TASK_001_uuid_extension_fix
+title: Fix UUID extension mismatch between schema and ORM models
+
+status: pending
+priority: high
+
+depends_on: []
+
+description: >
+  Production schema dump uses uuid-ossp extension (uuid_generate_v4()), but all ORM models
+  reference gen_random_uuid() from pgcrypto. This causes migration failures on fresh databases.
+
+goals:
+  - Update bidb_schema.sql to use pgcrypto instead of uuid-ossp
+  - Add CREATE EXTENSION IF NOT EXISTS pgcrypto to initial migration
+  - Ensure all UUID default expressions use gen_random_uuid()
+
+files:
+  - path: bidb_schema.sql
+    targets:
+      - type: function_call
+        name: uuid_generate_v4
+    semantic_anchors:
+      replace:
+        type: function_call
+        value: uuid_generate_v4()
+      with:
+        type: function_call
+        value: gen_random_uuid()
+
+  - path: alembic/versions/7130ecb0388c_true_initial_migration.py
+    targets:
+      - type: migration_file
+    semantic_anchors:
+      insert_after:
+        type: function_call
+        value: op.create_table
+      add_extension:
+        type: raw_sql
+        value: "CREATE EXTENSION IF NOT EXISTS pgcrypto;"
+
+  - path: src/mkobi/db/models/user.py
+    targets:
+      - type: class
+        name: User
+    semantic_anchors:
+      verify_default:
+        type: function_call
+        value: gen_random_uuid
+
+  - path: src/mkobi/db/models/dashboard.py
+    targets:
+      - type: class
+        name: Dashboard
+    semantic_anchors:
+      verify_default:
+        type: function_call
+        value: gen_random_uuid
+
+changes:
+  - action: update_sql
+    description: Change uuid_generate_v4() to gen_random_uuid() in schema dump
+    severity: high
+
+  - action: add_migration_step
+    description: Add pgcrypto extension creation to initial migration
+    severity: high
+
+acceptance_criteria:
+  - pgcrypto extension is created in migration
+  - All UUID defaults use gen_random_uuid()
+  - Fresh database migration succeeds from scratch
+
+tests_to_run:
+  - pytest tests/test_database_migrations.py -v
+
+risk_level: medium

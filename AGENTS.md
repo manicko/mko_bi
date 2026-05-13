@@ -1,31 +1,17 @@
 ---
-name: spec
-description: links to project specification, documentation, structure
-alwaysApply: false
----
-
-## Project Structure
-- `C:\py_dev\mkobi\docs\STRUCT.md`
-## Project specification
-- ТЗ/спецификация: `C:\py_dev\mkobi\docs\SPEC.md`
-- Docker `C:\py_dev\mkobi\docs\README_DOCKER.md`
-
-## Основные команды проекта
-- test:`uv run pytest <path>`
-- ruff:`uv run ruff check <path>`
-- mypy:`uv run mypy <path>`
-- alembic: `uv run alembic ...`
-- deps-add: `uv add <package>`
-- deps-dev:`uv add --dev <package>`
-- psql :`set "PGPASSWORD=..." & psql -h localhost -p 5432 -U postgres -d ...`
-
-
-windows
----
 name: Agent Guidelines
+description: Обязательные правила и контекст для работы над проектом
 alwaysApply: true
-description: Обязательные правила и контекст для работы над проектом mkobi
 ---
+
+#Key links
+[Project Structure](C:\py_dev\mkobi\.ai\structure\map.md)
+[Full Project Structure including dependencies and semantic for audit and development)](C:\py_dev\mkobi\.ai\structure**)
+[Important project specification](C:\py_dev\mkobi\docs\SPEC.md)
+[Docker specification](C:\py_dev\mkobi\docs\README_DOCKER.md)
+[Important project commands](C:\py_dev\mkobi\.ai\context\commands.md)
+[Important context](C:\py_dev\mkobi\.ai\context)
+
 
 # Agent Guidelines — mkobi BI Dashboard
 

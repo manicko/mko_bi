@@ -1,0 +1,61 @@
+id: task_template
+
+title: Add audit logging for user creation
+
+status: pending
+
+priority: high
+
+depends_on:
+  - task_003
+  - task_007
+
+description: >
+  Add audit logging after successful user creation.
+
+goals:
+  - create audit log record
+  - avoid affecting transaction flow
+  - preserve backward compatibility
+
+files:
+  - path: app/services/user_service.py
+
+    targets:
+      - type: class
+        name: UserService
+
+      - type: method
+        name: create_user
+
+    semantic_anchors:
+
+      insert_after:
+        type: function_call
+        value: validate_email
+
+      insert_before:
+        type: return_statement
+
+changes:
+
+  - action: add_code
+
+    description: >
+      Call audit_service.log_user_created()
+
+    code_hint: |
+      audit_service.log_user_created(
+          user_id=user.id,
+          created_by=admin.id
+      )
+
+acceptance_criteria:
+  - audit log created
+  - no transaction rollback issues
+  - tests pass
+
+tests_to_run:
+  - tests/test_user_creation.py
+
+risk_level: medium

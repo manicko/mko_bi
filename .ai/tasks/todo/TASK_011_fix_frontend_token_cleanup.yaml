@@ -1,0 +1,47 @@
+id: TASK_011_fix_frontend_token_cleanup
+title: Fix removeToken to consistently clear both storage backends
+
+status: pending
+priority: low
+
+depends_on: []
+
+description: >
+  removeToken() accesses sessionStorage even in production mode where only memoryToken
+  is used. This inconsistent behavior could cause confusion during refactoring.
+
+goals:
+  - Make removeToken() always clear both memoryToken and sessionStorage
+  - Ensure consistent cleanup regardless of environment
+
+files:
+  - path: frontend/src/features/auth/model/authToken.ts
+    targets:
+      - type: function
+        name: removeToken
+    semantic_anchors:
+      update_logic:
+        type: function_body
+
+  - path: frontend/src/features/auth/model/useAuth.ts
+    targets:
+      - type: hook
+        name: useAuth
+    semantic_anchors:
+      reference:
+        type: import
+
+changes:
+  - action: update_function
+    description: Always clear both storage backends unconditionally
+
+acceptance_criteria:
+  - Both memoryToken and sessionStorage cleared
+  - Consistent behavior across environments
+  - No runtime errors in production
+
+tests_to_run:
+  - npm test -- authToken
+  - npm test -- useAuth
+
+risk_level: low

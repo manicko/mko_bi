@@ -1,0 +1,56 @@
+id: TASK_003_fix_hardcoded_dimension_count
+title: Replace hardcoded dimension count in _store_aggregates with graph config
+
+status: pending
+priority: medium
+
+depends_on: []
+
+description: >
+  _store_aggregates() in data_worker.py uses df.columns[:3] to determine dimensions,
+  assuming first 3 columns. This breaks when column order changes or different number
+  of dimensions is needed.
+
+goals:
+  - Modify _store_aggregates to accept graph configuration
+  - Use graph.dimensions config instead of hardcoded [:3]
+  - Ensure dimension/metric partitioning aligns with _validate_aggregates
+
+files:
+  - path: src/mkobi/workers/data_worker.py
+    targets:
+      - type: function
+        name: _store_aggregates
+    semantic_anchors:
+      modify_signature:
+        type: function_definition
+      replace_hardcoded:
+        type: slice_access
+        value: df.columns[:3]
+
+  - path: src/mkobi/db/models/graphs.py
+    targets:
+      - type: class
+        name: Graph
+    semantic_anchors:
+      reference:
+        type: relationship
+        value: processing_configs
+
+changes:
+  - action: modify_signature
+    description: Add graph_config parameter to _store_aggregates
+
+  - action: replace_slice
+    description: Replace df.columns[:3] with graph_config.dimensions from ProcessingConfig
+
+acceptance_criteria:
+  - _store_aggregates accepts graph configuration
+  - Dimension partitioning uses graph config, not hardcoded slice
+  - Aggregation results are correct for different dimension counts
+
+tests_to_run:
+  - pytest tests/test_data_worker.py -v
+  - pytest tests/test_aggregation.py -v
+
+risk_level: medium

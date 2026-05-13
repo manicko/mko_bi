@@ -1,0 +1,1972 @@
+- path: c:\py_dev\mkobi\src\mkobi\app.py
+  module: c:_dev.mkobi.src.mkobi.app
+  layer: unknown
+  imports:
+  - contextlib
+  - typing
+  - fastapi
+  - fastapi.exceptions
+  - fastapi.middleware.cors
+  - fastapi.middleware.gzip
+  - fastapi.responses
+  - fastapi.staticfiles
+  - pydantic
+  - sqlalchemy
+  - starlette.exceptions
+  - mkobi.api
+  - mkobi.config
+  - mkobi.core.logging_config
+  - mkobi.db.session
+  - mkobi.db.starter
+  - mkobi.models.enums
+  classes: []
+  functions:
+  - lifespan
+  - create_app
+  - root
+  - health_check
+  - detailed_health_check
+  - http_exception_handler
+  - validation_exception_handler
+  - pydantic_validation_exception_handler
+  - _setup_static_files
+  - serve_spa
+- path: c:\py_dev\mkobi\src\mkobi\config.py
+  module: c:_dev.mkobi.src.mkobi.config
+  layer: unknown
+  imports:
+  - pathlib
+  - typing
+  - pydantic
+  - pydantic.fields
+  - pydantic_settings
+  - pydantic_settings.sources
+  - mkobi.models.enums
+  classes:
+  - SecretsFileSource
+  - DatabaseSettings
+  - JWTSettings
+  - RedisSettings
+  - AppSettings
+  - UploadSettings
+  - EmailSettings
+  - DashboardSettings
+  - LoggingSettings
+  - ChartsSettings
+  - YOYSettings
+  - CurrentYearStyle
+  - PreviousYearStyle
+  - LayoutSettings
+  - Settings
+  functions:
+  - _set_nested_value
+  - get_field_value
+  - __call__
+  - __repr__
+  - database_url
+  - validate_cors_origins
+  - settings_customise_sources
+  - __init__
+  - _log_initialization
+  - _ensure_upload_dir
+  - DATABASE_URL
+  - TEST_DATABASE_URL
+  - test_database_url
+  - jwt_secret_key
+  - jwt_algorithm
+  - upload_temp_dir
+  - allowed_file_types
+  - allowed_mime_types
+  - lazy_threshold_mb
+  - max_file_size
+  - log_level
+  - log_file
+  - load_yaml_config
+  - get_config
+- path: c:\py_dev\mkobi\src\mkobi\main.py
+  module: c:_dev.mkobi.src.mkobi.main
+  layer: unknown
+  imports:
+  - mkobi.app
+  classes: []
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\api\deps.py
+  module: c:_dev.mkobi.src.mkobi.api.deps
+  layer: unknown
+  imports:
+  - __future__
+  - typing
+  - fastapi
+  - fastapi.security
+  - jose
+  - sqlalchemy.ext.asyncio
+  - uuid
+  - mkobi.services.data_service
+  - mkobi.services.filter_service
+  - mkobi.services.graph_service
+  - mkobi.services.layout_service
+  - mkobi.services.processing_config_service
+  - mkobi.services.processing_log_service
+  - mkobi.core.permissions
+  - mkobi.db.session
+  - mkobi.models.enums
+  - mkobi.models.user
+  - mkobi.services.auth_service
+  - mkobi.db.repositories.user_repo
+  - mkobi.db.repositories.dashboard_repo
+  - mkobi.db.repositories.access_repo
+  - mkobi.db.repositories.aggregated_data_repo
+  - mkobi.db.repositories.layout_repo
+  - mkobi.db.repositories.filter_repo
+  - mkobi.db.repositories.processing_config_repo
+  - mkobi.db.repositories.processing_log_repo
+  - mkobi.db.repositories.registration_request_repo
+  - mkobi.db.repositories.graph_repo
+  - mkobi.services.auth_service
+  - mkobi.services.user_service
+  - mkobi.services.dashboard_service
+  - mkobi.services.filter_service
+  - mkobi.services.layout_service
+  - mkobi.services.data_service
+  - mkobi.services.graph_service
+  - mkobi.services.processing_config_service
+  - mkobi.services.processing_log_service
+  classes: []
+  functions:
+  - get_db_dependency
+  - get_user_repository
+  - get_dashboard_repository
+  - get_access_repository
+  - get_aggregated_data_repository
+  - get_layout_repository
+  - get_filter_repository
+  - get_processing_config_repository
+  - get_processing_log_repository
+  - get_registration_request_repository
+  - get_graph_repository
+  - get_auth_service
+  - get_user_service
+  - get_dashboard_service
+  - get_filter_service
+  - get_layout_service
+  - get_data_service
+  - get_graph_service
+  - get_processing_config_service
+  - get_processing_log_service
+  - get_token_from_header
+  - get_current_user_dependency
+  - require_admin_role
+  - require_editor_role
+  - require_viewer_role
+  - require_role_dependency
+  - role_checker
+  - require_dashboard_read_access
+  - require_dashboard_write_access
+  - require_dashboard_admin_access
+  - get_dashboard_permissions
+- path: c:\py_dev\mkobi\src\mkobi\api\__init__.py
+  module: c:_dev.mkobi.src.mkobi.api.__init__
+  layer: unknown
+  imports:
+  - mkobi.api
+  classes: []
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\core\base_repository.py
+  module: c:_dev.mkobi.src.mkobi.core.base_repository
+  layer: unknown
+  imports:
+  - typing
+  - pydantic
+  - sqlalchemy
+  - sqlalchemy.exc
+  - sqlalchemy.ext.asyncio
+  - mkobi.db.base
+  classes:
+  - BaseRepository
+  functions:
+  - __init__
+  - get_by_id
+  - get_all
+  - create
+  - update
+  - delete
+  - exists
+- path: c:\py_dev\mkobi\src\mkobi\core\logging_config.py
+  module: c:_dev.mkobi.src.mkobi.core.logging_config
+  layer: unknown
+  imports:
+  - pathlib
+  - typing
+  classes:
+  - JSONFormatter
+  functions:
+  - format
+  - setup_logging
+  - get_logger
+- path: c:\py_dev\mkobi\src\mkobi\core\permissions.py
+  module: c:_dev.mkobi.src.mkobi.core.permissions
+  layer: unknown
+  imports:
+  - typing
+  - collections.abc
+  - uuid
+  - functools
+  - fastapi
+  - fastapi.security
+  - jose
+  - sqlalchemy.ext.asyncio
+  - mkobi.core.security
+  - mkobi.db.repositories.access_repo
+  - mkobi.db.repositories.user_repo
+  - mkobi.db.session
+  - mkobi.models.enums
+  - mkobi.models.user
+  classes:
+  - RolePermissions
+  - PermissionError
+  - AuthenticationError
+  functions:
+  - can_create_dashboards
+  - can_edit_dashboards
+  - can_view_dashboards
+  - can_manage_users
+  - can_upload_data
+  - check_permission
+  - get_db
+  - _get_role_level
+  - check_role
+  - check_dashboard_access
+  - _check_access_with_session
+  - _decode_token_cached
+  - get_current_user
+  - _get_current_user_with_session
+  - get_current_user_dependency
+  - require_role
+  - role_checker
+  - require_dashboard_access
+  - access_checker
+- path: c:\py_dev\mkobi\src\mkobi\core\redis_client.py
+  module: c:_dev.mkobi.src.mkobi.core.redis_client
+  layer: unknown
+  imports:
+  - mkobi.config
+  classes: []
+  functions:
+  - get_redis_client
+  - get_async_redis_client
+- path: c:\py_dev\mkobi\src\mkobi\core\security.py
+  module: c:_dev.mkobi.src.mkobi.core.security
+  layer: unknown
+  imports:
+  - datetime
+  - typing
+  - jose
+  - mkobi.config
+  - uuid
+  classes:
+  - RateLimiter
+  - AsyncRateLimiter
+  functions:
+  - __init__
+  - check_rate_limit
+  - __init__
+  - check_rate_limit
+  - _truncate_password
+  - hash_password
+  - verify_password
+  - create_access_token
+  - decode_token
+- path: c:\py_dev\mkobi\src\mkobi\core\task_queue.py
+  module: c:_dev.mkobi.src.mkobi.core.task_queue
+  layer: unknown
+  imports:
+  - collections.abc
+  - typing
+  - mkobi.models.enums
+  classes:
+  - TaskQueue
+  functions:
+  - __init__
+  - enqueue
+  - process_next
+  - get_status
+  - get_result
+  - get_error
+  - enqueue_job
+  - get_task_queue
+- path: c:\py_dev\mkobi\src\mkobi\core\__init__.py
+  module: c:_dev.mkobi.src.mkobi.core.__init__
+  layer: unknown
+  imports: []
+  classes: []
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\data\__init__.py
+  module: c:_dev.mkobi.src.mkobi.data.__init__
+  layer: unknown
+  imports: []
+  classes: []
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\db\base.py
+  module: c:_dev.mkobi.src.mkobi.db.base
+  layer: unknown
+  imports:
+  - sqlalchemy.orm
+  classes:
+  - Base
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\db\session.py
+  module: c:_dev.mkobi.src.mkobi.db.session
+  layer: unknown
+  imports:
+  - collections.abc
+  - sqlalchemy.ext.asyncio
+  - contextlib
+  - mkobi.config
+  - mkobi.db.base
+  classes: []
+  functions:
+  - get_async_engine
+  - get_async_sessionlocal
+  - get_session
+  - get_db
+  - init_db
+  - drop_db
+- path: c:\py_dev\mkobi\src\mkobi\db\starter.py
+  module: c:_dev.mkobi.src.mkobi.db.starter
+  layer: unknown
+  imports:
+  - datetime
+  - typing
+  - alembic
+  - alembic.config
+  - sqlalchemy
+  - sqlalchemy.ext.asyncio
+  - mkobi.config
+  - mkobi.models.enums
+  classes:
+  - DatabaseNotFoundError
+  - SchemaNotFoundError
+  - DatabaseStarterConfig
+  - DatabaseStarter
+  functions:
+  - __init__
+  - __init__
+  - startup
+  - recreate_test_database
+  - _apply_migrations
+  - _sync_migrate
+  - cleanup_old_logs
+  - shutdown
+  - main
+- path: c:\py_dev\mkobi\src\mkobi\db\__init__.py
+  module: c:_dev.mkobi.src.mkobi.db.__init__
+  layer: unknown
+  imports: []
+  classes: []
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\interfaces\repository_interfaces.py
+  module: c:_dev.mkobi.src.mkobi.interfaces.repository_interfaces
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - sqlalchemy.ext.asyncio
+  classes:
+  - IRepository
+  - IUserRepository
+  - IDashboardRepository
+  - IAccessRepository
+  - IRegistrationRequestRepository
+  - IAggregatedDataRepository
+  - ILayoutRepository
+  - IFilterRepository
+  - IGraphRepository
+  - IProcessingConfigRepository
+  - IProcessingLogRepository
+  functions:
+  - get
+  - get_all
+  - create
+  - update
+  - delete
+  - get_by_email
+  - get_by_email_with_hash
+  - get_by_user
+  - get_by_name
+  - grant_access
+  - revoke_access
+  - check_access
+  - get_user_dashboards
+  - get_all
+  - create
+  - get_by_email
+  - get_all
+  - update_status
+  - delete
+  - bulk_insert
+  - get_by_dashboard_id
+  - get_by_graph_id
+  - delete_by_graph_id
+  - delete_by_dashboard_id
+  - get_dims_values
+  - get_by_name
+  - get_by_name
+  - get_by_dashboard_id
+  - get_by_name_and_dashboard
+  - create_log
+  - update_status
+  - get_by_dashboard
+  - get_filtered
+  - get_latest_by_dashboard
+  - get_by_id
+  - delete
+- path: c:\py_dev\mkobi\src\mkobi\interfaces\service_interfaces.py
+  module: c:_dev.mkobi.src.mkobi.interfaces.service_interfaces
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - sqlalchemy.ext.asyncio
+  - mkobi.models.dashboard
+  - mkobi.models.data
+  - mkobi.models.enums
+  - mkobi.models.filters
+  - mkobi.models.graph
+  - mkobi.models.layout
+  - mkobi.models.processing_configs
+  - mkobi.models.processing_logs
+  - mkobi.models.types
+  - mkobi.models.user
+  classes:
+  - IAuthService
+  - IUserService
+  - IDashboardService
+  - IGraphService
+  - IFilterService
+  - IDataService
+  - IProcessingConfigService
+  - IProcessingLogService
+  - ILayoutService
+  functions:
+  - register_user
+  - authenticate_user
+  - login_user
+  - refresh_token
+  - create_access_token
+  - verify_token
+  - register_request
+  - get_user_by_id
+  - get_user_by_email
+  - create_user
+  - get_user_by_id
+  - get_user_by_email
+  - update_user_role
+  - delete_user
+  - get_all_users
+  - create_dashboard
+  - get_dashboard
+  - get_dashboard_by_name
+  - get_user_dashboards
+  - update_dashboard
+  - delete_dashboard
+  - get_all_dashboards
+  - grant_access
+  - revoke_access
+  - get_dashboard_access_list
+  - create_graph
+  - get_graph_by_id
+  - get_graph_by_name_and_dashboard
+  - get_graphs_by_dashboard
+  - update_graph
+  - delete_graph
+  - create_filter
+  - get_filter_by_id
+  - get_filter_by_name
+  - update_filter
+  - delete_filter
+  - get_all_filters
+  - process_upload
+  - trigger_processing
+  - get_processing_status
+  - get_processing_result
+  - get_aggregated_data
+  - get_available_metrics
+  - get_available_dimensions
+  - create_processing_config
+  - get_processing_config_by_dashboard
+  - update_processing_config
+  - delete_processing_config
+  - create_processing_log
+  - get_processing_logs_by_dashboard
+  - get_processing_logs_by_status
+  - update_processing_log
+  - delete_processing_log
+  - create_layout
+  - get_layout
+  - get_all_layouts
+  - update_layout
+  - delete_layout
+- path: c:\py_dev\mkobi\src\mkobi\interfaces\__init__.py
+  module: c:_dev.mkobi.src.mkobi.interfaces.__init__
+  layer: unknown
+  imports:
+  - mkobi.interfaces.repository_interfaces
+  - mkobi.interfaces.service_interfaces
+  classes: []
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\models\access.py
+  module: c:_dev.mkobi.src.mkobi.models.access
+  layer: unknown
+  imports:
+  - uuid
+  - pydantic
+  classes:
+  - AccessCheck
+  - AccessGrant
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\models\auth.py
+  module: c:_dev.mkobi.src.mkobi.models.auth
+  layer: unknown
+  imports:
+  - pydantic
+  - uuid
+  - mkobi.models.enums
+  classes:
+  - LoginRequest
+  - RegistrationRequestCreate
+  - RegistrationRequestResponse
+  - RegisterRequest
+  - Token
+  - TokenData
+  - RefreshRequest
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\models\dashboard.py
+  module: c:_dev.mkobi.src.mkobi.models.dashboard
+  layer: unknown
+  imports:
+  - datetime
+  - typing
+  - pydantic
+  - uuid
+  - mkobi.models.enums
+  - mkobi.models.layout
+  classes:
+  - DashboardConfig
+  - DashboardCreate
+  - DashboardRead
+  - DashboardUpdate
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\models\data.py
+  module: c:_dev.mkobi.src.mkobi.models.data
+  layer: unknown
+  imports:
+  - typing
+  - pydantic
+  - datetime
+  - uuid
+  - mkobi.models.enums
+  - mkobi.models.transformation_configs
+  - mkobi.models.types
+  classes:
+  - DataUpload
+  - UploadResponse
+  - ProcessingStatusResponse
+  - ProcessingConfig
+  - ProcessingResult
+  - AggregatedData
+  - DataFilter
+  - ChartDataRequest
+  - LoaderConfig
+  - ValidationResult
+  - ChartData
+  - ChartConfig
+  - FilterState
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\models\enums.py
+  module: c:_dev.mkobi.src.mkobi.models.enums
+  layer: unknown
+  imports:
+  - enum
+  classes:
+  - UserRole
+  - DashboardPermission
+  - GraphType
+  - FilterType
+  - RegistrationStatus
+  - UploadMode
+  - ProcessingStatus
+  - EnvironmentEnum
+  - MimeTypeEnum
+  - FileExtensionEnum
+  - ButtonVariant
+  - ComponentSize
+  - OrientationEnum
+  - BarmodeEnum
+  - YoyModeEnum
+  - AggregationFunctionEnum
+  - FilterOperatorEnum
+  functions:
+  - allowed_values
+  - allowed_values
+- path: c:\py_dev\mkobi\src\mkobi\models\filters.py
+  module: c:_dev.mkobi.src.mkobi.models.filters
+  layer: unknown
+  imports:
+  - datetime
+  - pydantic
+  - uuid
+  - mkobi.models.enums
+  - mkobi.models.types
+  classes:
+  - FilterBase
+  - FilterCreate
+  - FilterUpdate
+  - FilterRead
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\models\graph.py
+  module: c:_dev.mkobi.src.mkobi.models.graph
+  layer: unknown
+  imports:
+  - datetime
+  - pydantic
+  - uuid
+  - mkobi.models.enums
+  - mkobi.models.types
+  classes:
+  - GraphBase
+  - GraphCreate
+  - GraphUpdate
+  - GraphRead
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\models\layout.py
+  module: c:_dev.mkobi.src.mkobi.models.layout
+  layer: unknown
+  imports:
+  - datetime
+  - typing
+  - uuid
+  - pydantic
+  classes:
+  - LayoutBase
+  - LayoutCreate
+  - LayoutUpdate
+  - LayoutRead
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\models\processing_configs.py
+  module: c:_dev.mkobi.src.mkobi.models.processing_configs
+  layer: unknown
+  imports:
+  - datetime
+  - pydantic
+  - uuid
+  - mkobi.models.types
+  classes:
+  - ProcessingConfigBase
+  - ProcessingConfigCreate
+  - ProcessingConfigUpdate
+  - ProcessingConfigRead
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\models\processing_logs.py
+  module: c:_dev.mkobi.src.mkobi.models.processing_logs
+  layer: unknown
+  imports:
+  - datetime
+  - pydantic
+  - uuid
+  - mkobi.models.enums
+  classes:
+  - ProcessingLogFilter
+  - ProcessingLogCreate
+  - ProcessingLogUpdate
+  - ProcessingLogRead
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\models\style.py
+  module: c:_dev.mkobi.src.mkobi.models.style
+  layer: unknown
+  imports:
+  - pydantic
+  classes:
+  - ComponentStyle
+  - ButtonStyle
+  - FilterStyle
+  - ChartStyle
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\models\transformation_configs.py
+  module: c:_dev.mkobi.src.mkobi.models.transformation_configs
+  layer: unknown
+  imports:
+  - typing
+  - pydantic
+  - mkobi.models.enums
+  classes:
+  - FilterConfig
+  - AggregationConfig
+  - YoyConfig
+  - ShareConfig
+  - CustomMetricConfig
+  - TransformationConfig
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\models\types.py
+  module: c:_dev.mkobi.src.mkobi.models.types
+  layer: unknown
+  imports:
+  - typing
+  - pydantic
+  - mkobi.models.enums
+  classes:
+  - DimensionData
+  - MetricData
+  - AggregatedRecordModel
+  - FilterCondition
+  - ChartFilterConfig
+  - TransformationConfig
+  - AggregationConfig
+  - ProcessingConfigData
+  - AxisConfig
+  - ChartLayoutConfig
+  - YoYConfig
+  - GraphConfigDict
+  - FilterConfigDict
+  - ProcessingSettingsDict
+  - TokenData
+  - LoginResponse
+  - ChartMetadata
+  - ProcessingResultData
+  - DimensionModel
+  - MetricModel
+  - GraphConfigModel
+  - FilterConfigModel
+  - ProcessingSettingsModel
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\models\user.py
+  module: c:_dev.mkobi.src.mkobi.models.user
+  layer: unknown
+  imports:
+  - datetime
+  - pydantic
+  - uuid
+  - mkobi.models.enums
+  classes:
+  - UserBase
+  - UserCreate
+  - UserRead
+  - UserDB
+  - UserUpdate
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\models\__init__.py
+  module: c:_dev.mkobi.src.mkobi.models.__init__
+  layer: unknown
+  imports:
+  - mkobi.models.auth
+  - mkobi.models.data
+  - mkobi.models.filters
+  - mkobi.models.graph
+  - mkobi.models.processing_configs
+  - mkobi.models.processing_logs
+  - mkobi.models.user
+  - mkobi.models.transformation_configs
+  - mkobi.models.enums
+  classes: []
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\services\auth_service.py
+  module: c:_dev.mkobi.src.mkobi.services.auth_service
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - sqlalchemy.ext.asyncio
+  - mkobi.core.logging_config
+  - mkobi.core.redis_client
+  - mkobi.core.security
+  - mkobi.db.session
+  - mkobi.interfaces.repository_interfaces
+  - mkobi.interfaces.service_interfaces
+  - mkobi.models.enums
+  - mkobi.models.user
+  classes:
+  - AuthService
+  functions:
+  - __init__
+  - _validate_role
+  - _validate_email_format
+  - _check_email_uniqueness
+  - register_user
+  - login_user
+  - authenticate_user
+  - create_access_token
+  - refresh_token
+  - verify_token
+  - get_user_by_id
+  - get_user_by_email
+  - create_user
+  - register_request
+- path: c:\py_dev\mkobi\src\mkobi\services\dashboard_service.py
+  module: c:_dev.mkobi.src.mkobi.services.dashboard_service
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - sqlalchemy
+  - sqlalchemy.ext.asyncio
+  - mkobi.db.models
+  - mkobi.db.models
+  - mkobi.db.session
+  - mkobi.interfaces.service_interfaces
+  - mkobi.interfaces.repository_interfaces
+  - mkobi.models.dashboard
+  - mkobi.models.enums
+  - mkobi.models.layout
+  classes:
+  - DashboardService
+  functions:
+  - __init__
+  - create_dashboard
+  - get_dashboard
+  - get_dashboard_by_name
+  - get_user_dashboards
+  - update_dashboard
+  - delete_dashboard
+  - get_all_dashboards
+  - grant_access
+  - revoke_access
+  - get_dashboard_access_list
+  - _validate_permission
+  - _validate_config
+  - _dashboard_to_read
+- path: c:\py_dev\mkobi\src\mkobi\services\data_service.py
+  module: c:_dev.mkobi.src.mkobi.services.data_service
+  layer: unknown
+  imports:
+  - datetime
+  - pathlib
+  - typing
+  - uuid
+  - sqlalchemy.ext.asyncio
+  - mkobi.config
+  - mkobi.core.permissions
+  - mkobi.core.redis_client
+  - mkobi.core.security
+  - mkobi.core.task_queue
+  - mkobi.data.loaders.loader
+  - mkobi.db.session
+  - mkobi.interfaces.repository_interfaces
+  - mkobi.interfaces.service_interfaces
+  - mkobi.models.data
+  - mkobi.models.enums
+  - mkobi.workers.data_worker
+  - mkobi.workers.data_worker
+  classes:
+  - DataService
+  functions:
+  - __init__
+  - process_upload
+  - _process_upload_with_session
+  - get_aggregated_data
+  - _get_aggregated_data_with_session
+  - get_available_metrics
+  - _get_available_metrics_with_session
+  - get_available_dimensions
+  - _get_available_dimensions_with_session
+  - _validate_mime_type
+  - _validate_file
+  - trigger_processing
+  - get_processing_status
+  - get_processing_result
+  - cleanup_task_files
+- path: c:\py_dev\mkobi\src\mkobi\services\filter_service.py
+  module: c:_dev.mkobi.src.mkobi.services.filter_service
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - sqlalchemy.ext.asyncio
+  - mkobi.interfaces.repository_interfaces
+  - mkobi.interfaces.service_interfaces
+  - mkobi.models.enums
+  - mkobi.models.filters
+  - mkobi.models.types
+  classes:
+  - FilterService
+  functions:
+  - __init__
+  - create_filter
+  - get_filter_by_id
+  - get_filter_by_name
+  - get_all_filters
+  - update_filter
+  - delete_filter
+  - _validate_filter_type
+  - _validate_filter_name
+  - _validate_filter_config
+- path: c:\py_dev\mkobi\src\mkobi\services\graph_service.py
+  module: c:_dev.mkobi.src.mkobi.services.graph_service
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - sqlalchemy.ext.asyncio
+  - mkobi.db.session
+  - mkobi.interfaces.repository_interfaces
+  - mkobi.interfaces.service_interfaces
+  - mkobi.models.graph
+  - mkobi.models.enums
+  classes:
+  - GraphService
+  functions:
+  - __init__
+  - _to_read_model
+  - _validate_graph_data
+  - create
+  - get
+  - update
+  - delete
+  - list_by_dashboard
+  - get_graphs_by_dashboard
+  - create_graph
+  - get_graph_by_id
+  - get_graph_by_name_and_dashboard
+  - update_graph
+  - delete_graph
+- path: c:\py_dev\mkobi\src\mkobi\services\layout_service.py
+  module: c:_dev.mkobi.src.mkobi.services.layout_service
+  layer: unknown
+  imports:
+  - uuid
+  - typing
+  - sqlalchemy.ext.asyncio
+  - mkobi.db.session
+  - mkobi.interfaces.repository_interfaces
+  - mkobi.interfaces.service_interfaces
+  - mkobi.models.layout
+  classes:
+  - LayoutService
+  functions:
+  - __init__
+  - create_layout
+  - get_layout
+  - get_all_layouts
+  - update_layout
+  - delete_layout
+- path: c:\py_dev\mkobi\src\mkobi\services\processing_config_service.py
+  module: c:_dev.mkobi.src.mkobi.services.processing_config_service
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - sqlalchemy.ext.asyncio
+  - mkobi.db.session
+  - mkobi.interfaces.repository_interfaces
+  - mkobi.interfaces.service_interfaces
+  - mkobi.models.processing_configs
+  - mkobi.models.types
+  classes:
+  - ProcessingConfigService
+  functions:
+  - __init__
+  - _validate_settings
+  - get_by_dashboard_id
+  - upsert
+  - delete
+  - create_processing_config
+  - get_processing_config_by_dashboard
+  - update_processing_config
+  - delete_processing_config
+- path: c:\py_dev\mkobi\src\mkobi\services\processing_log_service.py
+  module: c:_dev.mkobi.src.mkobi.services.processing_log_service
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - sqlalchemy.ext.asyncio
+  - mkobi.db.session
+  - mkobi.interfaces.repository_interfaces
+  - mkobi.interfaces.service_interfaces
+  - mkobi.models.enums
+  - mkobi.models.processing_logs
+  classes:
+  - ProcessingLogService
+  functions:
+  - __init__
+  - create_processing_log
+  - get_processing_logs_by_dashboard
+  - get_processing_logs_by_status
+  - update_processing_log
+  - delete_processing_log
+  - create_started_log
+  - update_to_uploaded
+  - update_to_processing
+  - update_to_success
+  - update_to_failed
+  - get_filtered
+- path: c:\py_dev\mkobi\src\mkobi\services\user_service.py
+  module: c:_dev.mkobi.src.mkobi.services.user_service
+  layer: unknown
+  imports:
+  - uuid
+  - typing
+  - sqlalchemy.ext.asyncio
+  - mkobi.core.security
+  - mkobi.db.models
+  - mkobi.interfaces
+  - mkobi.interfaces.repository_interfaces
+  - mkobi.models.enums
+  - mkobi.models.user
+  classes:
+  - UserService
+  functions:
+  - _validate_role
+  - _validate_user_exists
+  - _check_admin_deletion_allowed
+  - __init__
+  - get_user_by_id
+  - get_user_by_email
+  - create_user
+  - update_user_role
+  - delete_user
+  - get_all_users
+- path: c:\py_dev\mkobi\src\mkobi\services\__init__.py
+  module: c:_dev.mkobi.src.mkobi.services.__init__
+  layer: unknown
+  imports:
+  - mkobi.services.auth_service
+  - mkobi.services.user_service
+  classes: []
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\utils\decorators.py
+  module: c:_dev.mkobi.src.mkobi.utils.decorators
+  layer: unknown
+  imports:
+  - collections.abc
+  - typing
+  - mkobi.core.permissions
+  - mkobi.models.enums
+  classes: []
+  functions:
+  - timing
+  - async_wrapper
+  - sync_wrapper
+  - retry
+  - decorator
+  - async_wrapper
+  - sync_wrapper
+  - log_execution
+  - decorator
+  - async_wrapper
+  - sync_wrapper
+  - require_role
+  - decorator
+  - async_wrapper
+  - sync_wrapper
+  - error_handler
+  - decorator
+  - async_wrapper
+  - sync_wrapper
+- path: c:\py_dev\mkobi\src\mkobi\utils\exceptions.py
+  module: c:_dev.mkobi.src.mkobi.utils.exceptions
+  layer: unknown
+  imports:
+  - fastapi
+  - fastapi.responses
+  - mkobi.core.logging_config
+  classes:
+  - AppException
+  - NotFoundException
+  - PermissionDeniedException
+  - ValidationException
+  - FileUploadException
+  functions:
+  - __init__
+  - __init__
+  - __init__
+  - __init__
+  - __init__
+  - add_exception_handlers
+  - app_exception_handler
+  - global_exception_handler
+- path: c:\py_dev\mkobi\src\mkobi\utils\file_utils.py
+  module: c:_dev.mkobi.src.mkobi.utils.file_utils
+  layer: unknown
+  imports:
+  - pathlib
+  - uuid
+  - mkobi.models.enums
+  classes: []
+  functions:
+  - get_user_temp_dir
+  - cleanup_temp_dir
+  - validate_file_extension
+  - validate_mime_type
+- path: c:\py_dev\mkobi\src\mkobi\utils\time_utils.py
+  module: c:_dev.mkobi.src.mkobi.utils.time_utils
+  layer: unknown
+  imports:
+  - datetime
+  - fastapi
+  classes:
+  - TimeUtils
+  functions:
+  - __init__
+  - now
+  - utcnow
+  - format
+  - parse
+  - isoformat
+  - parse_iso
+- path: c:\py_dev\mkobi\src\mkobi\utils\validators.py
+  module: c:_dev.mkobi.src.mkobi.utils.validators
+  layer: unknown
+  imports:
+  - uuid
+  - mkobi.models.enums
+  classes: []
+  functions:
+  - validate_email
+  - validate_role
+  - validate_uuid
+  - validate_string
+  - validate_password
+  - raise_if_invalid
+- path: c:\py_dev\mkobi\src\mkobi\utils\__init__.py
+  module: c:_dev.mkobi.src.mkobi.utils.__init__
+  layer: unknown
+  imports:
+  - mkobi.utils.file_utils
+  - mkobi.utils.time_utils
+  classes: []
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\workers\data_worker.py
+  module: c:_dev.mkobi.src.mkobi.workers.data_worker
+  layer: unknown
+  imports:
+  - datetime
+  - pathlib
+  - typing
+  - uuid
+  - sqlalchemy
+  - mkobi.data.loaders.loader
+  - mkobi.data.processing.transformations
+  - mkobi.db.models.graphs
+  - mkobi.db.models.processing_logs
+  - mkobi.db.session
+  - mkobi.models.data
+  - mkobi.models.enums
+  - mkobi.data.storage.manager
+  - mkobi.models.enums
+  classes: []
+  functions:
+  - _update_processing_log_status
+  - _process_csv_file_async
+  - _store_aggregates
+  - process_csv_background
+  - process_csv_background_sync
+- path: c:\py_dev\mkobi\src\mkobi\db\models\access.py
+  module: c:_dev.mkobi.src.mkobi.db.models.access
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - sqlalchemy
+  - sqlalchemy.dialects.postgresql
+  - sqlalchemy.orm
+  - mkobi.db.base
+  - mkobi.models.enums
+  - mkobi.db.models.dashboard
+  - mkobi.db.models.user
+  classes:
+  - DashboardAccess
+  functions:
+  - __repr__
+- path: c:\py_dev\mkobi\src\mkobi\db\models\aggregated_data.py
+  module: c:_dev.mkobi.src.mkobi.db.models.aggregated_data
+  layer: unknown
+  imports:
+  - __future__
+  - typing
+  - uuid
+  - sqlalchemy
+  - sqlalchemy.dialects.postgresql
+  - sqlalchemy.engine.interfaces
+  - sqlalchemy.orm
+  - sqlalchemy.types
+  - mkobi.db.base
+  - mkobi.db.models.dashboard
+  - mkobi.db.models.graphs
+  - sqlalchemy
+  classes:
+  - JSONBType
+  - AggregatedData
+  functions:
+  - load_dialect_impl
+  - __repr__
+  - __str__
+- path: c:\py_dev\mkobi\src\mkobi\db\models\dashboard.py
+  module: c:_dev.mkobi.src.mkobi.db.models.dashboard
+  layer: unknown
+  imports:
+  - __future__
+  - datetime
+  - typing
+  - uuid
+  - sqlalchemy
+  - sqlalchemy.dialects.postgresql
+  - sqlalchemy.orm
+  - mkobi.db.base
+  - mkobi.db.models.access
+  - mkobi.db.models.aggregated_data
+  - mkobi.db.models.filters
+  - mkobi.db.models.graph
+  - mkobi.db.models.layout
+  - mkobi.db.models.processing_configs
+  - mkobi.db.models.processing_logs
+  - mkobi.db.models.user
+  classes:
+  - Dashboard
+  functions:
+  - __repr__
+  - __str__
+- path: c:\py_dev\mkobi\src\mkobi\db\models\filters.py
+  module: c:_dev.mkobi.src.mkobi.db.models.filters
+  layer: unknown
+  imports:
+  - datetime
+  - typing
+  - uuid
+  - sqlalchemy
+  - sqlalchemy.dialects.postgresql
+  - sqlalchemy.orm
+  - mkobi.db.base
+  - mkobi.models.enums
+  classes:
+  - Filter
+  functions:
+  - __repr__
+  - __str__
+- path: c:\py_dev\mkobi\src\mkobi\db\models\graphs.py
+  module: c:_dev.mkobi.src.mkobi.db.models.graphs
+  layer: unknown
+  imports:
+  - __future__
+  - datetime
+  - uuid
+  - typing
+  - sqlalchemy
+  - sqlalchemy.dialects.postgresql
+  - sqlalchemy.orm
+  - mkobi.db.base
+  - mkobi.models.enums
+  - mkobi.db.models.dashboard
+  - mkobi.db.models.aggregated_data
+  classes:
+  - Graph
+  functions:
+  - __repr__
+  - __str__
+- path: c:\py_dev\mkobi\src\mkobi\db\models\layout.py
+  module: c:_dev.mkobi.src.mkobi.db.models.layout
+  layer: unknown
+  imports:
+  - __future__
+  - datetime
+  - uuid
+  - typing
+  - sqlalchemy
+  - sqlalchemy.dialects.postgresql
+  - sqlalchemy.orm
+  - mkobi.db.base
+  - mkobi.db.models.dashboard
+  classes:
+  - Layout
+  functions:
+  - __repr__
+  - __str__
+- path: c:\py_dev\mkobi\src\mkobi\db\models\processing_configs.py
+  module: c:_dev.mkobi.src.mkobi.db.models.processing_configs
+  layer: unknown
+  imports:
+  - datetime
+  - typing
+  - uuid
+  - sqlalchemy
+  - sqlalchemy.dialects.postgresql
+  - sqlalchemy.orm
+  - mkobi.db.base
+  classes:
+  - ProcessingConfig
+  functions:
+  - __repr__
+  - __str__
+- path: c:\py_dev\mkobi\src\mkobi\db\models\processing_logs.py
+  module: c:_dev.mkobi.src.mkobi.db.models.processing_logs
+  layer: unknown
+  imports:
+  - datetime
+  - uuid
+  - sqlalchemy
+  - sqlalchemy.dialects.postgresql
+  - sqlalchemy.orm
+  - mkobi.db.base
+  - mkobi.models.enums
+  classes:
+  - ProcessingLog
+  functions:
+  - __repr__
+  - __str__
+- path: c:\py_dev\mkobi\src\mkobi\db\models\registration_request.py
+  module: c:_dev.mkobi.src.mkobi.db.models.registration_request
+  layer: unknown
+  imports:
+  - __future__
+  - datetime
+  - ipaddress
+  - typing
+  - uuid
+  - sqlalchemy
+  - sqlalchemy.dialects.postgresql
+  - sqlalchemy.orm
+  - mkobi.db.base
+  - mkobi.models.enums
+  - mkobi.db.models.user
+  classes:
+  - RegistrationRequest
+  functions:
+  - __repr__
+  - __str__
+- path: c:\py_dev\mkobi\src\mkobi\db\models\user.py
+  module: c:_dev.mkobi.src.mkobi.db.models.user
+  layer: unknown
+  imports:
+  - datetime
+  - uuid
+  - typing
+  - sqlalchemy
+  - sqlalchemy.dialects.postgresql
+  - sqlalchemy.orm
+  - mkobi.db.base
+  - mkobi.models.enums
+  - mkobi.db.models.access
+  - mkobi.db.models.dashboard
+  - mkobi.db.models.registration_request
+  classes:
+  - User
+  functions:
+  - __repr__
+  - __str__
+- path: c:\py_dev\mkobi\src\mkobi\db\models\__init__.py
+  module: c:_dev.mkobi.src.mkobi.db.models.__init__
+  layer: unknown
+  imports:
+  - mkobi.db.models.access
+  - mkobi.db.models.aggregated_data
+  - mkobi.db.models.dashboard
+  - mkobi.db.models.filters
+  - mkobi.db.models.graphs
+  - mkobi.db.models.layout
+  - mkobi.db.models.processing_configs
+  - mkobi.db.models.processing_logs
+  - mkobi.db.models.registration_request
+  - mkobi.db.models.user
+  classes: []
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\db\repositories\access_repo.py
+  module: c:_dev.mkobi.src.mkobi.db.repositories.access_repo
+  layer: unknown
+  imports:
+  - uuid
+  - typing
+  - sqlalchemy
+  - sqlalchemy.exc
+  - sqlalchemy.ext.asyncio
+  - mkobi.db.models
+  - mkobi.db.models
+  - mkobi.interfaces.repository_interfaces
+  classes:
+  - AccessRepository
+  functions:
+  - grant_access
+  - revoke_access
+  - check_access
+  - get_user_dashboards
+  - get_all
+- path: c:\py_dev\mkobi\src\mkobi\db\repositories\aggregated_data_repo.py
+  module: c:_dev.mkobi.src.mkobi.db.repositories.aggregated_data_repo
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - sqlalchemy
+  - sqlalchemy.exc
+  - sqlalchemy.ext.asyncio
+  - mkobi.db.models
+  - mkobi.interfaces.repository_interfaces
+  classes:
+  - AggregatedDataRepository
+  functions:
+  - bulk_insert
+  - get_by_dashboard_id
+  - get_by_graph_id
+  - delete_by_graph_id
+  - delete_by_dashboard_id
+  - get_dims_values
+- path: c:\py_dev\mkobi\src\mkobi\db\repositories\dashboard_filter_repo.py
+  module: c:_dev.mkobi.src.mkobi.db.repositories.dashboard_filter_repo
+  layer: unknown
+  imports:
+  - uuid
+  - sqlalchemy
+  - sqlalchemy.exc
+  - mkobi.db.models.filters
+  - sqlalchemy.ext.asyncio
+  classes:
+  - DashboardFilterRepository
+  functions:
+  - bind_filter
+  - unbind_filter
+  - get_dashboard_filters
+  - get_filter_dashboards
+- path: c:\py_dev\mkobi\src\mkobi\db\repositories\dashboard_repo.py
+  module: c:_dev.mkobi.src.mkobi.db.repositories.dashboard_repo
+  layer: unknown
+  imports:
+  - uuid
+  - typing
+  - sqlalchemy
+  - sqlalchemy.exc
+  - sqlalchemy.ext.asyncio
+  - mkobi.core.logging_config
+  - mkobi.db.models
+  - mkobi.interfaces.repository_interfaces
+  classes:
+  - DashboardRepository
+  functions:
+  - get
+  - get_by_user
+  - create
+  - update
+  - delete
+  - get_all
+  - get_by_name
+- path: c:\py_dev\mkobi\src\mkobi\db\repositories\filter_repo.py
+  module: c:_dev.mkobi.src.mkobi.db.repositories.filter_repo
+  layer: unknown
+  imports:
+  - uuid
+  - typing
+  - sqlalchemy
+  - sqlalchemy.exc
+  - sqlalchemy.ext.asyncio
+  - mkobi.db.models
+  - mkobi.interfaces.repository_interfaces
+  classes:
+  - FilterRepository
+  functions:
+  - get
+  - get_by_name
+  - create
+  - update
+  - delete
+  - get_all
+- path: c:\py_dev\mkobi\src\mkobi\db\repositories\graph_repo.py
+  module: c:_dev.mkobi.src.mkobi.db.repositories.graph_repo
+  layer: unknown
+  imports:
+  - uuid
+  - typing
+  - sqlalchemy
+  - sqlalchemy.exc
+  - sqlalchemy.ext.asyncio
+  - mkobi.db.models
+  - mkobi.interfaces.repository_interfaces
+  classes:
+  - GraphRepository
+  functions:
+  - get
+  - get_by_dashboard_id
+  - create
+  - update
+  - delete
+  - get_all
+  - get_by_name_and_dashboard
+- path: c:\py_dev\mkobi\src\mkobi\db\repositories\layout_repo.py
+  module: c:_dev.mkobi.src.mkobi.db.repositories.layout_repo
+  layer: unknown
+  imports:
+  - uuid
+  - typing
+  - sqlalchemy
+  - sqlalchemy.exc
+  - mkobi.db.models
+  - mkobi.interfaces.repository_interfaces
+  - sqlalchemy.ext.asyncio
+  classes:
+  - LayoutRepository
+  functions:
+  - get
+  - get_by_name
+  - get_all
+  - create
+  - update
+  - delete
+- path: c:\py_dev\mkobi\src\mkobi\db\repositories\processing_config_repo.py
+  module: c:_dev.mkobi.src.mkobi.db.repositories.processing_config_repo
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - sqlalchemy
+  - sqlalchemy.exc
+  - sqlalchemy.ext.asyncio
+  - mkobi.db.models
+  - mkobi.interfaces.repository_interfaces
+  classes:
+  - ProcessingConfigRepository
+  functions:
+  - get
+  - create
+  - update
+  - delete
+  - get_all
+- path: c:\py_dev\mkobi\src\mkobi\db\repositories\processing_log_repo.py
+  module: c:_dev.mkobi.src.mkobi.db.repositories.processing_log_repo
+  layer: unknown
+  imports:
+  - datetime
+  - uuid
+  - typing
+  - sqlalchemy
+  - sqlalchemy.exc
+  - sqlalchemy.ext.asyncio
+  - mkobi.db.models
+  - mkobi.db.models.processing_logs
+  - mkobi.interfaces.repository_interfaces
+  - mkobi.models.enums
+  - mkobi.models.processing_logs
+  - sqlalchemy
+  classes:
+  - ProcessingLogRepository
+  functions:
+  - create_log
+  - update_status
+  - get_by_dashboard
+  - get_filtered
+  - get_latest_by_dashboard
+  - get_by_id
+  - delete
+- path: c:\py_dev\mkobi\src\mkobi\db\repositories\registration_request_repo.py
+  module: c:_dev.mkobi.src.mkobi.db.repositories.registration_request_repo
+  layer: unknown
+  imports:
+  - uuid
+  - typing
+  - datetime
+  - sqlalchemy
+  - sqlalchemy.exc
+  - sqlalchemy.ext.asyncio
+  - mkobi.core.logging_config
+  - mkobi.db.models.registration_request
+  - mkobi.interfaces.repository_interfaces
+  classes:
+  - RegistrationRequestRepository
+  functions:
+  - create
+  - get_by_email
+  - get_by_id
+  - delete
+  - get_all
+  - update_status
+- path: c:\py_dev\mkobi\src\mkobi\db\repositories\user_repo.py
+  module: c:_dev.mkobi.src.mkobi.db.repositories.user_repo
+  layer: unknown
+  imports:
+  - uuid
+  - typing
+  - sqlalchemy
+  - sqlalchemy.exc
+  - sqlalchemy.ext.asyncio
+  - mkobi.db.models
+  - mkobi.interfaces.repository_interfaces
+  - mkobi.models.user
+  classes:
+  - UserRepository
+  functions:
+  - get
+  - get_by_email
+  - get_by_email_with_hash
+  - get_all
+  - create
+  - update
+  - delete
+- path: c:\py_dev\mkobi\src\mkobi\db\repositories\__init__.py
+  module: c:_dev.mkobi.src.mkobi.db.repositories.__init__
+  layer: unknown
+  imports:
+  - mkobi.db.repositories.access_repo
+  - mkobi.db.repositories.aggregated_data_repo
+  - mkobi.db.repositories.dashboard_repo
+  - mkobi.db.repositories.filter_repo
+  - mkobi.db.repositories.processing_config_repo
+  - mkobi.db.repositories.processing_log_repo
+  - mkobi.db.repositories.user_repo
+  classes: []
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\data\loaders\loader.py
+  module: c:_dev.mkobi.src.mkobi.data.loaders.loader
+  layer: unknown
+  imports:
+  - pathlib
+  - typing
+  - mkobi.config
+  - mkobi.models.data
+  - mkobi.models.enums
+  classes:
+  - CSVLoader
+  functions:
+  - load_csv
+  - detect_file_type
+  - __init__
+  - load_csv
+  - load
+  - _read_csv_lazy
+  - _get_file_size_mb
+  - _validate_file_size
+  - _read_csv
+  - _apply_type_transformations
+  - _validate_required_columns
+  - get_summary
+  - filter_data
+  - aggregate
+- path: c:\py_dev\mkobi\src\mkobi\data\loaders\validator.py
+  module: c:_dev.mkobi.src.mkobi.data.loaders.validator
+  layer: unknown
+  imports:
+  - typing
+  - mkobi.models.data
+  - mkobi.models.enums
+  classes:
+  - DataValidator
+  functions:
+  - __init__
+  - validate
+  - _validate_required_columns
+  - _validate_column_types
+  - _validate_data_quality
+  - _validate_duplicates
+  - validate_schema
+  - get_validation_summary
+  - validate_file_extension
+  - validate_mime_type
+  - validate_file_size
+  - validate_dataframe
+- path: c:\py_dev\mkobi\src\mkobi\data\loaders\__init__.py
+  module: c:_dev.mkobi.src.mkobi.data.loaders.__init__
+  layer: unknown
+  imports: []
+  classes: []
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\data\processing\registry.py
+  module: c:_dev.mkobi.src.mkobi.data.processing.registry
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - sqlalchemy
+  - sqlalchemy.exc
+  - sqlalchemy.ext.asyncio
+  - mkobi.data.processing.transformations
+  - mkobi.data.storage.manager
+  - mkobi.interfaces.repository_interfaces
+  - mkobi.interfaces.service_interfaces
+  - mkobi.models.enums
+  - mkobi.models.processing_logs
+  classes:
+  - DataPipeline
+  functions:
+  - __init__
+  - run
+  - _save_with_retry
+- path: c:\py_dev\mkobi\src\mkobi\data\processing\transformations.py
+  module: c:_dev.mkobi.src.mkobi.data.processing.transformations
+  layer: unknown
+  imports:
+  - typing
+  - pydantic
+  - mkobi.models.enums
+  - mkobi.models.transformation_configs
+  classes: []
+  functions:
+  - apply_transformations
+  - _apply_filters
+  - _add_computed_fields
+  - _apply_dtypes
+  - calculate_aggregations
+  - aggregate_data
+  - _apply_groupby_aggregations
+  - _calculate_yoy
+  - _calculate_share
+  - _parse_formula
+- path: c:\py_dev\mkobi\src\mkobi\data\processing\__init__.py
+  module: c:_dev.mkobi.src.mkobi.data.processing.__init__
+  layer: unknown
+  imports: []
+  classes: []
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\data\storage\manager.py
+  module: c:_dev.mkobi.src.mkobi.data.storage.manager
+  layer: unknown
+  imports:
+  - __future__
+  - typing
+  - uuid
+  - sqlalchemy
+  - sqlalchemy.dialects.postgresql
+  - mkobi.db.models.aggregated_data
+  - mkobi.models.enums
+  - sqlalchemy.ext.asyncio
+  - mkobi.db.models
+  classes:
+  - StorageManager
+  functions:
+  - __init__
+  - save_aggregates
+  - upsert_aggregate
+  - get_aggregates
+  - delete_by_graph
+  - delete_by_dashboard
+  - _bulk_insert
+  - _bulk_upsert
+  - _validate_graphs_exist
+  - _validate_aggregates
+  - _validate_single_aggregate
+  - clear_graph_data
+  - clear_dashboard_data
+  - save_aggregated_data
+  - clear_graph_data_compat
+  - clear_dashboard_data_compat
+- path: c:\py_dev\mkobi\src\mkobi\data\storage\__init__.py
+  module: c:_dev.mkobi.src.mkobi.data.storage.__init__
+  layer: unknown
+  imports: []
+  classes: []
+  functions: []
+- path: c:\py_dev\mkobi\src\mkobi\api\routes\admin.py
+  module: c:_dev.mkobi.src.mkobi.api.routes.admin
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - fastapi
+  - sqlalchemy.ext.asyncio
+  - mkobi.api.deps
+  - mkobi.db.repositories.registration_request_repo
+  - mkobi.models.enums
+  - mkobi.models.user
+  - mkobi.services.auth_service
+  classes: []
+  functions:
+  - get_users_admin_endpoint
+  - update_user_role_admin_endpoint
+  - delete_user_admin_endpoint
+  - get_registration_requests_admin_endpoint
+  - approve_registration_request_admin_endpoint
+  - reject_registration_request_admin_endpoint
+- path: c:\py_dev\mkobi\src\mkobi\api\routes\auth.py
+  module: c:_dev.mkobi.src.mkobi.api.routes.auth
+  layer: unknown
+  imports:
+  - ipaddress
+  - typing
+  - fastapi
+  - fastapi.security
+  - mkobi.api.deps
+  - mkobi.core.logging_config
+  - mkobi.core
+  - mkobi.core.security
+  - mkobi.models.auth
+  - mkobi.models.user
+  classes: []
+  functions:
+  - _handle_login
+  - login
+  - login_form
+  - register
+  - refresh
+  - get_current_user_info
+  - register_request
+- path: c:\py_dev\mkobi\src\mkobi\api\routes\dashboards.py
+  module: c:_dev.mkobi.src.mkobi.api.routes.dashboards
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - fastapi
+  - sqlalchemy.ext.asyncio
+  - mkobi.api.deps
+  - mkobi.db.repositories.dashboard_filter_repo
+  - mkobi.db.repositories.filter_repo
+  - mkobi.db.repositories.graph_repo
+  - mkobi.models.access
+  - mkobi.models.dashboard
+  - mkobi.models.graph
+  - mkobi.services.dashboard_service
+  classes: []
+  functions:
+  - create_dashboard_endpoint
+  - get_my_dashboards_endpoint
+  - get_dashboard_endpoint
+  - update_dashboard_endpoint
+  - delete_dashboard_endpoint
+  - grant_dashboard_access_endpoint
+  - bind_filter_endpoint
+  - unbind_filter_endpoint
+  - get_dashboard_filters_endpoint
+  - get_dashboard_access_endpoint
+  - revoke_dashboard_access_endpoint
+  - create_dashboard_graph_endpoint
+  - get_dashboard_graphs_endpoint
+- path: c:\py_dev\mkobi\src\mkobi\api\routes\data.py
+  module: c:_dev.mkobi.src.mkobi.api.routes.data
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - fastapi
+  - mkobi.api.deps
+  - mkobi.models.data
+  - mkobi.services.data_service
+  classes: []
+  functions:
+  - get_aggregated_data_endpoint
+- path: c:\py_dev\mkobi\src\mkobi\api\routes\filters.py
+  module: c:_dev.mkobi.src.mkobi.api.routes.filters
+  layer: unknown
+  imports:
+  - uuid
+  - fastapi
+  - sqlalchemy.ext.asyncio
+  - mkobi.api.deps
+  - mkobi.models.filters
+  - mkobi.services.filter_service
+  classes: []
+  functions:
+  - create_filter_endpoint
+  - get_filters_endpoint
+  - get_filter_endpoint
+  - update_filter_endpoint
+  - delete_filter_endpoint
+- path: c:\py_dev\mkobi\src\mkobi\api\routes\graphs.py
+  module: c:_dev.mkobi.src.mkobi.api.routes.graphs
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - fastapi
+  - sqlalchemy.ext.asyncio
+  - mkobi.api.deps
+  - mkobi.models.graph
+  - mkobi.db.repositories.graph_repo
+  classes: []
+  functions:
+  - create_graph_endpoint
+  - get_graphs_endpoint
+  - get_graph_endpoint
+  - update_graph_endpoint
+  - delete_graph_endpoint
+- path: c:\py_dev\mkobi\src\mkobi\api\routes\layouts.py
+  module: c:_dev.mkobi.src.mkobi.api.routes.layouts
+  layer: unknown
+  imports:
+  - uuid
+  - fastapi
+  - sqlalchemy.ext.asyncio
+  - mkobi.api.deps
+  - mkobi.models.layout
+  - mkobi.models.enums
+  - mkobi.services.layout_service
+  classes: []
+  functions:
+  - create_layout_endpoint
+  - get_layouts_endpoint
+  - get_layout_endpoint
+  - update_layout_endpoint
+  - delete_layout_endpoint
+- path: c:\py_dev\mkobi\src\mkobi\api\routes\processing_configs.py
+  module: c:_dev.mkobi.src.mkobi.api.routes.processing_configs
+  layer: unknown
+  imports:
+  - uuid
+  - fastapi
+  - sqlalchemy.ext.asyncio
+  - mkobi.api.deps
+  - mkobi.models.processing_configs
+  - mkobi.services.processing_config_service
+  classes: []
+  functions:
+  - get_config_endpoint
+  - upsert_config_endpoint
+  - delete_config_endpoint
+- path: c:\py_dev\mkobi\src\mkobi\api\routes\processing_logs.py
+  module: c:_dev.mkobi.src.mkobi.api.routes.processing_logs
+  layer: unknown
+  imports:
+  - datetime
+  - uuid
+  - typing
+  - fastapi
+  - sqlalchemy.ext.asyncio
+  - mkobi.api.deps
+  - mkobi.models.enums
+  - mkobi.models.processing_logs
+  - mkobi.services.processing_log_service
+  - mkobi.db.repositories.processing_log_repo
+  classes: []
+  functions:
+  - get_logs_endpoint
+  - get_log_endpoint
+- path: c:\py_dev\mkobi\src\mkobi\api\routes\upload.py
+  module: c:_dev.mkobi.src.mkobi.api.routes.upload
+  layer: unknown
+  imports:
+  - pathlib
+  - uuid
+  - fastapi
+  - sqlalchemy.ext.asyncio
+  - mkobi.api.deps
+  - mkobi.config
+  - mkobi.core.logging_config
+  - mkobi.core
+  - mkobi.core.permissions
+  - mkobi.core.security
+  - mkobi.models.data
+  - mkobi.models.enums
+  - mkobi.services.data_service
+  classes: []
+  functions:
+  - upload_file_endpoint
+  - process_file_endpoint
+  - get_status_endpoint
+  - get_result_endpoint
+- path: c:\py_dev\mkobi\src\mkobi\api\routes\users.py
+  module: c:_dev.mkobi.src.mkobi.api.routes.users
+  layer: unknown
+  imports:
+  - uuid
+  - fastapi
+  - sqlalchemy.ext.asyncio
+  - mkobi.api.deps
+  - mkobi.models.enums
+  - mkobi.models.user
+  - mkobi.services.user_service
+  classes: []
+  functions:
+  - create_user_endpoint
+  - get_users_endpoint
+  - get_user_endpoint
+  - update_user_endpoint
+  - delete_me_endpoint
+  - delete_user_endpoint
+- path: c:\py_dev\mkobi\src\mkobi\api\routes\__init__.py
+  module: c:_dev.mkobi.src.mkobi.api.routes.__init__
+  layer: unknown
+  imports:
+  - mkobi.api.routes
+  classes: []
+  functions: []

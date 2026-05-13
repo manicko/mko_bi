@@ -243,4 +243,5 @@ dev = [
     "types-pyyaml>=6.0.12.20260408",
     "autopep8>=2.3.2",
     "types-aiofiles>=25.1.0.20260508",
+    "libcst>=1.8.6",
 ]
