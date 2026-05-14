@@ -1,54 +1,25 @@
 tasks:
-  # Task ordering based on dependency analysis
-  # All tasks are independently executable - none depend on each other
-  # Tasks ordered by severity (HIGH first, then MEDIUM, then LOW)
-
   - id: task_001
     depends_on: []
-
   - id: task_002
     depends_on: []
-
   - id: task_003
     depends_on: []
-
   - id: task_004
     depends_on: []
-
   - id: task_005
     depends_on: []
-
   - id: task_006
     depends_on: []
-
   - id: task_007
     depends_on: []
-
   - id: task_008
     depends_on: []
-
   - id: task_009
     depends_on: []
-
   - id: task_010
-    depends_on: []
-
+    depends_on: [task_003]
   - id: task_011
     depends_on: []
-
-# Dependency Graph Summary
-# ========================
-# All 11 validated findings are independently executable.
-# No ordering constraints exist between them.
-#
-# Severity breakdown:
-# - HIGH: task_001 (V-001: UUID extension mismatch)
-# - MEDIUM: task_002, task_003, task_004, task_005, task_006, task_007
-# - LOW: task_008, task_009, task_010, task_011
-#
-# Parallel execution groups:
-# - Group 1 (sequential-safe): task_001, task_002 (both infrastructure/schema)
-# - Group 2 (fully parallel): task_003 through task_011
-#
-# Note: task_001 and task_002 share deployment domain but do not depend on each other.
-# Both are safe to apply in any order before clean-slate deployment.
+  - id: task_012
+    depends_on: []

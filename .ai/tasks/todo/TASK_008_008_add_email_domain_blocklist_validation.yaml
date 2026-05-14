@@ -1,0 +1,102 @@
+id: task_008
+title: Add email domain blocklist validation to registration request flow with proper DI, case-insensitivity, and email guard
+status: pending
+priority: medium
+depends_on: []
+description: >
+  Add validation in AuthService.register_request() to check if the email domain is in the blocked list from EmailSettings.blocked_domains, preventing registration with disposable/temporary email addresses.
+  Fixes: inject config via constructor (with backward compatibility), normalize domain to lowercase, guard against missing '@' in email.
+goals:
+  - Prevent registration with disposable/temporary email addresses
+  - Wire the existing blocklist configuration into the registration flow using dependency injection
+  - Return appropriate error when blocked domain is detected
+  - Ensure domain comparison is case-insensitive
+  - Guard against malformed email addresses (missing '@')
+  - Maintain backward compatibility with optional config injection
+files:
+  - path: src/mkobi/services/auth_service.py
+    targets:
+      - type: function
+        name: __init__
+    semantic_anchors:
+      - type: function
+        name: __init__
+    changes:
+      - action: add_code
+        insert_after: "        self._rate_limiter = AsyncRateLimiter(get_async_redis_client())\n"
+        new_text: |
+        from typing import Optional
+        from mkobi.config import get_config
+        
+        # Store config and preprocess blocked domains for efficient lookup
+        if config is None:
+            config = get_config()
+        self.config = config
+        self.blocked_domains_set = set(domain.lower() for domain in config.email.blocked_domains)
+      - action: modify
+        old_text: "    def __init__(\n        self,\n        user_repo: IUserRepository,\n        reg_request_repo: IRegistrationRequestRepository,\n    ) -> None:\n        self.user_repo = user_repo\n        self.reg_request_repo = reg_request_repo\n        self._rate_limiter = AsyncRateLimiter(get_async_redis_client())\n"
+        new_text: "    def __init__(\n        self,\n        user_repo: IUserRepository,\n        reg_request_repo: IRegistrationRequestRepository,\n        config: Optional[Any] = None,\n    ) -> None:\n        self.user_repo = user_repo\n        self.reg_request_repo = reg_request_repo\n        from typing import Optional\n        from mkobi.config import get_config\n        \n        # Store config and preprocess blocked domains for efficient lookup\n        if config is None:\n            config = get_config()\n        self.config = config\n        self.blocked_domains_set = set(domain.lower() for domain in config.email.blocked_domains)\n        self._rate_limiter = AsyncRateLimiter(get_async_redis_client())\n"
+    - path: src/mkobi/services/auth_service.py
+      targets:
+        - type: function
+          name: register_request
+      semantic_anchors:
+        - type: function
+          name: register_request
+      changes:
+        - action: add_code
+          insert_after: "        logger.info(\"Creating registration request\", extra={\"email\": email, \"ip\": ip})\n"
+          new_text: |
+        
+        # Guard against malformed email addresses
+        if '@' not in email:
+            logger.warning(
+                "Registration attempt with invalid email (missing '@')",
+                extra={"email": email}
+            )
+            raise ValueError("Invalid email format")
+        
+        # Extract and normalize email domain to lowercase for case-insensitive comparison
+        email_domain = email.split('@')[1].lower()
+        
+        # Check if email domain is blocked
+        if email_domain in self.blocked_domains_set:
+            logger.warning(
+                "Registration attempt with blocked email domain",
+                extra={"email": email, "domain": email_domain}
+            )
+            raise ValueError(
+                f"Registration with email domain '{email_domain}' is not allowed"
+            )
+        new_text: |
+        # Guard against malformed email addresses
+        if '@' not in email:
+            logger.warning(
+                "Registration attempt with invalid email (missing '@')",
+                extra={"email": email}
+            )
+            raise ValueError("Invalid email format")
+        
+        # Extract and normalize email domain to lowercase for case-insensitive comparison
+        email_domain = email.split('@')[1].lower()
+        
+        # Check if email domain is blocked
+        if email_domain in self.blocked_domains_set:
+            logger.warning(
+                "Registration attempt with blocked email domain",
+                extra={"email": email, "domain": email_domain}
+            )
+            raise ValueError(
+                f"Registration with email domain '{email_domain}' is not allowed"
+            )
+acceptance_criteria:
+  - The register_request method uses injected config (with backward compatibility fallback to get_config())
+  - Email domain comparison is case-insensitive (both domain and blocked lists normalized to lowercase)
+  - Registration attempts with malformed email (missing '@') raise ValueError with appropriate message
+  - Registration attempts with blocked domains raise ValueError with appropriate message
+  - Registration attempts with allowed domains proceed normally
+  - Blocked domains are loaded once and stored as a set for efficient lookup
+  - Tests pass
+tests_to_run:
+  - tests/test_auth_service.py
+risk_level: low

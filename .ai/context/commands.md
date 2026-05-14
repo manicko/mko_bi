@@ -7,5 +7,5 @@ windows
 - alembic: `uv run alembic ...`
 - deps-add: `uv add <package>`
 - deps-dev:`uv add --dev <package>`
-- psql :`set "PGPASSWORD=..." & psql -h localhost -p 5432 -U postgres -d ...`
+- psql :`set "PGPASSWORD=1234" & psql -h localhost -p 5432 -U postgres -d bidb`
 

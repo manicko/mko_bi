@@ -1,0 +1,52 @@
+id: task_007
+title: Add missing dashboard access check to data endpoint
+status: pending
+priority: high
+depends_on: []
+description: >
+  Add a call to check_dashboard_access() in the get_aggregated_data_endpoint function to verify the user has permission to access the specified dashboard before retrieving data. Also add the necessary import for check_dashboard_access.
+goals:
+  - Prevent data leakage by ensuring users can only access their own dashboard data
+  - Implement the missing authorization check that was documented in the endpoint's docstring
+  - Align implementation with the endpoint's stated security requirements
+files:
+  - path: src/mkobi/api/routes/data.py
+    targets:
+      - type: function
+        name: get_aggregated_data_endpoint
+    semantic_anchors:
+      - type: function
+        name: get_aggregated_data_endpoint
+    changes:
+      - action: add_code
+        insert_after: "from mkobi.api.deps import (\n    CurrentUser,\n    require_viewer_role,\n    get_data_service,\n)"
+        new_text: "from mkobi.core.permissions import check_dashboard_access\n"
+      - action: add_code
+        insert_after: "        logger.info(\n            \"Aggregated data request: dashboard_id=%s, user_id=%s, filters=%s\",\n            dashboard_id,\n            current_user.id,\n            filters,\n        )"
+        new_text: |
+        
+        # Check that user has access to the dashboard
+        if not await check_dashboard_access(
+            user_id=current_user.id,
+            dashboard_id=dashboard_id,
+            required_permission="view",
+        ):
+            logger.warning(
+                "Access denied to dashboard: dashboard_id=%s, user_id=%s",
+                dashboard_id,
+                current_user.id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have access to this dashboard",
+            )
+acceptance_criteria:
+  - The endpoint now calls check_dashboard_access before retrieving data
+  - Users without access receive a 403 Forbidden response
+  - Users with access can still retrieve data normally
+  - The check uses the "view" permission level as appropriate for data retrieval
+  - The import for check_dashboard_access is added at the top of the file
+  - Tests pass
+tests_to_run:
+  - tests/test_data.py
+risk_level: low

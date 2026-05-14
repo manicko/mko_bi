@@ -1,0 +1,43 @@
+id: task_011
+title: Replace direct RegistrationRequestRepository instantiation with DI in admin.py
+status: pending
+priority: low
+depends_on: []
+description: >
+  Replace direct RegistrationRequestRepository() instantiations in admin.py with dependency injection using Depends(get_registration_request_repository) in the endpoint signatures.
+goals:
+  - Eliminate direct repository instantiation that bypasses DI
+  - Improve testability by allowing repository mocking
+  - Align with the project's DI pattern used elsewhere
+  - Maintain same functionality while using proper dependency injection
+files:
+  - path: src/mkobi/api/routes/admin.py
+    targets:
+      - type: variable
+        name: repo
+    semantic_anchors:
+      - type: function
+        name: get_registration_requests_admin_endpoint
+    changes:
+      - action: add_code
+        insert_before: "from mkobi.api.deps import (\n    CurrentUser,\n    get_auth_service,\n    get_db_dependency,\n    get_user_service,\n    require_admin_role,\n)"
+        new_text: "from mkobi.api.deps import get_registration_request_repository\n"
+    changes_2:
+      - action: replace
+        old_text: "    try:\n        repo = RegistrationRequestRepository()\n        requests = await repo.get_all(db)\n        return cast(list[dict[str, Any]], requests)"
+        new_text: "    try:\n        repo = get_registration_request_repository()\n        requests = await repo.get_all(db)\n        return cast(list[dict[str, Any]], requests)"
+      - action: replace
+        old_text: "    try:\n        # Get the request\n        repo = RegistrationRequestRepository()\n        req = await repo.get_by_id(request_id, db)"
+        new_text: "    try:\n        # Get the request\n        repo = get_registration_request_repository()\n        req = await repo.get_by_id(request_id, db)"
+      - action: replace
+        old_text: "    try:\n        repo = RegistrationRequestRepository()\n        req = await repo.get_by_id(request_id, db)"
+        new_text: "    try:\n        repo = get_registration_request_repository()\n        req = await repo.get_by_id(request_id, db)"
+acceptance_criteria:
+  - Direct RegistrationRequestRepository() instantiations are removed
+  - The get_registration_request_repository function is imported from mkobi.api.deps
+  - Endpoints that used RegistrationRequestRepository() now get the repository via get_registration_request_repository()
+  - The functionality remains identical (same database operations)
+  - Tests pass
+tests_to_run:
+  - tests/test_admin.py
+risk_level: low

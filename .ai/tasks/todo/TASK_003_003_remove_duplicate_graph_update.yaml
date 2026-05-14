@@ -1,0 +1,33 @@
+id: task_003
+title: Remove duplicate _graph_repo.update call in update_graph_endpoint
+status: pending
+priority: low
+depends_on: []
+description: >
+  Remove one of the duplicate _graph_repo.update() calls in the update_graph_endpoint function to eliminate the copy-paste error.
+goals:
+  - Eliminate duplicate database update operation
+  - Improve performance by reducing unnecessary database calls
+  - Fix code duplication issue
+files:
+  - path: src/mkobi/api/routes/graphs.py
+    targets:
+      - type: function
+        name: update_graph_endpoint
+    semantic_anchors:
+      - type: function
+        name: update_graph_endpoint
+    changes:
+      - action: delete
+        old_text: |
+        
+        result = await _graph_repo.update(
+            graph_id, db, **update_data
+        )
+acceptance_criteria:
+  - Only one _graph_repo.update call remains in the function
+  - The function still correctly updates graph data
+  - Tests pass
+tests_to_run:
+  - tests/test_graphs.py
+risk_level: low

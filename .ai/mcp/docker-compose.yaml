@@ -1,0 +1,18 @@
+services:
+  postgres-bidb-mcp:
+    image: crystaldba/postgres-mcp
+    container_name: postgres-bidb-mcp
+    restart: unless-stopped
+    environment:
+      DATABASE_URI: postgresql://postgres:1234@host.docker.internal:5432/bidb
+    command:
+      - --access-mode=unrestricted
+
+  postgres-bidb-test-mcp:
+    image: crystaldba/postgres-mcp
+    container_name: postgres-bidb-test-mcp
+    restart: unless-stopped
+    environment:
+      DATABASE_URI: postgresql://postgres:1234@host.docker.internal:5432/bidb_test
+    command:
+      - --access-mode=unrestricted

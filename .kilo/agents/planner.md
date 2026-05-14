@@ -258,5 +258,6 @@ Optimize for:
 - stable autonomous execution
 - survivable refactoring workflows
 
-Always inspect and use relevant information from and its links:
+Always inspect and use relevant information from :
 [AGENTS.md](C:\py_dev\mkobi\AGENTS.md)
+[project rules](C:\py_dev\mkobi\.ai\context)

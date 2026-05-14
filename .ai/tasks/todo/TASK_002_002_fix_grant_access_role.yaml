@@ -1,0 +1,31 @@
+id: task_002
+title: Fix grant access endpoint to use require_admin_role
+status: pending
+priority: high
+depends_on: []
+description: >
+  Change the dependency in grant_dashboard_access_endpoint from require_viewer_role to require_admin_role to restrict access granting to admin users only.
+goals:
+  - Restrict dashboard access granting to admin users only
+  - Fix inconsistent authorization pattern
+  - Align with endpoint description stating "Available only to owners"
+files:
+  - path: src/mkobi/api/routes/dashboards.py
+    targets:
+      - type: function
+        name: grant_dashboard_access_endpoint
+    semantic_anchors:
+      - type: decorator
+        name: router.post
+    changes:
+      - action: replace
+        old_text: "dependencies=[Depends(require_viewer_role)],"
+        new_text: "dependencies=[Depends(require_admin_role)],"
+acceptance_criteria:
+  - The grant dashboard access endpoint now requires admin role
+  - Non-admin users receive 403 Forbidden when attempting to grant access
+  - Admin users can still grant access
+  - Tests pass
+tests_to_run:
+  - tests/test_dashboards_api.py
+risk_level: low

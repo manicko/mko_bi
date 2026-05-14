@@ -305,5 +305,6 @@ Your goal is:
 - predictable system behavior
 - long-term architectural stability
 
-Always inspect and use relevant information from and its links:
+Always inspect and use relevant information from:
 [AGENTS.md](C:\py_dev\mkobi\AGENTS.md)
+[project rules](C:\py_dev\mkobi\.ai\context)

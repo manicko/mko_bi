@@ -147,3 +147,4 @@ Always explain:
 
 Always inspect and use relevant information from:
 [AGENTS.md](C:\py_dev\mkobi\AGENTS.md)
+[project rules](C:\py_dev\mkobi\.ai\context)

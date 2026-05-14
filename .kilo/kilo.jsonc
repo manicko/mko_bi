@@ -2,5 +2,8 @@
   "$schema": "https://app.kilo.ai/config.json",
   "indexing": {
     "enabled": true
-  }
+  },
+  "instructions": [
+    ".kilo/rules/*.md"
+  ],
 }
