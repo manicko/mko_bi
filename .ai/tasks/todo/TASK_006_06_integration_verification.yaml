@@ -1,0 +1,52 @@
+id: TASK_006_06_integration_verification
+
+title: Integration Testing and Verification
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_01_admin_user_creation
+  - TASK_002_02_test_db_config
+  - TASK_003_03_sidebar_conditional
+  - TASK_004_04_password_change_endpoint
+  - TASK_005_05_password_change_page
+
+wave: 3
+
+description: >
+  Run full integration verification after all Wave 1 and Wave 2 tasks complete.
+  Execute backend tests, frontend typecheck/lint, ruff, and mypy. Verify
+  admin creation and password change flow work end-to-end.
+
+goals:
+  - Verify all existing tests pass
+  - Verify no ruff or mypy errors
+  - Verify frontend typecheck and lint pass
+  - Confirm admin creation works end-to-end
+  - Confirm password change flow works end-to-end
+  - Confirm sidebar hidden on login/register pages
+
+files: []
+
+acceptance_criteria:
+  - All existing tests pass (pytest tests/ -x -v)
+  - No ruff errors (ruff check src/)
+  - No mypy errors (mypy src/)
+  - Frontend typecheck passes
+  - Frontend lint passes
+  - Admin creation works end-to-end
+  - Password change flow works end-to-end
+  - Sidebar hidden on login/register pages
+
+tests_to_run:
+  - "pytest tests/ -x -v"
+  - "ruff check src/"
+  - "mypy src/"
+  - "cd frontend && npm run typecheck"
+  - "cd frontend && npm run lint"
+
+risk_level: low
+
+autonomous: true

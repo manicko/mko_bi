@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
     get_db_dependency,
+    get_processing_log_repository,
     get_processing_log_service,
     require_admin_role,
 )
@@ -103,14 +104,12 @@ async def get_log_endpoint(
     Admin-only operation.
     """
     try:
-        from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
-
-        repo = ProcessingLogRepository()
+        repo = get_processing_log_repository()
         log = await repo.get_by_id(log_id, db)
         if log is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                 detail="Processing log not found",
+                detail="Processing log not found",
             )
         return cast(ProcessingLogRead, ProcessingLogRead.model_validate(log))
     except HTTPException:

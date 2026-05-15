@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
     get_db_dependency as get_db,
+    get_graph_repository,
     require_admin_role,
     CurrentUser,
 )
@@ -23,14 +24,10 @@ from mkobi.models.graph import (
     GraphRead,
     GraphUpdate,
 )
-from mkobi.db.repositories.graph_repo import GraphRepository
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/graphs", tags=["graphs"])
-
-# Initialize repository
-_graph_repo = GraphRepository()
 
 
 # --- Global graph endpoints ---
@@ -71,7 +68,8 @@ async def create_graph_endpoint(
     )
 
     try:
-        result = await _graph_repo.create(
+        graph_repo = get_graph_repository()
+        result = await graph_repo.create(
             db=db,
             name=graph.name,
             type=graph.type,
@@ -123,7 +121,8 @@ async def get_graphs_endpoint(
     logger.info("Getting all graphs")
 
     try:
-        graphs = await _graph_repo.get_all(db=db)
+        graph_repo = get_graph_repository()
+        graphs = await graph_repo.get_all(db=db)
         return [GraphRead.model_validate(g) for g in graphs]
     except Exception as e:
         logger.error("Error getting graphs: %s", e)
@@ -162,7 +161,8 @@ async def get_graph_endpoint(
     logger.info("Requesting graph: graph_id=%s", graph_id)
 
     try:
-        graph = await _graph_repo.get(id=graph_id, db=db)
+        graph_repo = get_graph_repository()
+        graph = await graph_repo.get(id=graph_id, db=db)
         if graph is None:
             logger.warning("Graph not found: id=%s", graph_id)
             raise HTTPException(
@@ -230,11 +230,8 @@ async def update_graph_endpoint(
         if graph_update.metrics is not None:
             update_data["metrics"] = graph_update.metrics
 
-        result = await _graph_repo.update(
-            graph_id, db, **update_data
-        )
-
-        result = await _graph_repo.update(
+        graph_repo = get_graph_repository()
+        result = await graph_repo.update(
             graph_id, db, **update_data
         )
         if result is None:
@@ -292,7 +289,8 @@ async def delete_graph_endpoint(
     )
 
     try:
-        result = await _graph_repo.delete(graph_id, db)
+        graph_repo = get_graph_repository()
+        result = await graph_repo.delete(graph_id, db)
         if not result:
             logger.warning("Graph not found for deletion: id=%s", graph_id)
             raise HTTPException(

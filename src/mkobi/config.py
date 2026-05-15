@@ -231,6 +231,10 @@ class Settings(BaseSettings):
     # --- CORS ---
     cors_origins: list[str] = []
 
+    # --- Admin ---
+    admin_username: str = Field(default="admin", alias="ADMIN_USERNAME")
+    admin_password: str = Field(default="admin", alias="ADMIN_PASSWORD")
+
     @field_validator("cors_origins")
     @classmethod
     def validate_cors_origins(cls, value: list[str]) -> list[str]:
@@ -386,6 +390,16 @@ class Settings(BaseSettings):
     def log_file(self) -> str | None:
         """Alias for logging file."""
         return self.logging.log_file
+
+    @property
+    def admin_user(self) -> str:
+        """Return admin username."""
+        return self.admin_username
+
+    @property
+    def admin_pass(self) -> str:
+        """Return admin password."""
+        return self.admin_password
 
     def load_yaml_config(self) -> dict[str, Any]:
         """Load and return configuration from app.yaml.

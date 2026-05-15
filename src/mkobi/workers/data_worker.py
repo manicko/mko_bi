@@ -223,14 +223,34 @@ async def _store_aggregates(
             aggregates = []
             for row in rows:
                 for graph in graphs:
-                    dims = {k: v for k, v in row.items() if k in df.columns[:3]}
+                    # Validate graph.dimensions is non-empty and contains valid column names
+                    valid_dimensions = [
+                        dim for dim in graph.dimensions if dim in df.columns
+                    ] if graph.dimensions else []
+                    if not valid_dimensions:
+                        logger.warning(
+                            "Graph %s has invalid or empty dimensions: %s. DataFrame columns: %s. Falling back to first 3 columns.",
+                            graph.id,
+                            graph.dimensions,
+                            list(df.columns),
+                        )
+                        # Fallback to original behavior if dimensions are invalid
+                        dims = {
+                            k: v for k, v in row.items() if k in df.columns[:3]
+                        }
+                    else:
+                        dims = {
+                            k: v for k, v in row.items() if k in valid_dimensions
+                        }
                     metrics = {k: v for k, v in row.items() if k not in dims}
 
-                    aggregates.append({
-                        "graph_id": str(graph.id),
-                        "dims": dims,
-                        "metrics": metrics,
-                    })
+                    aggregates.append(
+                        {
+                            "graph_id": str(graph.id),
+                            "dims": dims,
+                            "metrics": metrics,
+                        }
+                    )
 
             manager = StorageManager(session)
             clear_old = (mode == UploadMode.OVERWRITE)

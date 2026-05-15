@@ -38,7 +38,7 @@ Generate:
 ## Step 1 — Load Validated Findings
 
 Study:
-- `C:\py_dev\mkobi\.ai\audit\validated\`
+- `C:\py_dev\mkobi\.ai\audit\validated\` and `C:\py_dev\mkobi\.ai\plans`
 - validated audit findings
 - safety validation results
 - rollout constraints

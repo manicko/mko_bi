@@ -31,6 +31,7 @@ Execute validated semantic development tasks safely while:
 ## Step 1 — Preparation
 
 Before implementation study:
+- IMPORTANT: `C:\py_dev\mkobi\.ai\context\commands.md`
 - `AGENTS.md`
 - project architecture
 - existing module patterns
@@ -112,9 +113,11 @@ Do not degrade architecture to satisfy outdated tests
 
 ## Step 7 — Completion
 
-- Mark task as done (*_DONE.yaml)
-- Move to `C:\py_dev\mkobi\.ai\tasks\done`
+- Mark task file name as done (*_DONE.yaml)
+- Move file to `C:\py_dev\mkobi\.ai\tasks\done`
+- Ensure the file is no more presented in `C:\py_dev\mkobi\.ai\tasks\todo`
 - Update task status and dependency graph
+
 
 ---
 
@@ -153,6 +156,7 @@ Result must include:
 * preserved architecture consistency
 * updated task status
 * documented newly discovered problems
+* STOP ON COMPLETION 1 task
 
 Result must NOT include:
 

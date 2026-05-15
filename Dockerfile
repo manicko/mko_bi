@@ -58,6 +58,7 @@ FROM base AS dev
 
 # Copy dependency files FIRST for layer caching
 COPY pyproject.toml uv.lock README.md ./
+RUN uv lock --verify
 COPY src/ ./src/
 
 # Install all dependencies including dev (creates .venv)
@@ -88,6 +89,7 @@ CMD ["uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000", "--
 FROM base AS test
 
 COPY pyproject.toml uv.lock README.md ./
+RUN uv lock --verify
 COPY src/ ./src/
 RUN uv sync --frozen
 ENV PATH="/app/.venv/bin:${PATH}"
@@ -112,6 +114,7 @@ CMD ["pytest", "tests/", "-v"]
 FROM base AS prod
 
 COPY pyproject.toml uv.lock README.md ./
+RUN uv lock --verify
 COPY src/ ./src/
 
 # Install only production dependencies

@@ -40,7 +40,7 @@ async def _handle_login(
 ) -> Token:
     """Common login logic and error handling."""
     # Apply rate limiting for login attempts
-    rate_limiter = AsyncRateLimiter(redis_client.get_async_redis_client())
+    rate_limiter = auth_service._rate_limiter
     if not await rate_limiter.check_rate_limit(
         f"login:{email}", max_attempts=5, ttl=300
     ):

@@ -61,11 +61,45 @@ async def upload_file_endpoint(
         },
     )
 
+    def _handle_value_error(e: ValueError) -> None:
+        """Handle ValueError by mapping to appropriate HTTPException with logging."""
+        logger.warning("Validation error during upload: %s", e)
+        error_msg = str(e).lower()
+        if "mime" in error_msg or "invalid mime" in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail=str(e),
+            ) from e
+        elif (
+            "format" in error_msg
+            or "invalid format" in error_msg
+            or "extension" in error_msg
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+                detail=str(e),
+            ) from e
+        elif "size" in error_msg or "exceeds" in error_msg or "max" in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+                detail=str(e),
+            ) from e
+        elif "limit" in error_msg or "rate limit" in error_msg:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=str(e),
+            ) from e
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+                detail=str(e),
+            ) from e
+
     try:
         config = get_config()
 
         # Enforce file size limit before reading into memory
-        if file.size > config.max_file_size * 1024 * 1024:  # Convert MB to bytes
+        if file.size is not None and file.size > config.max_file_size * 1024 * 1024:  # Convert MB to bytes
             logger.warning(
                 "File size exceeds limit",
                 extra={
@@ -124,37 +158,7 @@ async def upload_file_endpoint(
                 detail=str(e),
             ) from e
         except ValueError as e:
-            error_msg = str(e).lower()
-            logger.warning("Validation error during upload: %s", e)
-            if "mime" in error_msg or "invalid mime" in error_msg:
-                raise HTTPException(
-                    status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                    detail=str(e),
-                ) from e
-            elif (
-                "format" in error_msg
-                or "invalid format" in error_msg
-                or "extension" in error_msg
-            ):
-                raise HTTPException(
-                    status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                    detail=str(e),
-                ) from e
-            elif "size" in error_msg or "exceeds" in error_msg or "max" in error_msg:
-                raise HTTPException(
-                    status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-                    detail=str(e),
-                ) from e
-            elif "limit" in error_msg or "rate limit" in error_msg:
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail=str(e),
-                ) from e
-            else:
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                    detail=str(e),
-                ) from e
+            _handle_value_error(e)
         except Exception as e:
             logger.error("Error during file processing: %s", e, exc_info=True)
             raise
@@ -176,37 +180,7 @@ async def upload_file_endpoint(
     except HTTPException:
         raise
     except ValueError as e:
-        error_msg = str(e).lower()
-        logger.warning("Validation error during upload: %s", e)
-        if "mime" in error_msg or "invalid mime" in error_msg:
-            raise HTTPException(
-                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                detail=str(e),
-            ) from e
-        elif (
-            "format" in error_msg
-            or "invalid format" in error_msg
-            or "extension" in error_msg
-        ):
-            raise HTTPException(
-                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                detail=str(e),
-            ) from e
-        elif "size" in error_msg or "exceeds" in error_msg or "max" in error_msg:
-            raise HTTPException(
-                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-                detail=str(e),
-            ) from e
-        elif "limit" in error_msg or "rate limit" in error_msg:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=str(e),
-            ) from e
-        else:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail=str(e),
-            ) from e
+        _handle_value_error(e)
     except PermissionError as e:
         logger.warning("Permission denied for upload: %s", e)
         raise HTTPException(

@@ -1,5 +1,5 @@
-- path: c:\py_dev\mkobi\src\mkobi\app.py
-  module: c:_dev.mkobi.src.mkobi.app
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.app
   layer: unknown
   imports:
   - contextlib
@@ -31,8 +31,8 @@
   - pydantic_validation_exception_handler
   - _setup_static_files
   - serve_spa
-- path: c:\py_dev\mkobi\src\mkobi\config.py
-  module: c:_dev.mkobi.src.mkobi.config
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.config
   layer: unknown
   imports:
   - pathlib
@@ -81,17 +81,20 @@
   - max_file_size
   - log_level
   - log_file
+  - admin_user
+  - admin_pass
   - load_yaml_config
   - get_config
-- path: c:\py_dev\mkobi\src\mkobi\main.py
-  module: c:_dev.mkobi.src.mkobi.main
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\main.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.main
   layer: unknown
   imports:
   - mkobi.app
   classes: []
-  functions: []
-- path: c:\py_dev\mkobi\src\mkobi\api\deps.py
-  module: c:_dev.mkobi.src.mkobi.api.deps
+  functions:
+  - check_dependencies
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.deps
   layer: unknown
   imports:
   - __future__
@@ -164,15 +167,15 @@
   - require_dashboard_write_access
   - require_dashboard_admin_access
   - get_dashboard_permissions
-- path: c:\py_dev\mkobi\src\mkobi\api\__init__.py
-  module: c:_dev.mkobi.src.mkobi.api.__init__
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\__init__.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.__init__
   layer: unknown
   imports:
   - mkobi.api
   classes: []
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\core\base_repository.py
-  module: c:_dev.mkobi.src.mkobi.core.base_repository
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\base_repository.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.core.base_repository
   layer: unknown
   imports:
   - typing
@@ -191,8 +194,8 @@
   - update
   - delete
   - exists
-- path: c:\py_dev\mkobi\src\mkobi\core\logging_config.py
-  module: c:_dev.mkobi.src.mkobi.core.logging_config
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\logging_config.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.core.logging_config
   layer: unknown
   imports:
   - pathlib
@@ -203,8 +206,8 @@
   - format
   - setup_logging
   - get_logger
-- path: c:\py_dev\mkobi\src\mkobi\core\permissions.py
-  module: c:_dev.mkobi.src.mkobi.core.permissions
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\permissions.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.core.permissions
   layer: unknown
   imports:
   - typing
@@ -245,8 +248,8 @@
   - role_checker
   - require_dashboard_access
   - access_checker
-- path: c:\py_dev\mkobi\src\mkobi\core\redis_client.py
-  module: c:_dev.mkobi.src.mkobi.core.redis_client
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\redis_client.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.core.redis_client
   layer: unknown
   imports:
   - mkobi.config
@@ -254,8 +257,8 @@
   functions:
   - get_redis_client
   - get_async_redis_client
-- path: c:\py_dev\mkobi\src\mkobi\core\security.py
-  module: c:_dev.mkobi.src.mkobi.core.security
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.core.security
   layer: unknown
   imports:
   - datetime
@@ -276,8 +279,8 @@
   - verify_password
   - create_access_token
   - decode_token
-- path: c:\py_dev\mkobi\src\mkobi\core\task_queue.py
-  module: c:_dev.mkobi.src.mkobi.core.task_queue
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\task_queue.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.core.task_queue
   layer: unknown
   imports:
   - collections.abc
@@ -294,28 +297,28 @@
   - get_error
   - enqueue_job
   - get_task_queue
-- path: c:\py_dev\mkobi\src\mkobi\core\__init__.py
-  module: c:_dev.mkobi.src.mkobi.core.__init__
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\__init__.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.core.__init__
   layer: unknown
   imports: []
   classes: []
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\data\__init__.py
-  module: c:_dev.mkobi.src.mkobi.data.__init__
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\__init__.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.data.__init__
   layer: unknown
   imports: []
   classes: []
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\db\base.py
-  module: c:_dev.mkobi.src.mkobi.db.base
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\base.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.base
   layer: unknown
   imports:
   - sqlalchemy.orm
   classes:
   - Base
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\db\session.py
-  module: c:_dev.mkobi.src.mkobi.db.session
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\session.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.session
   layer: unknown
   imports:
   - collections.abc
@@ -331,8 +334,8 @@
   - get_db
   - init_db
   - drop_db
-- path: c:\py_dev\mkobi\src\mkobi\db\starter.py
-  module: c:_dev.mkobi.src.mkobi.db.starter
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.starter
   layer: unknown
   imports:
   - datetime
@@ -340,9 +343,12 @@
   - alembic
   - alembic.config
   - sqlalchemy
+  - sqlalchemy.exc
   - sqlalchemy.ext.asyncio
   - mkobi.config
+  - mkobi.db.repositories.user_repo
   - mkobi.models.enums
+  - mkobi.core.security
   classes:
   - DatabaseNotFoundError
   - SchemaNotFoundError
@@ -355,17 +361,18 @@
   - recreate_test_database
   - _apply_migrations
   - _sync_migrate
+  - ensure_admin_user
   - cleanup_old_logs
   - shutdown
   - main
-- path: c:\py_dev\mkobi\src\mkobi\db\__init__.py
-  module: c:_dev.mkobi.src.mkobi.db.__init__
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\__init__.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.__init__
   layer: unknown
   imports: []
   classes: []
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\interfaces\repository_interfaces.py
-  module: c:_dev.mkobi.src.mkobi.interfaces.repository_interfaces
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\interfaces\repository_interfaces.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.interfaces.repository_interfaces
   layer: unknown
   imports:
   - typing
@@ -420,8 +427,8 @@
   - get_latest_by_dashboard
   - get_by_id
   - delete
-- path: c:\py_dev\mkobi\src\mkobi\interfaces\service_interfaces.py
-  module: c:_dev.mkobi.src.mkobi.interfaces.service_interfaces
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\interfaces\service_interfaces.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.interfaces.service_interfaces
   layer: unknown
   imports:
   - typing
@@ -506,16 +513,16 @@
   - get_all_layouts
   - update_layout
   - delete_layout
-- path: c:\py_dev\mkobi\src\mkobi\interfaces\__init__.py
-  module: c:_dev.mkobi.src.mkobi.interfaces.__init__
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\interfaces\__init__.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.interfaces.__init__
   layer: unknown
   imports:
   - mkobi.interfaces.repository_interfaces
   - mkobi.interfaces.service_interfaces
   classes: []
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\models\access.py
-  module: c:_dev.mkobi.src.mkobi.models.access
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\access.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.access
   layer: unknown
   imports:
   - uuid
@@ -524,8 +531,8 @@
   - AccessCheck
   - AccessGrant
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\models\auth.py
-  module: c:_dev.mkobi.src.mkobi.models.auth
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\auth.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.auth
   layer: unknown
   imports:
   - pydantic
@@ -540,8 +547,8 @@
   - TokenData
   - RefreshRequest
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\models\dashboard.py
-  module: c:_dev.mkobi.src.mkobi.models.dashboard
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.dashboard
   layer: unknown
   imports:
   - datetime
@@ -556,8 +563,8 @@
   - DashboardRead
   - DashboardUpdate
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\models\data.py
-  module: c:_dev.mkobi.src.mkobi.models.data
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\data.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.data
   layer: unknown
   imports:
   - typing
@@ -582,8 +589,8 @@
   - ChartConfig
   - FilterState
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\models\enums.py
-  module: c:_dev.mkobi.src.mkobi.models.enums
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\enums.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.enums
   layer: unknown
   imports:
   - enum
@@ -608,8 +615,8 @@
   functions:
   - allowed_values
   - allowed_values
-- path: c:\py_dev\mkobi\src\mkobi\models\filters.py
-  module: c:_dev.mkobi.src.mkobi.models.filters
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\filters.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.filters
   layer: unknown
   imports:
   - datetime
@@ -623,8 +630,8 @@
   - FilterUpdate
   - FilterRead
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\models\graph.py
-  module: c:_dev.mkobi.src.mkobi.models.graph
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\graph.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.graph
   layer: unknown
   imports:
   - datetime
@@ -638,8 +645,8 @@
   - GraphUpdate
   - GraphRead
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\models\layout.py
-  module: c:_dev.mkobi.src.mkobi.models.layout
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\layout.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.layout
   layer: unknown
   imports:
   - datetime
@@ -652,8 +659,8 @@
   - LayoutUpdate
   - LayoutRead
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\models\processing_configs.py
-  module: c:_dev.mkobi.src.mkobi.models.processing_configs
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\processing_configs.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.processing_configs
   layer: unknown
   imports:
   - datetime
@@ -666,8 +673,8 @@
   - ProcessingConfigUpdate
   - ProcessingConfigRead
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\models\processing_logs.py
-  module: c:_dev.mkobi.src.mkobi.models.processing_logs
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\processing_logs.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.processing_logs
   layer: unknown
   imports:
   - datetime
@@ -680,8 +687,8 @@
   - ProcessingLogUpdate
   - ProcessingLogRead
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\models\style.py
-  module: c:_dev.mkobi.src.mkobi.models.style
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\style.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.style
   layer: unknown
   imports:
   - pydantic
@@ -691,8 +698,8 @@
   - FilterStyle
   - ChartStyle
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\models\transformation_configs.py
-  module: c:_dev.mkobi.src.mkobi.models.transformation_configs
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\transformation_configs.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.transformation_configs
   layer: unknown
   imports:
   - typing
@@ -706,8 +713,8 @@
   - CustomMetricConfig
   - TransformationConfig
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\models\types.py
-  module: c:_dev.mkobi.src.mkobi.models.types
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\types.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.types
   layer: unknown
   imports:
   - typing
@@ -738,8 +745,8 @@
   - FilterConfigModel
   - ProcessingSettingsModel
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\models\user.py
-  module: c:_dev.mkobi.src.mkobi.models.user
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\user.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.user
   layer: unknown
   imports:
   - datetime
@@ -753,8 +760,8 @@
   - UserDB
   - UserUpdate
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\models\__init__.py
-  module: c:_dev.mkobi.src.mkobi.models.__init__
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\__init__.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.__init__
   layer: unknown
   imports:
   - mkobi.models.auth
@@ -768,8 +775,8 @@
   - mkobi.models.enums
   classes: []
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\services\auth_service.py
-  module: c:_dev.mkobi.src.mkobi.services.auth_service
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.services.auth_service
   layer: unknown
   imports:
   - typing
@@ -783,6 +790,7 @@
   - mkobi.interfaces.service_interfaces
   - mkobi.models.enums
   - mkobi.models.user
+  - mkobi.config
   classes:
   - AuthService
   functions:
@@ -800,8 +808,8 @@
   - get_user_by_email
   - create_user
   - register_request
-- path: c:\py_dev\mkobi\src\mkobi\services\dashboard_service.py
-  module: c:_dev.mkobi.src.mkobi.services.dashboard_service
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.services.dashboard_service
   layer: unknown
   imports:
   - typing
@@ -833,8 +841,8 @@
   - _validate_permission
   - _validate_config
   - _dashboard_to_read
-- path: c:\py_dev\mkobi\src\mkobi\services\data_service.py
-  module: c:_dev.mkobi.src.mkobi.services.data_service
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\data_service.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.services.data_service
   layer: unknown
   imports:
   - datetime
@@ -873,8 +881,8 @@
   - get_processing_status
   - get_processing_result
   - cleanup_task_files
-- path: c:\py_dev\mkobi\src\mkobi\services\filter_service.py
-  module: c:_dev.mkobi.src.mkobi.services.filter_service
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\filter_service.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.services.filter_service
   layer: unknown
   imports:
   - typing
@@ -898,8 +906,8 @@
   - _validate_filter_type
   - _validate_filter_name
   - _validate_filter_config
-- path: c:\py_dev\mkobi\src\mkobi\services\graph_service.py
-  module: c:_dev.mkobi.src.mkobi.services.graph_service
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\graph_service.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.services.graph_service
   layer: unknown
   imports:
   - typing
@@ -927,8 +935,8 @@
   - get_graph_by_name_and_dashboard
   - update_graph
   - delete_graph
-- path: c:\py_dev\mkobi\src\mkobi\services\layout_service.py
-  module: c:_dev.mkobi.src.mkobi.services.layout_service
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\layout_service.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.services.layout_service
   layer: unknown
   imports:
   - uuid
@@ -947,8 +955,8 @@
   - get_all_layouts
   - update_layout
   - delete_layout
-- path: c:\py_dev\mkobi\src\mkobi\services\processing_config_service.py
-  module: c:_dev.mkobi.src.mkobi.services.processing_config_service
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_config_service.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.services.processing_config_service
   layer: unknown
   imports:
   - typing
@@ -971,8 +979,8 @@
   - get_processing_config_by_dashboard
   - update_processing_config
   - delete_processing_config
-- path: c:\py_dev\mkobi\src\mkobi\services\processing_log_service.py
-  module: c:_dev.mkobi.src.mkobi.services.processing_log_service
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.services.processing_log_service
   layer: unknown
   imports:
   - typing
@@ -998,8 +1006,8 @@
   - update_to_success
   - update_to_failed
   - get_filtered
-- path: c:\py_dev\mkobi\src\mkobi\services\user_service.py
-  module: c:_dev.mkobi.src.mkobi.services.user_service
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\user_service.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.services.user_service
   layer: unknown
   imports:
   - uuid
@@ -1024,16 +1032,16 @@
   - update_user_role
   - delete_user
   - get_all_users
-- path: c:\py_dev\mkobi\src\mkobi\services\__init__.py
-  module: c:_dev.mkobi.src.mkobi.services.__init__
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\__init__.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.services.__init__
   layer: unknown
   imports:
   - mkobi.services.auth_service
   - mkobi.services.user_service
   classes: []
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\utils\decorators.py
-  module: c:_dev.mkobi.src.mkobi.utils.decorators
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\decorators.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.utils.decorators
   layer: unknown
   imports:
   - collections.abc
@@ -1061,8 +1069,8 @@
   - decorator
   - async_wrapper
   - sync_wrapper
-- path: c:\py_dev\mkobi\src\mkobi\utils\exceptions.py
-  module: c:_dev.mkobi.src.mkobi.utils.exceptions
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.utils.exceptions
   layer: unknown
   imports:
   - fastapi
@@ -1083,8 +1091,8 @@
   - add_exception_handlers
   - app_exception_handler
   - global_exception_handler
-- path: c:\py_dev\mkobi\src\mkobi\utils\file_utils.py
-  module: c:_dev.mkobi.src.mkobi.utils.file_utils
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\file_utils.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.utils.file_utils
   layer: unknown
   imports:
   - pathlib
@@ -1096,8 +1104,8 @@
   - cleanup_temp_dir
   - validate_file_extension
   - validate_mime_type
-- path: c:\py_dev\mkobi\src\mkobi\utils\time_utils.py
-  module: c:_dev.mkobi.src.mkobi.utils.time_utils
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\time_utils.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.utils.time_utils
   layer: unknown
   imports:
   - datetime
@@ -1112,8 +1120,8 @@
   - parse
   - isoformat
   - parse_iso
-- path: c:\py_dev\mkobi\src\mkobi\utils\validators.py
-  module: c:_dev.mkobi.src.mkobi.utils.validators
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\validators.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.utils.validators
   layer: unknown
   imports:
   - uuid
@@ -1126,16 +1134,16 @@
   - validate_string
   - validate_password
   - raise_if_invalid
-- path: c:\py_dev\mkobi\src\mkobi\utils\__init__.py
-  module: c:_dev.mkobi.src.mkobi.utils.__init__
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\__init__.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.utils.__init__
   layer: unknown
   imports:
   - mkobi.utils.file_utils
   - mkobi.utils.time_utils
   classes: []
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\workers\data_worker.py
-  module: c:_dev.mkobi.src.mkobi.workers.data_worker
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.workers.data_worker
   layer: unknown
   imports:
   - datetime
@@ -1159,8 +1167,8 @@
   - _store_aggregates
   - process_csv_background
   - process_csv_background_sync
-- path: c:\py_dev\mkobi\src\mkobi\db\models\access.py
-  module: c:_dev.mkobi.src.mkobi.db.models.access
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\access.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.models.access
   layer: unknown
   imports:
   - typing
@@ -1176,8 +1184,8 @@
   - DashboardAccess
   functions:
   - __repr__
-- path: c:\py_dev\mkobi\src\mkobi\db\models\aggregated_data.py
-  module: c:_dev.mkobi.src.mkobi.db.models.aggregated_data
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\aggregated_data.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.models.aggregated_data
   layer: unknown
   imports:
   - __future__
@@ -1199,8 +1207,8 @@
   - load_dialect_impl
   - __repr__
   - __str__
-- path: c:\py_dev\mkobi\src\mkobi\db\models\dashboard.py
-  module: c:_dev.mkobi.src.mkobi.db.models.dashboard
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.models.dashboard
   layer: unknown
   imports:
   - __future__
@@ -1224,8 +1232,8 @@
   functions:
   - __repr__
   - __str__
-- path: c:\py_dev\mkobi\src\mkobi\db\models\filters.py
-  module: c:_dev.mkobi.src.mkobi.db.models.filters
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\filters.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.models.filters
   layer: unknown
   imports:
   - datetime
@@ -1241,8 +1249,8 @@
   functions:
   - __repr__
   - __str__
-- path: c:\py_dev\mkobi\src\mkobi\db\models\graphs.py
-  module: c:_dev.mkobi.src.mkobi.db.models.graphs
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\graphs.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.models.graphs
   layer: unknown
   imports:
   - __future__
@@ -1261,8 +1269,8 @@
   functions:
   - __repr__
   - __str__
-- path: c:\py_dev\mkobi\src\mkobi\db\models\layout.py
-  module: c:_dev.mkobi.src.mkobi.db.models.layout
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\layout.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.models.layout
   layer: unknown
   imports:
   - __future__
@@ -1279,8 +1287,8 @@
   functions:
   - __repr__
   - __str__
-- path: c:\py_dev\mkobi\src\mkobi\db\models\processing_configs.py
-  module: c:_dev.mkobi.src.mkobi.db.models.processing_configs
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\processing_configs.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.models.processing_configs
   layer: unknown
   imports:
   - datetime
@@ -1295,8 +1303,8 @@
   functions:
   - __repr__
   - __str__
-- path: c:\py_dev\mkobi\src\mkobi\db\models\processing_logs.py
-  module: c:_dev.mkobi.src.mkobi.db.models.processing_logs
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\processing_logs.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.models.processing_logs
   layer: unknown
   imports:
   - datetime
@@ -1311,8 +1319,8 @@
   functions:
   - __repr__
   - __str__
-- path: c:\py_dev\mkobi\src\mkobi\db\models\registration_request.py
-  module: c:_dev.mkobi.src.mkobi.db.models.registration_request
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\registration_request.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.models.registration_request
   layer: unknown
   imports:
   - __future__
@@ -1331,8 +1339,8 @@
   functions:
   - __repr__
   - __str__
-- path: c:\py_dev\mkobi\src\mkobi\db\models\user.py
-  module: c:_dev.mkobi.src.mkobi.db.models.user
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\user.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.models.user
   layer: unknown
   imports:
   - datetime
@@ -1351,8 +1359,8 @@
   functions:
   - __repr__
   - __str__
-- path: c:\py_dev\mkobi\src\mkobi\db\models\__init__.py
-  module: c:_dev.mkobi.src.mkobi.db.models.__init__
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\__init__.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.models.__init__
   layer: unknown
   imports:
   - mkobi.db.models.access
@@ -1367,8 +1375,8 @@
   - mkobi.db.models.user
   classes: []
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\db\repositories\access_repo.py
-  module: c:_dev.mkobi.src.mkobi.db.repositories.access_repo
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\access_repo.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.repositories.access_repo
   layer: unknown
   imports:
   - uuid
@@ -1387,8 +1395,8 @@
   - check_access
   - get_user_dashboards
   - get_all
-- path: c:\py_dev\mkobi\src\mkobi\db\repositories\aggregated_data_repo.py
-  module: c:_dev.mkobi.src.mkobi.db.repositories.aggregated_data_repo
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\aggregated_data_repo.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.repositories.aggregated_data_repo
   layer: unknown
   imports:
   - typing
@@ -1407,8 +1415,8 @@
   - delete_by_graph_id
   - delete_by_dashboard_id
   - get_dims_values
-- path: c:\py_dev\mkobi\src\mkobi\db\repositories\dashboard_filter_repo.py
-  module: c:_dev.mkobi.src.mkobi.db.repositories.dashboard_filter_repo
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_filter_repo.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.repositories.dashboard_filter_repo
   layer: unknown
   imports:
   - uuid
@@ -1423,8 +1431,8 @@
   - unbind_filter
   - get_dashboard_filters
   - get_filter_dashboards
-- path: c:\py_dev\mkobi\src\mkobi\db\repositories\dashboard_repo.py
-  module: c:_dev.mkobi.src.mkobi.db.repositories.dashboard_repo
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_repo.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.repositories.dashboard_repo
   layer: unknown
   imports:
   - uuid
@@ -1445,8 +1453,8 @@
   - delete
   - get_all
   - get_by_name
-- path: c:\py_dev\mkobi\src\mkobi\db\repositories\filter_repo.py
-  module: c:_dev.mkobi.src.mkobi.db.repositories.filter_repo
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\filter_repo.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.repositories.filter_repo
   layer: unknown
   imports:
   - uuid
@@ -1465,8 +1473,8 @@
   - update
   - delete
   - get_all
-- path: c:\py_dev\mkobi\src\mkobi\db\repositories\graph_repo.py
-  module: c:_dev.mkobi.src.mkobi.db.repositories.graph_repo
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\graph_repo.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.repositories.graph_repo
   layer: unknown
   imports:
   - uuid
@@ -1486,8 +1494,8 @@
   - delete
   - get_all
   - get_by_name_and_dashboard
-- path: c:\py_dev\mkobi\src\mkobi\db\repositories\layout_repo.py
-  module: c:_dev.mkobi.src.mkobi.db.repositories.layout_repo
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\layout_repo.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.repositories.layout_repo
   layer: unknown
   imports:
   - uuid
@@ -1506,8 +1514,8 @@
   - create
   - update
   - delete
-- path: c:\py_dev\mkobi\src\mkobi\db\repositories\processing_config_repo.py
-  module: c:_dev.mkobi.src.mkobi.db.repositories.processing_config_repo
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\processing_config_repo.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.repositories.processing_config_repo
   layer: unknown
   imports:
   - typing
@@ -1525,8 +1533,8 @@
   - update
   - delete
   - get_all
-- path: c:\py_dev\mkobi\src\mkobi\db\repositories\processing_log_repo.py
-  module: c:_dev.mkobi.src.mkobi.db.repositories.processing_log_repo
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\processing_log_repo.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.repositories.processing_log_repo
   layer: unknown
   imports:
   - datetime
@@ -1551,8 +1559,8 @@
   - get_latest_by_dashboard
   - get_by_id
   - delete
-- path: c:\py_dev\mkobi\src\mkobi\db\repositories\registration_request_repo.py
-  module: c:_dev.mkobi.src.mkobi.db.repositories.registration_request_repo
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\registration_request_repo.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.repositories.registration_request_repo
   layer: unknown
   imports:
   - uuid
@@ -1573,8 +1581,8 @@
   - delete
   - get_all
   - update_status
-- path: c:\py_dev\mkobi\src\mkobi\db\repositories\user_repo.py
-  module: c:_dev.mkobi.src.mkobi.db.repositories.user_repo
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\user_repo.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.repositories.user_repo
   layer: unknown
   imports:
   - uuid
@@ -1595,8 +1603,8 @@
   - create
   - update
   - delete
-- path: c:\py_dev\mkobi\src\mkobi\db\repositories\__init__.py
-  module: c:_dev.mkobi.src.mkobi.db.repositories.__init__
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\__init__.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.repositories.__init__
   layer: unknown
   imports:
   - mkobi.db.repositories.access_repo
@@ -1608,8 +1616,8 @@
   - mkobi.db.repositories.user_repo
   classes: []
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\data\loaders\loader.py
-  module: c:_dev.mkobi.src.mkobi.data.loaders.loader
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\loaders\loader.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.data.loaders.loader
   layer: unknown
   imports:
   - pathlib
@@ -1634,8 +1642,8 @@
   - get_summary
   - filter_data
   - aggregate
-- path: c:\py_dev\mkobi\src\mkobi\data\loaders\validator.py
-  module: c:_dev.mkobi.src.mkobi.data.loaders.validator
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\loaders\validator.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.data.loaders.validator
   layer: unknown
   imports:
   - typing
@@ -1656,14 +1664,14 @@
   - validate_mime_type
   - validate_file_size
   - validate_dataframe
-- path: c:\py_dev\mkobi\src\mkobi\data\loaders\__init__.py
-  module: c:_dev.mkobi.src.mkobi.data.loaders.__init__
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\loaders\__init__.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.data.loaders.__init__
   layer: unknown
   imports: []
   classes: []
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\data\processing\registry.py
-  module: c:_dev.mkobi.src.mkobi.data.processing.registry
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\registry.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.data.processing.registry
   layer: unknown
   imports:
   - typing
@@ -1683,8 +1691,8 @@
   - __init__
   - run
   - _save_with_retry
-- path: c:\py_dev\mkobi\src\mkobi\data\processing\transformations.py
-  module: c:_dev.mkobi.src.mkobi.data.processing.transformations
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.data.processing.transformations
   layer: unknown
   imports:
   - typing
@@ -1703,14 +1711,14 @@
   - _calculate_yoy
   - _calculate_share
   - _parse_formula
-- path: c:\py_dev\mkobi\src\mkobi\data\processing\__init__.py
-  module: c:_dev.mkobi.src.mkobi.data.processing.__init__
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\__init__.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.data.processing.__init__
   layer: unknown
   imports: []
   classes: []
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\data\storage\manager.py
-  module: c:_dev.mkobi.src.mkobi.data.storage.manager
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\storage\manager.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.data.storage.manager
   layer: unknown
   imports:
   - __future__
@@ -1741,14 +1749,14 @@
   - save_aggregated_data
   - clear_graph_data_compat
   - clear_dashboard_data_compat
-- path: c:\py_dev\mkobi\src\mkobi\data\storage\__init__.py
-  module: c:_dev.mkobi.src.mkobi.data.storage.__init__
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\storage\__init__.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.data.storage.__init__
   layer: unknown
   imports: []
   classes: []
   functions: []
-- path: c:\py_dev\mkobi\src\mkobi\api\routes\admin.py
-  module: c:_dev.mkobi.src.mkobi.api.routes.admin
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.admin
   layer: unknown
   imports:
   - typing
@@ -1756,7 +1764,6 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
-  - mkobi.db.repositories.registration_request_repo
   - mkobi.models.enums
   - mkobi.models.user
   - mkobi.services.auth_service
@@ -1768,8 +1775,8 @@
   - get_registration_requests_admin_endpoint
   - approve_registration_request_admin_endpoint
   - reject_registration_request_admin_endpoint
-- path: c:\py_dev\mkobi\src\mkobi\api\routes\auth.py
-  module: c:_dev.mkobi.src.mkobi.api.routes.auth
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.auth
   layer: unknown
   imports:
   - ipaddress
@@ -1791,8 +1798,8 @@
   - refresh
   - get_current_user_info
   - register_request
-- path: c:\py_dev\mkobi\src\mkobi\api\routes\dashboards.py
-  module: c:_dev.mkobi.src.mkobi.api.routes.dashboards
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.dashboards
   layer: unknown
   imports:
   - typing
@@ -1802,7 +1809,6 @@
   - mkobi.api.deps
   - mkobi.db.repositories.dashboard_filter_repo
   - mkobi.db.repositories.filter_repo
-  - mkobi.db.repositories.graph_repo
   - mkobi.models.access
   - mkobi.models.dashboard
   - mkobi.models.graph
@@ -1822,21 +1828,22 @@
   - revoke_dashboard_access_endpoint
   - create_dashboard_graph_endpoint
   - get_dashboard_graphs_endpoint
-- path: c:\py_dev\mkobi\src\mkobi\api\routes\data.py
-  module: c:_dev.mkobi.src.mkobi.api.routes.data
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.data
   layer: unknown
   imports:
   - typing
   - uuid
   - fastapi
   - mkobi.api.deps
+  - mkobi.core.permissions
   - mkobi.models.data
   - mkobi.services.data_service
   classes: []
   functions:
   - get_aggregated_data_endpoint
-- path: c:\py_dev\mkobi\src\mkobi\api\routes\filters.py
-  module: c:_dev.mkobi.src.mkobi.api.routes.filters
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\filters.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.filters
   layer: unknown
   imports:
   - uuid
@@ -1852,8 +1859,8 @@
   - get_filter_endpoint
   - update_filter_endpoint
   - delete_filter_endpoint
-- path: c:\py_dev\mkobi\src\mkobi\api\routes\graphs.py
-  module: c:_dev.mkobi.src.mkobi.api.routes.graphs
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.graphs
   layer: unknown
   imports:
   - typing
@@ -1862,7 +1869,6 @@
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
   - mkobi.models.graph
-  - mkobi.db.repositories.graph_repo
   classes: []
   functions:
   - create_graph_endpoint
@@ -1870,8 +1876,8 @@
   - get_graph_endpoint
   - update_graph_endpoint
   - delete_graph_endpoint
-- path: c:\py_dev\mkobi\src\mkobi\api\routes\layouts.py
-  module: c:_dev.mkobi.src.mkobi.api.routes.layouts
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.layouts
   layer: unknown
   imports:
   - uuid
@@ -1888,8 +1894,8 @@
   - get_layout_endpoint
   - update_layout_endpoint
   - delete_layout_endpoint
-- path: c:\py_dev\mkobi\src\mkobi\api\routes\processing_configs.py
-  module: c:_dev.mkobi.src.mkobi.api.routes.processing_configs
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.processing_configs
   layer: unknown
   imports:
   - uuid
@@ -1903,8 +1909,8 @@
   - get_config_endpoint
   - upsert_config_endpoint
   - delete_config_endpoint
-- path: c:\py_dev\mkobi\src\mkobi\api\routes\processing_logs.py
-  module: c:_dev.mkobi.src.mkobi.api.routes.processing_logs
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_logs.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.processing_logs
   layer: unknown
   imports:
   - datetime
@@ -1916,13 +1922,12 @@
   - mkobi.models.enums
   - mkobi.models.processing_logs
   - mkobi.services.processing_log_service
-  - mkobi.db.repositories.processing_log_repo
   classes: []
   functions:
   - get_logs_endpoint
   - get_log_endpoint
-- path: c:\py_dev\mkobi\src\mkobi\api\routes\upload.py
-  module: c:_dev.mkobi.src.mkobi.api.routes.upload
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.upload
   layer: unknown
   imports:
   - pathlib
@@ -1941,11 +1946,12 @@
   classes: []
   functions:
   - upload_file_endpoint
+  - _handle_value_error
   - process_file_endpoint
   - get_status_endpoint
   - get_result_endpoint
-- path: c:\py_dev\mkobi\src\mkobi\api\routes\users.py
-  module: c:_dev.mkobi.src.mkobi.api.routes.users
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.users
   layer: unknown
   imports:
   - uuid
@@ -1963,8 +1969,8 @@
   - update_user_endpoint
   - delete_me_endpoint
   - delete_user_endpoint
-- path: c:\py_dev\mkobi\src\mkobi\api\routes\__init__.py
-  module: c:_dev.mkobi.src.mkobi.api.routes.__init__
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\__init__.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.__init__
   layer: unknown
   imports:
   - mkobi.api.routes

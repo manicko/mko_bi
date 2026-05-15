@@ -11,11 +11,9 @@ from mkobi.api.deps import (
     CurrentUser,
     get_auth_service,
     get_db_dependency,
+    get_registration_request_repository,
     get_user_service,
     require_admin_role,
-)
-from mkobi.db.repositories.registration_request_repo import (
-    RegistrationRequestRepository,
 )
 from mkobi.models.enums import RegistrationStatus, UserRole
 from mkobi.models.user import UserRead
@@ -139,7 +137,7 @@ async def get_registration_requests_admin_endpoint(
     """Get all registration requests (admin endpoint)."""
     logger.info("Admin: getting registration requests")
     try:
-        repo = RegistrationRequestRepository()
+        repo = get_registration_request_repository()
         requests = await repo.get_all(db)
         return cast(list[dict[str, Any]], requests)
     except Exception as e:
@@ -167,7 +165,7 @@ async def approve_registration_request_admin_endpoint(
     logger.info("Admin: approving registration request: id=%s", request_id)
     try:
         # Get the request
-        repo = RegistrationRequestRepository()
+        repo = get_registration_request_repository()
         req = await repo.get_by_id(request_id, db)
         if not req:
             raise HTTPException(
@@ -225,7 +223,7 @@ async def reject_registration_request_admin_endpoint(
     """Reject registration request (admin endpoint)."""
     logger.info("Admin: rejecting registration request: id=%s", request_id)
     try:
-        repo = RegistrationRequestRepository()
+        repo = get_registration_request_repository()
         req = await repo.get_by_id(request_id, db)
         if not req:
             raise HTTPException(

@@ -1,0 +1,62 @@
+id: TASK_003_03_sidebar_conditional
+
+title: Frontend Sidebar Conditional Rendering Based on Auth State
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+wave: 1
+
+description: >
+  Modify AppLayout.tsx to conditionally render the Sidebar component only when
+  the user is authenticated. Import useAuth hook and wrap <Sidebar /> with
+  a conditional check on the user state.
+
+goals:
+  - Import useAuth in AppLayout.tsx
+  - Conditionally render Sidebar only when user is authenticated
+  - No visual regression in authenticated state
+
+files:
+  - path: frontend/src/shared/components/Layout/AppLayout.tsx
+    targets:
+      - type: component
+        name: AppLayout
+    semantic_anchors:
+      insert_after:
+        type: import_statement
+        value: Sidebar
+      insert_before:
+        type: jsx_tag
+        value: "<Sidebar />"
+    changes:
+      - action: add_import
+        description: Import useAuth hook from features/auth/model/useAuth
+        import: "import { useAuth } from '../../features/auth/model/useAuth'"
+      - action: add_hook_call
+        description: Call useAuth() inside AppLayout component
+        insert_after:
+          type: function_signature
+          value: "export function AppLayout()"
+        code: "const { user } = useAuth()"
+      - action: wrap_jsx
+        description: Wrap <Sidebar /> with conditional rendering
+        old_code: "<Sidebar />"
+        new_code: "{user && <Sidebar />}"
+
+acceptance_criteria:
+  - Sidebar is not rendered when user is not authenticated (login/register pages)
+  - Sidebar appears when user is authenticated
+  - No visual regression in authenticated state
+  - Frontend typecheck and lint pass
+
+tests_to_run:
+  - "cd frontend && npm run typecheck"
+  - "cd frontend && npm run lint"
+
+risk_level: low
+
+autonomous: true

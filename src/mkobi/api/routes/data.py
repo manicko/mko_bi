@@ -20,6 +20,7 @@ from mkobi.api.deps import (
     require_viewer_role,
     get_data_service,
 )
+from mkobi.core.permissions import check_dashboard_access
 from mkobi.models.data import ProcessingResultData
 from mkobi.services.data_service import DataService
 
@@ -68,6 +69,22 @@ async def get_aggregated_data_endpoint(
         current_user.id,
         filters,
     )
+
+    # Check that user has access to the dashboard
+    if not await check_dashboard_access(
+        user_id=current_user.id,
+        dashboard_id=dashboard_id,
+        required_permission="view",
+    ):
+        logger.warning(
+            "Access denied to dashboard: dashboard_id=%s, user_id=%s",
+            dashboard_id,
+            current_user.id,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this dashboard",
+        )
 
     try:
         # Parse filters from JSON string

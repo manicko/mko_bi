@@ -1,8 +1,12 @@
 """Tests for users API endpoints."""
 
+import uuid
 from fastapi import status
 from httpx import AsyncClient
 
+from mkobi.core.security import hash_password
+from mkobi.db.repositories.user_repo import UserRepository
+from mkobi.models.enums import UserRole
 
 
 class TestGetProfile:
@@ -12,7 +16,6 @@ class TestGetProfile:
         self, async_client: AsyncClient, test_user: dict
     ) -> None:
         """Test getting own profile via /auth/me."""
-        # Login first
         login_resp = await async_client.post(
             "/auth/login",
             json={
@@ -22,7 +25,6 @@ class TestGetProfile:
         )
         token = login_resp.json()["access_token"]
 
-        # Get profile
         response = await async_client.get(
             "/auth/me",
             headers={"Authorization": f"Bearer {token}"},
@@ -32,7 +34,9 @@ class TestGetProfile:
         assert data["email"] == test_user["email"]
         assert data["role"] == test_user["role"]
 
-    async def test_get_profile_unauthorized(self, async_client: AsyncClient) -> None:
+    async def test_get_profile_unauthorized(
+        self, async_client: AsyncClient
+    ) -> None:
         """Test getting profile without token."""
         response = await async_client.get("/auth/me")
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -45,7 +49,6 @@ class TestDeleteAccount:
         self, async_client: AsyncClient, test_user: dict, async_db_session
     ) -> None:
         """Test deleting own account via /users/me."""
-        # Login first
         login_resp = await async_client.post(
             "/auth/login",
             json={
@@ -55,14 +58,12 @@ class TestDeleteAccount:
         )
         token = login_resp.json()["access_token"]
 
-        # Delete account
         response = await async_client.delete(
             "/users/me",
             headers={"Authorization": f"Bearer {token}"},
         )
         assert response.status_code == status.HTTP_204_NO_CONTENT
 
-        # Verify user is deleted - login should fail
         login_resp = await async_client.post(
             "/auth/login",
             json={
@@ -82,8 +83,60 @@ class TestDeleteAccount:
     async def test_admin_cannot_delete_self(
         self, async_client: AsyncClient, async_db_session
     ) -> None:
-        """Test that admin cannot delete their own account."""
-        # Create admin user first via service or register
-        # This test depends on how admin users are created
-        # For now, skip if no admin user available
-        pass
+        """Test that admin cannot delete their own account when they are the only admin.
+
+        The _check_admin_deletion_allowed function blocks deletion when:
+        - total users > 1 (other users exist)
+        - admin count <= 1 (this admin is the sole admin)
+        """
+        repo = UserRepository()
+
+        # Clean the slate: delete all existing users
+        all_users = await repo.get_all(async_db_session)
+        for user in all_users:
+            await repo.delete(user.id, async_db_session)
+        await async_db_session.commit()
+
+        # Create a sole admin user
+        admin_user = await repo.create(
+            db=async_db_session,
+            email=f"sole_admin_{uuid.uuid4().hex[:8]}@example.com",
+            password_hash=hash_password("AdminPass123!"),
+            role=UserRole.ADMIN,
+        )
+        await async_db_session.commit()
+
+        # Create a non-admin user
+        await repo.create(
+            db=async_db_session,
+            email=f"viewer_{uuid.uuid4().hex[:8]}@example.com",
+            password_hash=hash_password("ViewerPass123!"),
+            role=UserRole.VIEWER,
+        )
+        await async_db_session.commit()
+
+        # Verify state: 2 users, 1 admin
+        all_after = await repo.get_all(async_db_session)
+        admins = [u for u in all_after if u.role == UserRole.ADMIN]
+        assert len(all_after) == 2
+        assert len(admins) == 1
+
+        # Login as the admin
+        login_resp = await async_client.post(
+            "/auth/login",
+            json={
+                "email": admin_user.email,
+                "password": "AdminPass123!",
+            },
+        )
+        assert login_resp.status_code == status.HTTP_200_OK
+        token = login_resp.json()["access_token"]
+
+        # Attempt to delete own admin account
+        response = await async_client.delete(
+            f"/users/{admin_user.id}",
+            headers={"Authorization": f"Bearer {token}"},
+        )
+
+        # Should be forbidden: sole admin cannot be deleted while users exist
+        assert response.status_code == status.HTTP_403_FORBIDDEN

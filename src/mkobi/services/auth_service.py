@@ -42,9 +42,16 @@ class AuthService(IAuthService):
         self,
         user_repo: IUserRepository,
         reg_request_repo: IRegistrationRequestRepository,
+        config: Any | None = None,
     ) -> None:
         self.user_repo = user_repo
         self.reg_request_repo = reg_request_repo
+        # Store config and preprocess blocked domains for efficient lookup
+        if config is None:
+            from mkobi.config import get_config
+            config = get_config()
+        self.config = config
+        self.blocked_domains_set = set(domain.lower() for domain in config.email.blocked_domains)
         self._rate_limiter = AsyncRateLimiter(get_async_redis_client())
 
     def _validate_role(self, role: str) -> None:
@@ -186,10 +193,10 @@ class AuthService(IAuthService):
         user_obj = await self.user_repo.get_by_email_with_hash(email=email, db=db)
         if user_obj is None:
             return None
-        
+
         if not verify_password(password, user_obj.password_hash):
             return None
-        
+
         logger.info("User successfully authenticated", extra={"email": email})
         return {
             "access_token": create_access_token({
@@ -217,14 +224,14 @@ class AuthService(IAuthService):
         result = await self.login_user(email, password, db)
         if result is None:
             return None
-        
+
         # Get user by email to return UserRead
         if db is None:
             async with get_session() as db:
                 user_obj = await self.user_repo.get_by_email(email=email, db=db)
         else:
             user_obj = await self.user_repo.get_by_email(email=email, db=db)
-        
+
         if user_obj is None:
             return None
         return cast(UserRead, UserRead.model_validate(user_obj))
@@ -368,6 +375,27 @@ class AuthService(IAuthService):
             ValueError: If request with this email already exists.
         """
         logger.info("Creating registration request", extra={"email": email, "ip": ip})
+
+        # Guard against malformed email addresses
+        if '@' not in email:
+            logger.warning(
+                "Registration attempt with invalid email (missing '@')",
+                extra={"email": email}
+            )
+            raise ValueError("Invalid email format")
+
+        # Extract and normalize email domain to lowercase for case-insensitive comparison
+        email_domain = email.split('@')[1].lower()
+
+        # Check if email domain is blocked
+        if email_domain in self.blocked_domains_set:
+            logger.warning(
+                "Registration attempt with blocked email domain",
+                extra={"email": email, "domain": email_domain}
+            )
+            raise ValueError(
+                f"Registration with email domain '{email_domain}' is not allowed"
+            )
 
         if db is None:
             async with get_session() as db:

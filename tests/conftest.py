@@ -100,8 +100,57 @@ class MockPipeline:
 
 
 @pytest.fixture(autouse=True)
+def _auto_mock_redis(monkeypatch):
+    """Auto-mock Redis client for all tests to avoid requiring a real Redis server.
+
+    This fixture is always active and patches get_async_redis_client and
+    get_redis_client to use an in-memory MockRedis instance. It also
+    patches AuthService to bypass rate limiting by default, so existing
+    tests don't break. Tests that need real rate limiting behavior should
+    use the strict_redis fixture.
+    """
+    mock_redis_client = MockRedis()
+
+    import mkobi.core.redis_client as redis_client_module
+
+    def mock_get_async_redis_client():
+        return mock_redis_client
+
+    def mock_get_redis_client():
+        return mock_redis_client
+
+    monkeypatch.setattr(redis_client_module, "get_async_redis_client", mock_get_async_redis_client)
+    monkeypatch.setattr(redis_client_module, "get_redis_client", mock_get_redis_client)
+
+    # Patch the rate limiter instances in data_service
+    from mkobi.core.security import AsyncRateLimiter
+    import mkobi.services.data_service as data_service_module
+
+    data_service_module._upload_rate_limiter = AsyncRateLimiter(mock_redis_client)
+
+    # Patch auth service rate limiter to always allow (backward compatibility)
+    import mkobi.services.auth_service as auth_service_module
+
+    original_init = auth_service_module.AuthService.__init__
+
+    def patched_init(self, *args, **kwargs):
+        original_init(self, *args, **kwargs)
+        # Make check_rate_limit always return True (allow all)
+        async def always_true(*a, **kw):
+            return True
+
+        self._rate_limiter.check_rate_limit = always_true
+
+    monkeypatch.setattr(auth_service_module.AuthService, "__init__", patched_init)
+
+
+@pytest.fixture
 def mock_redis(monkeypatch):
-    """Mock Redis client for all tests to avoid requiring real Redis."""
+    """Mock Redis client for tests that need to bypass rate limiting.
+
+    Opt-in fixture - only use when rate limiting should be explicitly
+    bypassed. Applies a patched AuthService that always allows login attempts.
+    """
     from mkobi.core.security import AsyncRateLimiter
 
     mock_redis_client = MockRedis()
@@ -119,7 +168,7 @@ def mock_redis(monkeypatch):
 
     data_service_module._upload_rate_limiter = AsyncRateLimiter(mock_redis_client)
 
-    # Patch auth service rate limiter
+    # Patch auth service rate limiter to always allow
     import mkobi.services.auth_service as auth_service_module
 
     original_init = auth_service_module.AuthService.__init__
@@ -129,9 +178,40 @@ def mock_redis(monkeypatch):
         # Make check_rate_limit always return True (allow all)
         async def always_true(*a, **kw):
             return True
+
         self._rate_limiter.check_rate_limit = always_true
 
     monkeypatch.setattr(auth_service_module.AuthService, "__init__", patched_init)
+
+
+@pytest.fixture
+def strict_redis(monkeypatch):
+    """Provide real rate limiting behavior for tests.
+
+    Uses an in-memory MockRedis client that tracks state, allowing rate
+    limiting logic to be properly tested without a real Redis server.
+    Unlike the default autouse mock, this does NOT patch check_rate_limit
+    — the AsyncRateLimiter will actually count attempts and block excess
+    requests.
+    """
+    from mkobi.core.security import AsyncRateLimiter
+
+    mock_redis_client = MockRedis()
+
+    # Patch get_async_redis_client to return mock
+    import mkobi.core.redis_client as redis_client_module
+
+    def mock_get_async_redis_client():
+        return mock_redis_client
+
+    monkeypatch.setattr(redis_client_module, "get_async_redis_client", mock_get_async_redis_client)
+
+    # Patch the rate limiter instances in data_service
+    import mkobi.services.data_service as data_service_module
+
+    data_service_module._upload_rate_limiter = AsyncRateLimiter(mock_redis_client)
+
+    # Auth service uses real rate limiting behavior - do NOT patch check_rate_limit
 
 
 @pytest.fixture(scope="session")
@@ -186,19 +266,43 @@ async def async_session_maker(async_test_engine):
 @pytest.fixture(scope="function")
 async def async_db_session(async_session_maker):
     """Fixture for creating async DB session for tests.
-    
-    Uses simple rollback for test isolation:
-    - Creates a session
-    - Yields it for test use
-    - Rolls back at the end (undoing all changes)
-    - No TRUNCATE needed, no deadlocks
+
+    Uses SAVEPOINT pattern (session.begin_nested()) for proper rollback:
+    - Starts a SAVEPOINT before each test
+    - Yields the session for test use
+    - Automatically rolls back the SAVEPOINT at the end
+    - No TRUNCATE needed, faster, no deadlocks
     """
+    from sqlalchemy import event
+
     async with async_session_maker() as session:
-        yield session
-        # Rollback any uncommitted changes
-        await session.rollback()
-        # Close the session
-        await session.close()
+        # Register a listener to start a new SAVEPOINT after each commit/rollback
+        # This allows tests to use commit() while maintaining isolation
+        # Note: Must listen on sync_session for AsyncSession
+        @event.listens_for(session.sync_session, "after_transaction_end")
+        def restart_savepoint(sess, trans):
+            if trans.nested and not trans._parent.nested:
+                # End the current nested transaction
+                sess.begin_nested()
+
+        # Start the initial SAVEPOINT
+        await session.begin_nested()
+        try:
+            yield session
+        finally:
+            # Rollback to SAVEPOINT
+            await session.rollback()
+            await session.close()
+
+
+@pytest.fixture(scope="session")
+async def baseline_data(setup_test_database):
+    """Load minimal reference data once per test session.
+
+    This fixture is a placeholder for future reference data loading.
+    Currently ensures the test database is properly initialized.
+    """
+    yield
 
 
 @pytest.fixture

@@ -13,9 +13,11 @@ from typing import cast
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from mkobi.config import get_config
-from mkobi.models.enums import EnvironmentEnum
+from mkobi.db.repositories.user_repo import UserRepository
+from mkobi.models.enums import EnvironmentEnum, UserRole
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +107,9 @@ class DatabaseStarter:
             assert self._main_engine is not None
             await self._apply_migrations(main_url)
 
+        # Ensure admin user exists (after migrations, before test DB handling)
+        await self.ensure_admin_user()
+
         # Handle test database
         if self._config.env == EnvironmentEnum.TEST or self._config.recreate_test_db:
             await self.recreate_test_database()
@@ -173,6 +178,46 @@ class DatabaseStarter:
         logger.info("Running migrations for %s...", db_url)
         await asyncio.to_thread(_sync_migrate)
         logger.info("Migrations applied successfully")
+
+    async def ensure_admin_user(self) -> None:
+        """Create admin user if it does not already exist.
+
+        Idempotent — safe to run multiple times. Uses a SAVEPOINT
+        (nested transaction) so that IntegrityError from duplicate
+        email is caught cleanly without aborting the outer transaction.
+        """
+        config = get_config()
+        admin_email = config.admin_username
+        admin_password = config.admin_password
+
+        logger.info("Ensuring admin user exists: %s", admin_email)
+
+        user_repo = UserRepository()
+        assert self._main_engine is not None
+
+        async with self._main_engine.begin() as conn:
+            # Create a SAVEPOINT for idempotent user creation
+            try:
+                async with conn.begin_nested():
+                    user = await user_repo.get_by_email(email=admin_email, db=conn)
+                    if user is not None:
+                        logger.info("Admin user already exists: %s", admin_email)
+                        return
+
+                    from mkobi.core.security import hash_password
+
+                    password_hash = hash_password(admin_password)
+                    await user_repo.create(
+                        db=conn,
+                        email=admin_email,
+                        password_hash=password_hash,
+                        role=UserRole.ADMIN,
+                    )
+                    logger.info("Admin user created successfully: %s", admin_email)
+            except IntegrityError:
+                logger.warning(
+                    "Admin user already exists (IntegrityError): %s", admin_email
+                )
 
     async def cleanup_old_logs(self) -> None:
         """Clean up old processing logs based on retention policy."""

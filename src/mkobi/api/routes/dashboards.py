@@ -16,13 +16,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mkobi.api.deps import (
     CurrentUser,
     get_db_dependency,
+    get_graph_repository,
     require_admin_role,
     require_viewer_role,
     get_dashboard_service,
 )
 from mkobi.db.repositories.dashboard_filter_repo import DashboardFilterRepository
 from mkobi.db.repositories.filter_repo import FilterRepository
-from mkobi.db.repositories.graph_repo import GraphRepository
 from mkobi.models.access import AccessGrant
 from mkobi.models.dashboard import (
     DashboardCreate,
@@ -33,10 +33,6 @@ from mkobi.models.graph import GraphCreate, GraphRead
 from mkobi.services.dashboard_service import DashboardService
 
 logger = logging.getLogger(__name__)
-
-# Initialize repository
-_graph_repo = GraphRepository()
-
 
 router = APIRouter(prefix="/dashboards", tags=["dashboards"])
 
@@ -368,7 +364,7 @@ async def delete_dashboard_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Grant dashboard access",
     description="Grants user access to dashboard. Available only to owners.",
-    dependencies=[Depends(require_viewer_role)],
+    dependencies=[Depends(require_admin_role)],
 )
 async def grant_dashboard_access_endpoint(
     dashboard_id: UUID,
@@ -660,7 +656,8 @@ async def create_dashboard_graph_endpoint(
     )
 
     try:
-        result = await _graph_repo.create(
+        graph_repo = get_graph_repository()
+        result = await graph_repo.create(
             db=db,
             name=graph.name,
             type=graph.type,
@@ -714,7 +711,8 @@ async def get_dashboard_graphs_endpoint(
     logger.info("Getting graphs for dashboard: dashboard_id=%s", dashboard_id)
 
     try:
-        graphs = await _graph_repo.get_by_dashboard_id(
+        graph_repo = get_graph_repository()
+        graphs = await graph_repo.get_by_dashboard_id(
             dashboard_id=dashboard_id, db=db
         )
         return [GraphRead.model_validate(g) for g in graphs]

@@ -359,11 +359,18 @@ class DataService(IDataService):
         file_content: bytes,
         content_type: str | None,
     ) -> None:
-        """Validate uploaded file."""
-        # 1. Check MIME-type
+        """Validate uploaded file.
+
+        Checks file content, MIME type, format, and size limits.
+        """
+        # 1. Check file content is not empty
+        if not file_content:
+            raise ValueError("File content is empty")
+
+        # 2. Check MIME-type
         self._validate_mime_type(content_type)
 
-        # 2. Check file format
+        # 3. Check file format
         config = get_config()
         allowed_extensions = config.allowed_file_types
         if filename and not any(
@@ -379,7 +386,7 @@ class DataService(IDataService):
                 f"Allowed formats: {', '.join(allowed_extensions)}"
             )
 
-        # 3. Check file size
+        # 4. Check file size
         if len(file_content) > self._max_file_size:
             logger.error(
                 "File exceeds maximum size: %s (%d > %d)",

@@ -213,6 +213,7 @@ pythonpath = ["src"]
 # register custom markers to avoid PytestUnknownMarkWarning
 markers = [
     "slow: marks tests as slow (use -m slow to run)",
+    "fast: marks tests that use Base.metadata.create_all() instead of full migrations",
 ]
 asyncio_default_fixture_loop_scope = "session"
 asyncio_default_test_loop_scope = "session"
