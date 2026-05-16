@@ -1,0 +1,39 @@
+id: TASK_011_V025
+title: Fix redundant token check in axios interceptor
+status: pending
+priority: low
+depends_on: []
+
+description: >
+  getTokenWithExpirationCheck() is called twice per request (lines 16 and 19) in the
+  axios request interceptor. This is a minor performance overhead.
+
+goals:
+  - Store the token result in a variable
+  - Reuse the variable instead of calling the function twice
+
+files:
+  - path: frontend/src/shared/api/axiosInstance.ts
+    targets:
+      - type: function
+        name: request_interceptor
+    semantic_anchors:
+      - type: function_call
+        value: getTokenWithExpirationCheck
+    changes:
+      - action: refactor
+        description: "Call getTokenWithExpirationCheck() once, store result, reuse"
+        code_hint: "const token = getTokenWithExpirationCheck(); if (token) { ... }"
+
+acceptance_criteria:
+  - getTokenWithExpirationCheck is called only once per request
+  - Token still added to request headers correctly
+  - 401 responses still handled correctly
+
+tests_to_run:
+  - cd frontend && npm run typecheck
+  - cd frontend && npm run lint
+
+risk_level: low
+notes: >
+  Simple refactoring. No behavioral change expected.

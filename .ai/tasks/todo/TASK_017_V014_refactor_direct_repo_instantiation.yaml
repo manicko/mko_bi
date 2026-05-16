@@ -1,0 +1,59 @@
+id: TASK_017_V014
+title: Refactor direct repository instantiation in route handlers to use Depends()
+status: pending
+priority: medium
+depends_on: []
+
+description: >
+  Some routes create repository instances directly (FilterRepository(), DashboardFilterRepository(),
+  etc.) instead of using Depends() injection. This bypasses the DI container and makes testing harder.
+
+goals:
+  - Replace direct repository instantiation with Depends(get_*_repository) pattern
+  - Ensure consistent DI pattern across all routes
+  - Improve testability
+
+files:
+  - path: src/mkobi/api/routes/dashboards.py
+    targets:
+      - type: function
+        name: bind_filter_endpoint
+      - type: function
+        name: unbind_filter_endpoint
+      - type: function
+        name: create_graph_endpoint
+    semantic_anchors:
+      - type: function_call
+        value: FilterRepository
+      - type: function_call
+        value: DashboardFilterRepository
+      - type: function_call
+        value: GraphRepository
+    changes:
+      - action: replace_instantiation
+        description: "Replace direct repository instantiation with Depends() injection"
+        code_hint: "Add filter_repo: FilterRepository = Depends(get_filter_repository) to endpoint signature"
+
+  - path: src/mkobi/api/routes/admin.py
+    targets:
+      - type: function
+        name: approve_registration_request_admin_endpoint
+    semantic_anchors:
+      - type: function_call
+        value: get_registration_request_repository
+    changes:
+      - action: replace_instantiation
+        description: "Replace direct repository instantiation with Depends() injection"
+
+acceptance_criteria:
+  - All route handlers use Depends() for repository injection
+  - No direct repository instantiation in route handlers
+  - Existing tests pass
+
+tests_to_run:
+  - uv run pytest tests/ -x -v
+
+risk_level: low
+notes: >
+  Ensure all get_*_repository dependency functions exist in api/deps.py before
+  refactoring. Add any missing ones.

@@ -1,0 +1,52 @@
+id: TASK_027_V005
+title: Add monitoring/alerting when rate limiter is disabled due to Redis unavailability
+status: pending
+priority: medium
+depends_on: []
+
+description: >
+  If Redis is unavailable, the rate limiter silently disables with only a warning log.
+  No monitoring or alerting. Attackers can bypass rate limits by causing Redis failures.
+
+goals:
+  - Add a metric/counter that tracks when rate limiter is disabled
+  - Add an alert or prominent log message when rate limiter fails
+  - Consider fail-closed behavior for production
+
+files:
+  - path: src/mkobi/services/data_service.py
+    targets:
+      - type: method
+        name: __init__
+    semantic_anchors:
+      - type: except_block
+        description: "Exception handler that sets _upload_rate_limiter = None"
+    changes:
+      - action: add_monitoring
+        description: "Add a counter or flag that tracks rate limiter health"
+        code_hint: "self._rate_limiter_healthy = False; logger.error('Rate limiter disabled - Redis unavailable')"
+
+  - path: src/mkobi/core/security.py
+    targets:
+      - type: class
+        name: RateLimiter
+    semantic_anchors:
+      - type: method
+        description: "Rate limiter check method"
+    changes:
+      - action: add_fail_closed_option
+        description: "Add optional fail-closed behavior when rate limiter is disabled"
+        code_hint: "If rate limiter is None and fail_closed=True, raise HTTPException(429)"
+
+acceptance_criteria:
+  - Rate limiter health is tracked and logged prominently
+  - Optional fail-closed mode rejects requests when rate limiter is down
+  - Existing tests pass
+
+tests_to_run:
+  - uv run pytest tests/ -x -v
+
+risk_level: medium
+notes: >
+  The fail-closed behavior should be configurable via env var. In development,
+  fail-open (current behavior) is acceptable. In production, fail-closed is safer.

@@ -1,0 +1,39 @@
+id: TASK_020_V029
+title: Replace plain Loading text in ProtectedRoute with proper spinner component
+status: pending
+priority: low
+depends_on: []
+
+description: >
+  ProtectedRoute loading state shows a plain "Loading..." div instead of a proper spinner.
+  Poor UX during authentication check.
+
+goals:
+  - Create or use a proper loading spinner component
+  - Replace the plain "Loading..." text in ProtectedRoute
+
+files:
+  - path: frontend/src/shared/components/ProtectedRoute.tsx
+    targets:
+      - type: JSX_element
+        description: "Loading state JSX"
+    semantic_anchors:
+      - type: return_statement
+        description: "return <div>Loading...</div>"
+    changes:
+      - action: replace_element
+        description: "Replace plain text with a CircularProgress or similar spinner component"
+        code_hint: "return <Box display='flex' justifyContent='center' p={3}><CircularProgress /></Box>"
+
+acceptance_criteria:
+  - Loading state shows a spinner instead of plain text
+  - Spinner is centered on the page
+  - No visual regression after auth completes
+
+tests_to_run:
+  - cd frontend && npm run typecheck
+  - cd frontend && npm run lint
+
+risk_level: low
+notes: >
+  Use MUI CircularProgress component (already available via @mui/material).

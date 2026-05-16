@@ -1,0 +1,41 @@
+id: TASK_009_V018
+title: Fix logger inconsistency in data_service.py
+status: pending
+priority: low
+depends_on: []
+
+description: >
+  data_service.py uses logging.getLogger(__name__) instead of get_logger(__name__) from
+  core.logging_config. This causes inconsistent logging format.
+
+goals:
+  - Replace logging.getLogger with get_logger in data_service.py
+  - Ensure consistent JSON logging format across all modules
+
+files:
+  - path: src/mkobi/services/data_service.py
+    targets:
+      - type: module_level
+        name: logger
+    semantic_anchors:
+      - type: import_statement
+        description: "import logging statement"
+      - type: assignment
+        description: "logger = logging.getLogger(__name__)"
+    changes:
+      - action: replace_import
+        description: "Replace 'import logging' with 'from mkobi.core.logging_config import get_logger'"
+      - action: replace_assignment
+        description: "Replace 'logger = logging.getLogger(__name__)' with 'logger = get_logger(__name__)'"
+
+acceptance_criteria:
+  - data_service.py uses get_logger from core.logging_config
+  - Log output format is consistent with other services
+  - Existing tests pass
+
+tests_to_run:
+  - uv run pytest tests/ -x -v
+
+risk_level: low
+notes: >
+  Two-line fix. Verify the import path for get_logger is correct.

@@ -1,0 +1,53 @@
+id: TASK_003_V007
+title: Fix get_aggregated_data to filter by dashboard_id and graph_id
+status: pending
+priority: medium
+depends_on: []
+
+description: >
+  The DataService.get_aggregated_data method accepts dashboard_id and graph_id parameters
+  but doesn't use them to filter results. This returns all aggregated data regardless of
+  which dashboard is requested, causing potential data leakage between dashboards.
+
+goals:
+  - Add dashboard_id filter to the aggregated data query
+  - Add graph_id filter to the aggregated data query
+  - Ensure data isolation between dashboards
+
+files:
+  - path: src/mkobi/services/data_service.py
+    targets:
+      - type: method
+        name: get_aggregated_data
+    semantic_anchors:
+      - type: method_call
+        description: "Repository call that fetches aggregated data without dashboard_id filter"
+    changes:
+      - action: modify_code
+        description: "Pass dashboard_id and graph_id to the repository query method"
+        code_hint: "Add dashboard_id and graph_id as filter parameters to the repository call"
+
+  - path: src/mkobi/db/repositories/aggregated_data_repo.py
+    targets:
+      - type: method
+        name: get_by_dashboard_graph
+    semantic_anchors:
+      - type: select_statement
+        description: "SQLAlchemy query for aggregated data"
+    changes:
+      - action: add_filter
+        description: "Add WHERE clauses for dashboard_id and graph_id"
+        code_hint: "Add .where(AggregatedData.dashboard_id == dashboard_id) and .where(AggregatedData.graph_id == graph_id)"
+
+acceptance_criteria:
+  - get_aggregated_data returns only data for the specified dashboard_id
+  - get_aggregated_data returns only data for the specified graph_id when provided
+  - Existing tests pass
+
+tests_to_run:
+  - uv run pytest tests/ -x -v
+
+risk_level: low
+notes: >
+  The endpoint in data.py already passes these parameters to the service layer.
+  The fix is in the service/repository layer to actually use them in the query.

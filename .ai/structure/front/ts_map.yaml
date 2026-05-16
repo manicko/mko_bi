@@ -953,6 +953,7 @@
   imports:
     - react-plotly.js
     - ../../../../shared/types/api.types
+    - plotly.js
   components:
     - PlotlyChart
   hooks: []

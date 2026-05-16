@@ -394,6 +394,13 @@
   value: Field
   stable_hash: f97e1b65
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: f97e1b65
+  symbol_path:
+  - Settings
+  type: function_call
+  value: Field
+  stable_hash: f97e1b65
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
 - id: f526a929
   symbol_path:
   - Settings
@@ -2415,6 +2422,13 @@
   type: function_call
   value: SchemaNotFoundError
   stable_hash: 292bf348
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: 9d942f14
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: cleanup_stale_temp_files
+  stable_hash: 9d942f14
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
 - id: 8d138112
   symbol_path:
@@ -4631,6 +4645,52 @@
   type: function_call
   value: list
   stable_hash: f412d457
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\data_service.py
+- id: 33b251fe
+  symbol_path:
+  - cleanup_stale_temp_files
+  type: function_call
+  value: get_config
+  stable_hash: 33b251fe
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\data_service.py
+- id: 9115bd78
+  symbol_path:
+  - cleanup_stale_temp_files
+  type: function_call
+  value: Path
+  stable_hash: 9115bd78
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\data_service.py
+- id: 773b05cb
+  symbol_path:
+  - cleanup_stale_temp_files
+  type: return_statement
+  stable_hash: 773b05cb
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\data_service.py
+- id: 773b05cb
+  symbol_path:
+  - cleanup_stale_temp_files
+  type: return_statement
+  stable_hash: 773b05cb
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\data_service.py
+- id: 06957399
+  symbol_path:
+  - cleanup_stale_temp_files
+  type: function_call
+  value: time
+  stable_hash: 06957399
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\data_service.py
+- id: e8d52159
+  symbol_path:
+  - cleanup_stale_temp_files
+  type: function_call
+  value: list
+  stable_hash: e8d52159
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\data_service.py
+- id: 773b05cb
+  symbol_path:
+  - cleanup_stale_temp_files
+  type: return_statement
+  stable_hash: 773b05cb
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\data_service.py
 - id: cc518ad9
   symbol_path:

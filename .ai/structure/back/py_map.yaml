@@ -307,6 +307,7 @@
   - mkobi.config
   - mkobi.db.repositories.user_repo
   - mkobi.models.enums
+  - mkobi.services.data_service
   - mkobi.core.security
   classes:
   - DatabaseNotFoundError
@@ -705,6 +706,7 @@
   - mkobi.models.enums
   - mkobi.workers.data_worker
   - mkobi.workers.data_worker
+  - time
   classes:
   - DataService
   functions:
@@ -712,6 +714,7 @@
   - _validate_mime_type
   - _validate_file
   - cleanup_task_files
+  - cleanup_stale_temp_files
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\filter_service.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.services.filter_service
   layer: unknown

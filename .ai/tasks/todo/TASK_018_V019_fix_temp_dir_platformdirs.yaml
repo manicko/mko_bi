@@ -1,0 +1,39 @@
+id: TASK_018_V019
+title: Fix UploadSettings temp_dir to use platformdirs
+status: pending
+priority: low
+depends_on: []
+
+description: >
+  UploadSettings.temp_dir uses a hardcoded relative path "data/tmp_uploads" instead of
+  platformdirs for cross-platform temp files as specified in SPEC.
+
+goals:
+  - Replace hardcoded temp_dir with platformdirs-based path
+  - Ensure cross-platform compatibility for temp file storage
+
+files:
+  - path: src/mkobi/config.py
+    targets:
+      - type: class
+        name: UploadSettings
+    semantic_anchors:
+      - type: field_definition
+        description: "temp_dir: str = 'data/tmp_uploads'"
+    changes:
+      - action: replace_default
+        description: "Replace hardcoded path with platformdirs.user_data_dir() based path"
+        code_hint: "Use platformdirs.user_data_dir('mkobi', 'ZOO') + '/tmp_uploads' or similar"
+
+acceptance_criteria:
+  - Temp directory uses platformdirs for cross-platform compatibility
+  - Temp files are created in the correct platform-specific location
+  - Existing tests pass
+
+tests_to_run:
+  - uv run pytest tests/ -x -v
+
+risk_level: low
+notes: >
+  platformdirs is already in the dependency list (referenced in SPEC).
+  Ensure the directory is created on startup if it doesn't exist.

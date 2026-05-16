@@ -1,0 +1,39 @@
+id: TASK_006_V013
+title: Fix check_dashboard_access swallowing all exceptions without logging
+status: pending
+priority: medium
+depends_on: []
+
+description: >
+  check_dashboard_access catches all exceptions and returns False without logging.
+  Database errors are silently swallowed, making debugging difficult.
+
+goals:
+  - Add logging before returning False on exception
+  - Preserve the fail-closed behavior (deny access on error)
+  - Enable debugging of database connectivity issues
+
+files:
+  - path: src/mkobi/core/permissions.py
+    targets:
+      - type: function
+        name: check_dashboard_access
+    semantic_anchors:
+      - type: except_block
+        description: "Broad except Exception returning False"
+    changes:
+      - action: add_logging
+        description: "Add logger.warning() call before returning False in the except block"
+        code_hint: "Add: logger.warning('Dashboard access check failed', exc_info=True) before return False"
+
+acceptance_criteria:
+  - Database errors during access check are logged with full traceback
+  - Access is still denied on error (fail-closed preserved)
+  - Existing tests pass
+
+tests_to_run:
+  - uv run pytest tests/ -x -v
+
+risk_level: low
+notes: >
+  Simple one-line addition. Ensure logger is already imported in the module.

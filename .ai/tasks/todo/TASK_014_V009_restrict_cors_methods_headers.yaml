@@ -1,0 +1,44 @@
+id: TASK_014_V009
+title: Restrict CORS methods and headers to specific values
+status: pending
+priority: medium
+depends_on: []
+
+description: >
+  CORS middleware allows all methods (allow_methods=["*"]) and all headers
+  (allow_headers=["*"]). This needs to be restricted for production.
+
+goals:
+  - Replace wildcard methods with specific HTTP methods
+  - Replace wildcard headers with specific headers
+  - Make CORS configuration environment-aware (permissive in dev, restricted in prod)
+
+files:
+  - path: src/mkobi/app.py
+    targets:
+      - type: function
+        name: create_app
+    semantic_anchors:
+      - type: CORSMiddleware
+        description: "CORSMiddleware configuration with wildcard methods and headers"
+    changes:
+      - action: modify_code
+        description: "Replace allow_methods=['*'] with ['GET', 'POST', 'PUT', 'DELETE', 'PATCH']"
+        code_hint: "allow_methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH']"
+      - action: modify_code
+        description: "Replace allow_headers=['*'] with specific headers"
+        code_hint: "allow_headers=['Authorization', 'Content-Type', 'Accept']"
+
+acceptance_criteria:
+  - CORS allows only specific HTTP methods
+  - CORS allows only specific headers
+  - Frontend API calls still work correctly
+  - Preflight requests handled correctly
+
+tests_to_run:
+  - uv run pytest tests/ -x -v
+
+risk_level: low
+notes: >
+  Verify all frontend API calls use only the allowed methods before restricting.
+  The frontend uses GET, POST, PUT, DELETE — all should be included.

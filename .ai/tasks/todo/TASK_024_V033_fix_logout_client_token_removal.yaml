@@ -1,0 +1,40 @@
+id: TASK_024_V033
+title: Fix logoutClient to use removeToken() abstraction instead of direct sessionStorage access
+status: pending
+priority: low
+depends_on: []
+
+description: >
+  logoutClient() uses sessionStorage.removeItem directly instead of the removeToken()
+  abstraction from authToken.ts. Inconsistent token management.
+
+goals:
+  - Replace direct sessionStorage access with removeToken() call
+  - Ensure consistent token management across the codebase
+
+files:
+  - path: frontend/src/features/auth/api/authApi.ts
+    targets:
+      - type: function
+        name: logoutClient
+    semantic_anchors:
+      - type: function_call
+        value: sessionStorage.removeItem
+    changes:
+      - action: replace_call
+        description: "Replace sessionStorage.removeItem with removeToken()"
+        code_hint: "Import removeToken from authToken.ts and call removeToken() instead of sessionStorage.removeItem"
+
+acceptance_criteria:
+  - logoutClient uses removeToken() abstraction
+  - Token is correctly removed on logout
+  - Frontend typecheck passes
+
+tests_to_run:
+  - cd frontend && npm run typecheck
+  - cd frontend && npm run lint
+
+risk_level: low
+notes: >
+  Simple refactoring. The removeToken() function already handles both memory
+  and sessionStorage cleanup.

@@ -1,0 +1,72 @@
+id: TASK_016_V011
+title: Refactor user creation/update endpoints to use request body models
+status: pending
+priority: medium
+depends_on: []
+
+description: >
+  User creation endpoint accepts email/password/role as query params. User update endpoint
+  accepts new_role as query param. Non-standard REST pattern that leaks params into URLs.
+
+goals:
+  - Create Pydantic request body models for user creation and update
+  - Change endpoints to accept request body instead of query params
+  - Update frontend API client to send request body
+
+files:
+  - path: src/mkobi/models/users.py
+    targets:
+      - type: class
+        name: UserCreate
+    semantic_anchors:
+      - type: class_definition
+        description: "Existing user model classes"
+    changes:
+      - action: add_model
+        description: "Add UserCreateRequest model with email, password, role fields"
+      - action: add_model
+        description: "Add UserUpdateRequest model with new_role field"
+
+  - path: src/mkobi/api/routes/users.py
+    targets:
+      - type: function
+        name: create_user_endpoint
+      - type: function
+        name: update_user_endpoint
+    semantic_anchors:
+      - type: Query_parameter
+        description: "Query(...) parameters for email, password, role, new_role"
+    changes:
+      - action: replace_params
+        description: "Replace Query(...) parameters with Pydantic request body model"
+        code_hint: "Change endpoint signature to accept user_data: UserCreateRequest"
+
+  - path: frontend/src/features/users/api/userApi.ts
+    targets:
+      - type: function
+        name: createUser
+      - type: function
+        name: updateUser
+    semantic_anchors:
+      - type: axios_call
+        description: "API calls using query parameters"
+    changes:
+      - action: replace_params
+        description: "Change from params to data (request body) in API calls"
+
+acceptance_criteria:
+  - User creation accepts request body with email, password, role
+  - User update accepts request body with new_role
+  - Parameters no longer appear in URL/query string
+  - Frontend API client updated to match
+  - Existing tests pass
+
+tests_to_run:
+  - uv run pytest tests/test_users_api.py -x -v
+  - uv run pytest tests/ -x -v
+  - cd frontend && npm run typecheck
+
+risk_level: medium
+notes: >
+  Coordinated backend + frontend change. The frontend API client must be updated
+  simultaneously to avoid breaking the user management UI.

@@ -1,0 +1,38 @@
+id: TASK_019_V027
+title: Fix CORS origins in app.yaml from example domains to localhost defaults
+status: pending
+priority: low
+depends_on: []
+
+description: >
+  CORS origins in settings/app.yaml are example domains (example.com). If not overridden
+  by env var, these are invalid and CORS won't work correctly.
+
+goals:
+  - Replace example domains with localhost defaults
+  - Ensure development works without env var override
+
+files:
+  - path: src/mkobi/settings/app.yaml
+    targets:
+      - type: yaml_key
+        description: "cors_origins configuration"
+    semantic_anchors:
+      - type: yaml_value
+        value: example.com
+    changes:
+      - action: replace_value
+        description: "Replace example.com with http://localhost:3000 and http://localhost:5173"
+        code_hint: "cors_origins: ['http://localhost:3000', 'http://localhost:5173']"
+
+acceptance_criteria:
+  - CORS origins default to localhost development URLs
+  - Production deployments still override via CORS_ORIGINS env var
+  - Existing tests pass
+
+tests_to_run:
+  - uv run pytest tests/ -x -v
+
+risk_level: low
+notes: >
+  Simple config change. The env var CORS_ORIGINS still takes precedence over YAML.

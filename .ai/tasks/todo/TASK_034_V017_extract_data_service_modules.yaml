@@ -1,0 +1,46 @@
+id: TASK_034_V017
+title: Extract file processing and cleanup from DataService into separate modules
+status: pending
+priority: low
+depends_on: []
+
+description: >
+  DataService is 680 lines with multiple responsibilities (upload, processing, status
+  tracking, cleanup). This is a maintainability concern.
+
+goals:
+  - Extract file processing logic to a separate module
+  - Extract cleanup logic to a separate module
+  - Reduce DataService to core coordination logic
+  - Improve testability of individual responsibilities
+
+files:
+  - path: src/mkobi/services/data_service.py
+    targets:
+      - type: class
+        name: DataService
+    semantic_anchors:
+      - type: method
+        description: "File processing and cleanup methods"
+    changes:
+      - action: extract_module
+        description: "Extract file processing to services/file_processing.py"
+      - action: extract_module
+        description: "Extract cleanup logic to services/file_cleanup.py"
+      - action: refactor
+        description: "Update DataService to delegate to the new modules"
+
+acceptance_criteria:
+  - DataService is reduced to < 400 lines
+  - File processing logic is in a separate module
+  - Cleanup logic is in a separate module
+  - All existing tests pass
+  - No behavioral changes
+
+tests_to_run:
+  - uv run pytest tests/ -x -v
+
+risk_level: medium
+notes: >
+  Refactoring task. Ensure all method signatures and imports are updated.
+  Run full test suite after refactoring.

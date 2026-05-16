@@ -1,0 +1,40 @@
+id: TASK_012_V026
+title: Replace unknown types in PlotlyChart.tsx with proper Plotly.js types
+status: pending
+priority: low
+depends_on: []
+
+description: >
+  PlotlyReactConfig interface uses unknown values instead of specific Plotly.js types.
+  This reduces IDE support and compile-time safety.
+
+goals:
+  - Replace unknown types with proper Plotly.js type definitions
+  - Improve type safety for chart configuration
+
+files:
+  - path: frontend/src/features/dashboards/ui/charts/PlotlyChart.tsx
+    targets:
+      - type: interface
+        name: PlotlyReactConfig
+    semantic_anchors:
+      - type: type_annotation
+        value: unknown
+    changes:
+      - action: replace_type
+        description: "Replace 'unknown' with proper Plotly.js types (Plotly.Layout, Plotly.Data, etc.)"
+        code_hint: "Use types from 'plotly.js' or 'plotly.js-dist-min' type definitions"
+
+acceptance_criteria:
+  - PlotlyReactConfig uses specific types instead of unknown
+  - Frontend typecheck passes
+  - Charts still render correctly
+
+tests_to_run:
+  - cd frontend && npm run typecheck
+  - cd frontend && npm run lint
+
+risk_level: low
+notes: >
+  If Plotly.js type definitions are not available, define minimal interfaces
+  for the actually used properties rather than using unknown.
