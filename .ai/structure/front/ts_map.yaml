@@ -48,6 +48,7 @@
     - ../features/upload/ui/UploadPage
     - ../features/admin/ui/AdminPanel
     - ../features/users/ui/UserProfile
+    - ../features/users/ui/ChangePasswordPage
   components:
     - AppRoutes
   hooks: []
@@ -60,6 +61,7 @@
     - <RoleBasedAccess roles={['admin', 'editor']}>
     - <ProtectedRoute>
     - <RoleBasedAccess roles={['admin']}>
+    - <ProtectedRoute>
     - <ProtectedRoute>
 - path: C:/py_dev/mkobi/frontend/src/features/auth/index.ts
   module: C:.py_dev.mkobi.frontend.src.features.auth.index
@@ -747,6 +749,39 @@
   components: []
   hooks: []
   jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/features/users/ui/ChangePasswordPage.tsx
+  module: C:.py_dev.mkobi.frontend.src.features.users.ui.ChangePasswordPage
+  layer: unknown
+  imports:
+    - react-hook-form
+    - '@hookform/resolvers/zod'
+    - react-router-dom
+    - '@mui/material'
+    - react
+    - ../../../shared/types/formSchemas
+    - ../api/userApi
+    - react-hot-toast
+  components:
+    - ChangePasswordPage
+  hooks: []
+  jsx_tags:
+    - '<Box sx={{ p: 3, maxWidth: 400, mx: ''auto'' }}>'
+    - <Typography variant="h4" component="h1" gutterBottom>
+    - '<Alert severity="error" sx={{ mb: 2 }}>'
+    - <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+    - '<Box sx={{ display: ''flex'', gap: 2, mt: 3 }}>'
+    - |-
+      <Button
+                  variant="contained"
+                  type="submit"
+                  disabled={isSubmitting}
+                >
+    - |-
+      <Button
+                  variant="outlined"
+                  onClick={handleCancel}
+                  disabled={isSubmitting}
+                >
 - path: C:/py_dev/mkobi/frontend/src/features/users/ui/UserProfile.tsx
   module: C:.py_dev.mkobi.frontend.src.features.users.ui.UserProfile
   layer: unknown
@@ -779,6 +814,12 @@
       <Typography variant="body1" sx={{ p: 1, bgcolor: 'grey.100', borderRadius:
       1 }}>
     - '<Box sx={{ mt: 4 }}>'
+    - |-
+      <Button
+                variant="outlined"
+                onClick={() => navigate('/profile/change-password')}
+              >
+    - '<Box sx={{ mt: 4 }}>'
     - '<Alert severity="error" sx={{ mb: 2 }}>'
     - |-
       <Button
@@ -805,6 +846,7 @@
     - ./Header
     - ./Sidebar
     - '@mui/material'
+    - ../../../features/auth/model/useAuth
   components:
     - AppLayout
   hooks: []

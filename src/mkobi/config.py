@@ -235,6 +235,9 @@ class Settings(BaseSettings):
     admin_username: str = Field(default="admin", alias="ADMIN_USERNAME")
     admin_password: str = Field(default="admin", alias="ADMIN_PASSWORD")
 
+    # --- Cleanup Settings ---
+    stale_file_threshold_hours: int = Field(default=24, alias="STALE_FILE_THRESHOLD_HOURS")
+
     @field_validator("cors_origins")
     @classmethod
     def validate_cors_origins(cls, value: list[str]) -> list[str]:

@@ -20,6 +20,7 @@ from mkobi.core.logging_config import get_logger
 from mkobi.core import redis_client
 from mkobi.core.security import AsyncRateLimiter
 from mkobi.models.auth import (
+    ChangePasswordRequest,
     LoginRequest,
     RefreshRequest,
     RegisterRequest,
@@ -280,6 +281,74 @@ async def get_current_user_info(
     """
     logger.info("Current user data request", extra={"email": current_user.email})
     return current_user
+
+
+@router.post(
+    "/change-password",
+    status_code=status.HTTP_200_OK,
+    summary="Change password",
+    description="Change current user password. Requires current password verification.",
+)
+async def change_password(
+    password_data: ChangePasswordRequest,
+    current_user: UserRead = Depends(get_current_user_dependency),
+    auth_service=Depends(get_auth_service),
+) -> dict[str, Any]:
+    """Password change endpoint.
+
+    Validates new password confirmation and current password,
+    then updates the password in the database.
+
+    Args:
+        password_data: Password change request data.
+        current_user: Currently authenticated user.
+        auth_service: Authentication service.
+
+    Returns:
+        dict: Success message.
+
+    Raises:
+        HTTPException 400: If password confirmation does not match.
+        HTTPException 401: If current password is incorrect.
+    """
+    # Validate password confirmation matches
+    if password_data.new_password != password_data.confirm_password:
+        logger.warning(
+            "Password change failed: confirmation mismatch",
+            extra={"user_id": str(current_user.id)},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="New password and confirmation do not match",
+        )
+
+    try:
+        await auth_service.change_password(
+            user_id=current_user.id,
+            current_password=password_data.current_password,
+            new_password=password_data.new_password,
+        )
+    except ValueError as e:
+        logger.warning(
+            "Password change failed",
+            extra={"user_id": str(current_user.id), "error": str(e)},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail=str(e),
+        ) from e
+    except Exception as e:
+        logger.error(
+            "Password change error",
+            extra={"user_id": str(current_user.id), "error": str(e)},
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Password change error",
+        ) from e
+
+    logger.info("Password changed successfully", extra={"user_id": str(current_user.id)})
+    return {"message": "Password changed successfully"}
 
 
 @router.post(

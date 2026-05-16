@@ -1,5 +1,5 @@
 import { axiosInstance } from '../../../shared/api/axiosInstance'
-import type { UserProfile } from '../../../shared/types/api.types'
+import type { UserProfile, ChangePasswordRequest } from '../../../shared/types/api.types'
 
 export async function getProfile(): Promise<UserProfile> {
   const response = await axiosInstance.get<UserProfile>('/auth/me')
@@ -8,4 +8,8 @@ export async function getProfile(): Promise<UserProfile> {
 
 export async function deleteAccount(): Promise<void> {
   await axiosInstance.delete('/users/me')
+}
+
+export async function changePassword(data: ChangePasswordRequest): Promise<void> {
+  await axiosInstance.post('/auth/change-password', data)
 }

@@ -1,5 +1,6 @@
 import Plot from 'react-plotly.js'
 import type { PlotlyData, PlotlyLayout } from '../../../../shared/types/api.types'
+import type { Data } from 'plotly.js'
 
 interface PlotlyChartProps {
   data: PlotlyData | PlotlyData[]
@@ -20,11 +21,11 @@ export function PlotlyChart({
   config,
   style,
 }: PlotlyChartProps) {
-  const chartData = Array.isArray(data) ? data : [data]
+  const chartData = Array.isArray(data) ? (data as Data[]) : [data as Data]
 
   return (
     <Plot
-      data={chartData as any[]}
+      data={chartData}
       layout={{
         autosize: true,
         margin: { t: 40, r: 20, b: 40, l: 40 },

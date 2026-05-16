@@ -28,9 +28,12 @@ export function DashboardFilters({
 }: DashboardFiltersProps) {
   const [localFilters, setLocalFilters] = useState<
     Record<string, string | string[] | number | number[]>
-  >(values || {})
+  >(() => values || {})
 
+  // Sync local state when external values prop changes
+  // This is required for the filter reset behavior when dashboard data reloads
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLocalFilters(values || {})
   }, [values])
 
@@ -111,7 +114,7 @@ function FilterField({ filter, value, onChange }: FilterFieldProps) {
         </FormControl>
       )
 
-    case 'multiselect':
+    case 'multiselect': {
       const selectedValues = Array.isArray(value) ? value : []
       return (
         <FormControl fullWidth size="small">
@@ -137,8 +140,9 @@ function FilterField({ filter, value, onChange }: FilterFieldProps) {
           </Select>
         </FormControl>
       )
+    }
 
-    case 'range':
+    case 'range': {
       const rangeValue = (value as [number, number]) || [
         config.min || 0,
         config.max || 100,
@@ -155,6 +159,7 @@ function FilterField({ filter, value, onChange }: FilterFieldProps) {
           />
         </Box>
       )
+    }
 
     case 'date':
       return (

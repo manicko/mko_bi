@@ -227,6 +227,12 @@ export interface GrantAccessRequest {
   permission: DashboardPermission
 }
 
+export interface ChangePasswordRequest {
+  current_password: string
+  new_password: string
+  confirm_password: string
+}
+
 export interface ProcessingLog {
   id: string
   dashboard_id: string | null

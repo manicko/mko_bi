@@ -9,6 +9,7 @@ All operations require authentication and appropriate permissions.
 """
 
 from pathlib import Path
+from typing import NoReturn
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
@@ -61,7 +62,7 @@ async def upload_file_endpoint(
         },
     )
 
-    def _handle_value_error(e: ValueError) -> None:
+    def _handle_value_error(e: ValueError) -> NoReturn:
         """Handle ValueError by mapping to appropriate HTTPException with logging."""
         logger.warning("Validation error during upload: %s", e)
         error_msg = str(e).lower()

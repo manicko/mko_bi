@@ -85,6 +85,15 @@ export function UserProfile() {
         </Typography>
       </Box>
 
+      <Box sx={{ mt: 4 }}>
+        <Button
+          variant="outlined"
+          onClick={() => navigate('/profile/change-password')}
+        >
+          Change Password
+        </Button>
+      </Box>
+
       {!isAdmin && (
         <Box sx={{ mt: 4 }}>
           {deleteError && (

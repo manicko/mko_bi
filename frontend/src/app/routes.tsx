@@ -9,6 +9,7 @@ import { DashboardView } from '../features/dashboards/ui/DashboardView'
 import { UploadPage } from '../features/upload/ui/UploadPage'
 import { AdminPanel } from '../features/admin/ui/AdminPanel'
 import { UserProfile } from '../features/users/ui/UserProfile'
+import { ChangePasswordPage } from '../features/users/ui/ChangePasswordPage'
 
 export function AppRoutes() {
   return (
@@ -57,6 +58,14 @@ export function AppRoutes() {
           element={
             <ProtectedRoute>
               <UserProfile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile/change-password"
+          element={
+            <ProtectedRoute>
+              <ChangePasswordPage />
             </ProtectedRoute>
           }
         />

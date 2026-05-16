@@ -1,7 +1,7 @@
 import hashlib
 from pathlib import Path
 
-import ast
+import libcst as cst
 import yaml
 
 IGNORE_DIRS = {".venv", "node_modules", "__pycache__", ".git", "dist", "build"}
@@ -10,16 +10,28 @@ ROOT = Path(__file__).parent.parent.parent.parent / "src"
 OUTPUT = Path(__file__).parent.parent.parent / "structure/back"
 
 
-class SemanticCollector(ast.NodeVisitor):
+class SemanticCollector(cst.CSTVisitor):
     def __init__(self, file_path):
+
         self.file_path = str(file_path)
+
+        # -------------------------
+        # Context
+        # -------------------------
 
         self.class_stack = []
         self.function_stack = []
 
+        # -------------------------
+        # Collected data
+        # -------------------------
+
         self.imports = []
+
         self.classes = []
+
         self.functions = []
+
         self.anchors = []
 
     # =========================================================
@@ -27,13 +39,14 @@ class SemanticCollector(ast.NodeVisitor):
     # =========================================================
 
     def visit_ClassDef(self, node):
-        class_name = node.name
+
+        class_name = node.name.value
 
         self.class_stack.append(class_name)
 
         self.classes.append(class_name)
 
-        self.generic_visit(node)
+    def leave_ClassDef(self, node):
 
         self.class_stack.pop()
 
@@ -42,13 +55,14 @@ class SemanticCollector(ast.NodeVisitor):
     # =========================================================
 
     def visit_FunctionDef(self, node):
-        function_name = node.name
+
+        function_name = node.name.value
 
         self.function_stack.append(function_name)
 
         self.functions.append(function_name)
 
-        self.generic_visit(node)
+    def leave_FunctionDef(self, node):
 
         self.function_stack.pop()
 
@@ -57,18 +71,18 @@ class SemanticCollector(ast.NodeVisitor):
     # =========================================================
 
     def visit_ImportFrom(self, node):
-        if node.module:
-            self.imports.append(node.module)
 
-        self.generic_visit(node)
+        if node.module:
+            self.imports.append(cst.Module([]).code_for_node(node.module))
 
     # =========================================================
     # CALLS
     # =========================================================
 
     def visit_Call(self, node):
-        if isinstance(node.func, ast.Name):
-            function_name = node.func.id
+
+        if isinstance(node.func, cst.Name):
+            function_name = node.func.value
 
             self.anchors.append({
                 "id": self.build_hash("function_call", function_name),
@@ -78,13 +92,12 @@ class SemanticCollector(ast.NodeVisitor):
                 "stable_hash": self.build_hash("function_call", function_name),
             })
 
-        self.generic_visit(node)
-
     # =========================================================
     # RETURNS
     # =========================================================
 
     def visit_Return(self, node):
+
         self.anchors.append({
             "id": self.build_hash("return_statement", "return"),
             "symbol_path": self.get_symbol_path(),
@@ -92,16 +105,16 @@ class SemanticCollector(ast.NodeVisitor):
             "stable_hash": self.build_hash("return_statement", "return"),
         })
 
-        self.generic_visit(node)
-
     # =========================================================
     # HELPERS
     # =========================================================
 
     def get_symbol_path(self):
+
         return self.class_stack + self.function_stack
 
     def build_hash(self, anchor_type, value):
+
         raw = f"{self.file_path}|{self.get_symbol_path()}|{anchor_type}|{value}"
 
         return hashlib.md5(raw.encode("utf-8")).hexdigest()[:8]
@@ -127,7 +140,7 @@ for file in ROOT.rglob("*.py"):
         continue
 
     try:
-        module = ast.parse(code)
+        module = cst.parse_module(code)
 
     except Exception as e:
         print(f"Parse error in {file}: {e}")
@@ -136,7 +149,7 @@ for file in ROOT.rglob("*.py"):
 
     collector = SemanticCollector(file)
 
-    collector.visit(module)
+    module.visit(collector)
 
     # =========================================================
     # FILE MAP

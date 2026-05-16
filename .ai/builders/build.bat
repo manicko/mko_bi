@@ -22,12 +22,8 @@ set "DOCS_DIR=%ROOT%\docs"
 
 echo.
 echo [1/3] Generating project structure...
-
-:: Вариант 1: Используем tree (встроен в Windows)
 tree "%ROOT%" /F /A > "%DOCS_DIR%\STRUCT.md" 2>nul
-
-:: Вариант 2: Если хочешь красивее — можно использовать PowerShell (раскомментируй ниже)
-:: powershell -NoProfile -Command "Get-ChildItem -Path '%ROOT%' -Recurse -Force | Where-Object { $_.FullName -notmatch '\\\.git|\\node_modules|\\__pycache__' } | Format-Table FullName" > "%DOCS_DIR%\STRUCT.md"
+tree "%ROOT%" /F /A > "%ROOT%\.ai\structure\map.md" 2>nul
 
 echo Generated STRUCT.md
 

@@ -18,7 +18,6 @@ import type { FilterType } from '../../../shared/types/enums'
 export function DashboardView() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  const [filterDetails, setFilterDetails] = useState<FilterDetail[]>([])
   const [filters, setFilters] = useState<
     Record<string, string | string[] | number | number[]>
   >({})
@@ -35,10 +34,9 @@ export function DashboardView() {
   } = useAggregatedData(id || '', filters)
   const { invalidateAggregatedData } = useInvalidateDashboard()
 
-  useEffect(() => {
-    if (dashboard?.config?.filters && dashboard.config.filters.length > 0) {
-      // Convert filter config items to FilterDetail format
-      const filterDetails: FilterDetail[] = dashboard.config.filters.map(
+  // Derive filterDetails from dashboard config
+  const filterDetails: FilterDetail[] = dashboard?.config?.filters && dashboard.config.filters.length > 0
+    ? dashboard.config.filters.map(
         (filterConfig, index) => ({
           id: `filter-${index}-${filterConfig.field}`,
           name: filterConfig.field,
@@ -50,11 +48,7 @@ export function DashboardView() {
           },
         })
       )
-      setFilterDetails(filterDetails)
-    } else {
-      setFilterDetails([])
-    }
-  }, [dashboard?.config?.filters])
+    : []
 
   const handleFilterChange = useCallback(
     (newFilters: Record<string, string | string[] | number | number[]>) => {

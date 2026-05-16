@@ -18,6 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from mkobi.config import get_config
 from mkobi.db.repositories.user_repo import UserRepository
 from mkobi.models.enums import EnvironmentEnum, UserRole
+from mkobi.services.data_service import cleanup_stale_temp_files
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +110,11 @@ class DatabaseStarter:
 
         # Ensure admin user exists (after migrations, before test DB handling)
         await self.ensure_admin_user()
+
+        # Clean up orphaned temp files from previous runs
+        deleted_count = cleanup_stale_temp_files()
+        if deleted_count > 0:
+            logger.info("Cleaned up %d orphaned temp files during startup", deleted_count)
 
         # Handle test database
         if self._config.env == EnvironmentEnum.TEST or self._config.recreate_test_db:

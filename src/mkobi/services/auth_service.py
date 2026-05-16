@@ -440,3 +440,59 @@ class AuthService(IAuthService):
                 extra={"email": email, "error": str(e)},
             )
             raise
+
+    async def change_password(
+        self,
+        user_id: UUID,
+        current_password: str,
+        new_password: str,
+        db: AsyncSession | None = None,
+    ) -> bool:
+        """Change user password.
+
+        Args:
+            user_id: User ID.
+            current_password: Current password for verification.
+            new_password: New password to set.
+            db: Optional database session.
+
+        Returns:
+            True if password changed successfully.
+
+        Raises:
+            ValueError: If current password is wrong or new password equals current.
+        """
+        logger.info("Password change attempt", extra={"user_id": str(user_id)})
+
+        if db is None:
+            async with get_session() as db:
+                return await self.change_password(
+                    user_id, current_password, new_password, db
+                )
+
+        # Get user by ID with hash for verification
+        user_obj = await self.user_repo.get_with_hash(user_id, db)
+        if user_obj is None:
+            logger.warning("User not found for password change", extra={"user_id": str(user_id)})
+            raise ValueError("User not found")
+
+        if not verify_password(current_password, user_obj.password_hash):
+            logger.warning(
+                "Incorrect current password during change",
+                extra={"user_id": str(user_id)},
+            )
+            raise ValueError("Current password is incorrect")
+
+        if current_password == new_password:
+            logger.warning(
+                "New password same as current",
+                extra={"user_id": str(user_id)},
+            )
+            raise ValueError("New password must be different from current password")
+
+        password_hash = hash_password(new_password)
+        await self.user_repo.update(user_id, db, password_hash=password_hash)
+        await db.commit()
+
+        logger.info("Password changed successfully", extra={"user_id": str(user_id)})
+        return True

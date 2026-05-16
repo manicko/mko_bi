@@ -41,6 +41,7 @@ export function UploadPage() {
   // Update processing status when polling returns data
   useEffect(() => {
     if (statusData?.status) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFileStates((prev) =>
         prev.map((f) =>
           f.processingLogId

@@ -46,3 +46,15 @@ export const grantAccessSchema = z.object({
 })
 
 export type GrantAccessFormData = z.infer<typeof grantAccessSchema>
+
+// Change password schema
+export const changePasswordSchema = z.object({
+  current_password: z.string().min(1, 'Current password is required'),
+  new_password: z.string().min(8, 'Password must be at least 8 characters'),
+  confirm_password: z.string().min(1, 'Password confirmation is required'),
+}).refine((data) => data.new_password === data.confirm_password, {
+  message: 'Passwords do not match',
+  path: ['confirm_password'],
+})
+
+export type ChangePasswordFormData = z.infer<typeof changePasswordSchema>

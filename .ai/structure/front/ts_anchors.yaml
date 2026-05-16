@@ -166,6 +166,13 @@
   type: component
   value: UploadPage
   stable_hash: 2cd463a5
+- id: 93aeffe8
+  file: C:/py_dev/mkobi/frontend/src/features/users/ui/ChangePasswordPage.tsx
+  symbol_path:
+    - ChangePasswordPage
+  type: component
+  value: ChangePasswordPage
+  stable_hash: 93aeffe8
 - id: ace8f0fa
   file: C:/py_dev/mkobi/frontend/src/features/users/ui/UserProfile.tsx
   symbol_path:

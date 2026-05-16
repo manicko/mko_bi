@@ -53,6 +53,11 @@ class IUserRepository(IRepository):
         """Get user by email with password hash."""
         pass
 
+    @abc.abstractmethod
+    async def get_with_hash(self, id: UUID, db: AsyncSession) -> Any | None:
+        """Get user by ID with password hash."""
+        pass
+
 
 class IDashboardRepository(IRepository):
     """Dashboard repository interface."""

@@ -121,3 +121,22 @@ class RefreshRequest(BaseModel):
             }
         },
     )
+
+
+class ChangePasswordRequest(BaseModel):
+    """Password change request model."""
+
+    current_password: str
+    new_password: str
+    confirm_password: str
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "current_password": "old_password123",
+                "new_password": "new_secure_password456",
+                "confirm_password": "new_secure_password456",
+            }
+        },
+    )
