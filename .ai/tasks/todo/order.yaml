@@ -1,7 +1,7 @@
 # Execution Order for Validated Audit Findings — mkobi BI Dashboard
 # Generated: 2026-05-16
-# Total tasks: 34
-# Source: audit_validated_findings_001.md (34 validated findings)
+# Total tasks: 32 (2 tasks refined after rejection)
+# Source: audit_validated_findings_001.md (34 validated findings, 2 refined)
 
 # Wave 1: Independent — Immediate Fixes (No dependencies, safe parallel execution)
 # These tasks can all be executed in parallel. No inter-task dependencies.
@@ -96,6 +96,9 @@ wave_1:
 
 # Wave 2: Coordinated Fixes (Independent within wave, but may touch shared files)
 # These tasks can be executed in parallel within the wave.
+# Note: TASK_013 and TASK_004 both touch dashboards.py but different functions
+# Note: TASK_014 and TASK_002 both touch app.py but different functions
+# Note: TASK_017 and TASK_026 both touch admin.py but different functions
 
 wave_2:
   - id: TASK_013_V004
@@ -136,6 +139,16 @@ wave_2:
     files:
       - src/mkobi/api/routes/dashboards.py
       - src/mkobi/api/routes/admin.py
+
+  - id: TASK_026_V002
+    name: generate_random_temp_password
+    depends_on: []
+    priority: high
+    files:
+      - src/mkobi/api/routes/admin.py
+    notes: >
+      Refined from rejected task. No email infrastructure required.
+      Random password returned in API response for admin to communicate.
 
 # Wave 3: Remaining Low-Priority Fixes (Independent within wave)
 
@@ -199,15 +212,6 @@ wave_3:
 # Wave 4: Infrastructure-Dependent Fixes (Require external services or coordination)
 
 wave_4:
-  - id: TASK_026_V002
-    name: fix_hardcoded_temp_password
-    depends_on: []
-    priority: high
-    files:
-      - src/mkobi/api/routes/admin.py
-    infrastructure: email_service
-    notes: Requires SMTP email service to be configured and operational
-
   - id: TASK_027_V005
     name: add_rate_limiter_monitoring
     depends_on: []
@@ -218,18 +222,19 @@ wave_4:
     infrastructure: monitoring_system
     notes: Requires monitoring infrastructure for alerting
 
-  - id: TASK_028_V006
-    name: document_task_queue_limitation
-    depends_on: []
-    priority: medium
-    files:
-      - src/mkobi/core/task_queue.py
-      - docs/TASK_QUEUE_MIGRATION.md
-    notes: Documentation/planning only, not full Redis/RQ integration
-
 # Wave 5: Configuration & Documentation (Safe, no code logic changes)
 
 wave_5:
+  - id: TASK_028_V006
+    name: document_task_queue_migration
+    depends_on: []
+    priority: medium
+    files:
+      - docs/TASK_QUEUE_MIGRATION.md
+    notes: >
+      Refined from rejected task. Pure documentation — no code changes.
+      Creates migration plan for replacing in-memory TaskQueue with Redis/RQ.
+
   - id: TASK_029_V020
     name: remove_weak_jwt_default
     depends_on: []
@@ -282,22 +287,28 @@ wave_5:
 # Wave 1 (12 tasks): All independent, no dependencies
 #   -> Can execute all 12 in parallel
 #
-# Wave 2 (5 tasks): All independent within wave
-#   -> Can execute all 5 in parallel after Wave 1
+# Wave 2 (6 tasks): All independent within wave
+#   -> Can execute all 6 in parallel after Wave 1
 #   -> Note: TASK_013 and TASK_004 both touch dashboards.py but different functions
 #   -> Note: TASK_014 and TASK_002 both touch app.py but different functions
+#   -> Note: TASK_017 and TASK_026 both touch admin.py but different functions
 #
 # Wave 3 (8 tasks): All independent within wave
 #   -> Can execute all 8 in parallel after Wave 2
 #
-# Wave 4 (3 tasks): Infrastructure-dependent
-#   -> TASK_026 requires email service
+# Wave 4 (1 task): Infrastructure-dependent
 #   -> TASK_027 requires monitoring system
-#   -> TASK_028 is documentation only
 #
-# Wave 5 (6 tasks): Configuration and documentation
+# Wave 5 (7 tasks): Configuration and documentation
 #   -> TASK_029 and TASK_030 require deployment coordination
+#   -> TASK_028 is pure documentation — no code changes
 #   -> Remaining tasks are safe documentation/refactoring
+#
+# REFINED TASKS (previously rejected):
+#   - TASK_026_V002: Refined to avoid email infrastructure dependency.
+#     Now generates random password and returns it in API response.
+#   - TASK_028_V006: Refined to pure documentation — no code changes.
+#     Only creates docs/TASK_QUEUE_MIGRATION.md migration plan.
 #
 # No circular dependencies detected.
 # All dependency chains are linear.

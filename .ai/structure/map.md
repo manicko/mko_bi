@@ -123,9 +123,11 @@ C:\PY_DEV\MKOBI
 |   |   |       TASK_023_V032_remove_hardcoded_alembic_url.yaml
 |   |   |       TASK_024_V033_fix_logout_client_token_removal.yaml
 |   |   |       TASK_025_V034_add_task_ownership_validation.yaml
-|   |   |       TASK_026_V002_fix_hardcoded_temp_password.yaml
+|   |   |       TASK_026_V002_generate_random_temp_password.yaml
+|   |   |       TASK_026_V002_REJECTED.yaml.deleted
 |   |   |       TASK_027_V005_add_rate_limiter_monitoring.yaml
-|   |   |       TASK_028_V006_document_task_queue_limitation.yaml
+|   |   |       TASK_028_V006_document_task_queue_migration.yaml
+|   |   |       TASK_028_V006_REJECTED.yaml.deleted
 |   |   |       TASK_029_V020_remove_weak_jwt_default.yaml
 |   |   |       TASK_030_V021_remove_weak_db_password_default.yaml
 |   |   |       TASK_031_V022_fix_formula_parser.yaml
@@ -134,6 +136,8 @@ C:\PY_DEV\MKOBI
 |   |   |       TASK_034_V017_extract_data_service_modules.yaml
 |   |   |       
 |   |   \---validation
+|   |           tasks_validated_findings_001.md
+|   |           
 |   +---templates
 |   |       decision.md
 |   |       ui-brand.md
