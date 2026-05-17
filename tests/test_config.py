@@ -69,6 +69,8 @@ class TestSettingsFromEnv(TestSettingsBase):
     def test_load_environment_enum_from_env(self, monkeypatch):
         """Test loading ENV from environment variable."""
         monkeypatch.setenv("ENV", "production")
+        monkeypatch.setenv("ADMIN_USERNAME", "testadmin")
+        monkeypatch.setenv("ADMIN_PASSWORD", "testpassword123")
         settings = Settings()
         assert settings.environment == EnvironmentEnum.PRODUCTION
 
@@ -255,8 +257,8 @@ class TestCORSOrigins(TestSettingsBase):
         """Test that CORS origins are loaded from YAML config."""
         settings = Settings()
         # Default from app.yaml
-        assert "https://example.com" in settings.cors_origins
-        assert "https://app.example.com" in settings.cors_origins
+        assert "http://localhost:3000" in settings.cors_origins
+        assert "http://localhost:5173" in settings.cors_origins
 
     def test_cors_origins_from_env_json(self, monkeypatch):
         """Test CORS origins parsing from JSON string in env var."""
