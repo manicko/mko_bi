@@ -1,18 +1,12 @@
 import Plot from 'react-plotly.js'
+import type { Config, Data } from 'plotly.js'
 import type { PlotlyData, PlotlyLayout } from '../../../../shared/types/api.types'
-import type { Data } from 'plotly.js'
 
 interface PlotlyChartProps {
   data: PlotlyData | PlotlyData[]
   layout?: PlotlyLayout
-  config?: PlotlyReactConfig
+  config?: Partial<Config>
   style?: React.CSSProperties
-}
-
-interface PlotlyReactConfig {
-  responsive?: boolean
-  displayModeBar?: boolean | 'hover'
-  [key: string]: unknown
 }
 
 export function PlotlyChart({

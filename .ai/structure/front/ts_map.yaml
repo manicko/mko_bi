@@ -41,6 +41,7 @@
     - ../shared/components/ProtectedRoute
     - ../shared/components/RoleBasedAccess
     - ../shared/components/Layout
+    - ../shared/components/NotFound
     - ../features/auth/ui/LoginForm
     - ../features/auth/ui/RegisterForm
     - ../features/dashboards/ui/DashboardList
@@ -115,6 +116,23 @@
   components: []
   hooks: []
   jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/shared/components/NotFound.tsx
+  module: C:.py_dev.mkobi.frontend.src.shared.components.NotFound
+  layer: component
+  imports:
+    - react-router-dom
+  components:
+    - NotFound
+  hooks: []
+  jsx_tags:
+    - <div className="flex min-h-screen flex-col items-center justify-center">
+    - <h1 className="text-6xl font-bold text-gray-800">
+    - <p className="mt-4 text-lg text-gray-600">
+    - |-
+      <Link
+              to="/dashboards"
+              className="mt-6 text-blue-600 hover:text-blue-800 underline"
+            >
 - path: C:/py_dev/mkobi/frontend/src/shared/components/PlaceholderPage.tsx
   module: C:.py_dev.mkobi.frontend.src.shared.components.PlaceholderPage
   layer: component
@@ -952,8 +970,8 @@
   layer: unknown
   imports:
     - react-plotly.js
-    - ../../../../shared/types/api.types
     - plotly.js
+    - ../../../../shared/types/api.types
   components:
     - PlotlyChart
   hooks: []

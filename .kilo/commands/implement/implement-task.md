@@ -28,27 +28,18 @@ Execute validated semantic development tasks safely while:
 
 # Workflow
 
-## Step 1 — Ask User For Execution Limit
 
-Before starting implementation:
+## Step 1 — Study  Task Goals
 
-Ask the user:
+Take the first task-file by execution order from:
+- `C:\py_dev\mkobi\.ai\tasks\todo`
 
-> "How many tasks should be implemented in this run?"
-
-Rules:
-- WAIT for explicit user response before continuing
-- Do NOT start analysis or implementation before receiving the answer
-- Accept only a positive integer
-- Store this value as the maximum number of tasks allowed for the current execution session
-- STOP execution immediately after reaching this limit even if more tasks remain
-
----
 
 ## Step 2 — Preparation
 
 Before implementation study:
 - IMPORTANT: `C:\py_dev\mkobi\.ai\context\commands.md`
+- Semantic structure: `C:\py_dev\mkobi\.ai\structure\*`
 - `AGENTS.md`
 - project architecture
 - existing module patterns
@@ -65,16 +56,8 @@ Understand:
 - validation patterns
 - logging/error handling patterns
 
----
 
-## Step 3 — Select and Study Next Task
-
-Take the first task-file by execution order from:
-- `C:\py_dev\mkobi\.ai\tasks\todo`
-
----
-
-## Step 4 — Task Validation
+## Step 3 — Task Validation
 
 Validate:
 - all `depends_on` tasks are completed
@@ -92,7 +75,7 @@ If already implemented:
 
 ---
 
-## Step 5 — Implement Task
+## Step 4 — Implement Task
 
 Implement ONLY:
 - approved task scope
@@ -114,35 +97,29 @@ Avoid:
 
 ---
 
-## Step 6 — Validate Code Quality
+## Step 5 — Validate Code Quality
 
 Run ruff and mypy checks on affected code.
 Fix only issues directly related to the task.
 
 ---
 
-## Step 7 — Validate Tests
+## Step 6 — Validate Tests
 
 Run relevant tests.
-
 If tests conflict with current architecture → update or remove tests.
-
 Do not degrade architecture to satisfy outdated tests.
 
 ---
 
-## Step 8 — Completion
-
+## Step 7 — Completion
 - Mark task file name as done (`*_DONE.yaml`)
 - Move file to `C:\py_dev\mkobi\.ai\tasks\done`
 - Ensure the file is no more presented in `C:\py_dev\mkobi\.ai\tasks\todo`
-- Update task status and dependency graph
 
 ---
 
-## Step 9 — Detect External Problems
-
-If unrelated problems are discovered:
+## Step 8 — If unrelated problems are discovered
 
 1. Check `C:\py_dev\mkobi\.ai\audit\problems`
 2. If matching problem exists extend/update existing problem description if needed
@@ -162,21 +139,6 @@ Do NOT fix unrelated problems during current task execution unless:
 - they create correctness or safety risks for current task
 
 ---
-
-# Execution Loop
-
-After completing a task:
-
-1. Check how many tasks were already completed during the current run
-2. If execution limit is reached:
-   - STOP immediately
-   - provide final summary
-   - do NOT continue to next task
-3. Otherwise:
-   - continue with the next task from `todo`
-
----
-
 # Expected Result
 
 Result must include:
@@ -185,9 +147,9 @@ Result must include:
 - passing relevant tests
 - passing relevant lint/type checks
 - preserved architecture consistency
-- updated task status
-- documented newly discovered problems
-- STOP after reaching the user-defined task limit
+- Mark task file name as done (`*_DONE.yaml`)
+- Ensure file task in `C:\py_dev\mkobi\.ai\tasks\done`
+- Ensure the file is no more presented in `C:\py_dev\mkobi\.ai\tasks\todo`
 
 Result must NOT include:
 - unrelated refactors

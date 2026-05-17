@@ -2,6 +2,7 @@ import { axiosInstance } from '../../../shared/api/axiosInstance'
 import type {
   AdminUser,
   UpdateUserRoleRequest,
+  CreateUserRequest,
   RegistrationRequestItem,
   DashboardAdmin,
   CreateDashboardRequest,
@@ -14,6 +15,11 @@ import type {
 // User Management API
 export async function getUsers(): Promise<AdminUser[]> {
   const response = await axiosInstance.get<AdminUser[]>('/admin/users')
+  return response.data
+}
+
+export async function createUser(data: CreateUserRequest): Promise<AdminUser> {
+  const response = await axiosInstance.post<AdminUser>('/users', data)
   return response.data
 }
 

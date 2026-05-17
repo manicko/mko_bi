@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from '../shared/components/ProtectedRoute'
 import { RoleBasedAccess } from '../shared/components/RoleBasedAccess'
 import { AppLayout } from '../shared/components/Layout'
+import { NotFound } from '../shared/components/NotFound'
 import { LoginForm } from '../features/auth/ui/LoginForm'
 import { RegisterForm } from '../features/auth/ui/RegisterForm'
 import { DashboardList } from '../features/dashboards/ui/DashboardList'
@@ -70,6 +71,7 @@ export function AppRoutes() {
           }
         />
         <Route path="/" element={<Navigate to="/dashboards" replace />} />
+        <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>
   )

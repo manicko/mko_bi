@@ -4,10 +4,11 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, Field, PostgresDsn, field_validator
+from pydantic import BaseModel, Field, PostgresDsn, field_validator, model_validator
 from pydantic.fields import FieldInfo
 from pydantic_settings import BaseSettings, YamlConfigSettingsSource
 from pydantic_settings.sources import PydanticBaseSettingsSource
+from platformdirs import user_data_dir
 
 from mkobi.models.enums import EnvironmentEnum, FileExtensionEnum, MimeTypeEnum
 
@@ -119,7 +120,7 @@ class AppSettings(BaseModel):
 class UploadSettings(BaseModel):
     """File upload settings."""
 
-    temp_dir: str = "data/tmp_uploads"
+    temp_dir: str = Field(default="", alias="temp_dir")
     temp_dir_prefix: str = "mkobi_upload"
     max_file_size_mb: int = Field(default=100, alias="max_file_size_mb")
     allowed_extensions: list[FileExtensionEnum] = [
@@ -133,6 +134,12 @@ class UploadSettings(BaseModel):
     lazy_threshold_mb: float = 10.0
 
     model_config = {"populate_by_name": True}
+
+    def __init__(self, **data: Any) -> None:
+        """Initialize with platformdirs temp directory if not provided."""
+        if "temp_dir" not in data or not data.get("temp_dir"):
+            data["temp_dir"] = str(Path(user_data_dir("mkobi", "ZOO")) / "tmp_uploads")
+        super().__init__(**data)
 
 
 class EmailSettings(BaseModel):
@@ -237,6 +244,29 @@ class Settings(BaseSettings):
 
     # --- Cleanup Settings ---
     stale_file_threshold_hours: int = Field(default=24, alias="STALE_FILE_THRESHOLD_HOURS")
+
+    @model_validator(mode="after")
+    def validate_admin_credentials(self) -> "Settings":
+        """Validate admin credentials are explicitly set in production.
+
+        In production, default credentials (admin/admin) are a security risk.
+        This validator ensures they are explicitly set via environment variables.
+        """
+        if self.environment == EnvironmentEnum.PRODUCTION:
+            if self.admin_username == "admin" or self.admin_password == "admin":
+                raise ValueError(
+                    "Default admin credentials are not allowed in production. "
+                    "Set ADMIN_USERNAME and ADMIN_PASSWORD environment variables."
+                )
+        else:
+            # Log warning in development if defaults are used
+            if self.admin_username == "admin":
+                logger.warning(
+                    "Using default admin username in %s environment - "
+                    "set ADMIN_USERNAME for production use",
+                    self.environment.value,
+                )
+        return self
 
     @field_validator("cors_origins")
     @classmethod

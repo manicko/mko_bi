@@ -129,6 +129,7 @@ class AggregatedDataRepository(IAggregatedDataRepository):
         self,
         graph_id: UUID,
         db: AsyncSession,
+        dashboard_id: UUID | None = None,
         filters: dict[str, Any] | None = None,
     ) -> list[aggregated_data_model.AggregatedData]:
         """Get aggregated data for graph.
@@ -136,6 +137,7 @@ class AggregatedDataRepository(IAggregatedDataRepository):
         Args:
             graph_id: Graph identifier (UUID).
             db: Async database session.
+            dashboard_id: Optional dashboard identifier for additional filtering.
             filters: Optional dictionary of filters for JSONB field dims.
 
         Returns:
@@ -145,6 +147,12 @@ class AggregatedDataRepository(IAggregatedDataRepository):
             query = select(aggregated_data_model.AggregatedData).where(
                 aggregated_data_model.AggregatedData.graph_id == graph_id
             )
+
+            # Apply dashboard_id filter for data isolation
+            if dashboard_id is not None:
+                query = query.where(
+                    aggregated_data_model.AggregatedData.dashboard_id == dashboard_id
+                )
 
             # Apply filters to JSONB field dims
             if filters:

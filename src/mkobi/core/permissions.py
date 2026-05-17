@@ -11,13 +11,11 @@ viewer can only read.
 """
 
 import logging
+import time
 from typing import Any
 from collections.abc import AsyncGenerator
 from uuid import UUID
-from functools import lru_cache
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,6 +27,12 @@ from mkobi.models.enums import DashboardPermission, UserRole
 from mkobi.models.user import UserRead
 
 logger = logging.getLogger(__name__)
+
+
+# --- TTL Cache for token decoding ---
+# Cache entry: {token: (decoded_data, timestamp)}
+_token_cache: dict[str, tuple[dict[str, Any] | None, float]] = {}
+_TOKEN_CACHE_TTL_SECONDS = 300  # 5 minutes
 
 
 class RolePermissions:
@@ -312,18 +316,19 @@ async def _check_access_with_session(
         return has_access
 
     except Exception as e:
-        logger.error(
-            "Error checking access user_id=%s, dashboard_id=%s: %s",
+        logger.warning(
+            "Dashboard access check failed: user_id=%s, dashboard_id=%s, required=%s: %s",
             user_id,
             dashboard_id,
+            required_permission,
             e,
+            exc_info=True,
         )
         return False
 
 
-@lru_cache(maxsize=128)
 def _decode_token_cached(token: str) -> dict[str, Any] | None:
-    """Cached token decoding.
+    """Cached token decoding with TTL.
 
     Args:
         token: JWT token.
@@ -331,9 +336,20 @@ def _decode_token_cached(token: str) -> dict[str, Any] | None:
     Returns:
         dict[str, Any] | None: Decoded token data or None.
     """
+    current_time = time.time()
+    
+    # Check if token is in cache and not expired
+    if token in _token_cache:
+        cached_data, timestamp = _token_cache[token]
+        if current_time - timestamp < _TOKEN_CACHE_TTL_SECONDS:
+            return cached_data
+        # Remove expired entry
+        del _token_cache[token]
+    
+    # Decode token and cache with timestamp
     result: dict[str, Any] | None = decode_token(token)
-    if result is None:
-        return None
+    _token_cache[token] = (result, current_time)
+    
     return result
 
 
@@ -412,142 +428,3 @@ async def _get_current_user_with_session(
         if not isinstance(e, AuthenticationError):
             logger.error("Error getting user: %s", e)
         raise
-
-
-# --- FastAPI dependencies ---
-
-
-security = HTTPBearer()
-
-
-async def get_current_user_dependency(
-    credentials: HTTPAuthorizationCredentials = Depends(security),
-    db: AsyncSession = Depends(get_db),
-) -> UserRead:
-    """FastAPI dependency for getting current user.
-
-    Extracts token from Authorization header, decodes it
-    and returns user data.
-
-    Args:
-        credentials: Credentials from Authorization header.
-        db: Database session.
-
-    Returns:
-        UserRead: Authenticated user model.
-
-    Raises:
-        HTTPException: If token is invalid or user not found.
-    """
-    try:
-        user = await get_current_user(credentials.credentials, db)
-        # Save user in request state for later use
-        # (will be available via request.state.user)
-        return user
-    except AuthenticationError as e:
-        logger.warning("Authentication error: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=str(e),
-            headers={"WWW-Authenticate": "Bearer"},
-        ) from e
-    except Exception as e:
-        logger.error("Unexpected authentication error: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Internal server error",
-        ) from e
-
-
-def require_role(required_roles: list[UserRole]):
-    """Create FastAPI dependency for checking user role.
-
-    Args:
-        required_roles: List of roles that have access.
-
-    Returns:
-        Callable: FastAPI dependency.
-
-    Raises:
-        HTTPException: If user has insufficient rights.
-
-    Example:
-        @app.get("/admin")
-        async def admin_route(
-            user: UserRead = Depends(get_current_user_dependency),
-            _: None = Depends(require_role([UserRole.ADMIN])),
-        ):
-            return {"message": "Admin area"}
-    """
-
-    def role_checker(user: UserRead = Depends(get_current_user_dependency)) -> UserRead:
-        """Check user role and return it on success."""
-        if not check_permission(user.role, required_roles):
-            logger.warning(
-                "Insufficient permissions: user_id=%s, user_role=%s, required_roles=%s",
-                user.id,
-                user.role,
-                [r.value for r in required_roles],
-            )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Required roles: {[r.value for r in required_roles]}",
-            )
-        return user
-
-    return role_checker
-
-
-def require_dashboard_access(
-    required_permission: str = "read",
-):
-    """Create FastAPI dependency for checking dashboard access.
-
-    Checks if user has access to specified dashboard
-    with required permission level.
-
-    Args:
-        required_permission: Required access level (read/write/admin).
-            Default is "read".
-
-    Returns:
-        Callable: FastAPI dependency.
-
-    Raises:
-        HTTPException: If user has no access.
-
-    Example:
-        @app.get("/dashboards/{dashboard_id}")
-        async def get_dashboard(
-            dashboard_id: int,
-            user: UserRead = Depends(get_current_user_dependency),
-            _: None = Depends(require_dashboard_access("read")),
-        ):
-            return {"message": "Dashboard data"}
-    """
-
-    async def access_checker(
-        dashboard_id: UUID,
-        user: UserRead = Depends(get_current_user_dependency),
-        db: AsyncSession = Depends(get_db),
-    ) -> UserRead:
-        """Check user access to dashboard."""
-        if not await check_dashboard_access(
-            user_id=user.id,
-            dashboard_id=dashboard_id,
-            required_permission=required_permission,
-            db=db,
-        ):
-            logger.warning(
-                "Access denied: user_id=%s, dashboard_id=%s, required=%s",
-                user.id,
-                dashboard_id,
-                required_permission,
-            )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have access to this dashboard",
-            )
-        return user
-
-    return access_checker

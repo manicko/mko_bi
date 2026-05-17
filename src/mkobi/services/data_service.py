@@ -4,7 +4,6 @@ Provides business logic for uploading, processing and tracking
 data processing status for dashboards.
 """
 
-import logging
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -15,6 +14,7 @@ import aiofiles
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.config import get_config
+from mkobi.core.logging_config import get_logger
 from mkobi.core.permissions import check_dashboard_access, PermissionError
 from mkobi.core.redis_client import get_redis_client
 from mkobi.core.security import RateLimiter
@@ -30,7 +30,7 @@ from mkobi.interfaces.service_interfaces import IDataService
 from mkobi.models.data import ProcessingResultData, ProcessingResult, ProcessingStatusResponse, UploadResponse
 from mkobi.models.enums import FileExtensionEnum, MimeTypeEnum, ProcessingStatus, UploadMode
 
-logger = logging.getLogger(__name__)
+logger = get_logger(__name__)
 
 
 class DataService(IDataService):
@@ -245,7 +245,7 @@ class DataService(IDataService):
     ) -> list[ProcessingResultData]:
         """Internal method to get aggregated data."""
         records = await self.agg_repo.get_by_graph_id(
-            graph_id, db,
+            graph_id, db, dashboard_id=dashboard_id,
         )
 
         result = []

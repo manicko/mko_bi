@@ -18,7 +18,7 @@ from mkobi.api.deps import (
     require_admin_role,
 )
 from mkobi.models.enums import UserRole
-from mkobi.models.user import UserRead
+from mkobi.models.user import UserCreateRequest, UserRead, UserUpdateRequest
 from mkobi.services.user_service import UserService
 
 logger = logging.getLogger(__name__)
@@ -35,18 +35,14 @@ router = APIRouter(prefix="/users", tags=["users"])
     dependencies=[Depends(require_admin_role)],
 )
 async def create_user_endpoint(
-    email: str,
-    password: str,
-    role: UserRole,
+    user_data: UserCreateRequest,
     user_service: UserService = Depends(get_user_service),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> UserRead:
     """Create a new user in the system.
 
     Args:
-        email: User email. Must be valid and unique.
-        password: User password. Will be hashed before saving.
-        role: User role. Allowed values: 'admin', 'editor', 'viewer'.
+        user_data: User creation data with email, password, and role.
         _: User with admin role (verified via dependency).
         user_service: User service.
         db: Database session.
@@ -59,13 +55,13 @@ async def create_user_endpoint(
         HTTPException 422: If data validation failed.
         HTTPException 500: On database error.
     """
-    logger.info("Creating user: email=%s, role=%s", email, role)
+    logger.info("Creating user: email=%s, role=%s", user_data.email, user_data.role)
 
     try:
-        user_data = await user_service.create_user(
-            email=email, password=password, role=role, db=db
+        user = await user_service.create_user(
+            email=user_data.email, password=user_data.password, role=user_data.role, db=db
         )
-        return user_data
+        return user
     except ValueError as e:
         logger.warning("Validation error creating user: %s", e)
         raise HTTPException(
@@ -73,7 +69,7 @@ async def create_user_endpoint(
             detail=str(e),
         ) from e
     except Exception as e:
-        logger.error("Error creating user %s: %s", email, e)
+        logger.error("Error creating user %s: %s", user_data.email, e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error creating user",
@@ -193,7 +189,7 @@ async def get_user_endpoint(
 )
 async def update_user_endpoint(
     user_id: UUID,
-    new_role: UserRole,
+    user_data: UserUpdateRequest,
     user_service: UserService = Depends(get_user_service),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> UserRead:
@@ -201,7 +197,7 @@ async def update_user_endpoint(
 
     Args:
         user_id: User ID to update.
-        new_role: New user role.
+        user_data: Request body containing the new role.
             Allowed values: 'admin', 'editor', 'viewer'.
         _: User with admin role (verified via dependency).
         user_service: User service.
@@ -215,11 +211,11 @@ async def update_user_endpoint(
         HTTPException 422: If role is invalid.
         HTTPException 500: On database error.
     """
-    logger.info("Updating user: id=%s, new_role=%s", user_id, new_role)
+    logger.info("Updating user: id=%s, new_role=%s", user_id, user_data.role)
 
     try:
         updated = await user_service.update_user_role(
-            user_id=user_id, role=new_role, db=db
+            user_id=user_id, role=user_data.role, db=db
         )
         if updated is None:
             logger.warning("User not found for update: id=%s", user_id)

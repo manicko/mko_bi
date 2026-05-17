@@ -171,6 +171,7 @@ class IAggregatedDataRepository(abc.ABC):
         self,
         graph_id: UUID,
         db: AsyncSession,
+        dashboard_id: UUID | None = None,
         filters: dict[str, Any] | None = None,
     ) -> list[Any]:
         """Get aggregated data for graph."""

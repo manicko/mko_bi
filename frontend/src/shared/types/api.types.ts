@@ -49,27 +49,14 @@ export interface Filter {
 }
 
 export interface UploadResponse {
-  message: string
+  task_id: string
   filename: string
+  dashboard_id: string
   status: string
-}
-
-export interface RegistrationRequest {
-  email: string
-}
-
-export interface RegistrationResponse {
   message: string
-  request_id: string
-}
-
-// Dashboard types
-export interface DashboardDetail {
-  id: string
-  name: string
-  description: string | null
-  config: DashboardConfig
-  permission: DashboardPermission
+  uploaded_at: string
+  // Frontend convenience - maps to task_id for processing status tracking
+  processing_log_id: string
 }
 
 export interface DashboardConfig {
@@ -136,6 +123,23 @@ export interface FilterConfig {
   options?: Array<{ label: string; value: string }>
 }
 
+export interface RegistrationRequest {
+  email: string
+}
+
+export interface RegistrationResponse {
+  message: string
+  request_id: string
+}
+
+export interface DashboardDetail {
+  id: string
+  name: string
+  description: string | null
+  config: DashboardConfig
+  permission: DashboardPermission
+}
+
 export interface AggregatedDataRequest {
   dashboard_id: string
   filters?: Record<string, string | string[] | number | number[]>
@@ -155,11 +159,6 @@ export interface GraphDataWithConfig {
 
 // Upload types
 // UploadMode is now imported from './enums'
-
-export interface UploadResponse {
-  message: string
-  processing_log_id: string
-}
 
 export interface ProcessingStatusResponse {
   status: ProcessingStatus
@@ -184,6 +183,12 @@ export interface AdminUser {
 }
 
 export interface UpdateUserRoleRequest {
+  role: UserRole
+}
+
+export interface CreateUserRequest {
+  email: string
+  password: string
   role: UserRole
 }
 

@@ -13,7 +13,8 @@ services:
     environment:
       POSTGRES_DB: bidb
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DATABASE__PASSWORD:-1234}
+      # Production requires explicit database password (no default)
+      POSTGRES_PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD must be set for production}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -40,10 +41,12 @@ services:
       DATABASE__HOST: db
       DATABASE__PORT: 5432
       DATABASE__USER: postgres
-      DATABASE__PASSWORD: ${DATABASE__PASSWORD:-1234}
+      # Production requires explicit database password (no default)
+      DATABASE__PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD must be set for production}
       DATABASE__DBNAME: bidb
       DATABASE__TEST_DBNAME: bidb_test
-      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-change-me-in-production}
+      # Production requires explicit JWT secret (no default)
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:?JWT__SECRET_KEY must be set for production}
       JWT__ALGORITHM: HS256
       UPLOAD__TEMP_DIR: /app/data/tmp_uploads
       LOGGING__LOG_FILE: /app/data/logs/app.log

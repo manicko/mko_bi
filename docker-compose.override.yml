@@ -10,6 +10,8 @@ services:
     user: root
     environment:
       ENV: development
+      # Development can use a default JWT secret for local testing
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
       LOGGING__LEVEL: DEBUG
       AUTO_MIGRATE: "true"
       RECREATE_TEST_DB: "true"

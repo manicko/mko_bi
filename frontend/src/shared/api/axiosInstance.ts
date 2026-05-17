@@ -16,7 +16,7 @@ axiosInstance.interceptors.request.use(
     const token = getTokenWithExpirationCheck()
     if (token) {
       config.headers.Authorization = `Bearer ${token}`
-    } else if (getTokenWithExpirationCheck() === null) {
+    } else {
       // Token was expired and removed
       removeToken()
     }

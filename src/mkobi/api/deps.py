@@ -63,6 +63,7 @@ __all__ = [
     "get_aggregated_data_repository",
     "get_layout_repository",
     "get_filter_repository",
+    "get_dashboard_filter_repository",
     "get_processing_config_repository",
     "get_processing_log_repository",
     "get_graph_repository",
@@ -166,6 +167,16 @@ def get_filter_repository():
     """
     from mkobi.db.repositories.filter_repo import FilterRepository
     return FilterRepository()
+
+
+def get_dashboard_filter_repository():
+    """DI factory for dashboard filter repository.
+
+    Returns:
+        DashboardFilterRepository: Dashboard filter repository implementation.
+    """
+    from mkobi.db.repositories.dashboard_filter_repo import DashboardFilterRepository
+    return DashboardFilterRepository()
 
 
 def get_processing_config_repository():

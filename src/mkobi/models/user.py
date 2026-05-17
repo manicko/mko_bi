@@ -96,3 +96,37 @@ class UserUpdate(BaseModel):
             }
         },
     )
+
+
+class UserCreateRequest(BaseModel):
+    """Request model for creating a new user."""
+
+    email: EmailStr
+    password: str
+    role: UserRole
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "email": "user@example.com",
+                "password": "secure_password123",
+                "role": UserRole.VIEWER,
+            }
+        },
+    )
+
+
+class UserUpdateRequest(BaseModel):
+    """Request model for updating user role."""
+
+    role: UserRole
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "role": UserRole.EDITOR,
+            }
+        },
+    )

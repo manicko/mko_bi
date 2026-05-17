@@ -100,13 +100,13 @@ async def upload_file_endpoint(
         config = get_config()
 
         # Enforce file size limit before reading into memory
-        if file.size is not None and file.size > config.max_file_size * 1024 * 1024:  # Convert MB to bytes
+        if file.size is not None and file.size > config.max_file_size:
             logger.warning(
                 "File size exceeds limit",
                 extra={
                     "file_name": file.filename,
                     "size_bytes": file.size,
-                    "max_bytes": config.max_file_size * 1024 * 1024,
+                    "max_bytes": config.max_file_size,
                 },
             )
             raise HTTPException(

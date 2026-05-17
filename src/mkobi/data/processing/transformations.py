@@ -449,11 +449,30 @@ def _calculate_share(
 def _parse_formula(formula: str) -> pl.Expr:
     """Parse simple formula into Polars expression.
 
+    This is a basic formula parser with known limitations:
+    - Only supports binary operators: +, -, *, /
+    - No parentheses or nested expressions support
+    - No operator precedence (evaluates left-to-right)
+    - Column names must contain only alphanumeric characters and underscores
+    - Numeric literals are NOT supported (all tokens are treated as column names)
+    - Multiple consecutive operators are not supported
+
+    Supported syntax examples:
+        - Single column: "revenue" -> pl.col("revenue")
+        - Binary operation: "revenue / cost" -> pl.col("revenue") / pl.col("cost")
+        - Chain: "a + b - c" -> (((pl.col("a") + pl.col("b")) - pl.col("c"))
+
+    For complex formulas, use computed_fields with pre-calculated expressions
+    or consider using simpleeval library (not currently a dependency).
+
     Args:
         formula: Formula string (e.g., "revenue / cost * 100").
 
     Returns:
         pl.Expr: Polars expression.
+
+    Raises:
+        ValueError: If formula contains unknown operators or is malformed.
     """
     tokens = re.split(r'([+\-*/])', formula)
     tokens = [t.strip() for t in tokens if t.strip()]

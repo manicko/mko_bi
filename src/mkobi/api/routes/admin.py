@@ -1,6 +1,7 @@
 """Admin routes for user management and registration requests."""
 
 import logging
+import secrets
 from typing import Any, cast
 from uuid import UUID
 
@@ -133,11 +134,11 @@ async def delete_user_admin_endpoint(
 )
 async def get_registration_requests_admin_endpoint(
     db: AsyncSession = Depends(get_db_dependency),
+    repo=Depends(get_registration_request_repository),
 ) -> list[dict[str, Any]]:
     """Get all registration requests (admin endpoint)."""
     logger.info("Admin: getting registration requests")
     try:
-        repo = get_registration_request_repository()
         requests = await repo.get_all(db)
         return cast(list[dict[str, Any]], requests)
     except Exception as e:
@@ -160,12 +161,12 @@ async def approve_registration_request_admin_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
     auth_service: AuthService = Depends(get_auth_service),
+    repo=Depends(get_registration_request_repository),
 ) -> dict[str, Any]:
     """Approve registration request (admin endpoint)."""
     logger.info("Admin: approving registration request: id=%s", request_id)
     try:
         # Get the request
-        repo = get_registration_request_repository()
         req = await repo.get_by_id(request_id, db)
         if not req:
             raise HTTPException(
@@ -179,10 +180,11 @@ async def approve_registration_request_admin_endpoint(
                 detail=f"Request already {req['status']}",
             )
 
-        # Create user
+        # Create user with random temporary password
+        temp_password = secrets.token_urlsafe(16)
         user = await auth_service.create_user(
             email=req["email"],
-            password="temppass123",  # TODO: generate random password and send email
+            password=temp_password,
             role=UserRole.VIEWER,
             db=db,
         )
@@ -196,7 +198,11 @@ async def approve_registration_request_admin_endpoint(
         )
         await db.commit()
 
-        return {"message": "Registration request approved", "user_id": str(user.id)}
+        return {
+            "message": "Registration request approved",
+            "user_id": str(user.id),
+            "temp_password": temp_password,
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -219,11 +225,11 @@ async def reject_registration_request_admin_endpoint(
     request_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    repo=Depends(get_registration_request_repository),
 ) -> dict[str, Any]:
     """Reject registration request (admin endpoint)."""
     logger.info("Admin: rejecting registration request: id=%s", request_id)
     try:
-        repo = get_registration_request_repository()
         req = await repo.get_by_id(request_id, db)
         if not req:
             raise HTTPException(

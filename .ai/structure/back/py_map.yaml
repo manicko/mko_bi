@@ -33,6 +33,7 @@
   - pydantic.fields
   - pydantic_settings
   - pydantic_settings.sources
+  - platformdirs
   - mkobi.models.enums
   classes:
   - SecretsFileSource
@@ -56,6 +57,8 @@
   - __call__
   - __repr__
   - database_url
+  - __init__
+  - validate_admin_credentials
   - validate_cors_origins
   - settings_customise_sources
   - __init__
@@ -113,6 +116,7 @@
   - mkobi.db.repositories.aggregated_data_repo
   - mkobi.db.repositories.layout_repo
   - mkobi.db.repositories.filter_repo
+  - mkobi.db.repositories.dashboard_filter_repo
   - mkobi.db.repositories.processing_config_repo
   - mkobi.db.repositories.processing_log_repo
   - mkobi.db.repositories.registration_request_repo
@@ -134,6 +138,7 @@
   - get_aggregated_data_repository
   - get_layout_repository
   - get_filter_repository
+  - get_dashboard_filter_repository
   - get_processing_config_repository
   - get_processing_log_repository
   - get_registration_request_repository
@@ -192,9 +197,6 @@
   - typing
   - collections.abc
   - uuid
-  - functools
-  - fastapi
-  - fastapi.security
   - jose
   - sqlalchemy.ext.asyncio
   - mkobi.core.security
@@ -217,9 +219,6 @@
   - _get_role_level
   - check_role
   - _decode_token_cached
-  - require_role
-  - role_checker
-  - require_dashboard_access
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\redis_client.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.core.redis_client
   layer: unknown
@@ -622,6 +621,8 @@
   - UserRead
   - UserDB
   - UserUpdate
+  - UserCreateRequest
+  - UserUpdateRequest
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\__init__.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.models.__init__
@@ -694,6 +695,7 @@
   - uuid
   - sqlalchemy.ext.asyncio
   - mkobi.config
+  - mkobi.core.logging_config
   - mkobi.core.permissions
   - mkobi.core.redis_client
   - mkobi.core.security
@@ -1484,12 +1486,12 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
-  - mkobi.db.repositories.dashboard_filter_repo
-  - mkobi.db.repositories.filter_repo
   - mkobi.models.access
   - mkobi.models.dashboard
   - mkobi.models.graph
   - mkobi.services.dashboard_service
+  - mkobi.core.permissions
+  - mkobi.core.permissions
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py

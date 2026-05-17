@@ -196,6 +196,12 @@ class DatabaseStarter:
         admin_email = config.admin_username
         admin_password = config.admin_password
 
+        # Warn if using default credentials (not production due to config validation)
+        if admin_email == "admin":
+            logger.warning(
+                "Using default admin username - set ADMIN_USERNAME environment variable"
+            )
+
         logger.info("Ensuring admin user exists: %s", admin_email)
 
         user_repo = UserRepository()

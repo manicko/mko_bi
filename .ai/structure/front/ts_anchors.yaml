@@ -12,6 +12,13 @@
   type: component
   value: AppRoutes
   stable_hash: 7077cf72
+- id: ae8ca5e0
+  file: C:/py_dev/mkobi/frontend/src/shared/components/NotFound.tsx
+  symbol_path:
+    - NotFound
+  type: component
+  value: NotFound
+  stable_hash: ae8ca5e0
 - id: d3058edd
   file: C:/py_dev/mkobi/frontend/src/shared/components/PlaceholderPage.tsx
   symbol_path:

@@ -15,14 +15,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
     CurrentUser,
+    get_dashboard_filter_repository,
     get_db_dependency,
+    get_filter_repository,
     get_graph_repository,
     require_admin_role,
     require_viewer_role,
     get_dashboard_service,
 )
-from mkobi.db.repositories.dashboard_filter_repo import DashboardFilterRepository
-from mkobi.db.repositories.filter_repo import FilterRepository
 from mkobi.models.access import AccessGrant
 from mkobi.models.dashboard import (
     DashboardCreate,
@@ -473,6 +473,8 @@ async def bind_filter_endpoint(
     filter_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    filter_repo=Depends(get_filter_repository),
+    dashboard_filter_repo=Depends(get_dashboard_filter_repository),
 ) -> dict[str, Any]:
     """Bind a filter to a dashboard."""
     logger.info(
@@ -481,20 +483,30 @@ async def bind_filter_endpoint(
         filter_id,
     )
     try:
-        filter_repo = FilterRepository()
         filter_obj = await filter_repo.get(filter_id, db)
         if not filter_obj:
             raise HTTPException(status_code=404, detail="Filter not found")
 
-        dashboard_filter_repo = DashboardFilterRepository()
         result = await dashboard_filter_repo.bind_filter(
             dashboard_id=dashboard_id, filter_id=filter_id, db=db
         )
         await db.commit()
         return {"message": "Filter bound to dashboard", "bound": result}
+    except HTTPException:
+        raise
     except Exception as e:
         await db.rollback()
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.error(
+            "Error binding filter to dashboard dashboard_id=%s, filter_id=%s: %s",
+            dashboard_id,
+            filter_id,
+            e,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error binding filter to dashboard",
+        ) from e
 
 
 @router.delete(
@@ -509,6 +521,7 @@ async def unbind_filter_endpoint(
     filter_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    dashboard_filter_repo=Depends(get_dashboard_filter_repository),
 ) -> dict[str, Any]:
     """Unbind a filter from a dashboard."""
     logger.info(
@@ -517,7 +530,6 @@ async def unbind_filter_endpoint(
         filter_id,
     )
     try:
-        dashboard_filter_repo = DashboardFilterRepository()
         result = await dashboard_filter_repo.unbind_filter(
             dashboard_id=dashboard_id, filter_id=filter_id, db=db
         )
@@ -528,9 +540,21 @@ async def unbind_filter_endpoint(
             raise HTTPException(
                 status_code=404, detail="Filter not bound to this dashboard"
             )
+    except HTTPException:
+        raise
     except Exception as e:
         await db.rollback()
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.error(
+            "Error unbinding filter from dashboard dashboard_id=%s, filter_id=%s: %s",
+            dashboard_id,
+            filter_id,
+            e,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error unbinding filter from dashboard",
+        ) from e
 
 
 @router.get(
@@ -544,17 +568,39 @@ async def get_dashboard_filters_endpoint(
     dashboard_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    dashboard_filter_repo=Depends(get_dashboard_filter_repository),
 ) -> list[dict[str, Any]]:
     """Get all filters bound to a dashboard."""
+    # Check dashboard access
+    from mkobi.core.permissions import check_dashboard_access
+    has_access = await check_dashboard_access(
+        user_id=current_user.id,
+        dashboard_id=dashboard_id,
+        required_permission="view",
+        db=db,
+    )
+    if not has_access:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No access to this dashboard",
+        )
     logger.info("Getting filters for dashboard: dashboard_id=%s", dashboard_id)
     try:
-        dashboard_filter_repo = DashboardFilterRepository()
         filter_ids = await dashboard_filter_repo.get_dashboard_filters(
             dashboard_id=dashboard_id, db=db
         )
         return [{"filter_id": str(fid)} for fid in filter_ids]
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.error(
+            "Error getting filters for dashboard dashboard_id=%s: %s",
+            dashboard_id,
+            e,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error getting dashboard filters",
+        ) from e
 
 
 # --- Dashboard Access management endpoints ---
@@ -582,7 +628,16 @@ async def get_dashboard_access_endpoint(
         )
         return access_list
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.error(
+            "Error getting access list for dashboard dashboard_id=%s: %s",
+            dashboard_id,
+            e,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error getting dashboard access",
+        ) from e
 
 
 @router.delete(
@@ -610,9 +665,21 @@ async def revoke_dashboard_access_endpoint(
             return {"message": "Access revoked successfully"}
         else:
             raise HTTPException(status_code=404, detail="Access record not found")
+    except HTTPException:
+        raise
     except Exception as e:
         await db.rollback()
-        raise HTTPException(status_code=500, detail=str(e)) from e
+        logger.error(
+            "Error revoking access dashboard_id=%s, user_id=%s: %s",
+            dashboard_id,
+            user_id,
+            e,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error revoking access",
+        ) from e
 
 
 # --- Dashboard graph endpoints ---
@@ -631,6 +698,7 @@ async def create_dashboard_graph_endpoint(
     graph: GraphCreate,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    graph_repo=Depends(get_graph_repository),
 ) -> GraphRead:
     """Create a new graph for a dashboard.
 
@@ -656,7 +724,6 @@ async def create_dashboard_graph_endpoint(
     )
 
     try:
-        graph_repo = get_graph_repository()
         result = await graph_repo.create(
             db=db,
             name=graph.name,
@@ -674,9 +741,11 @@ async def create_dashboard_graph_endpoint(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         ) from e
+    except HTTPException:
+        raise
     except Exception as e:
         await db.rollback()
-        logger.error("Error creating graph name=%s: %s", graph.name, e)
+        logger.error("Error creating graph name=%s: %s", graph.name, e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error creating graph",
@@ -694,6 +763,7 @@ async def get_dashboard_graphs_endpoint(
     dashboard_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
+    graph_repo=Depends(get_graph_repository),
 ) -> list[GraphRead]:
     """Get all graphs for a dashboard.
 
@@ -706,12 +776,25 @@ async def get_dashboard_graphs_endpoint(
         list[GraphRead]: List of graph models.
 
     Raises:
+        HTTPException 403: If user has no access to dashboard.
         HTTPException 500: On database error.
     """
+    # Check dashboard access
+    from mkobi.core.permissions import check_dashboard_access
+    has_access = await check_dashboard_access(
+        user_id=current_user.id,
+        dashboard_id=dashboard_id,
+        required_permission="view",
+        db=db,
+    )
+    if not has_access:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="No access to this dashboard",
+        )
     logger.info("Getting graphs for dashboard: dashboard_id=%s", dashboard_id)
 
     try:
-        graph_repo = get_graph_repository()
         graphs = await graph_repo.get_by_dashboard_id(
             dashboard_id=dashboard_id, db=db
         )

@@ -1,0 +1,390 @@
+---
+name: implement-multiple_tasks.md
+description: Execute semantic development tasks safely and incrementally using implementor subagents with validation and completion control
+agent: planner
+alwaysApply: false
+allowed-tools:
+  - read_file
+  - write_to_file
+  - execute_command
+  - list_files
+  - search_files
+  - new_task
+---
+
+<objective>
+Execute implementation tasks through an planner + implementor workflow.
+
+The planner:
+- manages task iteration
+- loads shared project context
+- spawns fresh implementor subagents
+- validates task completion
+- prevents context pollution between tasks
+
+The implementor subagent:
+- performs implementation for ONE task only
+- validates code quality
+- validates tests
+- finalizes task state
+
+</objective>
+
+<process>
+
+
+## 1. Ask User For Execution Limit 
+
+Ask the user:
+
+> "How many tasks should be implemented in this run?"
+
+Rules:
+- WAIT for explicit response
+- Accept only positive integer
+- Store as `{MAX_TASKS}`
+- Initialize `{COMPLETED_TASKS} = 0`
+
+IMPORTANT: DON'T PROCEED TO STEP 2 before finishing this step
+
+## 2. Prepare execution loop
+
+- Study execution order: C:\py_dev\mkobi\.ai\tasks\todo\order.yaml
+- List files left in:`C:\py_dev\mkobi\.ai\tasks\todo\*`
+- Keep {MAX_TASKS} >= {TASKS_FILES_COUNT} or  {TASKS_FILES_COUNT} 
+names from the list. {TASKS_FILES_TO_IMPLEMENT} of files PRESERVING execution order.
+
+---
+
+## 2. Load and SUMMARIZE shared Project Context:
+
+- IMPORTANT: `C:\py_dev\mkobi\.ai\context\commands.md`
+- `AGENTS.md`
+- `C:\py_dev\mkobi\docs\SPEC.md`
+- `C:\py_dev\mkobi\docs\STRUCT.md`
+
+Understand:
+- architecture
+- module boundaries
+- coding conventions
+- typing conventions
+- testing conventions
+- dependency boundaries
+- framework patterns
+- logging/error handling patterns
+
+Store summarized context as:
+
+`{MAIN_CONTEXT}`
+
+This context MUST be passed to EVERY implementor subagent.
+
+
+---
+
+## 3. Start Task Execution Loop
+
+Take file names from 
+{TASKS_FILES_TO_IMPLEMENT} one by one as {TASK_FILE}
+PRESERVING execution order.
+---
+
+## 3.2 Spawn Implementor Subagent
+
+Display banner:
+
+```
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPLEMENTING TASK
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+◆ Spawning implementor...
+```
+
+Spawn fresh implementor subagent with:
+
+<implementation_context>
+
+## Current Task File
+{TASK_FILE}
+## Task Content
+{MAIN_CONTEXT}
+
+</implementation_context>
+
+<objective>
+
+Study task content from {TASK_FILE}.
+
+Execute ONLY this task safely and completely.
+
+The task is NOT complete until:
+- implementation finished
+- validations pass
+- task renamed to *_DONE.yaml
+- task moved to done/
+- task removed from todo/
+
+</objective>
+
+<implementation_rules>
+
+Preserve:
+- architecture boundaries
+- dependency integrity
+- backward compatibility
+- existing conventions
+
+Avoid:
+- unrelated cleanup
+- broad rewrites
+- speculative improvements
+- hidden side effects
+
+</implementation_rules>
+
+<required_workflow>
+
+## 1. Validate Task
+
+Validate:
+- depends_on tasks completed
+- task still applicable
+- semantic targets exist
+- functionality not already implemented
+- assumptions still valid
+
+If already implemented:
+- rename task file to *_DONE.yaml
+- move task to done/
+- return IMPLEMENTATION_COMPLETE
+
+---
+
+## 2. Implement Task
+
+Implement ONLY approved scope.
+Follow existing patterns.
+
+---
+
+## 3. Validate Code Quality
+
+Run:
+- ruff
+- mypy
+
+Fix ONLY issues related to current task.
+
+---
+
+## 4. Validate Tests
+
+Run relevant tests.
+
+If tests conflict with architecture:
+- update tests
+OR
+- remove obsolete tests
+
+Do NOT degrade architecture for outdated tests.
+
+---
+
+## 5. Detect External Problems
+
+If unrelated issues discovered:
+
+Check:
+`C:\py_dev\mkobi\.ai\audit\problems`
+
+Create or extend reports if needed.
+
+Do NOT fix unrelated problems unless blocking.
+
+---
+
+## 6. Finalize Task
+
+REQUIRED:
+
+1. Rename {TASK_FILE} to `*_DONE.yaml`
+2. Move task file to:`C:\py_dev\mkobi\.ai\tasks\done`
+3. Verify {TASK_FILE} absent from`C:\py_dev\mkobi\.ai\tasks\todo`
+4. Verify ALL completion conditions
+
+</required_workflow>
+
+<expected_output>
+
+Return one of:
+
+- `## IMPLEMENTATION_COMPLETE`
+- `## IMPLEMENTATION_BLOCKED`
+
+Include:
+- summary
+- validations executed
+- tests executed
+- files modified
+- problems discovered
+
+</expected_output>
+
+```
+Task(
+  prompt="
+  Project commands: {project_commands}
+  1. Study task goal {task_file_name}
+  2. Study and follow instructions C:\py_dev\mkobi\.kilo\commands\implement\implement-task.md
+  Context: {execution_order}"
+  subagent_type="implementor",
+  model: poolside/laguna-m.1:free
+  description="Implement task {task_file_name}"
+)
+```
+Task(
+  prompt="First, read C:\py_dev\mkobi\.kilo\agents\implementor.md for your role and instructions..\n\n" + filled_prompt,
+  subagent_type="implementor",
+  description="Implement task {TASK_FILE}"
+)
+---
+
+## 3.3 Handle Implementor Return
+
+### If `## IMPLEMENTATION_BLOCKED`
+
+Display blocker information.
+
+Offer:
+
+1. Provide guidance
+2. Skip task
+3. Abort execution
+
+WAIT for user response.
+
+---
+
+### If `## IMPLEMENTATION_COMPLETE`
+
+Proceed to validation.
+
+---
+
+## 3.4  Completion Validation
+- task file renamed to *_DONE.yaml
+- task file moved to `C:\py_dev\mkobi\.ai\tasks\done`
+- task removed from `C:\py_dev\mkobi\.ai\tasks\todo`
+
+
+---
+
+## 3.5 Handle Validation Failure
+
+If ANY validation fails:
+
+Display:
+
+```text
+TASK FINALIZATION INVALID
+```
+
+Examples:
+
+* task not renamed
+* task not moved
+* task still exists in todo
+* incomplete validation
+* missing tests
+
+Then:
+
+* spawn NEW implementor subagent
+* provide failure details
+* request completion fix ONLY
+
+Do NOT continue to next task until validation passes.
+
+---
+
+## 4. Update Progress
+
+After successful validation:
+
+Increment:
+`{COMPLETED_TASKS}`
+
+Display:
+
+```text
+TASK COMPLETED SUCCESSFULLY
+```
+
+---
+
+## 5. Continue Loop Or Stop
+
+If:
+`{COMPLETED_TASKS} >= {MAX_TASKS}`
+
+STOP execution.
+
+Otherwise:
+
+* continue OUTER LOOP
+* select next task
+* spawn NEW fresh implementor
+
+IMPORTANT:
+Never reuse previous implementor context.
+
+</process>
+
+<output>
+
+Output final summary directly:
+
+```text
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+IMPLEMENTATION RUN COMPLETE ✓
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Tasks completed: {COMPLETED_TASKS}/{MAX_TASKS}
+
+Completed tasks:
+- {TASK_NAME}
+- {TASK_NAME}
+
+Validation:
+- task finalization verified
+- done/ migration verified
+- todo/ cleanup verified
+
+Status:
+✓ Architecture preserved
+✓ Tests validated
+✓ Lint/type checks validated
+```
+
+</output>
+
+<success_criteria>
+
+* [ ] User execution limit requested before work starts
+* [ ] Shared context loaded once by orchestrator
+* [ ] Fresh implementor spawned per task
+* [ ] Implementor receives MAIN_CONTEXT + TASK_CONTENT
+* [ ] One implementor handles one task only
+* [ ] Orchestrator validates task completion independently
+* [ ] Task renamed to *_DONE.yaml
+* [ ] Task moved to done/
+* [ ] Task removed from todo/
+* [ ] Failed finalization triggers corrective implementor
+* [ ] No context leakage between tasks
+* [ ] Execution stops at user-defined limit
+
+</success_criteria>
+
+```
+

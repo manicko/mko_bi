@@ -114,8 +114,8 @@ def create_app() -> FastAPI:
         CORSMiddleware,
         allow_origins=config.cors_origins,
         allow_credentials=True,
-        allow_methods=["*"],
-        allow_headers=["*"],
+        allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+        allow_headers=["Authorization", "Content-Type", "Accept"],
     )
 
     # Configure GZip middleware
@@ -259,37 +259,30 @@ def _setup_static_files(application: FastAPI) -> None:
     """Sets up static file serving for React SPA.
 
     Mounts static files from frontend/dist and configures
-    SPA fallback for all non-API routes.
+    SPA fallback for all non-API routes. Both are conditional
+    on the frontend build directory existing.
     """
-    import os
+    from pathlib import Path
 
-    static_dir = "frontend/dist"
+    static_dir = Path("frontend/dist")
+    index_path = static_dir / "index.html"
 
-    # Check if React build directory exists
-    if os.path.isdir(static_dir):
+    # Only register static files and SPA fallback when frontend build exists
+    if static_dir.exists() and index_path.exists():
         logger.info("Mounting static files from %s", static_dir)
         application.mount(
             "/",
-            StaticFiles(directory=static_dir, html=True),
+            StaticFiles(directory=str(static_dir), html=True),
             name="static",
         )
+
+        @application.get("/{full_path:path}", include_in_schema=False)
+        async def spa_fallback(full_path: str) -> FileResponse:
+            """Serve index.html for all non-API routes (SPA fallback)."""
+            return FileResponse(str(index_path))
     else:
         logger.warning(
-            "Static directory '%s' not found. "
+            "Static directory '%s' not found or missing index.html. "
             "React SPA will not be served. Run 'cd frontend && npm run build' first.",
             static_dir,
         )
-
-        # Fallback: SPA routing for development or if build not found
-        @application.get("/{full_path:path}", include_in_schema=False)
-        async def serve_spa(full_path: str) -> Response:
-            """SPA fallback - returns index.html for all non-API routes."""
-            index_path = os.path.join(static_dir, "index.html")
-            if os.path.exists(index_path):
-                return FileResponse(index_path)
-            return JSONResponse(
-                status_code=404,
-                content={
-                    "detail": "React SPA not built. Run 'cd frontend && npm run build'"
-                },
-            )
