@@ -245,6 +245,9 @@ class Settings(BaseSettings):
     # --- Cleanup Settings ---
     stale_file_threshold_hours: int = Field(default=24, alias="STALE_FILE_THRESHOLD_HOURS")
 
+    # --- Rate Limiter ---
+    rate_limiter_fail_closed: bool = Field(default=False, alias="RATE_LIMITER_FAIL_CLOSED")
+
     @model_validator(mode="after")
     def validate_admin_credentials(self) -> "Settings":
         """Validate admin credentials are explicitly set in production.

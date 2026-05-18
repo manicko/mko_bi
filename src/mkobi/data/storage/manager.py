@@ -29,6 +29,26 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _normalize_json_keys(data: Any) -> Any:
+    """Recursively sort dictionary keys for deterministic JSON serialization.
+
+    Ensures that semantically identical JSON objects produce the same text
+    representation regardless of original key ordering. This is critical for
+    PostgreSQL UPSERT conflict detection on JSONB columns cast to text.
+
+    Args:
+        data: Any JSON-serializable data structure.
+
+    Returns:
+        The same data with all dict keys sorted recursively.
+    """
+    if isinstance(data, dict):
+        return {k: _normalize_json_keys(v) for k, v in sorted(data.items())}
+    if isinstance(data, list):
+        return [_normalize_json_keys(item) for item in data]
+    return data
+
+
 class StorageManager:
     """Storage manager for aggregated data."""
 
@@ -146,10 +166,12 @@ class StorageManager:
             dashboard_id=dashboard_id,
         )
 
+        normalized_dims = _normalize_json_keys(dims)
+
         stmt = insert(AggregatedData).values(
             dashboard_id=dashboard_id,
             graph_id=graph_id,
-            dims=dims,
+            dims=normalized_dims,
             metrics=metrics,
         )
 
@@ -270,7 +292,7 @@ class StorageManager:
                 {
                     "dashboard_id": dashboard_id,
                     "graph_id": agg["graph_id"],
-                    "dims": agg["dims"],
+                    "dims": _normalize_json_keys(agg["dims"]),
                     "metrics": agg["metrics"],
                 }
                 for agg in chunk
@@ -301,7 +323,7 @@ class StorageManager:
                 {
                     "dashboard_id": dashboard_id,
                     "graph_id": agg["graph_id"],
-                    "dims": agg["dims"],
+                    "dims": _normalize_json_keys(agg["dims"]),
                     "metrics": agg["metrics"],
                 }
                 for agg in chunk

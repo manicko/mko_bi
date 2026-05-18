@@ -11,6 +11,7 @@ from typing import Any, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
@@ -494,19 +495,43 @@ async def bind_filter_endpoint(
         return {"message": "Filter bound to dashboard", "bound": result}
     except HTTPException:
         raise
-    except Exception as e:
+    except IntegrityError:
         await db.rollback()
         logger.error(
-            "Error binding filter to dashboard dashboard_id=%s, filter_id=%s: %s",
+            "Integrity error binding filter to dashboard dashboard_id=%s, filter_id=%s",
+            dashboard_id,
+            filter_id,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Conflict: filter binding failed",
+        ) from None
+    except ValueError as e:
+        await db.rollback()
+        logger.error(
+            "Validation error binding filter to dashboard dashboard_id=%s, filter_id=%s: %s",
             dashboard_id,
             filter_id,
             e,
             exc_info=True,
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error binding filter to dashboard",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
         ) from e
+    except Exception:
+        await db.rollback()
+        logger.error(
+            "Error binding filter to dashboard dashboard_id=%s, filter_id=%s",
+            dashboard_id,
+            filter_id,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error",
+        ) from None
 
 
 @router.delete(
@@ -542,19 +567,43 @@ async def unbind_filter_endpoint(
             )
     except HTTPException:
         raise
-    except Exception as e:
+    except IntegrityError:
         await db.rollback()
         logger.error(
-            "Error unbinding filter from dashboard dashboard_id=%s, filter_id=%s: %s",
+            "Integrity error unbinding filter from dashboard dashboard_id=%s, filter_id=%s",
+            dashboard_id,
+            filter_id,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Conflict: filter unbinding failed",
+        ) from None
+    except ValueError as e:
+        await db.rollback()
+        logger.error(
+            "Validation error unbinding filter from dashboard dashboard_id=%s, filter_id=%s: %s",
             dashboard_id,
             filter_id,
             e,
             exc_info=True,
         )
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error unbinding filter from dashboard",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
         ) from e
+    except Exception:
+        await db.rollback()
+        logger.error(
+            "Error unbinding filter from dashboard dashboard_id=%s, filter_id=%s",
+            dashboard_id,
+            filter_id,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error",
+        ) from None
 
 
 @router.get(
@@ -743,13 +792,30 @@ async def create_dashboard_graph_endpoint(
         ) from e
     except HTTPException:
         raise
-    except Exception as e:
+    except IntegrityError:
         await db.rollback()
-        logger.error("Error creating graph name=%s: %s", graph.name, e, exc_info=True)
+        logger.error(
+            "Integrity error creating graph name=%s dashboard_id=%s",
+            graph.name,
+            dashboard_id,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Conflict: graph creation failed",
+        ) from None
+    except Exception:
+        await db.rollback()
+        logger.error(
+            "Error creating graph name=%s dashboard_id=%s",
+            graph.name,
+            dashboard_id,
+            exc_info=True,
+        )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error creating graph",
-        ) from e
+            detail="Internal server error",
+        ) from None
 
 
 @router.get(

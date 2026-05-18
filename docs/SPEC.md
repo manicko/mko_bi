@@ -904,6 +904,30 @@ class BarmodeEnum(StrEnum):
 class YoyModeEnum(StrEnum):
     ABSOLUTE = "absolute"
     PERCENT = "percent"
+
+
+# Frontend-oriented enums (defined in backend for OpenAPI type sharing, not used in backend logic)
+
+
+class ButtonVariant(StrEnum):
+    """Button style variants (frontend-only)."""
+
+    PRIMARY = "primary"
+    SECONDARY = "secondary"
+    SUCCESS = "success"
+    DANGER = "danger"
+    WARNING = "warning"
+    INFO = "info"
+    LIGHT = "light"
+    DARK = "dark"
+
+
+class ComponentSize(StrEnum):
+    """Component sizes (frontend-only)."""
+
+    SMALL = "sm"
+    MEDIUM = "md"
+    LARGE = "lg"
 ```
 
 ---

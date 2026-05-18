@@ -21,37 +21,71 @@ MAX_PASSWORD_LENGTH: int = 72
 
 
 class RateLimiter:
-    def __init__(self, redis_client: redis.Redis) -> None:
+    def __init__(self, redis_client: redis.Redis, fail_closed: bool = False) -> None:
         self._redis = redis_client
+        self._fail_closed = fail_closed
 
     def check_rate_limit(self, key: str, max_attempts: int, ttl: int) -> bool:
-        attempts = self._redis.get(key)
-        if attempts is not None and int(str(attempts)) >= max_attempts:
-            logger.warning("Rate limit exceeded for key: %s", key)
-            return False
+        try:
+            attempts = self._redis.get(key)
+            if attempts is not None and int(str(attempts)) >= max_attempts:
+                logger.warning("Rate limit exceeded for key: %s", key)
+                return False
 
-        pipeline = self._redis.pipeline()
-        pipeline.incr(key)
-        pipeline.expire(key, ttl)
-        pipeline.execute()
-        return True
+            pipeline = self._redis.pipeline()
+            pipeline.incr(key)
+            pipeline.expire(key, ttl)
+            pipeline.execute()
+            return True
+        except Exception as e:
+            logger.error("Rate limiter Redis error for key %s: %s", key, e)
+            if self._fail_closed:
+                logger.critical(
+                    "Rate limiter FAIL-CLOSED: rejecting request for key %s "
+                    "(Redis unavailable)",
+                    key,
+                )
+                return False
+            logger.warning(
+                "Rate limiter fail-open: allowing request for key %s "
+                "(Redis unavailable)",
+                key,
+            )
+            return True
 
 
 class AsyncRateLimiter:
-    def __init__(self, redis_client: aioredis.Redis) -> None:
+    def __init__(self, redis_client: aioredis.Redis, fail_closed: bool = False) -> None:
         self._redis = redis_client
+        self._fail_closed = fail_closed
 
     async def check_rate_limit(self, key: str, max_attempts: int, ttl: int) -> bool:
-        attempts = await self._redis.get(key)
-        if attempts is not None and int(str(attempts)) >= max_attempts:
-            logger.warning("Rate limit exceeded for key: %s", key)
-            return False
+        try:
+            attempts = await self._redis.get(key)
+            if attempts is not None and int(str(attempts)) >= max_attempts:
+                logger.warning("Rate limit exceeded for key: %s", key)
+                return False
 
-        async with self._redis.pipeline() as pipeline:
-            await pipeline.incr(key)
-            await pipeline.expire(key, ttl)
-            await pipeline.execute()
-        return True
+            async with self._redis.pipeline() as pipeline:
+                await pipeline.incr(key)
+                await pipeline.expire(key, ttl)
+                await pipeline.execute()
+            return True
+        except Exception as e:
+            logger.error("Rate limiter Redis error for key %s: %s", key, e)
+            if self._fail_closed:
+                logger.critical(
+                    "Rate limiter FAIL-CLOSED: rejecting request for key %s "
+                    "(Redis unavailable)",
+                    key,
+                )
+                return False
+            logger.warning(
+                "Rate limiter fail-open: allowing request for key %s "
+                "(Redis unavailable)",
+                key,
+            )
+            return True
 
 
 def _truncate_password(password: str) -> str:

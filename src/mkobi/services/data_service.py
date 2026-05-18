@@ -4,13 +4,10 @@ Provides business logic for uploading, processing and tracking
 data processing status for dashboards.
 """
 
-import uuid
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 from uuid import UUID
 
-import aiofiles
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.config import get_config
@@ -18,8 +15,6 @@ from mkobi.core.logging_config import get_logger
 from mkobi.core.permissions import check_dashboard_access, PermissionError
 from mkobi.core.redis_client import get_redis_client
 from mkobi.core.security import RateLimiter
-from mkobi.core.task_queue import enqueue_job
-from mkobi.data.loaders.loader import detect_file_type
 from mkobi.db.session import get_session
 from mkobi.interfaces.repository_interfaces import (
     IAggregatedDataRepository,
@@ -28,7 +23,13 @@ from mkobi.interfaces.repository_interfaces import (
 )
 from mkobi.interfaces.service_interfaces import IDataService
 from mkobi.models.data import ProcessingResultData, ProcessingResult, ProcessingStatusResponse, UploadResponse
-from mkobi.models.enums import FileExtensionEnum, MimeTypeEnum, ProcessingStatus, UploadMode
+from mkobi.models.enums import ProcessingStatus, UploadMode
+from mkobi.services.file_processing import (
+    enqueue_processing_job,
+    find_task_file,
+    get_and_validate_processing_log,
+    process_upload_with_session,
+)
 
 logger = get_logger(__name__)
 
@@ -42,26 +43,34 @@ class DataService(IDataService):
         log_repo: IProcessingLogRepository,
         graph_repo: IGraphRepository,
     ) -> None:
-        """Initialize service with injected repositories.
-
-        Args:
-            agg_repo: Aggregated data repository.
-            log_repo: Processing log repository.
-            graph_repo: Graph repository.
-        """
+        """Initialize service with injected repositories."""
         self.agg_repo = agg_repo
         self.log_repo = log_repo
         self.graph_repo = graph_repo
         self._upload_rate_limiter: RateLimiter | None = None
-        # Try to initialize Redis, but don't fail if Redis is unavailable
-        try:
-            self._upload_rate_limiter = RateLimiter(get_redis_client())
-        except Exception:
-            logger.warning("Redis unavailable, rate limiting disabled")
-            self._upload_rate_limiter = None
+        self._rate_limiter_healthy: bool = False
         config = get_config()
-        self._upload_rate_limit = 10  # requests
-        self._upload_rate_period = 60  # seconds (1 minute)
+        try:
+            self._upload_rate_limiter = RateLimiter(
+                get_redis_client(),
+                fail_closed=config.rate_limiter_fail_closed,
+            )
+            self._rate_limiter_healthy = True
+        except Exception as e:
+            logger.error(
+                "Rate limiter disabled due to Redis unavailability: %s", e,
+            )
+            if config.rate_limiter_fail_closed:
+                logger.critical(
+                    "Rate limiter FAIL-CLOSED mode enabled - uploads will be rejected"
+                )
+            else:
+                logger.warning(
+                    "Rate limiter disabled - uploads will not be rate-limited"
+                )
+            self._upload_rate_limiter = None
+        self._upload_rate_limit = 10
+        self._upload_rate_period = 60
         self._max_file_size = config.max_file_size
 
     async def process_upload(
@@ -91,26 +100,16 @@ class DataService(IDataService):
         actual_db = db
         if actual_db is None:
             async with get_session() as session:
-                return await self._process_upload_with_session(
-                    file_content,
-                    dashboard_id,
-                    user_id,
-                    filename,
-                    content_type,
-                    mode,
-                    session,
+                return await self._execute_upload(
+                    file_content, dashboard_id, user_id,
+                    filename, content_type, mode, session,
                 )
-        return await self._process_upload_with_session(
-            file_content,
-            dashboard_id,
-            user_id,
-            filename,
-            content_type,
-            mode,
-            actual_db,
+        return await self._execute_upload(
+            file_content, dashboard_id, user_id,
+            filename, content_type, mode, actual_db,
         )
 
-    async def _process_upload_with_session(
+    async def _execute_upload(
         self,
         file_content: bytes,
         dashboard_id: UUID,
@@ -120,21 +119,7 @@ class DataService(IDataService):
         mode: UploadMode,
         db: AsyncSession,
     ) -> UploadResponse:
-        """Internal method for processing with session.
-
-        Args:
-            file_content: Raw file content bytes.
-            dashboard_id: Target dashboard ID.
-            user_id: Optional user ID for permission check.
-            filename: Original filename.
-            content_type: MIME type of uploaded file.
-            mode: Upload mode (OVERWRITE clears old data, APPEND keeps it).
-            db: Database session.
-        """
-        # Validate file
-        self._validate_file(filename, file_content, content_type)
-
-        # Check access permissions
+        """Execute upload with permission check and file processing."""
         if user_id:
             has_access = await check_dashboard_access(
                 user_id=user_id,
@@ -145,70 +130,25 @@ class DataService(IDataService):
             if not has_access:
                 logger.warning(
                     "Processing denied: user_id=%s, dashboard_id=%s",
-                    user_id,
-                    dashboard_id,
+                    user_id, dashboard_id,
                 )
                 raise PermissionError(
                     "No permission to process data for this dashboard"
                 )
 
-        # Save file to temporary directory
-        config = get_config()
-        upload_dir = Path(config.upload_temp_dir)
-        upload_dir.mkdir(parents=True, exist_ok=True)
-
-        # Detect file type using enum-based function
-        file_ext = ".csv.gz" if filename and detect_file_type(filename) == FileExtensionEnum.CSV_GZ else ".csv"
-
-        # Create processing log entry with STARTED status
-        log = await self.log_repo.create_log(
-            db=db,
+        log_id = await process_upload_with_session(
+            file_content=file_content,
             dashboard_id=dashboard_id,
-            status=ProcessingStatus.STARTED,
-            message=f"Upload started with mode={mode}",
-        )
-        await db.flush()
-
-        # Use log.id for the file path to ensure consistency
-        temp_file_path = upload_dir / f"{log.id}{file_ext}"
-
-        try:
-            async with aiofiles.open(temp_file_path, mode='wb') as f:
-                await f.write(file_content)
-            logger.info("File saved: path=%s, mode=%s", temp_file_path, mode)
-        except Exception as e:
-            logger.error("File save error: %s", e)
-            raise
-
-        # Update status to UPLOADED after file is saved successfully
-        await self.log_repo.update_status(
-            log_id=log.id,
-            status=ProcessingStatus.UPLOADED,
-            message=f"File uploaded successfully, awaiting processing. mode={mode}",
+            log_repo=self.log_repo,
+            filename=filename,
+            content_type=content_type,
+            mode=mode,
+            max_file_size=self._max_file_size,
             db=db,
-        )
-        await db.commit()
-
-        # Enqueue job with mode parameter - use log.id as the identifier
-        from mkobi.workers.data_worker import process_csv_background
-        await enqueue_job(
-            process_csv_background,
-            file_path=str(temp_file_path),
-            dashboard_id=str(dashboard_id),
-            task_id=str(log.id),
-            log_id=str(log.id),
-            mode=str(mode),
-        )
-
-        logger.info(
-            "Task enqueued: task_id=%s, dashboard_id=%s, mode=%s",
-            log.id,
-            dashboard_id,
-            mode,
         )
 
         return UploadResponse(
-            task_id=log.id,
+            task_id=log_id,
             filename=filename or "unknown",
             dashboard_id=dashboard_id,
             status=ProcessingStatus.UPLOADED,
@@ -223,185 +163,71 @@ class DataService(IDataService):
         db: AsyncSession | None = None,
     ) -> list[ProcessingResultData]:
         """Get aggregated data for graph."""
-        actual_db = db
-        if actual_db is None:
+        if db is None:
             async with get_session() as session:
                 return await self._get_aggregated_data_with_session(
-                    dashboard_id,
-                    graph_id,
-                    session,
+                    dashboard_id, graph_id, session,
                 )
         return await self._get_aggregated_data_with_session(
-            dashboard_id,
-            graph_id,
-            actual_db,
+            dashboard_id, graph_id, db,
         )
 
     async def _get_aggregated_data_with_session(
-        self,
-        dashboard_id: UUID,
-        graph_id: UUID,
-        db: AsyncSession,
+        self, dashboard_id: UUID, graph_id: UUID, db: AsyncSession,
     ) -> list[ProcessingResultData]:
-        """Internal method to get aggregated data."""
+        """Get aggregated data for a graph within a dashboard."""
         records = await self.agg_repo.get_by_graph_id(
             graph_id, db, dashboard_id=dashboard_id,
         )
-
-        result = []
-        for record in records:
-            result.append(
-                ProcessingResultData(
-                    columns=list(record.dims.keys()) + list(record.metrics.keys()),
-                    rows=1,
-                    dashboard_id=record.dashboard_id,
-                    preview=[{**record.dims, **record.metrics}],
-                )
+        return [
+            ProcessingResultData(
+                columns=list(record.dims.keys()) + list(record.metrics.keys()),
+                rows=1,
+                dashboard_id=record.dashboard_id,
+                preview=[{**record.dims, **record.metrics}],
             )
-        return result
+            for record in records
+        ]
 
     async def get_available_metrics(
-        self,
-        dashboard_id: UUID,
-        db: AsyncSession | None = None,
+        self, dashboard_id: UUID, db: AsyncSession | None = None,
     ) -> list[str]:
-        """Get available metrics for dashboard.
-
-        Args:
-            dashboard_id: Dashboard identifier.
-            db: Optional async session.
-
-        Returns:
-            list[str]: List of available metric names.
-        """
-        actual_db = db
-        if actual_db is None:
+        """Get available metrics for dashboard."""
+        if db is None:
             async with get_session() as session:
-                return await self._get_available_metrics_with_session(
-                    dashboard_id, session
-                )
-        return await self._get_available_metrics_with_session(dashboard_id, actual_db)
+                return await self._get_available_metrics_with_session(dashboard_id, session)
+        return await self._get_available_metrics_with_session(dashboard_id, db)
 
     async def _get_available_metrics_with_session(
-        self,
-        dashboard_id: UUID,
-        db: AsyncSession,
+        self, dashboard_id: UUID, db: AsyncSession,
     ) -> list[str]:
-        """Internal method to get available metrics."""
+        """Collect metric names from all graphs in a dashboard."""
         graphs = await self.graph_repo.get_by_dashboard_id(dashboard_id, db)
-
         metrics: set[str] = set()
         for graph in graphs:
             if graph.metrics:
                 metrics.update(graph.metrics)
-
         return list(metrics)
 
     async def get_available_dimensions(
-        self,
-        dashboard_id: UUID,
-        db: AsyncSession | None = None,
+        self, dashboard_id: UUID, db: AsyncSession | None = None,
     ) -> list[str]:
-        """Get available dimensions for dashboard.
-
-        Args:
-            dashboard_id: Dashboard identifier.
-            db: Optional async session.
-
-        Returns:
-            list[str]: List of available dimension names.
-        """
-        actual_db = db
-        if actual_db is None:
+        """Get available dimensions for dashboard."""
+        if db is None:
             async with get_session() as session:
-                return await self._get_available_dimensions_with_session(
-                    dashboard_id, session
-                )
-        return await self._get_available_dimensions_with_session(
-            dashboard_id, actual_db
-        )
+                return await self._get_available_dimensions_with_session(dashboard_id, session)
+        return await self._get_available_dimensions_with_session(dashboard_id, db)
 
     async def _get_available_dimensions_with_session(
-        self,
-        dashboard_id: UUID,
-        db: AsyncSession,
+        self, dashboard_id: UUID, db: AsyncSession,
     ) -> list[str]:
-        """Internal method to get available dimensions."""
+        """Collect dimension names from all graphs in a dashboard."""
         graphs = await self.graph_repo.get_by_dashboard_id(dashboard_id, db)
-
         dimensions: set[str] = set()
         for graph in graphs:
             if graph.dimensions:
                 dimensions.update(graph.dimensions)
-
         return list(dimensions)
-
-    # --- Helper methods ---
-
-    def _validate_mime_type(self, content_type: str | None) -> None:
-        """Validate MIME-type of uploaded file."""
-        if content_type is None:
-            logger.warning("MIME-type not specified, skipping check")
-            return
-
-        allowed_mime_types = MimeTypeEnum.allowed_values()
-        if content_type not in allowed_mime_types:
-            logger.error(
-                "Invalid MIME-type: %s. Allowed: %s",
-                content_type,
-                allowed_mime_types,
-            )
-            raise ValueError(f"Invalid MIME-type: {content_type}")
-
-    def _validate_file(
-        self,
-        filename: str | None,
-        file_content: bytes,
-        content_type: str | None,
-    ) -> None:
-        """Validate uploaded file.
-
-        Checks file content, MIME type, format, and size limits.
-        """
-        # 1. Check file content is not empty
-        if not file_content:
-            raise ValueError("File content is empty")
-
-        # 2. Check MIME-type
-        self._validate_mime_type(content_type)
-
-        # 3. Check file format
-        config = get_config()
-        allowed_extensions = config.allowed_file_types
-        if filename and not any(
-            filename.lower().endswith(ext.lower()) for ext in allowed_extensions
-        ):
-            logger.error(
-                "Invalid file format: %s. Allowed: %s",
-                filename,
-                allowed_extensions,
-            )
-            raise ValueError(
-                f"Invalid file format: '{filename}'. "
-                f"Allowed formats: {', '.join(allowed_extensions)}"
-            )
-
-        # 4. Check file size
-        if len(file_content) > self._max_file_size:
-            logger.error(
-                "File exceeds maximum size: %s (%d > %d)",
-                filename,
-                len(file_content),
-                self._max_file_size,
-            )
-            raise ValueError(
-                f"File '{filename}' exceeds maximum size "
-                f"({len(file_content)} > {self._max_file_size} bytes)"
-            )
-
-        logger.info(
-            "File validated successfully: %s (%d bytes)", filename, len(file_content)
-        )
 
     async def trigger_processing(
         self,
@@ -411,83 +237,41 @@ class DataService(IDataService):
         processing_config: dict[str, Any] | None = None,
         db: AsyncSession | None = None,
     ) -> ProcessingStatusResponse:
-        """Trigger processing of uploaded file.
-
-        Args:
-            task_id: Processing log ID (used to find the file).
-            dashboard_id: Target dashboard ID.
-            user_id: User ID for permission check.
-            processing_config: Optional processing configuration.
-            db: Optional database session.
-
-        Returns:
-            ProcessingStatusResponse with current status.
-        """
+        """Trigger processing of uploaded file."""
         if db is None:
             async with get_session() as session:
                 return await self.trigger_processing(
                     task_id, dashboard_id, user_id, processing_config, session
                 )
-
-        # Check user permissions
         if user_id:
             has_access = await check_dashboard_access(
-                user_id=user_id,
-                dashboard_id=dashboard_id,
-                required_permission="edit",
-                db=db,
+                user_id=user_id, dashboard_id=dashboard_id,
+                required_permission="edit", db=db,
             )
             if not has_access:
                 logger.warning(
                     "Processing denied: user_id=%s, dashboard_id=%s",
-                    user_id,
-                    dashboard_id,
+                    user_id, dashboard_id,
                 )
                 raise PermissionError("No permission to process data for this dashboard")
-
-        # Get the processing log
-        log = await self.log_repo.get_by_id(task_id, db)
-        if log is None:
-            raise ValueError(f"Processing task {task_id} not found")
-
-        # Find the file in temp directory
-        config = get_config()
-        upload_dir = Path(config.upload_temp_dir)
-        task_files = list(upload_dir.glob(f"*{task_id}*.csv*"))
-        
-        if not task_files:
-            raise ValueError(f"File for task {task_id} not found in temp directory")
-
-        file_path = str(task_files[0])
-        
-        # Update log status to processing
+        log = await get_and_validate_processing_log(
+            task_id=task_id, dashboard_id=dashboard_id,
+            log_repo=self.log_repo, db=db,
+        )
+        file_path = find_task_file(task_id)
         await self.log_repo.update_status(
-            log_id=task_id,
-            status=ProcessingStatus.PROCESSING,
-            message="Processing triggered manually",
-            db=db,
+            log_id=task_id, status=ProcessingStatus.PROCESSING,
+            message="Processing triggered manually", db=db,
         )
         await db.commit()
-
-        # Enqueue job
-        from mkobi.workers.data_worker import process_csv_background
-        
-        mode = "overwrite"  # Default mode for manual trigger
-        await enqueue_job(
-            process_csv_background,
-            file_path=file_path,
-            dashboard_id=str(dashboard_id),
-            task_id=str(task_id),
-            log_id=str(task_id),
-            mode=mode,
+        await enqueue_processing_job(
+            file_path=file_path, dashboard_id=dashboard_id,
+            task_id=task_id, mode="overwrite",
         )
-
         logger.info(
             "Processing triggered: task_id=%s, dashboard_id=%s",
-            task_id,
-            dashboard_id,
+            task_id, dashboard_id,
         )
-
         return ProcessingStatusResponse(
             task_id=task_id,
             filename=log.message or "unknown",
@@ -503,36 +287,20 @@ class DataService(IDataService):
         user_id: UUID,
         db: AsyncSession | None = None,
     ) -> ProcessingStatusResponse:
-        """Get processing status.
-
-        Args:
-            task_id: Processing log ID.
-            user_id: User ID for permission check.
-            db: Optional database session.
-
-        Returns:
-            ProcessingStatusResponse with current status.
-        """
+        """Get processing status."""
         if db is None:
             async with get_session() as session:
                 return await self.get_processing_status(task_id, user_id, session)
-
-        # Get the processing log
         log = await self.log_repo.get_by_id(task_id, db)
         if log is None:
             raise ValueError(f"Processing task {task_id} not found")
-
-        # Check user permissions (user should have view access to the dashboard)
         if user_id:
             has_access = await check_dashboard_access(
-                user_id=user_id,
-                dashboard_id=log.dashboard_id,
-                required_permission="view",
-                db=db,
+                user_id=user_id, dashboard_id=log.dashboard_id,
+                required_permission="view", db=db,
             )
             if not has_access:
                 raise PermissionError("No permission to view this dashboard")
-
         return ProcessingStatusResponse(
             task_id=task_id,
             filename=log.message or "unknown",
@@ -550,131 +318,34 @@ class DataService(IDataService):
         user_id: UUID,
         db: AsyncSession | None = None,
     ) -> ProcessingResult:
-        """Get processing result.
-
-        Args:
-            task_id: Processing log ID.
-            user_id: User ID for permission check.
-            db: Optional database session.
-
-        Returns:
-            ProcessingResult with processed data.
-        """
+        """Get processing result."""
         if db is None:
             async with get_session() as session:
                 return await self.get_processing_result(task_id, user_id, session)
-
-        # Get the processing log
         log = await self.log_repo.get_by_id(task_id, db)
         if log is None:
             raise ValueError(f"Processing task {task_id} not found")
-
-        # Check user permissions
         if user_id:
             has_access = await check_dashboard_access(
-                user_id=user_id,
-                dashboard_id=log.dashboard_id,
-                required_permission="view",
-                db=db,
+                user_id=user_id, dashboard_id=log.dashboard_id,
+                required_permission="view", db=db,
             )
             if not has_access:
                 raise PermissionError("No permission to view this dashboard")
-
-        # Check if processing is complete
         if log.status != ProcessingStatus.SUCCESS:
             return ProcessingResult(
-                success=False,
-                task_id=task_id,
-                dashboard_id=log.dashboard_id,
-                rows_processed=0,
+                success=False, task_id=task_id,
+                dashboard_id=log.dashboard_id, rows_processed=0,
                 message=f"Processing not complete. Status: {log.status}",
             )
-
-        # Get aggregated data for the dashboard
-        # For simplicity, get data for the first graph
         graphs = await self.graph_repo.get_by_dashboard_id(log.dashboard_id, db)
-        
         rows_processed = 0
         if graphs:
-            graph_id = graphs[0].id
-            agg_data = await self.agg_repo.get_by_graph_id(graph_id, db)
+            agg_data = await self.agg_repo.get_by_graph_id(graphs[0].id, db)
             rows_processed = len(agg_data) if agg_data else 0
-
         return ProcessingResult(
-            success=True,
-            task_id=task_id,
-            dashboard_id=log.dashboard_id,
-            rows_processed=rows_processed,
+            success=True, task_id=task_id,
+            dashboard_id=log.dashboard_id, rows_processed=rows_processed,
             message="Processing completed successfully",
         )
 
-# Cleanup function
-def cleanup_task_files(task_id: uuid.UUID) -> None:
-    """Delete temporary task files."""
-    logger.info("Cleaning up task files: task_id=%s", task_id)
-    config = get_config()
-    upload_dir = Path(config.upload_temp_dir)
-
-    # Fix: handle both .csv and .csv.gz files
-    csv_files = list(upload_dir.glob(f"*{task_id}*.csv*"))
-
-    for file_path in csv_files:
-        try:
-            file_path.unlink()
-            logger.info("File deleted: %s", file_path)
-        except Exception as e:
-            logger.error("Error deleting file %s: %s", file_path, e)
-
-
-def cleanup_stale_temp_files(max_age_hours: int | None = None) -> int:
-    """Delete stale temporary files older than the specified threshold.
-
-    This function is designed to be called on application startup to clean up
-    orphaned temp files from previous runs (e.g., worker crashes, container restarts).
-
-    Args:
-        max_age_hours: Maximum age of files in hours before deletion.
-            If None, uses the configured threshold (default 24 hours).
-
-    Returns:
-        int: Number of files deleted.
-    """
-    from time import time
-
-    config = get_config()
-    threshold_hours = max_age_hours if max_age_hours is not None else config.stale_file_threshold_hours
-    upload_dir = Path(config.upload_temp_dir)
-
-    if threshold_hours <= 0:
-        logger.warning("Invalid threshold %d hours, skipping cleanup", threshold_hours)
-        return 0
-
-    if not upload_dir.exists():
-        logger.info("Upload temp directory does not exist: %s", upload_dir)
-        return 0
-
-    # Calculate cutoff time (seconds since epoch)
-    cutoff_seconds = threshold_hours * 3600
-    current_time = time()
-    deleted_count = 0
-
-    # Find all CSV files in upload directory
-    csv_files = list(upload_dir.glob("*.csv*"))
-
-    for file_path in csv_files:
-        try:
-            # Check file modification time
-            mtime = file_path.stat().st_mtime
-            file_age_seconds = current_time - mtime
-
-            if file_age_seconds > cutoff_seconds:
-                file_path.unlink()
-                logger.info("Deleted stale temp file: %s (age: %.1f hours)", file_path, file_age_seconds / 3600)
-                deleted_count += 1
-        except Exception as e:
-            logger.error("Error processing file %s: %s", file_path, e)
-
-    if deleted_count > 0:
-        logger.info("Cleaned up %d stale temp files", deleted_count)
-
-    return deleted_count

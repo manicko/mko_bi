@@ -1,5 +1,6 @@
 import { axiosInstance } from '../../../shared/api/axiosInstance'
 import type { AuthResponse, UserProfile, RegistrationRequest, RegistrationResponse } from '../../../shared/types/api.types'
+import { removeToken } from '../model/authToken'
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
   const response = await axiosInstance.post<AuthResponse>('/auth/login', { email, password })
@@ -17,5 +18,5 @@ export async function getProfile(): Promise<UserProfile> {
 }
 
 export function logoutClient(): void {
-  sessionStorage.removeItem('access_token')
+  removeToken()
 }

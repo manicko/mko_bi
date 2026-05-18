@@ -17,7 +17,7 @@ from mkobi.api.deps import (
     require_admin_role,
 )
 from mkobi.models.enums import RegistrationStatus, UserRole
-from mkobi.models.user import UserRead
+from mkobi.models.user import UserRead, UserUpdateRequest
 from mkobi.services.auth_service import AuthService
 
 logger = logging.getLogger(__name__)
@@ -62,13 +62,13 @@ async def get_users_admin_endpoint(
 )
 async def update_user_role_admin_endpoint(
     user_id: UUID,
-    new_role: UserRole,
+    user_data: UserUpdateRequest,
     user_service=Depends(get_user_service),
 ) -> UserRead:
     """Update user role (admin endpoint)."""
-    logger.info("Admin: updating user role: id=%s, new_role=%s", user_id, new_role)
+    logger.info("Admin: updating user role: id=%s, new_role=%s", user_id, user_data.role)
     try:
-        updated = await user_service.update_user_role(user_id=user_id, role=new_role)
+        updated = await user_service.update_user_role(user_id=user_id, role=user_data.role)
         if updated is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

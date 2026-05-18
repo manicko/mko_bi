@@ -16,6 +16,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
 
 from mkobi.api.deps import get_auth_service, get_current_user_dependency, require_admin_role
+from mkobi.config import get_config
 from mkobi.core.logging_config import get_logger
 from mkobi.core import redis_client
 from mkobi.core.security import AsyncRateLimiter
@@ -384,7 +385,10 @@ async def register_request(
         client_ip = str(ip_address(request.client.host))
 
     # Apply rate limiting for registration requests
-    rate_limiter = AsyncRateLimiter(redis_client.get_async_redis_client())
+    rate_limiter = AsyncRateLimiter(
+        redis_client.get_async_redis_client(),
+        fail_closed=get_config().rate_limiter_fail_closed,
+    )
     rate_limit_key = f"register-request:{client_ip}" if client_ip else f"register-request:{request_data.email}"
     if not await rate_limiter.check_rate_limit(
         rate_limit_key, max_attempts=3, ttl=3600

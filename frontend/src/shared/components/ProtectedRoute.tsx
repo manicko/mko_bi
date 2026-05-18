@@ -1,4 +1,5 @@
 import { Navigate, useLocation } from 'react-router-dom'
+import { Box, CircularProgress } from '@mui/material'
 import { useAuth } from '../../features/auth'
 
 interface ProtectedRouteProps {
@@ -10,7 +11,11 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const location = useLocation()
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    )
   }
 
   if (!user) {

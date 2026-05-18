@@ -1,5 +1,5 @@
 ---
-name: implement-multiple_tasks.md
+name: implement-multiple_tasks
 description: Execute semantic development tasks safely and incrementally using implementor subagents with validation and completion control
 agent: planner
 alwaysApply: false
@@ -85,8 +85,10 @@ This context MUST be passed to EVERY implementor subagent.
 ## 3. Start Task Execution Loop
 
 Take file names from 
-{TASKS_FILES_TO_IMPLEMENT} one by one as {TASK_FILE}
+{TASKS_FILES_TO_IMPLEMENT} one by one as {TASK_FILE_ABS_PATH}
 PRESERVING execution order.
+
+Don't read task files content, just pass file names. 
 ---
 
 ## 3.2 Spawn Implementor Subagent
@@ -101,12 +103,14 @@ IMPLEMENTING TASK
 ◆ Spawning implementor...
 ```
 
-Spawn fresh implementor subagent with:
+Spawn fresh implementor subagent with subagent_prompt FILLED:
+
+<subagent_prompt:START>
 
 <implementation_context>
 
 ## Current Task File
-{TASK_FILE}
+{TASK_FILE_ABS_PATH}
 ## Task Content
 {MAIN_CONTEXT}
 
@@ -114,7 +118,7 @@ Spawn fresh implementor subagent with:
 
 <objective>
 
-Study task content from {TASK_FILE}.
+Study task content from  {TASK_FILE_ABS_PATH}.
 
 Execute ONLY this task safely and completely.
 
@@ -208,9 +212,9 @@ Do NOT fix unrelated problems unless blocking.
 
 REQUIRED:
 
-1. Rename {TASK_FILE} to `*_DONE.yaml`
+1. Rename  {TASK_FILE_ABS_PATH} to `*_DONE.yaml`
 2. Move task file to:`C:\py_dev\mkobi\.ai\tasks\done`
-3. Verify {TASK_FILE} absent from`C:\py_dev\mkobi\.ai\tasks\todo`
+3. Verify  {TASK_FILE_ABS_PATH} absent from`C:\py_dev\mkobi\.ai\tasks\todo`
 4. Verify ALL completion conditions
 
 </required_workflow>
@@ -231,22 +235,13 @@ Include:
 
 </expected_output>
 
+<subagent_prompt:END>
+
 ```
 Task(
-  prompt="
-  Project commands: {project_commands}
-  1. Study task goal {task_file_name}
-  2. Study and follow instructions C:\py_dev\mkobi\.kilo\commands\implement\implement-task.md
-  Context: {execution_order}"
+  prompt="First, read C:\py_dev\mkobi\.kilo\agents\implementor.md for your role and instructions..\n\n" + subagent_prompt,
   subagent_type="implementor",
-  model: poolside/laguna-m.1:free
-  description="Implement task {task_file_name}"
-)
-```
-Task(
-  prompt="First, read C:\py_dev\mkobi\.kilo\agents\implementor.md for your role and instructions..\n\n" + filled_prompt,
-  subagent_type="implementor",
-  description="Implement task {TASK_FILE}"
+  description="Implement task  {TASK_FILE_ABS_PATH}"
 )
 ---
 
@@ -374,9 +369,9 @@ Status:
 * [ ] User execution limit requested before work starts
 * [ ] Shared context loaded once by orchestrator
 * [ ] Fresh implementor spawned per task
-* [ ] Implementor receives MAIN_CONTEXT + TASK_CONTENT
+* [ ] Implementor receives MAIN_CONTEXT + TASK_FILE
 * [ ] One implementor handles one task only
-* [ ] Orchestrator validates task completion independently
+* [ ] Planner validates task completion independently
 * [ ] Task renamed to *_DONE.yaml
 * [ ] Task moved to done/
 * [ ] Task removed from todo/

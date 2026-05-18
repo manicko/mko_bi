@@ -30,11 +30,12 @@ if TYPE_CHECKING:
     from mkobi.services.processing_log_service import ProcessingLogService
 
 from mkobi.core.permissions import (
-    get_current_user,
     check_dashboard_access,
     check_role,
     AuthenticationError,
 )
+from mkobi.core.security import decode_token
+from mkobi.db.repositories.user_repo import UserRepository
 from mkobi.db.session import get_db, get_session  # noqa: F401 - re-exported for backwards compatibility
 from mkobi.models.enums import UserRole
 from mkobi.models.user import UserRead
@@ -412,14 +413,37 @@ async def get_current_user_dependency(
         HTTPException: If token is invalid or user not found.
     """
     try:
-        user = await get_current_user(token=token, db=db)
+        payload = decode_token(token)
+        if payload is None:
+            logger.warning("Invalid token")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        user_id_raw = payload.get("user_id")
+        if user_id_raw is None:
+            logger.warning("Token missing user_id")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid token",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        user_id = UUID(str(user_id_raw))
+
+        repo = UserRepository()
+        user = await repo.get(id=user_id, db=db)
         if user is None:
-            logger.warning("User not found for token")
+            logger.warning("User not found: user_id=%s", user_id)
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="User not found",
                 headers={"WWW-Authenticate": "Bearer"},
             )
+
+        logger.info("User authenticated: user_id=%s", user_id)
         return user
     except ExpiredSignatureError as e:
         logger.warning("Token expired")

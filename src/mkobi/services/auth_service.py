@@ -52,7 +52,10 @@ class AuthService(IAuthService):
             config = get_config()
         self.config = config
         self.blocked_domains_set = set(domain.lower() for domain in config.email.blocked_domains)
-        self._rate_limiter = AsyncRateLimiter(get_async_redis_client())
+        self._rate_limiter = AsyncRateLimiter(
+            get_async_redis_client(),
+            fail_closed=config.rate_limiter_fail_closed,
+        )
 
     def _validate_role(self, role: str) -> None:
         """Validate that role is allowed.

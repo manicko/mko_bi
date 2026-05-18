@@ -50,7 +50,7 @@ class TestDataService:
         log_repo.create_log.return_value.status = ProcessingStatusEnum.UPLOADED
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            with patch("mkobi.services.data_service.enqueue_job") as mock_enqueue:
+            with patch("mkobi.services.file_processing.enqueue_job") as mock_enqueue:
                 result = await data_service.process_upload(
                     file_content=csv_content,
                     dashboard_id=dashboard_id,
@@ -79,7 +79,7 @@ class TestDataService:
         log_repo.create_log.return_value.status = ProcessingStatusEnum.UPLOADED
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            with patch("mkobi.services.data_service.enqueue_job"):
+            with patch("mkobi.services.file_processing.enqueue_job"):
                 result = await data_service.process_upload(
                     file_content=csv_content,
                     dashboard_id=dashboard_id,
@@ -119,7 +119,7 @@ class TestDataService:
         log_repo.create_log.return_value.id = log_id
         log_repo.create_log.return_value.status = ProcessingStatusEnum.UPLOADED
 
-        with patch("mkobi.services.data_service.enqueue_job"):
+        with patch("mkobi.services.file_processing.enqueue_job"):
             result = await data_service.process_upload(
                 file_content=csv_content,
                 dashboard_id=dashboard_id,
@@ -180,7 +180,7 @@ class TestDataService:
         log_repo.create_log.return_value.status = ProcessingStatusEnum.UPLOADED
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            with patch("mkobi.services.data_service.enqueue_job"):
+            with patch("mkobi.services.file_processing.enqueue_job"):
                 buf = io.BytesIO()
                 with gzip.GzipFile(fileobj=buf, mode="wb") as gz:
                     gz.write(csv_content)
@@ -290,8 +290,8 @@ class TestDataService:
         log_repo.get_by_id.return_value = mock_log
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            with patch("mkobi.services.data_service.enqueue_job"):
-                with patch("pathlib.Path.glob", return_value=[Path("/tmp/test.csv")]):
+            with patch("mkobi.services.data_service.enqueue_processing_job"):
+                with patch("mkobi.services.data_service.find_task_file", return_value="/tmp/test.csv"):
                     result = await data_service.trigger_processing(task_id, dashboard_id, user_id)
 
         assert result.task_id == task_id
@@ -334,7 +334,7 @@ class TestDataService:
         log_repo.get_by_id.return_value = mock_log
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            with patch("pathlib.Path.glob", return_value=[]):
+            with patch("mkobi.services.data_service.find_task_file", side_effect=ValueError("File for task.*not found")):
                 with pytest.raises(ValueError, match="File for task.*not found"):
                     await data_service.trigger_processing(task_id, dashboard_id, user_id)
 
@@ -487,42 +487,51 @@ class TestDataService:
         assert result.success is True
         assert result.rows_processed == 0
 
-    # --- _validate_file tests ---
+    # --- validate_file tests ---
 
     async def test_validate_file_mime_skip(self, data_service):
         """Test MIME validation skips when content_type is None."""
-        data_service._validate_file(filename="test.csv", file_content=b"data", content_type=None)
+        from mkobi.services.file_processing import validate_file
+        validate_file(filename="test.csv", file_content=b"data", content_type=None, max_file_size=data_service._max_file_size)
 
     async def test_validate_file_valid_csv(self, data_service):
         """Test validation passes for valid CSV file."""
-        data_service._validate_file(
+        from mkobi.services.file_processing import validate_file
+        validate_file(
             filename="test.csv",
             file_content=b"name,value\ntest,1\n" * 10,
             content_type="text/csv",
+            max_file_size=data_service._max_file_size,
         )
 
     async def test_validate_file_valid_gz(self, data_service):
         """Test validation passes for valid .csv.gz file."""
-        data_service._validate_file(
+        from mkobi.services.file_processing import validate_file
+        validate_file(
             filename="test.csv.gz",
             file_content=b"compressed data",
             content_type="application/gzip",
+            max_file_size=data_service._max_file_size,
         )
 
     async def test_validate_file_invalid_extension(self, data_service):
         """Test validation rejects .txt extension."""
+        from mkobi.services.file_processing import validate_file
         with pytest.raises(ValueError, match="Invalid file format"):
-            data_service._validate_file(
+            validate_file(
                 filename="test.txt",
                 file_content=b"some text",
                 content_type="text/csv",  # Valid MIME but wrong extension
+                max_file_size=data_service._max_file_size,
             )
 
     async def test_validate_file_invalid_mime(self, data_service):
         """Test validation rejects disallowed MIME type."""
+        from mkobi.services.file_processing import validate_file
         with pytest.raises(ValueError, match="Invalid MIME-type"):
-            data_service._validate_file(
+            validate_file(
                 filename="test.csv",
                 file_content=b"data",
                 content_type="application/octet-stream",
+                max_file_size=data_service._max_file_size,
             )

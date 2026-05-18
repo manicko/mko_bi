@@ -449,36 +449,55 @@ def _calculate_share(
 def _parse_formula(formula: str) -> pl.Expr:
     """Parse simple formula into Polars expression.
 
-    This is a basic formula parser with known limitations:
-    - Only supports binary operators: +, -, *, /
-    - No parentheses or nested expressions support
-    - No operator precedence (evaluates left-to-right)
-    - Column names must contain only alphanumeric characters and underscores
-    - Numeric literals are NOT supported (all tokens are treated as column names)
-    - Multiple consecutive operators are not supported
+    Supports only binary arithmetic operators (+, -, *, /) between column names.
+    All tokens (including numeric literals like "100") are treated as column
+    references via ``pl.col()``. For numeric literal support or complex
+    expressions, pre-compute the value in a separate step or use the
+    ``simpleeval`` library (not currently a dependency).
 
-    Supported syntax examples:
-        - Single column: "revenue" -> pl.col("revenue")
-        - Binary operation: "revenue / cost" -> pl.col("revenue") / pl.col("cost")
-        - Chain: "a + b - c" -> (((pl.col("a") + pl.col("b")) - pl.col("c"))
+    Supported syntax
+    -----------------
+    - Single column: ``"revenue"`` → ``pl.col("revenue")``
+    - Binary op: ``"revenue / cost"`` → ``pl.col("revenue") / pl.col("cost")``
+    - Chained: ``"a + b - c"`` → left-to-right evaluation
 
-    For complex formulas, use computed_fields with pre-calculated expressions
-    or consider using simpleeval library (not currently a dependency).
+    Known limitations
+    -----------------
+    - **No parentheses** – ``"(a + b) * c"`` will not group as expected.
+    - **No operator precedence** – all operations evaluate strictly
+      left-to-right (e.g. ``"a + b * c"`` means ``(a + b) * c``, not
+      ``a + (b * c)``).
+    - **No numeric literals** – every operand is wrapped in ``pl.col()``,
+      so ``"revenue * 100"`` looks for a column named ``"100"``.
+    - **Column names** must match ``[a-zA-Z_][a-zA-Z0-9_]*``; names with
+      spaces or special characters are not supported.
+    - **No unary operators** – expressions like ``"-value"`` are invalid.
 
     Args:
-        formula: Formula string (e.g., "revenue / cost * 100").
+        formula: Formula string containing column names and operators,
+            e.g. ``"revenue / cost"``.
 
     Returns:
-        pl.Expr: Polars expression.
+        pl.Expr: Polars expression representing the formula.
 
     Raises:
-        ValueError: If formula contains unknown operators or is malformed.
+        ValueError: If the formula is empty, malformed, or contains
+            unsupported operators.
     """
+    if not formula or not formula.strip():
+        raise ValueError("Formula must not be empty")
+
     tokens = re.split(r'([+\-*/])', formula)
     tokens = [t.strip() for t in tokens if t.strip()]
 
+    if not tokens:
+        raise ValueError("Formula must not be empty")
+
     if len(tokens) == 1:
         return pl.col(tokens[0])
+
+    # Validate token pattern: column, op, column, op, column, ...
+    _validate_formula_tokens(tokens)
 
     expr = pl.col(tokens[0])
     i = 1
@@ -495,7 +514,47 @@ def _parse_formula(formula: str) -> pl.Expr:
         elif op == "/":
             expr = expr / pl.col(next_token)
         else:
-            raise ValueError(f"Unknown operator in formula: {op}")
+            raise ValueError(
+                f"Unsupported operator '{op}' in formula: {formula!r}"
+            )
         i += 2
 
     return expr
+
+
+def _validate_formula_tokens(tokens: list[str]) -> None:
+    """Validate that formula tokens follow the expected pattern.
+
+    Expects alternating column names and binary operators, starting
+    and ending with a column name: ``col op col op col ...``.
+
+    Args:
+        tokens: List of parsed formula tokens.
+
+    Raises:
+        ValueError: If the token pattern is invalid.
+    """
+    _VALID_COLUMN_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+    _OPERATORS = {"+", "-", "*", "/"}
+
+    for idx, token in enumerate(tokens):
+        if idx % 2 == 0:
+            # Even indices must be column names
+            if not _VALID_COLUMN_RE.match(token):
+                raise ValueError(
+                    f"Invalid column name {token!r} at position {idx} "
+                    f"in formula. Column names must match [a-zA-Z_][a-zA-Z0-9_]*"
+                )
+        else:
+            # Odd indices must be operators
+            if token not in _OPERATORS:
+                raise ValueError(
+                    f"Expected operator at position {idx}, got {token!r}"
+                )
+
+    # Token count must be odd (starts and ends with column name)
+    if len(tokens) % 2 == 0:
+        raise ValueError(
+            "Malformed formula: formula must end with a column name, "
+            "not an operator"
+        )

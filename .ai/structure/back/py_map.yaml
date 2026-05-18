@@ -19,6 +19,7 @@
   - mkobi.db.session
   - mkobi.db.starter
   - mkobi.models.enums
+  - pathlib
   classes: []
   functions:
   - create_app
@@ -106,6 +107,8 @@
   - mkobi.services.processing_config_service
   - mkobi.services.processing_log_service
   - mkobi.core.permissions
+  - mkobi.core.security
+  - mkobi.db.repositories.user_repo
   - mkobi.db.session
   - mkobi.models.enums
   - mkobi.models.user
@@ -1484,6 +1487,7 @@
   - typing
   - uuid
   - fastapi
+  - sqlalchemy.exc
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
   - mkobi.models.access

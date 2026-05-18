@@ -18,7 +18,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from mkobi.config import get_config
 from mkobi.db.repositories.user_repo import UserRepository
 from mkobi.models.enums import EnvironmentEnum, UserRole
-from mkobi.services.data_service import cleanup_stale_temp_files
+from mkobi.services.file_cleanup import cleanup_stale_temp_files
 
 logger = logging.getLogger(__name__)
 

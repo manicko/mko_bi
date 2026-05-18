@@ -115,7 +115,10 @@ async def upload_file_endpoint(
             )
 
         # Apply rate limiting for upload endpoint
-        rate_limiter = AsyncRateLimiter(redis_client.get_async_redis_client())
+        rate_limiter = AsyncRateLimiter(
+            redis_client.get_async_redis_client(),
+            fail_closed=config.rate_limiter_fail_closed,
+        )
         if not await rate_limiter.check_rate_limit(
             f"upload:{current_user.id}",
             max_attempts=10,
