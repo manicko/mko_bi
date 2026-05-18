@@ -21,7 +21,6 @@ C:\PY_DEV\MKOBI
 |   
 +---.ai
 |   |   config.json
-|   |   models.md
 |   |   
 |   +---.ai
 |   +---.tmp
@@ -29,24 +28,11 @@ C:\PY_DEV\MKOBI
 |   |       
 |   +---audit
 |   |   +---db
-|   |   |       audit_report_001.md
-|   |   |       audit_report_01.md
-|   |   |       audit_report_02.md
-|   |   |       
 |   |   +---problems
 |   |   +---project
-|   |   |       audit_report_001.md
-|   |   |       audit_report_002.md
-|   |   |       audit_report_01.md
-|   |   |       
 |   |   +---test
 |   |   +---tests
-|   |   |       audit_report_001.md
-|   |   |       audit_report_002.md
-|   |   |       
 |   |   \---validated
-|   |           audit_validated_findings_001.md
-|   |           
 |   +---builders
 |   |   |   build.bat
 |   |   |   
@@ -70,9 +56,14 @@ C:\PY_DEV\MKOBI
 |   +---mcp
 |   |       docker-compose.yaml
 |   |       
+|   +---models
+|   |       lookup_table.md
+|   |       models_to_use.md
+|   |       
 |   +---plans
-|   |       order_01.yaml
+|   |       order_02.yaml
 |   |       PLAN_01.md
+|   |       PLAN_02.md
 |   |       
 |   +---problems
 |   |   |   CONTEXT_01.md
@@ -101,6 +92,42 @@ C:\PY_DEV\MKOBI
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
+|   |   |       order.yaml
+|   |   |       TASK_001_T11_create_folder_structure.yaml
+|   |   |       TASK_002_T12_extract_inventory_from_spec.yaml
+|   |   |       TASK_003_T13_build_migration_map.yaml
+|   |   |       TASK_004_T14_create_high_risk_checklist.yaml
+|   |   |       TASK_005_T21_create_overview_files.yaml
+|   |   |       TASK_006_T22_create_auth_api_doc.yaml
+|   |   |       TASK_007_T23_create_dashboards_api_doc.yaml
+|   |   |       TASK_008_T24_create_processing_docs.yaml
+|   |   |       TASK_009_T31_create_admin_api_doc.yaml
+|   |   |       TASK_010_T32_create_health_api_doc.yaml
+|   |   |       TASK_011_T33_create_backend_docs.yaml
+|   |   |       TASK_012_T34_create_frontend_docs.yaml
+|   |   |       TASK_013_T35_create_security_docs.yaml
+|   |   |       TASK_014_T36_create_database_docs.yaml
+|   |   |       TASK_015_T37_create_deployment_doc.yaml
+|   |   |       TASK_016_T41_convert_spec_to_overview.yaml
+|   |   |       TASK_017_T42_create_docs_readme.yaml
+|   |   |       TASK_018_T51_add_yaml_frontmatter.yaml
+|   |   |       TASK_019_T52_add_cross_links.yaml
+|   |   |       TASK_020_T53_integrate_standalone_docs.yaml
+|   |   |       TASK_021_T61_reconciliation_pass.yaml
+|   |   |       TASK_022_T62_frontmatter_consistency_check.yaml
+|   |   |       TASK_023_T63_final_structure_verification.yaml
+|   |   |       TASK_024_A01_add_display_name_to_userread.yaml
+|   |   |       TASK_025_A02_add_token_with_user_response_model.yaml
+|   |   |       TASK_026_B01_admin_bypass_dashboard_listing.yaml
+|   |   |       TASK_027_B02_registration_request_validation.yaml
+|   |   |       TASK_028_B03_login_response_includes_user.yaml
+|   |   |       TASK_029_B04_403_for_unauthorized_dashboard_access.yaml
+|   |   |       TASK_030_C01_update_frontend_login_for_user_response.yaml
+|   |   |       TASK_031_C02_restructure_routes_move_login_outside_layout.yaml
+|   |   |       TASK_032_C03_update_header_navigation.yaml
+|   |   |       TASK_033_C04_add_display_name_to_profile_page.yaml
+|   |   |       TASK_034_C05_update_register_form_success_message.yaml
+|   |   |       
 |   |   \---validation
 |   |           tasks_validated_findings_001.md
 |   |           

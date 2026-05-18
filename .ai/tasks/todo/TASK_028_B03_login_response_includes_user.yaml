@@ -1,0 +1,43 @@
+id: TASK_028_B03_login_response_includes_user
+title: Login response includes user data
+status: pending
+priority: high
+depends_on:
+  - TASK_024_A01_add_display_name_to_userread
+  - TASK_025_A02_add_token_with_user_response_model
+description: >
+  Modify AuthService.login_user() to include user data in the return dict.
+  Change the login endpoint response_model from Token to TokenWithUser.
+  Update _handle_login to construct TokenWithUser from the dict returned by login_user.
+goals:
+  - Login response includes user data to avoid race condition
+  - Frontend can set user state immediately after login
+files:
+  - path: src/mkobi/services/auth_service.py
+    targets:
+      - type: method
+        name: AuthService.login_user
+    changes:
+      - action: modify_code
+        description: After successful auth, include user data (UserRead.model_validate) in the returned dict under "user" key
+  - path: src/mkobi/api/routes/auth.py
+    targets:
+      - type: function
+        name: _handle_login
+      - type: function
+        name: login
+      - type: function
+        name: login_form
+    changes:
+      - action: modify_code
+        description: Change response_model from Token to TokenWithUser. _handle_login must construct TokenWithUser from the dict returned by login_user
+acceptance_criteria:
+  - POST /auth/login returns {access_token, token_type, user: {id, email, role, display_name, created_at}}
+  - POST /auth/login/form returns the same format
+  - No separate /me call needed after login
+tests_to_run:
+  - tests/
+risk_level: medium
+phase: 02
+wave: 2
+plan: PLAN_02

@@ -1,0 +1,107 @@
+id: TASK_027_B02_registration_request_validation
+title: Fix registration request validation order and error messages
+status: pending
+priority: high
+depends_on: []
+description: >
+  Refactor AuthService.register_request() to check for existing registration
+  requests BEFORE checking blocked email domains. Add status-based error message
+  differentiation for duplicate requests. Update blocked domain error message
+  to match spec exactly.
+
+  Current execution order in register_request (lines 364-445):
+    1. Email format validation (lines 383-388)
+    2. Extract email_domain (line 391)
+    3. Blocked domain check (lines 393-401)
+    4. Existing request check (lines 407-415) — generic message, no status differentiation
+    5. Existing user check (lines 417-421)
+
+  Target execution order:
+    1. Email format validation (unchanged)
+    2. Extract email_domain (unchanged — needed for both checks)
+    3. Existing request check (moved before domain check, with status differentiation)
+    4. Blocked domain check (moved after existing request check)
+    5. Existing user check (unchanged)
+
+  Model context:
+    - RegistrationRequest.status is Mapped[RegistrationStatus] (Enum column)
+    - RegistrationStatus is a StrEnum with values: PENDING, APPROVED, REJECTED
+    - RegistrationStatus is imported from mkobi.models.enums
+    - existing_request is returned by self.reg_request_repo.get_by_email(email, db)
+    - existing_request.status returns a RegistrationStatus enum member
+
+goals:
+  - Existing registration request check happens before blocked domain check
+  - Status-based error messages for duplicate registration requests
+  - Blocked domain error message matches spec: "This email domain is not allowed for registration"
+  - No changes to email format validation or existing user check logic
+
+files:
+  - path: src/mkobi/services/auth_service.py
+    targets:
+      - type: method
+        name: AuthService.register_request
+    semantic_anchors:
+      insert_after:
+        type: assignment
+        value: "email_domain = email.split('@')[1].lower()"
+      insert_before:
+        type: conditional
+        value: "if email_domain in self.blocked_dset:"
+    changes:
+      - action: modify_code
+        description: >
+          Move existing request check (lines 407-415) before blocked domain check
+          (lines 393-401). Add status-based branching on existing_request.status:
+          - If status is PENDING or APPROVED → raise ValueError("A request for this email already exists")
+          - If status is REJECTED → raise ValueError("Your request was rejected. Contact an administrator for more information.")
+          Update blocked domain error message from
+          "Registration with email domain '{email_domain}' is not allowed"
+          to "This email domain is not allowed for registration".
+        implementation_hint: |
+          # After email_domain extraction (line 391), insert:
+          existing_request = await self.reg_request_repo.get_by_email(email, db)
+          if existing_request is not None:
+              if existing_request.status in (
+                  RegistrationStatus.PENDING,
+                  RegistrationStatus.APPROVED,
+              ):
+                  logger.warning(
+                      "Registration request already exists (active)",
+                      extra={"email": email, "status": existing_request.status.value}
+                  )
+                  raise ValueError("A request for this email already exists")
+              if existing_request.status == RegistrationStatus.REJECTED:
+                  logger.warning(
+                      "Registration request already exists (rejected)",
+                      extra={"email": email, "status": existing_request.status.value}
+                  )
+                  raise ValueError(
+                      "Your request was rejected. Contact an administrator for more information."
+                  )
+
+          # Then the blocked domain check with updated message:
+          if email_domain in self.blocked_domains_set:
+              ...
+              raise ValueError("This email domain is not allowed for registration")
+
+          # Remove the old existing_request check block (previously at lines 407-415)
+          # since it's now handled above with status differentiation.
+
+acceptance_criteria:
+  - PENDING existing request → ValueError("A request for this email already exists")
+  - APPROVED existing request → ValueError("A request for this email already exists")
+  - REJECTED existing request → ValueError("Your request was rejected. Contact an administrator for more information.")
+  - Blocked domain (no existing request) → ValueError("This email domain is not allowed for registration")
+  - Email format validation unchanged
+  - Existing user check unchanged
+  - New request creation logic unchanged
+  - RegistrationStatus enum imported from mkobi.models.enums (verify import exists)
+
+tests_to_run:
+  - tests/
+
+risk_level: medium
+phase: 02
+wave: 2
+plan: PLAN_02

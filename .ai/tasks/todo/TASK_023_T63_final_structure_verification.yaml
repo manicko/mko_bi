@@ -1,0 +1,36 @@
+id: TASK_023_T63_final_structure_verification
+title: Final structure verification
+status: pending
+priority: high
+depends_on:
+  - TASK_022_T62_frontmatter_consistency_check
+description: >
+  Verify the complete documentation structure matches the target from DECISION_01.md.
+  All 28 .md files exist in correct locations, folder numbering follows convention,
+  file naming is kebab-case, no files outside target structure.
+goals:
+  - All 28 .md files exist in correct locations
+  - Folder numbering follows convention (two-digit prefixes)
+  - File naming is kebab-case
+  - No files outside the target structure
+  - 90-adr/ is empty but exists for future use
+  - Total file count: 28 domain files + README.md + SPEC.md = 30 files
+files:
+  - path: docs/
+    targets:
+      - type: directory
+        name: docs
+    changes:
+      - action: validate
+        description: Verify complete documentation structure matches target
+acceptance_criteria:
+  - All 28 .md files exist in correct locations
+  - Folder numbering follows convention
+  - File naming is kebab-case
+  - No files outside the target structure
+  - Total file count: 28 domain files + README.md + SPEC.md = 30 files
+tests_to_run: []
+risk_level: low
+phase: 01
+wave: 6
+plan: PLAN_01

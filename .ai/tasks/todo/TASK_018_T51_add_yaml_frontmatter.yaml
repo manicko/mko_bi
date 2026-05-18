@@ -1,0 +1,238 @@
+id: TASK_018_T51_add_yaml_frontmatter
+title: Add YAML frontmatter to all created files
+status: pending
+priority: high
+depends_on:
+  - TASK_016_T41_convert_spec_to_overview
+  - TASK_017_T42_create_docs_readme
+description: >
+  Add consistent YAML frontmatter to every .md file created in Waves 2-4 (28 files).
+  Frontmatter template: id, domain, tags, related. Domain values from fixed taxonomy of 12 values.
+goals:
+  - All 28 files have valid YAML frontmatter
+  - id matches filename (kebab-case, no .md)
+  - domain is one of the 12 fixed values
+  - tags has 3-8 relevant tags per file
+  - related has 3-5 co-retrieved doc IDs (no self-references)
+  - No frontmatter on SPEC.md or README.md
+files:
+  - path: docs/00-overview/overview.md
+    targets:
+      - type: file
+        name: overview.md
+    changes:
+      - action: add_frontmatter
+        id: system-overview
+        domain: overview
+  - path: docs/00-overview/data-flow.md
+    targets:
+      - type: file
+        name: data-flow.md
+    changes:
+      - action: add_frontmatter
+        id: data-flow
+        domain: overview
+  - path: docs/01-auth/auth-api.md
+    targets:
+      - type: file
+        name: auth-api.md
+    changes:
+      - action: add_frontmatter
+        id: auth-api
+        domain: auth
+  - path: docs/02-dashboards/dashboards-api.md
+    targets:
+      - type: file
+        name: dashboards-api.md
+    changes:
+      - action: add_frontmatter
+        id: dashboards-api
+        domain: dashboards
+  - path: docs/03-processing/processing-api.md
+    targets:
+      - type: file
+        name: processing-api.md
+    changes:
+      - action: add_frontmatter
+        id: processing-api
+        domain: processing
+  - path: docs/03-processing/task-queue.md
+    targets:
+      - type: file
+        name: task-queue.md
+    changes:
+      - action: add_frontmatter
+        id: task-queue
+        domain: processing
+  - path: docs/04-admin/admin-api.md
+    targets:
+      - type: file
+        name: admin-api.md
+    changes:
+      - action: add_frontmatter
+        id: admin-api
+        domain: admin
+  - path: docs/05-health/health-api.md
+    targets:
+      - type: file
+        name: health-api.md
+    changes:
+      - action: add_frontmatter
+        id: health-api
+        domain: health
+  - path: docs/06-backend/architecture.md
+    targets:
+      - type: file
+        name: architecture.md
+    changes:
+      - action: add_frontmatter
+        id: backend-architecture
+        domain: backend
+  - path: docs/06-backend/configuration.md
+    targets:
+      - type: file
+        name: configuration.md
+    changes:
+      - action: add_frontmatter
+        id: configuration
+        domain: backend
+  - path: docs/06-backend/logging.md
+    targets:
+      - type: file
+        name: logging.md
+    changes:
+      - action: add_frontmatter
+        id: logging
+        domain: backend
+  - path: docs/06-backend/testing.md
+    targets:
+      - type: file
+        name: testing.md
+    changes:
+      - action: add_frontmatter
+        id: testing
+        domain: backend
+  - path: docs/07-frontend/architecture.md
+    targets:
+      - type: file
+        name: architecture.md
+    changes:
+      - action: add_frontmatter
+        id: frontend-architecture
+        domain: frontend
+  - path: docs/07-frontend/fsd-structure.md
+    targets:
+      - type: file
+        name: fsd-structure.md
+    changes:
+      - action: add_frontmatter
+        id: fsd-structure
+        domain: frontend
+  - path: docs/07-frontend/pages.md
+    targets:
+      - type: file
+        name: pages.md
+    changes:
+      - action: add_frontmatter
+        id: ui-pages
+        domain: frontend
+  - path: docs/07-frontend/auth-flow.md
+    targets:
+      - type: file
+        name: auth-flow.md
+    changes:
+      - action: add_frontmatter
+        id: frontend-auth-flow
+        domain: frontend
+  - path: docs/07-frontend/upload-ui.md
+    targets:
+      - type: file
+        name: upload-ui.md
+    changes:
+      - action: add_frontmatter
+        id: upload-ui
+        domain: frontend
+  - path: docs/07-frontend/frontend-security.md
+    targets:
+      - type: file
+        name: frontend-security.md
+    changes:
+      - action: add_frontmatter
+        id: frontend-security
+        domain: frontend
+  - path: docs/08-security/security-overview.md
+    targets:
+      - type: file
+        name: security-overview.md
+    changes:
+      - action: add_frontmatter
+        id: security-overview
+        domain: security
+  - path: docs/08-security/access-control.md
+    targets:
+      - type: file
+        name: access-control.md
+    changes:
+      - action: add_frontmatter
+        id: access-control
+        domain: security
+  - path: docs/09-database/schema-core.md
+    targets:
+      - type: file
+        name: schema-core.md
+    changes:
+      - action: add_frontmatter
+        id: schema-core
+        domain: database
+  - path: docs/09-database/schema-processing.md
+    targets:
+      - type: file
+        name: schema-processing.md
+    changes:
+      - action: add_frontmatter
+        id: schema-processing
+        domain: database
+  - path: docs/09-database/schema-access.md
+    targets:
+      - type: file
+        name: schema-access.md
+    changes:
+      - action: add_frontmatter
+        id: schema-access
+        domain: database
+  - path: docs/09-database/indexes.md
+    targets:
+      - type: file
+        name: indexes.md
+    changes:
+      - action: add_frontmatter
+        id: indexes
+        domain: database
+  - path: docs/09-database/enums.md
+    targets:
+      - type: file
+        name: enums.md
+    changes:
+      - action: add_frontmatter
+        id: enums
+        domain: database
+  - path: docs/10-deployment/deployment.md
+    targets:
+      - type: file
+        name: deployment.md
+    changes:
+      - action: add_frontmatter
+        id: deployment
+        domain: deployment
+acceptance_criteria:
+  - All 28 files have valid YAML frontmatter
+  - id matches filename (kebab-case, no .md)
+  - domain is one of the 12 fixed values
+  - tags has 3-8 relevant tags per file
+  - related has 3-5 co-retrieved doc IDs
+  - No frontmatter on SPEC.md or README.md
+tests_to_run: []
+risk_level: low
+phase: 01
+wave: 5
+plan: PLAN_01

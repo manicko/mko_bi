@@ -1,0 +1,39 @@
+id: TASK_005_T21_create_overview_files
+title: Create 00-overview/ files
+status: pending
+priority: high
+depends_on:
+  - TASK_003_T13_build_migration_map
+description: >
+  Create docs/00-overview/overview.md and docs/00-overview/data-flow.md by transferring
+  content from SPEC.md sections 1-4, 7-8, 10, and 14 (summary). All Russian text translated to English.
+goals:
+  - overview.md contains Purpose, Technology Stack, Core Entities, Roles, API Overview
+  - data-flow.md contains the complete end-to-end data flow
+  - All Russian text translated to English
+  - Cross-links added to domain-specific files
+files:
+  - path: docs/00-overview/overview.md
+    targets:
+      - type: file
+        name: overview.md
+    changes:
+      - action: create_file
+        description: System overview with Purpose, Technology Stack, Core Entities, Roles & Permissions, API Overview (from SPEC.md sections 1-4, 14 summary)
+  - path: docs/00-overview/data-flow.md
+    targets:
+      - type: file
+        name: data-flow.md
+    changes:
+      - action: create_file
+        description: End-to-end data flow from upload to display (from SPEC.md sections 7, 8, 10)
+acceptance_criteria:
+  - overview.md contains Purpose, Technology Stack, Core Entities, Roles, API Overview
+  - data-flow.md contains the complete end-to-end data flow
+  - All Russian text translated to English
+  - Cross-links added to domain-specific files
+tests_to_run: []
+risk_level: medium
+phase: 01
+wave: 2
+plan: PLAN_01

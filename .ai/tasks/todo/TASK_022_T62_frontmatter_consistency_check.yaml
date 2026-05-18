@@ -1,0 +1,31 @@
+id: TASK_022_T62_frontmatter_consistency_check
+title: Frontmatter consistency check
+status: pending
+priority: high
+depends_on:
+  - TASK_021_T61_reconciliation_pass
+description: >
+  Validate YAML frontmatter across all 28 files. Checks: id field (kebab-case, matches filename),
+  domain field (one of 12 fixed values), domain matches folder name, tags array (3-8 items),
+  related array (3-5 items, valid doc IDs), no frontmatter on SPEC.md or README.md.
+goals:
+  - All 28 files pass frontmatter validation
+  - No inconsistent field names or formats
+  - All related IDs reference existing files
+files:
+  - path: docs/
+    targets:
+      - type: directory
+        name: docs
+    changes:
+      - action: validate
+        description: Validate YAML frontmatter across all 28 domain files
+acceptance_criteria:
+  - All 28 files pass frontmatter validation
+  - No inconsistent field names or formats
+  - All related IDs reference existing files
+tests_to_run: []
+risk_level: low
+phase: 01
+wave: 6
+plan: PLAN_01

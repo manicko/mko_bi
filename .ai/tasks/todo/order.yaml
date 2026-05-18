@@ -1,0 +1,395 @@
+phase: combined
+phase_name: Documentation Restructuring + Authorization
+description: >
+  Combined execution order for PLAN_01 (Documentation Restructuring, 22 tasks)
+  and PLAN_02 (Authorization Phase, 11 tasks). PLAN_01 and PLAN_02 are independent
+  phases that can execute in parallel. Within each phase, waves execute sequentially
+  with parallel execution where safe.
+total_tasks: 33
+autonomous: true
+
+plans:
+  - id: PLAN_01
+    name: Documentation Restructuring
+    tasks: 22
+    waves: 6
+  - id: PLAN_02
+    name: Authorization Phase
+    tasks: 11
+    waves: 3
+
+# ============================================================
+# PLAN_01 — Documentation Restructuring
+# ============================================================
+plan_01_order:
+
+  wave_1:
+    name: Preparation
+    description: Create folder structure, extract inventory, build migration map, create high-risk checklist
+    parallel: false
+    tasks:
+      - id: TASK_001_T11_create_folder_structure
+        name: create_folder_structure
+        depends_on: []
+        priority: high
+        files:
+          - docs/00-overview/
+          - docs/01-auth/
+          - docs/02-dashboards/
+          - docs/03-processing/
+          - docs/04-admin/
+          - docs/05-health/
+          - docs/06-backend/
+          - docs/07-frontend/
+          - docs/08-security/
+          - docs/09-database/
+          - docs/10-deployment/
+          - docs/90-adr/
+          - docs/99-reference/
+      - id: TASK_002_T12_extract_inventory_from_spec
+        name: extract_inventory_from_spec
+        depends_on:
+          - TASK_001_T11_create_folder_structure
+        priority: high
+        files:
+          - .ai/tmp/inventory_01.md
+      - id: TASK_003_T13_build_migration_map
+        name: build_migration_map
+        depends_on:
+          - TASK_002_T12_extract_inventory_from_spec
+        priority: high
+        files:
+          - .ai/tmp/migration_map_01.md
+      - id: TASK_004_T14_create_high_risk_checklist
+        name: create_high_risk_checklist
+        depends_on:
+          - TASK_003_T13_build_migration_map
+        priority: high
+        files:
+          - .ai/tmp/high_risk_checklist_01.md
+
+  wave_2:
+    name: Core API Domain Migration
+    description: Create overview, auth, dashboards, and processing domain files
+    parallel: true
+    parallel_group: wave_2_3
+    tasks:
+      - id: TASK_005_T21_create_overview_files
+        name: create_overview_files
+        depends_on:
+          - TASK_003_T13_build_migration_map
+        priority: high
+        files:
+          - docs/00-overview/overview.md
+          - docs/00-overview/data-flow.md
+      - id: TASK_006_T22_create_auth_api_doc
+        name: create_auth_api_doc
+        depends_on:
+          - TASK_003_T13_build_migration_map
+        priority: high
+        files:
+          - docs/01-auth/auth-api.md
+      - id: TASK_007_T23_create_dashboards_api_doc
+        name: create_dashboards_api_doc
+        depends_on:
+          - TASK_003_T13_build_migration_map
+        priority: high
+        files:
+          - docs/02-dashboards/dashboards-api.md
+      - id: TASK_008_T24_create_processing_docs
+        name: create_processing_docs
+        depends_on:
+          - TASK_003_T13_build_migration_map
+        priority: high
+        files:
+          - docs/03-processing/processing-api.md
+          - docs/03-processing/task-queue.md
+
+  wave_3:
+    name: Extended Domain Migration
+    description: Create admin, health, backend, frontend, security, database, and deployment domain files
+    parallel: true
+    parallel_group: wave_2_3
+    tasks:
+      - id: TASK_009_T31_create_admin_api_doc
+        name: create_admin_api_doc
+        depends_on:
+          - TASK_003_T13_build_migration_map
+        priority: high
+        files:
+          - docs/04-admin/admin-api.md
+      - id: TASK_010_T32_create_health_api_doc
+        name: create_health_api_doc
+        depends_on:
+          - TASK_003_T13_build_migration_map
+        priority: high
+        files:
+          - docs/05-health/health-api.md
+      - id: TASK_011_T33_create_backend_docs
+        name: create_backend_docs
+        depends_on:
+          - TASK_003_T13_build_migration_map
+        priority: high
+        files:
+          - docs/06-backend/architecture.md
+          - docs/06-backend/configuration.md
+          - docs/06-backend/logging.md
+          - docs/06-backend/testing.md
+      - id: TASK_012_T34_create_frontend_docs
+        name: create_frontend_docs
+        depends_on:
+          - TASK_003_T13_build_migration_map
+        priority: high
+        files:
+          - docs/07-frontend/architecture.md
+          - docs/07-frontend/fsd-structure.md
+          - docs/07-frontend/pages.md
+          - docs/07-frontend/auth-flow.md
+          - docs/07-frontend/upload-ui.md
+          - docs/07-frontend/frontend-security.md
+      - id: TASK_013_T35_create_security_docs
+        name: create_security_docs
+        depends_on:
+          - TASK_003_T13_build_migration_map
+        priority: high
+        files:
+          - docs/08-security/security-overview.md
+          - docs/08-security/access-control.md
+      - id: TASK_014_T36_create_database_docs
+        name: create_database_docs
+        depends_on:
+          - TASK_003_T13_build_migration_map
+        priority: high
+        files:
+          - docs/09-database/schema-core.md
+          - docs/09-database/schema-processing.md
+          - docs/09-database/schema-access.md
+          - docs/09-database/indexes.md
+          - docs/09-database/enums.md
+      - id: TASK_015_T37_create_deployment_doc
+        name: create_deployment_doc
+        depends_on:
+          - TASK_003_T13_build_migration_map
+        priority: high
+        files:
+          - docs/10-deployment/deployment.md
+
+  wave_4:
+    name: SPEC.md Conversion + README Creation
+    description: Convert SPEC.md to system overview and create root README.md
+    parallel: false
+    tasks:
+      - id: TASK_016_T41_convert_spec_to_overview
+        name: convert_spec_to_overview
+        depends_on:
+          - TASK_005_T21_create_overview_files
+          - TASK_006_T22_create_auth_api_doc
+          - TASK_007_T23_create_dashboards_api_doc
+          - TASK_008_T24_create_processing_docs
+          - TASK_009_T31_create_admin_api_doc
+          - TASK_010_T32_create_health_api_doc
+          - TASK_011_T33_create_backend_docs
+          - TASK_012_T34_create_frontend_docs
+          - TASK_013_T35_create_security_docs
+          - TASK_014_T36_create_database_docs
+          - TASK_015_T37_create_deployment_doc
+        priority: high
+        files:
+          - docs/SPEC.md
+      - id: TASK_017_T42_create_docs_readme
+        name: create_docs_readme
+        depends_on:
+          - TASK_005_T21_create_overview_files
+          - TASK_006_T22_create_auth_api_doc
+          - TASK_007_T23_create_dashboards_api_doc
+          - TASK_008_T24_create_processing_docs
+          - TASK_009_T31_create_admin_api_doc
+          - TASK_010_T32_create_health_api_doc
+          - TASK_011_T33_create_backend_docs
+          - TASK_012_T34_create_frontend_docs
+          - TASK_013_T35_create_security_docs
+          - TASK_014_T36_create_database_docs
+          - TASK_015_T37_create_deployment_doc
+        priority: high
+        files:
+          - docs/README.md
+
+  wave_5:
+    name: Cross-Linking + Frontmatter Addition
+    description: Add YAML frontmatter, cross-links, and integrate standalone docs
+    parallel: false
+    tasks:
+      - id: TASK_018_T51_add_yaml_frontmatter
+        name: add_yaml_frontmatter
+        depends_on:
+          - TASK_016_T41_convert_spec_to_overview
+          - TASK_017_T42_create_docs_readme
+        priority: high
+        files:
+          - docs/
+      - id: TASK_019_T52_add_cross_links
+        name: add_cross_links
+        depends_on:
+          - TASK_018_T51_add_yaml_frontmatter
+        priority: high
+        files:
+          - docs/
+      - id: TASK_020_T53_integrate_standalone_docs
+        name: integrate_standalone_docs
+        depends_on:
+          - TASK_018_T51_add_yaml_frontmatter
+        priority: high
+        files:
+          - docs/99-reference/swagger.md
+          - docs/99-reference/run-guide.md
+          - docs/SWAGGER_README.md
+          - docs/RUN.md
+
+  wave_6:
+    name: Validation + Cleanup
+    description: Verify no content loss, frontmatter consistency, final structure
+    parallel: false
+    tasks:
+      - id: TASK_021_T61_reconciliation_pass
+        name: reconciliation_pass
+        depends_on:
+          - TASK_019_T52_add_cross_links
+          - TASK_020_T53_integrate_standalone_docs
+        priority: high
+        files:
+          - .ai/tmp/high_risk_checklist_01.md
+      - id: TASK_022_T62_frontmatter_consistency_check
+        name: frontmatter_consistency_check
+        depends_on:
+          - TASK_021_T61_reconciliation_pass
+        priority: high
+        files:
+          - docs/
+      - id: TASK_023_T63_final_structure_verification
+        name: final_structure_verification
+        depends_on:
+          - TASK_022_T62_frontmatter_consistency_check
+        priority: high
+        files:
+          - docs/
+
+# ============================================================
+# PLAN_02 — Authorization Phase
+# ============================================================
+plan_02_order:
+
+  wave_1:
+    name: Backend Model/Type Changes
+    description: Add display_name to UserRead and TokenWithUser response model
+    parallel: true
+    tasks:
+      - id: TASK_024_A01_add_display_name_to_userread
+        name: add_display_name_to_userread
+        depends_on: []
+        priority: high
+        files:
+          - src/mkobi/models/user.py
+      - id: TASK_025_A02_add_token_with_user_response_model
+        name: add_token_with_user_response_model
+        depends_on: []
+        priority: high
+        files:
+          - src/mkobi/models/auth.py
+
+  wave_2:
+    name: Backend Service/Route Logic
+    description: Admin bypass, registration validation, login response, 403 handling
+    parallel: false
+    tasks:
+      - id: TASK_026_B01_admin_bypass_dashboard_listing
+        name: admin_bypass_dashboard_listing
+        depends_on: []
+        priority: high
+        files:
+          - src/mkobi/db/repositories/dashboard_repo.py
+          - src/mkobi/services/dashboard_service.py
+          - src/mkobi/api/routes/dashboards.py
+      - id: TASK_027_B02_registration_request_validation
+        name: registration_request_validation
+        depends_on: []
+        priority: high
+        files:
+          - src/mkobi/services/auth_service.py
+      - id: TASK_028_B03_login_response_includes_user
+        name: login_response_includes_user
+        depends_on:
+          - TASK_024_A01_add_display_name_to_userread
+          - TASK_025_A02_add_token_with_user_response_model
+        priority: high
+        files:
+          - src/mkobi/services/auth_service.py
+          - src/mkobi/api/routes/auth.py
+      - id: TASK_029_B04_403_for_unauthorized_dashboard_access
+        name: 403_for_unauthorized_dashboard_access
+        depends_on:
+          - TASK_026_B01_admin_bypass_dashboard_listing
+        priority: high
+        files:
+          - src/mkobi/services/dashboard_service.py
+          - src/mkobi/api/routes/dashboards.py
+
+  wave_3:
+    name: Frontend Changes
+    description: Update login response handling, routes, header, profile, register form
+    parallel: false
+    tasks:
+      - id: TASK_030_C01_update_frontend_login_for_user_response
+        name: update_frontend_login_for_user_response
+        depends_on:
+          - TASK_028_B03_login_response_includes_user
+        priority: high
+        files:
+          - frontend/src/shared/types/api.types.ts
+          - frontend/src/features/auth/model/useAuth.ts
+      - id: TASK_031_C02_restructure_routes_move_login_outside_layout
+        name: restructure_routes_move_login_outside_layout
+        depends_on: []
+        priority: high
+        files:
+          - frontend/src/app/routes.tsx
+      - id: TASK_032_C03_update_header_navigation
+        name: update_header_navigation
+        depends_on: []
+        priority: high
+        files:
+          - frontend/src/shared/components/Layout/Header.tsx
+      - id: TASK_033_C04_add_display_name_to_profile_page
+        name: add_display_name_to_profile_page
+        depends_on:
+          - TASK_024_A01_add_display_name_to_userread
+        priority: high
+        files:
+          - frontend/src/features/users/ui/UserProfile.tsx
+      - id: TASK_034_C05_update_register_form_success_message
+        name: update_register_form_success_message
+        depends_on: []
+        priority: high
+        files:
+          - frontend/src/features/auth/ui/RegisterForm.tsx
+          - frontend/src/features/auth/api/authApi.ts
+
+# ============================================================
+# Cross-plan parallel execution notes
+# ============================================================
+cross_plan_notes: >
+  PLAN_01 (Documentation) and PLAN_02 (Authorization) are fully independent.
+  They modify completely different file sets and can execute in parallel.
+  PLAN_01 modifies only docs/ directory.
+  PLAN_02 modifies src/mkobi/ and frontend/src/ directories.
+  No shared files, no dependency conflicts.
+
+# ============================================================
+# Validation Notes
+# ============================================================
+validation_notes: >
+  All 33 tasks have been validated and approved.
+  TASK_027_B02 was previously rejected but has been refined with:
+    - Explicit RegistrationStatus enum references (PENDING, APPROVED, REJECTED)
+    - Clear implementation order with code hints
+    - Status-based error message differentiation
+    - Updated blocked domain error message

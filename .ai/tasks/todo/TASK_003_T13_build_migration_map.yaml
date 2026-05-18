@@ -1,0 +1,32 @@
+id: TASK_003_T13_build_migration_map
+title: Build section-to-file migration map
+status: pending
+priority: high
+depends_on:
+  - TASK_002_T12_extract_inventory_from_spec
+description: >
+  Map each SPEC.md section/subsection to its target file in the new structure.
+  Output: a mapping document at .ai/tmp/migration_map_01.md.
+goals:
+  - Every ## section from SPEC.md has a mapped target file
+  - All 7 high-risk sections have explicit target locations
+  - No section is left unmapped
+  - Standalone docs (TASK_QUEUE_MIGRATION.md, SWAGGER_README.md, RUN.md) are mapped to 99-reference/
+files:
+  - path: .ai/tmp/migration_map_01.md
+    targets:
+      - type: file
+        name: migration_map_01.md
+    changes:
+      - action: create_file
+        description: Complete mapping of SPEC.md sections to target files in the new modular structure
+acceptance_criteria:
+  - Every ## section from SPEC.md has a mapped target file
+  - All 7 high-risk sections have explicit target locations
+  - No section is left unmapped
+  - Standalone docs are mapped to 99-reference/
+tests_to_run: []
+risk_level: low
+phase: 01
+wave: 1
+plan: PLAN_01

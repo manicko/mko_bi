@@ -1,0 +1,40 @@
+id: TASK_029_B04_403_for_unauthorized_dashboard_access
+title: Return 403 for unauthorized dashboard access (not 404)
+status: pending
+priority: high
+depends_on:
+  - TASK_026_B01_admin_bypass_dashboard_listing
+description: >
+  Modify DashboardService.get_dashboard() to distinguish between
+  "dashboard not found" (404) and "dashboard exists but no access" (403).
+  Check dashboard existence first, then return a sentinel or raise exception for access denied.
+  Update the route handler to return 403 "Access denied" when dashboard exists but user lacks access.
+goals:
+  - Non-admin accessing existing dashboard without permission gets 403
+  - Non-existing dashboard still returns 404
+  - Admin bypass still works
+files:
+  - path: src/mkobi/services/dashboard_service.py
+    targets:
+      - type: method
+        name: DashboardService.get_dashboard
+    changes:
+      - action: modify_code
+        description: Return a tuple or sentinel to distinguish "not found" from "access denied"; check existence first then access
+  - path: src/mkobi/api/routes/dashboards.py
+    targets:
+      - type: function
+        name: get_dashboard_endpoint
+    changes:
+      - action: modify_code
+        description: Handle access denied case with HTTP 403 "Access denied" instead of 404
+acceptance_criteria:
+  - GET /dashboards/{existing_id} without access → 403 "Access denied"
+  - GET /dashboards/{non_existing_id} → 404 "Dashboard not found"
+  - GET /dashboards/{existing_id} with access → 200 with dashboard data
+tests_to_run:
+  - tests/
+risk_level: medium
+phase: 02
+wave: 2
+plan: PLAN_02

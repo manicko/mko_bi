@@ -1,0 +1,29 @@
+id: TASK_009_T31_create_admin_api_doc
+title: Create docs/04-admin/admin-api.md
+status: pending
+priority: high
+depends_on:
+  - TASK_003_T13_build_migration_map
+description: >
+  Create docs/04-admin/admin-api.md from SPEC.md sections 14.8, 14.9, 18.7.
+goals:
+  - All user management and admin endpoints documented
+  - Registration approval flow with temp_password generation described
+  - Admin panel UI pages referenced
+files:
+  - path: docs/04-admin/admin-api.md
+    targets:
+      - type: file
+        name: admin-api.md
+    changes:
+      - action: create_file
+        description: Admin API documentation covering user management, admin endpoints, and admin panel pages
+acceptance_criteria:
+  - All user management and admin endpoints documented
+  - Registration approval flow with temp_password generation described
+  - Cross-links to auth-api.md, access-control.md
+tests_to_run: []
+risk_level: low
+phase: 01
+wave: 3
+plan: PLAN_01

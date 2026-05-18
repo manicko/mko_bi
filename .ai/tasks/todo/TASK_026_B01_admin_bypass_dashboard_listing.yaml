@@ -1,0 +1,54 @@
+id: TASK_026_B01_admin_bypass_dashboard_listing
+title: Admin bypass for dashboard listing and access
+status: pending
+priority: high
+depends_on: []
+description: >
+  Modify DashboardRepository.get_by_user() to check if the user is admin.
+  If admin, return all dashboards via get_all() instead of JOINing with
+  dashboard_access. Also modify DashboardService.get_user_dashboards() and
+  DashboardService.get_dashboard() to pass user_role for admin bypass.
+  Update the get_my_dashboards_endpoint route handler to pass current_user.role.
+goals:
+  - Admins see all dashboards without explicit access entries
+  - Non-admins continue to see only dashboards with access entries
+  - Admin can access any dashboard detail by direct URL
+  - Route handler propagates user role to service layer
+files:
+  - path: src/mkobi/db/repositories/dashboard_repo.py
+    targets:
+      - type: method
+        name: DashboardRepository.get_by_user
+    semantic_anchors:
+      insert_after:
+        type: method_definition
+        value: get_by_user
+    changes:
+      - action: modify_code
+        description: Add is_admin parameter; if True, call get_all() instead of JOIN query
+  - path: src/mkobi/services/dashboard_service.py
+    targets:
+      - type: method
+        name: DashboardService.get_user_dashboards
+      - type: method
+        name: DashboardService.get_dashboard
+    changes:
+      - action: modify_code
+        description: Pass user_role to repo methods; in get_dashboard, bypass access check for admins
+  - path: src/mkobi/api/routes/dashboards.py
+    targets:
+      - type: function
+        name: get_my_dashboards_endpoint
+    changes:
+      - action: modify_code
+        description: Pass current_user.role to DashboardService.get_user_dashboards()
+acceptance_criteria:
+  - Admin user sees all dashboards from GET /dashboards/my
+  - Non-admin user sees only dashboards with explicit access
+  - Admin can GET /dashboards/{id} for any dashboard
+tests_to_run:
+  - tests/
+risk_level: medium
+phase: 02
+wave: 2
+plan: PLAN_02

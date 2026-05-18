@@ -1,0 +1,35 @@
+id: TASK_019_T52_add_cross_links
+title: Add cross-links between domain files
+status: pending
+priority: high
+depends_on:
+  - TASK_018_T51_add_yaml_frontmatter
+description: >
+  Add inline cross-links within each file's ## Related Docs section and within body content
+  where concepts reference other domains. Key cross-link pairs: auth-api <-> auth-flow,
+  dashboards-api <-> schema-core, processing-api <-> task-queue, architecture <-> configuration,
+  frontend-security <-> security-overview, deployment <-> configuration, pages <-> auth-flow,
+  pages <-> upload-ui.
+goals:
+  - Every file has a ## Related Docs section with 3-5 cross-links
+  - Body content references use relative paths
+  - No broken internal links
+  - Cross-links are bidirectional
+files:
+  - path: docs/
+    targets:
+      - type: directory
+        name: docs
+    changes:
+      - action: modify_files
+        description: Add cross-links between all domain files in Related Docs sections and body content
+acceptance_criteria:
+  - Every file has a ## Related Docs section with 3-5 cross-links
+  - Body content references use relative paths: [text](folder/file.md)
+  - No broken internal links (all targets exist)
+  - Cross-links are bidirectional
+tests_to_run: []
+risk_level: low
+phase: 01
+wave: 5
+plan: PLAN_01

@@ -1,0 +1,36 @@
+id: TASK_002_T12_extract_inventory_from_spec
+title: Extract inventory from SPEC.md
+status: pending
+priority: high
+depends_on:
+  - TASK_001_T11_create_folder_structure
+description: >
+  Parse docs/SPEC.md and produce a complete inventory of all content elements.
+  Output: a working checklist at .ai/tmp/inventory_01.md.
+goals:
+  - Every ## section in SPEC.md is catalogued
+  - All 7 high-risk sections are flagged
+  - All SQL DDL blocks are identified with their table names
+  - All 19 StrEnum classes from section 22 are listed
+  - All ~30 API endpoints from section 14 are listed with method + path + auth
+  - Russian-language sections are identified for translation during migration
+files:
+  - path: .ai/tmp/inventory_01.md
+    targets:
+      - type: file
+        name: inventory_01.md
+    changes:
+      - action: create_file
+        description: Inventory of all SPEC.md content elements — sections, SQL blocks, code blocks, enums, API endpoints, high-risk sections, Russian-language sections
+acceptance_criteria:
+  - Every ## section in SPEC.md is catalogued
+  - All 7 high-risk sections are flagged
+  - All SQL DDL blocks are identified with their table names
+  - All 19 StrEnum classes from section 22 are listed
+  - All ~30 API endpoints from section 14 are listed with method + path + auth
+  - Russian-language sections are identified
+tests_to_run: []
+risk_level: low
+phase: 01
+wave: 1
+plan: PLAN_01

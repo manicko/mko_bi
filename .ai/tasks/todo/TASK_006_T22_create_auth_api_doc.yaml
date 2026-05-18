@@ -1,0 +1,31 @@
+id: TASK_006_T22_create_auth_api_doc
+title: Create docs/01-auth/auth-api.md
+status: pending
+priority: high
+depends_on:
+  - TASK_003_T13_build_migration_map
+description: >
+  Create docs/01-auth/auth-api.md by transferring content from SPEC.md sections 5, 14.1, 18.1, 18.2, 18.6.
+  All Russian text translated to English.
+goals:
+  - All 7 auth endpoints documented with method, path, auth level, description
+  - Login and registration flows described step-by-step
+  - Cross-links to security-overview.md, auth-flow.md, access-control.md
+files:
+  - path: docs/01-auth/auth-api.md
+    targets:
+      - type: file
+        name: auth-api.md
+    changes:
+      - action: create_file
+        description: Authentication API documentation with endpoints, flows, constraints, edge cases, and cross-links
+acceptance_criteria:
+  - All 7 auth endpoints documented with method, path, auth level, description
+  - Login and registration flows described step-by-step
+  - Cross-links to security-overview.md, auth-flow.md, access-control.md
+  - Russian text translated to English
+tests_to_run: []
+risk_level: medium
+phase: 01
+wave: 2
+plan: PLAN_01

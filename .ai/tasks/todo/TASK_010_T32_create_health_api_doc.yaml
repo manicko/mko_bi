@@ -1,0 +1,28 @@
+id: TASK_010_T32_create_health_api_doc
+title: Create docs/05-health/health-api.md
+status: pending
+priority: high
+depends_on:
+  - TASK_003_T13_build_migration_map
+description: >
+  Create docs/05-health/health-api.md from SPEC.md section 14.10.
+goals:
+  - Both health endpoints documented with response format
+  - DB connectivity check described
+files:
+  - path: docs/05-health/health-api.md
+    targets:
+      - type: file
+        name: health-api.md
+    changes:
+      - action: create_file
+        description: Health check endpoints documentation
+acceptance_criteria:
+  - Both health endpoints documented with response format
+  - DB connectivity check described
+  - Cross-links to architecture.md
+tests_to_run: []
+risk_level: low
+phase: 01
+wave: 3
+plan: PLAN_01

@@ -1,0 +1,41 @@
+id: TASK_030_C01_update_frontend_login_for_user_response
+title: Update frontend login for user-in-response format
+status: pending
+priority: high
+depends_on:
+  - TASK_028_B03_login_response_includes_user
+description: >
+  Update the frontend AuthResponse type and useAuth hook to handle the new
+  login response format that includes user data. Add display_name to the
+  UserProfile interface in api.types.ts.
+goals:
+  - Frontend login works with new backend response format
+  - No race condition between login and getProfile
+  - UserProfile interface includes display_name field
+files:
+  - path: frontend/src/shared/types/api.types.ts
+    targets:
+      - type: interface
+        name: AuthResponse
+      - type: interface
+        name: UserProfile
+    changes:
+      - action: modify_code
+        description: Verify AuthResponse already has user field; add display_name: string to UserProfile interface
+  - path: frontend/src/features/auth/model/useAuth.ts
+    targets:
+      - type: hook
+        name: useAuth
+    changes:
+      - action: verify_code
+        description: Verify login callback correctly uses response.user from the login API response
+acceptance_criteria:
+  - Login flow works end-to-end with backend returning user in login response
+  - User state is set immediately without additional /me call
+  - UserProfile interface includes display_name field
+tests_to_run:
+  - frontend/src/
+risk_level: low
+phase: 02
+wave: 3
+plan: PLAN_02

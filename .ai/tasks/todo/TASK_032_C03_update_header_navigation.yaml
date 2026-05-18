@@ -1,0 +1,33 @@
+id: TASK_032_C03_update_header_navigation
+title: Update Header navigation — remove email/logout, keep Profile
+status: pending
+priority: high
+depends_on: []
+description: >
+  Restructure Header component: remove email display, remove logout button from header,
+  ensure rightmost button is "Profile", other nav buttons to the left.
+  No dropdown menu. Header is a narrow top navigation bar.
+goals:
+  - Header shows only navigation buttons, no email
+  - Rightmost button is "Profile"
+  - No logout in header (handled on profile page)
+  - Narrow top nav bar on all authenticated pages
+files:
+  - path: frontend/src/shared/components/Layout/Header.tsx
+    targets:
+      - type: component
+        name: Header
+    changes:
+      - action: modify_code
+        description: Remove email Typography, remove logout Button, keep only Profile button (rightmost) and conditional Admin button to its left
+acceptance_criteria:
+  - Header does not display user email
+  - Header has "Profile" button as rightmost element
+  - Header has "Admin" button (for admins) to the left of Profile
+  - No logout button in header
+tests_to_run:
+  - frontend/src/
+risk_level: low
+phase: 02
+wave: 3
+plan: PLAN_02

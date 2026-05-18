@@ -90,6 +90,9 @@ PRESERVING execution order.
 
 Don't read task files content, just pass file names. 
 ---
+## 3.1 Select implementor model  depending on task from:
+
+{task_implementor_model} = `C:\py_dev\mkobi\.ai\models\lookup_table.md`
 
 ## 3.2 Spawn Implementor Subagent
 
@@ -241,6 +244,7 @@ Include:
 Task(
   prompt="First, read C:\py_dev\mkobi\.kilo\agents\implementor.md for your role and instructions..\n\n" + subagent_prompt,
   subagent_type="implementor",
+  model = "{task_implementor_model}"
   description="Implement task  {TASK_FILE_ABS_PATH}"
 )
 ---

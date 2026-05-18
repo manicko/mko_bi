@@ -1,0 +1,35 @@
+id: TASK_021_T61_reconciliation_pass
+title: Reconciliation pass — verify no content loss
+status: pending
+priority: high
+depends_on:
+  - TASK_019_T52_add_cross_links
+  - TASK_020_T53_integrate_standalone_docs
+description: >
+  Verify that all 7 high-risk sections and all major content from SPEC.md exists in the new structure.
+  Uses the high-risk checklist from T1.4.
+goals:
+  - All 7 high-risk sections verified present in target files
+  - All 10 tables, 7 indexes, 19 enums accounted for
+  - All API endpoints documented
+  - No temporary/unassigned files remain
+  - No content silently dropped
+files:
+  - path: .ai/tmp/high_risk_checklist_01.md
+    targets:
+      - type: file
+        name: high_risk_checklist_01.md
+    changes:
+      - action: update_file
+        description: Mark all 7 high-risk sections as verified after reconciliation
+acceptance_criteria:
+  - All 7 high-risk sections verified present in target files
+  - All 10 tables, 7 indexes, 19 enums accounted for
+  - All API endpoints documented
+  - No temporary/unassigned files remain
+  - No content silently dropped
+tests_to_run: []
+risk_level: low
+phase: 01
+wave: 6
+plan: PLAN_01
