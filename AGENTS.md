@@ -7,7 +7,7 @@ alwaysApply: true
 #Key links
 [Project Structure](C:\py_dev\mkobi\.ai\structure\map.md)
 [Full Project Structure including dependencies and semantic for audit and development)](C:\py_dev\mkobi\.ai\structure**)
-[Important project specification](C:\py_dev\mkobi\docs\SPEC.md)
+[Important project specification](C:\py_dev\mkobi\docs\**)
 [Docker specification](C:\py_dev\mkobi\docs\README_DOCKER.md)
 [Important project commands](C:\py_dev\mkobi\.ai\context\commands.md)
 [Important context](C:\py_dev\mkobi\.ai\context)

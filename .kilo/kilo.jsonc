@@ -6,4 +6,5 @@
   "instructions": [
     ".kilo/rules/*.md"
   ],
+  "snapshot": false,
 }

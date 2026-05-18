@@ -1,0 +1,768 @@
+---
+id: dashboards-api
+domain: dashboards
+tags:
+  - dashboards
+  - layouts
+  - graphs
+  - filters
+  - crud
+  - access-control
+  - data-access
+related:
+  - schema-core
+  - processing-api
+  - auth-api
+  - admin-api
+  - ui-pages
+---
+
+# Dashboards API
+
+## Overview
+
+The dashboards API provides CRUD operations for dashboards, layouts, graphs, and filters. It also serves aggregated data for visualization. All endpoints are part of the `/api/v1` route group.
+
+**Access control:** Dashboard access is validated on every request. Users see only dashboards they have been granted access to via the `dashboard_access` table. See [Access Control](../08-security/access-control.md) for the enforcement model.
+
+**Base path:** `/api/v1`
+
+---
+
+## Dashboard Endpoints
+
+### 1. List My Dashboards
+
+Retrieve all dashboards the current user has access to.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `GET`                          |
+| **Path**       | `/api/v1/dashboards/my`        |
+| **Auth level** | Any authenticated user         |
+
+**Request:** Requires `Authorization: Bearer <token>` header.
+
+**Response** (`200 OK`):
+
+```json
+[
+  {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Sales Dashboard",
+    "description": "Quarterly sales metrics",
+    "layout_id": "660e8400-e29b-41d4-a716-446655440001",
+    "created_at": "2026-04-24T16:02:46+03:00",
+    "updated_at": "2026-04-24T16:02:46+03:00"
+  }
+]
+```
+
+---
+
+### 2. Get Dashboard Detail
+
+Retrieve a single dashboard by ID. Requires access to the dashboard.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `GET`                          |
+| **Path**       | `/api/v1/dashboards/:id`       |
+| **Auth level** | Any authenticated user (with access) |
+
+**Path parameters:**
+
+| Parameter | Type   | Description        |
+| --------- | ------ | ------------------ |
+| `id`      | UUID   | Dashboard ID       |
+
+**Response** (`200 OK`):
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Sales Dashboard",
+  "description": "Quarterly sales metrics",
+  "layout_id": "660e8400-e29b-41d4-a716-446655440001",
+  "created_by": "770e8400-e29b-41d4-a716-446655440002",
+  "created_at": "2026-04-24T16:02:46+03:00",
+  "updated_at": "2026-04-24T16:02:46+03:00"
+}
+```
+
+**Error responses:**
+
+| Status | Condition                    | Detail                       |
+| ------ | ---------------------------- | ---------------------------- |
+| `403`  | User lacks dashboard access  | Forbidden                    |
+| `404`  | Dashboard not found          | `Dashboard not found`        |
+
+---
+
+### 3. Create Dashboard
+
+Create a new dashboard. Admin only.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `POST`                         |
+| **Path**       | `/api/v1/dashboards`           |
+| **Auth level** | Admin                          |
+
+**Request body:**
+
+```json
+{
+  "name": "Marketing Dashboard",
+  "description": "Marketing campaign metrics",
+  "layout_id": "660e8400-e29b-41d4-a716-446655440001"
+}
+```
+
+**Response** (`201 Created`): Dashboard detail object.
+
+**Error responses:**
+
+| Status | Condition                    | Detail                       |
+| ------ | ---------------------------- | ---------------------------- |
+| `403`  | Caller is not admin          | Forbidden                    |
+| `422`  | Duplicate name               | Validation error             |
+
+---
+
+### 4. Update Dashboard
+
+Update an existing dashboard. Admin only.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `PUT`                          |
+| **Path**       | `/api/v1/dashboards/:id`       |
+| **Auth level** | Admin                          |
+
+**Path parameters:**
+
+| Parameter | Type   | Description        |
+| --------- | ------ | ------------------ |
+| `id`      | UUID   | Dashboard ID       |
+
+**Request body:**
+
+```json
+{
+  "name": "Updated Dashboard Name",
+  "description": "Updated description",
+  "layout_id": "660e8400-e29b-41d4-a716-446655440001"
+}
+```
+
+**Response** (`200 OK`): Updated dashboard detail object.
+
+**Error responses:**
+
+| Status | Condition                    | Detail                       |
+| ------ | ---------------------------- | ---------------------------- |
+| `403`  | Caller is not admin          | Forbidden                    |
+| `404`  | Dashboard not found          | `Dashboard not found`        |
+| `422`  | Validation error             | Error message                |
+
+---
+
+### 5. Delete Dashboard
+
+Delete a dashboard and all associated data (graphs, aggregated data, access entries). Admin only.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `DELETE`                       |
+| **Path**       | `/api/v1/dashboards/:id`       |
+| **Auth level** | Admin                          |
+
+**Path parameters:**
+
+| Parameter | Type   | Description        |
+| --------- | ------ | ------------------ |
+| `id`      | UUID   | Dashboard ID       |
+
+**Response** (`204 No Content`)
+
+**Error responses:**
+
+| Status | Condition                    | Detail                       |
+| ------ | ---------------------------- | ---------------------------- |
+| `403`  | Caller is not admin          | Forbidden                    |
+| `404`  | Dashboard not found          | `Dashboard not found`        |
+
+**Cascading effects:** Deleting a dashboard removes all associated graphs, aggregated data, dashboard access entries, dashboard-filter links, and processing configs (via `ON DELETE CASCADE`).
+
+---
+
+## Layout Endpoints
+
+Layouts define the UI composition (grid, graph positions, filter bindings) without data bindings. They are reusable across dashboards.
+
+### 6. List Layouts
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `GET`                          |
+| **Path**       | `/api/v1/layouts`              |
+| **Auth level** | Any authenticated user         |
+
+**Response** (`200 OK`):
+
+```json
+[
+  {
+    "id": "660e8400-e29b-41d4-a716-446655440001",
+    "name": "Two Column Grid",
+    "definition": {
+      "grid": [{"x": 0, "y": 0, "w": 6, "h": 4}],
+      "graphs": ["g1", "g2"],
+      "filters": ["year"],
+      "bindings": [
+        {"filter": "year", "graphs": ["g1", "g2"]}
+      ]
+    },
+    "created_at": "2026-04-24T16:02:46+03:00"
+  }
+]
+```
+
+---
+
+### 7. Get Layout Detail
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `GET`                          |
+| **Path**       | `/api/v1/layouts/:id`          |
+| **Auth level** | Any authenticated user         |
+
+**Path parameters:**
+
+| Parameter | Type   | Description        |
+| --------- | ------ | ------------------ |
+| `id`      | UUID   | Layout ID          |
+
+**Response** (`200 OK`): Single layout object.
+
+---
+
+### 8. Create Layout
+
+Admin only.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `POST`                         |
+| **Path**       | `/api/v1/layouts`              |
+| **Auth level** | Admin                          |
+
+**Request body:**
+
+```json
+{
+  "name": "Three Column Grid",
+  "definition": {
+    "grid": [
+      {"x": 0, "y": 0, "w": 4, "h": 4},
+      {"x": 4, "y": 0, "w": 4, "h": 4},
+      {"x": 8, "y": 0, "w": 4, "h": 4}
+    ],
+    "graphs": ["g1", "g2", "g3"],
+    "filters": ["year", "category"],
+    "bindings": [
+      {"filter": "year", "graphs": ["g1", "g2", "g3"]},
+      {"filter": "category", "graphs": ["g1"]}
+    ]
+  }
+}
+```
+
+**Response** (`201 Created`): Layout object.
+
+---
+
+### 9. Update Layout
+
+Admin only.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `PUT`                          |
+| **Path**       | `/api/v1/layouts/:id`          |
+| **Auth level** | Admin                          |
+
+**Request body:** Same structure as Create Layout.
+
+**Response** (`200 OK`): Updated layout object.
+
+---
+
+### 10. Delete Layout
+
+Admin only.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `DELETE`                       |
+| **Path**       | `/api/v1/layouts/:id`          |
+| **Auth level** | Admin                          |
+
+**Response** (`204 No Content`)
+
+---
+
+## Graph Endpoints
+
+Graphs define chart configurations within a dashboard. Each graph belongs to exactly one dashboard.
+
+### 11. List Graphs
+
+Returns graphs for dashboards the user has access to.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `GET`                          |
+| **Path**       | `/api/v1/graphs`               |
+| **Auth level** | Any authenticated user         |
+
+**Query parameters:**
+
+| Parameter      | Type   | Required | Description                    |
+| -------------- | ------ | -------- | ------------------------------ |
+| `dashboard_id` | UUID   | No       | Filter by specific dashboard   |
+
+**Response** (`200 OK`):
+
+```json
+[
+  {
+    "id": "880e8400-e29b-41d4-a716-446655440003",
+    "dashboard_id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "Revenue by Month",
+    "type": "bar",
+    "config": {
+      "x_axis": "month",
+      "y_axis": "revenue",
+      "orientation": "v",
+      "barmode": "group",
+      "colors": ["#1f77b4", "#ff7f0e"]
+    },
+    "dimensions": ["month", "year"],
+    "metrics": ["revenue", "cost"],
+    "created_at": "2026-04-24T16:02:46+03:00"
+  }
+]
+```
+
+---
+
+### 12. Get Graph Detail
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `GET`                          |
+| **Path**       | `/api/v1/graphs/:id`           |
+| **Auth level** | Any authenticated user (with dashboard access) |
+
+**Path parameters:**
+
+| Parameter | Type   | Description        |
+| --------- | ------ | ------------------ |
+| `id`      | UUID   | Graph ID           |
+
+**Response** (`200 OK`): Single graph object.
+
+---
+
+### 13. Create Graph
+
+Admin only.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `POST`                         |
+| **Path**       | `/api/v1/graphs`               |
+| **Auth level** | Admin                          |
+
+**Request body:**
+
+```json
+{
+  "dashboard_id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Profit Trend",
+  "type": "line",
+  "config": {
+    "x_axis": "date",
+    "y_axis": "profit",
+    "yoy_mode": "percent"
+  },
+  "dimensions": ["date"],
+  "metrics": ["profit"]
+}
+```
+
+**Response** (`201 Created`): Graph object.
+
+**Error responses:**
+
+| Status | Condition                    | Detail                       |
+| ------ | ---------------------------- | ---------------------------- |
+| `403`  | Caller is not admin          | Forbidden                    |
+| `422`  | Duplicate name in dashboard  | Validation error             |
+| `422`  | Invalid graph type           | Validation error             |
+
+---
+
+### 14. Update Graph
+
+Admin only.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `PUT`                          |
+| **Path**       | `/api/v1/graphs/:id`           |
+| **Auth level** | Admin                          |
+
+**Request body:** Same structure as Create Graph (excluding `dashboard_id`).
+
+**Response** (`200 OK`): Updated graph object.
+
+---
+
+### 15. Delete Graph
+
+Admin only.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `DELETE`                       |
+| **Path**       | `/api/v1/graphs/:id`           |
+| **Auth level** | Admin                          |
+
+**Response** (`204 No Content`)
+
+---
+
+## Graph Types
+
+Graphs support the following types, defined by the `GraphType` StrEnum:
+
+| Type     | Description                          | Plotly equivalent          |
+| -------- | ------------------------------------ | -------------------------- |
+| `bar`    | Vertical or horizontal bar chart     | `plotly.graph_objects.Bar` |
+| `line`   | Line chart with optional markers     | `plotly.graph_objects.Scatter` (mode=lines) |
+| `pie`    | Pie/donut chart                      | `plotly.graph_objects.Pie` |
+| `table`  | Tabular data display                 | HTML `<table>`             |
+
+### Graph Features
+
+| Feature        | Description                                                                 |
+| -------------- | --------------------------------------------------------------------------- |
+| `multi-axis`   | Dual Y-axes for comparing metrics with different scales                     |
+| `combined`     | Mixed chart types (e.g., bar + line) in a single graph                      |
+| `YoY`          | Year-over-year comparison; modes: `absolute` (value diff) or `percent` (% change) |
+
+Feature configuration is stored in the `config` JSONB field of the `graphs` table.
+
+---
+
+## Filter Endpoints
+
+Filters are reusable across dashboards via the `dashboard_filters` many-to-many join table. They are applied globally to all graphs on a dashboard.
+
+### 16. List Filters
+
+Returns filters for dashboards the user has access to. Editor and above.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `GET`                          |
+| **Path**       | `/api/v1/filters`              |
+| **Auth level** | Editor+                        |
+
+**Query parameters:**
+
+| Parameter      | Type   | Required | Description                    |
+| -------------- | ------ | -------- | ------------------------------ |
+| `dashboard_id` | UUID   | No       | Filter by specific dashboard   |
+
+**Response** (`200 OK`):
+
+```json
+[
+  {
+    "id": "990e8400-e29b-41d4-a716-446655440004",
+    "name": "year",
+    "type": "select",
+    "config": {
+      "field": "year",
+      "source": "dims",
+      "multi": false
+    },
+    "created_at": "2026-04-24T16:02:46+03:00"
+  }
+]
+```
+
+---
+
+### 17. Get Filter Detail
+
+Editor and above.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `GET`                          |
+| **Path**       | `/api/v1/filters/:id`          |
+| **Auth level** | Editor+                        |
+
+**Path parameters:**
+
+| Parameter | Type   | Description        |
+| --------- | ------ | ------------------ |
+| `id`      | UUID   | Filter ID          |
+
+**Response** (`200 OK`): Single filter object.
+
+---
+
+### 18. Create Filter
+
+Admin only.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `POST`                         |
+| **Path**       | `/api/v1/filters`              |
+| **Auth level** | Admin                          |
+
+**Request body:**
+
+```json
+{
+  "name": "category",
+  "type": "multiselect",
+  "config": {
+    "field": "category",
+    "source": "dims",
+    "multi": true
+  }
+}
+```
+
+**Response** (`201 Created`): Filter object.
+
+---
+
+### 19. Update Filter
+
+Admin only.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `PUT`                          |
+| **Path**       | `/api/v1/filters/:id`          |
+| **Auth level** | Admin                          |
+
+**Request body:** Same structure as Create Filter.
+
+**Response** (`200 OK`): Updated filter object.
+
+---
+
+### 20. Delete Filter
+
+Admin only.
+
+| Attribute      | Value                          |
+| -------------- | ------------------------------ |
+| **Method**     | `DELETE`                       |
+| **Path**       | `/api/v1/filters/:id`          |
+| **Auth level** | Admin                          |
+
+**Response** (`204 No Content`)
+
+---
+
+## Filter Types
+
+Filters support the following types, defined by the `FilterType` StrEnum:
+
+| Type          | Description                                      | UI Control          |
+| ------------- | ------------------------------------------------ | ------------------- |
+| `select`      | Single value selection                           | Dropdown            |
+| `multiselect` | Multiple value selection                         | Multi-select        |
+| `range`       | Numeric range (min/max)                          | Range slider        |
+| `date`        | Date or date range selection                     | Date picker         |
+
+### Backend Implementation
+
+Filters are applied on the backend through parameterized SQL queries against the `aggregated_data` table. The `dims` JSONB column is filtered using PostgreSQL JSONB operators. Filter values are never interpolated into SQL strings — all queries use SQLAlchemy parameterized queries.
+
+Example filter application flow:
+
+1. Frontend sends selected filter values as query parameters
+2. Backend constructs a query filtering `aggregated_data.dims` using JSONB containment operators (`@>`)
+3. Filtered results are returned as graph data
+
+---
+
+## Processing Config Endpoints
+
+Processing configs define how CSV data is parsed and aggregated for a specific dashboard.
+
+### 21. Get Processing Config
+
+Viewer and above.
+
+| Attribute      | Value                                      |
+| -------------- | ------------------------------------------ |
+| **Method**     | `GET`                                      |
+| **Path**       | `/api/v1/processing-configs/:dashboard_id` |
+| **Auth level** | Viewer+                                    |
+
+**Path parameters:**
+
+| Parameter      | Type   | Description        |
+| -------------- | ------ | ------------------ |
+| `dashboard_id` | UUID   | Dashboard ID       |
+
+**Response** (`200 OK`):
+
+```json
+{
+  "dashboard_id": "550e8400-e29b-41d4-a716-446655440000",
+  "settings": {
+    "loader": "sales_loader",
+    "date_column": "event_date",
+    "timezone": "UTC"
+  },
+  "updated_at": "2026-04-24T16:02:46+03:00"
+}
+```
+
+---
+
+### 22. Update Processing Config
+
+Editor and above.
+
+| Attribute      | Value                                      |
+| -------------- | ------------------------------------------ |
+| **Method**     | `PUT`                                      |
+| **Path**       | `/api/v1/processing-configs/:dashboard_id` |
+| **Auth level** | Editor+                                    |
+
+**Request body:**
+
+```json
+{
+  "settings": {
+    "loader": "sales_loader",
+    "date_column": "event_date",
+    "timezone": "Europe/Moscow"
+  }
+}
+```
+
+**Response** (`200 OK`): Updated processing config object.
+
+---
+
+### 23. Delete Processing Config
+
+Editor and above.
+
+| Attribute      | Value                                      |
+| -------------- | ------------------------------------------ |
+| **Method**     | `DELETE`                                   |
+| **Path**       | `/api/v1/processing-configs/:dashboard_id` |
+| **Auth level** | Editor+                                    |
+
+**Response** (`204 No Content`)
+
+---
+
+## Data Access Pattern
+
+Aggregated data is served through the data endpoints (see [Data API](../03-processing/processing-api.md) and [Data Flow](../00-overview/data-flow.md)). The typical flow:
+
+```
+Browser                          FastAPI                     PostgreSQL
+  │                                │                           │
+  │  GET /data/aggregated          │                           │
+  │  ?dashboard_id=:id             │                           │
+  │  &graph_id=:id                 │                           │
+  │  &filters=...                  │                           │
+  │ ──────────────────────────────►│                           │
+  │                                │  Check dashboard access   │
+  │                                │  Apply filters (JSONB)    │
+  │                                │  SELECT dims, metrics     │
+  │                                │  FROM aggregated_data     │
+  │                                │  WHERE graph_id = :id     │
+  │                                │──────────────────────────►│
+  │                                │                           │
+  │                                │  { dims: {...},           │
+  │                                │    metrics: {...} }[]     │
+  │                                │◄──────────────────────────│
+  │  200 OK                        │                           │
+  │  [{dims, metrics}, ...]        │                           │
+  │ ◄──────────────────────────────│                           │
+  │                                │                           │
+  │  Plotly.js renders chart       │                           │
+```
+
+---
+
+## UI Page References
+
+The following frontend pages consume the dashboards API:
+
+| UI Page                        | Path                    | Key Endpoints Used                                      |
+| ------------------------------ | ----------------------- | ------------------------------------------------------- |
+| Dashboard List                 | `/dashboards`           | `GET /api/v1/dashboards/my`                             |
+| Dashboard View                 | `/dashboard/:id`        | `GET /api/v1/dashboards/:id`, `GET /api/v1/data/aggregated` |
+| Data Upload                    | `/dashboard/:id/upload` | `POST /api/v1/upload/:dashboard_id`                     |
+| Admin Dashboard Management     | `/admin`                | CRUD endpoints for dashboards, layouts, graphs, filters |
+
+### Dashboard List Page (`/dashboards`)
+
+- Opens after successful login
+- Displays cards for each accessible dashboard (name, description, "Open" link)
+- Each card links to `/dashboard/:id`
+- User profile link in the top-right corner
+- Redirects to `/login` if the session is expired
+
+### Dashboard View Page (`/dashboard/:id`)
+
+- Displays the dashboard title and filter panel
+- Renders charts in a grid layout using Plotly.js React
+- Upload button visible for `editor` role and above
+- Filters panel dynamically renders controls based on filter configuration
+- Filter changes trigger new data requests with updated filter parameters
+
+---
+
+## Access Control
+
+All dashboard-related endpoints enforce access control:
+
+- **Dashboard endpoints:** Users must have an entry in `dashboard_access` for the requested dashboard
+- **Graph endpoints:** Graph definitions are filtered by dashboard access
+- **Filter endpoints:** Filters are only returned if the user has access to the associated dashboard
+
+The `check_dashboard_access` function verifies the user's permission against the `dashboard_access` table for the specific dashboard resource being accessed.
+
+---
+
+## Cross-References
+
+- [Database Schema](../09-database/schema-core.md) — Table definitions for `dashboards`, `layouts`, `graphs`, `filters`, `dashboard_access`, `dashboard_filters`, `processing_configs`, `aggregated_data`
+- [Access Control](../01-auth/access-control.md) — Dashboard-level permission enforcement
+- [Data Processing API](../03-processing/data-api.md) — Upload, processing triggers, and aggregated data retrieval
+- [Security Overview](../08-security/) — CORS, rate limiting, credential enforcement
+- [Frontend Pages](../07-frontend/pages.md) — UI pages consuming the dashboards API
+- [Database Enums](../09-database/enums.md) — `GraphType`, `FilterType` StrEnum definitions

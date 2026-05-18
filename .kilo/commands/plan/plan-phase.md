@@ -56,7 +56,7 @@ Normalize phase input in step 2 before any directory lookups.
 
 Load {MAIN_CONTEXT} from:
 
-C:\py_dev\mkobi\docs\SPEC.md
+C:\py_dev\mkobi\docs\**
 C:\py_dev\mkobi\docs\STRUCT.md
 
 Summarize it and keep as {MAIN_CONTEXT} 
@@ -149,7 +149,7 @@ Write research findings to: C:\py_dev\mkobi\.ai\researches\RESEARCH_{file_number
 ```
 Task(
   prompt="First, read .kilo/agents/researcher.md for your role and instructions.\n\n" + research_prompt,
-  subagent_type="general-purpose",
+  subagent_type="researcher",
   description="Research Phase {file_number}"
 )
 ```
@@ -245,7 +245,7 @@ Before returning PLANNING COMPLETE:
 ```
 Task(
   prompt="First, read .kilo/agents/planner.md for your role and instructions.\n\n" + filled_prompt,
-  subagent_type="general-purpose",
+  subagent_type="plan",
   description="Plan Phase {file_number}"
 )
 ```
@@ -370,7 +370,7 @@ Return what changed.
 ```
 Task(
   prompt="First, read .kilo/agents/planner.md for your role and instructions.\n\n" + revision_prompt,
-  subagent_type="general-purpose",
+  subagent_type="planner",
   description="Revise Phase {file_number} plans"
 )
 ```

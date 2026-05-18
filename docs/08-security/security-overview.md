@@ -1,0 +1,204 @@
+---
+id: security-overview
+domain: security
+tags:
+  - rate-limiting
+  - file-upload-security
+  - sql-injection
+  - cors
+  - credentials
+  - secrets-management
+  - jwt-security
+related:
+  - access-control
+  - auth-api
+  - configuration
+  - frontend-security
+  - processing-api
+---
+
+# Security Overview
+
+## Overview
+
+This document describes the security constraints and measures implemented across the system. Security is enforced at multiple layers: network (CORS), application (rate limiting, input validation), and data (parameterized queries, credential management).
+
+> **[HIGH-RISK]** Security constraints are enforced on the **backend**. Frontend validation is a UX convenience only and must never be relied upon as a security boundary.
+
+---
+
+## Rate Limiting
+
+### Overview
+
+Rate limiting is applied to sensitive endpoints to prevent brute-force attacks and abuse. The rate limiter is Redis-based and uses a sliding window algorithm.
+
+### Protected Endpoints
+
+| Endpoint | Rate Limit | Scope |
+| --- | --- | --- |
+| `POST /api/v1/auth/login` | 5 attempts per 5 minutes | Per email |
+| `POST /api/v1/auth/login/form` | 5 attempts per 5 minutes | Per email |
+| `POST /api/v1/auth/register-request` | 3 attempts per hour | Per IP/email |
+| `POST /api/v1/upload/:dashboard_id` | Configured via env | Per user |
+| `POST /api/v1/upload/:dashboard_id/process` | Configured via env | Per user |
+
+### Rate Limiter Failure Behavior [HIGH-RISK]
+
+The rate limiter depends on Redis. When Redis is unavailable, the system operates in one of two modes, configurable via the `RATE_LIMITER_FAIL_CLOSED` environment variable:
+
+| Mode | Config Value | Behavior | Log Level | Use Case |
+| --- | --- | --- | --- | --- |
+| **Fail-open** (default) | `RATE_LIMITER_FAIL_CLOSED=false` | Requests are allowed through when Redis is down | WARNING | Development, availability-first deployments |
+| **Fail-closed** | `RATE_LIMITER_FAIL_CLOSED=true` | Requests are rejected with HTTP 429 when the rate limiter cannot be initialized | CRITICAL | Production — prevents rate limit bypass during Redis outages |
+
+**Health tracking:** Rate limiter health is tracked internally. When the rate limiter is disabled due to Redis unavailability, an error-level log is emitted with exception details.
+
+> **Recommendation:** Use **fail-closed** mode in production to prevent attackers from exploiting Redis outages to bypass rate limits.
+
+---
+
+## File Upload Security
+
+### Allowed Formats
+
+| Format | MIME Type | Extension |
+| --- | --- | --- |
+| CSV | `text/csv` | `.csv` |
+| Gzip-compressed CSV | `application/gzip`, `application/x-gzip` | `.csv.gz` |
+
+### Validation Chain
+
+1. **Frontend (UX):** `react-dropzone` filters by MIME type; extension check on filename.
+2. **Backend (security boundary):**
+   - MIME type validation against whitelist (`text/csv`, `application/gzip`, `application/x-gzip`)
+   - File extension validation (`.csv`, `.csv.gz`)
+   - Maximum file size enforcement
+   - Rate limiting on upload endpoints
+
+### File Lifecycle
+
+1. File is uploaded to a temporary directory (via `platformdirs`)
+2. File is parsed and processed (Polars)
+3. Aggregated data is saved to PostgreSQL
+4. **Temporary file is deleted** after processing (success or failure)
+
+> **Critical:** Temporary files MUST always be deleted after processing. Failure to clean up may expose sensitive data on disk.
+
+---
+
+## SQL Injection Prevention
+
+### Rules
+
+- **All SQL queries** must be executed through parameterized queries (SQLAlchemy ORM/Core)
+- **String interpolation** for SQL is strictly forbidden (no f-strings, no `.format()`, no concatenation)
+- SQLAlchemy models and query builders are the only permitted interface to the database
+
+### Enforcement
+
+This is enforced at the code review level and by the project's linting/type-checking pipeline. The use of raw SQL via f-strings is flagged in `AGENTS.md` as a forbidden practice.
+
+---
+
+## CORS Configuration [HIGH-RISK]
+
+CORS is configured on the backend with explicit allowed methods and headers. Wildcards are **not** used.
+
+```python
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=config.cors_origins,  # From env var or app.yaml (default: localhost)
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
+)
+```
+
+### Constraints
+
+- **`allow_origins`** must be explicitly configured in production — the application validates CORS configuration at startup and raises an error if origins are not set in production mode
+- **No wildcard origins** (`*`) in production
+- **Explicit method list:** Only `GET`, `POST`, `PUT`, `DELETE`, `PATCH`
+- **Explicit header list:** Only `Authorization`, `Content-Type`, `Accept`
+
+---
+
+## Production Credential Enforcement [HIGH-RISK]
+
+The application **refuses to start** in production mode if default credentials are detected:
+
+| Variable | Default (dev) | Production Requirement |
+| --- | --- | --- |
+| `ADMIN_USERNAME` | `admin` | Must be explicitly set via environment variable |
+| `ADMIN_PASSWORD` | `admin` | Must be explicitly set; default `admin`/`admin` combination is rejected |
+| `JWT__SECRET_KEY` | — | Must be explicitly set; Docker Compose uses `${JWT__SECRET_KEY:?...}` fail-if-unset syntax |
+| `DATABASE__PASSWORD` | — | Must be explicitly set; same fail-if-unset pattern |
+
+In development mode, default credentials are permitted but a **warning** is logged.
+
+---
+
+## Secrets Management
+
+### Configuration Priority
+
+Configuration is loaded from multiple sources (highest priority first):
+
+1. Environment variables
+2. Docker secrets (`_FILE` suffix)
+3. `.env` file (development only)
+4. `app.yaml` (non-sensitive settings only)
+5. Defaults
+
+### Secret Variables
+
+| Variable | Description | Docker Secrets Support |
+| --- | --- | --- |
+| `DATABASE__PASSWORD` | Database password | `DATABASE__PASSWORD_FILE=/run/secrets/db_password` |
+| `JWT__SECRET_KEY` | JWT signing key | `JWT__SECRET_KEY_FILE=/run/secrets/jwt_secret` |
+
+- Nested variables use double underscore format: `DATABASE__HOST`, `DATABASE__PORT`, `JWT__SECRET_KEY`
+- `app.yaml` contains **only non-sensitive** settings (hosts, ports, paths)
+
+---
+
+## Email Domain Blocklist
+
+Registration requests are checked against a configurable email domain blocklist:
+
+- Configured in `app.yaml` (backend)
+- Validated on the backend via Pydantic (security boundary)
+- Also validated on the frontend via Zod (UX convenience)
+- Example blocked domains: `tempmail.com`, `throwawaymail.com`
+
+---
+
+## Password Security
+
+- Passwords are stored as **bcrypt hashes** (never plaintext)
+- Minimum length: 8 characters (enforced by frontend Zod schema)
+- Password change requires current password verification
+- Users remain logged in after password change (token is not invalidated)
+- Registration approval generates a cryptographically random temporary password via `secrets.token_urlsafe(16)`
+
+---
+
+## JWT Security
+
+- Tokens are signed and contain expiration (`exp` claim)
+- Payload contains: `user_id`, `email`, `role`
+- **Production:** Tokens stored in memory only (not in `localStorage` or cookies — XSS-safe)
+- **Development:** Tokens stored in `sessionStorage` for convenience
+- Axios interceptors attach the token to every request and handle `401` responses
+
+---
+
+## Cross-References
+
+- [Authentication API](../01-auth/auth-api.md) — Auth endpoint security, rate limiting details
+- [Access Control](access-control.md) — Dashboard-level permission enforcement model
+- [Frontend Security](../07-frontend/frontend-security.md) — JWT handling, CORS, file upload, role-based access
+- [Configuration](../06-backend/configuration.md) — Secrets management, environment variables
+- [Processing API](../03-processing/processing-api.md) — Upload security constraints and rate limiting
+- [Deployment](../10-deployment/deployment.md) — Production deployment and credential enforcement

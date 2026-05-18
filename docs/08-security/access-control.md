@@ -1,0 +1,191 @@
+---
+id: access-control
+domain: security
+tags:
+  - access-control
+  - roles
+  - permissions
+  - dashboard-access
+  - enforcement-points
+  - route-guards
+related:
+  - security-overview
+  - auth-api
+  - dashboards-api
+  - schema-access
+  - frontend-security
+---
+
+# Access Control
+
+## Overview
+
+This document describes the access control model and the specific enforcement points throughout the system. Access control is enforced on **every request** to dashboard-related endpoints — the backend is the security boundary.
+
+> **[HIGH-RISK]** Access control must be enforced consistently on all dashboard-related endpoints. Missing a single enforcement point can expose data across dashboards.
+
+---
+
+## Roles
+
+The system defines three roles, implemented as `StrEnum` in `src/mkobi/models/enums.py`:
+
+| Role | Description | Capabilities |
+| --- | --- | --- |
+| `admin` | System administrator | Full CRUD on all entities, user management, access management, log viewing |
+| `editor` | Data editor | Upload CSV, trigger processing, modify processing configs |
+| `viewer` | Read-only user | View dashboards they have been granted access to |
+
+---
+
+## Permission Model
+
+### Dashboard-Level Permissions
+
+The `dashboard_access` table defines granular permissions per user per dashboard:
+
+| Permission | Description |
+| --- | --- |
+| `view` | Can view the dashboard and its data |
+| `edit` | Can view and modify dashboard data (upload, process) |
+| `admin` | Full control over the dashboard (CRUD, access management) |
+
+**Schema:**
+
+```sql
+dashboard_access (
+    user_id         UUID REFERENCES users(id) ON DELETE CASCADE,
+    dashboard_id    UUID REFERENCES dashboards(id) ON DELETE CASCADE,
+    permission      TEXT NOT NULL CHECK (permission IN ('view', 'edit', 'admin')),
+    PRIMARY KEY (user_id, dashboard_id)
+);
+```
+
+### Role vs. Permission
+
+- **Roles** (`admin`, `editor`, `viewer`) are global and define what a user can do across the system.
+- **Permissions** (`view`, `edit`, `admin`) are per-dashboard and define what a user can do with a specific dashboard.
+- An `admin` role user has implicit full access to all dashboards.
+- An `editor` or `viewer` user only has access to dashboards explicitly granted via `dashboard_access`.
+
+---
+
+## Enforcement Points [HIGH-RISK]
+
+Access control is enforced on **all** dashboard-related endpoints, not just data retrieval. The following endpoints validate that the user has access to the requested dashboard:
+
+### Data Retrieval Endpoints
+
+| Endpoint | Auth Level | Access Check |
+| --- | --- | --- |
+| `GET /api/v1/dashboards/my` | Any authenticated | Returns only dashboards the user has access to |
+| `GET /api/v1/dashboards/:id` | Any authenticated | Validates user has access to the specific dashboard |
+| `GET /api/v1/data/aggregated` | Any authenticated | Validates dashboard access before returning data |
+
+### Filter Endpoints
+
+| Endpoint | Auth Level | Access Check |
+| --- | --- | --- |
+| `GET /api/v1/filters` | Editor+ | Filters are only returned if the user has access to the associated dashboard |
+| `GET /api/v1/filters/:id` | Editor+ | Same as above |
+
+### Graph Endpoints
+
+| Endpoint | Auth Level | Access Check |
+| --- | --- | --- |
+| `GET /api/v1/graphs` | Any authenticated | Graph definitions are filtered by dashboard access |
+| `GET /api/v1/graphs/:id` | Any authenticated | Validates access to the parent dashboard |
+
+### Access Management Endpoints
+
+| Endpoint | Auth Level | Access Check |
+| --- | --- | --- |
+| `GET /api/v1/dashboards/:id/access` | Admin only | Lists access entries; requires admin role |
+| `POST /api/v1/dashboards/:id/access` | Admin only | Grants access to a user for a dashboard |
+| `DELETE /api/v1/dashboards/:id/access/:user_id` | Admin only | Revokes access |
+
+### Upload and Processing Endpoints
+
+| Endpoint | Auth Level | Access Check |
+| --- | --- | --- |
+| `POST /api/v1/upload/:dashboard_id` | Editor+ | Validates user has edit permission on the dashboard |
+| `POST /api/v1/upload/:dashboard_id/process` | Editor+ | Validates task ownership and dashboard access |
+| `GET /api/v1/upload/status/:task_id` | Editor+ | Validates user has access to the task's dashboard |
+| `GET /api/v1/upload/result/:task_id` | Editor+ | Validates user has access to the task's dashboard |
+
+### Admin Endpoints
+
+| Endpoint | Auth Level | Access Check |
+| --- | --- | --- |
+| `GET /api/v1/admin/users` | Admin only | Full user listing |
+| `PATCH /api/v1/admin/users/:id/role` | Admin only | Role modification |
+| `DELETE /api/v1/admin/users/:id` | Admin only | User deletion |
+| `GET /api/v1/admin/registration-requests` | Admin only | Registration request listing |
+| `POST /api/v1/admin/registration-requests/:id/approve` | Admin only | Approve registration |
+| `POST /api/v1/admin/registration-requests/:id/reject` | Admin only | Reject registration |
+| `GET /api/v1/admin/logs` | Admin only | Processing log access |
+
+---
+
+## Access Check Function
+
+The `check_dashboard_access` function is the central enforcement mechanism:
+
+1. **Input:** `user_id`, `dashboard_id`, required permission level
+2. **Logic:**
+   - If the user has the `admin` role → access granted (short-circuit)
+   - Otherwise, query the `dashboard_access` table for the `(user_id, dashboard_id)` pair
+   - Verify the permission level meets or exceeds the required level
+3. **Failure:** Returns HTTP 403 Forbidden with an appropriate error message
+
+---
+
+## Frontend Enforcement
+
+The frontend provides UX-level access control that mirrors the backend:
+
+### Route Guards
+
+| Component | Behavior |
+| --- | --- |
+| `ProtectedRoute` | Redirects unauthenticated users to `/login` |
+| `RoleBasedAccess` | Renders children only if the user's role is in the allowed list |
+
+### Access Matrix
+
+| Route | Required Role |
+| --- | --- |
+| `/login`, `/register` | Public |
+| `/dashboards`, `/dashboard/:id` | Any authenticated |
+| `/dashboard/:id/upload` | `admin`, `editor` |
+| `/admin` | `admin` only |
+| `/profile`, `/profile/change-password` | Any authenticated |
+
+### UI-Level Enforcement
+
+- Upload button: visible only for `admin` and `editor`
+- Delete Account button: visible only for non-admin users
+- Admin navigation: visible only for `admin`
+
+> **Note:** UI-level role checks are for UX only. The backend enforces authorization on every API request.
+
+---
+
+## User Visibility Rules
+
+- Users can view their own profile (`GET /api/v1/users/:id` where `:id` matches their own)
+- Admins can view any user's profile
+- Non-admin users cannot see the full user list
+- Self-deletion (`DELETE /api/v1/users/me`) is available for non-admin users only
+
+---
+
+## Cross-References
+
+- [Security Overview](security-overview.md) — Rate limiting, CORS, credential enforcement
+- [Authentication API](../01-auth/auth-api.md) — Login, registration, JWT handling
+- [Dashboard API](../02-dashboards/dashboards-api.md) — Dashboard CRUD and access endpoints
+- [Frontend Security](../07-frontend/frontend-security.md) — Route guards, role-based UI
+- [Database Schema](../09-database/schema-access.md) — `dashboard_access` table definition
+- [Database Enums](../09-database/enums.md) — `UserRole`, `DashboardPermission` StrEnum definitions
+- [Admin API](../04-admin/admin-api.md) — User management and role modification

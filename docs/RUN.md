@@ -1,3 +1,5 @@
+> **DEPRECATED**: This file has been moved to `docs/99-reference/run-guide.md` (translated to English). Please refer to the new location. This file is kept for backward compatibility and will be removed in a future release.
+
 # Инструкция по запуску приложения
 
 ## Предварительные требования

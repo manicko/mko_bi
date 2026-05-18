@@ -1,0 +1,149 @@
+---
+id: system-overview
+domain: overview
+tags:
+  - architecture
+  - technology-stack
+  - entities
+  - roles
+  - permissions
+  - api-overview
+related:
+  - data-flow
+  - auth-api
+  - dashboards-api
+  - backend-architecture
+  - security-overview
+---
+
+# System Overview
+
+## Purpose
+
+A web application for:
+
+* Uploading CSV and CSV.gz data files into a temporary user directory
+* Processing the uploaded data
+* Storing aggregated results
+* Displaying data in dashboards
+* Managing user access control
+
+---
+
+## Technology Stack
+
+| Layer            | Technology                                |
+| ---------------- | ----------------------------------------- |
+| Backend          | **FastAPI**                               |
+| Frontend         | **React 18+ (TypeScript) + Vite**        |
+| UI Kit           | **Material UI v5** or **Ant Design**     |
+| State Management | **TanStack Query** (React Query)          |
+| Forms            | **React Hook Form + Zod**                |
+| Charts           | **Plotly.js React**                       |
+| File Upload      | **react-dropzone**                        |
+| HTTP Client      | **Axios** (with JWT interceptors)         |
+| Notifications    | **react-hot-toast**                       |
+| Data Processing  | **Polars** (pandas is forbidden)          |
+| Storage          | **PostgreSQL**                            |
+| Validation       | **Pydantic v2**                           |
+| Auth             | **JWT + bcrypt**                          |
+| Testing          | **pytest**                                |
+| Logging          | **Python logging**                        |
+| Env/Deps         | **uv**                                    |
+| Temp Files       | **platformdirs**                          |
+| ORM              | **SQLAlchemy 2.0 (async)**               |
+| Migrations       | **Alembic**                               |
+| DB Driver        | **asyncpg**                               |
+| Rate Limiting    | **Redis** (async operations)              |
+
+---
+
+## Core Entities
+
+### User
+
+| Field          | Type   | Description                    |
+| -------------- | ------ | ------------------------------ |
+| id             | UUID   | Primary key                    |
+| email          | TEXT   | Unique, not null               |
+| password_hash  | TEXT   | Bcrypt hash                    |
+| role           | TEXT   | `admin` \| `editor` \| `viewer` |
+
+### Dashboard
+
+| Field       | Type   | Description                          |
+| ----------- | ------ | ------------------------------------ |
+| id          | UUID   | Primary key                          |
+| name        | TEXT   | Unique, not null                     |
+| config      | JSONB  | Structure and graph descriptions     |
+
+### Access
+
+| Field        | Type   | Description                     |
+| ------------ | ------ | ------------------------------- |
+| user_id      | UUID   | References users.id             |
+| dashboard_id | UUID   | References dashboards.id        |
+
+### Aggregated Data
+
+| Field        | Type   | Description                                |
+| ------------ | ------ | ------------------------------------------ |
+| dashboard_id | UUID   | References dashboards.id                   |
+| dims         | JSONB  | Dimension values (filter and axis data)    |
+| metrics      | JSONB  | Metric values (display data)               |
+
+> See [Database Schema](../09-database/) for full table definitions and indexes.
+
+---
+
+## Roles & Permissions
+
+### Admin
+
+* Full CRUD on dashboards
+* Defines data schema, processing logic, and graph configurations
+* Manages users
+* Grants access permissions
+
+### Editor
+
+* Uploads CSV files
+* Triggers data recalculation
+
+### Viewer
+
+* Read-only access
+
+> See [Auth & Access Control](../01-auth/) for detailed authentication and authorization flows.
+
+---
+
+## API Overview
+
+The FastAPI backend exposes the following endpoint groups:
+
+| Group               | Description                                    | Access        |
+| ------------------- | ---------------------------------------------- | ------------- |
+| Auth                | Login, register-request, change-password, refresh | Public        |
+| Users               | CRUD operations                                | Admin         |
+| Dashboards          | CRUD operations                                | Admin         |
+| Layouts             | CRUD operations                                | Admin         |
+| Graphs              | CRUD operations                                | Admin         |
+| Filters             | CRUD operations                                | Admin          |
+| Processing Configs  | Read/Write processing settings                 | Editor+       |
+| Upload & Processing | File upload, processing triggers, status       | Editor+       |
+| Aggregated Data     | Retrieve chart data as JSON                    | Viewer+       |
+| Admin               | User management, registration requests, logs   | Admin         |
+| Health              | Health checks                                  | Public        |
+
+> See [API Responsibilities](../SPEC.md#14-api-responsibilities-fastapi) in SPEC.md for full endpoint listing.
+
+---
+
+## Related Docs
+
+* [Data Flow](data-flow.md) — End-to-end upload-to-display pipeline
+* [Authentication API](../01-auth/auth-api.md) — JWT auth and role definitions
+* [Backend Architecture](../06-backend/architecture.md) — Clean Architecture and layer design
+* [Security Overview](../08-security/security-overview.md) — Security constraints and measures
+* [Deployment](../10-deployment/deployment.md) — Production deployment options

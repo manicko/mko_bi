@@ -1,4 +1,20 @@
-> **DEPRECATED**: This file has been moved to `docs/99-reference/swagger.md`. Please refer to the new location. This file is kept for backward compatibility and will be removed in a future release.
+---
+id: swagger-guide
+domain: reference
+tags:
+  - swagger
+  - api
+  - documentation
+  - authentication
+  - testing
+  - fastapi
+related:
+  - run-guide
+  - system-overview
+  - auth-api
+  - dashboards-api
+  - backend-architecture
+---
 
 # Working with Swagger UI at http://localhost:8000/docs/
 
@@ -189,5 +205,5 @@ The Layout API implementation is in:
 - `TODO/DEV/TASK_012_layout_api_405_fix_DONE.md` - Fixed 405 errors
 - `TODO/DEV/TASK_016_layout_api_routes_fix_DONE.md` - Fixed route registration
 - `TODO/DEV/TASK_017_test_db_recreation_fix.md` - Database recreation issues
-- `TODO/DEV/TASK_018_jwt_token_payload_fix.md` - JWT token issues  
+- `TODO/DEV/TASK_018_jwt_token_payload_fix.md` - JWT token issues
 - `TODO/DEV/TASK_019_layout_update_500_fix.md` - 500 error fixes

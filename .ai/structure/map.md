@@ -61,19 +61,12 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
-|   |       order_02.yaml
-|   |       PLAN_01.md
-|   |       PLAN_02.md
-|   |       
 |   +---problems
-|   |   |   CONTEXT_01.md
-|   |   |   
 |   |   \---decisions
 |   |           DECISION_01.md
+|   |           DECISION_02.md
 |   |           
 |   +---researches
-|   |       RESEARCH_01.md
-|   |       
 |   +---structure
 |   |   |   map.md
 |   |   |   
@@ -87,27 +80,28 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
+|   |   |       TASK_001_T11_create_folder_structure_DONE.yaml
+|   |   |       TASK_002_T12_extract_inventory_from_spec_DONE.yaml
+|   |   |       TASK_003_T13_build_migration_map_DONE.yaml
+|   |   |       TASK_004_T14_create_high_risk_checklist_DONE.yaml
+|   |   |       TASK_005_T21_create_overview_files_DONE.yaml
+|   |   |       TASK_006_T22_create_auth_api_doc_DONE.yaml
+|   |   |       TASK_007_T23_create_dashboards_api_doc_DONE.yaml
+|   |   |       TASK_008_T24_create_processing_docs_DONE.yaml
+|   |   |       TASK_009_T31_create_admin_api_doc_DONE.yaml
+|   |   |       TASK_010_T32_create_health_api_doc_DONE.yaml
+|   |   |       TASK_011_T33_create_backend_docs_DONE.yaml
+|   |   |       TASK_012_T34_create_frontend_docs_DONE.yaml
+|   |   |       TASK_013_T35_create_security_docs_DONE.yaml
+|   |   |       TASK_014_T36_create_database_docs_DONE.yaml
+|   |   |       TASK_015_T37_create_deployment_doc_DONE.yaml
+|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
-|   |   |       TASK_001_T11_create_folder_structure.yaml
-|   |   |       TASK_002_T12_extract_inventory_from_spec.yaml
-|   |   |       TASK_003_T13_build_migration_map.yaml
-|   |   |       TASK_004_T14_create_high_risk_checklist.yaml
-|   |   |       TASK_005_T21_create_overview_files.yaml
-|   |   |       TASK_006_T22_create_auth_api_doc.yaml
-|   |   |       TASK_007_T23_create_dashboards_api_doc.yaml
-|   |   |       TASK_008_T24_create_processing_docs.yaml
-|   |   |       TASK_009_T31_create_admin_api_doc.yaml
-|   |   |       TASK_010_T32_create_health_api_doc.yaml
-|   |   |       TASK_011_T33_create_backend_docs.yaml
-|   |   |       TASK_012_T34_create_frontend_docs.yaml
-|   |   |       TASK_013_T35_create_security_docs.yaml
-|   |   |       TASK_014_T36_create_database_docs.yaml
-|   |   |       TASK_015_T37_create_deployment_doc.yaml
 |   |   |       TASK_016_T41_convert_spec_to_overview.yaml
 |   |   |       TASK_017_T42_create_docs_readme.yaml
 |   |   |       TASK_018_T51_add_yaml_frontmatter.yaml
@@ -130,10 +124,16 @@ C:\PY_DEV\MKOBI
 |   |   |       
 |   |   \---validation
 |   |           tasks_validated_findings_001.md
+|   |           tasks_validated_findings_002.md
 |   |           
 |   +---templates
 |   |       decision.md
 |   |       ui-brand.md
+|   |       
+|   +---tmp
+|   |       high_risk_checklist_01.md
+|   |       inventory_01.md
+|   |       migration_map_01.md
 |   |       
 |   \---verified
 +---.idea
@@ -18722,13 +18722,63 @@ C:\PY_DEV\MKOBI
 |           ff939227-d6dd-4515-9254-199643e1d29f.csv.gz
 |           
 +---docs
-|       README_DOCKER.md
-|       RUN.md
-|       SPEC.md
-|       STRUCT.md
-|       SWAGGER_README.md
-|       TASK_QUEUE_MIGRATION.md
-|       
+|   |   README_DOCKER.md
+|   |   RUN.md
+|   |   SPEC.md
+|   |   STRUCT.md
+|   |   SWAGGER_README.md
+|   |   TASK_QUEUE_MIGRATION.md
+|   |   
+|   +---00-overview
+|   |       data-flow.md
+|   |       overview.md
+|   |       
+|   +---01-auth
+|   |       auth-api.md
+|   |       
+|   +---02-dashboards
+|   |       dashboards-api.md
+|   |       
+|   +---03-processing
+|   |       processing-api.md
+|   |       task-queue.md
+|   |       
+|   +---04-admin
+|   |       admin-api.md
+|   |       
+|   +---05-health
+|   |       health-api.md
+|   |       
+|   +---06-backend
+|   |       architecture.md
+|   |       configuration.md
+|   |       logging.md
+|   |       testing.md
+|   |       
+|   +---07-frontend
+|   |       architecture.md
+|   |       auth-flow.md
+|   |       frontend-security.md
+|   |       fsd-structure.md
+|   |       pages.md
+|   |       upload-ui.md
+|   |       
+|   +---08-security
+|   |       access-control.md
+|   |       security-overview.md
+|   |       
+|   +---09-database
+|   |       enums.md
+|   |       indexes.md
+|   |       schema-access.md
+|   |       schema-core.md
+|   |       schema-processing.md
+|   |       
+|   +---10-deployment
+|   |       deployment.md
+|   |       
+|   +---90-adr
+|   \---99-reference
 +---frontend
 |   |   .gitignore
 |   |   eslint.config.js

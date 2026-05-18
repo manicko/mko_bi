@@ -1,522 +1,569 @@
-# 01 Modular Spec + Minimal AI Metadata - Research
+# 01 Frontend — BI Dashboard System (React + Plotly) - Research
 
 **Researched:** 2026-05-18
-**Domain:** Documentation restructuring — monolithic spec to modular AI-friendly markdown
+**Domain:** React SPA frontend with MUI, TanStack Query, Plotly, DataGrid inline editing, toast notifications
 **Confidence:** HIGH
 
 ## Summary
 
-This research investigates how to restructure a monolithic 1069-line `docs/SPEC.md` into a modular, domain-based documentation system optimized for LLM/RAG consumption. The "stack" is markdown, YAML frontmatter, and file organization — not software development.
+This research covers Phase 01: building a React SPA frontend for a BI dashboard system. The project already has a solid foundation — MUI v9, TanStack Query v5, React Router v7, react-hot-toast v2.6, Zod v4, and @mui/x-data-grid v9 are all installed and partially implemented. The existing code covers auth (login/register), dashboard list/view with Plotly charts, upload page, admin panel with DataGrid tables, and user profile management.
 
-The standard approach for AI-friendly documentation in 2025-2026 combines three practices: (1) YAML frontmatter as a machine-readable "type signature" for each document, enabling metadata-first retrieval before body text is ever read; (2) heading-aware chunking that preserves semantic coherence by splitting at section boundaries rather than arbitrary token counts; (3) cross-linking via `related` frontmatter fields and inline markdown links, creating a navigable knowledge graph without external tooling.
+The key technical challenges for this phase are: (1) implementing inline editing in MUI X DataGrid v9 with per-row parallel save, revert-on-error, and row-highlight during save; (2) converting the upload page from a separate route to a modal on the dashboard page; (3) converting the dashboard list from cards to a table format; (4) implementing toast notifications with correct positioning and auto-dismiss; (5) implementing confirm dialogs with dimmer overlay; (6) ensuring Zod v4 schema compatibility since the installed version has breaking changes from v3.
 
-**Primary recommendation:** Split SPEC.md by retrieval intent (what an LLM needs loaded into context simultaneously), not by section count. Target 25-40 files at 200-800 lines each. Use a minimal 4-field frontmatter schema (`id`, `domain`, `tags`, `related`). Apply a 4-step migration pipeline: inventory → map → transfer → reconcile. Automate the mechanical splitting with existing Python tools (`mdsplit` or `markdown-section-splitter`), then manually curate content placement and cross-links.
+**Primary recommendation:** The existing stack is well-chosen and already installed. Focus on using MUI X DataGrid v9's `processRowUpdate` callback for inline editing (it supports promise-based save with revert), `react-hot-toast`'s `<Toaster>` with per-toast `duration` for notifications, and Zod v4's `z.email()` top-level function instead of deprecated `z.string().email()`. No new libraries are needed.
 
 ## Standard Stack
 
-The established tools/patterns for this domain:
-
 ### Core
 
-| Tool/Pattern | Version/Ref | Purpose | Why Standard |
-|---|---|---|---|
-| **YAML Frontmatter** | Between `---` delimiters | Machine-readable metadata header | Universal support (Hugo, Docusaurus, MkDocs, RAG pipelines). Acts as "type signature" for documents — retrieval systems can filter by metadata before reading body text. |
-| **Markdown (CommonMark)** | Standard | Content format | Native LLM-friendly. Preserves structural hierarchy (headings, tables, code blocks) that LLMs parse reliably. |
-| **mdsplit** | PyPI v0.5.0 | Split markdown by heading level | Python CLI tool. Splits at H1-H6, generates kebab-case filenames, code-block-aware, generates TOC and navigation footers. |
-| **markdown-section-splitter** | GitHub: petalo/markdown-section-splitter | Split + frontmatter generation | Python script. Splits at `##` headers, auto-promotes headers, generates numbered kebab-case files, detects broken internal links, code-block-aware. |
+| Library | Version | Purpose | Why Standard |
+|---------|---------|---------|--------------|
+| React | 19.2.5 | UI framework | Already installed, latest stable |
+| TypeScript | 6.0.2 | Type safety | Already installed, strict mode |
+| Vite | 8.0.10 | Build tool | Already installed, fast HMR |
+| @mui/material | 9.0.0 | UI component library | Already installed, v9 latest |
+| @mui/icons-material | 9.0.0 | Icon components | Already installed, pairs with MUI |
+| @mui/x-data-grid | 9.0.4 | Data tables with inline editing | Already installed, v9 supports `processRowUpdate` with rowId param |
+| @tanstack/react-query | 5.100.9 | Server state management | Already installed, v5 latest |
+| react-router-dom | 7.15.0 | Client-side routing | Already installed, v7 latest |
+| react-hook-form | 7.75.0 | Form state management | Already installed |
+| @hookform/resolvers | 5.2.2 | Zod integration for RHF | Already installed |
+| zod | 4.4.3 | Schema validation | Already installed, v4 (has v3→v4 breaking changes) |
+| axios | 1.16.0 | HTTP client | Already installed |
+| react-plotly.js | 2.6.0 | Plotly chart wrapper | Already installed |
+| plotly.js-dist-min | 3.5.1 | Charting library | Already installed |
+| react-hot-toast | 2.6.0 | Toast notifications | Already installed, v2.6 supports multiple toasters |
+| react-dropzone | 15.0.0 | File drag-and-drop | Already installed |
+| @mui/x-date-pickers | 9.0.4 | Date picker components | Already installed, used in LogViewer |
+| date-fns | 4.1.0 | Date utility | Already installed, adapter for x-date-pickers |
 
 ### Supporting
 
-| Tool/Pattern | Purpose | When to Use |
-|---|---|---|
-| **MAGI (.mda) spec** | Extended markdown with typed relationships | Reference model for frontmatter schema design. The `doc-id`, `tags`, `entities`, `relationships` fields informed the minimal schema chosen. Overkill to adopt fully, but the `doc-id` + `related` pattern is directly applicable. |
-| **mdlint / markdownlint** | Lint markdown consistency | Post-migration validation of heading hierarchy, link integrity, formatting consistency. |
-| **Python `re` + `yaml` stdlib** | Custom split scripts | When `mdsplit` doesn't handle SPEC.md's specific structure (mixed heading levels, code blocks with headings inside). |
+| Library | Version | Purpose | When to Use |
+|---------|---------|---------|--------------|
+| @emotion/react | 11.14.0 | CSS-in-JS for MUI | Already installed, required by MUI v9 |
+| @emotion/styled | 11.14.1 | Styled components for MUI | Already installed, required by MUI v9 |
 
 ### Alternatives Considered
 
 | Instead of | Could Use | Tradeoff |
-|---|---|---|
-| Manual splitting | `mdsplit` / `markdown-section-splitter` | Tools handle mechanical splitting (80% of work) but can't decide content placement. Hybrid: tool-split, then manually curate. |
-| Full MAGI spec | Minimal 4-field schema | MAGI adds `ai-script` blocks, footnote relationships, `entities`, `expired-date`. Overkill for a project spec. The minimal schema covers 95% of retrieval needs. |
-| Pandoc conversion | Direct markdown splitting | Pandoc is designed for format conversion (Word→MD, HTML→MD), not structural splitting. Wrong tool for this job. |
+|------------|-----------|----------|
+| @mui/x-data-grid | AG Grid | AG Grid has more features but heavier; MUI X is already installed and integrated with MUI theme |
+| react-hot-toast | Notistack (MUI) | Notistack integrates with MUI Snackbar but react-hot-toast is already installed and lighter |
+| react-router-dom v7 data mode | Keep BrowserRouter mode | Data mode (createBrowserRouter) adds loaders/actions; not needed since we use TanStack Query for data fetching |
+| Zod v4 `z.string().email()` | `z.email()` | v4 deprecates method-form validators; use top-level functions |
 
-**Installation (if using mdsplit):**
-```bash
-pip install mdsplit
-# or
-uv add --dev mdsplit
-```
+**Installation:** All packages are already installed. No `npm install` needed.
 
 ## Architecture Patterns
 
 ### Recommended Project Structure
 
+The existing FSD structure is correct and should be maintained:
+
 ```
-docs/
-├── README.md                          # Root index: how docs are organized (human + AI)
-├── SPEC.md                            # System overview: what the system is (was monolithic spec)
-│
-├── 00-overview/
-│   ├── overview.md                    # System purpose, stack summary, key entities
-│   └── data-flow.md                   # End-to-end data flow (upload → process → display)
-│
-├── 01-auth/
-│   └── auth-api.md                    # Auth endpoints, JWT flow, registration, password change
-│
-├── 02-dashboards/
-│   └── dashboards-api.md              # Dashboards + layouts + graphs + filters (one bounded context)
-│
-├── 03-processing/
-│   ├── processing-api.md              # Upload, processing triggers, status/result endpoints
-│   └── task-queue.md                  # Task queue architecture + migration plan (from TASK_QUEUE_MIGRATION.md)
-│
-├── 04-admin/
-│   └── admin-api.md                   # Admin endpoints: users, registration requests, logs
-│
-├── 05-health/
-│   └── health-api.md                  # Health check endpoints
-│
-├── 06-backend/
-│   ├── architecture.md                # FastAPI architecture, service layer, DI
-│   ├── configuration.md               # Config sources, secrets management, env vars
-│   ├── logging.md                     # Logging standards, language requirements
-│   └── testing.md                     # Testing strategy, pytest, coverage areas
-│
-├── 07-frontend/
-│   ├── architecture.md                # React SPA architecture, FSD pattern, key principles
-│   ├── fsd-structure.md               # Project structure, folder conventions
-│   ├── pages.md                       # All 8 UI pages (Login, Register, Dashboard List, etc.)
-│   ├── auth-flow.md                   # Frontend auth: JWT handling, protected routes, role-based access
-│   ├── upload-ui.md                   # Upload page: dropzone, progress, mode toggle
-│   └── frontend-security.md           # CORS, JWT storage, file validation, email blacklist
-│
-├── 08-security/
-│   ├── security-overview.md           # Rate limiting, MIME validation, SQL injection prevention
-│   └── access-control.md              # Dashboard access enforcement, role checks per endpoint
-│
-├── 09-database/
-│   ├── schema-core.md                 # users, dashboards, graphs, layouts, filters tables
-│   ├── schema-processing.md           # aggregated_data, processing_logs, processing_configs
-│   ├── schema-access.md               # dashboard_access, registration_requests, dashboard_filters
-│   ├── indexes.md                     # All database indexes
-│   └── enums.md                       # All StrEnum definitions (from section 22)
-│
-├── 10-deployment/
-│   └── deployment.md                  # Dev setup, production variants, Docker, no-overengineering
-│
-├── 90-adr/
-│   └── (future ADRs)                  # Architecture decision records — immutable history
-│
-└── 99-reference/
-    ├── swagger.md                     # From SWAGGER_README.md
-    └── run-guide.md                   # From RUN.md
+frontend/src/
+├── app/                    # Providers and routing (DO NOT change to data mode)
+│   ├── providers.tsx       # QueryClient, BrowserRouter, ThemeProvider, Toaster
+│   └── routes.tsx          # Route definitions using <Routes>/<Route>
+├── features/               # Business features
+│   ├── auth/               # Login, register, token management
+│   │   ├── api/            # authApi.ts
+│   │   ├── model/          # useAuth.ts, authToken.ts
+│   │   └── ui/             # LoginForm.tsx, RegisterForm.tsx
+│   ├── dashboards/         # Dashboard list, view, charts
+│   │   ├── api/            # dashboardApi.ts (TanStack Query hooks)
+│   │   ├── ui/             # DashboardList.tsx (TABLE, not cards), DashboardView.tsx
+│   │   └── ui/charts/      # PlotlyChart.tsx, BarChart.tsx, etc.
+│   ├── upload/             # File upload (MODAL, not separate page)
+│   │   ├── api/            # uploadApi.ts
+│   │   └── ui/             # FileDropzone.tsx, UploadModal.tsx (was UploadPage.tsx)
+│   ├── admin/              # Admin panel with tabs
+│   │   ├── api/            # adminApi.ts
+│   │   └── ui/             # AdminPanel.tsx, UserManagement.tsx, etc.
+│   └── users/              # User profile, change password
+│       ├── api/            # userApi.ts
+│       └── ui/             # UserProfile.tsx, ChangePasswordPage.tsx
+├── shared/                 # Reusable code
+│   ├── api/                # axiosInstance.ts (interceptors for JWT)
+│   ├── components/         # Layout, ProtectedRoute, RoleBasedAccess, ConfirmDialog
+│   │   └── Layout/         # AppLayout.tsx, Header.tsx, Sidebar.tsx
+│   └── types/              # enums.ts, api.types.ts, formSchemas.ts
+└── main.tsx                # Entry point
 ```
 
-### Pattern 1: YAML Frontmatter as Document Schema
+### Pattern 1: DataGrid Inline Editing with Per-Row Parallel Save
 
-**What:** Every `.md` file starts with a YAML block that declares the document's identity, classification, and relationships. This is the single most impactful pattern for LLM/RAG consumption.
+**What:** MUI X DataGrid v9 supports inline cell editing with `processRowUpdate` callback. Each row save is independent — the callback returns a Promise, and the grid handles each row's lifecycle separately.
 
-**When to use:** Every file in the modular docs system.
+**When to use:** Admin tables (UserManagement, DashboardManagement, RegistrationRequests) where users edit cells inline and each change saves immediately to the server.
 
-**Example:**
-```yaml
----
-id: auth-api
-domain: auth
-tags: [jwt, bcrypt, registration, password, endpoints]
-related:
-  - auth-flow
-  - security-overview
-  - access-control
----
+**Key API details (verified from MUI X v9 docs):**
+- `processRowUpdate(newRow, originalRow, { rowId })` — called when editing stops. Must return the row object (or a Promise resolving to it). If the promise resolves with `originalRow`, the cell reverts. If rejected, the cell stays in edit mode.
+- `onProcessRowUpdateError(error)` — called when `processRowUpdate` throws or rejects.
+- Column `editable: true` enables editing per column.
+- Column `type: 'singleSelect'` with `valueOptions` renders a dropdown inline editor.
+- `editMode: 'row'` enables row-level editing (all editable cells in a row simultaneously).
+- `rowModesModel` + `onRowModesModelChange` for controlled editing state.
+
+**Example — Inline cell edit with save/revert pattern:**
+```tsx
+// Source: Context7 /mui/mui-x — editing/persistence.md
+<DataGrid
+  rows={rows}
+  columns={columns}
+  editMode="row"
+  processRowUpdate={async (updatedRow, originalRow, { rowId }) => {
+    try {
+      const saved = await apiSaveRow(updatedRow);
+      return saved; // Grid updates with saved data
+    } catch (error) {
+      toast.error(`Save failed: ${error.message}`);
+      return originalRow; // Revert cell to previous value, exit edit mode
+    }
+  }}
+  onProcessRowUpdateError={(error) => {
+    toast.error(`Save failed: ${error.message}`);
+  }}
+/>
 ```
 
-**Field specification:**
-- `id` (string, required): Unique kebab-case identifier. Used for cross-referencing and as the primary retrieval key. Should match the filename without `.md`.
-- `domain` (enum, required): One of 12 fixed values matching the folder name: `overview`, `auth`, `dashboards`, `processing`, `admin`, `health`, `backend`, `frontend`, `security`, `database`, `deployment`, `reference`. This is the primary taxonomy axis.
-- `tags` (string[], optional): Freeform cross-cutting semantic topics. Used for secondary filtering. Keep to 3-8 tags. Examples: `upload`, `csv`, `async`, `redis`, `polars`, `jwt`.
-- `related` (string[], optional): IDs of 3-5 semantically adjacent documents typically loaded together. Not exhaustive backlinks — only the most co-retrieved docs.
+**Row highlight during save:** Track saving state per row ID in a `Set<string>`. Apply a yellow background via `getRowClassName`:
+```tsx
+const savingRows = useRef(new Set<string>());
 
-**Why this works:** Research from Understanding Data (2026-03-16) confirms that frontmatter serves the same role for documents that type definitions serve for code. RAG systems can filter by `domain` and `tags` before running semantic search, dramatically improving precision. The `related` field creates a virtual knowledge graph that guides context assembly.
+// In processRowUpdate:
+savingRows.current.add(rowId);
+// ... after save completes or fails:
+savingRows.current.delete(rowId);
 
-### Pattern 2: Internal File Structure
-
-**What:** Consistent section hierarchy within each file. Required minimum + recommended optional sections.
-
-**Required sections (every file):**
-```markdown
-# {Title}
-
-## Purpose
-[1-3 paragraphs: what this document covers, why it exists]
-
-## Main Concepts
-[Core information: entities, endpoints, schemas, flows — the primary content]
+// In DataGrid props:
+getRowClassName={(params) => {
+  return savingRows.current.has(params.id) ? 'row-saving' : '';
+}}
 ```
 
-**Recommended sections (when applicable):**
-```markdown
-## Flows
-[Step-by-step processes, data flows, request/response sequences]
+**Parallel saves:** Since `processRowUpdate` is called independently for each row edit, and each returns its own Promise, rows save in parallel naturally. No queue or blocking needed.
 
-## Constraints
-[Validation rules, business rules, security constraints, limitations]
-
-## Edge Cases
-[Error conditions, boundary behaviors, failure modes]
-
-## Related Docs
-[Cross-links to related files with brief context on why they're related]
+**Dropdown inline edit (singleSelect):** For role/status dropdowns, use `type: 'singleSelect'` with `valueOptions`. The dropdown closes automatically after selection, and `processRowUpdate` fires immediately:
+```tsx
+{
+  field: 'role',
+  headerName: 'Role',
+  width: 130,
+  editable: true,
+  type: 'singleSelect',
+  valueOptions: ['admin', 'editor', 'viewer'],
+}
 ```
 
-**Optional sections:**
-`## Examples`, `## Migration Notes`, `## Open Questions`, `## Performance Notes`
+### Pattern 2: Toast Notifications with react-hot-toast
 
-**Critical rule:** Omit empty sections entirely. No "N/A" filler. If a section doesn't apply, it doesn't exist.
+**What:** react-hot-toast v2.6 supports per-toast duration, stacking, and manual dismiss.
 
-**Why this works:** Consistent structure lets LLMs predict where to find specific information types. The `## Purpose` section acts as a self-summary for retrieval. `## Edge Cases` captures the high-value "gotcha" content that's often lost in restructuring (directly addresses the 7 high-risk sections identified in DECISION_01).
+**Configuration in providers.tsx:**
+```tsx
+// Source: Context7 /timolins/react-hot-toast
+<Toaster
+  position="top-right"
+  gutter={8}
+  toastOptions={{
+    success: { duration: 3000 },
+    error: { duration: 5000 },
+    style: { background: '#363636', color: '#fff' },
+  }}
+/>
+```
 
-### Pattern 3: Retrieval-Intent Splitting
+**Per-toast usage:**
+```tsx
+import { toast } from 'react-hot-toast';
 
-**What:** Split documents based on what information an LLM (or human) needs to load into context simultaneously to answer a specific class of questions.
+toast.success('Saved!', { duration: 3000 });
+toast.error('Save failed', { duration: 5000 });
+toast.dismiss(); // Manual dismiss
+```
 
-**When to use:** Deciding file boundaries during migration.
+### Pattern 3: Confirm Dialog Pattern
 
-**Decision framework:**
-1. Identify the primary "question classes" the spec answers (e.g., "How does authentication work?", "What's the database schema?", "How do I deploy this?")
-2. For each question class, determine what content must be co-present in context
-3. Group content that's always needed together into one file
-4. Split content that's independently retrievable into separate files
+**What:** MUI Dialog with backdrop dimmer for destructive actions (delete user, delete dashboard, etc.).
 
-**Concrete examples from SPEC.md:**
-- **Keep together:** Dashboards + Layouts + Graphs + Filters = `dashboards-api.md` (they form one bounded context — you can't understand graphs without knowing the dashboard they belong to)
-- **Keep together:** Upload + Processing + Task Queue = `processing-api.md` (the upload pipeline is one end-to-end flow)
-- **Split apart:** Auth endpoints ≠ Frontend auth flow (different consumers: backend devs vs frontend devs)
-- **Split apart:** DB schema ≠ DB indexes ≠ DB enums (different retrieval intents: "what tables exist?" vs "what's optimized?" vs "what are the allowed values?")
+**Implementation:**
+```tsx
+function ConfirmDialog({ open, title, message, onConfirm, onCancel, confirmLoading }) {
+  return (
+    <Dialog open={open} onClose={onCancel}>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogContent><Typography>{message}</Typography></DialogContent>
+      <DialogActions>
+        <Button onClick={onCancel}>Cancel</Button>
+        <Button onClick={onConfirm} color="error" disabled={confirmLoading}>
+          Delete
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+```
 
-**Target:** 25-40 files. Sweet spot per file: 200-800 lines. Below 200 lines = too fragmented (120 tiny docs problem). Above 800 lines = too monolithic (5 giant docs problem).
+MUI Dialog already has a backdrop dimmer by default (`Backdrop` component). The `Delete` button is blocked during request via `disabled={confirmLoading}`.
 
-### Pattern 4: Canonical Content Ownership
+### Pattern 4: Upload as Modal (Not Separate Page)
 
-**What:** Each piece of information has exactly one canonical home. Other locations contain short summaries + cross-links, never full duplication.
+**What:** The upload flow should open as a modal dialog on the dashboard page, not navigate to a separate route.
 
-**When to use:** Content that naturally belongs to multiple domains (e.g., security constraints that apply to both auth and upload).
+**Implementation approach:**
+1. Create `UploadModal.tsx` in `features/upload/ui/` — extract the upload logic from `UploadPage.tsx`
+2. In `DashboardView.tsx`, add an "Upload" button that opens the modal state
+3. Modal contains: mode toggle (overwrite/append), FileDropzone, upload progress, processing status polling
+4. On processing success, close modal and invalidate dashboard data queries
+5. Remove the `/dashboard/:id/upload` route from routes.tsx
 
-**Example:**
-- **Canonical home:** `security-overview.md` contains the full rate-limiting specification
-- **In `processing-api.md`:** "Upload endpoints use rate limiting. See [security-overview.md] for configuration details and failure behavior."
-- **In `auth-api.md`:** "Login and registration endpoints are rate-limited. See [security-overview.md] for fail-open/fail-closed behavior."
+### Pattern 5: Dashboard List as Table
 
-**Why this works:** Duplication creates maintenance burden and inconsistency risk. When the rate-limiting config changes, there's exactly one place to update. Cross-links ensure discoverability.
+**What:** Convert from Card grid to DataGrid table with ID + Name columns.
 
-### Anti-Patterns to Avoid
+**Implementation:**
+```tsx
+const columns: GridColDef[] = [
+  { field: 'id', headerName: 'ID', width: 120,
+    valueGetter: (value: string) => value.slice(0, 8) }, // Short UUID
+  { field: 'name', headerName: 'Name', width: 300 },
+  { field: 'permission', headerName: 'Permission', width: 130 },
+];
+```
 
-- **The Junk Drawer:** Don't create a `misc/` or `other/` folder. Every file belongs to a domain. If it doesn't fit, the domain taxonomy needs refinement, not a junk drawer.
-- **Deep Nesting:** Max 2 levels below domain root. `domain/subgroup/file.md` is the limit. Deep nesting hurts both human navigation and LLM context assembly.
-- **Generic Filenames at Depth:** `api.md` inside `01-auth/` is ambiguous. Use `auth-api.md`. The only exception: `overview.md` within a domain folder.
-- **Frontmatter Bloat:** No `owner`, `reviewer`, `jira`, `epic`, `priority`, `sprint`, `risk`, `compliance` fields. These are project management metadata, not retrieval metadata. They rot instantly and add noise.
-- **Silent Dropping:** If a section's destination is unclear during migration, create a temporary doc (e.g., `_UNASSIGNED-rate-limiter-failure.md`) rather than deleting it. Unclear ≠ unimportant.
+### Pattern 6: Zod v4 Schema Compatibility
+
+**What:** Zod v4 has breaking changes from v3. The project has `zod: ^4.4.3` installed.
+
+**Critical changes:**
+- `z.string().email()` is deprecated → use `z.email()` (top-level function)
+- `z.string().uuid()` is deprecated → use `z.uuid()`
+- `z.string().url()` is deprecated → use `z.url()`
+- `message` param → `error` param in validation methods: `z.string().min(5, { error: "Too short" })`
+- `z.infer<typeof Schema>` still works for type inference
+- `z.object({})` still works
+- `.refine()` still works with `{ error: "..." }` instead of `{ message: "..." }`
+
+**Existing code impact:** The current `formSchemas.ts` uses `z.string().email()` and `{ message: '...' }` pattern — these need updating to Zod v4 syntax.
+
+### Pattern 7: Short UUID Display
+
+**What:** Display first 8 characters of UUID for all IDs.
+
+**Implementation:** Use `valueGetter` in DataGrid columns or a utility function:
+```tsx
+const shortUuid = (id: string) => id.slice(0, 8);
+```
+
+### Pattern 8: Table State Preservation on Navigation
+
+**What:** DataGrid pagination/sorting state should be preserved when navigating back.
+
+**Implementation:** Use `paginationModel` + `onPaginationModelChange` with state lifted to the component level. Since React state is preserved when components stay mounted (using `display: none` for hidden tabs), or use `queryParams` for URL-persisted state. For admin tabs, keep tab content mounted but hidden.
 
 ## Don't Hand-Roll
 
-Problems that look simple but have existing solutions:
-
 | Problem | Don't Build | Use Instead | Why |
-|---|---|---|---|
-| Split markdown by headings | Custom regex parser | `mdsplit` or `markdown-section-splitter` | Code-block-aware heading detection is trickier than it looks. These tools handle fenced code blocks, ATX headings, and edge cases. |
-| Generate kebab-case filenames | Manual string manipulation | `mdsplit --output` or the splitter's built-in naming | Handles Unicode, special characters, duplicate detection, GitHub-compatible anchors. |
-| Validate cross-links | Manual grep | `markdown-section-splitter`'s built-in link validation | Detects broken internal links across split files automatically. |
-| Generate TOC/index files | Manual curation | `mdsplit --table-of-contents` | Auto-generates `toc.md` with proper relative links. |
-| Frontmatter parsing | Custom YAML regex | Python `yaml.safe_load` with `re` for frontmatter extraction | YAML edge cases (multiline strings, special chars) are handled by the stdlib. |
-
-**Key insight:** The migration is a one-time structural operation, not a recurring process. Use existing tools for the mechanical 80% (splitting, naming, TOC generation), then invest manual effort in the creative 20% (content placement, cross-link curation, reconciliation).
+|---------|-------------|-------------|-----|
+| Inline table editing | Custom cell editors with useState per cell | MUI X DataGrid `processRowUpdate` | Handles edit mode, focus, keyboard nav, promise-based save/revert |
+| Toast notifications | Custom toast component with CSS animations | react-hot-toast | Already installed, handles stacking, auto-dismiss, pause-on-hover |
+| File drag-and-drop | Custom drop event handlers | react-dropzone | Already installed, handles drag state, file filtering |
+| Form validation | Manual if/else validation | Zod + @hookform/resolvers | Already installed, type-safe, composable |
+| Confirm dialogs | Custom modal with backdrop | MUI Dialog | Already installed, has backdrop dimmer, focus trap, Escape handling |
+| Date picking | Custom date input | @mui/x-date-pickers + AdapterDateFns | Already installed, accessible, locale-aware |
+| Table pagination/sorting | Custom pagination logic | DataGrid built-in paginationModel | Already installed, handles page size, page index |
+| JWT token storage | Custom cookie/sessionStorage logic | Existing authToken.ts (memory-first) | Already implemented with production memory-only mode |
+| HTTP interceptors | Custom fetch wrapper | axiosInstance with interceptors | Already implemented with JWT injection and 401 handling |
+| Route protection | Custom auth checks per route | ProtectedRoute + RoleBasedAccess | Already implemented |
 
 ## Common Pitfalls
 
-### Pitfall 1: Losing High-Risk Sections During Split
+### Pitfall 1: Zod v4 Breaking Changes in Form Schemas
 
-**What goes wrong:** Critical behavioral specifications (edge cases, failure modes, enforcement rules) get lost when content is redistributed across files. These sections are often short and don't have obvious "homes."
+**What goes wrong:** `z.string().email()` silently stops working or produces deprecation warnings. `{ message: "error" }` in `.min()` / `.max()` / `.refine()` doesn't work in v4.
+**Why it happens:** Zod v4 moved string format validators to top-level functions and renamed `message` to `error`.
+**How to avoid:** Update all schemas: `z.string().email()` → `z.email()`, `{ message: "x" }` → `{ error: "x" }`.
+**Warning signs:** TypeScript deprecation warnings, validation not triggering.
 
-**Why it happens:** During mechanical splitting, content is assigned by heading proximity. A subsection like "6.2 Rate Limiter Failure Behavior" might get bundled with the wrong parent or dropped into an unassigned pile.
+### Pitfall 2: DataGrid processRowUpdate Not Returning Row Object
 
-**How to maintain:** Before splitting, extract the 7 high-risk sections identified in DECISION_01.md into a checklist. After splitting, verify each one has a canonical home:
-- `6.2 Rate Limiter Failure Behavior` → `security-overview.md` (under "Failure Modes" subsection)
-- `6.3 Production Credential Enforcement` → `configuration.md` (under "Production Requirements")
-- `9.1 Formula Parser limitations` → `processing-api.md` (under "Custom Metrics")
-- `11.2 Task Queue Migration` → `task-queue.md` (standalone, already exists)
-- `15.1 Dashboard Access Enforcement` → `access-control.md`
-- `19.5 Application Startup Behavior` → `architecture.md` (under "Application Lifecycle")
-- `23.5 CORS validation behavior` → `frontend-security.md`
+**What goes wrong:** After editing a cell, the grid shows the old value or enters an inconsistent state.
+**Why it happens:** `processRowUpdate` must return the row object (or a Promise resolving to it). If it returns `undefined` or `void`, the grid doesn't know what to display.
+**How to avoid:** Always return either `updatedRow` (on success) or `originalRow` (on error/revert) from `processRowUpdate`.
+**Warning signs:** Cell shows stale data after edit, or edit mode doesn't exit.
 
-**Warning signs:** A reconciliation pass that finds content in `_UNASSIGNED_*` files. Missing line counts (if SPEC.md is 1069 lines, the total across all output files should account for all non-trivial content).
+### Pitfall 3: React Router v7 Import Changes
 
-### Pitfall 2: Inconsistent Frontmatter
+**What goes wrong:** `import { BrowserRouter } from 'react-router-dom'` may not work in v7. v7 merged `react-router` and `react-router-dom`.
+**Why it happens:** In v7, DOM-specific exports moved to `react-router/dom`. However, `react-router-dom` still works as a compatibility shim.
+**How to avoid:** The current code uses `react-router-dom` which is fine. If upgrading imports, use `react-router` for core APIs and `react-router/dom` for `RouterProvider`/`HydratedRouter`. Keep `BrowserRouter` for now since the app doesn't use data mode.
+**Warning signs:** Import errors, "useRoutes must be used within a RouterProvider" warnings.
 
-**What goes wrong:** Different files use different field names, formats, or conventions. Some have `domain: auth`, others have `domain: "auth"` or `domains: [auth]`. Some use `related` as strings, others as objects.
+### Pitfall 4: MUI X DataGrid v9 Pagination Model
 
-**Why it happens:** Manual frontmatter creation without a template or validation.
+**What goes wrong:** Pagination doesn't work or uses wrong defaults.
+**Why it happens:** DataGrid v9 uses `paginationModel: { page: 0, pageSize: 100 }` by default (page is 0-indexed). The old `pageSize` prop is deprecated.
+**How to avoid:** Use `initialState: { pagination: { paginationModel: { pageSize: 25 } } }` for initial state, or `paginationModel` + `onPaginationModelChange` for controlled state.
+**Warning signs:** Table shows 100 rows by default, pagination controls don't respond.
 
-**How to avoid:** Create a single frontmatter template file and copy it as the starting point for each new document. Use a consistent YAML style (no quotes for simple strings, arrays on one line for short lists).
+### Pitfall 5: Toast Auto-Dismiss Timing
 
-**Template:**
-```yaml
----
-id: {kebab-case-id}
-domain: {domain-name}
-tags:
-  - tag1
-  - tag2
-related:
-  - related-doc-id-1
-  - related-doc-id-2
----
-```
+**What goes wrong:** Success toasts linger too long or error toasts disappear too quickly.
+**Why it happens:** Default toast duration is 5000ms for all types.
+**How to avoid:** Configure per-type defaults in `<Toaster toastOptions={{ success: { duration: 3000 }, error: { duration: 5000 } }} />`.
+**Warning signs:** Toasts visible for wrong duration.
 
-### Pitfall 3: Broken Cross-References
+### Pitfall 6: Upload as Page vs Modal Route Conflict
 
-**What goes wrong:** After splitting, internal links (`[text](#section-anchor)` or `[text](other-section)`) point to non-existent files or anchors.
+**What goes wrong:** If upload is converted to modal but the `/dashboard/:id/upload` route remains, users can still navigate to a broken page.
+**Why it happens:** Route definition not removed when component changes from page to modal.
+**How to avoid:** Remove the upload route from `routes.tsx` when converting to modal. The upload button on DashboardView should set local state, not navigate.
+**Warning signs:** Direct URL navigation to `/dashboard/:id/upload` shows broken page.
 
-**Why it happens:** SPEC.md uses section numbers (`## 14.1 Auth Endpoints`) that won't survive the split. Anchors change when files are renamed.
+### Pitfall 7: Row Highlight State Stale Reference
 
-**How to avoid:** After splitting, use `grep -r "\]\(" docs/` to find all internal links. Validate each one. Replace section-number references with file+anchor references: `[Auth Endpoints](auth-api.md#auth-endpoints)`.
+**What goes wrong:** Row highlight doesn't clear after save completes.
+**Why it happens:** `Set` mutation doesn't trigger re-render unless state is updated.
+**How to avoid:** Use `useState` instead of `useRef` for `savingRows`, or call `apiRef.current.forceUpdate()` after modifying the ref.
+**Warning signs:** Row stays yellow after save completes.
 
-### Pitfall 4: Over-Fragmentation
+### Pitfall 8: Parallel Mutation Race Conditions in TanStack Query
 
-**What goes wrong:** Splitting into too many tiny files (100+ files, each <100 lines). This forces LLMs to load many files to answer simple questions, increasing context overhead and retrieval complexity.
-
-**Why it happens:** Splitting at too-deep a heading level (H4/H5) or treating every subsection as a separate file.
-
-**How to avoid:** Enforce the 200-800 line target per file. If a file would be <200 lines, merge it with its semantic parent. If >800 lines, split at the next heading level. The `mdsplit` tool's `--max-level` parameter controls this.
-
-### Pitfall 5: Under-Fragmentation
-
-**What goes wrong:** Ending up with 3-5 giant files (each >1500 lines). The monolithic problem persists in fewer files.
-
-**Why it happens:** Splitting at too-shallow a heading level (H1 only) or being too conservative about creating new files.
-
-**How to avoid:** Target 25-40 files for a 1069-line spec. That's an average of ~350 lines/file. If the initial split produces <20 files, split at a deeper heading level.
-
-### Pitfall 6: SPEC.md Identity Crisis
-
-**What goes wrong:** After migration, SPEC.md is either deleted (breaking external references), left as-is (confusing — two sources of truth), or gutted to a stub (losing the architecture overview value).
-
-**Why it happens:** No clear plan for the original file's new role.
-
-**How to avoid:** Per DECISION_01: SPEC.md becomes the system overview / documentation index. It keeps the architecture summary, domain links, key decisions, and main data flow. It's the "what the system is" document, while the new `README.md` is the "how docs are organized" document.
+**What goes wrong:** Rapid inline edits on the same row cause stale data to overwrite fresh data.
+**Why it happens:** If two mutations are in flight for the same row, the first may resolve after the second, overwriting with stale data.
+**How to avoid:** Use `onMutate` for optimistic updates with proper rollback. For inline editing, the DataGrid's `processRowUpdate` pattern handles this naturally since each edit starts from the current grid state.
+**Warning signs:** Cell value flickers or reverts after rapid edits.
 
 ## Code Examples
 
-### Example 1: Using mdsplit for Initial Mechanical Split
+### Inline Editing with Row Highlight and Revert-on-Error
 
-```bash
-# Split SPEC.md at H2 level (##) into separate files
-# This creates one file per ## section with kebab-case names
-python -m mdsplit docs/SPEC.md --max-level 2 --output docs/_split-temp --table-of-contents
+```tsx
+// Source: Context7 /mui/mui-x — editing/persistence.md (adapted)
+import { useState, useCallback } from 'react';
+import { DataGrid } from '@mui/x-data-grid';
+import { toast } from 'react-hot-toast';
 
-# Output:
-# _split-toc.md
-# _split-purpose.md
-# _split-stack.md
-# _split-core-entities.md
-# ... (one file per ## section)
+function UserTable() {
+  const [savingRows, setSavingRows] = useState<Set<string>>(new Set());
+
+  const processRowUpdate = useCallback(async (updatedRow, originalRow, { rowId }) => {
+    setSavingRows((prev) => new Set(prev).add(rowId));
+    try {
+      const saved = await apiSaveUser(updatedRow);
+      toast.success('User updated');
+      return saved;
+    } catch (error) {
+      toast.error(`Save failed: ${error.message}`);
+      return originalRow; // Revert to original value
+    } finally {
+      setSavingRows((prev) => {
+        const next = new Set(prev);
+        next.delete(rowId);
+        return next;
+      });
+    }
+  }, []);
+
+  return (
+    <DataGrid
+      rows={rows}
+      columns={columns}
+      editMode="row"
+      processRowUpdate={processRowUpdate}
+      onProcessRowUpdateError={(error) => toast.error(error.message)}
+      getRowClassName={(params) =>
+        savingRows.has(params.id as string) ? 'row-saving' : ''
+      }
+      sx={{
+        '& .row-saving': { backgroundColor: 'rgba(255, 235, 59, 0.3)' },
+      }}
+    />
+  );
+}
 ```
 
-**Source:** mdsplit PyPI documentation, https://pypi.org/project/mdsplit/
+### Toast Configuration in App Provider
 
-### Example 2: Using markdown-section-splitter for Smarter Splitting
-
-```bash
-# Split with header promotion (## → # in output files)
-# Generates numbered files with cross-reference validation
-python markdown_section_splitter.py docs/SPEC.md --output-dir docs/_split-temp
-
-# Output:
-# 00-toc.md
-# 01-purpose.md          (was ## 1. Purpose, now # Purpose)
-# 02-stack.md            (was ## 2. Stack, now # Stack)
-# ...
-# recommended_prompts.txt (LLM prompts for post-processing each file)
+```tsx
+// Source: Context7 /timolins/react-hot-toast — toaster.mdx
+<Toaster
+  position="top-right"
+  gutter={8}
+  toastOptions={{
+    success: { duration: 3000 },
+    error: { duration: 5000 },
+    style: { background: '#363636', color: '#fff' },
+  }}
+/>
 ```
 
-**Source:** https://github.com/petalo/markdown-section-splitter
+### Zod v4 Schema (Updated from v3)
 
-### Example 3: Frontmatter Template for a Domain File
+```typescript
+// Source: Context7 /colinhacks/zod — v4/changelog.mdx
+import { z } from 'zod';
 
-```markdown
----
-id: dashboards-api
-domain: dashboards
-tags: [crud, layouts, graphs, filters, admin]
-related:
-  - schema-core
-  - processing-api
-  - access-control
----
+// Zod v4 — use top-level functions instead of deprecated method forms
+export const loginSchema = z.object({
+  email: z.email({ error: 'Invalid email format' }),  // NOT z.string().email()
+  password: z.string().min(6, { error: 'Password must be at least 6 characters' }),
+});
 
-# Dashboards API
+export const registerSchema = z.object({
+  email: z.email({ error: 'Invalid email format' })
+    .refine((email) => {
+      const domain = email.split('@')[1];
+      return domain && !['tempmail.com', 'throwawaymail.com'].includes(domain);
+    }, { error: 'This email domain is not allowed' }),
+});
 
-## Purpose
-
-This document covers the complete dashboards bounded context: dashboard CRUD,
-layout management, graph definitions, and filter configuration. These four
-subsystems form a single bounded context because graphs cannot exist without
-dashboards, layouts define dashboard composition, and filters apply across
-dashboard graphs.
-
-## Main Concepts
-
-### Dashboard Entity
-...
-
-### Graph Types
-...
-
-## Flows
-
-### Creating a Dashboard with Graphs
-1. Admin POSTs dashboard → `POST /api/v1/dashboards`
-2. Admin POSTs layout → `POST /api/v1/layouts`
-3. Admin POSTs graphs → `POST /api/v1/graphs` (with `dashboard_id`)
-4. Admin POSTs filters → `POST /api/v1/filters`
-5. Link filters to dashboard → `dashboard_filters` table
-
-## Constraints
-
-- Graph names are unique per dashboard (`UNIQUE (dashboard_id, name)`)
-- Deleting a dashboard cascades to graphs and dashboard_access entries
-- Only admins can create/update/delete dashboards, layouts, graphs, and filters
-
-## Edge Cases
-
-- Deleting a layout that's referenced by a dashboard: foreign key prevents deletion
-- Creating a graph with a non-existent `dashboard_id`: FK constraint rejects
-
-## Related Docs
-
-- [schema-core.md](database/schema-core.md) — DDL for dashboards, layouts, graphs, filters tables
-- [processing-api.md](processing/processing-api.md) — Upload pipeline that populates graph data
-- [access-control.md](security/access-control.md) — Dashboard access enforcement per endpoint
+export const changePasswordSchema = z.object({
+  current_password: z.string().min(1, { error: 'Current password is required' }),
+  new_password: z.string().min(8, { error: 'Password must be at least 8 characters' }),
+  confirm_password: z.string().min(1, { error: 'Password confirmation is required' }),
+}).refine((data) => data.new_password === data.confirm_password, {
+  error: 'Passwords do not match',
+  path: ['confirm_password'],
+});
 ```
 
-### Example 4: Reconciliation Checklist Script (Python)
+### Upload Modal (Extracted from UploadPage)
 
-```python
-#!/usr/bin/env python3
-"""Verify no content was lost during SPEC.md migration."""
+```tsx
+// features/upload/ui/UploadModal.tsx
+interface UploadModalProps {
+  open: boolean;
+  dashboardId: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}
 
-import re
-from pathlib import Path
+export function UploadModal({ open, dashboardId, onClose, onSuccess }: UploadModalProps) {
+  // ... upload logic from UploadPage.tsx ...
+  // On processing success:
+  // onSuccess(); // Invalidate dashboard queries
+  // onClose();   // Close modal
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      {/* Upload form content */}
+    </Dialog>
+  );
+}
+```
 
-def extract_sections(spec_path: str) -> dict[str, int]:
-    """Extract all ## sections and their line counts from SPEC.md."""
-    content = Path(spec_path).read_text(encoding='utf-8')
-    sections = {}
-    current_section = "preamble"
-    line_count = 0
-    
-    for line in content.split('\n'):
-        if re.match(r'^## ', line):
-            sections[current_section] = line_count
-            current_section = line.strip().lstrip('#').strip()
-            line_count = 0
-        else:
-            line_count += 1
-    sections[current_section] = line_count
-    return sections
+### Dashboard List as Table
 
-def verify_coverage(original_sections: dict, docs_dir: str) -> list[str]:
-    """Check that each original section's content exists in output files."""
-    docs_content = ''
-    for f in Path(docs_dir).rglob('*.md'):
-        docs_content += f.read_text(encoding='utf-8') + '\n'
-    
-    warnings = []
-    for section_name, line_count in original_sections.items():
-        if line_count < 5:  # Skip trivial sections
-            continue
-        # Check if section heading text appears in output
-        normalized = section_name.lower().replace('&', 'and')
-        if normalized not in docs_content.lower():
-            warnings.append(
-                f"POTENTIAL LOSS: Section '{section_name}' ({line_count} lines) "
-                f"not found in output docs"
-            )
-    return warnings
+```tsx
+// features/dashboards/ui/DashboardList.tsx — TABLE format (not cards)
+const columns: GridColDef[] = [
+  {
+    field: 'id',
+    headerName: 'ID',
+    width: 120,
+    valueGetter: (value: string) => value.slice(0, 8),
+  },
+  { field: 'name', headerName: 'Name', width: 300 },
+  { field: 'permission', headerName: 'Permission', width: 130 },
+];
 
-# Usage
-sections = extract_sections('docs/SPEC.md')
-warnings = verify_coverage(sections, 'docs/')
-for w in warnings:
-    print(w)
+// In component:
+<DataGrid
+  rows={dashboards}
+  columns={columns}
+  loading={isLoading}
+  initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
+  pageSizeOptions={[10, 25, 50]}
+  autoHeight
+  slots={{ noRowsOverlay: () => <Box sx={{ p: 2, textAlign: 'center' }}>No data</Box> }}
+/>
+```
+
+### Confirm Dialog with Loading State
+
+```tsx
+// shared/components/ConfirmDialog.tsx
+interface ConfirmDialogProps {
+  open: boolean;
+  title: string;
+  message: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+  loading?: boolean;
+}
+
+export function ConfirmDialog({ open, title, message, onConfirm, onCancel, loading }: ConfirmDialogProps) {
+  return (
+    <Dialog open={open} onClose={onCancel}>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogContent><Typography>{message}</Typography></DialogContent>
+      <DialogActions>
+        <Button onClick={onCancel}>Cancel</Button>
+        <Button onClick={onConfirm} color="error" disabled={loading}>
+          Delete
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
 ```
 
 ## State of the Art
 
 | Old Approach | Current Approach | When Changed | Impact |
-|---|---|---|---|
-| Monolithic docs (one giant file) | Modular docs by domain/retrieval intent | 2024-2025 | LLMs can load only the relevant domain instead of the entire spec, reducing context usage by 80-90% |
-| No frontmatter | YAML frontmatter as document schema | 2025 | RAG systems filter by metadata before semantic search, improving precision |
-| Fixed-size chunking for RAG | Heading-aware + retrieval-intent chunking | 2024-2025 | Preserves semantic coherence; chunks can stand alone as meaningful units |
-| Manual cross-links only | `related` frontmatter + inline links | 2025-2026 | Creates a virtual knowledge graph for context assembly |
-| Flat folder structure | Semantic zoning (00-09 active, 90 ADR, 99 reference) | Industry convention | Separates current truth from historical decisions and static lookup |
+|--------------|------------------|--------------|--------|
+| `z.string().email()` | `z.email()` | Zod v4 (2025) | Method-form validators deprecated; top-level functions are the standard |
+| `{ message: "error" }` in Zod | `{ error: "error" }` | Zod v4 (2025) | `message` param renamed to `error` |
+| `processRowUpdate(newRow, oldRow)` | `processRowUpdate(newRow, oldRow, { rowId })` | MUI X v7+ (2024) | Third param with `rowId` added for identifying which row was edited |
+| `DataGrid pageSize={25}` | `initialState: { pagination: { paginationModel: { pageSize: 25 } } }` | MUI X v6+ | Old `pageSize` prop deprecated in favor of `paginationModel` |
+| `BrowserRouter` with `<Routes>` | `createBrowserRouter` + `RouterProvider` | React Router v6.4+ | Data mode recommended but NOT needed for this project (using TanStack Query) |
+| `react-hot-toast` single toaster | Multiple toasters via `toasterId` | v2.6 (2025) | Not needed for this project; single default toaster is sufficient |
+| MUI DataGrid v6/v7 | MUI X DataGrid v9 (2026-04) | v9 released April 2026 | Current installed version; `processRowUpdate` with `rowId` param works |
 
 **Deprecated/outdated:**
-- **Section numbers as identifiers:** SPEC.md uses `## 14.1 Auth Endpoints` — these numbers are fragile and don't survive splitting. Replace with named anchors and file-based references.
-- **Mixed-language content:** SPEC.md has Russian text in sections 1-18. The migration is an opportunity to translate everything to English (per project rules).
+- `z.string().email()`, `z.string().uuid()`, `z.string().url()` — use `z.email()`, `z.uuid()`, `z.url()`
+- `{ message: "..." }` in Zod validation — use `{ error: "..." }`
+- `DataGrid` `pageSize` prop — use `paginationModel` in `initialState`
+- `editRowsModel` prop — replaced by `rowModesModel`/`cellModesModel` in MUI X v6+
+- `onRowEditCommit` event — replaced by `processRowUpdate` callback
 
 ## Open Questions
 
-1. **Should existing docs (SWAGGER_README.md, RUN.md, TASK_QUEUE_MIGRATION.md, STRUCT.md) be migrated into the new structure or kept as-is?**
-   - What we know: TASK_QUEUE_MIGRATION.md is already a standalone doc that maps naturally to `03-processing/task-queue.md`. SWAGGER_README.md maps to `99-reference/swagger.md`. RUN.md maps to `99-reference/run-guide.md`. STRUCT.md is a generated artifact, not a spec — it should NOT be migrated.
-   - What's unclear: Whether to migrate content in-place or copy-and-deprecate.
-   - Recommendation: Copy content into the new structure, add a note at the top of the original file pointing to the new location. Don't delete originals until the new structure is validated.
+1. **Zod v4 migration scope:** The existing `formSchemas.ts` uses `z.string().email()` and `{ message: "..." }`. All schemas need updating to Zod v4 syntax. This is a straightforward find-and-replace but must be done before any form validation works correctly.
 
-2. **How to handle the Russian-language content in SPEC.md sections 1-18?**
-   - What we know: Project rules require English-only. SPEC.md has Russian in early sections.
-   - What's unclear: Whether translation should happen during migration or as a separate step.
-   - Recommendation: Translate during migration. The restructuring already requires reading and placing each section — translating at the same time is marginal extra effort.
+2. **DataGrid v9 `processRowUpdate` signature:** The installed version is `^9.0.4`. The `processRowUpdate(newRow, originalRow, { rowId })` signature with the third `params` argument was added in v7. Verify the exact v9 API matches the documented signature. Context7 docs confirm v9 uses the 3-argument form.
 
-3. **Should the `id` field use a specific format (UUID vs kebab-case)?**
-   - What we know: MAGI spec recommends UUIDs for `doc-id`. The decision specifies `id` as a field but doesn't mandate format.
-   - What's unclear: Whether UUIDs provide meaningful benefit over kebab-case names for a documentation set this size.
-   - Recommendation: Use kebab-case matching the filename (e.g., `id: auth-api` for `auth-api.md`). UUIDs add entropy without retrieval benefit for human-curated docs. If machine-generated IDs are needed later, they can be added as a separate field.
+3. **React Router v7 `react-router-dom` vs `react-router`:** The project has `react-router-dom: ^7.15.0` installed. In v7, `react-router-dom` is a compatibility shim that re-exports from `react-router`. The current imports (`BrowserRouter`, `Routes`, `Route`, `Navigate`, `Link`, `useNavigate`, `useLocation`, `Outlet`) all work from `react-router-dom`. No migration needed unless we want to switch to `react-router` imports.
+
+4. **Upload modal vs page route:** The decision says "Upload opens as a modal on the dashboard page." This means removing the `/dashboard/:id/upload` route and the `UploadPage` component, replacing with a modal triggered from `DashboardView`. The existing `UploadPage.tsx` logic should be reused in the modal.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- **DECISION_01.md** — User decisions constraining the research scope (granularity, metadata schema, migration strategy, naming conventions)
-- **SPEC.md** (1069 lines) — The source document to be restructured; analyzed in full
-- **mdsplit** (PyPI v0.5.0) — https://pypi.org/project/mdsplit/ — Python CLI tool for splitting markdown by heading level
-- **markdown-section-splitter** — https://github.com/petalo/markdown-section-splitter — Python script for splitting with frontmatter and link validation
+- Context7 `/mui/mui-x` — DataGrid editing persistence, `processRowUpdate`, `singleSelect` columns, pagination model
+- Context7 `/timolins/react-hot-toast` — Toaster configuration, per-toast duration, stacking, dismiss API
+- Context7 `/tanstack/query` — `useMutation`, optimistic updates, `onMutate`/`onError`/`onSettled` lifecycle
+- Context7 `/colinhacks/zod` — Zod v4 changelog, top-level validators, `error` param, `refine` with `abort`
+- Context7 `/remix-run/react-router` — `createBrowserRouter`, `RouterProvider`, `BrowserRouter`, route state
+- Existing codebase — `frontend/src/` all files (verified current implementation state)
 
 ### Secondary (MEDIUM confidence)
-- **MAGI (Markdown for Agent Guidance & Instruction)** — https://docs.magi-mda.org/introduction — Extended markdown spec with frontmatter schema, AI instructions, and typed relationships. Informed the frontmatter field design.
-- **"Frontmatter as Document Schema"** (Understanding Data, 2026-03-16) — https://understandingdata.com/posts/frontmatter-as-document-schema/ — Explains frontmatter as type signatures for documents, metadata-first retrieval.
-- **"Markdown-First Semantics"** (SteakHouse Blog, 2026-01-15) — https://blog.trysteakhouse.com/blog/markdown-first-semantics-frontmatter-rag-retrieval — Frontmatter as control plane for LLM ingestion.
-- **"Document-to-Markdown for RAG"** (Iteration Layer, 2026-04-15) — https://iterationlayer.com/blog/document-to-markdown-for-rag — Chunking strategies, metadata-enriched chunks, heading-aware splitting.
-- **"Context Window Management for LLMs"** (By AI Team, 2025-11-14) — https://byaiteam.com/blog/2025/11/14/context-window-management-for-llms-reduce-hallucinations/ — Chunking strategies, overlap, context assembly ordering.
-- **"Text Chunking Strategies for RAG"** (AtlasSC, 2026-03-30) — https://atlassc.net/2026/03/30/text-chunking-strategies-for-rag — Document-based chunking for structured formats (Markdown, HTML).
-- **"Migrating Legacy Docs to Markdown"** (Medium, 2026-01-16) — https://medium.com/@victorzion1/migrating-legacy-docs-to-markdown-step-by-step-guide-4e8c0a570267 — 10-step migration pipeline (inventory → define standard → structure → convert → fix → normalize → validate → link → review → maintain).
-- **Red Hat Modular Documentation** — https://redhat-documentation.github.io/modular-docs/ — Module types (concept, procedure, reference), assembly patterns, self-contained chunk principle.
-- **"How to Structure Large Documentation Projects"** (Toflio, 2026-03-05) — https://www.toflio.com/blog/build-large-document-folders-names-markdown — Folder hierarchy, naming conventions, common mistakes.
+- Web Search: MUI X DataGrid v9.0 announcement (2026-04-08) — confirmed v9 release and editing improvements
+- Web Search: react-hot-toast v2.6.0 release (2025-08-15) — confirmed multiple toasters support
+- Web Search: React Router v7.15.0 release (2026-05-05) — confirmed v7 is current, `react-router-dom` compatibility
 
 ### Tertiary (LOW confidence)
-- **"Organizing Your Content"** (Docsy) — https://www.docsy.dev/docs/best-practices/organizing-content/ — Documentation section organization patterns.
-- **"Structuring Your Documentation"** (ReadMe) — https://docs.readme.com/main/docs/structuring-your-docs — API documentation architecture patterns.
+- Web Search: React Router v6→v7 migration guide — import changes, data mode vs library mode
 
 ## Metadata
 
 **Confidence breakdown:**
-
-| Area | Level | Reason |
-|---|---|---|
-| Standard stack | HIGH | Tools (mdsplit, markdown-section-splitter) are concrete, installable, documented. Frontmatter pattern is widely adopted with multiple authoritative sources. |
-| Architecture | HIGH | Folder structure and file organization directly implement DECISION_01.md constraints. Patterns are validated against SPEC.md's actual content. |
-| Metadata schema | HIGH | The 4-field schema (id, domain, tags, related) is directly from DECISION_01.md. Research confirms this is the minimal effective set for RAG. |
-| Migration strategy | MEDIUM | The 4-step pipeline (inventory → map → transfer → reconcile) is standard practice. Specific tool usage for SPEC.md requires adaptation. |
-| Pitfalls | HIGH | All 6 pitfalls are grounded in SPEC.md's specific content (7 high-risk sections, mixed languages, section-number references). |
-| Code examples | HIGH | mdsplit and markdown-section-splitter examples are from official docs. Reconciliation script is original but straightforward. |
+- Standard stack: HIGH — all versions verified from `package.json`, Context7 confirms APIs
+- Architecture: HIGH — patterns verified against existing codebase and Context7 docs
+- Pitfalls: HIGH — Zod v4 changes verified from official changelog; DataGrid API verified from Context7
+- Code examples: HIGH — adapted from Context7 official documentation
 
 **Research date:** 2026-05-18
-**Valid until:** 2026-06-17 (30 days — stable domain, no fast-moving dependencies)
+**Valid until:** 2026-06-18 (30 days — stable libraries, but MUI X v9 is very new)

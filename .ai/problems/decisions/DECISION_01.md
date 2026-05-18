@@ -1,4 +1,4 @@
-# Phase 1: Modular Spec + Minimal AI Metadata - Context
+# Phase 1: Frontend — BI Dashboard System (React + Plotly)
 
 **Gathered:** 2026-05-18
 **Status:** Ready for planning
@@ -6,65 +6,78 @@
 <domain>
 ## Phase Boundary
 
-Restructure the monolithic `docs/SPEC.md` (1069 lines, mixing architecture, API, database, frontend, deployment, ADRs, flows, UI, business rules) into a modular, domain-based documentation system. Each file has single responsibility (200–800 lines), minimal LLM-oriented metadata, consistent internal structure, and cross-links. This is organizational work — producing structured documents from existing content, not building new capabilities.
+Building a React SPA frontend for a BI dashboard system. Covers: authentication (login/register), dashboard list and view pages with Plotly charts, CSV data upload, user profile management, and admin panel (user management, dashboard management, registration requests, log viewing). All with role-based access control (admin/user global roles, viewer/editor dashboard roles).
+
+Dashboard page layout (chart arrangement, filters panel) is described separately in a later phase.
+
 </domain>
 
 <decisions>
 ## Implementation Decisions
 
-### Granularity Boundary
+### Table inline editing
 
-- **API:** One file per domain cluster — `auth-api.md`, `dashboards-api.md` (covers dashboards+layouts+graphs+filters as one bounded context), `processing-api.md`, `admin-api.md`, `health-api.md`
-- **Security:** Canonical docs in `/08-security/` + short local summaries with cross-links in domain files. No full duplication, no pure references
-- **DB Schema:** Split by structural concern — `schema-core.md` (users, dashboards, graphs, layouts, filters), `schema-processing.md` (aggregated_data, processing_logs, processing_configs), `schema-access.md` (dashboard_access, registration_requests, dashboard_filters), plus separate `indexes.md` and `enums.md`
-- **Frontend:** By concern — `architecture.md`, `fsd-structure.md`, `pages.md` (all 8 pages in one file), `auth-flow.md`, `upload-ui.md`, `frontend-security.md`
-- **Core splitting principle:** Split by "retrieval intent" — what LLM/user needs loaded into context simultaneously. Target ~25–40 total md files. Not 5 giant docs, not 120 tiny docs
+- On server error (network failure, validation error): revert cell to previous value + show error toast
+- During save (request in flight): highlight the row with yellow background to indicate "saving..." state
+- Dropdown inline edits (user role, status): close immediately after selection, save triggers right away
+- Rapid successive edits across rows: each row saves independently in parallel, each with own highlight state — no blocking, no queue
+- No page reload on save — only the changed row updates
 
-### Metadata Schema
+### Upload flow
 
-- **Frontmatter fields:** `id`, `domain`, `tags` (optional array), `related`. That's it
-- **domain:** Fixed primary taxonomy (12 values: `overview`, `auth`, `dashboards`, `processing`, `backend`, `frontend`, `database`, `api`, `security`, `deployment`, `reference`, `adr`). Must match folder name
-- **tags:** Optional freeform array for cross-cutting semantic topics (e.g., `upload`, `csv`, `async`, `backend`)
-- **related:** Top 3-5 only — semantic adjacency docs usually loaded together, not exhaustive backlinks
-- **layer field:** Dropped entirely — domain + path + embeddings provide sufficient signal; layer creates ambiguity for cross-cutting docs
-- **Internal file structure:** Required minimum: `# Purpose` + `# Main Concepts`. Recommended: `# Flows`, `# Constraints`, `# Edge Cases`, `# Related Docs`. Optional: `# Examples`, `# Migration Notes`, `# Open Questions`, `# Performance Notes`. No N/A filler — omit empty sections entirely
+- Upload opens as a modal on the dashboard page (not a separate page)
+- SPEC.md will be adjusted to match this priority
 
-### Migration Strategy
+### Dashboard list presentation
 
-- **SPEC.md:** Convert to system overview / documentation index. Not deleted, not a redirect. Becomes the high-level entry point with architecture summary, domain links, key decisions, and main data flow
-- **Root index:** Full `README.md` at `/docs/` root for human + AI navigation. SPEC.md = "what the system is", README.md = "how docs are organized"
-- **Migration pipeline:** (1) Extract inventory (headings, code blocks, SQL, enums, constraints, warnings) → (2) Map each item to target file → (3) Transfer content → (4) Reconciliation pass. No silent dropping — unclear items go to temporary docs, never deleted
-- **High-risk sections for loss:** `6.2 Rate Limiter Failure Behavior`, `6.3 Production Credential Enforcement`, `9.1 Formula Parser limitations`, `11.2 Task Queue Migration`, `15.1 Dashboard Access Enforcement`, `19.5 Application Startup Behavior`, `23.5 CORS validation behavior`
-- **Shared content:** Canonical home for each fact + contextual summaries in other locations. "Summarize, don't replicate." Each piece of information has exactly one canonical owner
+- Table format with ID + Name columns (per CONTEXT_01.md)
+- SPEC.md will be adjusted to match this priority
 
-### Naming and Folder Conventions
+### Toast notifications
 
-- **Folder numbering:** Top-level only (`00-overview/`, `01-auth/`, … `99-reference/`). Sub-folders use plain names without number prefixes
-- **File naming:** Kebab-case mandatory — all lowercase with hyphens (`upload-flow.md`, `custom-metrics.md`). Avoid generic names on deeper levels (`api.md` → `auth-api.md`, `security.md` → `upload-security.md`). Top-level `overview.md` within domain folders is an acceptable exception
-- **Nesting depth:** Flat by default. Nest only when >5-7 files in a domain. Maximum practical depth: 2 levels below domain root (`domain/subgroup/file.md`)
-- **ADRs:** Keep in separate `90-adr/`. ADRs are decision history, not current truth — never merge into domain docs. Immutable-ish, numbered sequentially (`ADR-001-jsonb-storage.md`)
-- **Reference:** Keep in separate `99-reference/`. Lookup/static knowledge (enums, env vars, MIME types, error codes) — not domain knowledge. Prevents overview folder from becoming a junk container
-- **Semantic zoning:** 00–09 = active system domains, 90 = architectural history, 99 = static lookup/reference
+- Position: top-right
+- Auto-dismiss with short duration (~3 seconds for success, ~5 seconds for errors)
+- Multiple toasts stack vertically
+- Manual dismiss allowed (close button)
+
+### Access denied UX
+
+- Display message: "No access — contact your administrator"
+- No additional actions (no request access button, no redirect)
+
+### Dashboard page layout
+
+- Deferred — will be described in a separate phase
 
 </decisions>
 
 <specifics>
 ## Specific Ideas
 
-- "If a document is almost always needed together — don't split it" (graphs+filters+layouts = one cluster; upload pipeline+task queue = one cluster; auth+processing = separate)
-- "No silent dropping" — if a section's destination is unclear, create a temporary doc rather than deleting it
-- "Summarize, don't replicate" — shared content gets a canonical home + contextual summaries elsewhere, never full duplication
-- The entire architecture targets ~25–40 md files as the sweet spot for AI-friendly documentation
-- Metadata schema is intentionally minimal: `id`, `domain`, `tags`, `related` — nothing enterprise (no owner, reviewers, jira, epic, priority, sprint, risk, compliance)
+- SaaS admin panel style — modern, minimal, light theme
+- Tables: light with row separators, hover highlight, rounded buttons
+- Icons only for key actions: add, delete, upload
+- Active menu item highlighted in top navigation
+- Top nav order (right to left): Profile, Dashboards, Admin (admin only)
+- Tables support: pagination (25 rows default), sorting, inline editing, loader spinner inside table
+- Empty tables: show header + "No data" text
+- Short UUID format for all IDs
+- Confirm dialogs: background dimmer, short text, Cancel + Delete buttons; Delete button blocked during request
+- Esc closes modals, Enter confirms forms
+- Table state (pagination page, sorting) preserved on back navigation
+
 </specifics>
 
 <deferred>
 ## Deferred Ideas
 
-- None — discussion stayed within phase scope
+- Dashboard page layout (chart grid arrangement, filters panel placement) — separate phase
+- Registration request flow (user self-registration with admin approval) — mentioned in SPEC.md but not detailed in CONTEXT_01.md, may need clarification
+- Log viewer in admin panel — mentioned briefly, details TBD
+
 </deferred>
 
 ---
 
-_Phase: 01-modular-spec_
+_Phase: 01-frontend-spa_
 _Context gathered: 2026-05-18_
