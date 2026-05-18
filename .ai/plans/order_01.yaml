@@ -1,0 +1,86 @@
+phase: 01
+phase_name: Authorization
+waves: 3
+
+wave_1:
+  - id: TASK_001_01_add_display_name_to_userread
+    name: add_display_name_to_userread
+    depends_on: []
+    priority: high
+    files:
+      - src/mkobi/models/user.py
+  - id: TASK_001_02_add_token_with_user_response_model
+    name: add_token_with_user_response_model
+    depends_on: []
+    priority: high
+    files:
+      - src/mkobi/models/auth.py
+
+wave_2:
+  - id: TASK_002_01_admin_bypass_dashboard_listing
+    name: admin_bypass_dashboard_listing
+    depends_on: []
+    priority: high
+    files:
+      - src/mkobi/db/repositories/dashboard_repo.py
+      - src/mkobi/services/dashboard_service.py
+      - src/mkobi/api/routes/dashboards.py
+  - id: TASK_002_02_registration_request_validation
+    name: registration_request_validation
+    depends_on: []
+    priority: high
+    files:
+      - src/mkobi/services/auth_service.py
+  - id: TASK_002_03_login_response_includes_user
+    name: login_response_includes_user
+    depends_on:
+      - TASK_001_01_add_display_name_to_userread
+      - TASK_001_02_add_token_with_user_response_model
+    priority: high
+    files:
+      - src/mkobi/services/auth_service.py
+      - src/mkobi/api/routes/auth.py
+  - id: TASK_002_04_403_for_unauthorized_dashboard_access
+    name: 403_for_unauthorized_dashboard_access
+    depends_on:
+      - TASK_002_01_admin_bypass_dashboard_listing
+    priority: high
+    files:
+      - src/mkobi/services/dashboard_service.py
+      - src/mkobi/api/routes/dashboards.py
+
+wave_3:
+  - id: TASK_003_01_update_frontend_login_for_user_response
+    name: update_frontend_login_for_user_response
+    depends_on:
+      - TASK_002_03_login_response_includes_user
+    priority: high
+    files:
+      - frontend/src/shared/types/api.types.ts
+      - frontend/src/features/auth/model/useAuth.ts
+  - id: TASK_003_02_restructure_routes_move_login_outside_layout
+    name: restructure_routes_move_login_outside_layout
+    depends_on: []
+    priority: high
+    files:
+      - frontend/src/app/routes.tsx
+  - id: TASK_003_03_update_header_navigation
+    name: update_header_navigation
+    depends_on: []
+    priority: high
+    files:
+      - frontend/src/shared/components/Layout/Header.tsx
+  - id: TASK_003_04_add_display_name_to_profile_page
+    name: add_display_name_to_profile_page
+    depends_on:
+      - TASK_001_01_add_display_name_to_userread
+    priority: high
+    files:
+      - frontend/src/features/users/ui/UserProfile.tsx
+  - id: TASK_003_05_update_register_form_success_message
+    name: update_register_form_success_message
+    depends_on: []
+    priority: high
+    files:
+      - frontend/src/features/auth/ui/RegisterForm.tsx
+      - frontend/src/features/auth/api/authApi.ts

@@ -309,7 +309,7 @@
   - mkobi.config
   - mkobi.db.repositories.user_repo
   - mkobi.models.enums
-  - mkobi.services.data_service
+  - mkobi.services.file_cleanup
   - mkobi.core.security
   classes:
   - DatabaseNotFoundError
@@ -693,7 +693,6 @@
   layer: unknown
   imports:
   - datetime
-  - pathlib
   - typing
   - uuid
   - sqlalchemy.ext.asyncio
@@ -702,24 +701,48 @@
   - mkobi.core.permissions
   - mkobi.core.redis_client
   - mkobi.core.security
-  - mkobi.core.task_queue
-  - mkobi.data.loaders.loader
   - mkobi.db.session
   - mkobi.interfaces.repository_interfaces
   - mkobi.interfaces.service_interfaces
   - mkobi.models.data
   - mkobi.models.enums
-  - mkobi.workers.data_worker
-  - mkobi.workers.data_worker
-  - time
+  - mkobi.services.file_processing
   classes:
   - DataService
   functions:
   - __init__
-  - _validate_mime_type
-  - _validate_file
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\file_cleanup.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.services.file_cleanup
+  layer: unknown
+  imports:
+  - pathlib
+  - mkobi.config
+  - mkobi.core.logging_config
+  - time
+  classes: []
+  functions:
   - cleanup_task_files
   - cleanup_stale_temp_files
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\file_processing.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.services.file_processing
+  layer: unknown
+  imports:
+  - pathlib
+  - typing
+  - uuid
+  - sqlalchemy.ext.asyncio
+  - mkobi.config
+  - mkobi.core.logging_config
+  - mkobi.core.task_queue
+  - mkobi.data.loaders.loader
+  - mkobi.models.enums
+  - mkobi.workers.data_worker
+  - mkobi.workers.data_worker
+  classes: []
+  functions:
+  - validate_mime_type
+  - validate_file
+  - find_task_file
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\filter_service.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.services.filter_service
   layer: unknown
@@ -1419,6 +1442,7 @@
   - _calculate_yoy
   - _calculate_share
   - _parse_formula
+  - _validate_formula_tokens
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\__init__.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.data.processing.__init__
   layer: unknown
@@ -1441,6 +1465,7 @@
   classes:
   - StorageManager
   functions:
+  - _normalize_json_keys
   - __init__
   - _validate_aggregates
   - _validate_single_aggregate
@@ -1473,6 +1498,7 @@
   - fastapi
   - fastapi.security
   - mkobi.api.deps
+  - mkobi.config
   - mkobi.core.logging_config
   - mkobi.core
   - mkobi.core.security

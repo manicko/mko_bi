@@ -71,13 +71,12 @@ C:\PY_DEV\MKOBI
 |   |       docker-compose.yaml
 |   |       
 |   +---plans
-|   |       PLAN_01.md
-|   |       PLAN_02.md
-|   |       
 |   +---problems
 |   |   |   CONTEXT_01.md
 |   |   |   
 |   |   \---decisions
+|   |           DECISION_01.md
+|   |           
 |   +---researches
 |   +---structure
 |   |   |   map.md
@@ -107,6 +106,25 @@ C:\PY_DEV\MKOBI
 |   |   |       TASK_013_V004_add_dashboard_access_checks_DONE.yaml
 |   |   |       TASK_014_V009_restrict_cors_methods_headers_DONE.yaml
 |   |   |       TASK_015_V010_prevent_default_admin_credentials_DONE.yaml
+|   |   |       TASK_016_V011_refactor_user_endpoints_request_body_DONE.yaml
+|   |   |       TASK_017_V014_refactor_direct_repo_instantiation_DONE.yaml
+|   |   |       TASK_018_V019_fix_temp_dir_platformdirs_DONE.yaml
+|   |   |       TASK_019_V027_fix_cors_origins_yaml_DONE.yaml
+|   |   |       TASK_020_V029_fix_protected_route_loading_DONE.yaml
+|   |   |       TASK_021_V030_fix_silent_column_fallback_DONE.yaml
+|   |   |       TASK_022_V031_fix_jsonb_unique_constraint_DONE.yaml
+|   |   |       TASK_023_V032_remove_hardcoded_alembic_url_DONE.yaml
+|   |   |       TASK_024_V033_fix_logout_client_token_removal_DONE.yaml
+|   |   |       TASK_025_V034_add_task_ownership_validation_DONE.yaml
+|   |   |       TASK_026_V002_generate_random_temp_password_DONE.yaml
+|   |   |       TASK_027_V005_add_rate_limiter_monitoring_DONE.yaml
+|   |   |       TASK_028_V006_document_task_queue_migration_DONE.yaml
+|   |   |       TASK_029_V020_remove_weak_jwt_default_DONE.yaml
+|   |   |       TASK_030_V021_remove_weak_db_password_default_DONE.yaml
+|   |   |       TASK_031_V022_fix_formula_parser_DONE.yaml
+|   |   |       TASK_032_V024_document_token_storage_DONE.yaml
+|   |   |       TASK_033_V028_document_missing_enums_DONE.yaml
+|   |   |       TASK_034_V017_extract_data_service_modules_DONE.yaml
 |   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
@@ -114,25 +132,6 @@ C:\PY_DEV\MKOBI
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
-|   |   |       TASK_016_V011_refactor_user_endpoints_request_body.yaml
-|   |   |       TASK_017_V014_refactor_direct_repo_instantiation.yaml
-|   |   |       TASK_018_V019_fix_temp_dir_platformdirs.yaml
-|   |   |       TASK_019_V027_fix_cors_origins_yaml.yaml
-|   |   |       TASK_020_V029_fix_protected_route_loading.yaml
-|   |   |       TASK_021_V030_fix_silent_column_fallback.yaml
-|   |   |       TASK_022_V031_fix_jsonb_unique_constraint.yaml
-|   |   |       TASK_023_V032_remove_hardcoded_alembic_url.yaml
-|   |   |       TASK_024_V033_fix_logout_client_token_removal.yaml
-|   |   |       TASK_025_V034_add_task_ownership_validation.yaml
-|   |   |       TASK_026_V002_generate_random_temp_password.yaml
-|   |   |       TASK_027_V005_add_rate_limiter_monitoring.yaml
-|   |   |       TASK_028_V006_document_task_queue_migration.yaml
-|   |   |       TASK_029_V020_remove_weak_jwt_default.yaml
-|   |   |       TASK_030_V021_remove_weak_db_password_default.yaml
-|   |   |       TASK_031_V022_fix_formula_parser.yaml
-|   |   |       TASK_032_V024_document_token_storage.yaml
-|   |   |       TASK_033_V028_document_missing_enums.yaml
-|   |   |       TASK_034_V017_extract_data_service_modules.yaml
 |   |   |       
 |   |   \---validation
 |   |           tasks_validated_findings_001.md
@@ -18162,29 +18161,37 @@ C:\PY_DEV\MKOBI
 |           05653899-a4bd-496f-a3b8-712c85111102.csv.gz
 |           056f44ae-b03b-4001-8090-f8935dd847ac.csv
 |           067b9fab-a67c-4595-be0f-69f3a77068e8.csv
+|           06868905-49f9-4e0d-b4d1-c1759a864f2b.csv
 |           06c70214-3a42-4882-bb29-93518b028e1a.csv
 |           070decb4-616a-4f8c-ac4a-1424962a58b2.csv.gz
 |           0736552f-4ad7-4d25-aa3e-ffcb310acfee.csv
 |           07c04bf1-2170-44ce-8e05-593d449ae85a.csv
 |           07f46ad1-4687-4550-9d3d-761d1f2edcee.csv
+|           089b01d9-328c-49e6-81b8-6c3de2ee4c01.csv
 |           08cb64e9-4b47-4477-85b6-ae7e856fca9b.csv
 |           09489a86-fda4-47b6-bb18-fe66c6265f06.csv
+|           09b10ea2-a5ee-461c-8f17-4a0c0f20e171.csv
 |           09d6c207-117a-486f-bb2f-82e8300e9982.csv
 |           0a154677-e9b3-481b-ae8d-103895a6f565.csv.gz
 |           0b8124a5-200e-4476-aa96-b980d5d391e2.csv.gz
+|           0ba18832-b0e1-4fe4-bedf-07c3057d46b6.csv
 |           0bb4c8f8-c7f8-4bdf-a514-71ca8ae5248c.csv
+|           0bfbe511-efda-4141-aae1-457c0e9d4791.csv
 |           0c13991f-46f6-4d1a-92fa-2385a8648a07.csv
 |           0cdb4902-d862-4eed-b6c1-3307bac3abbc.csv
 |           0ce6e411-924d-47bb-b752-f7d7748f57a8.csv
 |           0e116a15-0d04-4794-b05a-c8de244cd017.csv
 |           0e207f70-3b03-4bc2-b9a5-06dd761e218d.csv.gz
+|           0f1ad06d-9f38-4c9e-974d-73fc30d77f6e.csv.gz
 |           0f8d8642-6d0f-4ff7-b2d8-36103ebdf79b.csv
+|           0faa0bd8-1ba1-4fe3-83e2-23d9ec2e7a64.csv
 |           10787f80-4236-46dc-a327-66746e159ec8.csv
 |           113a0bba-957c-4e33-b9b6-b53de8c3bb40.csv
 |           11e09209-2a9c-469c-bf35-71f59e017498.csv
 |           12936458-86d2-43ad-9714-e1b34df38039.csv
 |           1311e755-fa89-498a-927f-d13c000ba57d.csv
 |           139be15d-3e07-4a20-ba0e-a39a918c0aa1.csv.gz
+|           13c0cc13-f52f-41e3-be27-2c9c2a9c6858.csv
 |           13f96f24-2c9a-4bad-a4fd-0b43c2a72c4a.csv.gz
 |           140b5674-3557-4738-8d64-3d64abb9471c.csv
 |           14f5e55e-f463-468f-8cf3-458ccb93cbad.csv
@@ -18194,43 +18201,59 @@ C:\PY_DEV\MKOBI
 |           165fe93e-9442-484c-afe5-d3ced8d1ffa7.csv
 |           167da66d-2712-49e0-9464-958f659a3bb1.csv
 |           17ac97fc-ea9f-49b1-be08-733fe443af35.csv
+|           17de20b4-1644-468a-8e29-2e4a3fd7a91a.csv
 |           17de62ff-2198-48dd-8504-3ee597a6743f.csv
+|           181172d2-0079-4b59-b894-547cce7a9c4e.csv
+|           186073f8-70d8-4f77-a310-4fd34cf66616.csv
 |           18920fd1-1e08-40ec-bd67-b080f0d3b03d.csv.gz
 |           19238b3d-5019-4c50-bec6-c3ce835c35c1.csv
 |           19291aca-406b-4007-9c0c-71afa9e942d9.csv.gz
 |           198e58a4-b5b4-4f3b-a56c-b08a49e93dfd.csv
 |           1a1cf8a5-0a42-43de-ac4a-ae04d01c1875.csv
+|           1b0bb7ad-57a2-441e-beaa-bfc44644599d.csv.gz
 |           1b1a1183-fce0-4796-80f4-b61577197564.csv
 |           1b1e9e45-a5f4-4ca4-a106-917ad6f4d861.csv
+|           1b51792b-d30a-4ce4-9dcd-692572438f0b.csv
 |           1c4b5d0f-6bfa-4cd1-98b5-ea4c3335c46d.csv
+|           1c63cf73-a4b6-4b8e-b475-27fbab6cb5fd.csv
+|           1e560a84-c12d-4aab-b920-3d2013bc0279.csv
+|           1f41cfd1-3ef0-4a6a-bab4-57da54f9bf5f.csv.gz
 |           1f67c3d9-ae23-4aeb-86e1-557a4fd22a7a.csv
 |           200101d4-7f1f-4eed-891f-c335b5f8c1f5.csv.gz
 |           201d6018-2f7c-41f2-9bf5-cc4a29f12ab5.csv
 |           20801c08-c33a-4c2d-8564-3c7c03a8f8f1.csv
+|           212e198c-c170-4f71-97fd-b15d61ea3661.csv
 |           2195bf31-9a5d-4bb6-bcad-40db0e22259c.csv
+|           21a9c032-3d7d-4180-8814-066bed1bc244.csv
 |           221a5dab-ff92-43cf-9652-ea826a48e11e.csv
 |           234697f8-be1a-4aab-8f4d-6b0d8946fb98.csv
+|           237b57dd-1b97-496e-8a3b-7f67a087c279.csv
 |           23815d6f-e758-4942-8082-ba8524defab5.csv
 |           2385005c-3e66-4e4c-b7e9-0ace57404b1f.csv
+|           2403d0a5-3102-4afe-9922-b7e302270195.csv
 |           242057e9-d71a-4a75-9d11-c3efee1faea6.csv
 |           2471672d-b72b-4aa9-9b6d-39a32e84fbfb.csv
 |           24cf0c3a-b1d0-47af-bc64-4aed7d91eedb.csv.gz
 |           250e2b0d-8ac1-4838-8b60-d8fab3b87947.csv
 |           259305c0-cf1d-4e8b-92d5-fce788392c1a.csv
 |           26158209-4eaa-45c6-b721-548e339fbbfa.csv
+|           2650a3ad-b7eb-4030-a55c-5843a706f6aa.csv
 |           270abe37-4c92-42e6-98d5-5221c7f3df99.csv
 |           28258e7b-c268-4fda-91b2-9e2e015bc1ef.csv
 |           286644b9-d47a-44f6-ac7e-e47253af4c6d.csv
 |           2878b6d7-3626-44fd-9996-9c3091e5aa3f.csv
 |           288b69db-1411-4327-a3b2-cfce19771bcb.csv
+|           29d00f2a-e00a-4c18-bbd0-d5c1da8160e8.csv
 |           29f6ca88-2598-41aa-bf2a-56f7ee4ab35b.csv
 |           2a6f5242-2ae7-4487-abd3-db92912d0271.csv
 |           2adb9729-0dd7-4dad-8f76-2e843566cf53.csv.gz
 |           2b945abc-a663-4d53-8b4a-fe12432a5fb7.csv
 |           2b9b706d-76c6-4c37-8981-4658390bca07.csv
 |           2ba0f325-df08-412c-a5d4-07a9fb0d65c1.csv
+|           2cc0206b-ed61-4bc1-84de-9ce223cf4abd.csv.gz
 |           2cec58e4-4e82-45cc-9d01-e077fa3c5927.csv
 |           2d3b1cc7-ea20-4329-bbc0-ed387bcc531f.csv
+|           2d8f8656-0fd8-42c1-a301-ea40c27e4e8b.csv
 |           2dbccdc1-7645-40c9-aa9a-5c72d7836307.csv.gz
 |           2e0dad88-91e5-4028-9159-d9ef34cb1fa1.csv
 |           2e51c516-5d9c-4bb8-a35f-32a31f9ad682.csv
@@ -18241,44 +18264,69 @@ C:\PY_DEV\MKOBI
 |           2f2f3455-0c8d-4447-8c97-c20a119b9e70.csv
 |           2f4149d2-6478-491b-9d9f-813b435c4a6c.csv
 |           2fa47d7e-7ab5-4209-bb83-5018684ac4df.csv
+|           2fac2b52-f372-4ae4-b2c7-d7ba8549be46.csv
+|           305ff074-e995-4df1-bfaa-53e1491bdddc.csv
 |           30cb6621-078d-4ebc-a97a-1fbaf8307117.csv.gz
+|           31b7e0c7-fdf8-4d25-a608-4df68520a594.csv
 |           31d871d8-4866-4fca-9fd1-0cb24173bbad.csv
 |           3236a2b4-3f05-4c71-9ab3-5bf03c320274.csv
 |           32b677fe-b8f2-4c83-865a-7ea6518527ae.csv
 |           32e68317-6b2b-4a8e-91cc-c8f8a61dd193.csv.gz
 |           32faf1e9-dc5a-4ba9-931f-503e58b0679e.csv
 |           339eac93-d843-4125-a38d-71c28651dc0f.csv.gz
+|           33d8126e-4de3-4543-906b-ad0b4408ff83.csv
 |           33eb0673-81a7-4c5d-b342-dc1f4c831a72.csv
+|           346d558f-a1f2-4612-8389-8f3843e241e4.csv
 |           3512235d-62ae-408b-81f5-122cab80e44c.csv
 |           3558f9b7-556e-46ac-8c72-7aa731fe452d.csv
+|           3582de0d-9e6e-479a-8df2-e035477ac089.csv.gz
 |           35c27ce0-4339-4674-8c5d-13f7018e8213.csv
+|           35dbe0c7-3b01-44a8-9272-1be8d1fb52af.csv
 |           35ebc7eb-5ee6-4046-87e7-8950b7af4d30.csv
+|           3626aa54-d2d3-4b4f-b5f6-43ddd76a68be.csv.gz
 |           363a89b0-ee2b-4eae-bb6b-58c4e338f052.csv
 |           364353f0-9c3e-461a-8ab8-1ad498534816.csv.gz
+|           365f568c-d9b8-4c87-b44f-eba81933091a.csv
 |           36bc4a57-7348-4b86-a441-ca2c8fca3f74.csv.gz
 |           37395ea0-1fef-421c-b8fb-28ad0bc0ff52.csv
+|           374db02e-ab19-4a77-bfd7-f6cbf5f0d7a9.csv
+|           37653f5f-9fad-40e5-bfce-32370255c646.csv.gz
 |           385716ce-8d2a-4458-b8a3-52d901f9fa65.csv
 |           389bc208-8879-4934-9d1e-035bf2f6db49.csv
+|           38c904f8-d13c-4902-8441-10a074211fc2.csv
+|           38eec79e-9ce4-45d1-a4bf-1cc28446d588.csv
 |           3a9b4de9-0177-4d56-9113-5dec5df76340.csv
 |           3ab5ac59-759d-441d-a404-8c0397574b4c.csv
+|           3ae52d86-5985-4b0c-ae4e-6af477bea51f.csv
+|           3b26ce03-1985-485a-a0c8-4ea7cc4381df.csv
+|           3b4165eb-12f2-40a2-b0af-c43f9bdce766.csv
 |           3b4d6442-b257-4608-ad24-8c4ba9b8417a.csv.gz
 |           3b6224c3-f078-4db1-a6c5-3b66dd39ea1d.csv
 |           3b9842fa-73a3-487f-9067-aea35a2a5484.csv
 |           3c312f81-19b3-42ad-87fb-1e80478b2160.csv
 |           3c5fe18e-7d44-4b2f-8bdd-08001dfe5932.csv
 |           3c73e24d-05d7-473d-99db-3dd425e85f33.csv
+|           3ca25fdf-9eaf-45f2-a6ff-9a9accfd500f.csv
 |           3cae0b4b-fb33-4f96-88b8-a72558456904.csv.gz
 |           3e0e364e-b0b1-40ba-a4f5-8e1a773d1519.csv.gz
+|           3e9573f0-2286-41b4-8090-e109bb0b85c1.csv
 |           3fb8ac89-acab-4832-9bcc-e403cc70e590.csv
+|           402a306c-ec02-42e7-a460-62a98b30fcaa.csv.gz
 |           408defc4-54a0-4a4c-bbd6-4f227fb06e10.csv.gz
+|           40eef142-b61f-45b5-bb3c-62a99ca2bc18.csv.gz
+|           41361888-b74d-4d0b-b25b-724fcedcf3d4.csv.gz
 |           4139ddaf-90eb-4aea-b5b5-eec08ceed430.csv
 |           4207a252-4d9f-492d-b055-5802ad0ceae0.csv
 |           42850709-c60d-4294-b826-7910299c0bd5.csv.gz
+|           43aa8d30-5102-4f7b-b1d0-a561e9c594e4.csv
 |           444b992a-1403-4119-9db4-e6d8141cc39c.csv
 |           449db921-4503-4c4d-9e87-93331eb9c2e7.csv
+|           45196632-6e77-43a2-8af1-1749dd8103ab.csv
+|           46cb1ace-b94c-46cb-9fca-c4db91892222.csv
 |           46de603c-3983-45fd-bb44-5c4fe90f3aa0.csv
 |           4768a784-e48c-490f-9339-cc486f0a81c8.csv
 |           47ec4af2-15ab-4523-a459-307ee0a69aee.csv
+|           47f41510-92f9-4b4e-9b11-a1077cba3465.csv
 |           4855420b-e449-4844-97ee-ffbb71b8f8bc.csv
 |           4884f708-7e1c-4a75-b7a7-c0aa007ede82.csv
 |           4915c32d-580f-4534-b538-0254a5407492.csv.gz
@@ -18289,16 +18337,23 @@ C:\PY_DEV\MKOBI
 |           4b87b2b8-357d-45ac-a153-5a3f7ae69b4b.csv
 |           4bbc89e5-d52b-46f8-b2af-512143841d7d.csv
 |           4cf576f5-bee9-40c9-8592-7fe4cf3e0b64.csv
+|           4d3b73f5-0f85-40d7-b0fc-cb371896248e.csv
 |           4dd22e73-5d8f-47d0-9a33-b93977e29a7f.csv
+|           4e3880b0-200c-48c3-b780-39c89c26f4de.csv
 |           4e54b0d5-e04c-44a0-bfd1-8cc9cf9cb725.csv
 |           4e91465d-6c25-4595-a75e-382646586c67.csv
+|           4ed9cb99-551d-4852-a3ed-d27c90e8721b.csv
+|           4f62fbe7-548a-4a3d-8a81-585d8be5eb8a.csv
 |           4f81d925-ceeb-4b8c-9d99-2dc2003396df.csv
 |           4fb76b90-86f8-4af7-b617-022e1657e86f.csv.gz
+|           4ff9cdb2-7595-425e-b616-4e80ae4743c7.csv.gz
 |           51534d46-7f65-4bd5-a3c2-74e4272cade8.csv
 |           521f4f4e-f1c5-4adc-997f-9d1a7ee641d0.csv
 |           528550be-6e7e-4060-af80-195840ebfa30.csv
 |           530cef56-d60d-41c8-8670-6e19cac49bec.csv.gz
+|           545bfeae-dd83-4728-948a-334e89bd925b.csv.gz
 |           54798df9-623d-4298-98ac-7270d86bd929.csv
+|           557101a2-2052-4b5f-9032-f1be750d4895.csv
 |           55d5889c-eb0f-42af-a4f6-c924d0bea9d9.csv.gz
 |           55d7185b-21f4-42d1-ba5d-a4e092c85ecc.csv
 |           56c794ae-fb7c-4642-b92e-f9d6ae18f383.csv
@@ -18311,7 +18366,9 @@ C:\PY_DEV\MKOBI
 |           590ec697-5af8-45cf-a114-92feb52dff20.csv.gz
 |           59189d5b-9518-49db-bcad-ca84f4880bb7.csv
 |           5962ca8d-5354-4cb6-9904-0afe7914e67f.csv
+|           59e3f326-b61b-4c3f-ace2-f8c6d7860419.csv
 |           5a9c7993-00af-4195-8577-a8c9434023eb.csv
+|           5b8ec148-2f16-4a9c-883a-c27f804a9aa4.csv
 |           5bf9f841-f79a-4ec3-8d54-a4f538dfd79a.csv
 |           5c2160e2-9263-4362-95b5-adfd58064bc1.csv
 |           5c5c0fc7-291f-4bbe-a3fa-b0b99dea277c.csv
@@ -18319,6 +18376,7 @@ C:\PY_DEV\MKOBI
 |           5c8105f8-b66d-439a-9e2e-928108bbc497.csv
 |           5c8b4e97-fd61-4fa7-941a-0f48642a9318.csv
 |           5d4055c9-8b3d-4810-bfc8-9e69f848d3c4.csv
+|           5d96819d-dc0f-4f49-8a3a-7bd0d1ad4470.csv
 |           5dd5644d-a41f-4aeb-9748-6d0b89b473a8.csv.gz
 |           5e3e8ed4-47fe-4134-b567-d019d53ffa5d.csv.gz
 |           5e712e8e-5854-4721-adaa-6c31a56a7c39.csv
@@ -18331,6 +18389,7 @@ C:\PY_DEV\MKOBI
 |           64ddbac0-8ddd-4de4-97b1-4d410f6ed922.csv
 |           658616da-9d4d-4ebd-97f4-e12d0de1067c.csv.gz
 |           65fcc93d-825c-4e00-917f-44f4aaa315f4.csv
+|           667b6889-d710-4541-a8f5-ba298b7643cc.csv
 |           66eacfad-37c9-4c97-a5d6-472773c94b96.csv
 |           66f4b755-a214-4011-8d31-7f70ae029f82.csv
 |           67ab56f8-f0fa-4dd5-a6ce-e0ae2e00f026.csv
@@ -18341,13 +18400,17 @@ C:\PY_DEV\MKOBI
 |           69e9a53a-c9de-4c5a-bc0a-16fd89527800.csv
 |           6a2b51ea-9b0c-4647-a7e2-ea4e9822f628.csv.gz
 |           6b5769e0-6d0f-4067-aa62-02fea5f1573b.csv
+|           6bcacffb-a81f-4bdc-a24d-91c49e23af31.csv
+|           6beb33ca-5303-4736-8fac-3d08fcca504b.csv
 |           6c3e3366-4749-4d65-a629-0b5c87938421.csv
+|           6cbfc4f2-3c61-49b2-a1c6-616dc736d427.csv
 |           6cc590a3-502f-444e-9597-105688738eb3.csv
 |           6d084631-82ef-4c43-9fea-8c99163eba7e.csv
 |           6d276495-7314-4ccd-8fa4-c0088256c8bc.csv
 |           6d86cad4-2cc1-4749-85fa-677d54194433.csv
 |           6edc9b57-9cf9-4d96-9bf7-5a3e61256946.csv
 |           6fc9f6bf-bed4-4d1a-a16e-ddd4200ad9c7.csv
+|           6fcc99f2-4383-463b-803c-755cda40c03e.csv
 |           707a7a1d-4cef-4118-b1dc-111590034191.csv
 |           70834fd1-09b0-47dc-8f0d-713562dc8218.csv
 |           708bf312-7bc8-48fc-bac8-03ca2d5b3cef.csv.gz
@@ -18356,134 +18419,203 @@ C:\PY_DEV\MKOBI
 |           71da2399-03e8-431a-85c5-7ca4d0b83769.csv.gz
 |           72259814-528c-4cee-957b-5fa83be58680.csv.gz
 |           73efd364-7448-4338-addc-1931fd40d719.csv.gz
+|           745863be-d61a-4e9e-ac55-324d48bc3611.csv
 |           749e3e71-8386-4891-a451-b8de7869a980.csv
 |           74c647a5-670e-46f4-ad23-867fe230df25.csv
+|           756a3026-615a-456a-a428-6e87d02945de.csv.gz
 |           75f873c7-16fe-4751-a6c9-ee1291269bbf.csv
+|           782a719d-68c3-436a-8bdd-ddfb6ec0591a.csv.gz
 |           78d288f1-9c1a-4ac2-b529-b92078188026.csv
 |           79820610-1d17-4903-8209-37bb72afaf3b.csv
+|           79b72b4f-f778-4432-aaa8-ff28a995f4f7.csv
+|           79c41135-af8b-477a-8b74-606b57bafa8b.csv
 |           7a0bb4d0-f5db-452e-95c1-9276ab13d4df.csv
 |           7a241b57-05a7-4c72-8516-9977a0be1747.csv
+|           7a4f46fd-f658-4e12-87a6-6bfbf6981fc7.csv
 |           7ade8d88-b5ac-446c-82da-73d85a5e4034.csv
 |           7ae5c078-9c88-4ccd-ac7f-4b9ceb42957a.csv
 |           7c4b5f54-9419-45ae-94e5-340356953571.csv
 |           7cc5ab24-d947-4daa-b95e-721b5364360d.csv
 |           7d3aa923-9c55-4556-8c89-d2bc004e79d5.csv
 |           7dab9486-763c-4e25-ac25-9e2ba386515e.csv
+|           7e6ca7f0-8978-44c3-8c8f-5ccd07e0e6cb.csv
 |           7ecf618f-b415-4c6d-aa42-4602a0ea4ac6.csv
 |           7f1c3e9a-3a51-4f4d-b7d2-4c313ea6fdf5.csv
+|           7f74d4b0-e3c5-4401-9283-fa98de34b813.csv
 |           7fbd14f8-73c1-4963-b0e6-fd93cf8ebc14.csv
 |           8049ec9e-3d3f-4cb9-8ef5-8b8a22d312fe.csv
 |           8100aa9b-0c81-4a01-b2dc-bb784c52e5c5.csv
 |           81029bd2-9fe6-489c-bed9-27d445d381bf.csv
+|           814b1b9c-6af7-4beb-b3b2-aab76a76eaef.csv
 |           81d64a7e-93bb-4016-a19b-4bab7aea2708.csv
+|           820ffdb4-e347-4b6b-a4b4-3dae137614cc.csv
+|           828d7a9e-0449-4fca-ae96-f0753764c131.csv
 |           82acfebf-bc85-4286-8e76-aa151fb06cc8.csv
 |           831838d0-c923-4697-a412-2223c928e38f.csv
+|           8318ff9a-a93e-4079-9866-1002670b7815.csv
 |           833104d7-b73a-4eb5-ba64-22498379c5e1.csv.gz
 |           8369450c-c810-4a6d-a014-6c7592d15cd0.csv
+|           8382f5e1-5c85-479c-862f-b88c3c6d3af5.csv
 |           840de927-3071-4f5b-b0da-bba38826ab9b.csv
 |           84c60d3a-be3b-4a00-8db8-7c8b47fa7592.csv
+|           84dfe7d4-5dd7-4af9-abaf-3ea8b58cb79a.csv
 |           85990d62-d739-4015-bf99-dd5753ebc29e.csv.gz
 |           85ecac54-9f9f-4dd2-88f2-534480cbca8c.csv
 |           860231ab-f650-4d51-8e34-d5161a501724.csv
+|           861f9048-34ac-44af-87ee-ea56fcff0a74.csv
 |           86bf7e80-9bf9-4be1-b21d-a098cc21c032.csv
 |           86f0d577-8260-4bdc-b187-1f7da40176be.csv
 |           881264db-c0c6-4555-a39b-6a6a453aa0f2.csv
 |           8891d6e4-65d2-4188-877a-e4c12c5db7c4.csv
 |           88c08378-0ce1-4d13-a332-ceddbea14e99.csv
 |           88efa522-80c6-4356-8b0d-d5160194357b.csv
+|           89110a2d-946d-497f-9a59-f50e60b19090.csv.gz
+|           8a6332b2-5696-417f-a3b2-3b6b0ad3393a.csv
 |           8a67fde2-43dd-4c9e-b4cd-e29768463df6.csv
 |           8b36f768-acb5-4ba8-b7cf-978800e42b1f.csv
+|           8b41a352-adeb-4d30-a776-3c46e11734a2.csv.gz
+|           8b7ec6f7-6377-4550-b112-a722259ae892.csv
+|           8b9606ac-1f6e-46d4-be9c-6670d40c274a.csv
+|           8bc4ea6c-b2ca-4f65-b36f-2f0a34bf42be.csv
 |           8c8cbf72-615a-4142-ac4c-9f9494def40e.csv
 |           8d352add-3db8-4c03-a090-48a4636900d1.csv
 |           8dac511f-843a-4c95-975d-58d8a2cf4ad2.csv
+|           8e011ea4-84a2-40dc-9a69-6d4fbaa99524.csv
 |           8e0a0e86-892f-433a-9b5c-dee3ed1a71c4.csv
 |           8e16ad4d-1140-45ca-b665-f8e847ad92a7.csv
+|           8e375fe3-ed81-49ef-b5e9-da1bf9f3626f.csv.gz
 |           8e7b3988-3178-42b4-8c24-3c1b74b0eca5.csv.gz
 |           8ebb0f2a-bc0d-4733-8f0f-2fcbf194d62c.csv
+|           8efe430c-00fd-4a9c-873f-d01ba75e1ecd.csv
 |           8f2173c4-f17d-4561-8b7d-383734cfcd83.csv
 |           8f75e822-43bc-40dd-b768-65e31844e0f8.csv
+|           8fc9956f-6eae-4172-855a-653bc7961db0.csv
 |           905665cc-50c3-4e78-be0f-6e845ec3c7c7.csv.gz
+|           9233f7f0-8bf7-44c9-89b7-3289d9ed19f2.csv.gz
 |           9250d741-4793-4d84-87ef-bb0f4fd67ad7.csv
 |           94da449f-4e91-405d-8e0a-ca6f93eb020e.csv
+|           9510ccf3-edd9-479b-9135-b1229ea418d0.csv
 |           95581a72-f9c6-4bb1-8864-63e2ad848cba.csv
 |           959c3481-48cd-4d79-98f4-b5060e276678.csv
 |           95eff82b-76ff-4d55-8a58-f78eb98eef56.csv
+|           95f1ba88-247e-4f46-80e4-dd5498319bbf.csv
+|           9680f185-4459-4c6f-ba8f-6a4ed4ea3c31.csv
 |           96856066-7f3f-4b38-9389-63571d62a259.csv
 |           96f5b65f-b296-449f-9622-957cb3a60b0c.csv
 |           9780c4b1-8add-44a7-be78-f6f69a218b44.csv
 |           97cc1450-754c-4a61-b6ed-24a368e4ce40.csv
+|           97d5a191-2c68-4690-aeaa-7b3bb5a9b1b1.csv
 |           987d0cce-1760-4624-960c-6eefdcb0379d.csv
 |           9919c5b8-1802-44c9-aa8a-ecbf3ae68709.csv
 |           9993c8a0-8f85-48ea-a000-98f2f6300a6a.csv
 |           99ebacb1-768f-4724-b8ae-09ae00a5023c.csv
+|           9a897775-bb0f-4671-9f0f-aaff2768feb5.csv
 |           9d022b3d-b5ed-425b-92c8-abe31bf88c56.csv
 |           9d3597b1-8fad-434d-ae31-828bb7dff7bf.csv
 |           9e32ae10-f1e3-4749-8ce8-91d6b9f58414.csv
 |           9f2902e0-3ca9-468e-b5bb-f8f95a7c8d61.csv
+|           a06ef692-d129-41e0-8fb0-12fd3c25d526.csv
+|           a074cc9c-1874-4df4-955b-21f7e35d3f74.csv
 |           a1085e12-19af-444e-8511-96787dc0ce97.csv
 |           a13890a2-8685-4912-a098-2f1e4cdb4e4c.csv
+|           a1c103ef-76ce-4073-b4ed-56b2373546a5.csv
 |           a22990ba-3b2d-4685-b9b0-af44c89ede43.csv
+|           a237b25d-214c-45ca-ab1d-79c6052281bf.csv
 |           a240b1a0-01a5-48e0-8144-e4b984fb45ec.csv
 |           a2cb00a8-c643-44af-b49a-5317b3079a61.csv.gz
 |           a2e2f726-9a0e-4784-b7e8-1842094a6515.csv
 |           a3896d48-dcd4-4bd0-b31a-24ad62e5829b.csv.gz
+|           a3fb370f-d7ea-459e-b47c-6d5e188bd3e7.csv
+|           a46f41c1-11fe-4b67-bdf6-98aa6ff8d537.csv
 |           a4f0e8ef-3fec-4c1c-827a-91d6412a9b39.csv
 |           a574c476-23f3-470e-85e0-a1968ad4599d.csv
+|           a58c218c-9568-4f46-b8e3-21d29ed2de86.csv
 |           a5ad56fa-d24b-49cc-a212-4a4af196d0d4.csv
 |           a5b81dbc-bc86-4689-86c3-5061f5ad432d.csv
+|           a5db67d5-5a3c-477e-a450-3f1442f96296.csv
 |           a5dbfebe-a47c-49e5-babd-dc4b55a56605.csv.gz
 |           a662d1c8-7211-4e59-842f-948b0f845b86.csv
 |           a686b994-0da4-4fad-960e-c5655faeffc1.csv
 |           a6cc6a74-cd63-4540-89d8-fd4a4c689e37.csv.gz
 |           a76d4325-b123-4d1f-acbe-212d59e948a8.csv
+|           a7780a27-a71b-49e1-b412-7fb67a251513.csv
+|           a7986e61-8d72-422e-9a0b-158fc718420b.csv
 |           a798fe33-d85e-4bcb-be6d-343a3a7933d1.csv
 |           a81c1e7a-8536-4cd0-9386-ee936330545a.csv
+|           a859dea7-3e7e-40d8-88c1-3cfab4775ae3.csv
 |           a92ee85a-23ee-404a-a1d8-cbcfaf963ea5.csv
 |           a99d6941-560d-4364-bdc4-c486fa799808.csv.gz
+|           a9aeadec-01db-43d9-9da7-30a6d4fe43fb.csv
 |           aa13630d-516a-4d45-b9c8-0bcbfc1b1e5a.csv
 |           aa3a246d-3b88-4a11-a71c-826ef833dcd5.csv
 |           ab0d8cdd-8c9d-4910-b627-2ca9529d2e56.csv
 |           ab3fc9f5-18b8-47d1-b43c-5170c3584d54.csv
 |           abc6bc38-8fca-4720-a3fd-89a38e477209.csv
+|           ac08f771-357a-4cd7-8fb7-8f03b493e006.csv
 |           ad77fc9d-54e7-4cac-804c-a4a5b258a2ff.csv
 |           ae043411-0ad8-4737-975e-02be9e3a75b9.csv
+|           af186dc1-3889-4e24-a7d8-745b5913b433.csv
+|           af920e19-7f9d-4402-b54d-ee0b3b9994ee.csv
 |           b23644d5-ed4c-4ed2-bbc4-04ce9df7d7ed.csv
 |           b2a428bf-1a26-489f-965e-791995a3de29.csv
 |           b2ad37ac-610b-40b2-96c3-94f3c9e7c044.csv
 |           b2daa3fa-4af7-49a4-834b-722c295710de.csv
 |           b3a4f5a2-4ff4-4223-bb99-cb8511a9b9da.csv
 |           b477d753-6138-4fee-bb45-951b30c16219.csv
+|           b480a46e-2f7b-4f6e-a61f-4d404afed6aa.csv
+|           b4846cd7-df3a-4763-9bcc-8cb0e8cfa5ec.csv
 |           b587b378-8103-442c-9937-477f74a9d8e9.csv
 |           b5a08913-5de9-4016-bdf0-7930bc3ba02b.csv
 |           b5b4012c-44e2-4153-8690-248f4393a910.csv
 |           b61f2375-a5fa-486a-bed5-577b5d2fb59f.csv
+|           b62ba704-4eea-451d-af69-29045b6c4b82.csv
+|           b6a3e3d4-7fc3-4a4f-a9ae-38c69be79a07.csv
+|           b817c59b-eca8-4810-815d-995eb5c35f5f.csv
+|           b8882e7a-1f27-498e-b2dd-2c72e55118f3.csv
 |           ba814d93-3a0b-430a-ad3f-272ebd45ed80.csv
 |           ba86242b-bb9e-4e68-94fe-cde4daa11232.csv
+|           bae81887-fa70-4afd-96dc-283d65eb28bb.csv.gz
+|           bc0d017e-751a-43a8-a592-da342a88bff3.csv
 |           bc582f95-5f5e-436d-968b-f2924297663b.csv
 |           bd6557c8-220a-4da3-989f-dcfcad840e63.csv
+|           bd871452-27c3-4c17-96ee-70704ec7aa6f.csv
 |           be912ab8-f50d-4ad1-b1cc-1ca5fdd5034f.csv.gz
 |           bebf1dba-d1f4-4480-99c1-f753f4fa7c1b.csv
 |           bf94b83a-4db1-4c5b-b3a5-6c5d13e51ee2.csv.gz
 |           bfa10293-3185-40be-bfbc-1ece50fa94e0.csv
 |           c14d0526-1a1f-46f1-995f-3a96bc565060.csv
+|           c14d3d1c-51ef-4ff5-84cf-216e60d5a4cb.csv
+|           c199fba1-ff31-4e15-a4f7-d611e0b33d68.csv
+|           c37b2f93-2b22-4703-b354-0fc2a1c33e60.csv.gz
 |           c3998ba9-b76d-4cf1-bd8a-98cb368a09d7.csv.gz
+|           c42d5263-6c78-4230-996f-2ec35bf47ab0.csv.gz
 |           c4e4ee82-eaf9-4231-9375-ddfd35bb6884.csv
+|           c64b879d-af24-4680-aa1f-259f78e327b6.csv
+|           c692a2ba-fd12-4365-9c73-b41aabe8f374.csv
 |           c69679c6-9add-47b1-8d8b-9a2fb4d195a9.csv
+|           c6a529f8-879f-4d3d-84a5-735fa67abfbc.csv
 |           c6cb1820-d81c-41c0-99b6-704f13b7b853.csv
 |           c785b1c2-7e5c-41f9-8f32-ccc29ad70f7b.csv.gz
 |           c7a31724-cce6-462a-aa1c-3ba9ededcf0f.csv
 |           c7bab51c-d603-40ed-9eb4-4e2d5641af6c.csv
+|           c7c0f26b-5244-4cf9-a1c8-c5ef464d91f4.csv.gz
 |           c83aa420-674f-449b-9d78-6ccca1018d53.csv
 |           c848be1b-2443-471f-8515-be61c702057d.csv
+|           c857f0d1-e384-45e2-83b6-d094aea50a50.csv
+|           c87e2715-cd98-4747-8e70-8854bf5b7b6c.csv
 |           c8a16afe-5cf8-46c3-a54c-38a4f7198a83.csv
+|           c8c7eaa6-010f-4890-8ff4-68dfbb332b59.csv
 |           c8dde8ee-550c-4bca-ad16-305e450986d4.csv
+|           c985ef01-02b6-4874-941d-ae0a2c66896c.csv.gz
 |           c992809e-ff8a-43d1-b61d-3225db784f92.csv
 |           c99e19c3-bfdf-4f7f-968a-9ec3205c31de.csv
 |           c9a00998-ae94-49a5-ad4b-b5ea4e779d6e.csv
 |           c9b301d7-8676-4001-a2b8-ee97c3e8bce6.csv
+|           c9fe72c1-f71b-4921-8630-71cf1a1139ee.csv
 |           cb294158-228b-4c5c-9128-dc0a0b1f7457.csv
 |           cb702403-3e47-404a-aeb0-70a0f075dfbe.csv
 |           cbe4d8bf-ca76-4d6f-8eb4-2ddf975bcf2f.csv
+|           cbf001df-f117-4141-a2e7-7bee853571f1.csv
 |           cc040d45-cf42-4724-8d3a-4b010da42691.csv
 |           cc27c09a-100d-444b-9e4b-b1f19df58f1f.csv
 |           cc2807db-65e1-462a-b45a-1c50c4d3e557.csv
@@ -18496,24 +18628,31 @@ C:\PY_DEV\MKOBI
 |           cfadc00e-89d9-4763-b4ab-2f41e8fb1219.csv
 |           d0972751-32c3-4de3-b3da-95b780edd8bd.csv
 |           d0c4d364-ede2-4193-b549-9ba6cef19da2.csv
+|           d11d2e87-9d50-4c84-9dc1-e7099b56fb85.csv
 |           d13de9b7-5883-4a00-8d8d-6172873c7189.csv
 |           d140e7d1-2420-4183-8cc2-b7e60d9efe91.csv
+|           d189ec3a-f931-4287-bdc5-68ed993a7804.csv
 |           d1c49a7a-4238-490b-ab57-0462f6df875c.csv
 |           d1dc31e5-bc2c-45bb-89af-b016d7e5034b.csv
 |           d29fb2b5-5cc2-4f92-b08d-cc90dd7a009d.csv
 |           d309c3d5-d6b3-43f1-86d8-84ed8b535e1b.csv
+|           d45eb300-c52f-4d9e-84b9-679d26447be3.csv
 |           d46c2f4c-ebb7-4de9-a874-198eec165727.csv.gz
+|           d6364fa5-4ac6-49ce-81a6-4e21965ed7a9.csv
 |           d65d410e-d752-497f-8a73-b004844430ab.csv
 |           d6efc9b3-4ce9-48df-840b-2b4fc914bd17.csv.gz
 |           d7077293-f2bd-4215-94fb-37fce814f6e0.csv
 |           d77c3059-6ed3-4bfc-93ec-0d02dcf5e774.csv.gz
+|           d7c9edec-725b-48a5-88d3-82221e2d8dd2.csv
 |           d82e6ee4-c691-45c5-b650-642de4960165.csv
 |           d84a7191-a069-46ea-91ee-69c78c1e3aa5.csv
 |           d900250d-f1bc-405d-9eed-ddabf6ad2a1f.csv
 |           d91d6d0d-1f53-4ae7-a9a1-a59aced848c6.csv
+|           d96c0582-5497-4e84-9a76-17b910aba256.csv
 |           d97cc8cb-2494-4a0d-8c80-bc093f944a34.csv.gz
 |           d9ba714b-d5f0-4f0d-9df6-08f7f27fc00c.csv.gz
 |           d9f3a8b2-a12a-436d-8cea-ba1ea5395556.csv
+|           dbcc1702-d092-4016-a3bc-9925a7c5f3eb.csv
 |           dc539517-613c-449b-ba8b-8a17f06d5d71.csv
 |           dc6e7b69-b50d-4b4e-a581-b8cf573368fd.csv.gz
 |           dcbe6e9a-96ab-46ff-8a1f-dc8fc0c4681d.csv
@@ -18521,11 +18660,15 @@ C:\PY_DEV\MKOBI
 |           dcf1804a-60c6-4aa7-b14f-ddff43fc5c1b.csv
 |           dd08fca8-baf2-40c0-a018-5916ed921de8.csv
 |           dd0ca0e6-68e3-441d-8bb8-c7fec8481497.csv
+|           dd572f15-399a-4aff-991d-5e0338383c72.csv
 |           de24121d-7a22-4e01-8255-72604b83115c.csv
 |           de8e0ee5-4e43-405e-b68e-0e425978201b.csv
 |           deca7de8-9dd3-4a89-b4af-42bd0d9ac242.csv
 |           df30ccd1-2740-4748-815f-7250bf813c03.csv
 |           df3638e0-12fa-4e3d-8763-75add320e331.csv
+|           df77df4b-701e-445a-8c76-e49825cf49ba.csv
+|           dfefa7b9-b358-4fbc-89d4-1e137a860c42.csv
+|           e12da748-3659-4056-a8ee-c83d6a0ca5bd.csv
 |           e21e0313-e3f2-4dea-b605-800092f31c82.csv
 |           e335c350-7a60-4f4f-9d57-5c9ae5b51960.csv
 |           e39ff198-8b35-4a41-b9ba-45181aa73b2e.csv
@@ -18538,19 +18681,28 @@ C:\PY_DEV\MKOBI
 |           e78cafe7-67d6-47cf-ba0b-0745bf15a867.csv
 |           e84be9be-54af-4f12-bc66-4d95eea8e6ca.csv.gz
 |           e88b941c-ea93-4667-ae3b-4369411d342e.csv.gz
+|           e8e14971-37ac-4aea-8a90-94b79f325a8b.csv.gz
+|           e90ec835-e613-46b7-a525-2360967912cc.csv
 |           e95486e9-be20-492e-aeb8-08b7fb4c18a3.csv
 |           e992c5fe-61c7-4cf2-832d-cc87152628dc.csv
 |           ea56b449-ee91-420a-9168-c491f997fb8c.csv
+|           eaaa7d9e-0893-4176-a4ee-1beb40c65261.csv.gz
 |           eadc80c5-5083-4ff8-884e-81a090668025.csv
+|           ec8309e7-1a6b-43da-8932-6014e0e5d104.csv
+|           ec89a36c-3881-4716-a04d-1dd8a6ec9147.csv
 |           ecb9c52e-2f17-49ab-ba00-71e59b939119.csv
+|           ed524e04-76da-45c1-89c5-4673e1d81f87.csv
 |           ed5753a3-0cb9-4d04-9b27-752e63dde49f.csv
 |           ed9edb46-598b-46a5-a515-8970f1711065.csv
 |           ede496ff-2467-4010-b8e5-d9a307185473.csv
 |           edf61201-cdf6-4ad4-9c6c-b74d74a6c497.csv
+|           ef280f43-5bdd-4c89-a763-743e07ea9a82.csv
 |           ef2bc891-1bc5-426a-85fb-bd8f52c3866a.csv
+|           f01f0997-71e2-4391-ba17-24cb70ee0bf5.csv
 |           f0ba026d-2563-4ee4-9c4b-05447bb350a6.csv
 |           f0c43127-780f-41de-afda-5926d14d150d.csv
 |           f0eb9dde-487d-48a8-b872-99dece7b6e8d.csv
+|           f1ac94b2-de6c-4aa1-bca8-4e57caaa3385.csv
 |           f260c27d-f58a-43ae-8ff1-69b3bfdf985d.csv
 |           f308b9da-7bb4-4d21-9417-12dca8198d36.csv
 |           f34fcfc3-5907-4023-9f40-c78fa009b7e7.csv
@@ -18561,13 +18713,18 @@ C:\PY_DEV\MKOBI
 |           f7909a7a-6266-4cd8-ac7d-6ad1101884dc.csv
 |           f7ed60eb-8ed0-4d1d-a8d8-2d772db5a820.csv
 |           f86cfe20-8f9c-4199-85bf-f5f3cb9533cf.csv
+|           f937b46c-e30b-4c16-b9af-f563473321de.csv
 |           f9bd3257-1366-4c7a-8c29-d388c0e30c8f.csv
+|           fc5cefa2-67d7-4908-808a-11524c335e2b.csv.gz
+|           fcd19642-af21-4177-b5ca-4dd4672a9c50.csv.gz
 |           fd047b95-3c6b-4bb5-9b27-7e45984b964c.csv
 |           fda3b98a-464d-43bb-83ed-bea9bc22eb48.csv.gz
 |           fe577e93-db10-466e-9415-532c858c09f5.csv
 |           fe71e5dd-2735-4cd7-89b4-99a8fcd85f53.csv
+|           fec423c2-8adf-45ce-83a5-89d2ec000612.csv
 |           ff05175c-01d5-477e-8e3a-1d8dd65516b3.csv
 |           ff15a642-7739-4deb-b6bd-f8dd5853c6dd.csv.gz
+|           ff939227-d6dd-4515-9254-199643e1d29f.csv.gz
 |           
 +---docs
 |       README_DOCKER.md
@@ -18595,7 +18752,7 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           index-BZtF5YQ4.js
+|   |           index-CkIT2K1p.js
 |   |           
 |   +---node_modules
 |   |   |   .package-lock.json
@@ -96924,6 +97081,8 @@ C:\PY_DEV\MKOBI
 |   |   |   |   auth_service.py
 |   |   |   |   dashboard_service.py
 |   |   |   |   data_service.py
+|   |   |   |   file_cleanup.py
+|   |   |   |   file_processing.py
 |   |   |   |   filter_service.py
 |   |   |   |   graph_service.py
 |   |   |   |   layout_service.py
@@ -96936,6 +97095,8 @@ C:\PY_DEV\MKOBI
 |   |   |           auth_service.cpython-314.pyc
 |   |   |           dashboard_service.cpython-314.pyc
 |   |   |           data_service.cpython-314.pyc
+|   |   |           file_cleanup.cpython-314.pyc
+|   |   |           file_processing.cpython-314.pyc
 |   |   |           filter_service.cpython-314.pyc
 |   |   |           graph_service.cpython-314.pyc
 |   |   |           layout_service.cpython-314.pyc

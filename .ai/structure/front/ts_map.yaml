@@ -150,12 +150,15 @@
   layer: component
   imports:
     - react-router-dom
+    - '@mui/material'
     - ../../features/auth
   components:
     - ProtectedRoute
   hooks: []
   jsx_tags:
-    - <div>
+    - >-
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems:
+      'center', minHeight: '100vh' }}>
 - path: C:/py_dev/mkobi/frontend/src/shared/components/RoleBasedAccess.tsx
   module: C:.py_dev.mkobi.frontend.src.shared.components.RoleBasedAccess
   layer: component
@@ -413,6 +416,7 @@
   imports:
     - ../../../shared/api/axiosInstance
     - ../../../shared/types/api.types
+    - ../model/authToken
   components: []
   hooks: []
   jsx_tags: []

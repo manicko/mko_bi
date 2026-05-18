@@ -109,6 +109,25 @@
 * Rate limiting на login и registration-request endpoints (Redis-based)
 * Email domain blocklist при подаче заявки на регистрацию (configurable)
 
+### 6.2 Rate Limiter Failure Behavior
+
+The rate limiter depends on Redis. When Redis is unavailable, the system operates in one of two modes, configurable via `RATE_LIMITER_FAIL_CLOSED` env var:
+
+* **Fail-open** (default, `RATE_LIMITER_FAIL_CLOSED=false`): requests are allowed through when Redis is down. A warning is logged. Suitable for development and availability-first deployments.
+* **Fail-closed** (`RATE_LIMITER_FAIL_CLOSED=true`): requests are rejected with HTTP 429 when the rate limiter cannot be initialized. A critical-level alert is logged. Recommended for production to prevent rate limit bypass during Redis outages.
+
+Rate limiter health is tracked internally. When the rate limiter is disabled due to Redis unavailability, an error-level log is emitted with exception details.
+
+### 6.3 Production Credential Enforcement
+
+The application refuses to start in production mode if default credentials are detected:
+
+* `ADMIN_USERNAME` and `ADMIN_PASSWORD` must be explicitly set via environment variables — the default `admin`/`admin` combination is rejected in production.
+* `JWT__SECRET_KEY` must be explicitly set — the Docker Compose production config uses `${JWT__SECRET_KEY:?...}` syntax to fail on startup if unset.
+* `DATABASE__PASSWORD` must be explicitly set — same fail-if-unset pattern in Docker Compose.
+
+In development mode, default credentials are permitted but a warning is logged.
+
 ---
 
 ## 6.1 Configuration & Secrets Management
@@ -162,6 +181,14 @@
   * **полный пересчёт**
   * запись в PostgreSQL
 
+### 9.1 Custom Metrics (Formula Parser)
+
+Custom metrics are defined as formulas referencing column names with basic arithmetic operators (`+`, `-`, `*`, `/`). The formula parser has the following limitations:
+
+* **Supported**: simple binary expressions with column names (e.g., `revenue - cost`, `profit / revenue * 100`)
+* **Not supported**: parentheses, nested expressions, numeric literals as operands, column names with special characters or spaces, unary operators
+* Formulas are validated before processing; invalid formulas produce clear error messages indicating the position and nature of the syntax error
+
 ---
 
 ## 10. Data Storage
@@ -179,6 +206,14 @@
 * Статус обработки отслеживается через `processing_logs` (started → processing → success/failed)
 * Очередь задач: in-memory `TaskQueue` (MVP); для production — Redis + RQ
 * Результат обработки доступен через endpoint статуса задачи
+
+### 11.1 Task Ownership Validation
+
+The `POST /upload/{dashboard_id}/process` endpoint validates that the requested processing task belongs to the specified dashboard. If the task's `dashboard_id` does not match the URL parameter, the request is rejected. This prevents cross-dashboard task triggering.
+
+### 11.2 Task Queue Migration
+
+The current in-memory `TaskQueue` (based on `asyncio.Queue`) is an MVP implementation. All queued tasks are lost on application restart. A migration plan to Redis/RQ for persistent task processing is documented in `docs/TASK_QUEUE_MIGRATION.md`.
 
 ---
 
@@ -291,10 +326,12 @@
 
 - `GET /api/v1/users` → `User[]` (admin)
 - `GET /api/v1/users/:id` → `User` (self or admin)
-- `POST /api/v1/users` (admin)
-- `PUT /api/v1/users/:id/role` (admin)
+- `POST /api/v1/users` (admin) — Request body: `{email, password, role}`
+- `PATCH /api/v1/users/:id/role` (admin) — Request body: `{new_role}`
 - `DELETE /api/v1/users/:id` (admin)
 - `DELETE /api/v1/users/me` (self-deletion, non-admin only)
+
+**Note**: User creation and role update endpoints accept JSON request bodies (Pydantic models `UserCreateRequest` and `UserUpdateRequest`), not query parameters.
 
 ### 14.9 Admin Endpoints
 
@@ -302,10 +339,12 @@
 - `PATCH /api/v1/admin/users/:id/role`
 - `DELETE /api/v1/admin/users/:id`
 - `GET /api/v1/admin/registration-requests` → `Request[]`
-- `POST /api/v1/admin/registration-requests/:id/approve`
+- `POST /api/v1/admin/registration-requests/:id/approve` → `{message, user_id, temp_password}`
 - `POST /api/v1/admin/registration-requests/:id/reject`
 - `GET /api/v1/admin/logs` → `ProcessingLog[]` (with filtering and pagination)
 - `GET /api/v1/admin/logs/:log_id` → `ProcessingLog`
+
+**Registration approval**: When a registration request is approved, the system generates a cryptographically random temporary password (via `secrets.token_urlsafe(16)`) and returns it in the `temp_password` field of the response. The admin is responsible for communicating this password to the new user through an available channel.
 
 ### 14.10 Health Endpoints
 
@@ -318,6 +357,16 @@
 
 * проверка на каждом запросе
 * пользователь видит только свои dashboards
+
+### 15.1 Dashboard Access Enforcement
+
+Access control is enforced on all dashboard-related endpoints, not just data retrieval. The following endpoints validate that the user has access to the requested dashboard:
+
+* `GET /api/v1/filters` — filters are only returned if the user has access to the associated dashboard
+* `GET /api/v1/graphs` — graph definitions are filtered by dashboard access
+* `GET /api/v1/dashboards/:id/access` — requires admin role; lists access entries only for authorized admins
+
+The `check_dashboard_access` function verifies the user's permission against the `dashboard_access` table for the specific dashboard resource being accessed.
 
 ---
 
@@ -467,6 +516,7 @@ aggregated_data (
 
 - 1 строка = 1 точка графика
 - `dims`: ключ-значение для фильтров и осей
+- **JSONB normalization**: `dims` keys are sorted recursively before write operations to ensure deterministic UPSERT conflict detection. PostgreSQL JSONB equality is sensitive to key ordering; without normalization, records with identical semantics but different key insertion orders would be treated as distinct, causing duplicate data.
 - `metrics`: ключ-значение для отображения
 
 #### `processing_logs` - Логи обработки
@@ -940,6 +990,8 @@ class ComponentSize(StrEnum):
 - Refresh token (опционально) для продления сессии
 - Интерцепторы Axios для добавления токена к каждому запросу
 
+**Dev vs Prod storage**: In production, tokens are stored in memory only (not persisted, XSS-safe). In development, sessionStorage is used for convenience during development (tokens survive page refresh but are cleared on tab close).
+
 ### 23.2 File Upload
 
 - Rate limiting на `/api/v1/upload/*`
@@ -958,15 +1010,19 @@ class ComponentSize(StrEnum):
 
 ### 23.5 CORS Configuration (FastAPI)
 
+CORS is configured with explicit allowed methods and headers — wildcards are not used:
+
 ```python
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # React dev server
+    allow_origins=config.cors_origins,  # From env var or app.yaml (default: localhost)
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
+    allow_headers=["Authorization", "Content-Type", "Accept"],
 )
 ```
+
+In production, `cors_origins` must be explicitly configured. The application validates CORS configuration at startup and raises an error if origins are not set in production mode.
 
 ---
 
@@ -1010,4 +1066,4 @@ Nginx:
 
 **Автор**: Senior Python Architect
 **Дата**: 2026-05-16
-**Версия**: 2.1 (Updated with implemented features)
+**Версия**: 2.2 (Updated with implemented features)
