@@ -1,0 +1,45 @@
+id: TASK_005_V012
+title: Fix lru_cache on token decode without TTL
+status: pending
+priority: medium
+depends_on: []
+wave: 1
+
+description: >
+  _decode_token_cached uses @lru_cache to cache decoded tokens indefinitely.
+  If a user's role changes, the cached token data is stale until app restart.
+  Replace with TTL-based cache or add cache invalidation on role change.
+
+goals:
+  - Token cache has a TTL (e.g., 5 minutes) instead of indefinite caching
+  - Role changes take effect within TTL window
+  - No significant performance degradation
+  - Cache invalidation on role change is a nice-to-have
+
+files:
+  - path: src/mkobi/core/permissions.py
+    targets:
+      - type: function
+        name: _decode_token_cached
+    semantic_anchors:
+      insert_before:
+        type: decorator
+        value: @lru_cache
+    changes:
+      - action: modify_code
+        description: Replace @lru_cache with a TTL-based cache implementation. Use cachetools.TTLCache or a custom implementation with time-based expiration. Set TTL to 300 seconds (5 minutes).
+
+acceptance_criteria:
+  - Token decode results are cached for 5 minutes maximum
+  - After TTL expires, fresh token decode occurs
+  - Role changes take effect within 5 minutes
+  - Tests pass
+
+tests_to_run:
+  - tests/
+
+risk_level: low
+risk_notes: No dependencies. Safe to deploy independently.
+
+validated_finding: V-012
+severity: MEDIUM

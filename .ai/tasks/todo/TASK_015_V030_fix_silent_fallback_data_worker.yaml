@@ -1,0 +1,43 @@
+id: TASK_015_V030
+title: Add warning for silent fallback in data_worker column selection
+status: pending
+priority: low
+depends_on: []
+wave: 1
+
+description: >
+  data_worker.py silently falls back to first 3 columns when graph dimensions
+  are invalid. Log a warning and skip the graph instead of silent fallback.
+
+goals:
+  - Invalid graph dimensions produce a warning log instead of silent fallback
+  - Graphs with invalid dimensions are skipped, not displayed with wrong data
+  - Warning includes graph_id and expected vs actual dimensions
+
+files:
+  - path: src/mkobi/workers/data_worker.py
+    targets:
+      - type: function
+        name: process_csv_background_sync
+    semantic_anchors:
+      insert_after:
+        type: conditional
+        value: column count check
+    changes:
+      - action: modify_code
+        description: Replace the silent fallback to first 3 columns with a logger.warning() call that includes graph_id and dimension details. Skip the graph processing instead of using fallback columns.
+
+acceptance_criteria:
+  - Invalid graph dimensions log a warning with context
+  - Graphs with invalid dimensions are not processed
+  - Valid graphs still process correctly
+  - Tests pass
+
+tests_to_run:
+  - tests/
+
+risk_level: low
+risk_notes: Add logging and change fallback behavior. Low risk.
+
+validated_finding: V-030
+severity: LOW

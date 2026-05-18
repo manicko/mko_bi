@@ -1,0 +1,50 @@
+id: TASK_004_V008
+title: Fix broad exception handling leaking internal errors
+status: pending
+priority: medium
+depends_on: []
+wave: 1
+
+description: >
+  Filter bind/unbind endpoints and graph creation endpoint use `except Exception`
+  with `HTTPException(status_code=500, detail=str(e))`, leaking internal error
+  details to clients. Replace with specific exception types and generic error
+  messages.
+
+goals:
+  - Internal error messages not exposed to API consumers
+  - Specific exception types used where possible
+  - Generic "Internal server error" message for unexpected errors
+  - Consistent error handling pattern across all three endpoints
+
+files:
+  - path: src/mkobi/api/routes/dashboards.py
+    targets:
+      - type: function
+        name: bind_filter_endpoint
+      - type: function
+        name: unbind_filter_endpoint
+      - type: function
+        name: create_graph_endpoint
+    semantic_anchors:
+      insert_after:
+        type: exception_handler
+        value: except Exception
+    changes:
+      - action: modify_code
+        description: Replace `except Exception as e: raise HTTPException(status_code=500, detail=str(e))` with specific exception handlers. Use `HTTPException(status_code=500, detail="Internal server error")` for unexpected exceptions. Log the actual error internally.
+
+acceptance_criteria:
+  - API returns generic error messages, not internal details
+  - Database errors are logged internally but not exposed
+  - All three endpoints use consistent error handling pattern
+  - Tests pass
+
+tests_to_run:
+  - tests/
+
+risk_level: low
+risk_notes: Independent per-endpoint fix. No cross-endpoint dependencies.
+
+validated_finding: V-008
+severity: MEDIUM

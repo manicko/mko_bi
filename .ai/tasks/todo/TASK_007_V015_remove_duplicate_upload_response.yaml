@@ -1,0 +1,43 @@
+id: TASK_007_V015
+title: Remove duplicate UploadResponse interface in frontend
+status: pending
+priority: low
+depends_on: []
+wave: 1
+
+description: >
+  UploadResponse interface is defined twice in api.types.ts with different shapes.
+  Remove the duplicate and keep the more complete definition.
+
+goals:
+  - Single UploadResponse interface definition
+  - All fields from both definitions preserved in the merged version
+  - No type inconsistencies
+
+files:
+  - path: frontend/src/shared/types/api.types.ts
+    targets:
+      - type: interface
+        name: UploadResponse
+    semantic_anchors:
+      insert_after:
+        type: interface_definition
+        value: UploadResponse
+    changes:
+      - action: remove_duplicate
+        description: Identify both UploadResponse definitions. Merge fields into a single interface. Remove the duplicate definition. Ensure all consumers use the merged interface.
+
+acceptance_criteria:
+  - Only one UploadResponse interface definition exists
+  - All fields from both original definitions are present
+  - Frontend builds without errors
+  - No type errors in consuming components
+
+tests_to_run:
+  - frontend/src/
+
+risk_level: low
+risk_notes: Trivial fix. Frontend type cleanup only.
+
+validated_finding: V-015
+severity: LOW

@@ -1,0 +1,53 @@
+id: TASK_023_V014
+title: Refactor direct repository instantiation to use Depends injection
+status: pending
+priority: medium
+depends_on: []
+wave: 2
+
+description: >
+  Some routes create repository instances directly (FilterRepository(),
+  DashboardFilterRepository(), etc.) instead of using Depends() injection.
+  Refactor to use the existing Depends() pattern consistently.
+
+goals:
+  - All routes use Depends() for repository injection
+  - No direct repository instantiation in route handlers
+  - Consistent DI pattern across all routes
+  - Testing can override dependencies
+
+files:
+  - path: src/mkobi/api/routes/dashboards.py
+    targets:
+      - type: function
+        name: multiple endpoints
+    semantic_anchors:
+      insert_after:
+        type: function_definition
+        value: endpoint functions
+    changes:
+      - action: modify_code
+        description: Replace direct repository instantiation (e.g., FilterRepository()) with Depends(get_filter_repository) pattern. Use the existing dependency functions from api/deps.py.
+
+  - path: src/mkobi/api/routes/admin.py
+    targets:
+      - type: function
+        name: multiple endpoints
+    changes:
+      - action: modify_code
+        description: Same refactoring for admin routes that instantiate repositories directly.
+
+acceptance_criteria:
+  - All routes use Depends() for repository injection
+  - No direct repository instantiation in route handlers
+  - All existing tests pass
+  - New tests can override dependencies
+
+tests_to_run:
+  - tests/
+
+risk_level: medium
+risk_notes: Refactoring for consistency. Ensure all dependency functions exist in api/deps.py before refactoring routes.
+
+validated_finding: V-014
+severity: MEDIUM

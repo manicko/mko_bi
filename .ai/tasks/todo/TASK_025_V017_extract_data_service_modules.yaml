@@ -1,0 +1,48 @@
+id: TASK_025_V017
+title: Extract data service into smaller modules
+status: pending
+priority: low
+depends_on: []
+wave: 3
+
+description: >
+  DataService is 680 lines with multiple responsibilities (upload, processing,
+  status tracking, cleanup). Extract file processing and cleanup to separate
+  modules while preserving the public API.
+
+goals:
+  - DataService reduced to core orchestration logic
+  - File processing extracted to a separate module
+  - Cleanup logic extracted to a separate module
+  - Public API preserved (no breaking changes)
+  - Each module has a single responsibility
+
+files:
+  - path: src/mkobi/services/data_service.py
+    targets:
+      - type: class
+        name: DataService
+    semantic_anchors:
+      insert_after:
+        type: class_definition
+        value: DataService
+    changes:
+      - action: extract_module
+        description: Extract file processing methods to a new module (e.g., services/file_processing_service.py). Extract cleanup methods to a new module (e.g., services/cleanup_service.py). Keep DataService as the orchestrator that delegates to these modules. Preserve all public method signatures.
+
+acceptance_criteria:
+  - DataService is under 300 lines
+  - File processing logic in separate module
+  - Cleanup logic in separate module
+  - All public method signatures unchanged
+  - All existing tests pass
+  - New modules have their own tests
+
+tests_to_run:
+  - tests/test_data_service.py
+
+risk_level: medium
+risk_notes: Medium refactoring effort. Low risk if done incrementally. Preserve public API to avoid breaking callers.
+
+validated_finding: V-017
+severity: LOW

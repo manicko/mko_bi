@@ -1,0 +1,44 @@
+id: TASK_018_V034
+title: Add task ownership validation to upload process endpoint
+status: pending
+priority: low
+depends_on: []
+wave: 1
+
+description: >
+  The /upload/{dashboard_id}/process endpoint doesn't validate that the task
+  belongs to the specified dashboard. A task for a different dashboard could be
+  triggered with the wrong dashboard_id.
+
+goals:
+  - Process endpoint validates task belongs to dashboard
+  - Return 400/404 if task doesn't belong to the specified dashboard
+  - No cross-dashboard task processing
+
+files:
+  - path: src/mkobi/api/routes/upload.py
+    targets:
+      - type: function
+        name: process_upload_endpoint
+    semantic_anchors:
+      insert_after:
+        type: parameter_extraction
+        value: dashboard_id
+    changes:
+      - action: add_code
+        description: After retrieving the task by task_id, validate that the task's dashboard_id matches the dashboard_id from the URL path. Return HTTP 400 "Task does not belong to this dashboard" if they don't match.
+
+acceptance_criteria:
+  - Process endpoint validates task ownership
+  - Mismatched task/dashboard returns 400
+  - Valid task/dashboard combinations process correctly
+  - Tests pass
+
+tests_to_run:
+  - tests/test_upload_api.py
+
+risk_level: low
+risk_notes: Add validation check. Independent fix.
+
+validated_finding: V-034
+severity: LOW

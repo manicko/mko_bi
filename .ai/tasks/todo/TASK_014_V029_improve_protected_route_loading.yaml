@@ -1,0 +1,42 @@
+id: TASK_014_V029
+title: Improve ProtectedRoute loading state
+status: pending
+priority: low
+depends_on: []
+wave: 1
+
+description: >
+  ProtectedRoute loading state shows a plain "Loading..." div instead of a
+  proper spinner component. Replace with a proper loading spinner.
+
+goals:
+  - Loading state uses a proper spinner component
+  - Consistent with application design
+  - Better UX during authentication check
+
+files:
+  - path: frontend/src/shared/components/ProtectedRoute.tsx
+    targets:
+      - type: component
+        name: ProtectedRoute
+    semantic_anchors:
+      insert_after:
+        type: jsx_element
+        value: Loading...
+    changes:
+      - action: modify_code
+        description: Replace the plain "Loading..." div with a proper loading spinner. Use MUI CircularProgress or a dedicated spinner component. Center the spinner on screen.
+
+acceptance_criteria:
+  - Loading state shows a spinner instead of plain text
+  - Spinner is centered on screen
+  - Frontend builds without errors
+
+tests_to_run:
+  - frontend/src/
+
+risk_level: low
+risk_notes: UI improvement only. No functional change.
+
+validated_finding: V-029
+severity: LOW

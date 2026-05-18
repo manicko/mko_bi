@@ -1,0 +1,42 @@
+id: TASK_010_V023
+title: Add catch-all 404 route in frontend
+status: pending
+priority: low
+depends_on: []
+wave: 1
+
+description: >
+  No catch-all * route for unknown paths. Users see a blank page instead of a
+  404 message. Add a catch-all route that renders the NotFound component.
+
+goals:
+  - Unknown paths show a 404 page instead of blank
+  - NotFound component rendered for all unmatched routes
+  - Existing routes unaffected
+
+files:
+  - path: frontend/src/app/routes.tsx
+    targets:
+      - type: component
+        name: AppRoutes
+    semantic_anchors:
+      insert_after:
+        type: route_definition
+        value: last existing route
+    changes:
+      - action: add_code
+        description: Add `<Route path="*" element={<NotFound />} />` as the last child of the `<Routes>` component. Ensure NotFound component is imported.
+
+acceptance_criteria:
+  - Visiting an unknown URL shows the NotFound page
+  - Existing routes still work correctly
+  - Frontend builds without errors
+
+tests_to_run:
+  - frontend/src/
+
+risk_level: low
+risk_notes: Trivial fix. Add single route entry.
+
+validated_finding: V-023
+severity: LOW

@@ -71,6 +71,9 @@ C:\PY_DEV\MKOBI
 |   |       docker-compose.yaml
 |   |       
 |   +---plans
+|   |       order_01.yaml
+|   |       PLAN_01.md
+|   |       
 |   +---problems
 |   |   |   CONTEXT_01.md
 |   |   |   
@@ -78,6 +81,8 @@ C:\PY_DEV\MKOBI
 |   |           DECISION_01.md
 |   |           
 |   +---researches
+|   |       RESEARCH_01.md
+|   |       
 |   +---structure
 |   |   |   map.md
 |   |   |   
@@ -91,47 +96,44 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
-|   |   |       TASK_001_V001_fix_file_size_double_multiplication_DONE.yaml
-|   |   |       TASK_002_V003_fix_spa_fallback_registration_DONE.yaml
-|   |   |       TASK_003_V007_fix_aggregated_data_filtering_DONE.yaml
-|   |   |       TASK_004_V008_fix_broad_exception_handling_DONE.yaml
-|   |   |       TASK_005_V012_fix_lru_cache_token_decode_DONE.yaml
-|   |   |       TASK_006_V013_fix_check_dashboard_access_logging_DONE.yaml
-|   |   |       TASK_007_V015_remove_duplicate_upload_response_DONE.yaml
-|   |   |       TASK_008_V016_remove_duplicate_get_current_user_DONE.yaml
-|   |   |       TASK_009_V018_fix_logger_inconsistency_DONE.yaml
-|   |   |       TASK_010_V023_add_catch_all_404_route_DONE.yaml
-|   |   |       TASK_011_V025_fix_redundant_token_check_DONE.yaml
-|   |   |       TASK_012_V026_fix_plotlychart_unknown_types_DONE.yaml
-|   |   |       TASK_013_V004_add_dashboard_access_checks_DONE.yaml
-|   |   |       TASK_014_V009_restrict_cors_methods_headers_DONE.yaml
-|   |   |       TASK_015_V010_prevent_default_admin_credentials_DONE.yaml
-|   |   |       TASK_016_V011_refactor_user_endpoints_request_body_DONE.yaml
-|   |   |       TASK_017_V014_refactor_direct_repo_instantiation_DONE.yaml
-|   |   |       TASK_018_V019_fix_temp_dir_platformdirs_DONE.yaml
-|   |   |       TASK_019_V027_fix_cors_origins_yaml_DONE.yaml
-|   |   |       TASK_020_V029_fix_protected_route_loading_DONE.yaml
-|   |   |       TASK_021_V030_fix_silent_column_fallback_DONE.yaml
-|   |   |       TASK_022_V031_fix_jsonb_unique_constraint_DONE.yaml
-|   |   |       TASK_023_V032_remove_hardcoded_alembic_url_DONE.yaml
-|   |   |       TASK_024_V033_fix_logout_client_token_removal_DONE.yaml
-|   |   |       TASK_025_V034_add_task_ownership_validation_DONE.yaml
-|   |   |       TASK_026_V002_generate_random_temp_password_DONE.yaml
-|   |   |       TASK_027_V005_add_rate_limiter_monitoring_DONE.yaml
-|   |   |       TASK_028_V006_document_task_queue_migration_DONE.yaml
-|   |   |       TASK_029_V020_remove_weak_jwt_default_DONE.yaml
-|   |   |       TASK_030_V021_remove_weak_db_password_default_DONE.yaml
-|   |   |       TASK_031_V022_fix_formula_parser_DONE.yaml
-|   |   |       TASK_032_V024_document_token_storage_DONE.yaml
-|   |   |       TASK_033_V028_document_missing_enums_DONE.yaml
-|   |   |       TASK_034_V017_extract_data_service_modules_DONE.yaml
-|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
-|   |   |       order.yaml
+|   |   |       order_02.yaml
+|   |   |       TASK_001_V001_fix_file_size_double_multiplication.yaml
+|   |   |       TASK_002_V003_fix_spa_fallback_registration.yaml
+|   |   |       TASK_003_V007_fix_aggregated_data_filtering.yaml
+|   |   |       TASK_004_V008_fix_broad_exception_handling.yaml
+|   |   |       TASK_005_V012_fix_lru_cache_token_decode.yaml
+|   |   |       TASK_006_V013_fix_check_dashboard_access_logging.yaml
+|   |   |       TASK_007_V015_remove_duplicate_upload_response.yaml
+|   |   |       TASK_008_V016_remove_duplicate_get_current_user.yaml
+|   |   |       TASK_009_V018_fix_logger_inconsistency.yaml
+|   |   |       TASK_010_V023_add_catch_all_404_route.yaml
+|   |   |       TASK_011_V025_fix_redundant_token_check.yaml
+|   |   |       TASK_012_V026_fix_plotly_chart_unknown_types.yaml
+|   |   |       TASK_013_V027_fix_cors_origins_yaml.yaml
+|   |   |       TASK_014_V029_improve_protected_route_loading.yaml
+|   |   |       TASK_015_V030_fix_silent_fallback_data_worker.yaml
+|   |   |       TASK_016_V032_fix_alembic_hardcoded_db_url.yaml
+|   |   |       TASK_017_V033_fix_logout_client_storage.yaml
+|   |   |       TASK_018_V034_fix_task_ownership_validation.yaml
+|   |   |       TASK_019_V004_add_dashboard_access_checks.yaml
+|   |   |       TASK_020_V009_restrict_cors_methods_headers.yaml
+|   |   |       TASK_021_V010_prevent_default_admin_credentials.yaml
+|   |   |       TASK_022_V011_refactor_user_endpoints_request_body.yaml
+|   |   |       TASK_023_V014_refactor_direct_repo_instantiation.yaml
+|   |   |       TASK_024_V005_add_rate_limiter_monitoring.yaml
+|   |   |       TASK_025_V017_extract_data_service_modules.yaml
+|   |   |       TASK_026_V019_use_platformdirs_temp_dir.yaml
+|   |   |       TASK_027_V020_remove_weak_jwt_secret_default.yaml
+|   |   |       TASK_028_V021_remove_weak_db_password_default.yaml
+|   |   |       TASK_029_V022_document_formula_parser_limitations.yaml
+|   |   |       TASK_030_V024_document_dev_token_storage.yaml
+|   |   |       TASK_031_V028_document_additional_enums.yaml
+|   |   |       TASK_032_V031_test_jsonb_dims_constraint.yaml
 |   |   |       
 |   |   \---validation
 |   |           tasks_validated_findings_001.md

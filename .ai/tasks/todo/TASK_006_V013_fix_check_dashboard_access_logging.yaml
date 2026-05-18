@@ -1,0 +1,45 @@
+id: TASK_006_V013
+title: Fix check_dashboard_access swallowing all exceptions
+status: pending
+priority: medium
+depends_on: []
+wave: 1
+
+description: >
+  check_dashboard_access catches all exceptions and returns False without logging.
+  Database errors are silently swallowed, making debugging difficult. Add logging
+  before returning False.
+
+goals:
+  - Database errors in check_dashboard_access are logged
+  - Return behavior unchanged (still returns False on error)
+  - Error logs include sufficient context for debugging
+  - No performance impact
+
+files:
+  - path: src/mkobi/core/permissions.py
+    targets:
+      - type: function
+        name: check_dashboard_access
+    semantic_anchors:
+      insert_after:
+        type: exception_handler
+        value: except Exception
+    changes:
+      - action: add_code
+        description: Add logger.warning() or logger.error() call in the except block before returning False. Include exception type and message in the log. Do not log sensitive data.
+
+acceptance_criteria:
+  - Database errors are logged with appropriate severity
+  - Function still returns False on error (no behavior change)
+  - Log messages include exception type and context
+  - Tests pass
+
+tests_to_run:
+  - tests/
+
+risk_level: low
+risk_notes: No dependencies. Safe to deploy independently. Add logging only.
+
+validated_finding: V-013
+severity: MEDIUM

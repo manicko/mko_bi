@@ -1,0 +1,53 @@
+id: TASK_029_V022
+title: Document formula parser limitations
+status: pending
+priority: low
+depends_on: []
+wave: 3
+
+description: >
+  _parse_formula uses simple regex split — doesn't handle parentheses, nested
+  expressions, or column names with special characters. Document this limitation
+  in the SPEC and code comments.
+
+goals:
+  - Formula parser limitations documented in SPEC.md
+  - Code comments explain what is and isn't supported
+  - Users understand the constraints
+  - No code changes needed (MVP scope)
+
+files:
+  - path: src/mkobi/data/processing/transformations.py
+    targets:
+      - type: function
+        name: _parse_formula
+    semantic_anchors:
+      insert_before:
+        type: function_definition
+        value: _parse_formula
+    changes:
+      - action: add_code
+        description: Add a docstring to _parse_formula documenting supported operations (+, -, *, /), supported operands (column names, numeric literals), and limitations (no parentheses, no nested expressions, no special characters in column names).
+
+  - path: docs/SPEC.md
+    targets:
+      - type: section
+        value: Data Processing
+    changes:
+      - action: add_code
+        description: Add a subsection documenting formula parser limitations. List supported operators and syntax constraints.
+
+acceptance_criteria:
+  - _parse_formula has a clear docstring documenting limitations
+  - SPEC.md includes formula parser constraints
+  - No code behavior changes
+  - Documentation is accurate
+
+tests_to_run:
+  - tests/
+
+risk_level: low
+risk_notes: Documentation only. No code changes.
+
+validated_finding: V-022
+severity: LOW

@@ -1,0 +1,44 @@
+id: TASK_008_V016
+title: Remove duplicate get_current_user_dependency function
+status: pending
+priority: low
+depends_on: []
+wave: 1
+
+description: >
+  The same get_current_user_dependency function exists in both core/permissions.py
+  and api/deps.py. Remove the duplicate in core/permissions.py, keep only the
+  canonical version in api/deps.py.
+
+goals:
+  - Single get_current_user_dependency definition in api/deps.py
+  - No duplicate in core/permissions.py
+  - All imports still resolve correctly
+
+files:
+  - path: src/mkobi/core/permissions.py
+    targets:
+      - type: function
+        name: get_current_user_dependency
+    semantic_anchors:
+      insert_before:
+        type: function_definition
+        value: get_current_user_dependency
+    changes:
+      - action: remove_code
+        description: Remove the get_current_user_dependency function definition from core/permissions.py. Verify that all imports of this function point to the canonical version in api/deps.py. Update any imports in core/permissions.py that reference the local version.
+
+acceptance_criteria:
+  - get_current_user_dependency exists only in api/deps.py
+  - All imports resolve to the canonical version
+  - Application starts without import errors
+  - Tests pass
+
+tests_to_run:
+  - tests/
+
+risk_level: low
+risk_notes: Low risk. Remove duplicate, preserve canonical version.
+
+validated_finding: V-016
+severity: LOW

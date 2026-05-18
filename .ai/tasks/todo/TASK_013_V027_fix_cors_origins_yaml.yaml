@@ -1,0 +1,43 @@
+id: TASK_013_V027
+title: Fix CORS origins in YAML config being example domains
+status: pending
+priority: low
+depends_on: []
+wave: 1
+
+description: >
+  CORS origins in settings/app.yaml are example domains (example.com). If not
+  overridden by env var, these are invalid. Set to localhost defaults or empty list.
+
+goals:
+  - CORS origins in YAML config are valid defaults for development
+  - Empty list or localhost defaults instead of example.com
+  - Production deployments override via env var
+
+files:
+  - path: src/mkobi/settings/app.yaml
+    targets:
+      - type: config_key
+        value: cors_origins
+    semantic_anchors:
+      insert_after:
+        type: yaml_key
+        value: cors_origins
+    changes:
+      - action: modify_code
+        description: Change CORS origins from example.com domains to localhost defaults (e.g., ["http://localhost:3000", "http://localhost:5173"]) or an empty list [].
+
+acceptance_criteria:
+  - CORS origins in YAML are valid development defaults
+  - No example.com domains in default config
+  - Production deployments still override via env var
+  - Application starts correctly with default config
+
+tests_to_run:
+  - tests/
+
+risk_level: low
+risk_notes: Configuration change only. No code impact.
+
+validated_finding: V-027
+severity: LOW

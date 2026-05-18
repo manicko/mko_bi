@@ -1,0 +1,45 @@
+id: TASK_032_V031
+title: Test and document JSONB dims unique constraint behavior
+status: pending
+priority: low
+depends_on: []
+wave: 3
+
+description: >
+  UPSERT conflict target includes dims JSONB. JSONB equality for conflict
+  detection may not work as expected for all JSON values. Test thoroughly with
+  nested JSON and document the behavior.
+
+goals:
+  - JSONB dims equality behavior tested with various JSON structures
+  - Documentation of any edge cases
+  - Consider hashing dims for conflict target if needed
+  - No production issues with duplicate detection
+
+files:
+  - path: src/mkobi/data/storage/manager.py
+    targets:
+      - type: method
+        name: StorageManager.save_aggregated_data
+    semantic_anchors:
+      insert_after:
+        type: upsert_statement
+        value: on_conflict
+    changes:
+      - action: add_code
+        description: Add a comment documenting the JSONB equality behavior for UPSERT conflict detection. If testing reveals issues with nested JSON, add a hash column for conflict target instead of raw JSONB.
+
+acceptance_criteria:
+  - JSONB dims equality tested with nested JSON structures
+  - UPSERT correctly detects duplicates for all JSON structures
+  - Behavior documented in code comments
+  - Tests pass
+
+tests_to_run:
+  - tests/
+
+risk_level: low
+risk_notes: Testing and documentation. Potential code change if JSONB equality issues found.
+
+validated_finding: V-031
+severity: LOW

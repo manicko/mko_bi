@@ -1,0 +1,45 @@
+id: TASK_026_V019
+title: Use platformdirs for upload temp directory configuration
+status: pending
+priority: low
+depends_on: []
+wave: 3
+
+description: >
+  UploadSettings.temp_dir uses a hardcoded relative path "data/tmp_uploads"
+  instead of platformdirs for cross-platform temp files. SPEC specifies
+  platformdirs for temp files.
+
+goals:
+  - temp_dir uses platformdirs for cross-platform compatibility
+  - Default temp directory follows OS conventions
+  - Configurable via environment variable
+  - Backward compatible (existing config still works)
+
+files:
+  - path: src/mkobi/config.py
+    targets:
+      - type: class
+        name: UploadSettings
+    semantic_anchors:
+      insert_after:
+        type: field_definition
+        value: temp_dir
+    changes:
+      - action: modify_code
+        description: Change temp_dir default from "data/tmp_uploads" to use platformdirs.user_data_dir("mkobi", "mkobi") + "/tmp_uploads". Ensure the directory is created on initialization.
+
+acceptance_criteria:
+  - temp_dir uses platformdirs for default value
+  - Directory created automatically on startup
+  - Configurable via environment variable override
+  - Tests pass on all platforms
+
+tests_to_run:
+  - tests/
+
+risk_level: low
+risk_notes: Configuration change. Aligns with SPEC requirement for platformdirs.
+
+validated_finding: V-019
+severity: LOW

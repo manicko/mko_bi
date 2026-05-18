@@ -1,0 +1,44 @@
+id: TASK_031_V028
+title: Document additional enums in SPEC.md
+status: pending
+priority: low
+depends_on: []
+wave: 3
+
+description: >
+  ButtonVariant, ComponentSize, OrientationEnum, BarmodeEnum, YoyModeEnum,
+  AggregationFunctionEnum, FilterOperatorEnum are not documented in SPEC.md.
+  Add documentation for these enums.
+
+goals:
+  - All backend enums documented in SPEC.md
+  - Enum values and their meanings specified
+  - Clear distinction between backend and frontend-only enums
+
+files:
+  - path: docs/SPEC.md
+    targets:
+      - type: section
+        value: Enums / Constants
+    semantic_anchors:
+      insert_after:
+        type: section
+        value: existing enum documentation
+    changes:
+      - action: add_code
+        description: Add documentation for ButtonVariant, ComponentSize, OrientationEnum, BarmodeEnum, YoyModeEnum, AggregationFunctionEnum, FilterOperatorEnum. List each enum's values and their purpose. Note which are frontend-only vs backend.
+
+acceptance_criteria:
+  - All enums from models/enums.py documented in SPEC.md
+  - Enum values listed with descriptions
+  - Frontend-only enums clearly marked
+  - No code changes needed
+
+tests_to_run:
+  - tests/
+
+risk_level: low
+risk_notes: Documentation only. No code changes.
+
+validated_finding: V-028
+severity: LOW
