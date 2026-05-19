@@ -2515,6 +2515,20 @@
   value: UserRepository
   stable_hash: fc69d71c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: 2e8c07b6
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: get_async_sessionlocal
+  stable_hash: 2e8c07b6
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: 5dd1eb36
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: SessionLocal
+  stable_hash: 5dd1eb36
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
 - id: 1d1f75d4
   symbol_path:
   - DatabaseStarter

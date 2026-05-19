@@ -278,10 +278,6 @@
       <Tabs value={currentTab} onChange={handleTabChange} aria-label="Admin
       panel tabs">
     - '<Box sx={{ mt: 3 }}>'
-    - '<Box sx={{ display: currentTab === 0 ? ''block'' : ''none'' }}>'
-    - '<Box sx={{ display: currentTab === 1 ? ''block'' : ''none'' }}>'
-    - '<Box sx={{ display: currentTab === 2 ? ''block'' : ''none'' }}>'
-    - '<Box sx={{ display: currentTab === 3 ? ''block'' : ''none'' }}>'
 - path: C:/py_dev/mkobi/frontend/src/features/admin/ui/DashboardManagement.tsx
   module: C:.py_dev.mkobi.frontend.src.features.admin.ui.DashboardManagement
   layer: unknown
@@ -416,7 +412,6 @@
   hooks: []
   jsx_tags:
     - <Box>
-    - <style>
 - path: C:/py_dev/mkobi/frontend/src/features/auth/api/authApi.ts
   module: C:.py_dev.mkobi.frontend.src.features.auth.api.authApi
   layer: api

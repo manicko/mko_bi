@@ -101,7 +101,9 @@ User (Browser)
   3. Aggregate: groupby, YoY, shares, custom metrics
 * **Result**: Full recalculation, written to PostgreSQL
 * **Background**: Processing runs asynchronously via task queue (in-memory `TaskQueue` for MVP; Redis + RQ for production). See [Task Queue](../03-processing/task-queue.md) for the migration plan.
-* **Status tracking**: `processing_logs` table (`started` → `processing` → `success`/`failed`)
+* **File processing service**: `file_processing.py` handles validation, upload, and task orchestration.
+* **Background worker**: `data_worker.py` provides `process_csv_background` (async) and `process_csv_background_sync` (sync RQ wrapper) with mode-aware data persistence (`overwrite` clears old data, `append` keeps it).
+* **Status tracking**: `processing_logs` table (`started` → `uploaded` → `processing` → `success`/`failed`)
 
 ## Storage Details
 

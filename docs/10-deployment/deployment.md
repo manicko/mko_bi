@@ -157,7 +157,7 @@ docker compose --profile production up -d
 
 ## Docker Deployment
 
-The project uses a multi-stage Dockerfile supporting dev, test, prod, and prod-slim targets. See `README_DOCKER.md` for the full Docker specification.
+The project uses a multi-stage Dockerfile supporting dev, test, prod, and prod-slim targets. See [Docker Guide](../11-guides/docker.md) for the full Docker specification.
 
 ### Quick Start
 

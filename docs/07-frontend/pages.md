@@ -21,7 +21,7 @@ related:
 
 ## Overview
 
-The application consists of **8 UI pages** (plus a 404 fallback). Authenticated pages are wrapped in `AppLayout` which provides the `Header` navigation bar. The `/login` and `/register` routes are **outside** `AppLayout` so that the Header and Sidebar are not rendered on authentication pages.
+The application consists of **7 UI pages** (plus a 404 fallback). Authenticated pages are wrapped in `AppLayout` which provides the `Header` top navigation bar. The `/login` and `/register` routes are **outside** `AppLayout` so that the Header is not rendered on authentication pages.
 
 ---
 
@@ -35,8 +35,8 @@ The application consists of **8 UI pages** (plus a 404 fallback). Authenticated 
 
 | Element | Type | Description |
 | --- | --- | --- |
-| Email field | `TextField` | Email input with format validation (Zod: `z.string().email()`) |
-| Password field` | `TextField` | Password input (`type="password"`) |
+| Email field | `TextField` | Email input with format validation (Zod: `z.email()`) |
+| Password field | `TextField` | Password input (`type="password"`) |
 | Login button | `Button` | Submits the form; disabled while loading |
 | Register link | `Link` | Navigates to `/register` |
 | Error alert | `Alert` | Shown on authentication failure |
@@ -47,7 +47,7 @@ The application consists of **8 UI pages** (plus a 404 fallback). Authenticated 
 | --- | --- | --- | --- |
 | Login | `POST` | `/api/v1/auth/login` | `{ email, password }` |
 
-**Success response:** `{ access_token, token_type: "bearer" }` — token stored in memory (prod) or sessionStorage (dev), then redirect to `/dashboards`.
+**Success response:** `{ access_token, token_type: "bearer", user: { id, email, role, display_name, created_at } }` — token stored in memory (prod) or sessionStorage (dev), user state set immediately, then redirect to `/dashboards`.
 
 **Error responses:** `401` (invalid credentials), `429` (rate limit exceeded).
 
@@ -56,7 +56,7 @@ The application consists of **8 UI pages** (plus a 404 fallback). Authenticated 
 1. User enters email and password.
 2. Form is validated via Zod (`loginSchema`).
 3. On submit, `POST /api/v1/auth/login` is called.
-4. On success: token is stored, user is redirected to `/dashboards`.
+4. On success: token is stored, user profile (including `display_name`) is set in auth state, redirect to `/dashboards`.
 5. On failure: error alert is displayed.
 
 ---
@@ -106,8 +106,11 @@ The application consists of **8 UI pages** (plus a 404 fallback). Authenticated 
 
 | Element | Type | Description |
 | --- | --- | --- |
-| Dashboard cards | Card list | Each card shows name, description, and "Open" link |
-| Profile link | Link | Top-right corner, navigates to `/profile` |
+| DataGrid table | `DataGrid` | ID (short UUID) + Name + Created columns, sortable |
+| Pagination | `DataGrid` | Default 25 rows/page, options: 10, 25, 50 |
+| Empty state | `Alert` | Shown when user has no dashboard access |
+| Loading spinner | `CircularProgress` | Shown during data fetch |
+| Quick filter | `GridToolbar` | Built-in search/filter via DataGrid toolbar |
 
 ### API Endpoints
 
@@ -119,8 +122,9 @@ The application consists of **8 UI pages** (plus a 404 fallback). Authenticated 
 
 1. After login, user is redirected to this page.
 2. `GET /api/v1/dashboards/my` fetches dashboards the user has access to.
-3. Each dashboard card links to `/dashboard/:id`.
-4. If the session expires, the user is redirected to `/login`.
+3. Data is displayed in a sortable DataGrid table with short UUID and name columns.
+4. Clicking a row navigates to `/dashboard/:id`.
+5. If the session expires, the user is redirected to `/login`.
 
 ---
 
@@ -136,13 +140,17 @@ The application consists of **8 UI pages** (plus a 404 fallback). Authenticated 
 | Dashboard title | `Typography` | Dashboard name header |
 | Filters panel | `DashboardFilters` | Dynamic filters (Select/Range/Date) based on dashboard config |
 | Charts grid | Chart components | Plotly.js charts (Bar, Line, Pie, Table) arranged in a grid |
-| Upload button | `Button` | Visible only for `admin` and `editor` roles; links to `/dashboard/:id/upload` |
+| Upload button | `Button` | Visible only for `admin` and `editor` roles; opens `UploadModal` dialog |
+| Upload modal | `UploadModal` | Dialog with mode toggle, file dropzone, upload queue, processing status polling |
 
 ### API Endpoints
 
 | Action | Method | Endpoint | Query Params |
 | --- | --- | --- | --- |
+| Get dashboard | `GET` | `/api/v1/dashboards/:id` | — |
 | Get aggregated data | `GET` | `/api/v1/data/aggregated` | `dashboard_id`, `graph_id` (optional), `filters` (optional) |
+| Upload file | `POST` | `/api/v1/upload/:dashboard_id` | Query: `mode=overwrite\|append`; Body: `multipart/form-data` |
+| Check status | `GET` | `/api/v1/upload/status/:task_id` | Polled after upload |
 
 ### Flow
 
@@ -150,6 +158,8 @@ The application consists of **8 UI pages** (plus a 404 fallback). Authenticated 
 2. Filters panel renders based on dashboard configuration.
 3. Charts are fetched and rendered using Plotly.js React.
 4. Changing filters triggers new data requests (filtered on the backend).
+5. Clicking "Upload Data" opens the `UploadModal` dialog (no page navigation).
+6. After successful upload and processing, dashboard data refreshes automatically.
 
 ---
 
@@ -157,7 +167,7 @@ The application consists of **8 UI pages** (plus a 404 fallback). Authenticated 
 
 **Component:** `features/users/ui/UserProfile.tsx`
 **Access:** Authenticated users
-**Profile link** is present on all pages except `/login`.
+**Profile link** is present in the top navigation bar on all authenticated pages.
 
 ### UI Elements
 
@@ -179,7 +189,7 @@ The application consists of **8 UI pages** (plus a 404 fallback). Authenticated 
 
 ### Flow
 
-1. Profile data is fetched via `GET /api/v1/auth/me` (initialized with cached user data from the login response via TanStack Query).
+1. Profile data is initialized from the login response via TanStack Query (no extra API call needed).
 2. The profile displays email, display_name (computed from email prefix), and global role — all read-only.
 3. Non-admin users see a "Delete Account" button.
 4. Clicking delete opens a confirmation dialog.
@@ -228,13 +238,13 @@ The application consists of **8 UI pages** (plus a 404 fallback). Authenticated 
 
 ### UI Elements
 
-The admin panel uses a tabbed interface with 4 sections:
+The admin panel uses a tabbed interface with 4 sections. Tab state (pagination, sorting) is preserved when switching between tabs by keeping all tab content mounted but hidden (`display: none/block` pattern).
 
 | Tab | Component | Description |
 | --- | --- | --- |
-| User Management | `UserManagement` | Table of users, role changes, user deletion |
-| Registration Requests | `RegistrationRequests` | List of pending requests, approve/reject actions |
-| Dashboard Management | `DashboardManagement` | CRUD operations for dashboards |
+| User Management | `UserManagement` | DataGrid with inline role editing (singleSelect dropdown), row highlight during save, ConfirmDialog for delete, toast notifications |
+| Registration Requests | `RegistrationRequests` | DataGrid with approve/reject actions via ConfirmDialog with configurable labels ("Approve"/"Reject"), toast notifications |
+| Dashboard Management | `DashboardManagement` | DataGrid with short UUID, create/edit dialogs, ConfirmDialog for delete, toast notifications |
 | Log Viewer | `LogViewer` | Processing logs with filtering and pagination |
 
 ### API Endpoints
@@ -253,47 +263,12 @@ The admin panel uses a tabbed interface with 4 sections:
 
 ### Registration Approval Flow
 
-1. Admin views pending registration requests.
-2. On approve: `POST /api/v1/admin/registration-requests/:id/approve` creates a user with a random temporary password.
-3. The `temp_password` is returned in the response for the admin to communicate to the new user.
-4. On reject: the request status is set to `rejected`.
-
----
-
-## 8. Data Upload Page (`/dashboard/:id/upload`)
-
-**Component:** `features/upload/ui/UploadPage.tsx`
-**Access:** Admin and Editor (enforced by `RoleBasedAccess` with `roles={['admin', 'editor']}`)
-
-### UI Elements
-
-| Element | Type | Description |
-| --- | --- | --- |
-| Mode toggle | `ToggleButtonGroup` | "Overwrite" (reset all data) / "Append" (add new rows) |
-| File dropzone | `FileDropzone` | Drag-and-drop area for `.csv` and `.csv.gz` files |
-| File list | List | Selected files with remove buttons |
-| Upload queue | Paper section | Per-file progress bars and status indicators |
-| Start Upload button | `Button` | Begins upload of all selected files |
-| Cancel button | `Button` | Returns to dashboard view |
-| Success alert | `Alert` | Shown when all files are uploaded and processing starts |
-
-### API Endpoints
-
-| Action | Method | Endpoint | Params |
-| --- | --- | --- | --- |
-| Upload file | `POST` | `/api/v1/upload/:dashboard_id` | Query: `mode=overwrite\|append`; Body: `multipart/form-data` |
-| Check status | `GET` | `/api/v1/upload/status/:task_id` | Polled after upload |
-| Get result | `GET` | `/api/v1/upload/result/:task_id` | Final processing result |
-
-### Flow
-
-1. User selects upload mode (overwrite or append).
-2. User drags and drops or selects `.csv` / `.csv.gz` files.
-3. Files are validated for correct extension and MIME type.
-4. On "Start Upload", files are uploaded sequentially.
-5. Progress bars show upload progress per file.
-6. After upload, processing status is polled via `GET /api/v1/upload/status/:task_id`.
-7. On completion (`status === 'completed'` or `'success'`), user is redirected back to the dashboard.
+1. Admin views pending registration requests in a DataGrid table.
+2. Approve/reject actions use `ConfirmDialog` with configurable `confirmLabel` ("Approve" / "Reject").
+3. On approve: `POST /api/v1/admin/registration-requests/:id/approve` creates a user with a random temporary password.
+4. The `temp_password` is returned in the response for the admin to communicate to the new user.
+5. On reject: the request status is set to `rejected`.
+6. Toast notifications confirm success/failure of actions.
 
 ---
 
@@ -308,7 +283,7 @@ The admin panel uses a tabbed interface with 4 sections:
 ## Cross-References
 
 - [Auth Flow](auth-flow.md) — Detailed authentication and authorization flow
-- [Upload UI](upload-ui.md) — Upload security and file handling details
+- [Upload UI](upload-ui.md) — Upload modal and file handling details
 - [Frontend Security](frontend-security.md) — Security measures for all pages
 - [Authentication API](../../01-auth/auth-api.md) — Backend auth endpoint specs
 - [Processing API](../../03-processing/processing-api.md) — Upload and data endpoint specs

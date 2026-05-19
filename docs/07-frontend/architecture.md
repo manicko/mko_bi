@@ -89,7 +89,6 @@ All routes are defined in `frontend/src/app/routes.tsx` using React Router v6. T
 | `/register` | `RegisterForm` | Public |
 | `/dashboards` | `DashboardList` | Authenticated |
 | `/dashboard/:id` | `DashboardView` | Authenticated |
-| `/dashboard/:id/upload` | `UploadPage` | Admin, Editor |
 | `/admin` | `AdminPanel` | Admin only |
 | `/profile` | `UserProfile` | Authenticated |
 | `/profile/change-password` | `ChangePasswordPage` | Authenticated |
@@ -130,9 +129,9 @@ User Action → React Component → API Call (Axios) → FastAPI Endpoint
 ## Cross-References
 
 - [FSD Structure](fsd-structure.md) — Detailed project folder tree
-- [Pages](pages.md) — All 8 UI pages with endpoints and elements
+- [Pages](pages.md) — All 7 UI pages with endpoints and elements
 - [Auth Flow](auth-flow.md) — JWT handling, role-based access, email validation
-- [Upload UI](upload-ui.md) — Upload page and file handling
+- [Upload UI](upload-ui.md) — Upload modal and file handling
 - [Frontend Security](frontend-security.md) — CORS, file upload security, JWT handling
 - [Authentication API](../../01-auth/auth-api.md) — Backend auth endpoints
 - [Processing API](../../03-processing/processing-api.md) — Upload and data endpoints

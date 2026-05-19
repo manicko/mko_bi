@@ -1,3 +1,20 @@
+---
+id: docker-domain
+domain: guides
+tags:
+  - docker
+  - deployment
+  - devops
+related:
+  - run-guide
+  - deployment
+  - task-queue-migration
+---
+
+## Purpose
+
+This document provides comprehensive Docker setup instructions for the mkobi BI Dashboard System, including multi-stage builds, development environment configuration, testing procedures, and production deployment guidelines.
+
 # Docker Setup for mkobi BI Dashboard System
 
 ## Overview
@@ -238,3 +255,9 @@ If migrating from a single-stage Dockerfile:
 ## License
 
 MIT
+
+## Cross-References
+
+- [Run Guide](../04-run/run-guide.md) - Complete application run instructions
+- [Deployment](../05-ops/deployment.md) - Production deployment strategies
+- [Task Queue Migration](../05-ops/task-queue-migration.md) - Background task processing setup

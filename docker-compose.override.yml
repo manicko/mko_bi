@@ -10,11 +10,14 @@ services:
     user: root
     environment:
       ENV: development
+      # Admin credentials (valid email format required)
+      ADMIN_USERNAME: admin@example.com
+      ADMIN_PASSWORD: admin
       # Development can use a default JWT secret for local testing
       JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
       LOGGING__LEVEL: DEBUG
-      AUTO_MIGRATE: "true"
-      RECREATE_TEST_DB: "true"
+      AUTO_MIGRATE: "true"  # Run migration on startup to create schema
+      RECREATE_TEST_DB: "false"  # Disabled - test DB creation causes restart loop
     volumes:
       # Mount source code for hot reload (writable for egg-info generation)
       - ./src:/app/src
@@ -24,7 +27,7 @@ services:
       - ./uv.lock:/app/uv.lock
       # Mount frontend build for SPA serving (run 'cd frontend && npm run build' locally)
       - ./frontend/dist:/app/frontend/dist
-    command: ["uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+    command: ["uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000"]
     # Remove healthcheck in dev for faster startup
     healthcheck:
       disable: true

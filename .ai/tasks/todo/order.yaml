@@ -1,0 +1,107 @@
+# Execution Order for mkobi Refactoring Tasks
+# Generated: 2026-05-19
+# Source plans: PLAN_01_legacy_docs_integration.md, PLAN_02_migration_consolidation.md
+# Source audit: implementation_audit_01.md
+
+# Wave 1: Documentation Integration (PLAN_01) - Low risk, docs-only
+# Tasks can start immediately, no dependencies on other waves
+
+tasks:
+  # Wave 1: Documentation Integration - Sequential
+  - id: TASK_001_docs_create_guides_dir
+    depends_on: []
+    wave: 1
+    group: docs
+
+  - id: TASK_002_docs_migrate_docker_guide
+    depends_on:
+      - TASK_001_docs_create_guides_dir
+    wave: 1
+    group: docs
+
+  - id: TASK_003_docs_migrate_task_queue_guide
+    depends_on:
+      - TASK_001_docs_create_guides_dir
+    wave: 1
+    group: docs
+
+  - id: TASK_004_docs_update_deployment_cross_refs
+    depends_on:
+      - TASK_002_docs_migrate_docker_guide
+    wave: 1
+    group: docs
+
+  - id: TASK_005_docs_delete_legacy_files
+    depends_on:
+      - TASK_002_docs_migrate_docker_guide
+      - TASK_003_docs_migrate_task_queue_guide
+      - TASK_004_docs_update_deployment_cross_refs
+    wave: 1
+    group: docs
+
+  - id: TASK_006_docs_update_spec_index
+    depends_on:
+      - TASK_005_docs_delete_legacy_files
+    wave: 1
+    group: docs
+
+  # Wave 2: Migration Consolidation (PLAN_02) - Medium risk, DB changes
+  # Independent from Wave 1, can run in parallel
+
+  - id: TASK_007_db_generate_consolidated_migration
+    depends_on: []
+    wave: 2
+    group: db
+
+  - id: TASK_008_db_write_consolidated_upgrade
+    depends_on:
+      - TASK_007_db_generate_consolidated_migration
+    wave: 2
+    group: db
+
+  - id: TASK_009_db_write_consolidated_downgrade
+    depends_on:
+      - TASK_008_db_write_consolidated_upgrade
+    wave: 2
+    group: db
+
+  - id: TASK_010_db_validate_consolidated_migration
+    depends_on:
+      - TASK_009_db_write_consolidated_downgrade
+    wave: 2
+    group: db
+
+  - id: TASK_011_db_delete_old_migrations
+    depends_on:
+      - TASK_010_db_validate_consolidated_migration
+    wave: 2
+    group: db
+
+  # Wave 3: Frontend Audit Fixes - Independent, can run in parallel with Waves 1 & 2
+  # All audit fixes are independent of each other
+
+  - id: TASK_012_fe_fix_upload_polling_bug
+    depends_on: []
+    wave: 3
+    group: frontend_fixes
+
+  - id: TASK_013_fe_fix_user_mgmt_delete_loading
+    depends_on: []
+    wave: 3
+    group: frontend_fixes
+
+  - id: TASK_014_fe_fix_admin_datagrid_state
+    depends_on: []
+    wave: 3
+    group: frontend_fixes
+
+  - id: TASK_015_fe_fix_user_mgmt_inline_css
+    depends_on: []
+    wave: 3
+    group: frontend_fixes
+
+# Parallel execution groups:
+# Wave 1: Sequential (docs dependency chain)
+# Wave 2: Sequential (DB migration dependency chain)
+# Wave 3: All 4 tasks can run in parallel (independent frontend fixes)
+# Waves 1, 2, 3 can run concurrently (different domains: docs, DB, frontend)

@@ -154,7 +154,6 @@ Two guard components enforce access control at the route level:
 | `/login`, `/register` | None | Public |
 | `/dashboards` | `ProtectedRoute` | All authenticated |
 | `/dashboard/:id` | `ProtectedRoute` | All authenticated |
-| `/dashboard/:id/upload` | `ProtectedRoute` + `RoleBasedAccess` | `admin`, `editor` |
 | `/admin` | `ProtectedRoute` + `RoleBasedAccess` | `admin` only |
 | `/profile` | `ProtectedRoute` | All authenticated |
 | `/profile/change-password` | `ProtectedRoute` | All authenticated |

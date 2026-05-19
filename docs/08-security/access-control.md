@@ -189,7 +189,6 @@ The frontend provides UX-level access control that mirrors the backend:
 | --- | --- |
 | `/login`, `/register` | Public |
 | `/dashboards`, `/dashboard/:id` | Any authenticated |
-| `/dashboard/:id/upload` | `admin`, `editor` |
 | `/admin` | `admin` only |
 | `/profile`, `/profile/change-password` | Any authenticated |
 

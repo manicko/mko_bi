@@ -564,11 +564,30 @@ Displays processing logs with filtering and pagination.
 - View processing logs (status, dashboard, timestamps)
 - Filter by status (`started`, `uploaded`, `processing`, `success`, `failed`, `completed`)
 - Filter by dashboard
+- Filter by date range (`date_from`, `date_to`)
 - Paginated navigation
 
 **Related API endpoints:**
-- `GET /api/v1/admin/logs` — List logs with filters
+- `GET /api/v1/admin/logs` — List logs with filters (supports `status`, `dashboard_id`, `date_from`, `date_to`, `skip`, `limit`)
 - `GET /api/v1/admin/logs/:log_id` — Get single log entry
+
+### Dashboard Access Management (`/admin`)
+
+Provides endpoints for managing user access to dashboards.
+
+**Related API endpoints:**
+- `POST /api/v1/dashboards/{id}/access` — Grant access
+- `GET /api/v1/dashboards/{id}/access` — List access records
+- `DELETE /api/v1/dashboards/{id}/access/{user_id}` — Revoke access
+
+### Dashboard-Filter Binding (`/admin`)
+
+Provides endpoints for binding filters to dashboards.
+
+**Related API endpoints:**
+- `POST /api/v1/dashboards/{id}/filters?filter_id=:id` — Bind filter
+- `DELETE /api/v1/dashboards/{id}/filters/{filter_id}` — Unbind filter
+- `GET /api/v1/dashboards/{id}/filters` — List bound filters
 
 ---
 

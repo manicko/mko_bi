@@ -314,27 +314,9 @@ Authorization: Bearer <token>
 | **Method**     | `GET`                                              |
 | **Path**       | `/api/v1/admin/logs`                               |
 | **Auth level** | Admin                                              |
-| **Query params**| `status`, `dashboard_id`, `page`, `page_size`     |
+| **Query params**| `status`, `dashboard_id`, `date_from`, `date_to`, `skip`, `limit`     |
 
-**Response** (`200 OK`):
-
-```json
-{
-  "items": [
-    {
-      "id": "<uuid>",
-      "dashboard_id": "<uuid>",
-      "status": "success",
-      "message": "Processing completed",
-      "started_at": "2026-05-18T12:00:00Z",
-      "finished_at": "2026-05-18T12:01:30Z"
-    }
-  ],
-  "total": 42,
-  "page": 1,
-  "page_size": 20
-}
-```
+**Response** (`200 OK`): List of `ProcessingLogRead` objects, filtered and sorted by `started_at` DESC.
 
 ### Get Single Processing Log
 
@@ -366,4 +348,4 @@ Only aggregated data is stored. The structure uses a single `aggregated_data` ta
 - [Security Overview](../08-security/) — Rate limiting, MIME-type validation, file size limits
 - [Overview](../00-overview/overview.md) — System architecture and data flow
 - [Data Flow](../00-overview/data-flow.md) — End-to-end upload-to-display pipeline
-- [Upload UI](../07-frontend/upload-ui.md) — Frontend upload page and file handling
+- [Upload UI](../07-frontend/upload-ui.md) — Frontend upload modal and file handling

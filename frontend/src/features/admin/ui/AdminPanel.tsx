@@ -22,18 +22,10 @@ export function AdminPanel() {
       </Tabs>
 
       <Box sx={{ mt: 3 }}>
-        <Box sx={{ display: currentTab === 0 ? 'block' : 'none' }}>
-          <UserManagement />
-        </Box>
-        <Box sx={{ display: currentTab === 1 ? 'block' : 'none' }}>
-          <RegistrationRequests />
-        </Box>
-        <Box sx={{ display: currentTab === 2 ? 'block' : 'none' }}>
-          <DashboardManagement />
-        </Box>
-        <Box sx={{ display: currentTab === 3 ? 'block' : 'none' }}>
-          <LogViewer />
-        </Box>
+        {currentTab === 0 && <UserManagement />}
+        {currentTab === 1 && <RegistrationRequests />}
+        {currentTab === 2 && <DashboardManagement />}
+        {currentTab === 3 && <LogViewer />}
       </Box>
     </Box>
   )

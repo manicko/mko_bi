@@ -99,10 +99,13 @@ Access is validated on every request via the `dashboard_access` table.
 - [Database](09-database/) — Core schema, processing schema, access control tables, indexes, enums.
 - [Deployment](10-deployment/) — Development setup, production deployment, Docker, migrations.
 
+### Guides
+- [Docker Setup](11-guides/docker.md) — Multi-stage Dockerfile, Docker Compose, quick start.
+- [Task Queue Migration](11-guides/task-queue-migration.md) — In-memory `TaskQueue` to Redis/RQ migration plan.
+
 ### Reference
-- [Docker Setup](README_DOCKER.md) — Multi-stage Dockerfile, Docker Compose, quick start.
-- [Task Queue Migration](TASK_QUEUE_MIGRATION.md) — In-memory `TaskQueue` to Redis/RQ migration plan.
-- [Swagger UI Guide](SWAGGER_README.md) — Using the interactive API docs at `/docs/`.
+- [Swagger UI Guide](99-reference/swagger.md) — Using the interactive API docs at `/docs/`.
+- [Run Guide](99-reference/run-guide.md) — Application setup, configuration, and run instructions.
 
 ---
 
@@ -119,6 +122,20 @@ Access is validated on every request via the `dashboard_access` table.
 - **Admin bypass for dashboards** — Users with the `admin` role implicitly see all dashboards without requiring explicit `dashboard_access` entries.
 - **403/404 dual-signal for dashboard access** — The system distinguishes "dashboard not found" (HTTP 404) from "dashboard exists but no access" (HTTP 403) to avoid leaking dashboard existence information.
 - **`display_name` computed field** — The `UserRead` model exposes a computed `display_name` derived from the email prefix (text before `@`), available in all API responses returning user data.
+- **Upload as modal dialog** — File upload is implemented as `UploadModal` embedded in `DashboardView`, not as a separate page. This eliminates page navigation during upload and provides inline progress feedback.
+- **Dashboard-filter binding** — Filters are linked to dashboards via the `dashboard_filters` many-to-many join table. Admins bind/unbind filters using `POST/DELETE /api/v1/dashboards/{id}/filters`. Bound filters are listed via `GET /api/v1/dashboards/{id}/filters`.
+- **Dashboard access management** — Admins grant, list, and revoke dashboard access via dedicated endpoints: `POST/GET /api/v1/dashboards/{id}/access` and `DELETE /api/v1/dashboards/{id}/access/{user_id}`. This is in addition to the admin panel endpoints.
+- **Dashboard-specific graph endpoints** — Graphs can be created and listed via dashboard-scoped endpoints (`POST/GET /api/v1/dashboards/{id}/graphs`) in addition to the global `/api/v1/graphs` endpoints.
+- **File processing service** — `file_processing.py` encapsulates validation, upload processing, and task management functions extracted from `DataService` for modularity and testability.
+- **Background data worker** — `data_worker.py` provides `process_csv_background` (async) and `process_csv_background_sync` (sync RQ wrapper) for CSV processing in background. The `_store_aggregate` function handles mode-aware (overwrite/append) data persistence.
+- **Processing log date filtering** — The `GET /api/v1/admin/logs` endpoint supports `date_from` and `date_to` query parameters for filtering logs by `started_at` range, in addition to `status` and `dashboard_id` filters.
+- **Top navigation Header** — The sidebar was replaced with a top navigation bar (`Header`) containing role-based nav items (Dashboards, Admin, Profile), user email display, and an AccountCircle menu for logout.
+- **DataGrid tables for admin and dashboard list** — `DashboardList` and all admin panel tabs use MUI `DataGrid` with pagination, sorting, and quick filter instead of card lists or basic tables.
+- **ConfirmDialog pattern** — Destructive actions (delete user, delete dashboard, reject registration) use a shared `ConfirmDialog` component with configurable labels, invoked imperatively via the `useConfirmDialog` hook.
+- **Toast notifications** — User feedback for success/failure actions uses `react-hot-toast` (top-right, 3s success, 5s error duration) instead of inline alerts.
+- **Short UUID display** — UUIDs displayed in tables are truncated to 8 characters via the shared `shortUuid` utility for improved readability.
+- **Admin tab state preservation** — The admin panel uses `display: none/block` to hide inactive tabs, preserving pagination and sorting state across tab switches.
+- **Zod v4 migration** — Frontend form validation uses Zod v4 API (`z.email()` instead of `z.string().email()`).
 
 ---
 
@@ -128,9 +145,11 @@ Access is validated on every request via the `dashboard_access` table.
 | ------- | ---------- | ---------------------------------------- |
 | 2.2     | 2026-05-16 | Updated with implemented features        |
 | 2.3     | 2026-05-19 | Added login user-in-response, admin bypass, 403/404 dual-signal, display_name |
+| 2.4     | 2026-05-19 | Upload modal (no page nav), top nav Header, DataGrid tables, ConfirmDialog pattern, toast notifications, short UUID display, Zod v4 migration, admin tab state preservation |
+| 2.5     | 2026-05-19 | Dashboard-filter binding API, dashboard access management endpoints, dashboard-scoped graph endpoints, file processing service, background data worker, processing log date filtering |
 
 ---
 
 **Author:** Senior Python Architect
 **Date:** 2026-05-19
-**Version:** 2.3
+**Version:** 2.5

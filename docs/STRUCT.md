@@ -27,12 +27,17 @@ C:\PY_DEV\MKOBI
 |   +---.ai
 |   +---audit
 |   |   +---db
+|   |   |       audit_findings_01.md
+|   |   |       
 |   |   +---problems
 |   |   |       implementation_audit_01.md
 |   |   |       
 |   |   +---project
 |   |   +---test
 |   |   +---tests
+|   |   |       audit_report_001.md
+|   |   |       audit_report_1.md
+|   |   |       
 |   |   \---validated
 |   +---builders
 |   |   |   build.bat
@@ -83,24 +88,29 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
-|   |   |       TASK_001_FE_zod_v4_migration_DONE.yaml
-|   |   |       TASK_002_FE_toast_config_DONE.yaml
-|   |   |       TASK_003_FE_short_uuid_DONE.yaml
-|   |   |       TASK_004_FE_access_denied_DONE.yaml
-|   |   |       TASK_005_FE_confirm_dialog_DONE.yaml
-|   |   |       TASK_006_FE_dashboard_list_table_DONE.yaml
-|   |   |       TASK_007_FE_user_management_inline_edit_DONE.yaml
-|   |   |       TASK_008_FE_dashboard_mgmt_confirm_DONE.yaml
-|   |   |       TASK_009_FE_registration_requests_DONE.yaml
-|   |   |       TASK_010_FE_admin_state_preservation_DONE.yaml
-|   |   |       TASK_011_FE_upload_modal_DONE.yaml
-|   |   |       TASK_012_FE_top_navigation_DONE.yaml
+|   |   |       TASK_001_docs_create_guides_dir_DONE.yaml
+|   |   |       TASK_002_docs_migrate_docker_guide_DONE.yaml
+|   |   |       TASK_003_docs_migrate_task_queue_guide_DONE.yaml
+|   |   |       TASK_004_docs_update_deployment_cross_refs_DONE.yaml
+|   |   |       TASK_005_docs_delete_legacy_files_DONE.yaml
+|   |   |       TASK_006_docs_update_spec_index_DONE.yaml
+|   |   |       TASK_007_db_generate_consolidated_migration_DONE.yaml
+|   |   |       TASK_008_db_write_consolidated_upgrade_DONE.yaml
+|   |   |       TASK_009_db_write_consolidated_downgrade_DONE.yaml
+|   |   |       TASK_010_db_validate_consolidated_migration_DONE.yaml
+|   |   |       TASK_011_db_delete_old_migrations_DONE.yaml
+|   |   |       TASK_012_fe_fix_upload_polling_bug_DONE.yaml
+|   |   |       TASK_013_fe_fix_user_mgmt_delete_loading_DONE.yaml
+|   |   |       TASK_014_fe_fix_admin_datagrid_state_DONE.yaml
+|   |   |       TASK_015_fe_fix_user_mgmt_inline_css_DONE.yaml
 |   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
+|   |   |       order.yaml
+|   |   |       
 |   |   \---validation
 |   +---templates
 |   |       decision.md
@@ -18074,42 +18084,8 @@ C:\PY_DEV\MKOBI
 |   |   script.py.mako
 |   |   
 |   +---versions
-|   |   |   20260507141843_add_updated_at_to_users.py
-|   |   |   20260508145000_add_updated_at_to_layouts.py
-|   |   |   2aa835fe1fac_add_composite_index_on_aggregated_data.py
-|   |   |   3f7a1b2c9d0e_add_processing_logs_dashboard_id_index.py
-|   |   |   4bfb28b3732d_add_processing_logs_dashboard_id_index.py
-|   |   |   57f43a5c499d_change_json_to_jsonb_for_postgresql.py
-|   |   |   7130ecb0388c_true_initial_migration.py
-|   |   |   840a99edb818_standardize_index_naming.py
-|   |   |   91f5436a3098_add_unique_constraint_on_aggregated_.py
-|   |   |   a1b2c3d4e5f6_add_config_to_dashboards.py
-|   |   |   a1e404502aac_add_registration_requests_table.py
-|   |   |   a2b3c4d5e6f7_fix_unique_constraint_aggregated_data.py
-|   |   |   c3cc391beded_add_config_column_and_fix_indexes.py
-|   |   |   ce58bba5d461_add_db_constraints_and_fix_schema_issues.py
-|   |   |   e86f3c8f7324_schema_adjustments.py
-|   |   |   f50a4054569c_merge_heads.py
-|   |   |   
-|   |   \---__pycache__
-|   |           20260507141843_add_updated_at_to_users.cpython-314.pyc
-|   |           20260508145000_add_updated_at_to_layouts.cpython-314.pyc
-|   |           2aa835fe1fac_add_composite_index_on_aggregated_data.cpython-314.pyc
-|   |           3f7a1b2c9d0e_add_processing_logs_dashboard_id_index.cpython-314.pyc
-|   |           4bfb28b3732d_add_processing_logs_dashboard_id_index.cpython-314.pyc
-|   |           57f43a5c499d_change_json_to_jsonb_for_postgresql.cpython-314.pyc
-|   |           7130ecb0388c_true_initial_migration.cpython-314.pyc
-|   |           840a99edb818_standardize_index_naming.cpython-314.pyc
-|   |           91f5436a3098_add_unique_constraint_on_aggregated_.cpython-314.pyc
-|   |           a1b2c3d4e5f6_add_config_to_dashboards.cpython-314.pyc
-|   |           a1e404502aac_add_registration_requests_table.cpython-314.pyc
-|   |           a2b3c4d5e6f7_fix_unique_constraint_aggregated_data.cpython-314.pyc
-|   |           c3cc391beded_add_config_column_and_fix_indexes.cpython-314.pyc
-|   |           ce58bba5d461_add_db_constraints_and_fix_schema_issues.cpython-314.pyc
-|   |           d725e956aa7e_fix_indexes_to_match_spec.cpython-314.pyc
-|   |           e86f3c8f7324_schema_adjustments.cpython-314.pyc
-|   |           f50a4054569c_merge_heads.cpython-314.pyc
-|   |           
+|   |       7130ecb0388c_true_initial_migration.py
+|   |       
 |   \---__pycache__
 |           env.cpython-314.pyc
 |           
@@ -18758,12 +18734,8 @@ C:\PY_DEV\MKOBI
 |           
 +---docs
 |   |   README.md
-|   |   README_DOCKER.md
-|   |   RUN.md
 |   |   SPEC.md
 |   |   STRUCT.md
-|   |   SWAGGER_README.md
-|   |   TASK_QUEUE_MIGRATION.md
 |   |   
 |   +---00-overview
 |   |       data-flow.md
@@ -18813,6 +18785,10 @@ C:\PY_DEV\MKOBI
 |   |       
 |   +---10-deployment
 |   |       deployment.md
+|   |       
+|   +---11-guides
+|   |       docker.md
+|   |       task-queue-migration.md
 |   |       
 |   +---90-adr
 |   \---99-reference

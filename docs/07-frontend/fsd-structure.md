@@ -62,8 +62,8 @@ frontend/
 │   │   │   │   └── dashboardApi.ts       # Dashboard data fetching
 │   │   │   ├── model/                    # (empty — state via TanStack Query)
 │   │   │   └── ui/
-│   │   │       ├── DashboardList.tsx     # Dashboard list page
-│   │   │       ├── DashboardView.tsx     # Single dashboard view with charts
+│   │   │       ├── DashboardList.tsx     # Dashboard list page (DataGrid table)
+│   │   │       ├── DashboardView.tsx     # Single dashboard view with charts + UploadModal
 │   │   │       ├── DashboardFilters.tsx  # Filter panel component
 │   │   │       └── charts/
 │   │   │           ├── index.ts          # Chart exports
@@ -78,7 +78,7 @@ frontend/
 │   │   │   ├── api/
 │   │   │   │   └── uploadApi.ts          # File upload and processing status
 │   │   │   └── ui/
-│   │   │       ├── UploadPage.tsx        # Upload page with mode toggle
+│   │   │       ├── UploadModal.tsx       # Upload modal dialog (opened from DashboardView)
 │   │   │       └── FileDropzone.tsx      # Drag-and-drop file selector
 │   │   │
 │   │   ├── users/                        # User profile feature
@@ -93,8 +93,8 @@ frontend/
 │   │       ├── api/
 │   │       │   └── adminApi.ts           # Admin API calls
 │   │       └── ui/
-│   │           ├── AdminPanel.tsx        # Tabbed admin panel container
-│   │           ├── UserManagement.tsx    # User CRUD and role management
+│   │           ├── AdminPanel.tsx        # Tabbed admin panel container (state-preserving)
+│   │           ├── UserManagement.tsx    # User CRUD with inline editing
 │   │           ├── RegistrationRequests.tsx # Approve/reject registration requests
 │   │           ├── DashboardManagement.tsx  # Dashboard CRUD
 │   │           └── LogViewer.tsx         # Processing log viewer
@@ -108,13 +108,20 @@ frontend/
 │       │   ├── index.ts                  # Component exports
 │       │   ├── Layout/
 │       │   │   ├── index.ts              # Layout exports
-│       │   │   ├── AppLayout.tsx         # Main application layout wrapper
-│       │   │   ├── Header.tsx            # Top navigation bar
-│       │   │   └── Sidebar.tsx           # Side navigation
+│       │   │   ├── AppLayout.tsx         # Main application layout wrapper (Header + Outlet)
+│       │   │   └── Header.tsx            # Top navigation bar (role-based items, user menu, logout)
 │       │   ├── NotFound.tsx              # 404 page
 │       │   ├── PlaceholderPage.tsx       # Placeholder for unimplemented pages
 │       │   ├── ProtectedRoute.tsx        # Auth guard (redirects to /login)
-│       │   └── RoleBasedAccess.tsx       # Role-based component visibility
+│       │   ├── RoleBasedAccess.tsx       # Role-based component visibility
+│       │   ├── ConfirmDialog.tsx         # Reusable confirmation dialog for destructive actions
+│       │   └── AccessDenied.tsx          # "No access" display component
+│       │
+│       ├── hooks/
+│       │   └── useConfirmDialog.ts       # Hook for imperative ConfirmDialog control
+│       │
+│       ├── utils/
+│       │   └── shortUuid.ts              # Short UUID utility (first 8 chars for display)
 │       │
 │       └── types/
 │           ├── api.types.ts              # API response/request type definitions
@@ -151,7 +158,9 @@ Each feature is a self-contained vertical slice with four sublayers:
 | Sublayer | Purpose |
 | --- | --- |
 | `api/` | Shared Axios instance with interceptors |
-| `components/` | Generic UI components (layout, guards, utilities) |
+| `components/` | Generic UI components (layout, guards, dialogs, utilities) |
+| `hooks/` | Reusable React hooks (e.g., `useConfirmDialog`) |
+| `utils/` | Utility functions (e.g., `shortUuid`) |
 | `types/` | Shared TypeScript types, enums, and Zod schemas |
 
 **Rules:** `shared/` must never import from `features/` or `app/`.
@@ -165,5 +174,5 @@ Frontend enums in `shared/types/enums.ts` mirror the backend `StrEnum` values de
 - [Frontend Architecture](architecture.md) — System context, principles, and data flow
 - [Pages](pages.md) — UI pages mapped to these features
 - [Auth Flow](auth-flow.md) — Detailed auth feature documentation
-- [Upload UI](upload-ui.md) — Upload feature page and API integration
+- [Upload UI](upload-ui.md) — Upload modal feature and API integration
 - [Frontend Security](frontend-security.md) — Security measures across all features

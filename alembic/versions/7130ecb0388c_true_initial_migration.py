@@ -42,15 +42,20 @@ def upgrade() -> None:
     )
     processing_status_enum.create(op.get_bind(), checkfirst=True)
 
+    # Create registration_status enum
+    registration_status_enum = ENUM('pending', 'approved', 'rejected', name='registration_status')
+    registration_status_enum.create(op.get_bind(), checkfirst=True)
+
     # Create users table (with existence check)
     op.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            email TEXT NOT NULL,
-            password_hash TEXT NOT NULL,
-            role user_role NOT NULL,
+            email VARCHAR(255) NOT NULL,
+            password_hash VARCHAR(255) NOT NULL,
+            role user_role NOT NULL DEFAULT 'viewer'::user_role,
             is_active BOOLEAN NOT NULL DEFAULT TRUE,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
         );
     """)
     op.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users (email)")
@@ -60,9 +65,10 @@ def upgrade() -> None:
     op.execute("""
         CREATE TABLE IF NOT EXISTS layouts (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            name TEXT NOT NULL,
+            name VARCHAR(255) NOT NULL,
             definition JSONB NOT NULL,
-            created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+            updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
         );
     """)
     op.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_layouts_name ON layouts (name)")
@@ -71,7 +77,7 @@ def upgrade() -> None:
     op.execute("""
         CREATE TABLE IF NOT EXISTS dashboards (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            name TEXT NOT NULL,
+            name VARCHAR(255) NOT NULL,
             description TEXT,
             config JSONB,
             layout_id UUID REFERENCES layouts(id) ON DELETE SET NULL,
@@ -87,7 +93,7 @@ def upgrade() -> None:
         CREATE TABLE IF NOT EXISTS graphs (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             dashboard_id UUID NOT NULL REFERENCES dashboards(id) ON DELETE CASCADE,
-            name TEXT NOT NULL,
+            name VARCHAR(255) NOT NULL,
             type graph_type NOT NULL,
             config JSONB NOT NULL,
             dimensions JSONB NOT NULL,
@@ -102,7 +108,7 @@ def upgrade() -> None:
     op.execute("""
         CREATE TABLE IF NOT EXISTS filters (
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            name TEXT NOT NULL,
+            name VARCHAR(255) NOT NULL,
             type filter_type NOT NULL,
             config JSONB NOT NULL,
             created_at TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -154,6 +160,7 @@ def upgrade() -> None:
     op.execute("CREATE INDEX IF NOT EXISTS idx_aggregated_data_dashboard_id ON aggregated_data (dashboard_id)")
     op.execute("CREATE INDEX IF NOT EXISTS idx_aggregated_data_graph_id ON aggregated_data (graph_id)")
     op.execute("CREATE INDEX IF NOT EXISTS idx_aggregated_data_dims_gin ON aggregated_data USING GIN (dims)")
+    op.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_aggregated_data_dashboard_graph_dims ON aggregated_data (dashboard_id, graph_id, dims)")
 
     # Create processing_logs table
     op.execute("""
@@ -161,26 +168,141 @@ def upgrade() -> None:
             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             dashboard_id UUID REFERENCES dashboards(id) ON DELETE SET NULL,
             status processing_status NOT NULL,
-            message TEXT,
+            message VARCHAR(1000),
             started_at TIMESTAMPTZ,
             finished_at TIMESTAMPTZ
         );
     """)
+    op.execute("CREATE INDEX IF NOT EXISTS idx_processing_logs_dashboard_id ON processing_logs (dashboard_id)")
+
+    # Create registration_requests table
+    op.execute("""
+        CREATE TABLE IF NOT EXISTS registration_requests (
+            id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+            email VARCHAR(255) NOT NULL UNIQUE,
+            status registration_status NOT NULL DEFAULT 'pending',
+            requested_by_ip INET,
+            reviewed_by UUID REFERENCES users(id) ON DELETE SET NULL,
+            reviewed_at TIMESTAMPTZ,
+            created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+        );
+    """)
+
+    # Add CHECK constraint for email length
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_constraint 
+                WHERE conname = 'users_email_length_check'
+            ) THEN
+                ALTER TABLE users ADD CONSTRAINT users_email_length_check 
+                CHECK (length(email) <= 255);
+            END IF;
+        END $$;
+    """)
+
+    # Create trigger function for updated_at
+    op.execute("""
+        CREATE OR REPLACE FUNCTION update_updated_at_column()
+        RETURNS TRIGGER AS $$
+        BEGIN
+            NEW.updated_at = NOW();
+            RETURN NEW;
+        END;
+        $$ LANGUAGE plpgsql;
+    """)
+
+    # Create triggers for tables with updated_at column
+    op.execute("DROP TRIGGER IF EXISTS update_dashboards_updated_at ON dashboards")
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_trigger WHERE tgname = 'update_dashboards_updated_at'
+            ) THEN
+                CREATE TRIGGER update_dashboards_updated_at
+                BEFORE UPDATE ON dashboards
+                FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+            END IF;
+        END $$;
+    """)
+
+    op.execute("DROP TRIGGER IF EXISTS update_processing_configs_updated_at ON processing_configs")
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_trigger WHERE tgname = 'update_processing_configs_updated_at'
+            ) THEN
+                CREATE TRIGGER update_processing_configs_updated_at
+                BEFORE UPDATE ON processing_configs
+                FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+            END IF;
+        END $$;
+    """)
+
+    op.execute("DROP TRIGGER IF EXISTS update_layouts_updated_at ON layouts")
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_trigger WHERE tgname = 'update_layouts_updated_at'
+            ) THEN
+                CREATE TRIGGER update_layouts_updated_at
+                BEFORE UPDATE ON layouts
+                FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+            END IF;
+        END $$;
+    """)
+
+    op.execute("DROP TRIGGER IF EXISTS update_graphs_updated_at ON graphs")
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_trigger WHERE tgname = 'update_graphs_updated_at'
+            ) THEN
+                CREATE TRIGGER update_graphs_updated_at
+                BEFORE UPDATE ON graphs
+                FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+            END IF;
+        END $$;
+    """)
+
+    op.execute("DROP TRIGGER IF EXISTS update_users_updated_at ON users")
+    op.execute("""
+        DO $$ BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_trigger WHERE tgname = 'update_users_updated_at'
+            ) THEN
+                CREATE TRIGGER update_users_updated_at
+                BEFORE UPDATE ON users
+                FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+            END IF;
+        END $$;
+    """)
 
 
 def downgrade() -> None:
-    """Drop all tables and enum types."""
-    # Drop tables in reverse order (respecting foreign keys)
+    """Drop all triggers, tables, and enum types in reverse dependency order."""
+    # Drop triggers (must be dropped before the trigger function)
+    op.execute("DROP TRIGGER IF EXISTS update_dashboards_updated_at ON dashboards")
+    op.execute("DROP TRIGGER IF EXISTS update_processing_configs_updated_at ON processing_configs")
+    op.execute("DROP TRIGGER IF EXISTS update_layouts_updated_at ON layouts")
+    op.execute("DROP TRIGGER IF EXISTS update_graphs_updated_at ON graphs")
+    op.execute("DROP TRIGGER IF EXISTS update_users_updated_at ON users")
+
+    # Drop trigger function
+    op.execute("DROP FUNCTION IF EXISTS update_updated_at_column()")
+
+    # Drop tables in reverse dependency order (respecting foreign keys)
     op.execute("DROP TABLE IF EXISTS dashboard_access CASCADE")
     op.execute("DROP TABLE IF EXISTS dashboard_filters CASCADE")
     op.execute("DROP TABLE IF EXISTS filters CASCADE")
     op.execute("DROP TABLE IF EXISTS graphs CASCADE")
-    op.execute("DROP TABLE IF EXISTS dashboards CASCADE")
-    op.execute("DROP TABLE IF EXISTS layouts CASCADE")
-    op.execute("DROP TABLE IF EXISTS users CASCADE")
     op.execute("DROP TABLE IF EXISTS aggregated_data CASCADE")
     op.execute("DROP TABLE IF EXISTS processing_configs CASCADE")
     op.execute("DROP TABLE IF EXISTS processing_logs CASCADE")
+    op.execute("DROP TABLE IF EXISTS registration_requests CASCADE")
+    op.execute("DROP TABLE IF EXISTS dashboards CASCADE")
+    op.execute("DROP TABLE IF EXISTS layouts CASCADE")
+    op.execute("DROP TABLE IF EXISTS users CASCADE")
 
     # Drop enum types using Alembic's proper API (idempotent with checkfirst)
     user_role_enum = ENUM(name='user_role')
@@ -197,3 +319,6 @@ def downgrade() -> None:
 
     processing_status_enum = ENUM(name='processing_status')
     processing_status_enum.drop(op.get_bind(), checkfirst=True)
+
+    registration_status_enum = ENUM(name='registration_status')
+    registration_status_enum.drop(op.get_bind(), checkfirst=True)

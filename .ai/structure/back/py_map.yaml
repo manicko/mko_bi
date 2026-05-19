@@ -310,6 +310,7 @@
   - mkobi.db.repositories.user_repo
   - mkobi.models.enums
   - mkobi.services.file_cleanup
+  - mkobi.db.session
   - mkobi.core.security
   classes:
   - DatabaseNotFoundError

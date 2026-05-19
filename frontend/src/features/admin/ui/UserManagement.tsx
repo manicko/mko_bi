@@ -165,6 +165,11 @@ export function UserManagement() {
           console.error('Row update error:', error)
         }}
         getRowClassName={getRowClassName}
+        sx={{
+          '& .row-saving': {
+            backgroundColor: '#fef08a',
+          },
+        }}
       />
       <ConfirmDialog
         open={confirmDialog.isOpen}
@@ -173,14 +178,8 @@ export function UserManagement() {
         confirmLabel={confirmDialog.confirmLabel}
         onConfirm={confirmDialog.handleConfirm}
         onCancel={confirmDialog.handleCancel}
+        loading={deleteMutation.isPending}
       />
-      <style>
-        {`
-          .row-saving {
-            background-color: #fef08a !important;
-          }
-        `}
-      </style>
     </Box>
   )
 }

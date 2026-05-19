@@ -1,3 +1,23 @@
+---
+id: task-queue-migration
+domain: guides
+tags:
+  - task-queue
+  - redis
+  - rq
+  - migration
+  - background-processing
+related:
+  - processing-api
+  - backend-architecture
+  - deployment
+  - docker
+---
+
+## Purpose
+
+This document provides a comprehensive migration plan for transitioning the task queue from an in-memory `asyncio.Queue` implementation to a persistent Redis/RQ backend. It details the current limitations, target architecture, step-by-step migration instructions, and rollback strategy for production deployment.
+
 # Task Queue Migration Plan: In-Memory to Redis/RQ
 
 ## Current State
@@ -102,8 +122,8 @@ Redis Queue (RQ) provides a persistent, Redis-backed task queue designed for exa
 
 ```
 FastAPI endpoint → enqueue_job() → rq.Queue (Redis) → RQ Worker (separate process) → task func
-                                                                        ↓
-                                                           rq.Job (status/result/error in Redis)
+                                                                         ↓
+                                                            rq.Job (status/result/error in Redis)
 ```
 
 ### Components
@@ -405,3 +425,12 @@ This allows toggling between in-memory and Redis queues via environment variable
 - Upload call site: `src/mkobi/services/data_service.py:210`
 - Manual trigger call site: `src/mkobi/services/data_service.py:504`
 - RQ documentation: https://python-rq.org/docs/
+
+## Cross-References
+
+- [Processing API](../03-processing/processing-api.md) — Upload, processing pipeline, and data endpoints
+- [Overview](../00-overview/overview.md) — System architecture and data flow
+- [Security Overview](../08-security/security-overview.md) — Rate limiting and upload constraints
+- [Deployment](../10-deployment/deployment.md) — Docker deployment and Redis configuration
+- [Backend Architecture](../06-backend/architecture.md) — Clean Architecture and startup lifecycle
+- [Docker Guide](./docker.md) — Docker setup and deployment configuration

@@ -94,6 +94,32 @@ A web application for:
 | dims         | JSONB  | Dimension values (filter and axis data)    |
 | metrics      | JSONB  | Metric values (display data)               |
 
+### Access
+
+| Field        | Type   | Description                     |
+| ------------ | ------ | ------------------------------- |
+| user_id      | UUID   | References users.id             |
+| dashboard_id | UUID   | References dashboards.id        |
+| permission   | TEXT   | `view` \| `edit` \| `admin`     |
+
+### Registration Request
+
+| Field           | Type   | Description                     |
+| --------------- | ------ | ------------------------------- |
+| id              | UUID   | Primary key                     |
+| email           | TEXT   | Unique, not null                |
+| status          | TEXT   | `pending` \| `approved` \| `rejected` |
+| requested_by_ip | INET   | IP address of requester         |
+| reviewed_by     | UUID   | Admin who reviewed              |
+| reviewed_at     | TIMESTAMPTZ | Review timestamp           |
+
+### Dashboard-Filter Binding
+
+| Field        | Type   | Description                     |
+| ------------ | ------ | ------------------------------- |
+| dashboard_id | UUID   | References dashboards.id        |
+| filter_id    | UUID   | References filters.id           |
+
 > See [Database Schema](../09-database/) for full table definitions and indexes.
 
 ---
@@ -126,14 +152,14 @@ The FastAPI backend exposes the following endpoint groups:
 
 | Group               | Description                                    | Access        |
 | ------------------- | ---------------------------------------------- | ------------- |
-| Auth                | Login, register-request, change-password, refresh | Public        |
+| Auth                | Login, register-request, change-password, refresh, me | Public/Any    |
 | Users               | CRUD operations                                | Admin         |
-| Dashboards          | CRUD operations                                | Admin         |
+| Dashboards          | CRUD operations, access management, filter binding | Admin+        |
 | Layouts             | CRUD operations                                | Admin         |
-| Graphs              | CRUD operations                                | Admin         |
-| Filters             | CRUD operations                                | Admin          |
+| Graphs              | CRUD operations (global + dashboard-scoped)    | Admin         |
+| Filters             | CRUD operations                                | Admin         |
 | Processing Configs  | Read/Write processing settings                 | Editor+       |
-| Upload & Processing | File upload, processing triggers, status       | Editor+       |
+| Upload & Processing | File upload, processing triggers, status, result | Editor+       |
 | Aggregated Data     | Retrieve chart data as JSON                    | Viewer+       |
 | Admin               | User management, registration requests, logs   | Admin         |
 | Health              | Health checks                                  | Public        |

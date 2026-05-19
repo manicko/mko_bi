@@ -688,6 +688,190 @@ Editor and above.
 
 ---
 
+## Dashboard Access Management
+
+Admins can grant, list, and revoke user access to a dashboard through dedicated endpoints.
+
+### 24. Grant Dashboard Access
+
+| Attribute      | Value                                              |
+| -------------- | -------------------------------------------------- |
+| **Method**     | `POST`                                             |
+| **Path**       | `/api/v1/dashboards/{dashboard_id}/access`         |
+| **Auth level** | Admin                                              |
+
+**Request body:**
+
+```json
+{
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "dashboard_id": "660e8400-e29b-41d4-a716-446655440001",
+  "permission_level": "view"
+}
+```
+
+**Response** (`200 OK`):
+
+```json
+{
+  "message": "Access granted",
+  "dashboard_id": "660e8400-e29b-41d4-a716-446655440001",
+  "user_id": "550e8400-e29b-41d4-a716-446655440000",
+  "permission": "view"
+}
+```
+
+**Valid permission levels:** `view`, `edit`, `admin` (defined by `DashboardPermission` StrEnum)
+
+**Error responses:**
+
+| Status | Condition                    | Detail                       |
+| ------ | ---------------------------- | ---------------------------- |
+| `403`  | Caller is not admin          | Forbidden                    |
+| `404`  | Dashboard not found          | `Dashboard not found`        |
+| `422`  | dashboard_id mismatch        | `dashboard_id in body doesn't match URL` |
+
+---
+
+### 25. List Dashboard Access
+
+| Attribute      | Value                                              |
+| -------------- | -------------------------------------------------- |
+| **Method**     | `GET`                                              |
+| **Path**       | `/api/v1/dashboards/{dashboard_id}/access`         |
+| **Auth level** | Admin                                              |
+
+**Response** (`200 OK`): List of access records with user_id, permission level.
+
+---
+
+### 26. Revoke Dashboard Access
+
+| Attribute      | Value                                              |
+| -------------- | -------------------------------------------------- |
+| **Method**     | `DELETE`                                           |
+| **Path**       | `/api/v1/dashboards/{dashboard_id}/access/{user_id}` |
+| **Auth level** | Admin                                              |
+
+**Response** (`200 OK`):
+
+```json
+{
+  "message": "Access revoked successfully"
+}
+```
+
+**Error responses:**
+
+| Status | Condition                    | Detail                       |
+| ------ | ---------------------------- | ---------------------------- |
+| `404`  | Access record not found      | `Access record not found`    |
+
+---
+
+## Dashboard-Filter Binding
+
+Filters are linked to dashboards via the `dashboard_filters` many-to-many join table. Bound filters appear on the dashboard's filter panel.
+
+### 27. Bind Filter to Dashboard
+
+| Attribute      | Value                                              |
+| -------------- | -------------------------------------------------- |
+| **Method**     | `POST`                                             |
+| **Path**       | `/api/v1/dashboards/{dashboard_id}/filters`        |
+| **Auth level** | Admin                                              |
+| **Query param**| `filter_id` — UUID of the filter to bind           |
+
+**Response** (`200 OK`):
+
+```json
+{
+  "message": "Filter bound to dashboard",
+  "bound": true
+}
+```
+
+**Error responses:**
+
+| Status | Condition                    | Detail                       |
+| ------ | ---------------------------- | ---------------------------- |
+| `404`  | Filter not found             | `Filter not found`           |
+| `409`  | Already bound / integrity    | `Conflict: filter binding failed` |
+
+---
+
+### 28. Unbind Filter from Dashboard
+
+| Attribute      | Value                                              |
+| -------------- | -------------------------------------------------- |
+| **Method**     | `DELETE`                                           |
+| **Path**       | `/api/v1/dashboards/{dashboard_id}/filters/{filter_id}` |
+| **Auth level** | Admin                                              |
+
+**Response** (`200 OK`):
+
+```json
+{
+  "message": "Filter unbound from dashboard"
+}
+```
+
+**Error responses:**
+
+| Status | Condition                    | Detail                       |
+| ------ | ---------------------------- | ---------------------------- |
+| `404`  | Filter not bound             | `Filter not bound to this dashboard` |
+
+---
+
+### 29. List Dashboard Filters
+
+| Attribute      | Value                                              |
+| -------------- | -------------------------------------------------- |
+| **Method**     | `GET`                                              |
+| **Path**       | `/api/v1/dashboards/{dashboard_id}/filters`        |
+| **Auth level** | Any authenticated user (with dashboard access)     |
+
+**Response** (`200 OK`): List of filter IDs bound to the dashboard.
+
+---
+
+## Dashboard Graph Endpoints
+
+In addition to the global graph endpoints, graphs can be created and listed via dashboard-scoped endpoints.
+
+### 30. Create Graph for Dashboard
+
+| Attribute      | Value                                              |
+| -------------- | -------------------------------------------------- |
+| **Method**     | `POST`                                             |
+| **Path**       | `/api/v1/dashboards/{dashboard_id}/graphs`         |
+| **Auth level** | Admin                                              |
+
+**Request body:** Same structure as global Create Graph.
+
+**Response** (`201 Created`): Graph object.
+
+**Error responses:**
+
+| Status | Condition                    | Detail                       |
+| ------ | ---------------------------- | ---------------------------- |
+| `409`  | Duplicate name in dashboard  | `Conflict: graph creation failed` |
+
+---
+
+### 31. List Graphs for Dashboard
+
+| Attribute      | Value                                              |
+| -------------- | -------------------------------------------------- |
+| **Method**     | `GET`                                              |
+| **Path**       | `/api/v1/dashboards/{dashboard_id}/graphs`         |
+| **Auth level** | Any authenticated user (with dashboard access)     |
+
+**Response** (`200 OK`): List of graph objects for the dashboard.
+
+---
+
 ## Data Access Pattern
 
 Aggregated data is served through the data endpoints (see [Data API](../03-processing/processing-api.md) and [Data Flow](../00-overview/data-flow.md)). The typical flow:
@@ -726,25 +910,25 @@ The following frontend pages consume the dashboards API:
 | UI Page                        | Path                    | Key Endpoints Used                                      |
 | ------------------------------ | ----------------------- | ------------------------------------------------------- |
 | Dashboard List                 | `/dashboards`           | `GET /api/v1/dashboards/my`                             |
-| Dashboard View                 | `/dashboard/:id`        | `GET /api/v1/dashboards/:id`, `GET /api/v1/data/aggregated` |
-| Data Upload                    | `/dashboard/:id/upload` | `POST /api/v1/upload/:dashboard_id`                     |
+| Dashboard View                 | `/dashboard/:id`        | `GET /api/v1/dashboards/:id`, `GET /api/v1/data/aggregated`, `POST /api/v1/upload/:dashboard_id` |
 | Admin Dashboard Management     | `/admin`                | CRUD endpoints for dashboards, layouts, graphs, filters |
 
 ### Dashboard List Page (`/dashboards`)
 
 - Opens after successful login
-- Displays cards for each accessible dashboard (name, description, "Open" link)
-- Each card links to `/dashboard/:id`
-- User profile link in the top-right corner
+- Displays dashboards in a sortable DataGrid table (ID, Name, Created columns)
+- Clicking a row navigates to `/dashboard/:id`
+- Shows empty state when user has no dashboard access
 - Redirects to `/login` if the session is expired
 
 ### Dashboard View Page (`/dashboard/:id`)
 
-- Displays the dashboard title and filter panel
+- Displays the dashboard title, description, and filter panel
 - Renders charts in a grid layout using Plotly.js React
-- Upload button visible for `editor` role and above
+- Upload button visible for `admin` and `editor` roles; opens UploadModal dialog (no page navigation)
 - Filters panel dynamically renders controls based on filter configuration
 - Filter changes trigger new data requests with updated filter parameters
+- After upload completion, dashboard data refreshes automatically
 
 ---
 

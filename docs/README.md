@@ -31,11 +31,10 @@ This directory contains the full project documentation for the mkobi BI Dashboar
 | File | Description |
 |------|-------------|
 | [`SPEC.md`](./SPEC.md) | Full project specification (technology stack, architecture, data flow) |
-| [`RUN.md`](./RUN.md) | Application setup and launch instructions |
-| [`STRUCT.md`](./STRUCT.md) | Complete project directory tree |
-| [`README_DOCKER.md`](./README_DOCKER.md) | Docker-specific documentation |
-| [`SWAGGER_README.md`](./SWAGGER_README.md) | Swagger/OpenAPI documentation guide |
-| [`TASK_QUEUE_MIGRATION.md`](./TASK_QUEUE_MIGRATION.md) | Task queue migration guide |
+| [`run-guide.md`](./99-reference/run-guide.md) | Application setup and launch instructions |
+| [`docker.md`](./11-guides/docker.md) | Docker-specific documentation |
+| [`swagger.md`](./99-reference/swagger.md) | Swagger/OpenAPI documentation guide |
+| [`task-queue-migration.md`](./11-guides/task-queue-migration.md) | Task queue migration guide |
 
 ---
 
@@ -49,7 +48,7 @@ Start here:
 4. [`07-frontend/architecture.md`](./07-frontend/architecture.md) — frontend Feature-Sliced Design
 
 ### Setting up locally?
-1. [`RUN.md`](./RUN.md) — local setup instructions
+1. [`run-guide.md`](./99-reference/run-guide.md) — local setup instructions
 2. [`10-deployment/deployment.md`](./10-deployment/deployment.md) — Docker deployment
 3. [`06-backend/configuration.md`](./06-backend/configuration.md) — backend configuration
 

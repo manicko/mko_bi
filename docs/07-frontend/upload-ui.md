@@ -9,6 +9,7 @@ tags:
   - processing-status
   - api-integration
   - file-validation
+  - modal-dialog
 related:
   - frontend-security
   - processing-api
@@ -20,11 +21,15 @@ related:
 
 ## Overview
 
-The upload feature (`features/upload/`) provides the UI and API integration for uploading CSV and CSV.gz files to a dashboard. The upload page is accessible at `/dashboard/:id/upload` and is restricted to users with `admin` or `editor` roles.
+The upload feature (`features/upload/`) provides the UI and API integration for uploading CSV and CSV.gz files to a dashboard. Upload is implemented as a **modal dialog** (`UploadModal`) opened from the DashboardView page, rather than a separate page. This eliminates page navigation during upload and provides a smoother user experience.
 
-## Upload Page
+**Access:** Restricted to users with `admin` or `editor` roles. The "Upload Data" button is only visible to these roles on the DashboardView page.
 
-**Component:** `features/upload/ui/UploadPage.tsx`
+## Upload Modal
+
+**Component:** `features/upload/ui/UploadModal.tsx`
+
+The `UploadModal` is a reusable dialog component that accepts `open`, `onClose`, `dashboardId`, and `onUploadComplete` props. It is rendered inside `DashboardView` and opened via the "Upload Data" button.
 
 ### UI Elements
 
@@ -35,8 +40,8 @@ The upload feature (`features/upload/`) provides the UI and API integration for 
 | File list | List | Selected files with remove buttons and file sizes |
 | Upload queue | Paper section | Per-file progress bars with status indicators |
 | Start Upload button | `Button` | Begins sequential upload of all files; disabled while uploading |
-| Cancel button | `Button` | Returns to dashboard view; disabled while uploading |
-| Success alert | `Alert` | Shown when all files are uploaded and processing begins |
+| Cancel/Close button | `Button` | Closes the modal; disabled while uploading, labeled "Close" when complete |
+| Success alert | `Alert` | Shown when all files are processed successfully |
 
 ### Upload Modes
 
@@ -71,21 +76,27 @@ Built on `react-dropzone` with the following configuration:
 ## Upload Flow
 
 ```
+User clicks "Upload Data" on DashboardView
+        │
+        ▼
+UploadModal opens (Dialog)
+        │
+        ▼
 User selects mode (overwrite/append)
-       │
-       ▼
+        │
+        ▼
 User drags/drops files onto dropzone
-       │
-       ▼
+        │
+        ▼
 Client validates file extensions and MIME types
-       │
-       ▼
+        │
+        ▼
 Files appear in the upload queue
-       │
-       ▼
+        │
+        ▼
 User clicks "Start Upload"
-       │
-       ▼
+        │
+        ▼
 For each file:
   ┌─────────────────────────────────┐
   │ POST /api/v1/upload/:dashboard_id│
@@ -95,19 +106,22 @@ For each file:
   └────────────────┬────────────────┘
                    │
                    ▼
-  On success: { task_id, log_id, status: "started" }
+  On success: { task_id, processing_log_id, status: "started" }
   On failure: error toast, file marked as ERROR
                    │
                    ▼
 All files uploaded → poll processing status
-       │
-       ▼
-GET /api/v1/upload/status/:task_id (polled)
-       │
-       ▼
+        │
+        ▼
+GET /api/v1/upload/status/:task_id (polled via TanStack Query)
+        │
+        ▼
 Status = 'completed' or 'success'
-  → toast success → redirect to /dashboard/:id
+  → toast success → onUploadComplete callback → modal closes
+  → dashboard data invalidated and refetched
 ```
+
+**Key difference from page-based flow:** There is no page navigation. The modal stays open during upload, shows progress inline, and closes automatically (or user clicks "Close") when processing is complete. Dashboard data refreshes via TanStack Query invalidation.
 
 ## API Integration
 
@@ -132,14 +146,14 @@ File: <binary data>
 ```json
 {
   "task_id": "<uuid>",
-  "log_id": "<uuid>",
+  "processing_log_id": "<uuid>",
   "status": "started"
 }
 ```
 
 ### Processing Status Polling
 
-After all files are uploaded, the page polls for processing status:
+After all files are uploaded, the modal polls for processing status:
 
 ```
 GET /api/v1/upload/status/:task_id
@@ -154,7 +168,7 @@ GET /api/v1/upload/status/:task_id
 }
 ```
 
-Polling continues until `status` is `'completed'` or `'success'`, at which point the user is redirected to the dashboard view.
+Polling continues until `status` is `'completed'` or `'success'`, at which point a success toast is shown and the `onUploadComplete` callback invalidates the dashboard data cache.
 
 ## Backend Processing Pipeline
 
@@ -200,6 +214,6 @@ The backend independently enforces:
 
 - [Frontend Security](frontend-security.md) — File upload security details
 - [Processing API](../../03-processing/processing-api.md) — Backend upload and processing endpoints
-- [Pages](pages.md) — Upload page UI elements
+- [Pages](pages.md) — DashboardView page with integrated upload modal
 - [Data Flow](../../00-overview/data-flow.md) — End-to-end upload-to-display pipeline
 - [Task Queue](../../03-processing/task-queue.md) — Background processing architecture

@@ -155,7 +155,6 @@ Two components enforce access control at the route level:
 | --- | --- |
 | `/login`, `/register` | Public |
 | `/dashboards`, `/dashboard/:id` | Any authenticated |
-| `/dashboard/:id/upload` | `admin`, `editor` |
 | `/admin` | `admin` only |
 | `/profile`, `/profile/change-password` | Any authenticated |
 
@@ -165,8 +164,8 @@ Individual UI elements are conditionally rendered based on role:
 - Upload button: visible only for `admin` and `editor`.
 - Delete Account button: visible only for non-admin users.
 - Admin link in Header: visible only for `admin`.
-- Header shows only navigation buttons (Admin, Profile); no user email or logout button. Logout is handled on the Profile page.
-- Login and Register pages render outside `AppLayout` — no Header or Sidebar on authentication pages.
+- Header shows navigation buttons (Dashboards, Admin, Profile) with user email and an AccountCircle menu for logout. Logout is handled via the Header user menu, not on a separate page.
+- Login and Register pages render outside `AppLayout` — no Header on authentication pages.
 
 > **Note:** UI-level role checks are for UX only. The backend enforces authorization on every API request.
 

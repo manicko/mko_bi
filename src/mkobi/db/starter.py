@@ -22,6 +22,10 @@ from mkobi.services.file_cleanup import cleanup_stale_temp_files
 
 logger = logging.getLogger(__name__)
 
+# Timeout constants for DB operations
+DB_CONNECT_TIMEOUT = 10.0
+DB_HEALTH_CHECK_TIMEOUT = 5.0
+
 
 class DatabaseNotFoundError(Exception):
     """Database not found."""
@@ -63,6 +67,34 @@ class DatabaseStarter:
         self._main_engine: AsyncEngine | None = None
         self._test_engine: AsyncEngine | None = None
 
+    async def _check_db_connection(self) -> None:
+        """Check database connectivity with timeout."""
+        assert self._main_engine is not None
+        try:
+            async with asyncio.timeout(DB_CONNECT_TIMEOUT):
+                async with self._main_engine.connect() as conn:
+                    await conn.execute(text("SELECT 1"))
+        except asyncio.TimeoutError:
+            raise DatabaseNotFoundError("Database connection timed out") from None
+        except Exception as e:
+            logger.error("Main database not accessible: %s", e)
+            raise DatabaseNotFoundError(f"Main database not accessible: {e}") from e
+
+    def _get_alembic_revision(self) -> str | None:
+        """Get current alembic revision from database.
+
+        Returns revision hash if schema is initialized, None otherwise.
+        """
+        alembic_ini = self._config.alembic_ini_path
+        config = Config(alembic_ini)
+        main_url = self._config.main_database_url or get_config().DATABASE_URL
+        if main_url:
+            config.set_main_option("sqlalchemy.url", main_url)
+        try:
+            return command.current(config, verbose=False)
+        except Exception:
+            return None
+
     async def startup(self) -> None:
         """Main entry point for database initialization."""
         logger.info("Starting database initialization...")
@@ -72,41 +104,28 @@ class DatabaseStarter:
         if not main_url:
             raise DatabaseNotFoundError("Main database URL not configured")
 
-        # Create main engine
-        self._main_engine = create_async_engine(main_url)
+        # Create main engine with connection pool settings
+        self._main_engine = create_async_engine(
+            main_url,
+            pool_pre_ping=True,
+            pool_recycle=300,
+        )
         assert self._main_engine is not None
 
-        # Check if database exists
-        try:
-            async with self._main_engine.connect() as conn:
-                await conn.execute(text("SELECT 1"))
-        except Exception as e:
-            logger.error("Main database not accessible: %s", e)
-            raise DatabaseNotFoundError(f"Main database not accessible: {e}") from e
+        # Check database connectivity with timeout
+        await self._check_db_connection()
 
-        # Check if schema exists (check for alembic_version table)
-        try:
-            assert self._main_engine is not None
-            async with self._main_engine.connect() as conn:
-                result = await conn.execute(
-                    text(
-                        "SELECT EXISTS ("
-                        "SELECT FROM information_schema.tables "
-                        "WHERE table_name = 'alembic_version')"
-                    )
-                )
-                schema_exists = result.scalar()
-                if not schema_exists:
-                    raise SchemaNotFoundError("Schema not initialized")
-        except SchemaNotFoundError:
-            raise
-        except Exception as e:
-            logger.warning("Could not check schema: %s", e)
-
-        # Apply migrations if needed
+        # Apply migrations if configured (this also creates the schema)
         if self._config.auto_migrate:
-            assert self._main_engine is not None
             await self._apply_migrations(main_url)
+
+        # Check if schema is properly initialized via alembic
+        current_rev = self._get_alembic_revision()
+        if not current_rev:
+            raise SchemaNotFoundError(
+                "Database schema not initialized - no alembic revision found"
+            )
+        logger.info("Database schema initialized at revision: %s", current_rev)
 
         # Ensure admin user exists (after migrations, before test DB handling)
         await self.ensure_admin_user()
@@ -188,10 +207,10 @@ class DatabaseStarter:
     async def ensure_admin_user(self) -> None:
         """Create admin user if it does not already exist.
 
-        Idempotent — safe to run multiple times. Uses a SAVEPOINT
-        (nested transaction) so that IntegrityError from duplicate
-        email is caught cleanly without aborting the outer transaction.
+        Idempotent — safe to run multiple times.
         """
+        from mkobi.db.session import get_async_sessionlocal
+
         config = get_config()
         admin_email = config.admin_username
         admin_password = config.admin_password
@@ -205,27 +224,25 @@ class DatabaseStarter:
         logger.info("Ensuring admin user exists: %s", admin_email)
 
         user_repo = UserRepository()
-        assert self._main_engine is not None
+        SessionLocal = await get_async_sessionlocal()
 
-        async with self._main_engine.begin() as conn:
-            # Create a SAVEPOINT for idempotent user creation
+        async with SessionLocal() as db:
             try:
-                async with conn.begin_nested():
-                    user = await user_repo.get_by_email(email=admin_email, db=conn)
-                    if user is not None:
-                        logger.info("Admin user already exists: %s", admin_email)
-                        return
+                user = await user_repo.get_by_email(email=admin_email, db=db)
+                if user is not None:
+                    logger.info("Admin user already exists: %s", admin_email)
+                    return
 
-                    from mkobi.core.security import hash_password
+                from mkobi.core.security import hash_password
 
-                    password_hash = hash_password(admin_password)
-                    await user_repo.create(
-                        db=conn,
-                        email=admin_email,
-                        password_hash=password_hash,
-                        role=UserRole.ADMIN,
-                    )
-                    logger.info("Admin user created successfully: %s", admin_email)
+                password_hash = hash_password(admin_password)
+                await user_repo.create(
+                    db=db,
+                    email=admin_email,
+                    password_hash=password_hash,
+                    role=UserRole.ADMIN,
+                )
+                logger.info("Admin user created successfully: %s", admin_email)
             except IntegrityError:
                 logger.warning(
                     "Admin user already exists (IntegrityError): %s", admin_email
