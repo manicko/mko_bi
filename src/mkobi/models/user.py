@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, computed_field
 from uuid import UUID
 
 from mkobi.models.enums import UserRole
@@ -44,6 +44,14 @@ class UserRead(UserBase):
 
     id: UUID
     created_at: datetime
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def display_name(self) -> str:
+        """Derive display name from email prefix (text before @)."""
+        email_str = self.email.split("@")[0]
+        assert isinstance(email_str, str)
+        return email_str
 
     model_config = ConfigDict(
         from_attributes=True,

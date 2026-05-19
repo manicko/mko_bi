@@ -94,8 +94,10 @@ Retrieve a single dashboard by ID. Requires access to the dashboard.
 
 | Status | Condition                    | Detail                       |
 | ------ | ---------------------------- | ---------------------------- |
-| `403`  | User lacks dashboard access  | Forbidden                    |
+| `403`  | User lacks dashboard access  | `Access denied`              |
 | `404`  | Dashboard not found          | `Dashboard not found`        |
+
+> The system distinguishes between "dashboard exists but no access" (403) and "dashboard does not exist" (404). Admin users bypass the access check entirely. See [Access Control](../08-security/access-control.md) for details.
 
 ---
 

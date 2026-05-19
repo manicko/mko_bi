@@ -27,6 +27,7 @@ from mkobi.models.auth import (
     RegisterRequest,
     RegistrationRequestCreate,
     Token,
+    TokenWithUser,
 )
 from mkobi.models.user import UserRead
 
@@ -39,7 +40,7 @@ async def _handle_login(
     email: str,
     password: str,
     auth_service,
-) -> Token:
+) -> TokenWithUser:
     """Common login logic and error handling."""
     # Apply rate limiting for login attempts
     rate_limiter = auth_service._rate_limiter
@@ -65,20 +66,24 @@ async def _handle_login(
         )
 
     logger.info("Login successful", extra={"email": email})
-    return Token(access_token=token_data["access_token"], token_type="bearer")
+    return TokenWithUser(
+        access_token=token_data["access_token"],
+        token_type="bearer",
+        user=token_data["user"],
+    )
 
 
 @router.post(
     "/login",
-    response_model=Token,
+    response_model=TokenWithUser,
     status_code=status.HTTP_200_OK,
     summary="User login",
-    description="Authenticates user by email and password, returns JWT token.",
+    description="Authenticates user by email and password, returns JWT token with user data.",
 )
 async def login(
     login_data: LoginRequest,
     auth_service=Depends(get_auth_service),
-) -> Token:
+) -> TokenWithUser:
     """User login endpoint."""
     return await _handle_login(
         email=login_data.email,
@@ -89,7 +94,7 @@ async def login(
 
 @router.post(
     "/login/form",
-    response_model=Token,
+    response_model=TokenWithUser,
     status_code=status.HTTP_200_OK,
     summary="User login (form)",
     description="Authentication via OAuth2 form. Calls common /login logic.",
@@ -97,7 +102,7 @@ async def login(
 async def login_form(
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service=Depends(get_auth_service),
-) -> Token:
+) -> TokenWithUser:
     """Login endpoint via OAuth2 form."""
     return await _handle_login(
         email=form_data.username,

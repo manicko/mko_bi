@@ -1,0 +1,59 @@
+id: TASK_006_FE_dashboard_list_table
+
+title: Convert DashboardList from Card grid to DataGrid table
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_003_FE_short_uuid
+
+description: >
+  Convert the dashboard list from a Card grid to a DataGrid table with ID (short UUID)
+  + Name columns, 25 rows/page default, sorting, and "No data" empty state.
+
+goals:
+  - DataGrid table with ID and Name columns
+  - ID column displays short UUID (first 8 chars) using shortUuid
+  - Default page size: 25 rows, options: 10, 25, 50
+  - Sorting enabled on all columns
+  - Empty state: table header + "No data" text
+  - Loading spinner during data fetch
+  - Card grid layout completely removed
+
+files:
+  - path: frontend/src/features/dashboards/ui/DashboardList.tsx
+    targets:
+      - type: component
+        name: DashboardList
+    semantic_anchors:
+      replace:
+        type: component_body
+        value: DashboardList component — replace Card grid with DataGrid
+
+changes:
+  - action: update_code
+    description: Replace Card/Grid/CardContent imports with DataGrid, GridColDef from @mui/x-data-grid
+  - action: update_code
+    description: Add shortUuid import and ID column with valueGetter
+  - action: update_code
+    description: Configure DataGrid with pageSize 25, pageSizeOptions [10, 25, 50], sorting, noRowsOverlay
+  - action: remove_code
+    description: Remove all Card, Grid, CardContent imports and usage
+
+acceptance_criteria:
+  - Dashboard list uses DataGrid table (not cards)
+  - ID column shows short UUID
+  - Default page size is 25
+  - Empty state shows header + "No data"
+  - No Card/Grid/CardContent imports remain
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+risk_level: medium
+
+wave: 2
+
+plan_source: PLAN_01_dashboard_list_table.md

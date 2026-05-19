@@ -3,6 +3,7 @@ from mkobi.models.auth import (
     RegisterRequest,
     Token,
     TokenData,
+    TokenWithUser,
     RefreshRequest,
 )
 from mkobi.models.data import (
@@ -76,6 +77,7 @@ __all__ = [
     "RegisterRequest",
     "Token",
     "TokenData",
+    "TokenWithUser",
     "RefreshRequest",
     # Users
     "UserCreate",

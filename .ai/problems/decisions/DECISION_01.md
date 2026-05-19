@@ -1,83 +1,88 @@
-# Phase 1: Frontend — BI Dashboard System (React + Plotly)
+# Phase 1: Legacy Documentation Integration - Context
 
-**Gathered:** 2026-05-18
+**Gathered:** 2026-05-19
 **Status:** Ready for planning
 
 <domain>
 ## Phase Boundary
 
-Building a React SPA frontend for a BI dashboard system. Covers: authentication (login/register), dashboard list and view pages with Plotly charts, CSV data upload, user profile management, and admin panel (user management, dashboard management, registration requests, log viewing). All with role-based access control (admin/user global roles, viewer/editor dashboard roles).
+Integrate 4 orphaned documentation files from `docs/` root into the structured documentation system (numbered domain folders, YAML frontmatter, English-only, cross-linked). Two files (SWAGGER_README.md, RUN.md) are already deprecated with content absorbed elsewhere. Two files (README_DOCKER.md, TASK_QUEUE_MIGRATION.md) still hold unique content not yet integrated. Also evaluate whether `commands.md` belongs in user-facing docs.
 
-Dashboard page layout (chart arrangement, filters panel) is described separately in a later phase.
+This phase covers documentation structure and placement only — not implementation code changes.
 
 </domain>
 
 <decisions>
 ## Implementation Decisions
 
-### Table inline editing
+### New guides section
 
-- On server error (network failure, validation error): revert cell to previous value + show error toast
-- During save (request in flight): highlight the row with yellow background to indicate "saving..." state
-- Dropdown inline edits (user role, status): close immediately after selection, save triggers right away
-- Rapid successive edits across rows: each row saves independently in parallel, each with own highlight state — no blocking, no queue
-- No page reload on save — only the changed row updates
+- Create a new numbered section `11-guides/` for operational/how-to content that doesn't belong to a specific domain (auth, dashboards, processing, etc.)
+- This section is for guides that explain how to use, operate, or maintain the system from a user/operator perspective
+- Numbering rationale: follows `10-deployment/`, precedes `90-adr/` (ADR section) and `99-reference/` (reference section)
 
-### Upload flow
+### README_DOCKER.md → `11-guides/docker.md`
 
-- Upload opens as a modal on the dashboard page (not a separate page)
-- SPEC.md will be adjusted to match this priority
+- Move content from `docs/README_DOCKER.md` to `docs/11-guides/docker.md`
+- Add full YAML frontmatter (id, domain: guides, tags, related)
+- Content is already in English and well-structured — minimal rewrite needed beyond adding frontmatter and cross-links
+- Update the reference in `10-deployment/deployment.md` (line 161) to point to the new location
+- Delete the original `docs/README_DOCKER.md`
 
-### Dashboard list presentation
+### TASK_QUEUE_MIGRATION.md → `11-guides/task-queue-migration.md`
 
-- Table format with ID + Name columns (per CONTEXT_01.md)
-- SPEC.md will be adjusted to match this priority
+- Move content from `docs/TASK_QUEUE_MIGRATION.md` to `docs/11-guides/task-queue-migration.md`
+- Add full YAML frontmatter
+- Content is already in English and comprehensive — minimal rewrite needed
+- Update any references from `10-deployment/deployment.md` or `03-processing/` docs to point to the new location
+- Delete the original `docs/TASK_QUEUE_MIGRATION.md`
 
-### Toast notifications
+### SWAGGER_README.md — Delete
 
-- Position: top-right
-- Auto-dismiss with short duration (~3 seconds for success, ~5 seconds for errors)
-- Multiple toasts stack vertically
-- Manual dismiss allowed (close button)
+- Content already absorbed into `docs/99-reference/swagger.md` (which has frontmatter and is cross-linked)
+- The original file is a deprecated stub with a redirect notice
+- Delete `docs/SWAGGER_README.md` entirely — no content loss
 
-### Access denied UX
+### RUN.md — Delete
 
-- Display message: "No access — contact your administrator"
-- No additional actions (no request access button, no redirect)
+- Content already absorbed into `docs/99-reference/run-guide.md` (translated to English, has frontmatter)
+- The original file is a deprecated stub in Russian with a redirect notice
+- Delete `docs/RUN.md` entirely — no content loss
 
-### Dashboard page layout
+### commands.md — Keep as internal context
 
-- Deferred — will be described in a separate phase
+- `commands.md` is an internal agent reference (build commands, test commands, database CLI)
+- It is NOT user-facing documentation — it lives in `.ai/context/` for agent consumption
+- Do NOT move it into the docs structure
+- No changes needed
+
+### KiloCode's Discretion
+
+- Exact frontmatter fields (tags, related) for the new guide files — follow the pattern established by existing docs in adjacent sections
+- Cross-link wording and placement — follow existing conventions
+- Whether to add a `README.md` index file to `11-guides/` — optional, add if it helps navigation
 
 </decisions>
 
 <specifics>
 ## Specific Ideas
 
-- SaaS admin panel style — modern, minimal, light theme
-- Tables: light with row separators, hover highlight, rounded buttons
-- Icons only for key actions: add, delete, upload
-- Active menu item highlighted in top navigation
-- Top nav order (right to left): Profile, Dashboards, Admin (admin only)
-- Tables support: pagination (25 rows default), sorting, inline editing, loader spinner inside table
-- Empty tables: show header + "No data" text
-- Short UUID format for all IDs
-- Confirm dialogs: background dimmer, short text, Cancel + Delete buttons; Delete button blocked during request
-- Esc closes modals, Enter confirms forms
-- Table state (pagination page, sorting) preserved on back navigation
+- The `10-deployment/deployment.md` already references `README_DOCKER.md` at line 161 — this cross-link must be updated as part of the migration
+- The `99-reference/` folder already exists and holds `swagger.md` and `run-guide.md` — these are the already-integrated versions of the deprecated files
+- The doc-maintenance-rules specify `99-reference/` for guides and external docs — the new `11-guides/` section is a deliberate exception for operational guides that are more "how-to" than "reference"
+- All new files must comply with doc-maintenance-rules: YAML frontmatter, `## Purpose` section, English-only, cross-links via relative paths
 
-</specifics>
+</deferred>
 
-<deferred>
 ## Deferred Ideas
 
-- Dashboard page layout (chart grid arrangement, filters panel placement) — separate phase
-- Registration request flow (user self-registration with admin approval) — mentioned in SPEC.md but not detailed in CONTEXT_01.md, may need clarification
-- Log viewer in admin panel — mentioned briefly, details TBD
+- Content restructuring or rewriting of the Docker or task queue migration content — this phase only moves and adds frontmatter, not content revision
+- Adding a `README.md` index for the `11-guides/` section — can be done in a future doc maintenance pass
+- Reviewing whether `99-reference/` contents should be reorganized — out of scope for this phase
 
 </deferred>
 
 ---
 
-_Phase: 01-frontend-spa_
-_Context gathered: 2026-05-18_
+_Phase: 01-legacy-docs-integration_
+_Context gathered: 2026-05-19_

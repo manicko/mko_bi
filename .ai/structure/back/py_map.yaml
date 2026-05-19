@@ -402,12 +402,14 @@
   - pydantic
   - uuid
   - mkobi.models.enums
+  - mkobi.models.user
   classes:
   - LoginRequest
   - RegistrationRequestCreate
   - RegistrationRequestResponse
   - RegisterRequest
   - Token
+  - TokenWithUser
   - TokenData
   - RefreshRequest
   - ChangePasswordRequest
@@ -626,7 +628,8 @@
   - UserUpdate
   - UserCreateRequest
   - UserUpdateRequest
-  functions: []
+  functions:
+  - display_name
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\__init__.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.models.__init__
   layer: unknown
@@ -672,9 +675,7 @@
   imports:
   - typing
   - uuid
-  - sqlalchemy
   - sqlalchemy.ext.asyncio
-  - mkobi.db.models
   - mkobi.db.models
   - mkobi.db.session
   - mkobi.interfaces.service_interfaces
@@ -682,6 +683,7 @@
   - mkobi.models.dashboard
   - mkobi.models.enums
   - mkobi.models.layout
+  - mkobi.utils.exceptions
   classes:
   - DashboardService
   functions:
@@ -1520,6 +1522,7 @@
   - mkobi.models.dashboard
   - mkobi.models.graph
   - mkobi.services.dashboard_service
+  - mkobi.utils.exceptions
   - mkobi.core.permissions
   - mkobi.core.permissions
   classes: []

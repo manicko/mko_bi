@@ -60,7 +60,7 @@ names from the list. {TASKS_FILES_TO_IMPLEMENT} of files PRESERVING execution or
 
 - IMPORTANT: `C:\py_dev\mkobi\.ai\context\commands.md`
 - `AGENTS.md`
-- `C:\py_dev\mkobi\docs\**`
+- `C:\py_dev\mkobi\docs\SPEC.md`
 - `C:\py_dev\mkobi\docs\STRUCT.md`
 
 Understand:
@@ -177,9 +177,15 @@ Follow existing patterns.
 
 ## 3. Validate Code Quality
 
-Run:
-- ruff
-- mypy
+Run checks depending on what was changed:
+
+**Python files** (`*.py`):
+- Lint: `uv run ruff check <affected_files_or_dirs>`
+- Type check: `uv run mypy <affected_files_or_dirs>`
+
+**TypeScript / React files** (`*.ts`, `*.tsx`):
+- Type check: `npm run build` (runs `tsc -b`) — from `frontend/` directory
+- Lint: `npm run lint` — from `frontend/` directory
 
 Fix ONLY issues related to current task.
 
@@ -187,7 +193,8 @@ Fix ONLY issues related to current task.
 
 ## 4. Validate Tests
 
-Run relevant tests.
+**Python:** Run `uv run pytest <path>` for relevant test files.
+**Frontend:** Run `npm run test` — from `frontend/` directory.
 
 If tests conflict with architecture:
 - update tests
@@ -363,7 +370,7 @@ Validation:
 Status:
 ✓ Architecture preserved
 ✓ Tests validated
-✓ Lint/type checks validated
+✓ Lint/type checks validated (ruff+mypy for Python, tsc+eslint for TypeScript)
 ```
 
 </output>

@@ -1,0 +1,58 @@
+id: TASK_008_FE_dashboard_mgmt_confirm
+
+title: Upgrade DashboardManagement with ConfirmDialog and short UUID
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_005_FE_confirm_dialog
+  - TASK_003_FE_short_uuid
+
+description: >
+  Upgrade DashboardManagement.tsx to use ConfirmDialog instead of window.confirm for delete,
+  display short UUIDs, use toast notifications instead of Snackbar, and update pagination defaults.
+
+goals:
+  - ConfirmDialog replaces window.confirm for delete action
+  - Delete button in ConfirmDialog disabled during request
+  - ID column displays short UUID using shortUuid utility
+  - Default page size: 25
+  - Toast notifications via react-hot-toast instead of Snackbar
+  - Removed Snackbar/Alert state and imports
+
+files:
+  - path: frontend/src/features/admin/ui/DashboardManagement.tsx
+    targets:
+      - type: component
+        name: DashboardManagement
+    semantic_anchors:
+      update_zone:
+        type: component_body
+        value: DashboardManagement component — replace confirm with ConfirmDialog
+
+changes:
+  - action: update_code
+    description: Replace window.confirm with ConfirmDialog for delete action
+  - action: update_code
+    description: Add shortUuid import and ID column with valueGetter
+  - action: update_code
+    description: Replace Snackbar/Alert with toast.success/toast.error
+  - action: update_code
+    description: Update pagination defaults to pageSize: 25
+
+acceptance_criteria:
+  - ConfirmDialog for delete
+  - Short UUID in ID column
+  - No Snackbar/Alert usage
+  - Default page size 25
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+risk_level: medium
+
+wave: 2
+
+plan_source: PLAN_01_dashboard_mgmt_confirm.md

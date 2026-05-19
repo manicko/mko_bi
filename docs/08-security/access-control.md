@@ -65,8 +65,40 @@ dashboard_access (
 
 - **Roles** (`admin`, `editor`, `viewer`) are global and define what a user can do across the system.
 - **Permissions** (`view`, `edit`, `admin`) are per-dashboard and define what a user can do with a specific dashboard.
-- An `admin` role user has implicit full access to all dashboards.
+- An `admin` role user has implicit full access to all dashboards (see [Admin Bypass](#admin-bypass) below).
 - An `editor` or `viewer` user only has access to dashboards explicitly granted via `dashboard_access`.
+
+---
+
+## Admin Bypass
+
+Users with the `admin` role bypass all dashboard-level access checks:
+
+- **`GET /api/v1/dashboards/my`** — Returns all dashboards in the system (not just those with explicit `dashboard_access` entries).
+- **`GET /api/v1/dashboards/:id`** — Returns any dashboard by ID without checking the `dashboard_access` table.
+- **All other dashboard-related endpoints** — Admin bypass is applied consistently across graphs, filters, and data retrieval.
+
+The bypass is implemented at the repository level: `DashboardRepository.get_by_user()` returns all dashboards when `is_admin=True`, and `DashboardService.get_dashboard()` short-circuits the access check for admin users.
+
+> Non-admin users continue to see only dashboards with explicit `dashboard_access` entries. The bypass applies only to the `admin` role.
+
+---
+
+## 403/404 Dual-Signal for Dashboard Access [HIGH-RISK]
+
+The `GET /api/v1/dashboards/:id` endpoint distinguishes between two failure cases:
+
+| Condition | HTTP Status | Detail | Reason |
+| --- | --- | --- | --- |
+| Dashboard does not exist | `404 Not Found` | `Dashboard not found` | Avoids confirming existence |
+| Dashboard exists but user lacks access | `403 Forbidden` | `Access denied` | Informs user they need permission |
+
+**Implementation:** The `DashboardService.get_dashboard()` method uses a dual-signal approach:
+1. If the dashboard is not found → returns `None` (mapped to 404 by the route handler).
+2. If the dashboard exists but the user has no access → raises `PermissionDeniedException` (mapped to 403 by the route handler).
+3. Admin users bypass step 2 entirely.
+
+> This pattern prevents an attacker from enumerating dashboard IDs: a 404 response does not reveal whether the dashboard exists or the user simply lacks access. However, a 403 response confirms the dashboard exists. This is an intentional trade-off to provide meaningful error messages to authorized users.
 
 ---
 
@@ -78,8 +110,8 @@ Access control is enforced on **all** dashboard-related endpoints, not just data
 
 | Endpoint | Auth Level | Access Check |
 | --- | --- | --- |
-| `GET /api/v1/dashboards/my` | Any authenticated | Returns only dashboards the user has access to |
-| `GET /api/v1/dashboards/:id` | Any authenticated | Validates user has access to the specific dashboard |
+| `GET /api/v1/dashboards/my` | Any authenticated | Returns only dashboards the user has access to; admins see all dashboards |
+| `GET /api/v1/dashboards/:id` | Any authenticated | Validates user has access to the specific dashboard; 403 if access denied, 404 if not found; admins bypass access check |
 | `GET /api/v1/data/aggregated` | Any authenticated | Validates dashboard access before returning data |
 
 ### Filter Endpoints

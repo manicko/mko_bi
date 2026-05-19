@@ -8,15 +8,31 @@ import { defineConfig, globalIgnores } from 'eslint/config'
 export default defineConfig([
   globalIgnores(['dist']),
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['src/**/*.{ts,tsx}'],
     extends: [
       js.configs.recommended,
-      tseslint.configs.recommended,
+      tseslint.configs.recommendedTypeChecked,
       reactHooks.configs.flat.recommended,
       reactRefresh.configs.vite,
     ],
     languageOptions: {
+      parserOptions: {
+        project: './tsconfig.app.json',
+      },
       globals: globals.browser,
+    },
+  },
+  {
+    files: ['vite.config.ts'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommendedTypeChecked,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: './tsconfig.node.json',
+      },
+      globals: globals.node,
     },
   },
 ])

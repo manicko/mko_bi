@@ -9,6 +9,8 @@ export interface UserProfile {
   id: string
   email: string
   role: UserRole
+  display_name: string
+  created_at: string
 }
 
 export interface DashboardSummary {

@@ -63,7 +63,9 @@ class IDashboardRepository(IRepository):
     """Dashboard repository interface."""
 
     @abc.abstractmethod
-    async def get_by_user(self, user_id: UUID, db: AsyncSession) -> list[Any]:
+    async def get_by_user(
+        self, user_id: UUID, db: AsyncSession, is_admin: bool = False
+    ) -> list[Any]:
         """Get dashboards by user (dashboards available to user)."""
         pass
 
@@ -109,6 +111,13 @@ class IAccessRepository(abc.ABC):
     @abc.abstractmethod
     async def get_all(self, db: AsyncSession) -> list[Any]:
         """Get all access records."""
+        pass
+
+    @abc.abstractmethod
+    async def get_by_dashboard(
+        self, dashboard_id: UUID, db: AsyncSession
+    ) -> list[Any]:
+        """Get all access records for a dashboard."""
         pass
 
 

@@ -73,19 +73,70 @@ class TestGetDashboardDetail:
         assert data["name"] == "test_detail_dashboard"
 
     async def test_get_dashboard_no_access(
-        self, authenticated_client: AsyncClient, async_db_session, test_user: dict
+        self, async_client: AsyncClient, async_db_session
     ) -> None:
-        """Test getting dashboard without access returns 404."""
-        repo = DashboardRepository()
-        dashboard = await repo.create(
+        """Test getting dashboard without access returns 403 for non-admin."""
+        # Create a viewer user (non-admin) to test access control
+        from mkobi.db.repositories.user_repo import UserRepository
+        from mkobi.core.security import create_access_token
+
+        user_repo = UserRepository()
+        viewer_user = await user_repo.create(
             db=async_db_session,
-            name="test_no_access_dashboard",
-            created_by=test_user["id"],
+            email="viewer_no_access@example.com",
+            password_hash="hash",
+            role=UserRole.VIEWER,
         )
         await async_db_session.flush()
 
-        # No access granted
-        response = await authenticated_client.get(f"/dashboards/{dashboard.id}")
+        # Create a dashboard owned by another user
+        repo = DashboardRepository()
+        other_user = await user_repo.create(
+            db=async_db_session,
+            email="other_owner@example.com",
+            password_hash="hash",
+            role=UserRole.EDITOR,
+        )
+        await async_db_session.flush()
+        dashboard = await repo.create(
+            db=async_db_session,
+            name="test_no_access_dashboard",
+            created_by=other_user.id,
+        )
+        await async_db_session.flush()
+
+        # Login as viewer (no access to this dashboard)
+        token = create_access_token({"user_id": str(viewer_user.id), "email": viewer_user.email})
+        async_client.headers["Authorization"] = f"Bearer {token}"
+
+        # No access granted - should return 403 Forbidden
+        response = await async_client.get(f"/dashboards/{dashboard.id}")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    async def test_get_dashboard_not_found(
+        self, async_client: AsyncClient, async_db_session
+    ) -> None:
+        """Test getting non-existent dashboard returns 404."""
+        from uuid import uuid4
+        from mkobi.db.repositories.user_repo import UserRepository
+        from mkobi.core.security import create_access_token
+
+        user_repo = UserRepository()
+        viewer_user = await user_repo.create(
+            db=async_db_session,
+            email="viewer_not_found@example.com",
+            password_hash="hash",
+            role=UserRole.VIEWER,
+        )
+        await async_db_session.flush()
+
+        # Login as viewer
+        token = create_access_token({"user_id": str(viewer_user.id), "email": viewer_user.email})
+        async_client.headers["Authorization"] = f"Bearer {token}"
+
+        # Request non-existent dashboard
+        fake_id = uuid4()
+        response = await async_client.get(f"/dashboards/{fake_id}")
         assert response.status_code == status.HTTP_404_NOT_FOUND
 
 
@@ -273,20 +324,45 @@ class TestAccessControl:
     """Tests for dashboard access control."""
 
     async def test_access_control_no_access(
-        self, authenticated_client: AsyncClient, async_db_session, test_user: dict
+        self, async_client: AsyncClient, async_db_session
     ) -> None:
-        """Test accessing dashboard without access returns 404."""
-        repo = DashboardRepository()
-        dashboard = await repo.create(
+        """Test accessing dashboard without access returns 403 for non-admin."""
+        # Create a viewer user (non-admin) to test access control
+        from mkobi.db.repositories.user_repo import UserRepository
+        from mkobi.core.security import create_access_token
+
+        user_repo = UserRepository()
+        viewer_user = await user_repo.create(
             db=async_db_session,
-            name="access_test_dashboard",
-            created_by=test_user["id"],
+            email="viewer_no_access2@example.com",
+            password_hash="hash",
+            role=UserRole.VIEWER,
         )
         await async_db_session.flush()
 
-        # No access granted
-        response = await authenticated_client.get(f"/dashboards/{dashboard.id}")
-        assert response.status_code == status.HTTP_404_NOT_FOUND
+        # Create a dashboard owned by another user
+        repo = DashboardRepository()
+        other_user = await user_repo.create(
+            db=async_db_session,
+            email="other_owner2@example.com",
+            password_hash="hash",
+            role=UserRole.EDITOR,
+        )
+        await async_db_session.flush()
+        dashboard = await repo.create(
+            db=async_db_session,
+            name="access_test_dashboard",
+            created_by=other_user.id,
+        )
+        await async_db_session.flush()
+
+        # Login as viewer (no access to this dashboard)
+        token = create_access_token({"user_id": str(viewer_user.id), "email": viewer_user.email})
+        async_client.headers["Authorization"] = f"Bearer {token}"
+
+        # No access granted - should return 403 Forbidden
+        response = await async_client.get(f"/dashboards/{dashboard.id}")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
     async def test_access_control_with_access(
         self, authenticated_client: AsyncClient, async_db_session, test_user: dict
@@ -312,3 +388,70 @@ class TestAccessControl:
 
         response = await authenticated_client.get(f"/dashboards/{dashboard.id}")
         assert response.status_code == status.HTTP_200_OK
+
+
+class TestAdminBypass:
+    """Tests for admin bypass functionality."""
+
+    async def test_admin_sees_all_dashboards(
+        self, authenticated_client: AsyncClient, async_db_session, test_user: dict
+    ) -> None:
+        """Test that admin user sees all dashboards without explicit access."""
+        # Create another user and their dashboard (admin has no explicit access)
+        from mkobi.db.repositories.user_repo import UserRepository
+
+        user_repo = UserRepository()
+        other_user = await user_repo.create(
+            db=async_db_session,
+            email="other_user_admin_test@example.com",
+            password_hash="hash",
+            role=UserRole.EDITOR,
+        )
+        await async_db_session.flush()
+
+        repo = DashboardRepository()
+        other_dashboard = await repo.create(
+            db=async_db_session,
+            name="other_user_dashboard",
+            created_by=other_user.id,
+        )
+        await async_db_session.flush()
+
+        # Admin requests their dashboards - should include dashboard they have no access to
+        response = await authenticated_client.get("/dashboards/my")
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert isinstance(data, list)
+        # Admin should see this dashboard even without explicit access
+        assert any(d["id"] == str(other_dashboard.id) for d in data)
+
+    async def test_admin_can_access_any_dashboard(
+        self, authenticated_client: AsyncClient, async_db_session, test_user: dict
+    ) -> None:
+        """Test that admin can access any dashboard by direct URL."""
+        # Create another user and their dashboard (admin has no explicit access)
+        from mkobi.db.repositories.user_repo import UserRepository
+
+        user_repo = UserRepository()
+        other_user = await user_repo.create(
+            db=async_db_session,
+            email="other_user_detail_test@example.com",
+            password_hash="hash",
+            role=UserRole.EDITOR,
+        )
+        await async_db_session.flush()
+
+        repo = DashboardRepository()
+        dashboard = await repo.create(
+            db=async_db_session,
+            name="dashboard_for_admin_bypass",
+            created_by=other_user.id,
+        )
+        await async_db_session.flush()
+
+        # Admin requests dashboard they have no explicit access to
+        response = await authenticated_client.get(f"/dashboards/{dashboard.id}")
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["id"] == str(dashboard.id)
+        assert data["name"] == "dashboard_for_admin_bypass"

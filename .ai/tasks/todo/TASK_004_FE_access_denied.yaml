@@ -1,0 +1,48 @@
+id: TASK_004_FE_access_denied
+
+title: Create AccessDenied component
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Create an AccessDenied component that displays "No access — contact your administrator"
+  with no additional actions, using MUI components for consistent styling.
+
+goals:
+  - Displays exact text: "No access — contact your administrator"
+  - No buttons or interactive elements
+  - Centered display suitable for embedding in content area
+  - Uses MUI components
+
+files:
+  - path: frontend/src/shared/components/AccessDenied.tsx
+    targets:
+      - type: component
+        name: AccessDenied
+    semantic_anchors:
+      insert_after:
+        type: component_creation
+        value: AccessDenied shared component
+
+changes:
+  - action: create_file
+    description: Create AccessDenied.tsx with centered text display
+
+acceptance_criteria:
+  - AccessDenied component created
+  - Exact text matches the locked decision
+  - No buttons or actions present
+  - Uses MUI Box and Typography
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+risk_level: low
+
+wave: 1
+
+plan_source: PLAN_01_access_denied.md

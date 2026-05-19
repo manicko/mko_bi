@@ -21,7 +21,7 @@ related:
 
 ## Overview
 
-The application consists of **8 UI pages** (plus a 404 fallback). All authenticated pages are wrapped in `AppLayout` which provides `Header` and `Sidebar` navigation. The profile link (`/profile`) is available on all pages except `/login`.
+The application consists of **8 UI pages** (plus a 404 fallback). Authenticated pages are wrapped in `AppLayout` which provides the `Header` navigation bar. The `/login` and `/register` routes are **outside** `AppLayout` so that the Header and Sidebar are not rendered on authentication pages.
 
 ---
 
@@ -164,6 +164,7 @@ The application consists of **8 UI pages** (plus a 404 fallback). All authentica
 | Element | Type | Description |
 | --- | --- | --- |
 | Email display | Read-only text | User's email address |
+| Display Name display | Read-only text | User's `display_name` (computed from email prefix) |
 | Role display | Read-only text | User's role (`admin`, `editor`, or `viewer`) |
 | Change Password button | `Button` | Navigates to `/profile/change-password` |
 | Delete Account button | `Button` | Only visible for non-admin users; opens a confirmation dialog |
@@ -173,15 +174,16 @@ The application consists of **8 UI pages** (plus a 404 fallback). All authentica
 
 | Action | Method | Endpoint | Description |
 | --- | --- | --- | --- |
-| Get profile | `GET` | `/api/v1/auth/me` | Returns current user profile |
+| Get profile | `GET` | `/api/v1/auth/me` | Returns current user profile (also available from login response) |
 | Delete account | `DELETE` | `/api/v1/users/me` | Self-deletion (non-admin only) |
 
 ### Flow
 
-1. Profile data is fetched via `GET /api/v1/auth/me` (initialized with cached user data from TanStack Query).
-2. Non-admin users see a "Delete Account" button.
-3. Clicking delete opens a confirmation dialog.
-4. On confirmation, `DELETE /api/v1/users/me` is called; on success, user is logged out and redirected to `/login`.
+1. Profile data is fetched via `GET /api/v1/auth/me` (initialized with cached user data from the login response via TanStack Query).
+2. The profile displays email, display_name (computed from email prefix), and global role — all read-only.
+3. Non-admin users see a "Delete Account" button.
+4. Clicking delete opens a confirmation dialog.
+5. On confirmation, `DELETE /api/v1/users/me` is called; on success, user is logged out and redirected to `/login`.
 
 ---
 

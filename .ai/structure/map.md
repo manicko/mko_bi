@@ -1,7 +1,9 @@
 Folder PATH listing for volume Windows
 Volume serial number is F012-D5D6
 C:\PY_DEV\MKOBI
+|   $null
 |   .dockerignore
+|   .env
 |   .env.example
 |   .gitignore
 |   AGENTS.md
@@ -23,9 +25,6 @@ C:\PY_DEV\MKOBI
 |   |   config.json
 |   |   
 |   +---.ai
-|   +---.tmp
-|   |       context_check.log
-|   |       
 |   +---audit
 |   |   +---db
 |   |   +---problems
@@ -61,10 +60,24 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
+|   |       PLAN_01_access_denied.md
+|   |       PLAN_01_admin_state_preservation.md
+|   |       PLAN_01_confirm_dialog.md
+|   |       PLAN_01_dashboard_list_table.md
+|   |       PLAN_01_dashboard_mgmt_confirm.md
+|   |       PLAN_01_registration_requests.md
+|   |       PLAN_01_short_uuid.md
+|   |       PLAN_01_toast_config.md
+|   |       PLAN_01_top_navigation.md
+|   |       PLAN_01_upload_modal.md
+|   |       PLAN_01_user_management_inline_edit.md
+|   |       PLAN_01_zod_v4_migration.md
+|   |       
 |   +---problems
+|   |   |   CONTEXT_01.md
+|   |   |   
 |   |   \---decisions
 |   |           DECISION_01.md
-|   |           DECISION_02.md
 |   |           
 |   +---researches
 |   +---structure
@@ -80,51 +93,27 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
-|   |   |       TASK_001_T11_create_folder_structure_DONE.yaml
-|   |   |       TASK_002_T12_extract_inventory_from_spec_DONE.yaml
-|   |   |       TASK_003_T13_build_migration_map_DONE.yaml
-|   |   |       TASK_004_T14_create_high_risk_checklist_DONE.yaml
-|   |   |       TASK_005_T21_create_overview_files_DONE.yaml
-|   |   |       TASK_006_T22_create_auth_api_doc_DONE.yaml
-|   |   |       TASK_007_T23_create_dashboards_api_doc_DONE.yaml
-|   |   |       TASK_008_T24_create_processing_docs_DONE.yaml
-|   |   |       TASK_009_T31_create_admin_api_doc_DONE.yaml
-|   |   |       TASK_010_T32_create_health_api_doc_DONE.yaml
-|   |   |       TASK_011_T33_create_backend_docs_DONE.yaml
-|   |   |       TASK_012_T34_create_frontend_docs_DONE.yaml
-|   |   |       TASK_013_T35_create_security_docs_DONE.yaml
-|   |   |       TASK_014_T36_create_database_docs_DONE.yaml
-|   |   |       TASK_015_T37_create_deployment_doc_DONE.yaml
-|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
-|   |   |       TASK_016_T41_convert_spec_to_overview.yaml
-|   |   |       TASK_017_T42_create_docs_readme.yaml
-|   |   |       TASK_018_T51_add_yaml_frontmatter.yaml
-|   |   |       TASK_019_T52_add_cross_links.yaml
-|   |   |       TASK_020_T53_integrate_standalone_docs.yaml
-|   |   |       TASK_021_T61_reconciliation_pass.yaml
-|   |   |       TASK_022_T62_frontmatter_consistency_check.yaml
-|   |   |       TASK_023_T63_final_structure_verification.yaml
-|   |   |       TASK_024_A01_add_display_name_to_userread.yaml
-|   |   |       TASK_025_A02_add_token_with_user_response_model.yaml
-|   |   |       TASK_026_B01_admin_bypass_dashboard_listing.yaml
-|   |   |       TASK_027_B02_registration_request_validation.yaml
-|   |   |       TASK_028_B03_login_response_includes_user.yaml
-|   |   |       TASK_029_B04_403_for_unauthorized_dashboard_access.yaml
-|   |   |       TASK_030_C01_update_frontend_login_for_user_response.yaml
-|   |   |       TASK_031_C02_restructure_routes_move_login_outside_layout.yaml
-|   |   |       TASK_032_C03_update_header_navigation.yaml
-|   |   |       TASK_033_C04_add_display_name_to_profile_page.yaml
-|   |   |       TASK_034_C05_update_register_form_success_message.yaml
+|   |   |       TASK_001_FE_zod_v4_migration.yaml
+|   |   |       TASK_002_FE_toast_config.yaml
+|   |   |       TASK_003_FE_short_uuid.yaml
+|   |   |       TASK_004_FE_access_denied.yaml
+|   |   |       TASK_005_FE_confirm_dialog.yaml
+|   |   |       TASK_006_FE_dashboard_list_table.yaml
+|   |   |       TASK_007_FE_user_management_inline_edit.yaml
+|   |   |       TASK_008_FE_dashboard_mgmt_confirm.yaml
+|   |   |       TASK_009_FE_registration_requests.yaml
+|   |   |       TASK_010_FE_admin_state_preservation.yaml
+|   |   |       TASK_011_FE_upload_modal.yaml
+|   |   |       TASK_012_FE_top_navigation.yaml
 |   |   |       
 |   |   \---validation
 |   |           tasks_validated_findings_001.md
-|   |           tasks_validated_findings_002.md
 |   |           
 |   +---templates
 |   |       decision.md
@@ -180,6 +169,9 @@ C:\PY_DEV\MKOBI
 |   |   |           audit-tests-full.md
 |   |   |           
 |   |   +---docs
+|   |   |       doc-tasks.md
+|   |   |       docs-audit-improve.md
+|   |   |       
 |   |   +---implement
 |   |   |       implement-multiple_tasks.md
 |   |   |       implement-task.md
@@ -4187,8 +4179,10 @@ C:\PY_DEV\MKOBI
 |           12865600087165886199
 |           12958775000513637759
 |           13393548723153612342
+|           13721529446913284213
 |           13949329209897281892
 |           13979636886595267432
+|           14448297638087247601
 |           14471665815449548435
 |           14896133796014091425
 |           14928974306267782854
@@ -4229,6 +4223,7 @@ C:\PY_DEV\MKOBI
 |           4925289080536601073
 |           5178735118944880258
 |           5182174678267865401
+|           5377123736532754113
 |           5398284773524182058
 |           5441873096946848584
 |           548744676179618953
@@ -4247,6 +4242,7 @@ C:\PY_DEV\MKOBI
 |           7757781752673505822
 |           7858831275428853260
 |           8030558945267085120
+|           8081801220538038106
 |           8252212323481120275
 |           8306074993673646402
 |           8922659809379559877
@@ -18162,6 +18158,7 @@ C:\PY_DEV\MKOBI
 |           0736552f-4ad7-4d25-aa3e-ffcb310acfee.csv
 |           07c04bf1-2170-44ce-8e05-593d449ae85a.csv
 |           07f46ad1-4687-4550-9d3d-761d1f2edcee.csv
+|           088e5aee-5800-4a25-83c1-2d7c21a8edb4.csv.gz
 |           089b01d9-328c-49e6-81b8-6c3de2ee4c01.csv
 |           08cb64e9-4b47-4477-85b6-ae7e856fca9b.csv
 |           09489a86-fda4-47b6-bb18-fe66c6265f06.csv
@@ -18205,18 +18202,22 @@ C:\PY_DEV\MKOBI
 |           19291aca-406b-4007-9c0c-71afa9e942d9.csv.gz
 |           198e58a4-b5b4-4f3b-a56c-b08a49e93dfd.csv
 |           1a1cf8a5-0a42-43de-ac4a-ae04d01c1875.csv
+|           1a99a25b-4d81-4b1a-933a-be2ecc11a5e6.csv
 |           1b0bb7ad-57a2-441e-beaa-bfc44644599d.csv.gz
 |           1b1a1183-fce0-4796-80f4-b61577197564.csv
 |           1b1e9e45-a5f4-4ca4-a106-917ad6f4d861.csv
 |           1b51792b-d30a-4ce4-9dcd-692572438f0b.csv
 |           1c4b5d0f-6bfa-4cd1-98b5-ea4c3335c46d.csv
 |           1c63cf73-a4b6-4b8e-b475-27fbab6cb5fd.csv
+|           1d6d0987-1a29-46fd-a5fd-7f12336a27a0.csv
 |           1e560a84-c12d-4aab-b920-3d2013bc0279.csv
 |           1f41cfd1-3ef0-4a6a-bab4-57da54f9bf5f.csv.gz
 |           1f67c3d9-ae23-4aeb-86e1-557a4fd22a7a.csv
 |           200101d4-7f1f-4eed-891f-c335b5f8c1f5.csv.gz
 |           201d6018-2f7c-41f2-9bf5-cc4a29f12ab5.csv
 |           20801c08-c33a-4c2d-8564-3c7c03a8f8f1.csv
+|           21097694-4d07-40f7-a34f-6eba7626bae9.csv
+|           212ce5d2-2d34-4d6e-ac86-ce8f393b234c.csv
 |           212e198c-c170-4f71-97fd-b15d61ea3661.csv
 |           2195bf31-9a5d-4bb6-bcad-40db0e22259c.csv
 |           21a9c032-3d7d-4180-8814-066bed1bc244.csv
@@ -18233,6 +18234,7 @@ C:\PY_DEV\MKOBI
 |           259305c0-cf1d-4e8b-92d5-fce788392c1a.csv
 |           26158209-4eaa-45c6-b721-548e339fbbfa.csv
 |           2650a3ad-b7eb-4030-a55c-5843a706f6aa.csv
+|           26aa1dd3-a3e9-4159-b35f-91880ae42c71.csv
 |           270abe37-4c92-42e6-98d5-5221c7f3df99.csv
 |           28258e7b-c268-4fda-91b2-9e2e015bc1ef.csv
 |           286644b9-d47a-44f6-ac7e-e47253af4c6d.csv
@@ -18241,6 +18243,7 @@ C:\PY_DEV\MKOBI
 |           29d00f2a-e00a-4c18-bbd0-d5c1da8160e8.csv
 |           29f6ca88-2598-41aa-bf2a-56f7ee4ab35b.csv
 |           2a6f5242-2ae7-4487-abd3-db92912d0271.csv
+|           2a807a43-4ac9-420b-8205-2354f51ff99b.csv
 |           2adb9729-0dd7-4dad-8f76-2e843566cf53.csv.gz
 |           2b945abc-a663-4d53-8b4a-fe12432a5fb7.csv
 |           2b9b706d-76c6-4c37-8981-4658390bca07.csv
@@ -18255,6 +18258,7 @@ C:\PY_DEV\MKOBI
 |           2e5324fb-fa47-4fec-867c-3faaebe3b4f2.csv
 |           2ea8b5d7-f616-4a76-a607-265679c3797f.csv
 |           2eb5d349-754c-49eb-860d-f9e1755e0532.csv
+|           2ed76f69-73e8-45ee-bc53-46cb74f4a13f.csv
 |           2f10f903-fe08-4cb3-a535-ca5a8295ed5d.csv.gz
 |           2f2f3455-0c8d-4447-8c97-c20a119b9e70.csv
 |           2f4149d2-6478-491b-9d9f-813b435c4a6c.csv
@@ -18262,12 +18266,14 @@ C:\PY_DEV\MKOBI
 |           2fac2b52-f372-4ae4-b2c7-d7ba8549be46.csv
 |           305ff074-e995-4df1-bfaa-53e1491bdddc.csv
 |           30cb6621-078d-4ebc-a97a-1fbaf8307117.csv.gz
+|           31152a84-a77d-4720-a093-263b5d8e5242.csv
 |           31b7e0c7-fdf8-4d25-a608-4df68520a594.csv
 |           31d871d8-4866-4fca-9fd1-0cb24173bbad.csv
 |           3236a2b4-3f05-4c71-9ab3-5bf03c320274.csv
 |           32b677fe-b8f2-4c83-865a-7ea6518527ae.csv
 |           32e68317-6b2b-4a8e-91cc-c8f8a61dd193.csv.gz
 |           32faf1e9-dc5a-4ba9-931f-503e58b0679e.csv
+|           330430f1-4ab9-4e03-b7a1-447e56847b93.csv
 |           339eac93-d843-4125-a38d-71c28651dc0f.csv.gz
 |           33d8126e-4de3-4543-906b-ad0b4408ff83.csv
 |           33eb0673-81a7-4c5d-b342-dc1f4c831a72.csv
@@ -18276,6 +18282,7 @@ C:\PY_DEV\MKOBI
 |           3558f9b7-556e-46ac-8c72-7aa731fe452d.csv
 |           3582de0d-9e6e-479a-8df2-e035477ac089.csv.gz
 |           35c27ce0-4339-4674-8c5d-13f7018e8213.csv
+|           35d4b93c-de78-401f-9bda-24f20bf9b48d.csv
 |           35dbe0c7-3b01-44a8-9272-1be8d1fb52af.csv
 |           35ebc7eb-5ee6-4046-87e7-8950b7af4d30.csv
 |           3626aa54-d2d3-4b4f-b5f6-43ddd76a68be.csv.gz
@@ -18297,13 +18304,16 @@ C:\PY_DEV\MKOBI
 |           3b4165eb-12f2-40a2-b0af-c43f9bdce766.csv
 |           3b4d6442-b257-4608-ad24-8c4ba9b8417a.csv.gz
 |           3b6224c3-f078-4db1-a6c5-3b66dd39ea1d.csv
+|           3b8b5ed9-e4ca-4220-a10f-2b1210a4e1ee.csv
 |           3b9842fa-73a3-487f-9067-aea35a2a5484.csv
 |           3c312f81-19b3-42ad-87fb-1e80478b2160.csv
 |           3c5fe18e-7d44-4b2f-8bdd-08001dfe5932.csv
 |           3c73e24d-05d7-473d-99db-3dd425e85f33.csv
 |           3ca25fdf-9eaf-45f2-a6ff-9a9accfd500f.csv
 |           3cae0b4b-fb33-4f96-88b8-a72558456904.csv.gz
+|           3d4faa0c-9dc2-4aa3-837d-07b10a01ceea.csv
 |           3e0e364e-b0b1-40ba-a4f5-8e1a773d1519.csv.gz
+|           3e37fc55-a77b-4057-8fee-006ca6dd1573.csv
 |           3e9573f0-2286-41b4-8090-e109bb0b85c1.csv
 |           3fb8ac89-acab-4832-9bcc-e403cc70e590.csv
 |           402a306c-ec02-42e7-a460-62a98b30fcaa.csv.gz
@@ -18311,6 +18321,7 @@ C:\PY_DEV\MKOBI
 |           40eef142-b61f-45b5-bb3c-62a99ca2bc18.csv.gz
 |           41361888-b74d-4d0b-b25b-724fcedcf3d4.csv.gz
 |           4139ddaf-90eb-4aea-b5b5-eec08ceed430.csv
+|           41597c90-d534-4a3f-9be9-837a861b9430.csv
 |           4207a252-4d9f-492d-b055-5802ad0ceae0.csv
 |           42850709-c60d-4294-b826-7910299c0bd5.csv.gz
 |           43aa8d30-5102-4f7b-b1d0-a561e9c594e4.csv
@@ -18325,12 +18336,14 @@ C:\PY_DEV\MKOBI
 |           4855420b-e449-4844-97ee-ffbb71b8f8bc.csv
 |           4884f708-7e1c-4a75-b7a7-c0aa007ede82.csv
 |           4915c32d-580f-4534-b538-0254a5407492.csv.gz
+|           492c3ed2-2375-4421-98dc-fcc3c293646d.csv
 |           49458939-f71c-46a3-997b-858e366ee44b.csv
 |           4ac1da49-a2e7-45a2-99b6-54124a6008b8.csv.gz
 |           4b308502-50ab-4f44-82a3-3563309f3fb8.csv
 |           4b65c11c-451a-4535-912e-ad730c220a4b.csv.gz
 |           4b87b2b8-357d-45ac-a153-5a3f7ae69b4b.csv
 |           4bbc89e5-d52b-46f8-b2af-512143841d7d.csv
+|           4c21d1f5-0c89-4561-971e-e34bb0282b65.csv
 |           4cf576f5-bee9-40c9-8592-7fe4cf3e0b64.csv
 |           4d3b73f5-0f85-40d7-b0fc-cb371896248e.csv
 |           4dd22e73-5d8f-47d0-9a33-b93977e29a7f.csv
@@ -18346,24 +18359,30 @@ C:\PY_DEV\MKOBI
 |           521f4f4e-f1c5-4adc-997f-9d1a7ee641d0.csv
 |           528550be-6e7e-4060-af80-195840ebfa30.csv
 |           530cef56-d60d-41c8-8670-6e19cac49bec.csv.gz
+|           53d7e11c-556f-4d45-8260-8543f1264837.csv.gz
 |           545bfeae-dd83-4728-948a-334e89bd925b.csv.gz
 |           54798df9-623d-4298-98ac-7270d86bd929.csv
 |           557101a2-2052-4b5f-9032-f1be750d4895.csv
 |           55d5889c-eb0f-42af-a4f6-c924d0bea9d9.csv.gz
 |           55d7185b-21f4-42d1-ba5d-a4e092c85ecc.csv
+|           5643fe18-e66c-4e57-a68a-51b986517889.csv
 |           56c794ae-fb7c-4642-b92e-f9d6ae18f383.csv
 |           56f9a03b-fe8b-4c00-96c1-99b7f82d17ab.csv.gz
+|           57585d45-8677-47e8-be13-b8dc02e6b577.csv
 |           5760f712-3e39-452b-be0c-0a3a5285b89e.csv
 |           58072e3f-75f3-4e2a-8711-ce83e676c96b.csv.gz
 |           580c5cfb-b166-4ff9-9b36-ab1a215bdc55.csv
 |           58d49399-f50b-4b10-8c73-351d7170d433.csv
+|           58e57f08-fc8d-4d09-9bba-893a0c7167e4.csv
 |           58f87c1e-7646-4633-ab59-054ca25b79e0.csv
 |           590ec697-5af8-45cf-a114-92feb52dff20.csv.gz
 |           59189d5b-9518-49db-bcad-ca84f4880bb7.csv
 |           5962ca8d-5354-4cb6-9904-0afe7914e67f.csv
 |           59e3f326-b61b-4c3f-ace2-f8c6d7860419.csv
 |           5a9c7993-00af-4195-8577-a8c9434023eb.csv
+|           5aecf488-080c-436c-b13e-b14595923645.csv
 |           5b8ec148-2f16-4a9c-883a-c27f804a9aa4.csv
+|           5bb76089-97e4-4070-8d0d-2d5e9a7fdb82.csv
 |           5bf9f841-f79a-4ec3-8d54-a4f538dfd79a.csv
 |           5c2160e2-9263-4362-95b5-adfd58064bc1.csv
 |           5c5c0fc7-291f-4bbe-a3fa-b0b99dea277c.csv
@@ -18387,9 +18406,12 @@ C:\PY_DEV\MKOBI
 |           667b6889-d710-4541-a8f5-ba298b7643cc.csv
 |           66eacfad-37c9-4c97-a5d6-472773c94b96.csv
 |           66f4b755-a214-4011-8d31-7f70ae029f82.csv
+|           66fe012a-1023-4c70-ab81-dd18a480aefa.csv
 |           67ab56f8-f0fa-4dd5-a6ce-e0ae2e00f026.csv
+|           67b025ba-7a84-44b3-99be-7fdfe161be32.csv
 |           68107ea6-d6fa-4307-b34f-12c5f2286678.csv
 |           68e323ac-2a16-4408-bdac-e05d818c8bcd.csv
+|           68fd8f6e-323d-4510-9655-aef9519a6412.csv.gz
 |           6982852a-6078-409b-b825-c5bb49673f3b.csv.gz
 |           69a6048e-b835-446e-b8af-cbfee445a126.csv
 |           69e9a53a-c9de-4c5a-bc0a-16fd89527800.csv
@@ -18410,6 +18432,7 @@ C:\PY_DEV\MKOBI
 |           70834fd1-09b0-47dc-8f0d-713562dc8218.csv
 |           708bf312-7bc8-48fc-bac8-03ca2d5b3cef.csv.gz
 |           709350d0-b58f-4ef1-89b5-da0cc2f37d08.csv
+|           70be89e9-2c86-4827-a07a-0af22ec85f3e.csv.gz
 |           717c0c3d-96b9-40f3-8e19-4e032b3928b9.csv.gz
 |           71da2399-03e8-431a-85c5-7ca4d0b83769.csv.gz
 |           72259814-528c-4cee-957b-5fa83be58680.csv.gz
@@ -18427,6 +18450,7 @@ C:\PY_DEV\MKOBI
 |           7a0bb4d0-f5db-452e-95c1-9276ab13d4df.csv
 |           7a241b57-05a7-4c72-8516-9977a0be1747.csv
 |           7a4f46fd-f658-4e12-87a6-6bfbf6981fc7.csv
+|           7a9ed36b-d007-4596-b7ba-f485227ea520.csv.gz
 |           7ade8d88-b5ac-446c-82da-73d85a5e4034.csv
 |           7ae5c078-9c88-4ccd-ac7f-4b9ceb42957a.csv
 |           7c4b5f54-9419-45ae-94e5-340356953571.csv
@@ -18441,6 +18465,7 @@ C:\PY_DEV\MKOBI
 |           8049ec9e-3d3f-4cb9-8ef5-8b8a22d312fe.csv
 |           8100aa9b-0c81-4a01-b2dc-bb784c52e5c5.csv
 |           81029bd2-9fe6-489c-bed9-27d445d381bf.csv
+|           81083347-5c25-46f6-8cf4-b6cc702512b5.csv
 |           814b1b9c-6af7-4beb-b3b2-aab76a76eaef.csv
 |           81d64a7e-93bb-4016-a19b-4bab7aea2708.csv
 |           820ffdb4-e347-4b6b-a4b4-3dae137614cc.csv
@@ -18451,20 +18476,27 @@ C:\PY_DEV\MKOBI
 |           833104d7-b73a-4eb5-ba64-22498379c5e1.csv.gz
 |           8369450c-c810-4a6d-a014-6c7592d15cd0.csv
 |           8382f5e1-5c85-479c-862f-b88c3c6d3af5.csv
+|           84032230-e5c5-46ae-89f9-0dfa2d9603df.csv
 |           840de927-3071-4f5b-b0da-bba38826ab9b.csv
 |           84c60d3a-be3b-4a00-8db8-7c8b47fa7592.csv
 |           84dfe7d4-5dd7-4af9-abaf-3ea8b58cb79a.csv
+|           850c9500-0fec-44ee-9388-3703cee3a054.csv
+|           858ed94b-0eb8-4c74-b21e-bde2aa45078d.csv
 |           85990d62-d739-4015-bf99-dd5753ebc29e.csv.gz
+|           85e696c0-797f-4d8a-8db4-f755c19b35f4.csv
 |           85ecac54-9f9f-4dd2-88f2-534480cbca8c.csv
 |           860231ab-f650-4d51-8e34-d5161a501724.csv
 |           861f9048-34ac-44af-87ee-ea56fcff0a74.csv
 |           86bf7e80-9bf9-4be1-b21d-a098cc21c032.csv
+|           86cc70f7-ffd7-4af9-9407-9b768e2827f7.csv
 |           86f0d577-8260-4bdc-b187-1f7da40176be.csv
 |           881264db-c0c6-4555-a39b-6a6a453aa0f2.csv
 |           8891d6e4-65d2-4188-877a-e4c12c5db7c4.csv
 |           88c08378-0ce1-4d13-a332-ceddbea14e99.csv
+|           88dd365e-4ad9-4885-9656-774028613eb6.csv
 |           88efa522-80c6-4356-8b0d-d5160194357b.csv
 |           89110a2d-946d-497f-9a59-f50e60b19090.csv.gz
+|           89dcb7dc-5393-4009-8151-c0575afa4da1.csv.gz
 |           8a6332b2-5696-417f-a3b2-3b6b0ad3393a.csv
 |           8a67fde2-43dd-4c9e-b4cd-e29768463df6.csv
 |           8b36f768-acb5-4ba8-b7cf-978800e42b1f.csv
@@ -18485,6 +18517,7 @@ C:\PY_DEV\MKOBI
 |           8f2173c4-f17d-4561-8b7d-383734cfcd83.csv
 |           8f75e822-43bc-40dd-b768-65e31844e0f8.csv
 |           8fc9956f-6eae-4172-855a-653bc7961db0.csv
+|           8fe1ba7f-aa32-4814-bcfe-c2ccde542b12.csv
 |           905665cc-50c3-4e78-be0f-6e845ec3c7c7.csv.gz
 |           9233f7f0-8bf7-44c9-89b7-3289d9ed19f2.csv.gz
 |           9250d741-4793-4d84-87ef-bb0f4fd67ad7.csv
@@ -18505,10 +18538,13 @@ C:\PY_DEV\MKOBI
 |           9993c8a0-8f85-48ea-a000-98f2f6300a6a.csv
 |           99ebacb1-768f-4724-b8ae-09ae00a5023c.csv
 |           9a897775-bb0f-4671-9f0f-aaff2768feb5.csv
+|           9be42ce4-5afe-4b18-8279-0b1036550161.csv.gz
+|           9c8bfb47-bef7-4ace-b335-56e107750aa0.csv
 |           9d022b3d-b5ed-425b-92c8-abe31bf88c56.csv
 |           9d3597b1-8fad-434d-ae31-828bb7dff7bf.csv
 |           9e32ae10-f1e3-4749-8ce8-91d6b9f58414.csv
 |           9f2902e0-3ca9-468e-b5bb-f8f95a7c8d61.csv
+|           9fa4a9b5-fc7d-42c4-b83c-54b75d1d0ec6.csv
 |           a06ef692-d129-41e0-8fb0-12fd3c25d526.csv
 |           a074cc9c-1874-4df4-955b-21f7e35d3f74.csv
 |           a1085e12-19af-444e-8511-96787dc0ce97.csv
@@ -18522,6 +18558,7 @@ C:\PY_DEV\MKOBI
 |           a3896d48-dcd4-4bd0-b31a-24ad62e5829b.csv.gz
 |           a3fb370f-d7ea-459e-b47c-6d5e188bd3e7.csv
 |           a46f41c1-11fe-4b67-bdf6-98aa6ff8d537.csv
+|           a48945b3-1a1f-4e9e-80fa-712cee128e09.csv
 |           a4f0e8ef-3fec-4c1c-827a-91d6412a9b39.csv
 |           a574c476-23f3-470e-85e0-a1968ad4599d.csv
 |           a58c218c-9568-4f46-b8e3-21d29ed2de86.csv
@@ -18565,6 +18602,7 @@ C:\PY_DEV\MKOBI
 |           b61f2375-a5fa-486a-bed5-577b5d2fb59f.csv
 |           b62ba704-4eea-451d-af69-29045b6c4b82.csv
 |           b6a3e3d4-7fc3-4a4f-a9ae-38c69be79a07.csv
+|           b77cc402-fb5c-4b61-84b8-b629e92afe5b.csv.gz
 |           b817c59b-eca8-4810-815d-995eb5c35f5f.csv
 |           b8882e7a-1f27-498e-b2dd-2c72e55118f3.csv
 |           ba814d93-3a0b-430a-ad3f-272ebd45ed80.csv
@@ -18573,11 +18611,13 @@ C:\PY_DEV\MKOBI
 |           bc0d017e-751a-43a8-a592-da342a88bff3.csv
 |           bc582f95-5f5e-436d-968b-f2924297663b.csv
 |           bd6557c8-220a-4da3-989f-dcfcad840e63.csv
+|           bd77355e-5489-4f89-b2d0-2122f6d73adc.csv
 |           bd871452-27c3-4c17-96ee-70704ec7aa6f.csv
 |           be912ab8-f50d-4ad1-b1cc-1ca5fdd5034f.csv.gz
 |           bebf1dba-d1f4-4480-99c1-f753f4fa7c1b.csv
 |           bf94b83a-4db1-4c5b-b3a5-6c5d13e51ee2.csv.gz
 |           bfa10293-3185-40be-bfbc-1ece50fa94e0.csv
+|           c0b4b201-7706-436b-a858-3ebf697f7778.csv
 |           c14d0526-1a1f-46f1-995f-3a96bc565060.csv
 |           c14d3d1c-51ef-4ff5-84cf-216e60d5a4cb.csv
 |           c199fba1-ff31-4e15-a4f7-d611e0b33d68.csv
@@ -18585,6 +18625,7 @@ C:\PY_DEV\MKOBI
 |           c3998ba9-b76d-4cf1-bd8a-98cb368a09d7.csv.gz
 |           c42d5263-6c78-4230-996f-2ec35bf47ab0.csv.gz
 |           c4e4ee82-eaf9-4231-9375-ddfd35bb6884.csv
+|           c57fe28a-1760-4ddb-8105-00a717740f85.csv.gz
 |           c64b879d-af24-4680-aa1f-259f78e327b6.csv
 |           c692a2ba-fd12-4365-9c73-b41aabe8f374.csv
 |           c69679c6-9add-47b1-8d8b-9a2fb4d195a9.csv
@@ -18607,6 +18648,7 @@ C:\PY_DEV\MKOBI
 |           c9a00998-ae94-49a5-ad4b-b5ea4e779d6e.csv
 |           c9b301d7-8676-4001-a2b8-ee97c3e8bce6.csv
 |           c9fe72c1-f71b-4921-8630-71cf1a1139ee.csv
+|           ca8f63b9-76f8-49e7-8046-30ec799ac7dd.csv
 |           cb294158-228b-4c5c-9128-dc0a0b1f7457.csv
 |           cb702403-3e47-404a-aeb0-70a0f075dfbe.csv
 |           cbe4d8bf-ca76-4d6f-8eb4-2ddf975bcf2f.csv
@@ -18615,6 +18657,7 @@ C:\PY_DEV\MKOBI
 |           cc27c09a-100d-444b-9e4b-b1f19df58f1f.csv
 |           cc2807db-65e1-462a-b45a-1c50c4d3e557.csv
 |           cc9ef445-083e-4751-b782-4528043124cd.csv
+|           cce9aaf2-9965-4ec8-85bd-2f6ff6ead7e5.csv
 |           ccf6a48a-9efe-480e-a8f9-48c90029c333.csv.gz
 |           cdd5d6e3-0d92-413e-ab06-deadedc6c6f7.csv
 |           ce189ad4-e4cc-45a2-b56c-d3bb9bbbf604.csv
@@ -18661,6 +18704,7 @@ C:\PY_DEV\MKOBI
 |           deca7de8-9dd3-4a89-b4af-42bd0d9ac242.csv
 |           df30ccd1-2740-4748-815f-7250bf813c03.csv
 |           df3638e0-12fa-4e3d-8763-75add320e331.csv
+|           df6b6adb-fc92-48e4-b751-4629de60bdf1.csv
 |           df77df4b-701e-445a-8c76-e49825cf49ba.csv
 |           dfefa7b9-b358-4fbc-89d4-1e137a860c42.csv
 |           e12da748-3659-4056-a8ee-c83d6a0ca5bd.csv
@@ -18682,7 +18726,9 @@ C:\PY_DEV\MKOBI
 |           e992c5fe-61c7-4cf2-832d-cc87152628dc.csv
 |           ea56b449-ee91-420a-9168-c491f997fb8c.csv
 |           eaaa7d9e-0893-4176-a4ee-1beb40c65261.csv.gz
+|           eac60643-acbb-42f4-b5f6-dc343b4f38b0.csv
 |           eadc80c5-5083-4ff8-884e-81a090668025.csv
+|           ebf4889f-f159-4717-9e11-d6a6098597f0.csv
 |           ec8309e7-1a6b-43da-8932-6014e0e5d104.csv
 |           ec89a36c-3881-4716-a04d-1dd8a6ec9147.csv
 |           ecb9c52e-2f17-49ab-ba00-71e59b939119.csv
@@ -18693,6 +18739,7 @@ C:\PY_DEV\MKOBI
 |           edf61201-cdf6-4ad4-9c6c-b74d74a6c497.csv
 |           ef280f43-5bdd-4c89-a763-743e07ea9a82.csv
 |           ef2bc891-1bc5-426a-85fb-bd8f52c3866a.csv
+|           ef6b5f13-cc0a-4d6a-a262-f2e4a6ef6e05.csv
 |           f01f0997-71e2-4391-ba17-24cb70ee0bf5.csv
 |           f0ba026d-2563-4ee4-9c4b-05447bb350a6.csv
 |           f0c43127-780f-41de-afda-5926d14d150d.csv
@@ -18701,6 +18748,7 @@ C:\PY_DEV\MKOBI
 |           f260c27d-f58a-43ae-8ff1-69b3bfdf985d.csv
 |           f308b9da-7bb4-4d21-9417-12dca8198d36.csv
 |           f34fcfc3-5907-4023-9f40-c78fa009b7e7.csv
+|           f36b2f07-1c44-4283-85e8-60a233daa5f3.csv
 |           f374a45a-74c8-4b01-992c-088607c3cc23.csv
 |           f4c67d40-9769-48ca-8782-f71d2ce4e9f6.csv.gz
 |           f5b77d69-e492-4bc5-898e-57e86e3db108.csv
@@ -18722,6 +18770,7 @@ C:\PY_DEV\MKOBI
 |           ff939227-d6dd-4515-9254-199643e1d29f.csv.gz
 |           
 +---docs
+|   |   README.md
 |   |   README_DOCKER.md
 |   |   RUN.md
 |   |   SPEC.md
@@ -18731,6 +18780,7 @@ C:\PY_DEV\MKOBI
 |   |   
 |   +---00-overview
 |   |       data-flow.md
+|   |       doc-maintenance-rules.md
 |   |       overview.md
 |   |       
 |   +---01-auth
@@ -18779,6 +18829,9 @@ C:\PY_DEV\MKOBI
 |   |       
 |   +---90-adr
 |   \---99-reference
+|           run-guide.md
+|           swagger.md
+|           
 +---frontend
 |   |   .gitignore
 |   |   eslint.config.js
@@ -18797,7 +18850,7 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           index-CkIT2K1p.js
+|   |           index-C5alNRlj.js
 |   |           
 |   +---node_modules
 |   |   |   .package-lock.json
@@ -18869,6 +18922,9 @@ C:\PY_DEV\MKOBI
 |   |   |       loose-envify
 |   |   |       loose-envify.cmd
 |   |   |       loose-envify.ps1
+|   |   |       lz-string
+|   |   |       lz-string.cmd
+|   |   |       lz-string.ps1
 |   |   |       nanoid
 |   |   |       nanoid.cmd
 |   |   |       nanoid.ps1
@@ -18893,6 +18949,12 @@ C:\PY_DEV\MKOBI
 |   |   |       semver
 |   |   |       semver.cmd
 |   |   |       semver.ps1
+|   |   |       specificity
+|   |   |       specificity.cmd
+|   |   |       specificity.ps1
+|   |   |       tldts
+|   |   |       tldts.cmd
+|   |   |       tldts.ps1
 |   |   |       topo2geo
 |   |   |       topo2geo.cmd
 |   |   |       topo2geo.ps1
@@ -18914,12 +18976,160 @@ C:\PY_DEV\MKOBI
 |   |   |       vite
 |   |   |       vite.cmd
 |   |   |       vite.ps1
+|   |   |       vitest
+|   |   |       vitest.cmd
+|   |   |       vitest.ps1
+|   |   |       why-is-node-running
+|   |   |       why-is-node-running.cmd
+|   |   |       why-is-node-running.ps1
 |   |   |       
 |   |   +---.tmp
 |   |   |       tsconfig.app.tsbuildinfo
 |   |   |       tsconfig.node.tsbuildinfo
 |   |   |       
+|   |   +---.vite
+|   |   |   \---vitest
+|   |   |       \---da39a3ee5e6b4b0d3255bfef95601890afd80709
+|   |   |               results.json
+|   |   |               
 |   |   +---.vite-temp
+|   |   +---@adobe
+|   |   |   \---css-tools
+|   |   |       |   LICENSE
+|   |   |       |   package.json
+|   |   |       |   README.md
+|   |   |       |   
+|   |   |       +---dist
+|   |   |       |   +---cjs
+|   |   |       |   |       adobe-css-tools.cjs
+|   |   |       |   |       adobe-css-tools.cjs.map
+|   |   |       |   |       adobe-css-tools.d.cts
+|   |   |       |   |       
+|   |   |       |   +---esm
+|   |   |       |   |       adobe-css-tools.d.mts
+|   |   |       |   |       adobe-css-tools.mjs
+|   |   |       |   |       adobe-css-tools.mjs.map
+|   |   |       |   |       
+|   |   |       |   \---umd
+|   |   |       |           adobe-css-tools.d.ts
+|   |   |       |           adobe-css-tools.js
+|   |   |       |           adobe-css-tools.js.map
+|   |   |       |           
+|   |   |       \---docs
+|   |   |               API.md
+|   |   |               AST.md
+|   |   |               CHANGELOG.md
+|   |   |               EXAMPLES.md
+|   |   |               
+|   |   +---@asamuzakjp
+|   |   |   +---css-color
+|   |   |   |   |   LICENSE
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   +---dist
+|   |   |   |   |   \---esm
+|   |   |   |   |       |   index.d.ts
+|   |   |   |   |       |   index.js
+|   |   |   |   |       |   index.js.map
+|   |   |   |   |       |   
+|   |   |   |   |       \---js
+|   |   |   |   |               cache.d.ts
+|   |   |   |   |               cache.js
+|   |   |   |   |               cache.js.map
+|   |   |   |   |               color.d.ts
+|   |   |   |   |               color.js
+|   |   |   |   |               color.js.map
+|   |   |   |   |               common.d.ts
+|   |   |   |   |               common.js
+|   |   |   |   |               common.js.map
+|   |   |   |   |               constant.d.ts
+|   |   |   |   |               constant.js
+|   |   |   |   |               constant.js.map
+|   |   |   |   |               convert.d.ts
+|   |   |   |   |               convert.js
+|   |   |   |   |               convert.js.map
+|   |   |   |   |               css-calc.d.ts
+|   |   |   |   |               css-calc.js
+|   |   |   |   |               css-calc.js.map
+|   |   |   |   |               css-gradient.d.ts
+|   |   |   |   |               css-gradient.js
+|   |   |   |   |               css-gradient.js.map
+|   |   |   |   |               css-var.d.ts
+|   |   |   |   |               css-var.js
+|   |   |   |   |               css-var.js.map
+|   |   |   |   |               relative-color.d.ts
+|   |   |   |   |               relative-color.js
+|   |   |   |   |               relative-color.js.map
+|   |   |   |   |               resolve.d.ts
+|   |   |   |   |               resolve.js
+|   |   |   |   |               resolve.js.map
+|   |   |   |   |               typedef.d.ts
+|   |   |   |   |               util.d.ts
+|   |   |   |   |               util.js
+|   |   |   |   |               util.js.map
+|   |   |   |   |               
+|   |   |   |   \---src
+|   |   |   |       |   index.ts
+|   |   |   |       |   
+|   |   |   |       \---js
+|   |   |   |               cache.ts
+|   |   |   |               color.ts
+|   |   |   |               common.ts
+|   |   |   |               constant.ts
+|   |   |   |               convert.ts
+|   |   |   |               css-calc.ts
+|   |   |   |               css-gradient.ts
+|   |   |   |               css-var.ts
+|   |   |   |               relative-color.ts
+|   |   |   |               resolve.ts
+|   |   |   |               typedef.ts
+|   |   |   |               util.ts
+|   |   |   |               
+|   |   |   +---dom-selector
+|   |   |   |   |   LICENSE
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   +---src
+|   |   |   |   |   |   index.js
+|   |   |   |   |   |   
+|   |   |   |   |   \---js
+|   |   |   |   |           constant.js
+|   |   |   |   |           finder.js
+|   |   |   |   |           matcher.js
+|   |   |   |   |           parser.js
+|   |   |   |   |           utility.js
+|   |   |   |   |           
+|   |   |   |   \---types
+|   |   |   |       |   index.d.ts
+|   |   |   |       |   
+|   |   |   |       \---js
+|   |   |   |               constant.d.ts
+|   |   |   |               finder.d.ts
+|   |   |   |               matcher.d.ts
+|   |   |   |               parser.d.ts
+|   |   |   |               utility.d.ts
+|   |   |   |               
+|   |   |   +---generational-cache
+|   |   |   |   |   LICENSE
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   +---src
+|   |   |   |   |       index.js
+|   |   |   |   |       
+|   |   |   |   \---types
+|   |   |   |           index.d.ts
+|   |   |   |           
+|   |   |   \---nwsapi
+|   |   |       |   LICENSE
+|   |   |       |   package.json
+|   |   |       |   README.md
+|   |   |       |   
+|   |   |       \---src
+|   |   |               nwsapi.js
+|   |   |               
 |   |   +---@babel
 |   |   |   +---code-frame
 |   |   |   |   |   LICENSE
@@ -20121,6 +20331,35 @@ C:\PY_DEV\MKOBI
 |   |   |                       isReactComponent.js
 |   |   |                       isReactComponent.js.map
 |   |   |                       
+|   |   +---@bramus
+|   |   |   \---specificity
+|   |   |       |   index.d.ts
+|   |   |       |   LICENSE
+|   |   |       |   package.json
+|   |   |       |   README.md
+|   |   |       |   
+|   |   |       +---bin
+|   |   |       |       cli.js
+|   |   |       |       
+|   |   |       +---dist
+|   |   |       |       index.cjs
+|   |   |       |       index.cjs.map
+|   |   |       |       index.js
+|   |   |       |       index.js.map
+|   |   |       |       
+|   |   |       \---src
+|   |   |           |   index.js
+|   |   |           |   
+|   |   |           +---core
+|   |   |           |       calculate.js
+|   |   |           |       index.js
+|   |   |           |       
+|   |   |           \---util
+|   |   |                   compare.js
+|   |   |                   filter.js
+|   |   |                   index.js
+|   |   |                   sort.js
+|   |   |                   
 |   |   +---@choojs
 |   |   |   \---findup
 |   |   |       |   .travis.yml
@@ -20148,6 +20387,67 @@ C:\PY_DEV\MKOBI
 |   |   |                                   \---a
 |   |   |                                           top.json
 |   |   |                                           
+|   |   +---@csstools
+|   |   |   +---color-helpers
+|   |   |   |   |   CHANGELOG.md
+|   |   |   |   |   LICENSE.md
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   \---dist
+|   |   |   |           index.d.ts
+|   |   |   |           index.mjs
+|   |   |   |           
+|   |   |   +---css-calc
+|   |   |   |   |   CHANGELOG.md
+|   |   |   |   |   LICENSE.md
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   \---dist
+|   |   |   |           index.d.ts
+|   |   |   |           index.mjs
+|   |   |   |           
+|   |   |   +---css-color-parser
+|   |   |   |   |   CHANGELOG.md
+|   |   |   |   |   LICENSE.md
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   \---dist
+|   |   |   |           index.d.ts
+|   |   |   |           index.mjs
+|   |   |   |           
+|   |   |   +---css-parser-algorithms
+|   |   |   |   |   CHANGELOG.md
+|   |   |   |   |   LICENSE.md
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   \---dist
+|   |   |   |           index.d.ts
+|   |   |   |           index.mjs
+|   |   |   |           
+|   |   |   +---css-syntax-patches-for-csstree
+|   |   |   |   |   CHANGELOG.md
+|   |   |   |   |   LICENSE.md
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   \---dist
+|   |   |   |           index.d.ts
+|   |   |   |           index.json
+|   |   |   |           
+|   |   |   \---css-tokenizer
+|   |   |       |   CHANGELOG.md
+|   |   |       |   LICENSE.md
+|   |   |       |   package.json
+|   |   |       |   README.md
+|   |   |       |   
+|   |   |       \---dist
+|   |   |               index.d.ts
+|   |   |               index.mjs
+|   |   |               
 |   |   +---@emotion
 |   |   |   +---babel-plugin
 |   |   |   |   |   LICENSE
@@ -20876,6 +21176,86 @@ C:\PY_DEV\MKOBI
 |   |   |           package.json
 |   |   |           README.md
 |   |   |           
+|   |   +---@exodus
+|   |   |   \---bytes
+|   |   |       |   array.d.ts
+|   |   |       |   array.js
+|   |   |       |   assert.js
+|   |   |       |   base32.d.ts
+|   |   |       |   base32.js
+|   |   |       |   base58.d.ts
+|   |   |       |   base58.js
+|   |   |       |   base58check.d.ts
+|   |   |       |   base58check.js
+|   |   |       |   base58check.node.js
+|   |   |       |   base64.d.ts
+|   |   |       |   base64.js
+|   |   |       |   bech32.d.ts
+|   |   |       |   bech32.js
+|   |   |       |   bigint.d.ts
+|   |   |       |   bigint.js
+|   |   |       |   encoding-browser.browser.js
+|   |   |       |   encoding-browser.d.ts
+|   |   |       |   encoding-browser.js
+|   |   |       |   encoding-browser.native.js
+|   |   |       |   encoding-lite.d.ts
+|   |   |       |   encoding-lite.js
+|   |   |       |   encoding.d.ts
+|   |   |       |   encoding.js
+|   |   |       |   hex.d.ts
+|   |   |       |   hex.js
+|   |   |       |   hex.node.js
+|   |   |       |   index.d.ts
+|   |   |       |   index.js
+|   |   |       |   LICENSE
+|   |   |       |   multi-byte.d.ts
+|   |   |       |   multi-byte.js
+|   |   |       |   multi-byte.node.js
+|   |   |       |   package.json
+|   |   |       |   README.md
+|   |   |       |   single-byte.d.ts
+|   |   |       |   single-byte.js
+|   |   |       |   single-byte.node.js
+|   |   |       |   utf16.browser.js
+|   |   |       |   utf16.d.ts
+|   |   |       |   utf16.js
+|   |   |       |   utf16.native.js
+|   |   |       |   utf16.node.js
+|   |   |       |   utf8.d.ts
+|   |   |       |   utf8.js
+|   |   |       |   utf8.node.js
+|   |   |       |   whatwg.d.ts
+|   |   |       |   whatwg.js
+|   |   |       |   wif.d.ts
+|   |   |       |   wif.js
+|   |   |       |   
+|   |   |       \---fallback
+|   |   |               base32.js
+|   |   |               base58check.js
+|   |   |               base64.js
+|   |   |               encoding.api.js
+|   |   |               encoding.js
+|   |   |               encoding.labels.js
+|   |   |               encoding.util.js
+|   |   |               hex.js
+|   |   |               latin1.js
+|   |   |               multi-byte.encodings.cjs
+|   |   |               multi-byte.encodings.json
+|   |   |               multi-byte.js
+|   |   |               multi-byte.table.js
+|   |   |               percent.js
+|   |   |               platform.browser.js
+|   |   |               platform.js
+|   |   |               platform.native.js
+|   |   |               single-byte.encodings.js
+|   |   |               single-byte.js
+|   |   |               utf16.js
+|   |   |               utf8.auto.browser.js
+|   |   |               utf8.auto.js
+|   |   |               utf8.auto.native.js
+|   |   |               utf8.js
+|   |   |               _utils.js
+|   |   |               
 |   |   +---@hookform
 |   |   |   \---resolvers
 |   |   |       |   LICENSE
@@ -74542,6 +74922,17 @@ C:\PY_DEV\MKOBI
 |   |   |                   simple-filters.js
 |   |   |                   
 |   |   +---@standard-schema
+|   |   |   +---spec
+|   |   |   |   |   LICENSE
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   \---dist
+|   |   |   |           index.cjs
+|   |   |   |           index.d.cts
+|   |   |   |           index.d.ts
+|   |   |   |           index.js
+|   |   |   |           
 |   |   |   \---utils
 |   |   |       |   LICENSE
 |   |   |       |   package.json
@@ -75251,6 +75642,666 @@ C:\PY_DEV\MKOBI
 |   |   |               useSuspenseQueries.ts
 |   |   |               useSuspenseQuery.ts
 |   |   |               
+|   |   +---@testing-library
+|   |   |   +---dom
+|   |   |   |   |   LICENSE
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   +---dist
+|   |   |   |   |   |   config.js
+|   |   |   |   |   |   DOMElementFilter.js
+|   |   |   |   |   |   event-map.js
+|   |   |   |   |   |   events.js
+|   |   |   |   |   |   get-node-text.js
+|   |   |   |   |   |   get-queries-for-element.js
+|   |   |   |   |   |   get-user-code-frame.js
+|   |   |   |   |   |   helpers.js
+|   |   |   |   |   |   index.js
+|   |   |   |   |   |   label-helpers.js
+|   |   |   |   |   |   matches.js
+|   |   |   |   |   |   pretty-dom.js
+|   |   |   |   |   |   query-helpers.js
+|   |   |   |   |   |   role-helpers.js
+|   |   |   |   |   |   screen.js
+|   |   |   |   |   |   suggestions.js
+|   |   |   |   |   |   wait-for-element-to-be-removed.js
+|   |   |   |   |   |   wait-for.js
+|   |   |   |   |   |   
+|   |   |   |   |   +---@testing-library
+|   |   |   |   |   |       dom.cjs.js
+|   |   |   |   |   |       dom.esm.js
+|   |   |   |   |   |       dom.umd.js
+|   |   |   |   |   |       dom.umd.js.map
+|   |   |   |   |   |       dom.umd.min.js
+|   |   |   |   |   |       dom.umd.min.js.map
+|   |   |   |   |   |       
+|   |   |   |   |   \---queries
+|   |   |   |   |           all-utils.js
+|   |   |   |   |           alt-text.js
+|   |   |   |   |           display-value.js
+|   |   |   |   |           index.js
+|   |   |   |   |           label-text.js
+|   |   |   |   |           placeholder-text.js
+|   |   |   |   |           role.js
+|   |   |   |   |           test-id.js
+|   |   |   |   |           text.js
+|   |   |   |   |           title.js
+|   |   |   |   |           
+|   |   |   |   \---types
+|   |   |   |           config.d.ts
+|   |   |   |           events.d.ts
+|   |   |   |           get-node-text.d.ts
+|   |   |   |           get-queries-for-element.d.ts
+|   |   |   |           index.d.ts
+|   |   |   |           matches.d.ts
+|   |   |   |           pretty-dom.d.ts
+|   |   |   |           queries.d.ts
+|   |   |   |           query-helpers.d.ts
+|   |   |   |           role-helpers.d.ts
+|   |   |   |           screen.d.ts
+|   |   |   |           suggestions.d.ts
+|   |   |   |           wait-for-element-to-be-removed.d.ts
+|   |   |   |           wait-for.d.ts
+|   |   |   |           
+|   |   |   +---jest-dom
+|   |   |   |   |   CHANGELOG.md
+|   |   |   |   |   jest-globals.d.ts
+|   |   |   |   |   jest-globals.js
+|   |   |   |   |   LICENSE
+|   |   |   |   |   matchers.d.ts
+|   |   |   |   |   matchers.js
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   vitest.d.ts
+|   |   |   |   |   vitest.js
+|   |   |   |   |   
+|   |   |   |   +---dist
+|   |   |   |   |       index.js
+|   |   |   |   |       index.mjs
+|   |   |   |   |       jest-globals.js
+|   |   |   |   |       jest-globals.mjs
+|   |   |   |   |       matchers-35e4d3bd.mjs
+|   |   |   |   |       matchers-98b869c1.js
+|   |   |   |   |       matchers.js
+|   |   |   |   |       matchers.mjs
+|   |   |   |   |       vitest.js
+|   |   |   |   |       vitest.mjs
+|   |   |   |   |       
+|   |   |   |   +---node_modules
+|   |   |   |   |   \---dom-accessibility-api
+|   |   |   |   |       |   LICENSE.md
+|   |   |   |   |       |   package.json
+|   |   |   |   |       |   README.md
+|   |   |   |   |       |   
+|   |   |   |   |       \---dist
+|   |   |   |   |           |   accessible-description.d.ts
+|   |   |   |   |           |   accessible-description.d.ts.map
+|   |   |   |   |           |   accessible-description.js
+|   |   |   |   |           |   accessible-description.js.map
+|   |   |   |   |           |   accessible-description.mjs
+|   |   |   |   |           |   accessible-description.mjs.map
+|   |   |   |   |           |   accessible-name-and-description.d.ts
+|   |   |   |   |           |   accessible-name-and-description.d.ts.map
+|   |   |   |   |           |   accessible-name-and-description.js
+|   |   |   |   |           |   accessible-name-and-description.js.map
+|   |   |   |   |           |   accessible-name-and-description.mjs
+|   |   |   |   |           |   accessible-name-and-description.mjs.map
+|   |   |   |   |           |   accessible-name.d.ts
+|   |   |   |   |           |   accessible-name.d.ts.map
+|   |   |   |   |           |   accessible-name.js
+|   |   |   |   |           |   accessible-name.js.map
+|   |   |   |   |           |   accessible-name.mjs
+|   |   |   |   |           |   accessible-name.mjs.map
+|   |   |   |   |           |   getRole.d.ts
+|   |   |   |   |           |   getRole.d.ts.map
+|   |   |   |   |           |   getRole.js
+|   |   |   |   |           |   getRole.js.map
+|   |   |   |   |           |   getRole.mjs
+|   |   |   |   |           |   getRole.mjs.map
+|   |   |   |   |           |   index.d.ts
+|   |   |   |   |           |   index.d.ts.map
+|   |   |   |   |           |   index.js
+|   |   |   |   |           |   index.js.map
+|   |   |   |   |           |   index.mjs
+|   |   |   |   |           |   index.mjs.map
+|   |   |   |   |           |   is-disabled.d.ts
+|   |   |   |   |           |   is-disabled.d.ts.map
+|   |   |   |   |           |   is-disabled.js
+|   |   |   |   |           |   is-disabled.js.map
+|   |   |   |   |           |   is-disabled.mjs
+|   |   |   |   |           |   is-disabled.mjs.map
+|   |   |   |   |           |   is-inaccessible.d.ts
+|   |   |   |   |           |   is-inaccessible.d.ts.map
+|   |   |   |   |           |   is-inaccessible.js
+|   |   |   |   |           |   is-inaccessible.js.map
+|   |   |   |   |           |   is-inaccessible.mjs
+|   |   |   |   |           |   is-inaccessible.mjs.map
+|   |   |   |   |           |   util.d.ts
+|   |   |   |   |           |   util.d.ts.map
+|   |   |   |   |           |   util.js
+|   |   |   |   |           |   util.js.map
+|   |   |   |   |           |   util.mjs
+|   |   |   |   |           |   util.mjs.map
+|   |   |   |   |           |   
+|   |   |   |   |           \---polyfills
+|   |   |   |   |                   array.from.d.ts
+|   |   |   |   |                   array.from.d.ts.map
+|   |   |   |   |                   array.from.js
+|   |   |   |   |                   array.from.js.map
+|   |   |   |   |                   array.from.mjs
+|   |   |   |   |                   array.from.mjs.map
+|   |   |   |   |                   iterator.d.js
+|   |   |   |   |                   iterator.d.js.map
+|   |   |   |   |                   iterator.d.mjs
+|   |   |   |   |                   iterator.d.mjs.map
+|   |   |   |   |                   SetLike.d.ts
+|   |   |   |   |                   SetLike.d.ts.map
+|   |   |   |   |                   SetLike.js
+|   |   |   |   |                   SetLike.js.map
+|   |   |   |   |                   SetLike.mjs
+|   |   |   |   |                   SetLike.mjs.map
+|   |   |   |   |                   
+|   |   |   |   \---types
+|   |   |   |       |   bun.d.ts
+|   |   |   |       |   index.d.ts
+|   |   |   |       |   jest-globals.d.ts
+|   |   |   |       |   jest.d.ts
+|   |   |   |       |   matchers-standalone.d.ts
+|   |   |   |       |   matchers.d.ts
+|   |   |   |       |   vitest.d.ts
+|   |   |   |       |   
+|   |   |   |       \---__tests__
+|   |   |   |           +---bun
+|   |   |   |           |       bun-custom-expect-types.test.ts
+|   |   |   |           |       bun-types.test.ts
+|   |   |   |           |       tsconfig.json
+|   |   |   |           |       
+|   |   |   |           +---jest
+|   |   |   |           |       jest-custom-expect-types.test.ts
+|   |   |   |           |       jest-types.test.ts
+|   |   |   |           |       tsconfig.json
+|   |   |   |           |       
+|   |   |   |           +---jest-globals
+|   |   |   |           |       jest-globals-custom-expect-types.test.ts
+|   |   |   |           |       jest-globals-types.test.ts
+|   |   |   |           |       tsconfig.json
+|   |   |   |           |       
+|   |   |   |           \---vitest
+|   |   |   |                   tsconfig.json
+|   |   |   |                   vitest-custom-expect-types.test.ts
+|   |   |   |                   vitest-types.test.ts
+|   |   |   |                   
+|   |   |   +---react
+|   |   |   |   |   dont-cleanup-after-each.js
+|   |   |   |   |   LICENSE
+|   |   |   |   |   package.json
+|   |   |   |   |   pure.d.ts
+|   |   |   |   |   pure.js
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   +---dist
+|   |   |   |   |   |   act-compat.js
+|   |   |   |   |   |   config.js
+|   |   |   |   |   |   fire-event.js
+|   |   |   |   |   |   index.js
+|   |   |   |   |   |   pure.js
+|   |   |   |   |   |   
+|   |   |   |   |   \---@testing-library
+|   |   |   |   |           react.cjs.js
+|   |   |   |   |           react.esm.js
+|   |   |   |   |           react.pure.cjs.js
+|   |   |   |   |           react.pure.esm.js
+|   |   |   |   |           react.pure.umd.js
+|   |   |   |   |           react.pure.umd.js.map
+|   |   |   |   |           react.pure.umd.min.js
+|   |   |   |   |           react.pure.umd.min.js.map
+|   |   |   |   |           react.umd.js
+|   |   |   |   |           react.umd.js.map
+|   |   |   |   |           react.umd.min.js
+|   |   |   |   |           react.umd.min.js.map
+|   |   |   |   |           
+|   |   |   |   \---types
+|   |   |   |           index.d.ts
+|   |   |   |           pure.d.ts
+|   |   |   |           
+|   |   |   \---user-event
+|   |   |       |   LICENSE
+|   |   |       |   package.json
+|   |   |       |   README.md
+|   |   |       |   
+|   |   |       \---dist
+|   |   |           +---cjs
+|   |   |           |   |   index.js
+|   |   |           |   |   options.js
+|   |   |           |   |   package.json
+|   |   |           |   |   
+|   |   |           |   +---clipboard
+|   |   |           |   |       copy.js
+|   |   |           |   |       cut.js
+|   |   |           |   |       index.js
+|   |   |           |   |       paste.js
+|   |   |           |   |       
+|   |   |           |   +---convenience
+|   |   |           |   |       click.js
+|   |   |           |   |       hover.js
+|   |   |           |   |       index.js
+|   |   |           |   |       tab.js
+|   |   |           |   |       
+|   |   |           |   +---document
+|   |   |           |   |       copySelection.js
+|   |   |           |   |       getValueOrTextContent.js
+|   |   |           |   |       index.js
+|   |   |           |   |       interceptor.js
+|   |   |           |   |       patchFocus.js
+|   |   |           |   |       prepareDocument.js
+|   |   |           |   |       trackValue.js
+|   |   |           |   |       UI.js
+|   |   |           |   |       
+|   |   |           |   +---event
+|   |   |           |   |   |   createEvent.js
+|   |   |           |   |   |   dispatchEvent.js
+|   |   |           |   |   |   eventMap.js
+|   |   |           |   |   |   focus.js
+|   |   |           |   |   |   index.js
+|   |   |           |   |   |   input.js
+|   |   |           |   |   |   radio.js
+|   |   |           |   |   |   types.js
+|   |   |           |   |   |   wrapEvent.js
+|   |   |           |   |   |   
+|   |   |           |   |   +---behavior
+|   |   |           |   |   |       click.js
+|   |   |           |   |   |       cut.js
+|   |   |           |   |   |       index.js
+|   |   |           |   |   |       keydown.js
+|   |   |           |   |   |       keypress.js
+|   |   |           |   |   |       keyup.js
+|   |   |           |   |   |       paste.js
+|   |   |           |   |   |       registry.js
+|   |   |           |   |   |       
+|   |   |           |   |   \---selection
+|   |   |           |   |           getInputRange.js
+|   |   |           |   |           getTargetTypeAndSelection.js
+|   |   |           |   |           index.js
+|   |   |           |   |           modifySelection.js
+|   |   |           |   |           modifySelectionPerMouse.js
+|   |   |           |   |           moveSelection.js
+|   |   |           |   |           resolveCaretPosition.js
+|   |   |           |   |           selectAll.js
+|   |   |           |   |           setSelection.js
+|   |   |           |   |           setSelectionPerMouse.js
+|   |   |           |   |           setSelectionRange.js
+|   |   |           |   |           updateSelectionOnFocus.js
+|   |   |           |   |           
+|   |   |           |   +---keyboard
+|   |   |           |   |       index.js
+|   |   |           |   |       keyMap.js
+|   |   |           |   |       parseKeyDef.js
+|   |   |           |   |       
+|   |   |           |   +---pointer
+|   |   |           |   |       index.js
+|   |   |           |   |       keyMap.js
+|   |   |           |   |       parseKeyDef.js
+|   |   |           |   |       
+|   |   |           |   +---setup
+|   |   |           |   |       api.js
+|   |   |           |   |       directApi.js
+|   |   |           |   |       index.js
+|   |   |           |   |       setup.js
+|   |   |           |   |       wrapAsync.js
+|   |   |           |   |       
+|   |   |           |   +---system
+|   |   |           |   |   |   index.js
+|   |   |           |   |   |   keyboard.js
+|   |   |           |   |   |   
+|   |   |           |   |   \---pointer
+|   |   |           |   |           buttons.js
+|   |   |           |   |           device.js
+|   |   |           |   |           index.js
+|   |   |           |   |           mouse.js
+|   |   |           |   |           pointer.js
+|   |   |           |   |           shared.js
+|   |   |           |   |           
+|   |   |           |   +---utility
+|   |   |           |   |       clear.js
+|   |   |           |   |       index.js
+|   |   |           |   |       selectOptions.js
+|   |   |           |   |       type.js
+|   |   |           |   |       upload.js
+|   |   |           |   |       
+|   |   |           |   \---utils
+|   |   |           |       |   index.js
+|   |   |           |       |   
+|   |   |           |       +---click
+|   |   |           |       |       isClickableInput.js
+|   |   |           |       |       
+|   |   |           |       +---dataTransfer
+|   |   |           |       |       Blob.js
+|   |   |           |       |       Clipboard.js
+|   |   |           |       |       DataTransfer.js
+|   |   |           |       |       FileList.js
+|   |   |           |       |       
+|   |   |           |       +---edit
+|   |   |           |       |       isContentEditable.js
+|   |   |           |       |       isEditable.js
+|   |   |           |       |       maxLength.js
+|   |   |           |       |       setFiles.js
+|   |   |           |       |       timeValue.js
+|   |   |           |       |       
+|   |   |           |       +---focus
+|   |   |           |       |       cursor.js
+|   |   |           |       |       getActiveElement.js
+|   |   |           |       |       getTabDestination.js
+|   |   |           |       |       isFocusable.js
+|   |   |           |       |       selection.js
+|   |   |           |       |       selector.js
+|   |   |           |       |       
+|   |   |           |       +---keyDef
+|   |   |           |       |       readNextDescriptor.js
+|   |   |           |       |       
+|   |   |           |       +---misc
+|   |   |           |       |       cloneEvent.js
+|   |   |           |       |       findClosest.js
+|   |   |           |       |       getDocumentFromNode.js
+|   |   |           |       |       getTreeDiff.js
+|   |   |           |       |       getWindow.js
+|   |   |           |       |       isDescendantOrSelf.js
+|   |   |           |       |       isDisabled.js
+|   |   |           |       |       isElementType.js
+|   |   |           |       |       isVisible.js
+|   |   |           |       |       level.js
+|   |   |           |       |       wait.js
+|   |   |           |       |       
+|   |   |           |       \---pointer
+|   |   |           |               cssPointerEvents.js
+|   |   |           |               
+|   |   |           +---esm
+|   |   |           |   |   index.js
+|   |   |           |   |   options.js
+|   |   |           |   |   package.json
+|   |   |           |   |   
+|   |   |           |   +---clipboard
+|   |   |           |   |       copy.js
+|   |   |           |   |       cut.js
+|   |   |           |   |       index.js
+|   |   |           |   |       paste.js
+|   |   |           |   |       
+|   |   |           |   +---convenience
+|   |   |           |   |       click.js
+|   |   |           |   |       hover.js
+|   |   |           |   |       index.js
+|   |   |           |   |       tab.js
+|   |   |           |   |       
+|   |   |           |   +---document
+|   |   |           |   |       copySelection.js
+|   |   |           |   |       getValueOrTextContent.js
+|   |   |           |   |       index.js
+|   |   |           |   |       interceptor.js
+|   |   |           |   |       patchFocus.js
+|   |   |           |   |       prepareDocument.js
+|   |   |           |   |       trackValue.js
+|   |   |           |   |       UI.js
+|   |   |           |   |       
+|   |   |           |   +---event
+|   |   |           |   |   |   createEvent.js
+|   |   |           |   |   |   dispatchEvent.js
+|   |   |           |   |   |   eventMap.js
+|   |   |           |   |   |   focus.js
+|   |   |           |   |   |   index.js
+|   |   |           |   |   |   input.js
+|   |   |           |   |   |   radio.js
+|   |   |           |   |   |   types.js
+|   |   |           |   |   |   wrapEvent.js
+|   |   |           |   |   |   
+|   |   |           |   |   +---behavior
+|   |   |           |   |   |       click.js
+|   |   |           |   |   |       cut.js
+|   |   |           |   |   |       index.js
+|   |   |           |   |   |       keydown.js
+|   |   |           |   |   |       keypress.js
+|   |   |           |   |   |       keyup.js
+|   |   |           |   |   |       paste.js
+|   |   |           |   |   |       registry.js
+|   |   |           |   |   |       
+|   |   |           |   |   \---selection
+|   |   |           |   |           getInputRange.js
+|   |   |           |   |           getTargetTypeAndSelection.js
+|   |   |           |   |           index.js
+|   |   |           |   |           modifySelection.js
+|   |   |           |   |           modifySelectionPerMouse.js
+|   |   |           |   |           moveSelection.js
+|   |   |           |   |           resolveCaretPosition.js
+|   |   |           |   |           selectAll.js
+|   |   |           |   |           setSelection.js
+|   |   |           |   |           setSelectionPerMouse.js
+|   |   |           |   |           setSelectionRange.js
+|   |   |           |   |           updateSelectionOnFocus.js
+|   |   |           |   |           
+|   |   |           |   +---keyboard
+|   |   |           |   |       index.js
+|   |   |           |   |       keyMap.js
+|   |   |           |   |       parseKeyDef.js
+|   |   |           |   |       
+|   |   |           |   +---pointer
+|   |   |           |   |       index.js
+|   |   |           |   |       keyMap.js
+|   |   |           |   |       parseKeyDef.js
+|   |   |           |   |       
+|   |   |           |   +---setup
+|   |   |           |   |       api.js
+|   |   |           |   |       directApi.js
+|   |   |           |   |       index.js
+|   |   |           |   |       setup.js
+|   |   |           |   |       wrapAsync.js
+|   |   |           |   |       
+|   |   |           |   +---system
+|   |   |           |   |   |   index.js
+|   |   |           |   |   |   keyboard.js
+|   |   |           |   |   |   
+|   |   |           |   |   \---pointer
+|   |   |           |   |           buttons.js
+|   |   |           |   |           device.js
+|   |   |           |   |           index.js
+|   |   |           |   |           mouse.js
+|   |   |           |   |           pointer.js
+|   |   |           |   |           shared.js
+|   |   |           |   |           
+|   |   |           |   +---utility
+|   |   |           |   |       clear.js
+|   |   |           |   |       index.js
+|   |   |           |   |       selectOptions.js
+|   |   |           |   |       type.js
+|   |   |           |   |       upload.js
+|   |   |           |   |       
+|   |   |           |   \---utils
+|   |   |           |       |   index.js
+|   |   |           |       |   
+|   |   |           |       +---click
+|   |   |           |       |       isClickableInput.js
+|   |   |           |       |       
+|   |   |           |       +---dataTransfer
+|   |   |           |       |       Blob.js
+|   |   |           |       |       Clipboard.js
+|   |   |           |       |       DataTransfer.js
+|   |   |           |       |       FileList.js
+|   |   |           |       |       
+|   |   |           |       +---edit
+|   |   |           |       |       isContentEditable.js
+|   |   |           |       |       isEditable.js
+|   |   |           |       |       maxLength.js
+|   |   |           |       |       setFiles.js
+|   |   |           |       |       timeValue.js
+|   |   |           |       |       
+|   |   |           |       +---focus
+|   |   |           |       |       cursor.js
+|   |   |           |       |       getActiveElement.js
+|   |   |           |       |       getTabDestination.js
+|   |   |           |       |       isFocusable.js
+|   |   |           |       |       selection.js
+|   |   |           |       |       selector.js
+|   |   |           |       |       
+|   |   |           |       +---keyDef
+|   |   |           |       |       readNextDescriptor.js
+|   |   |           |       |       
+|   |   |           |       +---misc
+|   |   |           |       |       cloneEvent.js
+|   |   |           |       |       findClosest.js
+|   |   |           |       |       getDocumentFromNode.js
+|   |   |           |       |       getTreeDiff.js
+|   |   |           |       |       getWindow.js
+|   |   |           |       |       isDescendantOrSelf.js
+|   |   |           |       |       isDisabled.js
+|   |   |           |       |       isElementType.js
+|   |   |           |       |       isVisible.js
+|   |   |           |       |       level.js
+|   |   |           |       |       wait.js
+|   |   |           |       |       
+|   |   |           |       \---pointer
+|   |   |           |               cssPointerEvents.js
+|   |   |           |               
+|   |   |           \---types
+|   |   |               |   index.d.ts
+|   |   |               |   options.d.ts
+|   |   |               |   
+|   |   |               +---clipboard
+|   |   |               |       copy.d.ts
+|   |   |               |       cut.d.ts
+|   |   |               |       index.d.ts
+|   |   |               |       paste.d.ts
+|   |   |               |       
+|   |   |               +---convenience
+|   |   |               |       click.d.ts
+|   |   |               |       hover.d.ts
+|   |   |               |       index.d.ts
+|   |   |               |       tab.d.ts
+|   |   |               |       
+|   |   |               +---document
+|   |   |               |       copySelection.d.ts
+|   |   |               |       getValueOrTextContent.d.ts
+|   |   |               |       index.d.ts
+|   |   |               |       interceptor.d.ts
+|   |   |               |       patchFocus.d.ts
+|   |   |               |       prepareDocument.d.ts
+|   |   |               |       trackValue.d.ts
+|   |   |               |       UI.d.ts
+|   |   |               |       
+|   |   |               +---event
+|   |   |               |   |   createEvent.d.ts
+|   |   |               |   |   dispatchEvent.d.ts
+|   |   |               |   |   eventMap.d.ts
+|   |   |               |   |   focus.d.ts
+|   |   |               |   |   index.d.ts
+|   |   |               |   |   input.d.ts
+|   |   |               |   |   radio.d.ts
+|   |   |               |   |   types.d.ts
+|   |   |               |   |   wrapEvent.d.ts
+|   |   |               |   |   
+|   |   |               |   +---behavior
+|   |   |               |   |       click.d.ts
+|   |   |               |   |       cut.d.ts
+|   |   |               |   |       index.d.ts
+|   |   |               |   |       keydown.d.ts
+|   |   |               |   |       keypress.d.ts
+|   |   |               |   |       keyup.d.ts
+|   |   |               |   |       paste.d.ts
+|   |   |               |   |       registry.d.ts
+|   |   |               |   |       
+|   |   |               |   \---selection
+|   |   |               |           getInputRange.d.ts
+|   |   |               |           getTargetTypeAndSelection.d.ts
+|   |   |               |           index.d.ts
+|   |   |               |           modifySelection.d.ts
+|   |   |               |           modifySelectionPerMouse.d.ts
+|   |   |               |           moveSelection.d.ts
+|   |   |               |           resolveCaretPosition.d.ts
+|   |   |               |           selectAll.d.ts
+|   |   |               |           setSelection.d.ts
+|   |   |               |           setSelectionPerMouse.d.ts
+|   |   |               |           setSelectionRange.d.ts
+|   |   |               |           updateSelectionOnFocus.d.ts
+|   |   |               |           
+|   |   |               +---keyboard
+|   |   |               |       index.d.ts
+|   |   |               |       keyMap.d.ts
+|   |   |               |       parseKeyDef.d.ts
+|   |   |               |       
+|   |   |               +---pointer
+|   |   |               |       index.d.ts
+|   |   |               |       keyMap.d.ts
+|   |   |               |       parseKeyDef.d.ts
+|   |   |               |       
+|   |   |               +---setup
+|   |   |               |       api.d.ts
+|   |   |               |       directApi.d.ts
+|   |   |               |       index.d.ts
+|   |   |               |       setup.d.ts
+|   |   |               |       wrapAsync.d.ts
+|   |   |               |       
+|   |   |               +---system
+|   |   |               |   |   index.d.ts
+|   |   |               |   |   keyboard.d.ts
+|   |   |               |   |   
+|   |   |               |   \---pointer
+|   |   |               |           buttons.d.ts
+|   |   |               |           device.d.ts
+|   |   |               |           index.d.ts
+|   |   |               |           mouse.d.ts
+|   |   |               |           pointer.d.ts
+|   |   |               |           shared.d.ts
+|   |   |               |           
+|   |   |               +---utility
+|   |   |               |       clear.d.ts
+|   |   |               |       index.d.ts
+|   |   |               |       selectOptions.d.ts
+|   |   |               |       type.d.ts
+|   |   |               |       upload.d.ts
+|   |   |               |       
+|   |   |               \---utils
+|   |   |                   |   index.d.ts
+|   |   |                   |   
+|   |   |                   +---click
+|   |   |                   |       isClickableInput.d.ts
+|   |   |                   |       
+|   |   |                   +---dataTransfer
+|   |   |                   |       Blob.d.ts
+|   |   |                   |       Clipboard.d.ts
+|   |   |                   |       DataTransfer.d.ts
+|   |   |                   |       FileList.d.ts
+|   |   |                   |       
+|   |   |                   +---edit
+|   |   |                   |       isContentEditable.d.ts
+|   |   |                   |       isEditable.d.ts
+|   |   |                   |       maxLength.d.ts
+|   |   |                   |       setFiles.d.ts
+|   |   |                   |       timeValue.d.ts
+|   |   |                   |       
+|   |   |                   +---focus
+|   |   |                   |       cursor.d.ts
+|   |   |                   |       getActiveElement.d.ts
+|   |   |                   |       getTabDestination.d.ts
+|   |   |                   |       isFocusable.d.ts
+|   |   |                   |       selection.d.ts
+|   |   |                   |       selector.d.ts
+|   |   |                   |       
+|   |   |                   +---keyDef
+|   |   |                   |       readNextDescriptor.d.ts
+|   |   |                   |       
+|   |   |                   +---misc
+|   |   |                   |       cloneEvent.d.ts
+|   |   |                   |       findClosest.d.ts
+|   |   |                   |       getDocumentFromNode.d.ts
+|   |   |                   |       getTreeDiff.d.ts
+|   |   |                   |       getWindow.d.ts
+|   |   |                   |       isDescendantOrSelf.d.ts
+|   |   |                   |       isDisabled.d.ts
+|   |   |                   |       isElementType.d.ts
+|   |   |                   |       isVisible.d.ts
+|   |   |                   |       level.d.ts
+|   |   |                   |       wait.d.ts
+|   |   |                   |       
+|   |   |                   \---pointer
+|   |   |                           cssPointerEvents.d.ts
+|   |   |                           
 |   |   +---@turf
 |   |   |   +---area
 |   |   |   |   |   LICENSE
@@ -75333,6 +76384,25 @@ C:\PY_DEV\MKOBI
 |   |   |                   index.js.map
 |   |   |                   
 |   |   +---@types
+|   |   |   +---aria-query
+|   |   |   |       index.d.ts
+|   |   |   |       LICENSE
+|   |   |   |       package.json
+|   |   |   |       README.md
+|   |   |   |       
+|   |   |   +---chai
+|   |   |   |       index.d.ts
+|   |   |   |       LICENSE
+|   |   |   |       package.json
+|   |   |   |       README.md
+|   |   |   |       register-should.d.ts
+|   |   |   |       
+|   |   |   +---deep-eql
+|   |   |   |       index.d.ts
+|   |   |   |       LICENSE
+|   |   |   |       package.json
+|   |   |   |       README.md
+|   |   |   |       
 |   |   |   +---esrecurse
 |   |   |   |       index.d.ts
 |   |   |   |       LICENSE
@@ -76884,6 +77954,144 @@ C:\PY_DEV\MKOBI
 |   |   |               optionalTypes.d.ts
 |   |   |               preamble.d.ts
 |   |   |               
+|   |   +---@vitest
+|   |   |   +---expect
+|   |   |   |   |   LICENSE
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   \---dist
+|   |   |   |           index.d.ts
+|   |   |   |           index.js
+|   |   |   |           
+|   |   |   +---mocker
+|   |   |   |   |   LICENSE
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   \---dist
+|   |   |   |           auto-register.d.ts
+|   |   |   |           auto-register.js
+|   |   |   |           automock.d.ts
+|   |   |   |           automock.js
+|   |   |   |           browser.d.ts
+|   |   |   |           browser.js
+|   |   |   |           chunk-automock.js
+|   |   |   |           chunk-helpers.js
+|   |   |   |           chunk-hoistMocks.js
+|   |   |   |           chunk-interceptor-native.js
+|   |   |   |           chunk-mocker.js
+|   |   |   |           chunk-pathe.M-eThtNZ.js
+|   |   |   |           chunk-registry.js
+|   |   |   |           chunk-utils.js
+|   |   |   |           hoistMocks.d-w2ILr1dG.d.ts
+|   |   |   |           index.d-B41z0AuW.d.ts
+|   |   |   |           index.d.ts
+|   |   |   |           index.js
+|   |   |   |           mocker.d-QEntlm6J.d.ts
+|   |   |   |           node.d.ts
+|   |   |   |           node.js
+|   |   |   |           redirect.d.ts
+|   |   |   |           redirect.js
+|   |   |   |           register.d.ts
+|   |   |   |           register.js
+|   |   |   |           transforms.d.ts
+|   |   |   |           transforms.js
+|   |   |   |           types.d-BjI5eAwu.d.ts
+|   |   |   |           
+|   |   |   +---pretty-format
+|   |   |   |   |   LICENSE
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   \---dist
+|   |   |   |           index.d.ts
+|   |   |   |           index.js
+|   |   |   |           
+|   |   |   +---runner
+|   |   |   |   |   LICENSE
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   types.d.ts
+|   |   |   |   |   utils.d.ts
+|   |   |   |   |   
+|   |   |   |   \---dist
+|   |   |   |           chunk-artifact.js
+|   |   |   |           index.d.ts
+|   |   |   |           index.js
+|   |   |   |           tasks.d-DEYaIMIu.d.ts
+|   |   |   |           types.d.ts
+|   |   |   |           types.js
+|   |   |   |           utils.d.ts
+|   |   |   |           utils.js
+|   |   |   |           
+|   |   |   +---snapshot
+|   |   |   |   |   environment.d.ts
+|   |   |   |   |   LICENSE
+|   |   |   |   |   manager.d.ts
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   \---dist
+|   |   |   |           environment.d-DOJxxZV9.d.ts
+|   |   |   |           environment.d.ts
+|   |   |   |           environment.js
+|   |   |   |           index.d.ts
+|   |   |   |           index.js
+|   |   |   |           manager.d.ts
+|   |   |   |           manager.js
+|   |   |   |           rawSnapshot.d-D_X3-62x.d.ts
+|   |   |   |           
+|   |   |   +---spy
+|   |   |   |   |   LICENSE
+|   |   |   |   |   optional-types.d.ts
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   \---dist
+|   |   |   |           index.d.ts
+|   |   |   |           index.js
+|   |   |   |           
+|   |   |   \---utils
+|   |   |       |   diff.d.ts
+|   |   |       |   error.d.ts
+|   |   |       |   helpers.d.ts
+|   |   |       |   LICENSE
+|   |   |       |   package.json
+|   |   |       |   README.md
+|   |   |       |   
+|   |   |       \---dist
+|   |   |           |   chunk-pathe.M-eThtNZ.js
+|   |   |           |   constants.d.ts
+|   |   |           |   constants.js
+|   |   |           |   diff.d.ts
+|   |   |           |   diff.js
+|   |   |           |   display.d.ts
+|   |   |           |   display.js
+|   |   |           |   error.d.ts
+|   |   |           |   error.js
+|   |   |           |   helpers.d.ts
+|   |   |           |   helpers.js
+|   |   |           |   index.d.ts
+|   |   |           |   index.js
+|   |   |           |   offset.d.ts
+|   |   |           |   offset.js
+|   |   |           |   resolver.d.ts
+|   |   |           |   resolver.js
+|   |   |           |   serialize.d.ts
+|   |   |           |   serialize.js
+|   |   |           |   source-map.d.ts
+|   |   |           |   source-map.js
+|   |   |           |   timers.d.ts
+|   |   |           |   timers.js
+|   |   |           |   types.d-BCElaP-c.d.ts
+|   |   |           |   types.d.ts
+|   |   |           |   types.js
+|   |   |           |   
+|   |   |           \---source-map
+|   |   |                   node.d.ts
+|   |   |                   node.js
+|   |   |                   
 |   |   +---abs-svg-path
 |   |   |       index.js
 |   |   |       package.json
@@ -77021,6 +78229,193 @@ C:\PY_DEV\MKOBI
 |   |   |           publish-built-version
 |   |   |           travis-gh-pages
 |   |   |           
+|   |   +---ansi-regex
+|   |   |       index.d.ts
+|   |   |       index.js
+|   |   |       license
+|   |   |       package.json
+|   |   |       readme.md
+|   |   |       
+|   |   +---ansi-styles
+|   |   |       index.d.ts
+|   |   |       index.js
+|   |   |       license
+|   |   |       package.json
+|   |   |       readme.md
+|   |   |       
+|   |   +---aria-query
+|   |   |   |   CHANGELOG.md
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---lib
+|   |   |       |   ariaPropsMap.js
+|   |   |       |   domMap.js
+|   |   |       |   elementRoleMap.js
+|   |   |       |   index.js
+|   |   |       |   roleElementMap.js
+|   |   |       |   rolesMap.js
+|   |   |       |   
+|   |   |       +---etc
+|   |   |       |   \---roles
+|   |   |       |       |   ariaAbstractRoles.js
+|   |   |       |       |   ariaDpubRoles.js
+|   |   |       |       |   ariaGraphicsRoles.js
+|   |   |       |       |   ariaLiteralRoles.js
+|   |   |       |       |   
+|   |   |       |       +---abstract
+|   |   |       |       |       commandRole.js
+|   |   |       |       |       compositeRole.js
+|   |   |       |       |       inputRole.js
+|   |   |       |       |       landmarkRole.js
+|   |   |       |       |       rangeRole.js
+|   |   |       |       |       roletypeRole.js
+|   |   |       |       |       sectionheadRole.js
+|   |   |       |       |       sectionRole.js
+|   |   |       |       |       selectRole.js
+|   |   |       |       |       structureRole.js
+|   |   |       |       |       widgetRole.js
+|   |   |       |       |       windowRole.js
+|   |   |       |       |       
+|   |   |       |       +---dpub
+|   |   |       |       |       docAbstractRole.js
+|   |   |       |       |       docAcknowledgmentsRole.js
+|   |   |       |       |       docAfterwordRole.js
+|   |   |       |       |       docAppendixRole.js
+|   |   |       |       |       docBacklinkRole.js
+|   |   |       |       |       docBiblioentryRole.js
+|   |   |       |       |       docBibliographyRole.js
+|   |   |       |       |       docBibliorefRole.js
+|   |   |       |       |       docChapterRole.js
+|   |   |       |       |       docColophonRole.js
+|   |   |       |       |       docConclusionRole.js
+|   |   |       |       |       docCoverRole.js
+|   |   |       |       |       docCreditRole.js
+|   |   |       |       |       docCreditsRole.js
+|   |   |       |       |       docDedicationRole.js
+|   |   |       |       |       docEndnoteRole.js
+|   |   |       |       |       docEndnotesRole.js
+|   |   |       |       |       docEpigraphRole.js
+|   |   |       |       |       docEpilogueRole.js
+|   |   |       |       |       docErrataRole.js
+|   |   |       |       |       docExampleRole.js
+|   |   |       |       |       docFootnoteRole.js
+|   |   |       |       |       docForewordRole.js
+|   |   |       |       |       docGlossaryRole.js
+|   |   |       |       |       docGlossrefRole.js
+|   |   |       |       |       docIndexRole.js
+|   |   |       |       |       docIntroductionRole.js
+|   |   |       |       |       docNoterefRole.js
+|   |   |       |       |       docNoticeRole.js
+|   |   |       |       |       docPagebreakRole.js
+|   |   |       |       |       docPagelistRole.js
+|   |   |       |       |       docPartRole.js
+|   |   |       |       |       docPrefaceRole.js
+|   |   |       |       |       docPrologueRole.js
+|   |   |       |       |       docPullquoteRole.js
+|   |   |       |       |       docQnaRole.js
+|   |   |       |       |       docSubtitleRole.js
+|   |   |       |       |       docTipRole.js
+|   |   |       |       |       docTocRole.js
+|   |   |       |       |       
+|   |   |       |       +---graphics
+|   |   |       |       |       graphicsDocumentRole.js
+|   |   |       |       |       graphicsObjectRole.js
+|   |   |       |       |       graphicsSymbolRole.js
+|   |   |       |       |       
+|   |   |       |       \---literal
+|   |   |       |               alertdialogRole.js
+|   |   |       |               alertRole.js
+|   |   |       |               applicationRole.js
+|   |   |       |               articleRole.js
+|   |   |       |               bannerRole.js
+|   |   |       |               blockquoteRole.js
+|   |   |       |               buttonRole.js
+|   |   |       |               captionRole.js
+|   |   |       |               cellRole.js
+|   |   |       |               checkboxRole.js
+|   |   |       |               codeRole.js
+|   |   |       |               columnheaderRole.js
+|   |   |       |               comboboxRole.js
+|   |   |       |               complementaryRole.js
+|   |   |       |               contentinfoRole.js
+|   |   |       |               definitionRole.js
+|   |   |       |               deletionRole.js
+|   |   |       |               dialogRole.js
+|   |   |       |               directoryRole.js
+|   |   |       |               documentRole.js
+|   |   |       |               emphasisRole.js
+|   |   |       |               feedRole.js
+|   |   |       |               figureRole.js
+|   |   |       |               formRole.js
+|   |   |       |               genericRole.js
+|   |   |       |               graphicsDocumentRole.js
+|   |   |       |               graphicsObjectRole.js
+|   |   |       |               graphicsSymbolRole.js
+|   |   |       |               gridcellRole.js
+|   |   |       |               gridRole.js
+|   |   |       |               groupRole.js
+|   |   |       |               headingRole.js
+|   |   |       |               imgRole.js
+|   |   |       |               insertionRole.js
+|   |   |       |               linkRole.js
+|   |   |       |               listboxRole.js
+|   |   |       |               listitemRole.js
+|   |   |       |               listRole.js
+|   |   |       |               logRole.js
+|   |   |       |               mainRole.js
+|   |   |       |               markRole.js
+|   |   |       |               marqueeRole.js
+|   |   |       |               mathRole.js
+|   |   |       |               menubarRole.js
+|   |   |       |               menuitemcheckboxRole.js
+|   |   |       |               menuitemradioRole.js
+|   |   |       |               menuitemRole.js
+|   |   |       |               menuRole.js
+|   |   |       |               meterRole.js
+|   |   |       |               navigationRole.js
+|   |   |       |               noneRole.js
+|   |   |       |               noteRole.js
+|   |   |       |               optionRole.js
+|   |   |       |               paragraphRole.js
+|   |   |       |               presentationRole.js
+|   |   |       |               progressbarRole.js
+|   |   |       |               radiogroupRole.js
+|   |   |       |               radioRole.js
+|   |   |       |               regionRole.js
+|   |   |       |               rowgroupRole.js
+|   |   |       |               rowheaderRole.js
+|   |   |       |               rowRole.js
+|   |   |       |               scrollbarRole.js
+|   |   |       |               searchboxRole.js
+|   |   |       |               searchRole.js
+|   |   |       |               separatorRole.js
+|   |   |       |               sliderRole.js
+|   |   |       |               spinbuttonRole.js
+|   |   |       |               statusRole.js
+|   |   |       |               strongRole.js
+|   |   |       |               subscriptRole.js
+|   |   |       |               superscriptRole.js
+|   |   |       |               switchRole.js
+|   |   |       |               tableRole.js
+|   |   |       |               tablistRole.js
+|   |   |       |               tabpanelRole.js
+|   |   |       |               tabRole.js
+|   |   |       |               termRole.js
+|   |   |       |               textboxRole.js
+|   |   |       |               timeRole.js
+|   |   |       |               timerRole.js
+|   |   |       |               toolbarRole.js
+|   |   |       |               tooltipRole.js
+|   |   |       |               treegridRole.js
+|   |   |       |               treeitemRole.js
+|   |   |       |               treeRole.js
+|   |   |       |               
+|   |   |       \---util
+|   |   |               iterationDecorator.js
+|   |   |               iteratorProxy.js
+|   |   |               
 |   |   +---array-bounds
 |   |   |       .eslintrc.json
 |   |   |       .travis.yml
@@ -77047,6 +78442,13 @@ C:\PY_DEV\MKOBI
 |   |   |       .npmignore
 |   |   |       index.js
 |   |   |       LICENSE.md
+|   |   |       package.json
+|   |   |       README.md
+|   |   |       
+|   |   +---assertion-error
+|   |   |       index.d.ts
+|   |   |       index.js
+|   |   |       LICENSE
 |   |   |       package.json
 |   |   |       README.md
 |   |   |       
@@ -77271,6 +78673,33 @@ C:\PY_DEV\MKOBI
 |   |   |           index.d.ts
 |   |   |           index.js
 |   |   |           
+|   |   +---bidi-js
+|   |   |   |   LICENSE.txt
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---dist
+|   |   |   |       bidi.js
+|   |   |   |       bidi.min.js
+|   |   |   |       bidi.min.mjs
+|   |   |   |       bidi.mjs
+|   |   |   |       
+|   |   |   \---src
+|   |   |       |   brackets.js
+|   |   |       |   charTypes.js
+|   |   |       |   embeddingLevels.js
+|   |   |       |   index.js
+|   |   |       |   mirroring.js
+|   |   |       |   reordering.js
+|   |   |       |   
+|   |   |       +---data
+|   |   |       |       bidiBrackets.data.js
+|   |   |       |       bidiCharTypes.data.js
+|   |   |       |       bidiMirroring.data.js
+|   |   |       |       
+|   |   |       \---util
+|   |   |               parseCharacterMap.js
+|   |   |               
 |   |   +---binary-search-bounds
 |   |   |   |   LICENSE
 |   |   |   |   package.json
@@ -78243,6 +79672,15 @@ C:\PY_DEV\MKOBI
 |   |   |               index.js
 |   |   |               region.js
 |   |   |               
+|   |   +---chai
+|   |   |       index.js
+|   |   |       LICENSE
+|   |   |       package.json
+|   |   |       README.md
+|   |   |       register-assert.js
+|   |   |       register-expect.js
+|   |   |       register-should.js
+|   |   |       
 |   |   +---clamp
 |   |   |       .npmignore
 |   |   |       index.js
@@ -78704,6 +80142,360 @@ C:\PY_DEV\MKOBI
 |   |   |       CHANGELOG.md
 |   |   |       index.json
 |   |   |       LICENSE
+|   |   |       package.json
+|   |   |       README.md
+|   |   |       
+|   |   +---css-tree
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---cjs
+|   |   |   |   |   data-patch.cjs
+|   |   |   |   |   data.cjs
+|   |   |   |   |   index.cjs
+|   |   |   |   |   version.cjs
+|   |   |   |   |   
+|   |   |   |   +---convertor
+|   |   |   |   |       create.cjs
+|   |   |   |   |       index.cjs
+|   |   |   |   |       
+|   |   |   |   +---definition-syntax
+|   |   |   |   |       generate.cjs
+|   |   |   |   |       index.cjs
+|   |   |   |   |       parse.cjs
+|   |   |   |   |       scanner.cjs
+|   |   |   |   |       SyntaxError.cjs
+|   |   |   |   |       walk.cjs
+|   |   |   |   |       
+|   |   |   |   +---generator
+|   |   |   |   |       create.cjs
+|   |   |   |   |       index.cjs
+|   |   |   |   |       sourceMap.cjs
+|   |   |   |   |       token-before.cjs
+|   |   |   |   |       
+|   |   |   |   +---lexer
+|   |   |   |   |       error.cjs
+|   |   |   |   |       generic-an-plus-b.cjs
+|   |   |   |   |       generic-const.cjs
+|   |   |   |   |       generic-urange.cjs
+|   |   |   |   |       generic.cjs
+|   |   |   |   |       index.cjs
+|   |   |   |   |       Lexer.cjs
+|   |   |   |   |       match-graph.cjs
+|   |   |   |   |       match.cjs
+|   |   |   |   |       prepare-tokens.cjs
+|   |   |   |   |       search.cjs
+|   |   |   |   |       structure.cjs
+|   |   |   |   |       trace.cjs
+|   |   |   |   |       units.cjs
+|   |   |   |   |       
+|   |   |   |   +---parser
+|   |   |   |   |       create.cjs
+|   |   |   |   |       index.cjs
+|   |   |   |   |       parse-selector.cjs
+|   |   |   |   |       sequence.cjs
+|   |   |   |   |       SyntaxError.cjs
+|   |   |   |   |       
+|   |   |   |   +---syntax
+|   |   |   |   |   |   create.cjs
+|   |   |   |   |   |   index.cjs
+|   |   |   |   |   |   
+|   |   |   |   |   +---atrule
+|   |   |   |   |   |       container.cjs
+|   |   |   |   |   |       font-face.cjs
+|   |   |   |   |   |       import.cjs
+|   |   |   |   |   |       index.cjs
+|   |   |   |   |   |       layer.cjs
+|   |   |   |   |   |       media.cjs
+|   |   |   |   |   |       nest.cjs
+|   |   |   |   |   |       page.cjs
+|   |   |   |   |   |       scope.cjs
+|   |   |   |   |   |       starting-style.cjs
+|   |   |   |   |   |       supports.cjs
+|   |   |   |   |   |       
+|   |   |   |   |   +---config
+|   |   |   |   |   |       generator.cjs
+|   |   |   |   |   |       lexer.cjs
+|   |   |   |   |   |       mix.cjs
+|   |   |   |   |   |       parser-selector.cjs
+|   |   |   |   |   |       parser.cjs
+|   |   |   |   |   |       walker.cjs
+|   |   |   |   |   |       
+|   |   |   |   |   +---function
+|   |   |   |   |   |       expression.cjs
+|   |   |   |   |   |       var.cjs
+|   |   |   |   |   |       
+|   |   |   |   |   +---node
+|   |   |   |   |   |       AnPlusB.cjs
+|   |   |   |   |   |       Atrule.cjs
+|   |   |   |   |   |       AtrulePrelude.cjs
+|   |   |   |   |   |       AttributeSelector.cjs
+|   |   |   |   |   |       Block.cjs
+|   |   |   |   |   |       Brackets.cjs
+|   |   |   |   |   |       CDC.cjs
+|   |   |   |   |   |       CDO.cjs
+|   |   |   |   |   |       ClassSelector.cjs
+|   |   |   |   |   |       Combinator.cjs
+|   |   |   |   |   |       Comment.cjs
+|   |   |   |   |   |       Condition.cjs
+|   |   |   |   |   |       Declaration.cjs
+|   |   |   |   |   |       DeclarationList.cjs
+|   |   |   |   |   |       Dimension.cjs
+|   |   |   |   |   |       Feature.cjs
+|   |   |   |   |   |       FeatureFunction.cjs
+|   |   |   |   |   |       FeatureRange.cjs
+|   |   |   |   |   |       Function.cjs
+|   |   |   |   |   |       GeneralEnclosed.cjs
+|   |   |   |   |   |       Hash.cjs
+|   |   |   |   |   |       Identifier.cjs
+|   |   |   |   |   |       IdSelector.cjs
+|   |   |   |   |   |       index-generate.cjs
+|   |   |   |   |   |       index-parse-selector.cjs
+|   |   |   |   |   |       index-parse.cjs
+|   |   |   |   |   |       index.cjs
+|   |   |   |   |   |       Layer.cjs
+|   |   |   |   |   |       LayerList.cjs
+|   |   |   |   |   |       MediaQuery.cjs
+|   |   |   |   |   |       MediaQueryList.cjs
+|   |   |   |   |   |       NestingSelector.cjs
+|   |   |   |   |   |       Nth.cjs
+|   |   |   |   |   |       Number.cjs
+|   |   |   |   |   |       Operator.cjs
+|   |   |   |   |   |       Parentheses.cjs
+|   |   |   |   |   |       Percentage.cjs
+|   |   |   |   |   |       PseudoClassSelector.cjs
+|   |   |   |   |   |       PseudoElementSelector.cjs
+|   |   |   |   |   |       Ratio.cjs
+|   |   |   |   |   |       Raw.cjs
+|   |   |   |   |   |       Rule.cjs
+|   |   |   |   |   |       Scope.cjs
+|   |   |   |   |   |       Selector.cjs
+|   |   |   |   |   |       SelectorList.cjs
+|   |   |   |   |   |       String.cjs
+|   |   |   |   |   |       StyleSheet.cjs
+|   |   |   |   |   |       SupportsDeclaration.cjs
+|   |   |   |   |   |       TypeSelector.cjs
+|   |   |   |   |   |       UnicodeRange.cjs
+|   |   |   |   |   |       Url.cjs
+|   |   |   |   |   |       Value.cjs
+|   |   |   |   |   |       WhiteSpace.cjs
+|   |   |   |   |   |       
+|   |   |   |   |   +---pseudo
+|   |   |   |   |   |       index.cjs
+|   |   |   |   |   |       lang.cjs
+|   |   |   |   |   |       
+|   |   |   |   |   \---scope
+|   |   |   |   |           atrulePrelude.cjs
+|   |   |   |   |           default.cjs
+|   |   |   |   |           index.cjs
+|   |   |   |   |           selector.cjs
+|   |   |   |   |           value.cjs
+|   |   |   |   |           
+|   |   |   |   +---tokenizer
+|   |   |   |   |       adopt-buffer.cjs
+|   |   |   |   |       char-code-definitions.cjs
+|   |   |   |   |       index.cjs
+|   |   |   |   |       names.cjs
+|   |   |   |   |       OffsetToLocation.cjs
+|   |   |   |   |       TokenStream.cjs
+|   |   |   |   |       types.cjs
+|   |   |   |   |       utils.cjs
+|   |   |   |   |       
+|   |   |   |   +---utils
+|   |   |   |   |       clone.cjs
+|   |   |   |   |       create-custom-error.cjs
+|   |   |   |   |       ident.cjs
+|   |   |   |   |       index.cjs
+|   |   |   |   |       List.cjs
+|   |   |   |   |       names.cjs
+|   |   |   |   |       string.cjs
+|   |   |   |   |       url.cjs
+|   |   |   |   |       
+|   |   |   |   \---walker
+|   |   |   |           create.cjs
+|   |   |   |           index.cjs
+|   |   |   |           
+|   |   |   +---data
+|   |   |   |       patch.json
+|   |   |   |       
+|   |   |   +---dist
+|   |   |   |       csstree.esm.js
+|   |   |   |       csstree.js
+|   |   |   |       data.cjs
+|   |   |   |       data.js
+|   |   |   |       version.cjs
+|   |   |   |       version.js
+|   |   |   |       
+|   |   |   \---lib
+|   |   |       |   data-patch.js
+|   |   |       |   data.js
+|   |   |       |   index.js
+|   |   |       |   version.js
+|   |   |       |   
+|   |   |       +---convertor
+|   |   |       |       create.js
+|   |   |       |       index.js
+|   |   |       |       
+|   |   |       +---definition-syntax
+|   |   |       |       generate.js
+|   |   |       |       index.js
+|   |   |       |       parse.js
+|   |   |       |       scanner.js
+|   |   |       |       SyntaxError.js
+|   |   |       |       walk.js
+|   |   |       |       
+|   |   |       +---generator
+|   |   |       |       create.js
+|   |   |       |       index.js
+|   |   |       |       sourceMap.js
+|   |   |       |       token-before.js
+|   |   |       |       
+|   |   |       +---lexer
+|   |   |       |       error.js
+|   |   |       |       generic-an-plus-b.js
+|   |   |       |       generic-const.js
+|   |   |       |       generic-urange.js
+|   |   |       |       generic.js
+|   |   |       |       index.js
+|   |   |       |       Lexer.js
+|   |   |       |       match-graph.js
+|   |   |       |       match.js
+|   |   |       |       prepare-tokens.js
+|   |   |       |       search.js
+|   |   |       |       structure.js
+|   |   |       |       trace.js
+|   |   |       |       units.js
+|   |   |       |       
+|   |   |       +---parser
+|   |   |       |       create.js
+|   |   |       |       index.js
+|   |   |       |       parse-selector.js
+|   |   |       |       sequence.js
+|   |   |       |       SyntaxError.js
+|   |   |       |       
+|   |   |       +---syntax
+|   |   |       |   |   create.js
+|   |   |       |   |   index.js
+|   |   |       |   |   
+|   |   |       |   +---atrule
+|   |   |       |   |       container.js
+|   |   |       |   |       font-face.js
+|   |   |       |   |       import.js
+|   |   |       |   |       index.js
+|   |   |       |   |       layer.js
+|   |   |       |   |       media.js
+|   |   |       |   |       nest.js
+|   |   |       |   |       page.js
+|   |   |       |   |       scope.js
+|   |   |       |   |       starting-style.js
+|   |   |       |   |       supports.js
+|   |   |       |   |       
+|   |   |       |   +---config
+|   |   |       |   |       generator.js
+|   |   |       |   |       lexer.js
+|   |   |       |   |       mix.js
+|   |   |       |   |       parser-selector.js
+|   |   |       |   |       parser.js
+|   |   |       |   |       walker.js
+|   |   |       |   |       
+|   |   |       |   +---function
+|   |   |       |   |       expression.js
+|   |   |       |   |       var.js
+|   |   |       |   |       
+|   |   |       |   +---node
+|   |   |       |   |       AnPlusB.js
+|   |   |       |   |       Atrule.js
+|   |   |       |   |       AtrulePrelude.js
+|   |   |       |   |       AttributeSelector.js
+|   |   |       |   |       Block.js
+|   |   |       |   |       Brackets.js
+|   |   |       |   |       CDC.js
+|   |   |       |   |       CDO.js
+|   |   |       |   |       ClassSelector.js
+|   |   |       |   |       Combinator.js
+|   |   |       |   |       Comment.js
+|   |   |       |   |       Condition.js
+|   |   |       |   |       Declaration.js
+|   |   |       |   |       DeclarationList.js
+|   |   |       |   |       Dimension.js
+|   |   |       |   |       Feature.js
+|   |   |       |   |       FeatureFunction.js
+|   |   |       |   |       FeatureRange.js
+|   |   |       |   |       Function.js
+|   |   |       |   |       GeneralEnclosed.js
+|   |   |       |   |       Hash.js
+|   |   |       |   |       Identifier.js
+|   |   |       |   |       IdSelector.js
+|   |   |       |   |       index-generate.js
+|   |   |       |   |       index-parse-selector.js
+|   |   |       |   |       index-parse.js
+|   |   |       |   |       index.js
+|   |   |       |   |       Layer.js
+|   |   |       |   |       LayerList.js
+|   |   |       |   |       MediaQuery.js
+|   |   |       |   |       MediaQueryList.js
+|   |   |       |   |       NestingSelector.js
+|   |   |       |   |       Nth.js
+|   |   |       |   |       Number.js
+|   |   |       |   |       Operator.js
+|   |   |       |   |       Parentheses.js
+|   |   |       |   |       Percentage.js
+|   |   |       |   |       PseudoClassSelector.js
+|   |   |       |   |       PseudoElementSelector.js
+|   |   |       |   |       Ratio.js
+|   |   |       |   |       Raw.js
+|   |   |       |   |       Rule.js
+|   |   |       |   |       Scope.js
+|   |   |       |   |       Selector.js
+|   |   |       |   |       SelectorList.js
+|   |   |       |   |       String.js
+|   |   |       |   |       StyleSheet.js
+|   |   |       |   |       SupportsDeclaration.js
+|   |   |       |   |       TypeSelector.js
+|   |   |       |   |       UnicodeRange.js
+|   |   |       |   |       Url.js
+|   |   |       |   |       Value.js
+|   |   |       |   |       WhiteSpace.js
+|   |   |       |   |       
+|   |   |       |   +---pseudo
+|   |   |       |   |       index.js
+|   |   |       |   |       lang.js
+|   |   |       |   |       
+|   |   |       |   \---scope
+|   |   |       |           atrulePrelude.js
+|   |   |       |           default.js
+|   |   |       |           index.js
+|   |   |       |           selector.js
+|   |   |       |           value.js
+|   |   |       |           
+|   |   |       +---tokenizer
+|   |   |       |       adopt-buffer.js
+|   |   |       |       char-code-definitions.js
+|   |   |       |       index.js
+|   |   |       |       names.js
+|   |   |       |       OffsetToLocation.js
+|   |   |       |       TokenStream.js
+|   |   |       |       types.js
+|   |   |       |       utils.js
+|   |   |       |       
+|   |   |       +---utils
+|   |   |       |       clone.js
+|   |   |       |       create-custom-error.js
+|   |   |       |       ident.js
+|   |   |       |       index.js
+|   |   |       |       List.js
+|   |   |       |       names.js
+|   |   |       |       string.js
+|   |   |       |       url.js
+|   |   |       |       
+|   |   |       \---walker
+|   |   |               create.js
+|   |   |               index.js
+|   |   |               
+|   |   +---css.escape
+|   |   |       css.escape.js
+|   |   |       LICENSE-MIT.txt
 |   |   |       package.json
 |   |   |       README.md
 |   |   |       
@@ -79446,6 +81238,15 @@ C:\PY_DEV\MKOBI
 |   |   |           interval.js
 |   |   |           timeout.js
 |   |   |           timer.js
+|   |   |           
+|   |   +---data-urls
+|   |   |   |   LICENSE.txt
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---lib
+|   |   |           parser.js
+|   |   |           utils.js
 |   |   |           
 |   |   +---date-fns
 |   |   |   |   add.cjs
@@ -85183,6 +86984,14 @@ C:\PY_DEV\MKOBI
 |   |   |           index.js
 |   |   |           node.js
 |   |   |           
+|   |   +---decimal.js
+|   |   |       decimal.d.ts
+|   |   |       decimal.js
+|   |   |       decimal.mjs
+|   |   |       LICENCE.md
+|   |   |       package.json
+|   |   |       README.md
+|   |   |       
 |   |   +---deep-is
 |   |   |   |   .travis.yml
 |   |   |   |   index.js
@@ -85226,6 +87035,23 @@ C:\PY_DEV\MKOBI
 |   |   |   \---lib
 |   |   |           delayed_stream.js
 |   |   |           
+|   |   +---dequal
+|   |   |   |   index.d.ts
+|   |   |   |   license
+|   |   |   |   package.json
+|   |   |   |   readme.md
+|   |   |   |   
+|   |   |   +---dist
+|   |   |   |       index.js
+|   |   |   |       index.min.js
+|   |   |   |       index.mjs
+|   |   |   |       
+|   |   |   \---lite
+|   |   |           index.d.ts
+|   |   |           index.js
+|   |   |           index.min.js
+|   |   |           index.mjs
+|   |   |           
 |   |   +---detect-kerning
 |   |   |       .eslintrc.json
 |   |   |       .travis.yml
@@ -85246,6 +87072,74 @@ C:\PY_DEV\MKOBI
 |   |   |           filesystem.js
 |   |   |           process.js
 |   |   |           
+|   |   +---dom-accessibility-api
+|   |   |   |   .browserslistrc
+|   |   |   |   LICENSE.md
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---dist
+|   |   |       |   accessible-description.d.ts
+|   |   |       |   accessible-description.d.ts.map
+|   |   |       |   accessible-description.js
+|   |   |       |   accessible-description.js.map
+|   |   |       |   accessible-description.mjs
+|   |   |       |   accessible-description.mjs.map
+|   |   |       |   accessible-name-and-description.d.ts
+|   |   |       |   accessible-name-and-description.d.ts.map
+|   |   |       |   accessible-name-and-description.js
+|   |   |       |   accessible-name-and-description.js.map
+|   |   |       |   accessible-name-and-description.mjs
+|   |   |       |   accessible-name-and-description.mjs.map
+|   |   |       |   accessible-name.d.ts
+|   |   |       |   accessible-name.d.ts.map
+|   |   |       |   accessible-name.js
+|   |   |       |   accessible-name.js.map
+|   |   |       |   accessible-name.mjs
+|   |   |       |   accessible-name.mjs.map
+|   |   |       |   getRole.d.ts
+|   |   |       |   getRole.d.ts.map
+|   |   |       |   getRole.js
+|   |   |       |   getRole.js.map
+|   |   |       |   getRole.mjs
+|   |   |       |   getRole.mjs.map
+|   |   |       |   index.d.ts
+|   |   |       |   index.d.ts.map
+|   |   |       |   index.js
+|   |   |       |   index.js.map
+|   |   |       |   index.mjs
+|   |   |       |   index.mjs.map
+|   |   |       |   is-inaccessible.d.ts
+|   |   |       |   is-inaccessible.d.ts.map
+|   |   |       |   is-inaccessible.js
+|   |   |       |   is-inaccessible.js.map
+|   |   |       |   is-inaccessible.mjs
+|   |   |       |   is-inaccessible.mjs.map
+|   |   |       |   util.d.ts
+|   |   |       |   util.d.ts.map
+|   |   |       |   util.js
+|   |   |       |   util.js.map
+|   |   |       |   util.mjs
+|   |   |       |   util.mjs.map
+|   |   |       |   
+|   |   |       \---polyfills
+|   |   |               array.from.d.ts
+|   |   |               array.from.d.ts.map
+|   |   |               array.from.js
+|   |   |               array.from.js.map
+|   |   |               array.from.mjs
+|   |   |               array.from.mjs.map
+|   |   |               iterator.d.js
+|   |   |               iterator.d.js.map
+|   |   |               iterator.d.mjs
+|   |   |               iterator.d.mjs.map
+|   |   |               SetLike.d.ts
+|   |   |               SetLike.d.ts.map
+|   |   |               SetLike.js
+|   |   |               SetLike.js.map
+|   |   |               SetLike.mjs
+|   |   |               SetLike.mjs.map
+|   |   |               
 |   |   +---dom-helpers
 |   |   |   |   LICENSE
 |   |   |   |   package.json
@@ -85746,6 +87640,78 @@ C:\PY_DEV\MKOBI
 |   |   |       package.json
 |   |   |       README.md
 |   |   |       
+|   |   +---entities
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   readme.md
+|   |   |   |   
+|   |   |   +---dist
+|   |   |   |   |   decode-codepoint.d.ts
+|   |   |   |   |   decode-codepoint.d.ts.map
+|   |   |   |   |   decode-codepoint.js
+|   |   |   |   |   decode-codepoint.js.map
+|   |   |   |   |   decode.d.ts
+|   |   |   |   |   decode.d.ts.map
+|   |   |   |   |   decode.js
+|   |   |   |   |   decode.js.map
+|   |   |   |   |   encode.d.ts
+|   |   |   |   |   encode.d.ts.map
+|   |   |   |   |   encode.js
+|   |   |   |   |   encode.js.map
+|   |   |   |   |   escape.d.ts
+|   |   |   |   |   escape.d.ts.map
+|   |   |   |   |   escape.js
+|   |   |   |   |   escape.js.map
+|   |   |   |   |   index.d.ts
+|   |   |   |   |   index.d.ts.map
+|   |   |   |   |   index.js
+|   |   |   |   |   index.js.map
+|   |   |   |   |   
+|   |   |   |   +---generated
+|   |   |   |   |       decode-data-html.d.ts
+|   |   |   |   |       decode-data-html.d.ts.map
+|   |   |   |   |       decode-data-html.js
+|   |   |   |   |       decode-data-html.js.map
+|   |   |   |   |       decode-data-xml.d.ts
+|   |   |   |   |       decode-data-xml.d.ts.map
+|   |   |   |   |       decode-data-xml.js
+|   |   |   |   |       decode-data-xml.js.map
+|   |   |   |   |       encode-html.d.ts
+|   |   |   |   |       encode-html.d.ts.map
+|   |   |   |   |       encode-html.js
+|   |   |   |   |       encode-html.js.map
+|   |   |   |   |       
+|   |   |   |   \---internal
+|   |   |   |           bin-trie-flags.d.ts
+|   |   |   |           bin-trie-flags.d.ts.map
+|   |   |   |           bin-trie-flags.js
+|   |   |   |           bin-trie-flags.js.map
+|   |   |   |           decode-shared.d.ts
+|   |   |   |           decode-shared.d.ts.map
+|   |   |   |           decode-shared.js
+|   |   |   |           decode-shared.js.map
+|   |   |   |           encode-shared.d.ts
+|   |   |   |           encode-shared.d.ts.map
+|   |   |   |           encode-shared.js
+|   |   |   |           encode-shared.js.map
+|   |   |   |           
+|   |   |   \---src
+|   |   |       |   decode-codepoint.ts
+|   |   |       |   decode.ts
+|   |   |       |   encode.ts
+|   |   |       |   escape.ts
+|   |   |       |   index.ts
+|   |   |       |   
+|   |   |       +---generated
+|   |   |       |       decode-data-html.ts
+|   |   |       |       decode-data-xml.ts
+|   |   |       |       encode-html.ts
+|   |   |       |       
+|   |   |       \---internal
+|   |   |               bin-trie-flags.ts
+|   |   |               decode-shared.ts
+|   |   |               encode-shared.ts
+|   |   |               
 |   |   +---error-ex
 |   |   |       index.js
 |   |   |       LICENSE
@@ -85796,6 +87762,20 @@ C:\PY_DEV\MKOBI
 |   |   |   |       
 |   |   |   \---test
 |   |   |           index.js
+|   |   |           
+|   |   +---es-module-lexer
+|   |   |   |   lexer.js
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---dist
+|   |   |   |       lexer.asm.js
+|   |   |   |       lexer.cjs
+|   |   |   |       lexer.js
+|   |   |   |       
+|   |   |   \---types
+|   |   |           lexer.d.ts
 |   |   |           
 |   |   +---es-object-atoms
 |   |   |   |   .eslintrc
@@ -87175,6 +89155,23 @@ C:\PY_DEV\MKOBI
 |   |   |       package.json
 |   |   |       README.md
 |   |   |       
+|   |   +---estree-walker
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---src
+|   |   |   |       async.js
+|   |   |   |       index.js
+|   |   |   |       sync.js
+|   |   |   |       walker.js
+|   |   |   |       
+|   |   |   \---types
+|   |   |           async.d.ts
+|   |   |           index.d.ts
+|   |   |           sync.d.ts
+|   |   |           walker.d.ts
+|   |   |           
 |   |   +---esutils
 |   |   |   |   LICENSE.BSD
 |   |   |   |   package.json
@@ -87251,6 +89248,24 @@ C:\PY_DEV\MKOBI
 |   |   |           special-event-names.js
 |   |   |           subclass.js
 |   |   |           symbols.js
+|   |   |           
+|   |   +---expect-type
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   SECURITY.md
+|   |   |   |   
+|   |   |   \---dist
+|   |   |           branding.d.ts
+|   |   |           branding.js
+|   |   |           index.d.ts
+|   |   |           index.js
+|   |   |           messages.d.ts
+|   |   |           messages.js
+|   |   |           overloads.d.ts
+|   |   |           overloads.js
+|   |   |           utils.d.ts
+|   |   |           utils.js
 |   |   |           
 |   |   +---ext
 |   |   |   |   CHANGELOG.md
@@ -88541,6 +90556,14 @@ C:\PY_DEV\MKOBI
 |   |   |   \---src
 |   |   |           index.js
 |   |   |           
+|   |   +---html-encoding-sniffer
+|   |   |   |   LICENSE.txt
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---lib
+|   |   |           html-encoding-sniffer.js
+|   |   |           
 |   |   +---iconv-lite
 |   |   |   |   Changelog.md
 |   |   |   |   LICENSE
@@ -88602,6 +90625,13 @@ C:\PY_DEV\MKOBI
 |   |   |       imurmurhash.min.js
 |   |   |       package.json
 |   |   |       README.md
+|   |   |       
+|   |   +---indent-string
+|   |   |       index.d.ts
+|   |   |       index.js
+|   |   |       license
+|   |   |       package.json
+|   |   |       readme.md
 |   |   |       
 |   |   +---inherits
 |   |   |       inherits.js
@@ -88697,6 +90727,12 @@ C:\PY_DEV\MKOBI
 |   |   |       package.json
 |   |   |       readme.md
 |   |   |       
+|   |   +---is-potential-custom-element-name
+|   |   |       index.js
+|   |   |       LICENSE-MIT.txt
+|   |   |       package.json
+|   |   |       README.md
+|   |   |       
 |   |   +---is-string-blank
 |   |   |       index.js
 |   |   |       LICENSE
@@ -88736,6 +90772,843 @@ C:\PY_DEV\MKOBI
 |   |   |       package.json
 |   |   |       README.md
 |   |   |       
+|   |   +---jsdom
+|   |   |   |   LICENSE.txt
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---lib
+|   |   |   |   |   api.js
+|   |   |   |   |   
+|   |   |   |   +---generated
+|   |   |   |   |   |   css-property-definitions.js
+|   |   |   |   |   |   css-property-descriptors.js
+|   |   |   |   |   |   css-property-metadata.js
+|   |   |   |   |   |   event-sets.js
+|   |   |   |   |   |   js-globals.json
+|   |   |   |   |   |   
+|   |   |   |   |   \---idl
+|   |   |   |   |           AbortController.js
+|   |   |   |   |           AbortSignal.js
+|   |   |   |   |           AbstractRange.js
+|   |   |   |   |           AddEventListenerOptions.js
+|   |   |   |   |           AssignedNodesOptions.js
+|   |   |   |   |           Attr.js
+|   |   |   |   |           BarProp.js
+|   |   |   |   |           BeforeUnloadEvent.js
+|   |   |   |   |           BinaryType.js
+|   |   |   |   |           Blob.js
+|   |   |   |   |           BlobCallback.js
+|   |   |   |   |           BlobEvent.js
+|   |   |   |   |           BlobEventInit.js
+|   |   |   |   |           BlobPropertyBag.js
+|   |   |   |   |           CanPlayTypeResult.js
+|   |   |   |   |           CDATASection.js
+|   |   |   |   |           CharacterData.js
+|   |   |   |   |           CloseEvent.js
+|   |   |   |   |           CloseEventInit.js
+|   |   |   |   |           Comment.js
+|   |   |   |   |           CompositionEvent.js
+|   |   |   |   |           CompositionEventInit.js
+|   |   |   |   |           Crypto.js
+|   |   |   |   |           CSSConditionRule.js
+|   |   |   |   |           CSSContainerRule.js
+|   |   |   |   |           CSSCounterStyleRule.js
+|   |   |   |   |           CSSFontFaceRule.js
+|   |   |   |   |           CSSGroupingRule.js
+|   |   |   |   |           CSSImportRule.js
+|   |   |   |   |           CSSKeyframeRule.js
+|   |   |   |   |           CSSKeyframesRule.js
+|   |   |   |   |           CSSLayerBlockRule.js
+|   |   |   |   |           CSSLayerStatementRule.js
+|   |   |   |   |           CSSMediaRule.js
+|   |   |   |   |           CSSNamespaceRule.js
+|   |   |   |   |           CSSNestedDeclarations.js
+|   |   |   |   |           CSSPageRule.js
+|   |   |   |   |           CSSRule.js
+|   |   |   |   |           CSSRuleList.js
+|   |   |   |   |           CSSScopeRule.js
+|   |   |   |   |           CSSStyleDeclaration.js
+|   |   |   |   |           CSSStyleProperties.js
+|   |   |   |   |           CSSStyleRule.js
+|   |   |   |   |           CSSStyleSheet.js
+|   |   |   |   |           CSSStyleSheetInit.js
+|   |   |   |   |           CSSSupportsRule.js
+|   |   |   |   |           CustomElementConstructor.js
+|   |   |   |   |           CustomElementRegistry.js
+|   |   |   |   |           CustomEvent.js
+|   |   |   |   |           CustomEventInit.js
+|   |   |   |   |           DeviceMotionEvent.js
+|   |   |   |   |           DeviceMotionEventAcceleration.js
+|   |   |   |   |           DeviceMotionEventAccelerationInit.js
+|   |   |   |   |           DeviceMotionEventInit.js
+|   |   |   |   |           DeviceMotionEventRotationRate.js
+|   |   |   |   |           DeviceMotionEventRotationRateInit.js
+|   |   |   |   |           DeviceOrientationEvent.js
+|   |   |   |   |           DeviceOrientationEventInit.js
+|   |   |   |   |           Document.js
+|   |   |   |   |           DocumentFragment.js
+|   |   |   |   |           DocumentReadyState.js
+|   |   |   |   |           DocumentType.js
+|   |   |   |   |           DOMException.js
+|   |   |   |   |           DOMImplementation.js
+|   |   |   |   |           DOMParser.js
+|   |   |   |   |           DOMRect.js
+|   |   |   |   |           DOMRectInit.js
+|   |   |   |   |           DOMRectReadOnly.js
+|   |   |   |   |           DOMStringMap.js
+|   |   |   |   |           DOMTokenList.js
+|   |   |   |   |           Element.js
+|   |   |   |   |           ElementCreationOptions.js
+|   |   |   |   |           ElementDefinitionOptions.js
+|   |   |   |   |           ElementInternals.js
+|   |   |   |   |           EndingType.js
+|   |   |   |   |           ErrorEvent.js
+|   |   |   |   |           ErrorEventInit.js
+|   |   |   |   |           Event.js
+|   |   |   |   |           EventHandlerNonNull.js
+|   |   |   |   |           EventInit.js
+|   |   |   |   |           EventListener.js
+|   |   |   |   |           EventListenerOptions.js
+|   |   |   |   |           EventModifierInit.js
+|   |   |   |   |           EventTarget.js
+|   |   |   |   |           External.js
+|   |   |   |   |           File.js
+|   |   |   |   |           FileList.js
+|   |   |   |   |           FilePropertyBag.js
+|   |   |   |   |           FileReader.js
+|   |   |   |   |           FocusEvent.js
+|   |   |   |   |           FocusEventInit.js
+|   |   |   |   |           FormData.js
+|   |   |   |   |           Function.js
+|   |   |   |   |           GetRootNodeOptions.js
+|   |   |   |   |           HashChangeEvent.js
+|   |   |   |   |           HashChangeEventInit.js
+|   |   |   |   |           Headers.js
+|   |   |   |   |           History.js
+|   |   |   |   |           HTMLAnchorElement.js
+|   |   |   |   |           HTMLAreaElement.js
+|   |   |   |   |           HTMLAudioElement.js
+|   |   |   |   |           HTMLBaseElement.js
+|   |   |   |   |           HTMLBodyElement.js
+|   |   |   |   |           HTMLBRElement.js
+|   |   |   |   |           HTMLButtonElement.js
+|   |   |   |   |           HTMLCanvasElement.js
+|   |   |   |   |           HTMLCollection.js
+|   |   |   |   |           HTMLDataElement.js
+|   |   |   |   |           HTMLDataListElement.js
+|   |   |   |   |           HTMLDetailsElement.js
+|   |   |   |   |           HTMLDialogElement.js
+|   |   |   |   |           HTMLDirectoryElement.js
+|   |   |   |   |           HTMLDivElement.js
+|   |   |   |   |           HTMLDListElement.js
+|   |   |   |   |           HTMLElement.js
+|   |   |   |   |           HTMLEmbedElement.js
+|   |   |   |   |           HTMLFieldSetElement.js
+|   |   |   |   |           HTMLFontElement.js
+|   |   |   |   |           HTMLFormControlsCollection.js
+|   |   |   |   |           HTMLFormElement.js
+|   |   |   |   |           HTMLFrameElement.js
+|   |   |   |   |           HTMLFrameSetElement.js
+|   |   |   |   |           HTMLHeadElement.js
+|   |   |   |   |           HTMLHeadingElement.js
+|   |   |   |   |           HTMLHRElement.js
+|   |   |   |   |           HTMLHtmlElement.js
+|   |   |   |   |           HTMLIFrameElement.js
+|   |   |   |   |           HTMLImageElement.js
+|   |   |   |   |           HTMLInputElement.js
+|   |   |   |   |           HTMLLabelElement.js
+|   |   |   |   |           HTMLLegendElement.js
+|   |   |   |   |           HTMLLIElement.js
+|   |   |   |   |           HTMLLinkElement.js
+|   |   |   |   |           HTMLMapElement.js
+|   |   |   |   |           HTMLMarqueeElement.js
+|   |   |   |   |           HTMLMediaElement.js
+|   |   |   |   |           HTMLMenuElement.js
+|   |   |   |   |           HTMLMetaElement.js
+|   |   |   |   |           HTMLMeterElement.js
+|   |   |   |   |           HTMLModElement.js
+|   |   |   |   |           HTMLObjectElement.js
+|   |   |   |   |           HTMLOListElement.js
+|   |   |   |   |           HTMLOptGroupElement.js
+|   |   |   |   |           HTMLOptionElement.js
+|   |   |   |   |           HTMLOptionsCollection.js
+|   |   |   |   |           HTMLOutputElement.js
+|   |   |   |   |           HTMLParagraphElement.js
+|   |   |   |   |           HTMLParamElement.js
+|   |   |   |   |           HTMLPictureElement.js
+|   |   |   |   |           HTMLPreElement.js
+|   |   |   |   |           HTMLProgressElement.js
+|   |   |   |   |           HTMLQuoteElement.js
+|   |   |   |   |           HTMLScriptElement.js
+|   |   |   |   |           HTMLSelectElement.js
+|   |   |   |   |           HTMLSlotElement.js
+|   |   |   |   |           HTMLSourceElement.js
+|   |   |   |   |           HTMLSpanElement.js
+|   |   |   |   |           HTMLStyleElement.js
+|   |   |   |   |           HTMLTableCaptionElement.js
+|   |   |   |   |           HTMLTableCellElement.js
+|   |   |   |   |           HTMLTableColElement.js
+|   |   |   |   |           HTMLTableElement.js
+|   |   |   |   |           HTMLTableRowElement.js
+|   |   |   |   |           HTMLTableSectionElement.js
+|   |   |   |   |           HTMLTemplateElement.js
+|   |   |   |   |           HTMLTextAreaElement.js
+|   |   |   |   |           HTMLTimeElement.js
+|   |   |   |   |           HTMLTitleElement.js
+|   |   |   |   |           HTMLTrackElement.js
+|   |   |   |   |           HTMLUListElement.js
+|   |   |   |   |           HTMLUnknownElement.js
+|   |   |   |   |           HTMLVideoElement.js
+|   |   |   |   |           InputEvent.js
+|   |   |   |   |           InputEventInit.js
+|   |   |   |   |           KeyboardEvent.js
+|   |   |   |   |           KeyboardEventInit.js
+|   |   |   |   |           Location.js
+|   |   |   |   |           MediaList.js
+|   |   |   |   |           MessageEvent.js
+|   |   |   |   |           MessageEventInit.js
+|   |   |   |   |           MimeType.js
+|   |   |   |   |           MimeTypeArray.js
+|   |   |   |   |           MouseEvent.js
+|   |   |   |   |           MouseEventInit.js
+|   |   |   |   |           MutationCallback.js
+|   |   |   |   |           MutationObserver.js
+|   |   |   |   |           MutationObserverInit.js
+|   |   |   |   |           MutationRecord.js
+|   |   |   |   |           NamedNodeMap.js
+|   |   |   |   |           Navigator.js
+|   |   |   |   |           Node.js
+|   |   |   |   |           NodeFilter.js
+|   |   |   |   |           NodeIterator.js
+|   |   |   |   |           NodeList.js
+|   |   |   |   |           OnBeforeUnloadEventHandlerNonNull.js
+|   |   |   |   |           OnErrorEventHandlerNonNull.js
+|   |   |   |   |           PageTransitionEvent.js
+|   |   |   |   |           PageTransitionEventInit.js
+|   |   |   |   |           Performance.js
+|   |   |   |   |           Plugin.js
+|   |   |   |   |           PluginArray.js
+|   |   |   |   |           PointerEvent.js
+|   |   |   |   |           PointerEventInit.js
+|   |   |   |   |           PopStateEvent.js
+|   |   |   |   |           PopStateEventInit.js
+|   |   |   |   |           ProcessingInstruction.js
+|   |   |   |   |           ProgressEvent.js
+|   |   |   |   |           ProgressEventInit.js
+|   |   |   |   |           PromiseRejectionEvent.js
+|   |   |   |   |           PromiseRejectionEventInit.js
+|   |   |   |   |           RadioNodeList.js
+|   |   |   |   |           Range.js
+|   |   |   |   |           Screen.js
+|   |   |   |   |           ScrollBehavior.js
+|   |   |   |   |           ScrollIntoViewOptions.js
+|   |   |   |   |           ScrollLogicalPosition.js
+|   |   |   |   |           ScrollOptions.js
+|   |   |   |   |           ScrollRestoration.js
+|   |   |   |   |           Selection.js
+|   |   |   |   |           SelectionMode.js
+|   |   |   |   |           ShadowRoot.js
+|   |   |   |   |           ShadowRootInit.js
+|   |   |   |   |           ShadowRootMode.js
+|   |   |   |   |           StaticRange.js
+|   |   |   |   |           StaticRangeInit.js
+|   |   |   |   |           Storage.js
+|   |   |   |   |           StorageEvent.js
+|   |   |   |   |           StorageEventInit.js
+|   |   |   |   |           StyleSheet.js
+|   |   |   |   |           StyleSheetList.js
+|   |   |   |   |           SubmitEvent.js
+|   |   |   |   |           SubmitEventInit.js
+|   |   |   |   |           SupportedType.js
+|   |   |   |   |           SVGAnimatedPreserveAspectRatio.js
+|   |   |   |   |           SVGAnimatedRect.js
+|   |   |   |   |           SVGAnimatedString.js
+|   |   |   |   |           SVGBoundingBoxOptions.js
+|   |   |   |   |           SVGDefsElement.js
+|   |   |   |   |           SVGDescElement.js
+|   |   |   |   |           SVGElement.js
+|   |   |   |   |           SVGGElement.js
+|   |   |   |   |           SVGGraphicsElement.js
+|   |   |   |   |           SVGMetadataElement.js
+|   |   |   |   |           SVGNumber.js
+|   |   |   |   |           SVGPreserveAspectRatio.js
+|   |   |   |   |           SVGRect.js
+|   |   |   |   |           SVGStringList.js
+|   |   |   |   |           SVGSVGElement.js
+|   |   |   |   |           SVGSwitchElement.js
+|   |   |   |   |           SVGSymbolElement.js
+|   |   |   |   |           SVGTitleElement.js
+|   |   |   |   |           Text.js
+|   |   |   |   |           TextDecodeOptions.js
+|   |   |   |   |           TextDecoder.js
+|   |   |   |   |           TextDecoderOptions.js
+|   |   |   |   |           TextEncoder.js
+|   |   |   |   |           TextEncoderEncodeIntoResult.js
+|   |   |   |   |           TextTrackKind.js
+|   |   |   |   |           TouchEvent.js
+|   |   |   |   |           TouchEventInit.js
+|   |   |   |   |           TransitionEvent.js
+|   |   |   |   |           TransitionEventInit.js
+|   |   |   |   |           TreeWalker.js
+|   |   |   |   |           UIEvent.js
+|   |   |   |   |           UIEventInit.js
+|   |   |   |   |           utils.js
+|   |   |   |   |           ValidityState.js
+|   |   |   |   |           VisibilityState.js
+|   |   |   |   |           VoidFunction.js
+|   |   |   |   |           WebSocket.js
+|   |   |   |   |           WheelEvent.js
+|   |   |   |   |           WheelEventInit.js
+|   |   |   |   |           XMLDocument.js
+|   |   |   |   |           XMLHttpRequest.js
+|   |   |   |   |           XMLHttpRequestEventTarget.js
+|   |   |   |   |           XMLHttpRequestResponseType.js
+|   |   |   |   |           XMLHttpRequestUpload.js
+|   |   |   |   |           XMLSerializer.js
+|   |   |   |   |           
+|   |   |   |   \---jsdom
+|   |   |   |       |   utils.js
+|   |   |   |       |   virtual-console.js
+|   |   |   |       |   
+|   |   |   |       +---browser
+|   |   |   |       |   |   default-stylesheet.css
+|   |   |   |       |   |   not-implemented.js
+|   |   |   |       |   |   Window.js
+|   |   |   |       |   |   
+|   |   |   |       |   +---parser
+|   |   |   |       |   |       html.js
+|   |   |   |       |   |       index.js
+|   |   |   |       |   |       xml.js
+|   |   |   |       |   |       
+|   |   |   |       |   \---resources
+|   |   |   |       |           async-resource-queue.js
+|   |   |   |       |           decompress-interceptor.js
+|   |   |   |       |           jsdom-dispatcher.js
+|   |   |   |       |           per-document-resource-loader.js
+|   |   |   |       |           request-interceptor.js
+|   |   |   |       |           request-manager.js
+|   |   |   |       |           resource-queue.js
+|   |   |   |       |           stream-handler.js
+|   |   |   |       |           
+|   |   |   |       +---level3
+|   |   |   |       |       xpath.js
+|   |   |   |       |       
+|   |   |   |       \---living
+|   |   |   |           |   attributes.js
+|   |   |   |           |   documents.js
+|   |   |   |           |   interfaces.js
+|   |   |   |           |   node-document-position.js
+|   |   |   |           |   node-type.js
+|   |   |   |           |   node.js
+|   |   |   |           |   window-properties.js
+|   |   |   |           |   
+|   |   |   |           +---aborting
+|   |   |   |           |       AbortController-impl.js
+|   |   |   |           |       AbortSignal-impl.js
+|   |   |   |           |       
+|   |   |   |           +---attributes
+|   |   |   |           |       Attr-impl.js
+|   |   |   |           |       NamedNodeMap-impl.js
+|   |   |   |           |       
+|   |   |   |           +---constraint-validation
+|   |   |   |           |       DefaultConstraintValidation-impl.js
+|   |   |   |           |       ValidityState-impl.js
+|   |   |   |           |       
+|   |   |   |           +---crypto
+|   |   |   |           |       Crypto-impl.js
+|   |   |   |           |       
+|   |   |   |           +---css
+|   |   |   |           |   |   CSSConditionRule-impl.js
+|   |   |   |           |   |   CSSContainerRule-impl.js
+|   |   |   |           |   |   CSSCounterStyleRule-impl.js
+|   |   |   |           |   |   CSSFontFaceRule-impl.js
+|   |   |   |           |   |   CSSGroupingRule-impl.js
+|   |   |   |           |   |   CSSImportRule-impl.js
+|   |   |   |           |   |   CSSKeyframeRule-impl.js
+|   |   |   |           |   |   CSSKeyframesRule-impl.js
+|   |   |   |           |   |   CSSLayerBlockRule-impl.js
+|   |   |   |           |   |   CSSLayerStatementRule-impl.js
+|   |   |   |           |   |   CSSMediaRule-impl.js
+|   |   |   |           |   |   CSSNamespaceRule-impl.js
+|   |   |   |           |   |   CSSNestedDeclarations-impl.js
+|   |   |   |           |   |   CSSPageRule-impl.js
+|   |   |   |           |   |   CSSRule-impl.js
+|   |   |   |           |   |   CSSRuleList-impl.js
+|   |   |   |           |   |   CSSScopeRule-impl.js
+|   |   |   |           |   |   CSSStyleDeclaration-impl.js
+|   |   |   |           |   |   CSSStyleProperties-impl.js
+|   |   |   |           |   |   CSSStyleRule-impl.js
+|   |   |   |           |   |   CSSStyleSheet-impl.js
+|   |   |   |           |   |   CSSSupportsRule-impl.js
+|   |   |   |           |   |   ElementCSSInlineStyle-impl.js
+|   |   |   |           |   |   MediaList-impl.js
+|   |   |   |           |   |   StyleSheet-impl.js
+|   |   |   |           |   |   StyleSheetList-impl.js
+|   |   |   |           |   |   
+|   |   |   |           |   +---helpers
+|   |   |   |           |   |       computed-style.js
+|   |   |   |           |   |       css-parser.js
+|   |   |   |           |   |       css-values.js
+|   |   |   |           |   |       generic-property-descriptor.js
+|   |   |   |           |   |       patched-csstree.js
+|   |   |   |           |   |       shorthand-properties.js
+|   |   |   |           |   |       stylesheets.js
+|   |   |   |           |   |       system-colors.js
+|   |   |   |           |   |       
+|   |   |   |           |   \---properties
+|   |   |   |           |           background.js
+|   |   |   |           |           backgroundAttachment.js
+|   |   |   |           |           backgroundClip.js
+|   |   |   |           |           backgroundColor.js
+|   |   |   |           |           backgroundImage.js
+|   |   |   |           |           backgroundOrigin.js
+|   |   |   |           |           backgroundPosition.js
+|   |   |   |           |           backgroundRepeat.js
+|   |   |   |           |           backgroundSize.js
+|   |   |   |           |           border.js
+|   |   |   |           |           borderBottom.js
+|   |   |   |           |           borderBottomColor.js
+|   |   |   |           |           borderBottomStyle.js
+|   |   |   |           |           borderBottomWidth.js
+|   |   |   |           |           borderColor.js
+|   |   |   |           |           borderLeft.js
+|   |   |   |           |           borderLeftColor.js
+|   |   |   |           |           borderLeftStyle.js
+|   |   |   |           |           borderLeftWidth.js
+|   |   |   |           |           borderRight.js
+|   |   |   |           |           borderRightColor.js
+|   |   |   |           |           borderRightStyle.js
+|   |   |   |           |           borderRightWidth.js
+|   |   |   |           |           borderSpacing.js
+|   |   |   |           |           borderStyle.js
+|   |   |   |           |           borderTop.js
+|   |   |   |           |           borderTopColor.js
+|   |   |   |           |           borderTopStyle.js
+|   |   |   |           |           borderTopWidth.js
+|   |   |   |           |           borderWidth.js
+|   |   |   |           |           bottom.js
+|   |   |   |           |           clip.js
+|   |   |   |           |           display.js
+|   |   |   |           |           flex.js
+|   |   |   |           |           flexBasis.js
+|   |   |   |           |           flexGrow.js
+|   |   |   |           |           flexShrink.js
+|   |   |   |           |           font.js
+|   |   |   |           |           fontFamily.js
+|   |   |   |           |           fontSize.js
+|   |   |   |           |           fontStyle.js
+|   |   |   |           |           fontVariant.js
+|   |   |   |           |           fontWeight.js
+|   |   |   |           |           height.js
+|   |   |   |           |           left.js
+|   |   |   |           |           lineHeight.js
+|   |   |   |           |           margin.js
+|   |   |   |           |           marginBottom.js
+|   |   |   |           |           marginLeft.js
+|   |   |   |           |           marginRight.js
+|   |   |   |           |           marginTop.js
+|   |   |   |           |           opacity.js
+|   |   |   |           |           padding.js
+|   |   |   |           |           paddingBottom.js
+|   |   |   |           |           paddingLeft.js
+|   |   |   |           |           paddingRight.js
+|   |   |   |           |           paddingTop.js
+|   |   |   |           |           right.js
+|   |   |   |           |           top.js
+|   |   |   |           |           width.js
+|   |   |   |           |           
+|   |   |   |           +---custom-elements
+|   |   |   |           |       CustomElementRegistry-impl.js
+|   |   |   |           |       ElementInternals-impl.js
+|   |   |   |           |       
+|   |   |   |           +---deviceorientation
+|   |   |   |           |       DeviceMotionEventAcceleration-impl.js
+|   |   |   |           |       DeviceMotionEventRotationRate-impl.js
+|   |   |   |           |       
+|   |   |   |           +---domparsing
+|   |   |   |           |       DOMParser-impl.js
+|   |   |   |           |       InnerHTML-impl.js
+|   |   |   |           |       parse5-adapter-serialization.js
+|   |   |   |           |       serialization.js
+|   |   |   |           |       XMLSerializer-impl.js
+|   |   |   |           |       
+|   |   |   |           +---encoding
+|   |   |   |           |       TextDecoder-impl.js
+|   |   |   |           |       TextEncoder-impl.js
+|   |   |   |           |       
+|   |   |   |           +---events
+|   |   |   |           |       BeforeUnloadEvent-impl.js
+|   |   |   |           |       BlobEvent-impl.js
+|   |   |   |           |       CloseEvent-impl.js
+|   |   |   |           |       CompositionEvent-impl.js
+|   |   |   |           |       CustomEvent-impl.js
+|   |   |   |           |       DeviceMotionEvent-impl.js
+|   |   |   |           |       DeviceOrientationEvent-impl.js
+|   |   |   |           |       ErrorEvent-impl.js
+|   |   |   |           |       Event-impl.js
+|   |   |   |           |       EventModifierMixin-impl.js
+|   |   |   |           |       EventTarget-impl.js
+|   |   |   |           |       FocusEvent-impl.js
+|   |   |   |           |       HashChangeEvent-impl.js
+|   |   |   |           |       InputEvent-impl.js
+|   |   |   |           |       KeyboardEvent-impl.js
+|   |   |   |           |       MessageEvent-impl.js
+|   |   |   |           |       MouseEvent-impl.js
+|   |   |   |           |       PageTransitionEvent-impl.js
+|   |   |   |           |       PointerEvent-impl.js
+|   |   |   |           |       PopStateEvent-impl.js
+|   |   |   |           |       ProgressEvent-impl.js
+|   |   |   |           |       PromiseRejectionEvent-impl.js
+|   |   |   |           |       StorageEvent-impl.js
+|   |   |   |           |       SubmitEvent-impl.js
+|   |   |   |           |       TouchEvent-impl.js
+|   |   |   |           |       TransitionEvent-impl.js
+|   |   |   |           |       UIEvent-impl.js
+|   |   |   |           |       WheelEvent-impl.js
+|   |   |   |           |       
+|   |   |   |           +---fetch
+|   |   |   |           |       header-list.js
+|   |   |   |           |       header-types.js
+|   |   |   |           |       header-utils.js
+|   |   |   |           |       Headers-impl.js
+|   |   |   |           |       
+|   |   |   |           +---file-api
+|   |   |   |           |       Blob-impl.js
+|   |   |   |           |       File-impl.js
+|   |   |   |           |       FileList-impl.js
+|   |   |   |           |       FileReader-impl.js
+|   |   |   |           |       
+|   |   |   |           +---geometry
+|   |   |   |           |       DOMRect-impl.js
+|   |   |   |           |       DOMRectReadOnly-impl.js
+|   |   |   |           |       
+|   |   |   |           +---helpers
+|   |   |   |           |   |   binary-data.js
+|   |   |   |           |   |   by-id-cache.js
+|   |   |   |           |   |   create-element.js
+|   |   |   |           |   |   create-event-accessor.js
+|   |   |   |           |   |   custom-elements.js
+|   |   |   |           |   |   dates-and-times.js
+|   |   |   |           |   |   details.js
+|   |   |   |           |   |   encoding.js
+|   |   |   |           |   |   events.js
+|   |   |   |           |   |   focusing.js
+|   |   |   |           |   |   form-controls.js
+|   |   |   |           |   |   html-constructor.js
+|   |   |   |           |   |   internal-constants.js
+|   |   |   |           |   |   is-window.js
+|   |   |   |           |   |   iterable-weak-set.js
+|   |   |   |           |   |   json.js
+|   |   |   |           |   |   mutation-observers.js
+|   |   |   |           |   |   namespaces.js
+|   |   |   |           |   |   node.js
+|   |   |   |           |   |   number-and-date-inputs.js
+|   |   |   |           |   |   ordered-set.js
+|   |   |   |           |   |   page-transition-event.js
+|   |   |   |           |   |   runtime-script-errors.js
+|   |   |   |           |   |   shadow-dom.js
+|   |   |   |           |   |   strings.js
+|   |   |   |           |   |   text.js
+|   |   |   |           |   |   traversal.js
+|   |   |   |           |   |   validate-names.js
+|   |   |   |           |   |   
+|   |   |   |           |   \---svg
+|   |   |   |           |           basic-types.js
+|   |   |   |           |           render.js
+|   |   |   |           |           
+|   |   |   |           +---hr-time
+|   |   |   |           |       Performance-impl.js
+|   |   |   |           |       
+|   |   |   |           +---mutation-observer
+|   |   |   |           |       MutationObserver-impl.js
+|   |   |   |           |       MutationRecord-impl.js
+|   |   |   |           |       
+|   |   |   |           +---navigator
+|   |   |   |           |       MimeType-impl.js
+|   |   |   |           |       MimeTypeArray-impl.js
+|   |   |   |           |       Navigator-impl.js
+|   |   |   |           |       NavigatorConcurrentHardware-impl.js
+|   |   |   |           |       NavigatorCookies-impl.js
+|   |   |   |           |       NavigatorID-impl.js
+|   |   |   |           |       NavigatorLanguage-impl.js
+|   |   |   |           |       NavigatorOnLine-impl.js
+|   |   |   |           |       NavigatorPlugins-impl.js
+|   |   |   |           |       Plugin-impl.js
+|   |   |   |           |       PluginArray-impl.js
+|   |   |   |           |       
+|   |   |   |           +---nodes
+|   |   |   |           |       CDATASection-impl.js
+|   |   |   |           |       CharacterData-impl.js
+|   |   |   |           |       ChildNode-impl.js
+|   |   |   |           |       Comment-impl.js
+|   |   |   |           |       Document-impl.js
+|   |   |   |           |       DocumentFragment-impl.js
+|   |   |   |           |       DocumentOrShadowRoot-impl.js
+|   |   |   |           |       DocumentType-impl.js
+|   |   |   |           |       DOMImplementation-impl.js
+|   |   |   |           |       DOMStringMap-impl.js
+|   |   |   |           |       DOMTokenList-impl.js
+|   |   |   |           |       Element-impl.js
+|   |   |   |           |       ElementContentEditable-impl.js
+|   |   |   |           |       GlobalEventHandlers-impl.js
+|   |   |   |           |       HTMLAnchorElement-impl.js
+|   |   |   |           |       HTMLAreaElement-impl.js
+|   |   |   |           |       HTMLAudioElement-impl.js
+|   |   |   |           |       HTMLBaseElement-impl.js
+|   |   |   |           |       HTMLBodyElement-impl.js
+|   |   |   |           |       HTMLBRElement-impl.js
+|   |   |   |           |       HTMLButtonElement-impl.js
+|   |   |   |           |       HTMLCanvasElement-impl.js
+|   |   |   |           |       HTMLCollection-impl.js
+|   |   |   |           |       HTMLDataElement-impl.js
+|   |   |   |           |       HTMLDataListElement-impl.js
+|   |   |   |           |       HTMLDetailsElement-impl.js
+|   |   |   |           |       HTMLDialogElement-impl.js
+|   |   |   |           |       HTMLDirectoryElement-impl.js
+|   |   |   |           |       HTMLDivElement-impl.js
+|   |   |   |           |       HTMLDListElement-impl.js
+|   |   |   |           |       HTMLElement-impl.js
+|   |   |   |           |       HTMLEmbedElement-impl.js
+|   |   |   |           |       HTMLFieldSetElement-impl.js
+|   |   |   |           |       HTMLFontElement-impl.js
+|   |   |   |           |       HTMLFormControlsCollection-impl.js
+|   |   |   |           |       HTMLFormElement-impl.js
+|   |   |   |           |       HTMLFrameElement-impl.js
+|   |   |   |           |       HTMLFrameSetElement-impl.js
+|   |   |   |           |       HTMLHeadElement-impl.js
+|   |   |   |           |       HTMLHeadingElement-impl.js
+|   |   |   |           |       HTMLHRElement-impl.js
+|   |   |   |           |       HTMLHtmlElement-impl.js
+|   |   |   |           |       HTMLHyperlinkElementUtils-impl.js
+|   |   |   |           |       HTMLIFrameElement-impl.js
+|   |   |   |           |       HTMLImageElement-impl.js
+|   |   |   |           |       HTMLInputElement-impl.js
+|   |   |   |           |       HTMLLabelElement-impl.js
+|   |   |   |           |       HTMLLegendElement-impl.js
+|   |   |   |           |       HTMLLIElement-impl.js
+|   |   |   |           |       HTMLLinkElement-impl.js
+|   |   |   |           |       HTMLMapElement-impl.js
+|   |   |   |           |       HTMLMarqueeElement-impl.js
+|   |   |   |           |       HTMLMediaElement-impl.js
+|   |   |   |           |       HTMLMenuElement-impl.js
+|   |   |   |           |       HTMLMetaElement-impl.js
+|   |   |   |           |       HTMLMeterElement-impl.js
+|   |   |   |           |       HTMLModElement-impl.js
+|   |   |   |           |       HTMLObjectElement-impl.js
+|   |   |   |           |       HTMLOListElement-impl.js
+|   |   |   |           |       HTMLOptGroupElement-impl.js
+|   |   |   |           |       HTMLOptionElement-impl.js
+|   |   |   |           |       HTMLOptionsCollection-impl.js
+|   |   |   |           |       HTMLOrSVGElement-impl.js
+|   |   |   |           |       HTMLOutputElement-impl.js
+|   |   |   |           |       HTMLParagraphElement-impl.js
+|   |   |   |           |       HTMLParamElement-impl.js
+|   |   |   |           |       HTMLPictureElement-impl.js
+|   |   |   |           |       HTMLPreElement-impl.js
+|   |   |   |           |       HTMLProgressElement-impl.js
+|   |   |   |           |       HTMLQuoteElement-impl.js
+|   |   |   |           |       HTMLScriptElement-impl.js
+|   |   |   |           |       HTMLSelectElement-impl.js
+|   |   |   |           |       HTMLSlotElement-impl.js
+|   |   |   |           |       HTMLSourceElement-impl.js
+|   |   |   |           |       HTMLSpanElement-impl.js
+|   |   |   |           |       HTMLStyleElement-impl.js
+|   |   |   |           |       HTMLTableCaptionElement-impl.js
+|   |   |   |           |       HTMLTableCellElement-impl.js
+|   |   |   |           |       HTMLTableColElement-impl.js
+|   |   |   |           |       HTMLTableElement-impl.js
+|   |   |   |           |       HTMLTableRowElement-impl.js
+|   |   |   |           |       HTMLTableSectionElement-impl.js
+|   |   |   |           |       HTMLTemplateElement-impl.js
+|   |   |   |           |       HTMLTextAreaElement-impl.js
+|   |   |   |           |       HTMLTimeElement-impl.js
+|   |   |   |           |       HTMLTitleElement-impl.js
+|   |   |   |           |       HTMLTrackElement-impl.js
+|   |   |   |           |       HTMLUListElement-impl.js
+|   |   |   |           |       HTMLUnknownElement-impl.js
+|   |   |   |           |       HTMLVideoElement-impl.js
+|   |   |   |           |       LinkStyle-impl.js
+|   |   |   |           |       Node-impl.js
+|   |   |   |           |       NodeList-impl.js
+|   |   |   |           |       NonDocumentTypeChildNode-impl.js
+|   |   |   |           |       NonElementParentNode-impl.js
+|   |   |   |           |       ParentNode-impl.js
+|   |   |   |           |       ProcessingInstruction-impl.js
+|   |   |   |           |       RadioNodeList-impl.js
+|   |   |   |           |       ShadowRoot-impl.js
+|   |   |   |           |       Slotable-impl.js
+|   |   |   |           |       SVGDefsElement-impl.js
+|   |   |   |           |       SVGDescElement-impl.js
+|   |   |   |           |       SVGElement-impl.js
+|   |   |   |           |       SVGGElement-impl.js
+|   |   |   |           |       SVGGraphicsElement-impl.js
+|   |   |   |           |       SVGMetadataElement-impl.js
+|   |   |   |           |       SVGSVGElement-impl.js
+|   |   |   |           |       SVGSwitchElement-impl.js
+|   |   |   |           |       SVGSymbolElement-impl.js
+|   |   |   |           |       SVGTests-impl.js
+|   |   |   |           |       SVGTitleElement-impl.js
+|   |   |   |           |       Text-impl.js
+|   |   |   |           |       WindowEventHandlers-impl.js
+|   |   |   |           |       XMLDocument-impl.js
+|   |   |   |           |       
+|   |   |   |           +---range
+|   |   |   |           |       AbstractRange-impl.js
+|   |   |   |           |       boundary-point.js
+|   |   |   |           |       Range-impl.js
+|   |   |   |           |       StaticRange-impl.js
+|   |   |   |           |       
+|   |   |   |           +---selection
+|   |   |   |           |       Selection-impl.js
+|   |   |   |           |       
+|   |   |   |           +---svg
+|   |   |   |           |       SVGAnimatedPreserveAspectRatio-impl.js
+|   |   |   |           |       SVGAnimatedRect-impl.js
+|   |   |   |           |       SVGAnimatedString-impl.js
+|   |   |   |           |       SVGListBase.js
+|   |   |   |           |       SVGNumber-impl.js
+|   |   |   |           |       SVGPreserveAspectRatio-impl.js
+|   |   |   |           |       SVGRect-impl.js
+|   |   |   |           |       SVGStringList-impl.js
+|   |   |   |           |       
+|   |   |   |           +---traversal
+|   |   |   |           |       helpers.js
+|   |   |   |           |       NodeIterator-impl.js
+|   |   |   |           |       TreeWalker-impl.js
+|   |   |   |           |       
+|   |   |   |           +---webidl
+|   |   |   |           |       DOMException-impl.js
+|   |   |   |           |       
+|   |   |   |           +---websockets
+|   |   |   |           |       WebSocket-impl.js
+|   |   |   |           |       
+|   |   |   |           +---webstorage
+|   |   |   |           |       Storage-impl.js
+|   |   |   |           |       
+|   |   |   |           +---window
+|   |   |   |           |       BarProp-impl.js
+|   |   |   |           |       External-impl.js
+|   |   |   |           |       History-impl.js
+|   |   |   |           |       Location-impl.js
+|   |   |   |           |       navigation.js
+|   |   |   |           |       Screen-impl.js
+|   |   |   |           |       SessionHistory.js
+|   |   |   |           |       
+|   |   |   |           \---xhr
+|   |   |   |                   FormData-impl.js
+|   |   |   |                   multipart-form-data.js
+|   |   |   |                   xhr-sync-worker.js
+|   |   |   |                   xhr-utils.js
+|   |   |   |                   XMLHttpRequest-impl.js
+|   |   |   |                   XMLHttpRequestEventTarget-impl.js
+|   |   |   |                   XMLHttpRequestUpload-impl.js
+|   |   |   |                   
+|   |   |   \---node_modules
+|   |   |       \---lru-cache
+|   |   |           |   LICENSE.md
+|   |   |           |   package.json
+|   |   |           |   README.md
+|   |   |           |   
+|   |   |           \---dist
+|   |   |               +---commonjs
+|   |   |               |   |   diagnostics-channel-cjs.cjs.map
+|   |   |               |   |   diagnostics-channel-cjs.d.cts.map
+|   |   |               |   |   diagnostics-channel.d.ts
+|   |   |               |   |   diagnostics-channel.js
+|   |   |               |   |   index.d.ts
+|   |   |               |   |   index.d.ts.map
+|   |   |               |   |   index.js
+|   |   |               |   |   index.js.map
+|   |   |               |   |   index.min.js
+|   |   |               |   |   index.min.js.map
+|   |   |               |   |   package.json
+|   |   |               |   |   perf.d.ts
+|   |   |               |   |   perf.d.ts.map
+|   |   |               |   |   perf.js
+|   |   |               |   |   perf.js.map
+|   |   |               |   |   
+|   |   |               |   +---browser
+|   |   |               |   |       diagnostics-channel-browser.d.ts.map
+|   |   |               |   |       diagnostics-channel-browser.js.map
+|   |   |               |   |       diagnostics-channel.d.ts
+|   |   |               |   |       diagnostics-channel.js
+|   |   |               |   |       index.d.ts
+|   |   |               |   |       index.d.ts.map
+|   |   |               |   |       index.js
+|   |   |               |   |       index.js.map
+|   |   |               |   |       index.min.js
+|   |   |               |   |       index.min.js.map
+|   |   |               |   |       perf.d.ts
+|   |   |               |   |       perf.d.ts.map
+|   |   |               |   |       perf.js
+|   |   |               |   |       perf.js.map
+|   |   |               |   |       
+|   |   |               |   \---node
+|   |   |               |           diagnostics-channel-node.d.ts.map
+|   |   |               |           diagnostics-channel-node.js.map
+|   |   |               |           diagnostics-channel.d.ts
+|   |   |               |           diagnostics-channel.js
+|   |   |               |           index.d.ts
+|   |   |               |           index.d.ts.map
+|   |   |               |           index.js
+|   |   |               |           index.js.map
+|   |   |               |           index.min.js
+|   |   |               |           index.min.js.map
+|   |   |               |           perf.d.ts
+|   |   |               |           perf.d.ts.map
+|   |   |               |           perf.js
+|   |   |               |           perf.js.map
+|   |   |               |           
+|   |   |               \---esm
+|   |   |                   |   diagnostics-channel-esm.d.mts.map
+|   |   |                   |   diagnostics-channel-esm.mjs.map
+|   |   |                   |   diagnostics-channel.d.ts
+|   |   |                   |   diagnostics-channel.js
+|   |   |                   |   index.d.ts
+|   |   |                   |   index.d.ts.map
+|   |   |                   |   index.js
+|   |   |                   |   index.js.map
+|   |   |                   |   index.min.js
+|   |   |                   |   index.min.js.map
+|   |   |                   |   package.json
+|   |   |                   |   perf.d.ts
+|   |   |                   |   perf.d.ts.map
+|   |   |                   |   perf.js
+|   |   |                   |   perf.js.map
+|   |   |                   |   
+|   |   |                   +---browser
+|   |   |                   |       diagnostics-channel-browser.d.ts.map
+|   |   |                   |       diagnostics-channel-browser.js.map
+|   |   |                   |       diagnostics-channel.d.ts
+|   |   |                   |       diagnostics-channel.js
+|   |   |                   |       index.d.ts
+|   |   |                   |       index.d.ts.map
+|   |   |                   |       index.js
+|   |   |                   |       index.js.map
+|   |   |                   |       index.min.js
+|   |   |                   |       index.min.js.map
+|   |   |                   |       perf.d.ts
+|   |   |                   |       perf.d.ts.map
+|   |   |                   |       perf.js
+|   |   |                   |       perf.js.map
+|   |   |                   |       
+|   |   |                   \---node
+|   |   |                           diagnostics-channel-node.d.ts.map
+|   |   |                           diagnostics-channel-node.js.map
+|   |   |                           diagnostics-channel.d.ts
+|   |   |                           diagnostics-channel.js
+|   |   |                           index.d.ts
+|   |   |                           index.d.ts.map
+|   |   |                           index.js
+|   |   |                           index.js.map
+|   |   |                           index.min.js
+|   |   |                           index.min.js.map
+|   |   |                           perf.d.ts
+|   |   |                           perf.d.ts.map
+|   |   |                           perf.js
+|   |   |                           perf.js.map
+|   |   |                           
 |   |   +---jsesc
 |   |   |   |   jsesc.js
 |   |   |   |   LICENSE-MIT.txt
@@ -88931,6 +91804,52 @@ C:\PY_DEV\MKOBI
 |   |   |       package.json
 |   |   |       README.md
 |   |   |       
+|   |   +---lz-string
+|   |   |   |   bower.json
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---bin
+|   |   |   |       bin.js
+|   |   |   |       
+|   |   |   +---libs
+|   |   |   |       base64-string.js
+|   |   |   |       lz-string.js
+|   |   |   |       lz-string.min.js
+|   |   |   |       
+|   |   |   +---reference
+|   |   |   |       lz-string-1.0.2.js
+|   |   |   |       
+|   |   |   +---tests
+|   |   |   |   |   lz-string-spec.js
+|   |   |   |   |   SpecRunner.html
+|   |   |   |   |   
+|   |   |   |   \---lib
+|   |   |   |       \---jasmine-1.3.1
+|   |   |   |               jasmine-html.js
+|   |   |   |               jasmine.css
+|   |   |   |               jasmine.js
+|   |   |   |               MIT.LICENSE
+|   |   |   |               
+|   |   |   \---typings
+|   |   |           lz-string.d.ts
+|   |   |           
+|   |   +---magic-string
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---dist
+|   |   |           magic-string.cjs.d.ts
+|   |   |           magic-string.cjs.js
+|   |   |           magic-string.cjs.js.map
+|   |   |           magic-string.es.d.mts
+|   |   |           magic-string.es.mjs
+|   |   |           magic-string.es.mjs.map
+|   |   |           magic-string.umd.js
+|   |   |           magic-string.umd.js.map
+|   |   |           
 |   |   +---map-limit
 |   |   |   |   index.js
 |   |   |   |   LICENSE.md
@@ -90242,6 +93161,39 @@ C:\PY_DEV\MKOBI
 |   |   |       package.json
 |   |   |       readme.md
 |   |   |       
+|   |   +---mdn-data
+|   |   |   |   index.js
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---api
+|   |   |   |       index.js
+|   |   |   |       inheritance.json
+|   |   |   |       inheritance.schema.json
+|   |   |   |       
+|   |   |   +---css
+|   |   |   |       at-rules.json
+|   |   |   |       at-rules.schema.json
+|   |   |   |       definitions.json
+|   |   |   |       functions.json
+|   |   |   |       functions.schema.json
+|   |   |   |       index.js
+|   |   |   |       properties.json
+|   |   |   |       properties.schema.json
+|   |   |   |       selectors.json
+|   |   |   |       selectors.schema.json
+|   |   |   |       syntaxes.json
+|   |   |   |       syntaxes.schema.json
+|   |   |   |       types.json
+|   |   |   |       types.schema.json
+|   |   |   |       units.json
+|   |   |   |       units.schema.json
+|   |   |   |       
+|   |   |   \---l10n
+|   |   |           css.json
+|   |   |           index.js
+|   |   |           
 |   |   +---mime-db
 |   |   |       db.json
 |   |   |       HISTORY.md
@@ -90256,6 +93208,12 @@ C:\PY_DEV\MKOBI
 |   |   |       LICENSE
 |   |   |       package.json
 |   |   |       README.md
+|   |   |       
+|   |   +---min-indent
+|   |   |       index.js
+|   |   |       license
+|   |   |       package.json
+|   |   |       readme.md
 |   |   |       
 |   |   +---minimatch
 |   |   |   |   LICENSE.md
@@ -90545,6 +93503,20 @@ C:\PY_DEV\MKOBI
 |   |   |       package.json
 |   |   |       readme.md
 |   |   |       
+|   |   +---obug
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---dist
+|   |   |           browser.d.ts
+|   |   |           browser.js
+|   |   |           browser.min.js
+|   |   |           core.d.ts
+|   |   |           core.js
+|   |   |           node.d.ts
+|   |   |           node.js
+|   |   |           
 |   |   +---once
 |   |   |       LICENSE
 |   |   |       once.js
@@ -90617,6 +93589,53 @@ C:\PY_DEV\MKOBI
 |   |   |       package.json
 |   |   |       README.md
 |   |   |       
+|   |   +---parse5
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---dist
+|   |   |       |   index.d.ts
+|   |   |       |   index.js
+|   |   |       |   
+|   |   |       +---common
+|   |   |       |       doctype.d.ts
+|   |   |       |       doctype.js
+|   |   |       |       error-codes.d.ts
+|   |   |       |       error-codes.js
+|   |   |       |       foreign-content.d.ts
+|   |   |       |       foreign-content.js
+|   |   |       |       html.d.ts
+|   |   |       |       html.js
+|   |   |       |       token.d.ts
+|   |   |       |       token.js
+|   |   |       |       unicode.d.ts
+|   |   |       |       unicode.js
+|   |   |       |       
+|   |   |       +---parser
+|   |   |       |       formatting-element-list.d.ts
+|   |   |       |       formatting-element-list.js
+|   |   |       |       index.d.ts
+|   |   |       |       index.js
+|   |   |       |       open-element-stack.d.ts
+|   |   |       |       open-element-stack.js
+|   |   |       |       
+|   |   |       +---serializer
+|   |   |       |       index.d.ts
+|   |   |       |       index.js
+|   |   |       |       
+|   |   |       +---tokenizer
+|   |   |       |       index.d.ts
+|   |   |       |       index.js
+|   |   |       |       preprocessor.d.ts
+|   |   |       |       preprocessor.js
+|   |   |       |       
+|   |   |       \---tree-adapters
+|   |   |               default.d.ts
+|   |   |               default.js
+|   |   |               interface.d.ts
+|   |   |               interface.js
+|   |   |               
 |   |   +---path-exists
 |   |   |       index.d.ts
 |   |   |       index.js
@@ -90644,6 +93663,28 @@ C:\PY_DEV\MKOBI
 |   |   |       package.json
 |   |   |       readme.md
 |   |   |       
+|   |   +---pathe
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   utils.d.ts
+|   |   |   |   
+|   |   |   \---dist
+|   |   |       |   index.cjs
+|   |   |       |   index.d.cts
+|   |   |       |   index.d.mts
+|   |   |       |   index.d.ts
+|   |   |       |   index.mjs
+|   |   |       |   utils.cjs
+|   |   |       |   utils.d.cts
+|   |   |       |   utils.d.mts
+|   |   |       |   utils.d.ts
+|   |   |       |   utils.mjs
+|   |   |       |   
+|   |   |       \---shared
+|   |   |               pathe.BSlhyZSM.cjs
+|   |   |               pathe.M-eThtNZ.mjs
+|   |   |               
 |   |   +---pbf
 |   |   |   |   compile.js
 |   |   |   |   index.js
@@ -92158,6 +95199,57 @@ C:\PY_DEV\MKOBI
 |   |   |           Obj.js
 |   |   |           Str.js
 |   |   |           
+|   |   +---pretty-format
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---build
+|   |   |   |   |   collections.d.ts
+|   |   |   |   |   collections.js
+|   |   |   |   |   index.d.ts
+|   |   |   |   |   index.js
+|   |   |   |   |   types.d.ts
+|   |   |   |   |   types.js
+|   |   |   |   |   
+|   |   |   |   \---plugins
+|   |   |   |       |   AsymmetricMatcher.d.ts
+|   |   |   |       |   AsymmetricMatcher.js
+|   |   |   |       |   ConvertAnsi.d.ts
+|   |   |   |       |   ConvertAnsi.js
+|   |   |   |       |   DOMCollection.d.ts
+|   |   |   |       |   DOMCollection.js
+|   |   |   |       |   DOMElement.d.ts
+|   |   |   |       |   DOMElement.js
+|   |   |   |       |   Immutable.d.ts
+|   |   |   |       |   Immutable.js
+|   |   |   |       |   ReactElement.d.ts
+|   |   |   |       |   ReactElement.js
+|   |   |   |       |   ReactTestComponent.d.ts
+|   |   |   |       |   ReactTestComponent.js
+|   |   |   |       |   
+|   |   |   |       \---lib
+|   |   |   |               escapeHTML.d.ts
+|   |   |   |               escapeHTML.js
+|   |   |   |               markup.d.ts
+|   |   |   |               markup.js
+|   |   |   |               
+|   |   |   \---node_modules
+|   |   |       \---react-is
+|   |   |           |   build-info.json
+|   |   |           |   index.js
+|   |   |           |   LICENSE
+|   |   |           |   package.json
+|   |   |           |   README.md
+|   |   |           |   
+|   |   |           +---cjs
+|   |   |           |       react-is.development.js
+|   |   |           |       react-is.production.min.js
+|   |   |           |       
+|   |   |           \---umd
+|   |   |                   react-is.development.js
+|   |   |                   react-is.production.min.js
+|   |   |                   
 |   |   +---probe-image-size
 |   |   |   |   http.js
 |   |   |   |   index.js
@@ -93018,6 +96110,13 @@ C:\PY_DEV\MKOBI
 |   |   |               package.json
 |   |   |               README.md
 |   |   |               
+|   |   +---redent
+|   |   |       index.d.ts
+|   |   |       index.js
+|   |   |       license
+|   |   |       package.json
+|   |   |       readme.md
+|   |   |       
 |   |   +---regl
 |   |   |   |   API.md
 |   |   |   |   CHANGES.md
@@ -93125,6 +96224,12 @@ C:\PY_DEV\MKOBI
 |   |   |           nodiag.js
 |   |   |           order.js
 |   |   |           
+|   |   +---require-from-string
+|   |   |       index.js
+|   |   |       license
+|   |   |       package.json
+|   |   |       readme.md
+|   |   |       
 |   |   +---reselect
 |   |   |   |   LICENSE
 |   |   |   |   package.json
@@ -93528,6 +96633,13 @@ C:\PY_DEV\MKOBI
 |   |   |   \---lib
 |   |   |           sax.js
 |   |   |           
+|   |   +---saxes
+|   |   |       package.json
+|   |   |       README.md
+|   |   |       saxes.d.ts
+|   |   |       saxes.js
+|   |   |       saxes.js.map
+|   |   |       
 |   |   +---scheduler
 |   |   |   |   index.js
 |   |   |   |   index.native.js
@@ -93593,6 +96705,14 @@ C:\PY_DEV\MKOBI
 |   |   |       package.json
 |   |   |       readme.md
 |   |   |       
+|   |   +---siginfo
+|   |   |       .travis.yml
+|   |   |       index.js
+|   |   |       LICENSE
+|   |   |       package.json
+|   |   |       README.md
+|   |   |       test.js
+|   |   |       
 |   |   +---source-map
 |   |   |   |   CHANGELOG.md
 |   |   |   |   LICENSE
@@ -93650,6 +96770,15 @@ C:\PY_DEV\MKOBI
 |   |   |   \---lib
 |   |   |           stack-trace.js
 |   |   |           
+|   |   +---stackback
+|   |   |       .npmignore
+|   |   |       .travis.yml
+|   |   |       formatstack.js
+|   |   |       index.js
+|   |   |       package.json
+|   |   |       README.md
+|   |   |       test.js
+|   |   |       
 |   |   +---static-eval
 |   |   |   |   .travis.yml
 |   |   |   |   CHANGELOG.md
@@ -93667,6 +96796,15 @@ C:\PY_DEV\MKOBI
 |   |   |           eval.js
 |   |   |           prop.js
 |   |   |           template-strings.js
+|   |   |           
+|   |   +---std-env
+|   |   |   |   LICENCE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---dist
+|   |   |           index.d.mts
+|   |   |           index.mjs
 |   |   |           
 |   |   +---stream-parser
 |   |   |   |   .npmignore
@@ -93745,6 +96883,13 @@ C:\PY_DEV\MKOBI
 |   |   |               package.json
 |   |   |               README.md
 |   |   |               
+|   |   +---strip-indent
+|   |   |       index.d.ts
+|   |   |       index.js
+|   |   |       license
+|   |   |       package.json
+|   |   |       readme.md
+|   |   |       
 |   |   +---strongly-connected-components
 |   |   |   |   .npmignore
 |   |   |   |   LICENSE
@@ -93863,12 +97008,34 @@ C:\PY_DEV\MKOBI
 |   |   |       readme.md
 |   |   |       test.js
 |   |   |       
+|   |   +---symbol-tree
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---lib
+|   |   |           SymbolTree.js
+|   |   |           SymbolTreeNode.js
+|   |   |           TreeIterator.js
+|   |   |           TreePosition.js
+|   |   |           
 |   |   +---through2
 |   |   |       LICENSE.md
 |   |   |       package.json
 |   |   |       README.md
 |   |   |       through2.js
 |   |   |       
+|   |   +---tinybench
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---dist
+|   |   |           index.cjs
+|   |   |           index.d.cts
+|   |   |           index.d.ts
+|   |   |           index.js
+|   |   |           
 |   |   +---tinycolor2
 |   |   |   |   deno_asserts@0.168.0.mjs
 |   |   |   |   LICENSE
@@ -93891,6 +97058,16 @@ C:\PY_DEV\MKOBI
 |   |   |           test_template.js
 |   |   |           tinycolor.js
 |   |   |           
+|   |   +---tinyexec
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---dist
+|   |   |           LICENSES.txt
+|   |   |           main.d.mts
+|   |   |           main.mjs
+|   |   |           
 |   |   +---tinyglobby
 |   |   |   |   LICENSE
 |   |   |   |   package.json
@@ -93911,6 +97088,169 @@ C:\PY_DEV\MKOBI
 |   |   |       tinyqueue.js
 |   |   |       tinyqueue.min.js
 |   |   |       
+|   |   +---tinyrainbow
+|   |   |   |   LICENCE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---dist
+|   |   |           index.d.ts
+|   |   |           index.js
+|   |   |           
+|   |   +---tldts
+|   |   |   |   index.ts
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---bin
+|   |   |   |       cli.js
+|   |   |   |       
+|   |   |   +---dist
+|   |   |   |   |   index.cjs.min.js
+|   |   |   |   |   index.cjs.min.js.map
+|   |   |   |   |   index.esm.min.js
+|   |   |   |   |   index.esm.min.js.map
+|   |   |   |   |   index.umd.min.js
+|   |   |   |   |   index.umd.min.js.map
+|   |   |   |   |   
+|   |   |   |   +---cjs
+|   |   |   |   |   |   index.js
+|   |   |   |   |   |   index.js.map
+|   |   |   |   |   |   tsconfig.tsbuildinfo
+|   |   |   |   |   |   
+|   |   |   |   |   \---src
+|   |   |   |   |       |   suffix-trie.js
+|   |   |   |   |       |   suffix-trie.js.map
+|   |   |   |   |       |   
+|   |   |   |   |       \---data
+|   |   |   |   |               trie.js
+|   |   |   |   |               trie.js.map
+|   |   |   |   |               
+|   |   |   |   +---es6
+|   |   |   |   |   |   index.js
+|   |   |   |   |   |   index.js.map
+|   |   |   |   |   |   tsconfig.bundle.tsbuildinfo
+|   |   |   |   |   |   
+|   |   |   |   |   \---src
+|   |   |   |   |       |   suffix-trie.js
+|   |   |   |   |       |   suffix-trie.js.map
+|   |   |   |   |       |   
+|   |   |   |   |       \---data
+|   |   |   |   |               trie.js
+|   |   |   |   |               trie.js.map
+|   |   |   |   |               
+|   |   |   |   \---types
+|   |   |   |       |   index.d.ts
+|   |   |   |       |   
+|   |   |   |       \---src
+|   |   |   |           |   suffix-trie.d.ts
+|   |   |   |           |   
+|   |   |   |           \---data
+|   |   |   |                   trie.d.ts
+|   |   |   |                   
+|   |   |   \---src
+|   |   |       |   suffix-trie.ts
+|   |   |       |   
+|   |   |       \---data
+|   |   |               trie.ts
+|   |   |               
+|   |   +---tldts-core
+|   |   |   |   index.ts
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---dist
+|   |   |   |   +---cjs
+|   |   |   |   |   |   index.js
+|   |   |   |   |   |   index.js.map
+|   |   |   |   |   |   tsconfig.tsbuildinfo
+|   |   |   |   |   |   
+|   |   |   |   |   \---src
+|   |   |   |   |       |   domain-without-suffix.js
+|   |   |   |   |       |   domain-without-suffix.js.map
+|   |   |   |   |       |   domain.js
+|   |   |   |   |       |   domain.js.map
+|   |   |   |   |       |   extract-hostname.js
+|   |   |   |   |       |   extract-hostname.js.map
+|   |   |   |   |       |   factory.js
+|   |   |   |   |       |   factory.js.map
+|   |   |   |   |       |   is-ip.js
+|   |   |   |   |       |   is-ip.js.map
+|   |   |   |   |       |   is-valid.js
+|   |   |   |   |       |   is-valid.js.map
+|   |   |   |   |       |   options.js
+|   |   |   |   |       |   options.js.map
+|   |   |   |   |       |   subdomain.js
+|   |   |   |   |       |   subdomain.js.map
+|   |   |   |   |       |   
+|   |   |   |   |       \---lookup
+|   |   |   |   |               fast-path.js
+|   |   |   |   |               fast-path.js.map
+|   |   |   |   |               interface.js
+|   |   |   |   |               interface.js.map
+|   |   |   |   |               
+|   |   |   |   +---es6
+|   |   |   |   |   |   index.js
+|   |   |   |   |   |   index.js.map
+|   |   |   |   |   |   tsconfig.bundle.tsbuildinfo
+|   |   |   |   |   |   
+|   |   |   |   |   \---src
+|   |   |   |   |       |   domain-without-suffix.js
+|   |   |   |   |       |   domain-without-suffix.js.map
+|   |   |   |   |       |   domain.js
+|   |   |   |   |       |   domain.js.map
+|   |   |   |   |       |   extract-hostname.js
+|   |   |   |   |       |   extract-hostname.js.map
+|   |   |   |   |       |   factory.js
+|   |   |   |   |       |   factory.js.map
+|   |   |   |   |       |   is-ip.js
+|   |   |   |   |       |   is-ip.js.map
+|   |   |   |   |       |   is-valid.js
+|   |   |   |   |       |   is-valid.js.map
+|   |   |   |   |       |   options.js
+|   |   |   |   |       |   options.js.map
+|   |   |   |   |       |   subdomain.js
+|   |   |   |   |       |   subdomain.js.map
+|   |   |   |   |       |   
+|   |   |   |   |       \---lookup
+|   |   |   |   |               fast-path.js
+|   |   |   |   |               fast-path.js.map
+|   |   |   |   |               interface.js
+|   |   |   |   |               interface.js.map
+|   |   |   |   |               
+|   |   |   |   \---types
+|   |   |   |       |   index.d.ts
+|   |   |   |       |   
+|   |   |   |       \---src
+|   |   |   |           |   domain-without-suffix.d.ts
+|   |   |   |           |   domain.d.ts
+|   |   |   |           |   extract-hostname.d.ts
+|   |   |   |           |   factory.d.ts
+|   |   |   |           |   is-ip.d.ts
+|   |   |   |           |   is-valid.d.ts
+|   |   |   |           |   options.d.ts
+|   |   |   |           |   subdomain.d.ts
+|   |   |   |           |   
+|   |   |   |           \---lookup
+|   |   |   |                   fast-path.d.ts
+|   |   |   |                   interface.d.ts
+|   |   |   |                   
+|   |   |   \---src
+|   |   |       |   domain-without-suffix.ts
+|   |   |       |   domain.ts
+|   |   |       |   extract-hostname.ts
+|   |   |       |   factory.ts
+|   |   |       |   is-ip.ts
+|   |   |       |   is-valid.ts
+|   |   |       |   options.ts
+|   |   |       |   subdomain.ts
+|   |   |       |   
+|   |   |       \---lookup
+|   |   |               fast-path.ts
+|   |   |               interface.ts
+|   |   |               
 |   |   +---to-float32
 |   |   |       .eslintrc.json
 |   |   |       .travis.yml
@@ -93958,6 +97298,30 @@ C:\PY_DEV\MKOBI
 |   |   |           stitch.js
 |   |   |           transform.js
 |   |   |           untransform.js
+|   |   |           
+|   |   +---tough-cookie
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---dist
+|   |   |           index.cjs
+|   |   |           index.cjs.map
+|   |   |           index.d.cts
+|   |   |           index.d.ts
+|   |   |           index.js
+|   |   |           index.js.map
+|   |   |           
+|   |   +---tr46
+|   |   |   |   index.js
+|   |   |   |   LICENSE.md
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---lib
+|   |   |           mappingTable.json
+|   |   |           regexes.js
+|   |   |           statusMapping.js
 |   |   |           
 |   |   +---ts-api-utils
 |   |   |   |   LICENSE.md
@@ -94466,6 +97830,269 @@ C:\PY_DEV\MKOBI
 |   |   |           index.d.ts
 |   |   |           index.js
 |   |   |           
+|   |   +---undici
+|   |   |   |   index-fetch.js
+|   |   |   |   index.d.ts
+|   |   |   |   index.js
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---docs
+|   |   |   |   \---docs
+|   |   |   |       +---api
+|   |   |   |       |       Agent.md
+|   |   |   |       |       api-lifecycle.md
+|   |   |   |       |       BalancedPool.md
+|   |   |   |       |       CacheStorage.md
+|   |   |   |       |       CacheStore.md
+|   |   |   |       |       Client.md
+|   |   |   |       |       ClientStats.md
+|   |   |   |       |       Connector.md
+|   |   |   |       |       ContentType.md
+|   |   |   |       |       Cookies.md
+|   |   |   |       |       Debug.md
+|   |   |   |       |       DiagnosticsChannel.md
+|   |   |   |       |       Dispatcher.md
+|   |   |   |       |       EnvHttpProxyAgent.md
+|   |   |   |       |       Errors.md
+|   |   |   |       |       EventSource.md
+|   |   |   |       |       Fetch.md
+|   |   |   |       |       GlobalInstallation.md
+|   |   |   |       |       H2CClient.md
+|   |   |   |       |       MockAgent.md
+|   |   |   |       |       MockCallHistory.md
+|   |   |   |       |       MockCallHistoryLog.md
+|   |   |   |       |       MockClient.md
+|   |   |   |       |       MockErrors.md
+|   |   |   |       |       MockPool.md
+|   |   |   |       |       Pool.md
+|   |   |   |       |       PoolStats.md
+|   |   |   |       |       ProxyAgent.md
+|   |   |   |       |       RedirectHandler.md
+|   |   |   |       |       RetryAgent.md
+|   |   |   |       |       RetryHandler.md
+|   |   |   |       |       RoundRobinPool.md
+|   |   |   |       |       SnapshotAgent.md
+|   |   |   |       |       Socks5ProxyAgent.md
+|   |   |   |       |       Util.md
+|   |   |   |       |       WebSocket.md
+|   |   |   |       |       
+|   |   |   |       \---best-practices
+|   |   |   |               client-certificate.md
+|   |   |   |               crawling.md
+|   |   |   |               mocking-request.md
+|   |   |   |               proxy.md
+|   |   |   |               undici-vs-builtin-fetch.md
+|   |   |   |               writing-tests.md
+|   |   |   |               
+|   |   |   +---lib
+|   |   |   |   |   global.js
+|   |   |   |   |   
+|   |   |   |   +---api
+|   |   |   |   |       abort-signal.js
+|   |   |   |   |       api-connect.js
+|   |   |   |   |       api-pipeline.js
+|   |   |   |   |       api-request.js
+|   |   |   |   |       api-stream.js
+|   |   |   |   |       api-upgrade.js
+|   |   |   |   |       index.js
+|   |   |   |   |       readable.js
+|   |   |   |   |       
+|   |   |   |   +---cache
+|   |   |   |   |       memory-cache-store.js
+|   |   |   |   |       sqlite-cache-store.js
+|   |   |   |   |       
+|   |   |   |   +---core
+|   |   |   |   |       connect.js
+|   |   |   |   |       constants.js
+|   |   |   |   |       diagnostics.js
+|   |   |   |   |       errors.js
+|   |   |   |   |       request.js
+|   |   |   |   |       socks5-client.js
+|   |   |   |   |       socks5-utils.js
+|   |   |   |   |       symbols.js
+|   |   |   |   |       tree.js
+|   |   |   |   |       util.js
+|   |   |   |   |       
+|   |   |   |   +---dispatcher
+|   |   |   |   |       agent.js
+|   |   |   |   |       balanced-pool.js
+|   |   |   |   |       client-h1.js
+|   |   |   |   |       client-h2.js
+|   |   |   |   |       client.js
+|   |   |   |   |       dispatcher-base.js
+|   |   |   |   |       dispatcher.js
+|   |   |   |   |       env-http-proxy-agent.js
+|   |   |   |   |       fixed-queue.js
+|   |   |   |   |       h2c-client.js
+|   |   |   |   |       pool-base.js
+|   |   |   |   |       pool.js
+|   |   |   |   |       proxy-agent.js
+|   |   |   |   |       retry-agent.js
+|   |   |   |   |       round-robin-pool.js
+|   |   |   |   |       socks5-proxy-agent.js
+|   |   |   |   |       
+|   |   |   |   +---encoding
+|   |   |   |   |       index.js
+|   |   |   |   |       
+|   |   |   |   +---handler
+|   |   |   |   |       cache-handler.js
+|   |   |   |   |       cache-revalidation-handler.js
+|   |   |   |   |       decorator-handler.js
+|   |   |   |   |       deduplication-handler.js
+|   |   |   |   |       redirect-handler.js
+|   |   |   |   |       retry-handler.js
+|   |   |   |   |       unwrap-handler.js
+|   |   |   |   |       wrap-handler.js
+|   |   |   |   |       
+|   |   |   |   +---interceptor
+|   |   |   |   |       cache.js
+|   |   |   |   |       decompress.js
+|   |   |   |   |       deduplicate.js
+|   |   |   |   |       dns.js
+|   |   |   |   |       dump.js
+|   |   |   |   |       redirect.js
+|   |   |   |   |       response-error.js
+|   |   |   |   |       retry.js
+|   |   |   |   |       
+|   |   |   |   +---llhttp
+|   |   |   |   |       .gitkeep
+|   |   |   |   |       constants.d.ts
+|   |   |   |   |       constants.js
+|   |   |   |   |       llhttp-wasm.js
+|   |   |   |   |       llhttp_simd-wasm.js
+|   |   |   |   |       utils.d.ts
+|   |   |   |   |       utils.js
+|   |   |   |   |       
+|   |   |   |   +---mock
+|   |   |   |   |       mock-agent.js
+|   |   |   |   |       mock-call-history.js
+|   |   |   |   |       mock-client.js
+|   |   |   |   |       mock-errors.js
+|   |   |   |   |       mock-interceptor.js
+|   |   |   |   |       mock-pool.js
+|   |   |   |   |       mock-symbols.js
+|   |   |   |   |       mock-utils.js
+|   |   |   |   |       pending-interceptors-formatter.js
+|   |   |   |   |       snapshot-agent.js
+|   |   |   |   |       snapshot-recorder.js
+|   |   |   |   |       snapshot-utils.js
+|   |   |   |   |       
+|   |   |   |   +---util
+|   |   |   |   |       cache.js
+|   |   |   |   |       date.js
+|   |   |   |   |       promise.js
+|   |   |   |   |       runtime-features.js
+|   |   |   |   |       stats.js
+|   |   |   |   |       timers.js
+|   |   |   |   |       
+|   |   |   |   \---web
+|   |   |   |       +---cache
+|   |   |   |       |       cache.js
+|   |   |   |       |       cachestorage.js
+|   |   |   |       |       util.js
+|   |   |   |       |       
+|   |   |   |       +---cookies
+|   |   |   |       |       constants.js
+|   |   |   |       |       index.js
+|   |   |   |       |       parse.js
+|   |   |   |       |       util.js
+|   |   |   |       |       
+|   |   |   |       +---eventsource
+|   |   |   |       |       eventsource-stream.js
+|   |   |   |       |       eventsource.js
+|   |   |   |       |       util.js
+|   |   |   |       |       
+|   |   |   |       +---fetch
+|   |   |   |       |       body.js
+|   |   |   |       |       constants.js
+|   |   |   |       |       data-url.js
+|   |   |   |       |       formdata-parser.js
+|   |   |   |       |       formdata.js
+|   |   |   |       |       global.js
+|   |   |   |       |       headers.js
+|   |   |   |       |       index.js
+|   |   |   |       |       LICENSE
+|   |   |   |       |       request.js
+|   |   |   |       |       response.js
+|   |   |   |       |       util.js
+|   |   |   |       |       
+|   |   |   |       +---infra
+|   |   |   |       |       index.js
+|   |   |   |       |       
+|   |   |   |       +---subresource-integrity
+|   |   |   |       |       Readme.md
+|   |   |   |       |       subresource-integrity.js
+|   |   |   |       |       
+|   |   |   |       +---webidl
+|   |   |   |       |       index.js
+|   |   |   |       |       
+|   |   |   |       \---websocket
+|   |   |   |           |   connection.js
+|   |   |   |           |   constants.js
+|   |   |   |           |   events.js
+|   |   |   |           |   frame.js
+|   |   |   |           |   permessage-deflate.js
+|   |   |   |           |   receiver.js
+|   |   |   |           |   sender.js
+|   |   |   |           |   util.js
+|   |   |   |           |   websocket.js
+|   |   |   |           |   
+|   |   |   |           \---stream
+|   |   |   |                   websocketerror.js
+|   |   |   |                   websocketstream.js
+|   |   |   |                   
+|   |   |   +---scripts
+|   |   |   |       strip-comments.js
+|   |   |   |       
+|   |   |   \---types
+|   |   |           agent.d.ts
+|   |   |           api.d.ts
+|   |   |           balanced-pool.d.ts
+|   |   |           cache-interceptor.d.ts
+|   |   |           cache.d.ts
+|   |   |           client-stats.d.ts
+|   |   |           client.d.ts
+|   |   |           connector.d.ts
+|   |   |           content-type.d.ts
+|   |   |           cookies.d.ts
+|   |   |           diagnostics-channel.d.ts
+|   |   |           dispatcher.d.ts
+|   |   |           env-http-proxy-agent.d.ts
+|   |   |           errors.d.ts
+|   |   |           eventsource.d.ts
+|   |   |           fetch.d.ts
+|   |   |           formdata.d.ts
+|   |   |           global-dispatcher.d.ts
+|   |   |           global-origin.d.ts
+|   |   |           h2c-client.d.ts
+|   |   |           handlers.d.ts
+|   |   |           header.d.ts
+|   |   |           index.d.ts
+|   |   |           interceptors.d.ts
+|   |   |           mock-agent.d.ts
+|   |   |           mock-call-history.d.ts
+|   |   |           mock-client.d.ts
+|   |   |           mock-errors.d.ts
+|   |   |           mock-interceptor.d.ts
+|   |   |           mock-pool.d.ts
+|   |   |           patch.d.ts
+|   |   |           pool-stats.d.ts
+|   |   |           pool.d.ts
+|   |   |           proxy-agent.d.ts
+|   |   |           readable.d.ts
+|   |   |           README.md
+|   |   |           retry-agent.d.ts
+|   |   |           retry-handler.d.ts
+|   |   |           round-robin-pool.d.ts
+|   |   |           snapshot-agent.d.ts
+|   |   |           socks5-proxy-agent.d.ts
+|   |   |           util.d.ts
+|   |   |           utility.d.ts
+|   |   |           webidl.d.ts
+|   |   |           websocket.d.ts
+|   |   |           
 |   |   +---undici-types
 |   |   |       agent.d.ts
 |   |   |       api.d.ts
@@ -94681,6 +98308,130 @@ C:\PY_DEV\MKOBI
 |   |   |               rollupTypeCompat.d.ts
 |   |   |               terserOptions.d.ts
 |   |   |               
+|   |   +---vitest
+|   |   |   |   config.d.ts
+|   |   |   |   coverage.d.ts
+|   |   |   |   environments.d.ts
+|   |   |   |   globals.d.ts
+|   |   |   |   import-meta.d.ts
+|   |   |   |   importMeta.d.ts
+|   |   |   |   index.cjs
+|   |   |   |   index.d.cts
+|   |   |   |   jsdom.d.ts
+|   |   |   |   LICENSE.md
+|   |   |   |   mocker.d.ts
+|   |   |   |   node.d.ts
+|   |   |   |   optional-runtime-types.d.ts
+|   |   |   |   optional-types.d.ts
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   reporters.d.ts
+|   |   |   |   runners.d.ts
+|   |   |   |   snapshot.d.ts
+|   |   |   |   suite.d.ts
+|   |   |   |   suppress-warnings.cjs
+|   |   |   |   vitest.mjs
+|   |   |   |   worker.d.ts
+|   |   |   |   
+|   |   |   +---browser
+|   |   |   |       context.d.ts
+|   |   |   |       context.js
+|   |   |   |       
+|   |   |   \---dist
+|   |   |       |   browser.d.ts
+|   |   |       |   browser.js
+|   |   |       |   cli.js
+|   |   |       |   config.cjs
+|   |   |       |   config.d.ts
+|   |   |       |   config.js
+|   |   |       |   coverage.d.ts
+|   |   |       |   coverage.js
+|   |   |       |   environments.d.ts
+|   |   |       |   environments.js
+|   |   |       |   index.d.ts
+|   |   |       |   index.js
+|   |   |       |   module-evaluator.d.ts
+|   |   |       |   module-evaluator.js
+|   |   |       |   node.d.ts
+|   |   |       |   node.js
+|   |   |       |   nodejs-worker-loader.js
+|   |   |       |   path.js
+|   |   |       |   reporters.d.ts
+|   |   |       |   reporters.js
+|   |   |       |   runners.d.ts
+|   |   |       |   runners.js
+|   |   |       |   runtime.d.ts
+|   |   |       |   runtime.js
+|   |   |       |   snapshot.d.ts
+|   |   |       |   snapshot.js
+|   |   |       |   spy.js
+|   |   |       |   suite.d.ts
+|   |   |       |   suite.js
+|   |   |       |   worker.d.ts
+|   |   |       |   worker.js
+|   |   |       |   
+|   |   |       +---chunks
+|   |   |       |       acorn.B2iPLyUM.js
+|   |   |       |       base.RR7zL1h0.js
+|   |   |       |       benchmark.CX_oY03V.js
+|   |   |       |       benchmark.d.DAaHLpsq.d.ts
+|   |   |       |       browser.d.BcoexmFG.d.ts
+|   |   |       |       cac.CVxlyDFd.js
+|   |   |       |       cli-api.B5majYba.js
+|   |   |       |       config.d.A1h_Y6Jt.d.ts
+|   |   |       |       console.3WNpx0tS.js
+|   |   |       |       constants.CPYnjOGj.js
+|   |   |       |       coverage.CTzCuANN.js
+|   |   |       |       coverage.d.BZtK59WP.d.ts
+|   |   |       |       coverage.DM_a_rWm.js
+|   |   |       |       creator.DgVhQm5q.js
+|   |   |       |       defaults.9aQKnqFk.js
+|   |   |       |       env.D4Lgay0q.js
+|   |   |       |       environment.d.CrsxCzP1.d.ts
+|   |   |       |       evaluatedModules.d.BxJ5omdx.d.ts
+|   |   |       |       evaluatedModules.Dg1zASAC.js
+|   |   |       |       global.d.DVsSRdQ5.d.ts
+|   |   |       |       globals.Dj1TGiMC.js
+|   |   |       |       index.BCY_7LL2.js
+|   |   |       |       index.Chj8NDwU.js
+|   |   |       |       index.CMESou6r.js
+|   |   |       |       index.DC7d2Pf8.js
+|   |   |       |       index.DdgEv5B1.js
+|   |   |       |       index.DXx9Dtk7.js
+|   |   |       |       index.og1WyBLx.js
+|   |   |       |       index.UpGiHP7g.js
+|   |   |       |       init-forks.UV3ZQGQH.js
+|   |   |       |       init-threads.D3eCsY76.js
+|   |   |       |       init.D98-gwRW.js
+|   |   |       |       inspector.CvyFGlXm.js
+|   |   |       |       modules.BJuCwlRJ.js
+|   |   |       |       native.DPzPHdi5.js
+|   |   |       |       nativeModuleMocker.BRN2oBJd.js
+|   |   |       |       nativeModuleRunner.BIakptoF.js
+|   |   |       |       node.COQbm6gK.js
+|   |   |       |       plugin.d.C0upjs_f.d.ts
+|   |   |       |       reporters.d.CtLUhkkA.d.ts
+|   |   |       |       rpc.d.B_8sPU0w.d.ts
+|   |   |       |       rpc.MzXet3jl.js
+|   |   |       |       setup-common.DYx3LtFI.js
+|   |   |       |       startVitestModuleRunner.bRl2_oI_.js
+|   |   |       |       suite.d.udJtyAgw.d.ts
+|   |   |       |       test.DNmyFkvJ.js
+|   |   |       |       traces.d.D2T_R8rx.d.ts
+|   |   |       |       traces.DT5aQ62U.js
+|   |   |       |       utils.BS4fH3nR.js
+|   |   |       |       utils.BX5Fg8C4.js
+|   |   |       |       vm.DVLYObm9.js
+|   |   |       |       worker.d.ZpHpO4yb.d.ts
+|   |   |       |       _commonjsHelpers.D26ty3Ew.js
+|   |   |       |       
+|   |   |       \---workers
+|   |   |               forks.js
+|   |   |               runVmTests.js
+|   |   |               threads.js
+|   |   |               vmForks.js
+|   |   |               vmThreads.js
+|   |   |               
 |   |   +---vt-pbf
 |   |   |   |   index.js
 |   |   |   |   LICENSE
@@ -94689,6 +98440,16 @@ C:\PY_DEV\MKOBI
 |   |   |   |   
 |   |   |   \---lib
 |   |   |           geojson_wrapper.js
+|   |   |           
+|   |   +---w3c-xmlserializer
+|   |   |   |   LICENSE.md
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---lib
+|   |   |           attributes.js
+|   |   |           constants.js
+|   |   |           serialize.js
 |   |   |           
 |   |   +---weak-map
 |   |   |       package.json
@@ -94702,6 +98463,49 @@ C:\PY_DEV\MKOBI
 |   |   |       package.json
 |   |   |       README.md
 |   |   |       
+|   |   +---webidl-conversions
+|   |   |   |   LICENSE.md
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---lib
+|   |   |           index.js
+|   |   |           
+|   |   +---whatwg-mimetype
+|   |   |   |   LICENSE.txt
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---lib
+|   |   |           index.js
+|   |   |           mime-type-parameters.js
+|   |   |           mime-type.js
+|   |   |           parser.js
+|   |   |           serializer.js
+|   |   |           sniff.js
+|   |   |           utils.js
+|   |   |           
+|   |   +---whatwg-url
+|   |   |   |   index.js
+|   |   |   |   LICENSE.txt
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   webidl2js-wrapper.js
+|   |   |   |   
+|   |   |   \---lib
+|   |   |           encoding.js
+|   |   |           Function.js
+|   |   |           infra.js
+|   |   |           percent-encoding.js
+|   |   |           URL-impl.js
+|   |   |           url-state-machine.js
+|   |   |           URL.js
+|   |   |           urlencoded.js
+|   |   |           URLSearchParams-impl.js
+|   |   |           URLSearchParams.js
+|   |   |           utils.js
+|   |   |           VoidFunction.js
+|   |   |           
 |   |   +---which
 |   |   |   |   CHANGELOG.md
 |   |   |   |   LICENSE
@@ -94711,6 +98515,18 @@ C:\PY_DEV\MKOBI
 |   |   |   |   
 |   |   |   \---bin
 |   |   |           node-which
+|   |   |           
+|   |   +---why-is-node-running
+|   |   |   |   cli.js
+|   |   |   |   example.js
+|   |   |   |   include.js
+|   |   |   |   index.js
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---.github
+|   |   |           FUNDING.yml
 |   |   |           
 |   |   +---word-wrap
 |   |   |       index.d.ts
@@ -94839,6 +98655,42 @@ C:\PY_DEV\MKOBI
 |   |   |       README.md
 |   |   |       wrappy.js
 |   |   |       
+|   |   +---xml-name-validator
+|   |   |   |   LICENSE.txt
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---lib
+|   |   |           xml-name-validator.js
+|   |   |           
+|   |   +---xmlchars
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   xmlchars.d.ts
+|   |   |   |   xmlchars.js
+|   |   |   |   xmlchars.js.map
+|   |   |   |   
+|   |   |   +---xml
+|   |   |   |   +---1.0
+|   |   |   |   |       ed4.d.ts
+|   |   |   |   |       ed4.js
+|   |   |   |   |       ed4.js.map
+|   |   |   |   |       ed5.d.ts
+|   |   |   |   |       ed5.js
+|   |   |   |   |       ed5.js.map
+|   |   |   |   |       
+|   |   |   |   \---1.1
+|   |   |   |           ed2.d.ts
+|   |   |   |           ed2.js
+|   |   |   |           ed2.js.map
+|   |   |   |           
+|   |   |   \---xmlns
+|   |   |       \---1.0
+|   |   |               ed3.d.ts
+|   |   |               ed3.js
+|   |   |               ed3.js.map
+|   |   |               
 |   |   +---xtend
 |   |   |       .jshintrc
 |   |   |       immutable.js
@@ -95698,9 +99550,12 @@ C:\PY_DEV\MKOBI
 |       |   |   |       authApi.ts
 |       |   |   |       
 |       |   |   +---model
-|       |   |   |       authToken.ts
-|       |   |   |       useAuth.ts
-|       |   |   |       
+|       |   |   |   |   authToken.ts
+|       |   |   |   |   useAuth.ts
+|       |   |   |   |   
+|       |   |   |   \---__tests__
+|       |   |   |           authToken.test.ts
+|       |   |   |           
 |       |   |   \---ui
 |       |   |           LoginForm.tsx
 |       |   |           RegisterForm.tsx
@@ -95745,29 +99600,36 @@ C:\PY_DEV\MKOBI
 |       |               ChangePasswordPage.tsx
 |       |               UserProfile.tsx
 |       |               
-|       \---shared
-|           +---api
-|           |       axiosInstance.ts
-|           |       index.ts
-|           |       
-|           +---components
-|           |   |   index.ts
-|           |   |   NotFound.tsx
-|           |   |   PlaceholderPage.tsx
-|           |   |   ProtectedRoute.tsx
-|           |   |   RoleBasedAccess.tsx
-|           |   |   
-|           |   \---Layout
-|           |           AppLayout.tsx
-|           |           Header.tsx
-|           |           index.ts
-|           |           Sidebar.tsx
-|           |           
-|           \---types
-|                   api.types.ts
-|                   enums.ts
-|                   formSchemas.ts
-|                   
+|       +---shared
+|       |   +---api
+|       |   |       axiosInstance.ts
+|       |   |       index.ts
+|       |   |       
+|       |   +---components
+|       |   |   |   index.ts
+|       |   |   |   NotFound.tsx
+|       |   |   |   PlaceholderPage.tsx
+|       |   |   |   ProtectedRoute.tsx
+|       |   |   |   RoleBasedAccess.tsx
+|       |   |   |   
+|       |   |   \---Layout
+|       |   |           AppLayout.tsx
+|       |   |           Header.tsx
+|       |   |           index.ts
+|       |   |           Sidebar.tsx
+|       |   |           
+|       |   \---types
+|       |       |   api.types.ts
+|       |       |   enums.ts
+|       |       |   formSchemas.ts
+|       |       |   
+|       |       \---__tests__
+|       |               enums.test.ts
+|       |               formSchemas.test.ts
+|       |               
+|       \---test
+|               setup.ts
+|               
 +---nginx
 |       nginx.conf
 |       
@@ -97163,6 +101025,7 @@ C:\PY_DEV\MKOBI
 |   |   |   |   __init__.py
 |   |   |   |   
 |   |   |   \---__pycache__
+|   |   |           exceptions.cpython-314.pyc
 |   |   |           file_utils.cpython-314.pyc
 |   |   |           time_utils.cpython-314.pyc
 |   |   |           __init__.cpython-314.pyc

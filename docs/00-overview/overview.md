@@ -69,6 +69,8 @@ A web application for:
 | password_hash  | TEXT   | Bcrypt hash                    |
 | role           | TEXT   | `admin` \| `editor` \| `viewer` |
 
+> The `UserRead` Pydantic model exposes a computed `display_name` field derived from the email prefix (text before `@`). This field is included in all API responses returning user data (login, profile, user management).
+
 ### Dashboard
 
 | Field       | Type   | Description                          |

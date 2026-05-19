@@ -3,6 +3,9 @@
 Tests the business logic for file upload, processing, and status tracking.
 """
 
+import uuid
+from datetime import datetime
+
 import pytest
 from pydantic import ValidationError
 
@@ -30,6 +33,7 @@ from mkobi.models.auth import (
     LoginRequest,
     Token,
     TokenData,
+    TokenWithUser,
 )
 from mkobi.models.access import (
     AccessCheck,
@@ -81,13 +85,14 @@ class TestUserModels:
         """Test user read model creation."""
         user = UserRead(
             id="550e8400-e29b-41d4-a716-446655440000",
-            email="test@example.com",
+            email="john@example.com",
             role=UserRole.ADMIN,
             created_at="2026-04-24T16:02:46+03:00",
         )
         assert str(user.id) == "550e8400-e29b-41d4-a716-446655440000"
-        assert user.email == "test@example.com"
+        assert user.email == "john@example.com"
         assert user.role == UserRole.ADMIN
+        assert user.display_name == "john"
 
     def test_user_db_valid(self):
         """Test user DB model creation."""
@@ -322,6 +327,24 @@ class TestAuthModels:
             token_type="bearer",
         )
         assert token.token_type == "bearer"
+
+    def test_token_with_user_valid(self):
+        """Test valid token with user creation."""
+        user = UserRead(
+            id=uuid.UUID("550e8400-e29b-41d4-a716-446655440000"),
+            email="john@example.com",
+            role=UserRole.VIEWER,
+            created_at=datetime.now(),
+        )
+        token = TokenWithUser(
+            access_token="test_token_123",
+            token_type="bearer",
+            user=user,
+        )
+        assert token.access_token == "test_token_123"
+        assert token.token_type == "bearer"
+        assert token.user.email == "john@example.com"
+        assert token.user.display_name == "john"
 
     def test_token_data_valid(self):
         """Test valid token data creation."""

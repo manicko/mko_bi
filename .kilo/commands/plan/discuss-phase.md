@@ -41,7 +41,7 @@ to define next free file number: {file_number} (required)
 **Load project information:**
 [AGENTS.md](C:\py_dev\mkobi\AGENTS.md)
 [project rules](C:\py_dev\mkobi\.ai\context\**)
-[specification](C:\py_dev\mkobi\docs\**)
+[specification](C:\py_dev\mkobi\docs\SPEC.md)
 [structure](C:\py_dev\mkobi\docs\STRUCT.md)
 </context>
 

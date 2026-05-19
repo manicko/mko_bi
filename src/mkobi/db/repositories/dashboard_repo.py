@@ -55,17 +55,29 @@ class DashboardRepository(IDashboardRepository):
             raise
 
     async def get_by_user(
-        self, user_id: UUID, db: AsyncSession
+        self, user_id: UUID, db: AsyncSession, is_admin: bool = False
     ) -> list[dashboard_model.Dashboard]:
         """Get all dashboards available to user.
 
         Args:
             user_id: User identifier (UUID).
+            db: Async database session.
+            is_admin: If True, returns all dashboards (admin bypass).
 
         Returns:
             List of dashboards available to user.
         """
         try:
+            if is_admin:
+                # Admin bypass: return all dashboards without access check
+                result = await db.execute(select(dashboard_model.Dashboard))
+                dashboards = list(result.scalars().all())
+                logger.info(
+                    "All dashboards retrieved for admin user",
+                    extra={"user_id": str(user_id), "count": len(dashboards)},
+                )
+                return dashboards
+
             result = await db.execute(
                 select(dashboard_model.Dashboard)
                 .join(access_model.DashboardAccess)

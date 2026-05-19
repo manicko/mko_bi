@@ -5,125 +5,126 @@ agent: auditor
 alwaysApply: false
 ---
 
+# Detailed Project Audit — mkobi BI Dashboard
 
+## Objective
 
-# Full Audit Task
+Perform a comprehensive audit of the BI Dashboard System (`mkobi`) for compliance with the project specification (`docs/SPEC.md` and all `docs/**/*.md`).
 
-## Цель
+**Audit focus:**
 
-Провести полный comprehensive audit BI Dashboard System (`mkobi`) на соответствие спецификациям SPEC.md.
+- **Backend (FastAPI)**: architecture, security, data processing correctness, type safety
+- **Frontend (React SPA)**: FSD architecture, type safety, API integration, UI components
+- **Data Layer**: PostgreSQL schema, migrations, JSONB usage, indexes
+- **DevOps**: Docker, deployment readiness, configuration
 
-Фокус аудита:
+**Quality criteria:**
 
-* **Backend (FastAPI)**: архитектура, безопасность, корректность обработки данных, типизация
-* **Frontend (React SPA)**: архитектура FSD, type safety, интеграция с API, UI компоненты
-* **Data Layer**: PostgreSQL schema, миграции, JSONB usage, индексы
-* **DevOps**: Docker, deployment readiness, конфигурация
+- Clean Architecture (strict layer separation)
+- Separation of Concerns (domain boundaries)
+- Strict modularity
+- No overengineering
+- Full type safety (Python type hints + Pydantic, TypeScript)
+- Code standards compliance (ruff, mypy)
+- Proper logging (structured logging, NOT `print`)
+- `StrEnum` for all fixed values (17 classes)
+- Package name: `mkobi`
 
-Критерии качества:
+**AVOID:**
 
-* Clean Architecture (разделение слоев)
-* Separation of Concerns (предметные области)
-* Строгая модульность
-* Отсутствие overengineering
-* Полная типизация (Python type hints + Pydantic, TypeScript)
-* Соблюдение стандартов кода (PEP 8, ruff, mypy)
-* Корректное логирование (logging, НЕ print)
-* Использование StrEnum вместо dict/list
-* Пакет `mkobi` (с 1 underscore)
-
-ИЗБЕГАТЬ:
-
-* enterprise overengineering
-* unnecessary abstractions
-* сложных паттернов без необходимости
+- enterprise overengineering
+- unnecessary abstractions
+- complex patterns without justification
 
 ---
 
-# Правила аудита
+# Audit Rules
 
-## Основные принципы
+## Core Principles
 
-При проверке:
+Inspection order:
 
-1. Сначала проверять соответствие ТЗ (SPEC.md)
-2. Затем корректность реализации
-3. Затем качество кода
+1. Specification compliance (`docs/SPEC.md` + all `docs/**/*.md`)
+2. Implementation correctness
+3. Code quality
 
-Не считать проблемой:
+**Do NOT flag as issues:**
 
-* Простую архитектуру, если она:
-  * последовательна
-  * читаема
-  * тестируема
-  * расширяема
+- Simple architecture that is consistent, readable, testable, and extensible
+- Minimal abstraction layers
+- Absence of enterprise patterns where not needed
 
-Критичными считать:
+**Flag as CRITICAL:**
 
-* Нарушения безопасности
-* Нарушения access control
-* Потерю данных
-* Смешивание ответственности
-* Нестабильную обработку данных
-* Async/blocking issues
-* Hardcoded behavior
-* Отсутствие validation
-* Использование print() вместо logging
-* Отсутствие StrEnum там, где используются dict/list для констант
+- Security vulnerabilities
+- Access control violations
+- Data loss or corruption
+- Mixed responsibilities (business logic in routes)
+- Unstable data processing
+- Async/blocking issues
+- Hardcoded behavior
+- Missing validation
+- `print()` instead of logging
+- Missing `StrEnum` where dict/list used for constants
 
 ---
 
 # BLOCK 1 — Project Structure & Architecture
 
-## 1.1 Backend Structure (src/mkobi/)
+## 1.1 Backend Structure (`src/mkobi/`)
 
-Проверить соблюдение Clean Architecture:
+Verify Clean Architecture compliance:
 
-### Слои приложения
+### Application Layers
 
-* **API Layer** (`src/mkobi/api/routes/`): только HTTP, валидация входных данных, вызов сервисов
-* **Service Layer** (`src/mkobi/services/`): бизнес-логика, оркестрация
-* **Repository Layer** (`src/mkobi/db/repositories/`): доступ к данным, SQL queries
-* **Model Layer** (`src/mkobi/models/`): Pydantic модели для API, `src/mkobi/db/models/` для ORM
-* **Interfaces** (`src/mkobi/interfaces/`): абстракции для DI
-* **Core** (`src/mkobi/core/`): инфраструктурный код (security, permissions, logging)
-* **Data Processing** (`src/mkobi/data/`): loaders, processing, storage
-* **Config** (`src/mkobi/config.py`, `src/mkobi/settings/`): централизованная конфигурация
+| Layer | Directory | Responsibility |
+|-------|-----------|----------------|
+| API Layer | `src/mkobi/api/routes/` | HTTP only, input validation, service calls |
+| Service Layer | `src/mkobi/services/` | Business logic, orchestration |
+| Repository Layer | `src/mkobi/db/repositories/` | Data access, SQL queries |
+| Model Layer | `src/mkobi/models/` | Pydantic models for API |
+| DB Models | `src/mkobi/db/models/` | SQLAlchemy ORM models |
+| Interfaces | `src/mkobi/interfaces/` | DI abstractions |
+| Core | `src/mkobi/core/` | Security, permissions, logging, config, task queue |
+| Data Processing | `src/mkobi/data/` | Loaders, processing, storage |
+| Config | `src/mkobi/config.py`, `src/mkobi/settings/` | Centralized configuration |
+| Workers | `src/mkobi/workers/` | Background task functions |
 
-### Проверить отсутствие
+### Verify Absence Of
 
-* Business logic inside routes
-* SQL inside controllers/routes
-* Global mutable state
-* Cyclic imports
-* Hidden side effects
-* Смешивания ответственности между слоями
+- Business logic inside route handlers
+- SQL inside controllers/routes
+- Global mutable state
+- Cyclic imports
+- Hidden side effects
+- Mixed responsibilities between layers
 
-### Проверить наличие
+### Verify Presence Of
 
-* Dependency Injection (через `src/mkobi/api/deps.py`)
-* Config centralization (pydantic-settings, env vars, Docker secrets)
-* Logging centralization (`src/mkobi/core/logging_config.py`)
-* Enum usage (StrEnum в `src/mkobi/models/enums.py`)
+- Dependency Injection (via `src/mkobi/api/deps.py`)
+- Config centralization (pydantic-settings, env vars, Docker secrets)
+- Logging centralization (`src/mkobi/core/logging_config.py`)
+- Enum usage (StrEnum in `src/mkobi/models/enums.py`)
+- Task queue (`src/mkobi/core/task_queue.py` — in-memory MVP)
 
-## 1.2 Frontend Structure (frontend/src/)
+## 1.2 Frontend Structure (`frontend/src/`)
 
-Проверить соответствие Feature-Sliced Design (FSD):
+Verify Feature-Sliced Design (FSD) compliance:
 
-### Структура
+### Structure
 
 ```
 frontend/src/
-├── app/                    # Инициализация, провайдеры
+├── app/                    # Initialization, providers
 │   ├── providers.tsx       # QueryClient, Router, Theme
-│   └── routes.tsx          # Все роуты
-├── features/               # Фичи (основные бизнес-возможности)
+│   └── routes.tsx          # All routes
+├── features/               # Business features
 │   ├── auth/
 │   ├── dashboards/
 │   ├── upload/
 │   ├── users/
 │   └── admin/
-├── shared/                 # Переиспользуемый код
+├── shared/                 # Reusable code
 │   ├── api/               # axiosInstance, errorHandling
 │   ├── components/         # ProtectedRoute, Layout, RoleBasedAccess
 │   ├── config/            # constants
@@ -131,38 +132,39 @@ frontend/src/
 └── main.tsx
 ```
 
-### Проверить для каждой feature
+### Verify Per Feature
 
-* **ui/**: React компоненты (только UI логика)
-* **api/**: API вызовы (axios, TanStack Query)
-* **model/**: состояние, хуки (useAuth, useDashboards)
-* **types/**: TypeScript типы
+- **ui/**: React components (UI logic only)
+- **api/**: API calls (axios, TanStack Query)
+- **model/**: State, hooks (useAuth, useDashboards)
+- **types/**: TypeScript types
 
-### Проверить отсутствие
+### Verify Absence Of
 
-* Бизнес-логики в компонентах
-* Дублирования API вызовов
-* Хардкода URL (использовать axiosInstance)
-* Смешивания ответственности
+- Business logic in components
+- Duplicated API calls
+- Hardcoded URLs (use axiosInstance)
+- Mixed responsibilities
 
 ## 1.3 Processing Pipeline
 
-Проверить `src/mkobi/data/processing/`:
+Verify `src/mkobi/data/`:
 
-Pipeline должен быть:
+Pipeline must be:
 
-* Явным (читаемые этапы)
-* Разбитым по шагам: upload → parse → transform → aggregate → save
-* Использовать Polars (НЕ pandas)
-* Иметь корректную обработку ошибок
-* Очищать временные файлы (platformdirs)
+- Explicit (readable stages)
+- Split into steps: upload → parse → transform → aggregate → save → cleanup
+- Use Polars (NOT pandas)
+- Have correct error handling
+- Clean up temp files (`platformdirs`, `finally` blocks)
+- Normalize JSONB `dims` keys (recursive sort) before writes for deterministic UPSERT
 
-Проверить файлы:
+Verify files:
 
-* `loaders/loader.py`: загрузка и валидация CSV/CSV.gz
-* `processing/transformations.py`: трансформации, агрегации
-* `processing/registry.py`: реестр обработчиков
-* `storage/manager.py`: сохранение в PostgreSQL (JSONB)
+- `loaders/loader.py`: CSV/CSV.gz loading and validation
+- `processing/transformations.py`: transformations, aggregations
+- `processing/registry.py`: handler registry
+- `storage/manager.py`: save to PostgreSQL (JSONB)
 
 ---
 
@@ -170,99 +172,131 @@ Pipeline должен быть:
 
 ## 2.1 Auth Endpoints
 
-Проверить `src/mkobi/api/routes/auth.py`:
+Verify `src/mkobi/api/routes/auth.py`:
 
-### Функционал
+### Endpoints
 
-* `POST /api/v1/auth/login` → `{access_token, user}`
-* `POST /api/v1/auth/register-request` → `{message}`
-* `GET /api/v1/auth/me` → `UserProfile`
+- `POST /api/v1/auth/login` → `TokenWithUser` (token + user with `display_name`)
+- `POST /api/v1/auth/login/form` → OAuth2 form variant
+- `POST /api/v1/auth/register-request` → `{message, id}`
+- `POST /api/v1/auth/refresh` → `{access_token, token_type}`
+- `GET /api/v1/auth/me` → `UserProfile`
+- `POST /api/v1/auth/change-password` → `{message}`
 
-### Проверить
+### Verify
 
-* JWT generation (correct algorithm, expiration)
-* JWT validation (dependencies в deps.py)
-* Password hashing (bcrypt, НЕ plaintext)
-* Email validation (pydantic EmailStr или regex)
-* Rate limiting на login endpoint
-* Нет print(), только logger
+- Login returns `TokenWithUser` (token + full user profile including computed `display_name`)
+- `display_name` is derived from email prefix (text before `@`)
+- JWT generation (correct algorithm explicitly set, expiration)
+- JWT validation (dependencies in `deps.py`)
+- Password hashing (bcrypt, NOT plaintext)
+- Email validation (Pydantic `EmailStr`)
+- Rate limiting on login (5/5min per email) and register-request (3/hour per IP/email)
+- No `print()`, only `logger`
+- Refresh token verifies user still exists in DB
+- Change-password requires current password, user stays logged in after change
 
 ## 2.2 Dashboard Endpoints
 
-Проверить `src/mkobi/api/routes/dashboards.py`:
+Verify `src/mkobi/api/routes/dashboards.py`:
 
-### Функционал
+### Endpoints
 
-* `GET /api/v1/dashboards/my` → `DashboardSummary[]`
-* `GET /api/v1/dashboards/:id` → `DashboardDetail`
-* `POST /api/v1/dashboards` (admin only)
-* `PUT /api/v1/dashboards/:id` (admin only)
-* `DELETE /api/v1/dashboards/:id` (admin only)
+- `GET /api/v1/dashboards/my` → `DashboardSummary[]` (admin sees all)
+- `GET /api/v1/dashboards/:id` → `DashboardDetail` (403/404 dual-signal)
+- `POST /api/v1/dashboards` (admin only)
+- `PUT /api/v1/dashboards/:id` (admin only)
+- `DELETE /api/v1/dashboards/:id` (admin only, cascading)
 
-### Проверить
+### Verify
 
-* Access validation (user ↔ dashboard via dashboard_access)
-* Role-based permissions (admin/editor/viewer)
-* Correct Pydantic models (src/mkobi/models/dashboard.py)
-* Layout связь (layout_id → layouts table)
-* Ошибки возвращаются через HTTPException (НЕ print)
+- Access validation (user ↔ dashboard via `dashboard_access`)
+- Admin bypass: admins see all dashboards without explicit `dashboard_access` entries
+- 403/404 dual-signal: 404 for not-found, 403 for exists-but-no-access
+- Role-based permissions (admin/editor/viewer)
+- Correct Pydantic models (`src/mkobi/models/dashboard.py`)
+- Layout relationship (layout_id → layouts table)
+- Errors via `HTTPException` (NOT `print`)
 
-## 2.3 Data Endpoints
+## 2.3 Data & Upload Endpoints
 
-Проверить `src/mkobi/api/routes/data.py` и `src/mkobi/api/routes/upload.py`:
+Verify `src/mkobi/api/routes/data.py` and `src/mkobi/api/routes/upload.py`:
 
-### Функционал
+### Endpoints
 
-* `GET /api/v1/data/aggregated?dashboard_id=:id&filters=...` → графики данные
-* `POST /api/v1/upload/:dashboard_id?mode=overwrite|append` (multipart file)
+- `GET /api/v1/data/aggregated?dashboard_id=&graph_id=&filters=`
+- `POST /api/v1/upload/:dashboard_id?mode=overwrite|append`
+- `POST /api/v1/upload/:dashboard_id/process?task_id=`
+- `GET /api/v1/upload/status/:task_id`
+- `GET /api/v1/upload/result/:task_id`
 
-### Проверить upload
+### Verify Upload
 
-* File type validation (MIME-type: `text/csv`, `application/gzip`)
-* UTF-8 validation
-* Max file size limit
-* Temp file cleanup (platformdirs, finally block)
-* CSV.gz handling (gzip decompression)
-* Path traversal protection
-* Unsafe filenames handling
-* Rate limiting
+- File type validation (MIME: `text/csv`, `application/gzip`, `application/x-gzip`)
+- File extension validation (`.csv`, `.csv.gz`)
+- UTF-8 encoding validation
+- Max file size limit
+- Temp file cleanup (`platformdirs`, `finally` block — both success and failure)
+- CSV.gz handling (gzip decompression)
+- Path traversal protection
+- Unsafe filename handling
+- Rate limiting
+- Task ownership validation on manual trigger (task belongs to dashboard)
 
-### Проверить data API
+### Verify Data API
 
-* Filters применяются на backend (SQL/Polars)
-* JSONB dims фильтрация (GIN index usage)
-* Dashboard access validation
-* Pagination/limits if needed
+- Filters applied on backend (SQL/Polars)
+- JSONB `dims` filtering (GIN index usage)
+- Dashboard access validation
+- `dims` keys sorted recursively before storage (UPSERT determinism)
 
 ## 2.4 Admin Endpoints
 
-Проверить `src/mkobi/api/routes/admin.py`:
+Verify `src/mkobi/api/routes/admin.py`:
 
-### Функционал
+### Endpoints
 
-* `GET /api/v1/admin/users` → `User[]`
-* `PATCH /api/v1/admin/users/:id/role`
-* `GET /api/v1/admin/registration-requests` → `Request[]`
-* `POST /api/v1/admin/registration-requests/:id/approve`
-* `GET /api/v1/admin/logs` → `ProcessingLog[]`
+- `GET /api/v1/admin/users` → `User[]`
+- `PATCH /api/v1/admin/users/:id/role`
+- `DELETE /api/v1/admin/users/:id`
+- `GET /api/v1/admin/registration-requests` (with status filter)
+- `POST /api/v1/admin/registration-requests/:id/approve`
+- `POST /api/v1/admin/registration-requests/:id/reject`
+- `GET /api/v1/admin/logs` (with pagination, status/dashboard filters)
+- `GET /api/v1/admin/logs/:log_id`
 
-### Проверить
+### Verify
 
-* Только admin может выполнять
-* Корректная работа с registration_requests
-* Логи возвращаются корректно
-* Нет утечки чувствительных данных (password_hash)
+- Only admin can execute
+- Registration request approval flow:
+  - Creates user with random temp password (`secrets.token_urlsafe(16)`)
+  - Temp password returned in response (admin communicates to user)
+  - Updates request status to `approved`, sets `reviewed_by` and `reviewed_at`
+- Rejection updates status to `rejected`
+- Cannot approve/reject already-processed requests (409 Conflict)
+- No sensitive data leakage (password_hash excluded from responses)
+- Processing logs include pagination (`page`, `page_size`, `total`)
 
-## 2.5 Other Endpoints
+## 2.5 Health Endpoints
 
-Проверить:
+Verify:
 
-* `src/mkobi/api/routes/users.py`: user CRUD, profile
-* `src/mkobi/api/routes/filters.py`: filters management
-* `src/mkobi/api/routes/graphs.py`: graph definitions
-* `src/mkobi/api/routes/layouts.py`: layout management
-* `src/mkobi/api/routes/processing_configs.py`: processing settings
-* `src/mkobi/api/routes/processing_logs.py`: processing logs
+- `GET /health` → `{status, database}` (200 healthy, 503 unhealthy)
+- `GET /health/detailed` → `{status, components: {database, static_files}}`
+- `GET /` → `{message, status, version}`
+- Health checks execute `SELECT 1` against PostgreSQL
+- Detailed check verifies `frontend/dist` directory exists
+
+## 2.6 Other Endpoints
+
+Verify:
+
+- `src/mkobi/api/routes/users.py`: user CRUD, profile, self-deletion (`DELETE /users/me`)
+- `src/mkobi/api/routes/filters.py`: filter CRUD
+- `src/mkobi/api/routes/graphs.py`: graph CRUD
+- `src/mkobi/api/routes/layouts.py`: layout CRUD
+- `src/mkobi/api/routes/processing_configs.py`: processing config CRUD
+- `src/mkobi/api/routes/processing_logs.py`: processing log access
 
 ---
 
@@ -270,72 +304,109 @@ Pipeline должен быть:
 
 ## 3.1 Access Control
 
-Проверить `src/mkobi/core/permissions.py`:
+Verify `src/mkobi/core/permissions.py`:
 
 ### Dashboard Access
 
-* Проверка dashboard_access на каждом запросе к дашборду
-* Editor/viewer/admin restrictions
-* Direct object access vulnerabilities (user может получить чужой дашборд?)
-* Admin имеет полный доступ
+- `dashboard_access` checked on every dashboard-related request
+- Editor/viewer/admin restrictions enforced
+- Direct object access vulnerabilities (user cannot access another user's dashboard)
+- Admin bypass: admins have full access without explicit `dashboard_access` entries
+- 403/404 dual-signal implementation in `DashboardService.get_dashboard()`
 
 ### User Roles
 
-Проверить использование `UserRole` StrEnum:
+Verify `UserRole` StrEnum usage:
 
-* ADMIN = "admin"
-* EDITOR = "editor"
-* VIEWER = "viewer"
+```python
+class UserRole(StrEnum):
+    ADMIN = "admin"
+    EDITOR = "editor"
+    VIEWER = "viewer"
+```
 
-Все проверки ролей должны использовать StrEnum, НЕ строки.
+All role checks must use StrEnum, NOT string literals.
+
+### Dashboard Permissions
+
+Verify `DashboardPermission` StrEnum:
+
+```python
+class DashboardPermission(StrEnum):
+    VIEW = "view"
+    EDIT = "edit"
+    ADMIN = "admin"
+```
 
 ## 3.2 JWT Security
 
-Проверить `src/mkobi/core/security.py`:
+Verify `src/mkobi/core/security.py`:
 
-* Token expiration validation
-* Invalid token handling (401 Unauthorized)
-* Missing token handling (401 Unauthorized)
-* Secret key хранится в env (JWT__SECRET_KEY)
-* Algorithm указан явно (НЕ default)
+- Token expiration validation
+- Invalid token handling (401 Unauthorized)
+- Missing token handling (401 Unauthorized)
+- Secret key stored in env (`JWT__SECRET_KEY`)
+- Algorithm explicitly set (NOT default)
+- Payload contains: `user_id`, `email`, `role`
 
 ## 3.3 Password Security
 
-Проверить:
+Verify:
 
-* bcrypt usage (НЕ md5, SHA, plaintext)
-* Password hash хранится в БД (НЕ plaintext)
-* Нет password logging
-* Password strength validation (опционально)
+- bcrypt usage (NOT md5, SHA, plaintext)
+- Password hash stored in DB (NOT plaintext)
+- No password logging
+- Minimum 8 characters (frontend Zod schema)
+- Temp password generated via `secrets.token_urlsafe(16)` on registration approval
 
 ## 3.4 Upload Security
 
-Проверить `src/mkobi/api/routes/upload.py`:
+Verify `src/mkobi/api/routes/upload.py`:
 
-* Path traversal (../../file.csv)
-* Unsafe filenames (использовать secure filename)
-* Oversized files handling (limit через config)
-* MIME-type validation (client + server side)
-* Rate limiting (защита от spam upload)
+- Path traversal (`../../file.csv`)
+- Unsafe filenames (use secure filename)
+- Oversized files handling (limit via config)
+- MIME-type validation (client + server side)
+- Rate limiting (protection from spam upload)
 
 ## 3.5 SQL Safety
 
-Проверить repositories (`src/mkobi/db/repositories/`):
+Verify repositories (`src/mkobi/db/repositories/`):
 
-* Отсутствие raw unsafe SQL
-* Parameterized queries (SQLAlchemy ORM/Core)
-* Запрещено формирование SQL через string interpolation (f-strings, +)
-* Использование ORM для всех операций
+- No raw unsafe SQL
+- Parameterized queries (SQLAlchemy ORM/Core)
+- SQL formation via string interpolation forbidden (f-strings, `+`)
+- ORM used for all operations
 
 ## 3.6 Secrets & Config
 
-Проверить `src/mkobi/config.py`:
+Verify `src/mkobi/config.py`:
 
-* Отсутствие hardcoded secrets
-* Env-based configuration (pydantic-settings)
-* Docker secrets support (_FILE suffix)
-* Nested env vars (DATABASE__HOST, DATABASE__PORT)
-* `.env` файл только для development
+- No hardcoded secrets
+- Env-based configuration (pydantic-settings)
+- Docker secrets support (`_FILE` suffix)
+- Nested env vars (`DATABASE__HOST`, `DATABASE__PORT`, `JWT__SECRET_KEY`)
+- `.env` file for development only
+- `app.yaml` for non-sensitive settings only
+- Production credential enforcement (refuses to start with default `admin`/`admin`)
+- CORS origins validated at startup in production mode
+
+## 3.7 Rate Limiting
+
+Verify:
+
+- Redis-based sliding window algorithm
+- Fail-open (default) vs fail-closed (production) via `RATE_LIMITER_FAIL_CLOSED`
+- Protected endpoints: login (5/5min), register-request (3/hour), upload (configured)
+- Health tracking when Redis unavailable
+
+## 3.8 Email Domain Blocklist
+
+Verify:
+
+- Configurable domain blocklist in `app.yaml`
+- Validated on backend via Pydantic (security boundary)
+- Also validated on frontend via Zod (UX convenience)
 
 ---
 
@@ -343,52 +414,63 @@ Pipeline должен быть:
 
 ## 4.1 Data Loaders
 
-Проверить `src/mkobi/data/loaders/loader.py`:
+Verify `src/mkobi/data/loaders/loader.py`:
 
-* Используется Polars (import polars as pl)
-* НЕ используется pandas (import pandas as pd)
-* Чтение CSV (read_csv)
-* Чтение CSV.gz (read_csv с decompression)
-* Валидация схемы (validator.py)
-* Обработка ошибок (corrupted CSV, invalid schema, missing columns, empty files)
+- Polars used (`import polars as pl`)
+- pandas NOT used (`import pandas as pd` forbidden)
+- CSV reading (`read_csv`)
+- CSV.gz reading (`read_csv` with decompression)
+- Schema validation (`validator.py`)
+- Error handling (corrupted CSV, invalid schema, missing columns, empty files)
 
 ## 4.2 Transformations
 
-Проверить `src/mkobi/data/processing/transformations.py`:
+Verify `src/mkobi/data/processing/transformations.py`:
 
 ### Aggregations
 
-Проверить наличие:
+Verify presence of:
 
-* Groupby (Polars group_by)
-* YoY (year-over-year calculations)
-* Shares (доли)
-* Custom metrics (настраиваемые метрики)
+- GroupBy (Polars `group_by`)
+- YoY (year-over-year calculations) with modes: `absolute`, `percent`
+- Shares (ratio computations)
+- Custom metrics (configurable metrics via formula parser)
+
+### Custom Metrics Formula Parser
+
+Verify:
+
+- Supports: `revenue - cost`, `profit / revenue * 100`
+- Operators: `+`, `-`, `*`, `/`
+- Limitations documented: no parentheses, no numeric literals, no special chars in column names
+- Invalid formulas produce clear error messages with position and nature
 
 ### Pipeline Correctness
 
-* Parsing (CSV → Polars DataFrame)
-* Transformations (по конфигу dashboard)
-* Aggregations (группировки, метрики)
-* Full recalculation logic (перезапись данных)
+- Parsing (CSV → Polars DataFrame)
+- Transformations (per dashboard config)
+- Aggregations (grouping, metrics)
+- Full recalculation logic (all aggregates rebuilt on each upload)
 
 ## 4.3 Storage
 
-Проверить `src/mkobi/data/storage/manager.py`:
+Verify `src/mkobi/data/storage/manager.py`:
 
-* Save to PostgreSQL (aggregated_data table)
-* JSONB usage для dims и metrics
-* Корректная сериализация
-* DB transaction handling (atomic processing, rollback on failure)
+- Save to PostgreSQL (`aggregated_data` table)
+- JSONB usage for `dims` and `metrics`
+- Correct serialization
+- DB transaction handling (atomic processing, rollback on failure)
+- `dims` keys sorted recursively before writes (UPSERT determinism)
+- Unique index on `(dashboard_id, graph_id, dims::text)` for conflict detection
 
 ## 4.4 Resource Handling
 
-Проверить:
+Verify:
 
-* Temp files cleanup (platformdirs, удаление после обработки)
-* DB transaction handling (commit/rollback)
-* Memory-heavy operations (streaming для больших файлов?)
-* Ошибки обрабатываются и логируются
+- Temp files cleanup (`platformdirs`, deletion after processing — both success and failure)
+- DB transaction handling (commit/rollback)
+- Memory-efficient processing (Polars lazy evaluation where applicable)
+- Errors handled and logged
 
 ---
 
@@ -396,32 +478,43 @@ Pipeline должен быть:
 
 ## 5.1 Schema Compliance
 
-Проверить соответствие SPEC.md (раздел 16):
+Verify all 10 tables match `docs/09-database/`:
 
 ### Core Tables
 
-* `users`: id, email, password_hash, role (UserRole StrEnum), is_active, created_at, updated_at
-* `layouts`: id, name, definition (JSONB), created_at, updated_at
-* `dashboards`: id, name, description, layout_id, created_by, created_at, updated_at
-* `graphs`: id, dashboard_id, name, type (GraphType StrEnum), config, dimensions, metrics, created_at
-* `filters`: id, name, type (FilterType StrEnum), config, created_at
-* `dashboard_access`: user_id, dashboard_id, permission (DashboardPermission StrEnum)
-* `dashboard_filters`: dashboard_id, filter_id (many-to-many)
-* `processing_configs`: dashboard_id, settings (JSONB), updated_at
-* `aggregated_data`: id, dashboard_id, graph_id, dims (JSONB), metrics (JSONB)
-* `processing_logs`: id, dashboard_id, status (ProcessingStatus StrEnum), message, timestamps
-* `registration_requests`: id, email, status (RegistrationStatus StrEnum), ip, reviewed_by, timestamps
+- `users`: UUID PK, email UNIQUE, password_hash, `user_role` ENUM, is_active, TIMESTAMPTZ timestamps
+- `layouts`: UUID PK, name UNIQUE, JSONB definition, TIMESTAMPTZ timestamps
+- `dashboards`: UUID PK, name UNIQUE, description, config JSONB, layout_id FK (SET NULL), created_by FK (SET NULL), TIMESTAMPTZ timestamps
+- `graphs`: UUID PK, dashboard_id FK (CASCADE), name, `graph_type` ENUM, JSONB config/dimensions/metrics, UNIQUE(dashboard_id, name)
+- `filters`: UUID PK, name UNIQUE, `filter_type` ENUM, JSONB config
 
-### Проверить
+### Access Tables
 
-* Foreign keys присутствуют
-* CASCADE behavior корректен
-* CHECK constraints для enums (используют StrEnum значения)
-* UNIQUE constraints где нужно
+- `dashboard_access`: composite PK (user_id, dashboard_id), `dashboard_permission_level` ENUM, FK to users/dashboards (CASCADE)
+- `dashboard_filters`: composite PK (dashboard_id, filter_id), FK to dashboards/filters (CASCADE)
+- `registration_requests`: UUID PK, email UNIQUE, `registration_status` ENUM, INET IP, reviewed_by FK (SET NULL), timestamps
+
+### Processing Tables
+
+- `processing_configs`: dashboard_id PK/FK (CASCADE), JSONB settings, TIMESTAMPTZ updated_at
+- `aggregated_data`: BIGSERIAL PK, dashboard_id FK (CASCADE), graph_id FK (CASCADE), JSONB dims/metrics
+- `processing_logs`: UUID PK, dashboard_id FK (SET NULL), `processing_status` ENUM, message, TIMESTAMPTZ timestamps
+
+### Verify
+
+- Foreign keys present
+- CASCADE behavior correct (dashboard deletion removes graphs, data, access, configs)
+- SET NULL behavior correct (layout/user deletion preserves dashboard)
+- CHECK constraints for enums
+- UNIQUE constraints where needed
+- `gen_random_uuid()` default for UUID PKs
+- `TIMESTAMPTZ` for all timestamps
 
 ## 5.2 Indexes
 
-Проверить наличие индексов (SPEC.md раздел 16.2):
+Verify all indexes from `docs/09-database/indexes.md`:
+
+**Core 7 indexes:**
 
 ```sql
 CREATE INDEX idx_aggregated_data_graph_id ON aggregated_data(graph_id);
@@ -431,35 +524,46 @@ CREATE INDEX idx_aggregated_data_dims_gin ON aggregated_data USING GIN (dims);
 CREATE INDEX idx_dashboard_access_user ON dashboard_access(user_id);
 CREATE INDEX idx_dashboard_access_dashboard ON dashboard_access(dashboard_id);
 CREATE INDEX idx_graphs_dashboard ON graphs(dashboard_id);
-CREATE INDEX idx_dashboard_filters_dashboard_filter ON dashboard_filters(dashboard_id, filter_id);
 ```
+
+**Additional indexes:**
+
+- `idx_dashboard_filters_dashboard_filter` on `dashboard_filters(dashboard_id, filter_id)`
+- `uq_aggregated_data_dashboard_graph_dims` on `aggregated_data(dashboard_id, graph_id, dims::text)` — UNIQUE for UPSERT
+- Unique indexes on: `users.email`, `layouts.name`, `dashboards.name`, `graphs(dashboard_id, name)`, `filters.name`
+- `idx_users_role` on `users.role`
+- `idx_processing_logs_dashboard_id` on `processing_logs(dashboard_id)`
 
 ## 5.3 Aggregated Data Model
 
-Проверить `src/mkobi/db/models/aggregated_data.py`:
+Verify `src/mkobi/db/models/aggregated_data.py`:
 
-* Корректность JSONB usage (dims, metrics)
-* Фильтрация через dims (GIN index)
-* Metrics consistency
-* 1 строка = 1 точка графика
+- Correct JSONB usage (dims, metrics)
+- Filtering via dims (GIN index)
+- Metrics consistency
+- 1 row = 1 chart data point
+- `dims` keys sorted recursively before writes
 
 ## 5.4 Queries (Repositories)
 
-Проверить `src/mkobi/db/repositories/`:
+Verify `src/mkobi/db/repositories/`:
 
-* Отсутствие N+1 проблем
-* Корректность joins (если используются)
-* Index usage (GIN для JSONB)
-* Prepared statements (SQLAlchemy)
+- No N+1 problems
+- Correct joins
+- Index usage (GIN for JSONB)
+- Prepared statements (SQLAlchemy)
 
 ## 5.5 Migrations (Alembic)
 
-Проверить `alembic/versions/`:
+Verify `alembic/versions/`:
 
-* Все миграции применяются корректно
-* Downgrade не нарушает данные (или запрещен)
-* Имена миграций описательные
-* Порядок миграций корректен
+- All migrations apply correctly
+- Reproducible from empty database
+- No broken revisions
+- No circular dependencies
+- Descriptive migration names
+- Correct migration order
+- PostgreSQL ENUM types created with `checkfirst=True` for idempotency
 
 ---
 
@@ -467,133 +571,153 @@ CREATE INDEX idx_dashboard_filters_dashboard_filter ON dashboard_filters(dashboa
 
 ## 6.1 Architecture (FSD)
 
-Проверить соответствие Feature-Sliced Design:
+Verify Feature-Sliced Design compliance:
 
 ### App Layer
 
-* `app/providers.tsx`: QueryClient, Router, Theme провайдеры
-* `app/routes.tsx`: все роуты приложения
+- `app/providers.tsx`: QueryClient (retry: 1, staleTime: 5min), Router, Theme providers
+- `app/routes.tsx`: all application routes
+
+### Routes
+
+| Path | Component | Access |
+|------|-----------|--------|
+| `/login` | `LoginForm` | Public |
+| `/register` | `RegisterForm` | Public |
+| `/dashboards` | `DashboardList` | Authenticated |
+| `/dashboard/:id` | `DashboardView` | Authenticated |
+| `/dashboard/:id/upload` | `UploadPage` | Admin, Editor |
+| `/admin` | `AdminPanel` | Admin only |
+| `/profile` | `UserProfile` | Authenticated |
+| `/profile/change-password` | `ChangePasswordPage` | Authenticated |
+| `*` | `NotFound` | Public |
 
 ### Features Layer
 
-Для каждой feature проверить:
+For each feature verify:
 
-* **auth**: LoginForm, RegisterForm, useAuth, authApi, authToken
-* **dashboards**: DashboardList, DashboardView, DashboardFilters, useDashboards, dashboardApi
-* **upload**: FileDropzone, UploadPage, uploadApi
-* **users**: UserProfile, userApi
-* **admin**: AdminPanel, UserManagement, LogViewer, RegistrationRequests, DashboardManagement, adminApi
+- **auth**: LoginForm, RegisterForm, useAuth, authApi, authToken
+- **dashboards**: DashboardList, DashboardView, DashboardFilters, useDashboards, dashboardApi
+- **upload**: FileDropzone, UploadPage, uploadApi
+- **users**: UserProfile, userApi
+- **admin**: AdminPanel, UserManagement, LogViewer, RegistrationRequests, DashboardManagement, adminApi
 
 ### Shared Layer
 
-* **api**: axiosInstance с интерцепторами для JWT
-* **components**: ProtectedRoute, RoleBasedAccess, Layout (AppLayout, Header, Sidebar)
-* **types**: api.types.ts (общие типы User, Dashboard, etc.), enums.ts (TypeScript enums)
+- **api**: axiosInstance with JWT interceptors, base URL `/api/v1`, 401 handling
+- **components**: ProtectedRoute, RoleBasedAccess, Layout (AppLayout, Header, Sidebar)
+- **types**: api.types.ts (User, Dashboard, etc.), enums.ts (TypeScript enums)
 
 ## 6.2 Type Safety
 
-Проверить:
+Verify:
 
-* TypeScript используется (НЕ any)
-* Типы для API responses (AuthResponse, DashboardSummary, etc.)
-* Типы для компонентов (props interfaces)
-* Zod schemas для форм (React Hook Form)
-* Отсутствие type errors (tsc --noEmit)
+- TypeScript strict mode used (NO `any`)
+- Types for API responses (AuthResponse, DashboardSummary, etc.)
+- Types for components (props interfaces)
+- Zod schemas for forms (React Hook Form)
+- No type errors (`tsc --noEmit`)
 
 ## 6.3 API Integration
 
-Проверить `frontend/src/features/*/api/`:
+Verify `frontend/src/features/*/api/`:
 
-* Используется axiosInstance (НЕ прямой axios)
-* JWT добавляется через интерцептор
-* Error handling (react-hot-toast)
-* TanStack Query для серверного состояния
-* Polling для long operations (processing status)
+- axiosInstance used (NOT direct axios)
+- JWT added via request interceptor
+- Token expiration checked before attaching
+- Response interceptor handles 401 (removes token, toast notification, redirect to `/login`)
+- TanStack Query for server state
+- Polling for long operations (processing status)
+- react-hot-toast for notifications
 
 ## 6.4 UI Components
 
-Проверить рендеринг:
-
 ### Login Page (`/login`)
 
-* Поля: email, password
-* Валидация формата email
-* Кнопка "Войти"
-* Ссылка "Зарегистрироваться"
-* Сообщение об ошибке
+- Fields: email, password
+- Email format validation
+- Login button
+- Registration link
+- Error message display
+- On success: stores token + user state, redirects to `/dashboards`
 
 ### Registration Page (`/register`)
 
-* Поле email (Zod validation)
-* Кнопка "Отправить заявку"
-* Проверка по blacklist доменов
+- Email field (Zod validation)
+- Submit button
+- Domain blocklist check
+- Success message
 
 ### Dashboard List Page (`/dashboards`)
 
-* Список доступных дашбордов
-* Карточки: название, описание, ссылка
-* GET `/api/v1/dashboards/my`
+- List of accessible dashboards
+- Cards: name, description, link
+- GET `/api/v1/dashboards/my`
+- User profile link in header
 
 ### Dashboard View Page (`/dashboard/:id`)
 
-* Заголовок дашборда
-* Filters Panel (динамически по конфигу)
-* Charts Grid (Plotly.js React)
-* Upload Button (для editor+)
-* GET `/api/v1/data/aggregated?dashboard_id=:id&filters=...`
+- Dashboard title
+- Filters Panel (dynamic from config)
+- Charts Grid (Plotly.js React)
+- Upload button (editor+ only)
+- GET `/api/v1/data/aggregated?dashboard_id=:id&filters=...`
 
 ### Data Upload Page (`/dashboard/:id/upload`)
 
-* Mode Toggle: "Перезаписать" / "Добавить"
-* Dropzone (react-dropzone)
-* Progress Bar
-* POST `/api/v1/upload/:dashboard_id?mode=overwrite|append`
+- Mode Toggle: "Overwrite" / "Append"
+- Dropzone (react-dropzone)
+- Progress Bar
+- POST `/api/v1/upload/:dashboard_id?mode=overwrite|append`
 
 ### Admin Panel (`/admin`)
 
-* User Management (таблица, изменение ролей)
-* Registration Requests (одобрение/отклонение)
-* Dashboard Management (CRUD)
-* Log Viewer (просмотр логов)
+- User Management (table, role change, delete)
+- Registration Requests (approve/reject)
+- Dashboard Management (CRUD)
+- Log Viewer (filterable, paginated)
 
 ### User Profile Page (`/profile`)
 
-* Email (read-only), роль (read-only)
-* Кнопка "Удалить аккаунт" (только для НЕ-админов)
+- Email (read-only), role (read-only)
+- `display_name` shown
+- Delete Account button (non-admin only)
+- Change Password link
 
 ## 6.5 State Management
 
-Проверить:
+Verify:
 
-* TanStack Query для серверного состояния (НЕ Redux/Zustand)
-* React Hook Form для форм
-* Zod для валидации форм
-* Local state через useState/useReducer где уместно
-* Отсутствие избыточного глобального состояния
+- TanStack Query for server state (NOT Redux/Zustand)
+- React Hook Form for forms
+- Zod for form validation
+- Local state via `useState`/`useReducer` where appropriate
+- No excessive global state
 
 ## 6.6 Chart Rendering
 
-Проверить `frontend/src/features/dashboards/ui/charts/`:
+Verify `frontend/src/features/dashboards/ui/charts/`:
 
-* BarChart (Plotly.js React)
-* LineChart (Plotly.js React)
-* PieChart (Plotly.js React)
-* TableChart
-* PlotlyChart (обертка)
-* Поддерживаемые типы: bar, line, pie, table
-* Config-driven rendering (из graph.config)
-* Invalid config handling
-* Missing data handling
+- BarChart (Plotly.js React)
+- LineChart (Plotly.js React)
+- PieChart (Plotly.js React)
+- TableChart
+- PlotlyChart (wrapper)
+- Supported types: bar, line, pie, table
+- Config-driven rendering (from `graph.config` JSONB)
+- Invalid config handling
+- Missing data handling
 
-## 6.7 Security (Frontend)
+## 6.7 Frontend Security
 
-Проверить:
+Verify:
 
-* JWT хранится в memory или secure httpOnly cookie (НЕ localStorage для продакшена)
-* Axios интерцепторы добавляют токен
-* ProtectedRoute компонент работает
-* RoleBasedAccess компонент работает
-* Email validation (Zod regex + blacklist domains)
+- JWT stored in memory (production) or sessionStorage (development) — NOT localStorage
+- Axios interceptors add token
+- ProtectedRoute component works
+- RoleBasedAccess component works
+- Email validation (Zod regex + blacklist domains)
+- UI-level role checks are for UX only (backend enforces authorization)
 
 ---
 
@@ -601,120 +725,104 @@ CREATE INDEX idx_dashboard_filters_dashboard_filter ON dashboard_filters(dashboa
 
 ## 7.1 Typing
 
-Проверить `src/mkobi/`:
+Verify `src/mkobi/`:
 
-* Type hints во всех функциях (параметры и возвращаемое значение)
-* Pydantic модели для API (src/mkobi/models/)
-* SQLAlchemy модели для ORM (src/mkobi/db/models/)
-* Отсутствие `Any` типов (кроме обоснованных случаев)
-* mypy проходит без ошибок
+- Type hints on all functions (parameters + return value)
+- Pydantic models for API (`src/mkobi/models/`)
+- SQLAlchemy models for ORM (`src/mkobi/db/models/`)
+- No `Any` types (except justified cases)
+- mypy passes without errors
 
 ## 7.2 Pydantic Models
 
-Проверить `src/mkobi/models/`:
+Verify `src/mkobi/models/`:
 
-* Все модели наследуются от BaseModel
-* Используются типы: EmailStr, UUID, datetime
-* Валидаторы где нужно (validator, field_validator)
-* Config class (или model_config) настроена
-* Отсутствие дублирования логики
+- All models inherit from `BaseModel`
+- Types used: `EmailStr`, `UUID`, `datetime`
+- Validators where needed (`validator`, `field_validator`)
+- `model_config` configured
+- No duplicated logic
 
-Проверить файлы:
+Verify files:
 
-* `auth.py`: LoginRequest, AuthResponse, UserResponse
-* `dashboard.py`: DashboardCreate, DashboardUpdate, DashboardResponse
-* `user.py`: UserCreate, UserUpdate, UserResponse
-* `enums.py`: ВСЕ StrEnum (UserRole, DashboardPermission, GraphType, FilterType, RegistrationStatus, UploadMode, ProcessingStatus)
+- `auth.py`: LoginRequest, TokenWithUser, UserResponse (with `display_name`)
+- `dashboard.py`: DashboardCreate, DashboardUpdate, DashboardResponse
+- `user.py`: UserCreate, UserUpdate, UserResponse
+- `enums.py`: ALL 17 StrEnum classes
 
 ## 7.3 Enum Usage (StrEnum)
 
-Проверить `src/mkobi/models/enums.py`:
+Verify `src/mkobi/models/enums.py`:
 
-Все константы должны быть StrEnum, НЕ dict или list:
+All constants must be StrEnum, NOT dict or list. All 17 classes:
 
-```python
-from enum import StrEnum
+`UserRole`, `DashboardPermission`, `GraphType`, `FilterType`, `RegistrationStatus`, `UploadMode`, `ProcessingStatus`, `EnvironmentEnum`, `MimeTypeEnum`, `FileExtensionEnum`, `AggregationFunctionEnum`, `FilterOperatorEnum`, `OrientationEnum`, `BarmodeEnum`, `YoyModeEnum`, `ButtonVariant`, `ComponentSize`
 
+Verify enum usage in code (NOT string literals):
 
-class UserRole(StrEnum):
-    ADMIN = "admin"
-    EDITOR = "editor"
-    VIEWER = "viewer"
-
-
-class GraphType(StrEnum):
-    BAR = "bar"
-    LINE = "line"
-    PIE = "pie"
-    TABLE = "table"
-```
-
-Проверить использование enum в коде (НЕ строковые литералы):
-
-* Bad: `if user.role == "admin":`
-* Good: `if user.role == UserRole.ADMIN:`
+- Bad: `if user.role == "admin":`
+- Good: `if user.role == UserRole.ADMIN:`
 
 ## 7.4 Readability
 
-Проверить:
+Verify:
 
-* Oversized functions (разбивать на меньшие)
-* Duplicated logic (выносить в helpers)
-* Unclear naming (переименовывать)
-* Magic constants (выносить в константы или config)
-* Комментарии там, где сложная логика (НО не избыточные)
-* Comments MUST be in English (НЕ на русском)
+- No oversized functions (split into smaller ones)
+- No duplicated logic (extract to helpers)
+- Clear naming
+- No magic constants (extract to constants or config)
+- Comments only for non-trivial logic
+- Comments MUST be in English (NOT Russian)
 
 ## 7.5 Logging Language
 
-Проверить:
+Verify:
 
-* Log messages are in English (НЕ на русском)
-* Exception messages are in English
-* Comments are in English
-* Example: `logger.info("User logged in")` (GOOD), `logger.info("Пользователь вошел")` (BAD)
+- Log messages in English (NOT Russian)
+- Exception messages in English
+- Docstrings in English
+- Example: `logger.info("User logged in")` (GOOD), `logger.info("Пользователь вошел")` (BAD)
 
-## 7.5 Error Handling
+## 7.6 Error Handling
 
-Проверить:
+Verify:
 
-* Отсутствие broad except (except Exception:)
-* Отсутствие swallowed exceptions (пустые except)
-* Consistent errors (всегда возвращать HTTPException с кодом)
-* Логирование ошибок (logger.error с контекстом)
-* Отсутствие print()
+- No broad `except Exception:` without re-raise
+- No swallowed exceptions (empty except blocks)
+- Consistent errors (always return `HTTPException` with code)
+- Error logging (`logger.error` with context)
+- No `print()` statements
 
-## 7.6 Async Correctness
+## 7.7 Async Correctness
 
-Проверить:
+Verify:
 
-* Blocking IO в async endpoints (НЕ делать)
-* Sync DB calls в async endpoints (использовать async SQLAlchemy)
-* time.sleep() в async (использовать asyncio.sleep)
-* Proper await usage
+- No blocking I/O in async endpoints
+- No sync DB calls in async endpoints (use async SQLAlchemy)
+- No `time.sleep()` in async (use `asyncio.sleep`)
+- Proper `await` usage
 
-## 7.7 Logging
+## 7.8 Logging
 
-Проверить использование logging:
+Verify logging usage:
 
 ```python
 import logging
-
 logger = logging.getLogger(__name__)
 ```
 
-Проверить наличие логирования:
+Verify logging present for:
 
-* Upload events (start, complete, failure)
-* Processing events (start, steps, complete, failure)
-* Auth events (login success/failure)
-* Errors (с stack trace)
-* Уровни: INFO, WARNING, ERROR (НЕ DEBUG в продакшене)
+- Upload events (start, complete, failure)
+- Processing events (start, steps, complete, failure)
+- Auth events (login success/failure)
+- Errors (with stack trace)
+- Levels: INFO, WARNING, ERROR (NOT DEBUG in production)
 
-Проверить отсутствие:
+Verify absence of:
 
-* print() statements
-* logger.info() для ошибок (использовать logger.error())
+- `print()` statements
+- `logger.info()` for errors (use `logger.error()`)
 
 ---
 
@@ -722,67 +830,97 @@ logger = logging.getLogger(__name__)
 
 ## 8.1 TypeScript
 
-Проверить:
+Verify:
 
-* Type hints (интерфейсы, типы)
-* Отсутствие `any` (использовать конкретные типы)
-* Zod schemas для runtime validation
-* Корректные props types для компонентов
-* tsc --noEmit проходит без ошибок
+- Type hints (interfaces, types)
+- No `any` (use specific types)
+- Zod schemas for runtime validation
+- Correct props types for components
+- `tsc --noEmit` passes without errors
 
 ## 8.2 React Best Practices
 
-Проверить:
+Verify:
 
-* Функциональные компоненты (НЕ class components)
-* Hooks usage (useState, useEffect, custom hooks)
-* Key props в списках
-* Memoization где нужно (useMemo, useCallback)
-* Отсутствие бизнес-логики в компонентах (выносить в hooks/services)
+- Functional components (NOT class components)
+- Hooks usage (`useState`, `useEffect`, custom hooks)
+- Key props in lists
+- Memoization where needed (`useMemo`, `useCallback`)
+- No business logic in components (extract to hooks/services)
 
 ## 8.3 Code Style
 
-Проверить:
+Verify:
 
-* ESLint проходит без ошибок
-* Prettier (если настроен)
-* Именование: PascalCase для компонентов, camelCase для переменных
-* Отсутствие закомментированного кода
-* Отсутствие console.log() в продакшене
-* Comments MUST be in English (НЕ на русском)
+- ESLint passes without errors
+- Prettier (if configured)
+- Naming: PascalCase for components, camelCase for variables
+- No commented-out code
+- No `console.log()` in production
+- Comments MUST be in English (NOT Russian)
 
 ---
 
+# BLOCK 9 — Task Queue & Background Processing
+
+## 9.1 In-Memory Task Queue (MVP)
+
+Verify `src/mkobi/core/task_queue.py`:
+
+- `TaskQueue` class with `asyncio.Queue`
+- `default_queue` singleton
+- `enqueue_job()` compatibility wrapper
+- `get_task_queue()` returns singleton
+- Task lifecycle: `STARTED` → `PROCESSING` → `SUCCESS`/`FAILED`
+- Status/result/error tracking in memory dicts
+
+## 9.2 Background Worker
+
+Verify `src/mkobi/workers/data_worker.py`:
+
+- `process_csv_background()` — async entry point
+- `process_csv_background_sync()` — sync wrapper for RQ compatibility
+- Full pipeline: parse → transform → aggregate → save → cleanup
+- Processing log updates at each stage
+
+## 9.3 Redis/RQ Migration Readiness
+
+Verify migration path documented in `docs/03-processing/task-queue.py`:
+
+- `process_csv_background_sync` prepared for RQ
+- Dual-mode operation support (`USE_REDIS_QUEUE` env var)
+- Rollback plan documented
+
+---
 
 # BLOCK 10 — Performance & Stability
 
 ## 10.1 Processing Scalability
 
-Проверить:
+Verify:
 
-* Memory-heavy operations (чтение всего файла в память?)
-* Full file loading issues (streaming для больших файлов?)
-* Polars lazy evaluation где применимо
-* Chunked processing для больших datasets
+- Memory-efficient processing (Polars lazy evaluation where applicable)
+- Full file loading considerations for large files
+- No unbounded memory growth
 
 ## 10.2 API Stability
 
-Проверить:
+Verify:
 
-* Error isolation (один endpoint не падает → другие работают)
-* Long-running requests (timeout handling)
-* Rate limiting (защита от abuse)
-* CORS настроен корректно (FastAPI CORSMiddleware)
+- Error isolation (one endpoint failure doesn't crash others)
+- Long-running requests (timeout handling)
+- Rate limiting (protection from abuse)
+- CORS configured correctly (FastAPI CORSMiddleware, explicit origins/methods/headers)
 
 ## 10.3 Database
 
-Проверить:
+Verify:
 
-* Heavy JSONB scans (используется GIN index?)
-* Missing indexes usage (проверить query plans)
-* Connection pooling (asyncpg pool)
-* Deadlocks (транзакции короткие)
-* N+1 problems (используется eager loading где нужно)
+- Heavy JSONB scans use GIN index
+- Missing indexes detected via query plans
+- Connection pooling (asyncpg pool)
+- Short transactions (no deadlocks)
+- N+1 problems addressed (eager loading where needed)
 
 ---
 
@@ -790,121 +928,141 @@ logger = logging.getLogger(__name__)
 
 ## 11.1 Configuration
 
-Проверить `src/mkobi/config.py` и `src/mkobi/settings/`:
+Verify `src/mkobi/config.py` and `src/mkobi/settings/`:
 
-* Pydantic-settings для загрузки конфигурации
-* Приоритет: env vars > Docker secrets > .env > YAML > defaults
-* Secrets через env vars (DATABASE__PASSWORD, JWT__SECRET_KEY)
-* Docker secrets support (_FILE suffix)
-* `.env` файл только для development
-* `app.yaml` только для нечувствительных настроек
+- Pydantic-settings for config loading
+- Priority: env vars > Docker secrets > .env > app.yaml > defaults
+- Secrets via env vars (`DATABASE__PASSWORD`, `JWT__SECRET_KEY`)
+- Docker secrets support (`_FILE` suffix)
+- `.env` file for development only
+- `app.yaml` for non-sensitive settings only
+- Production credential enforcement at startup
 
-## 11.2 Database Initialization
+## 11.2 Database Initialization & Startup Lifecycle
 
-Проверить `src/mkobi/db/starter.py` и lifespan в `src/mkobi/app.py`:
+Verify `src/mkobi/db/starter.py` and lifespan in `src/mkobi/app.py`:
 
-* Автоматическая проверка схемы БД при старте
-* Миграции применяются согласно окружению (ENV)
-* Production ограничения соблюдаются
+1. Dependency check (all required packages importable)
+2. Database connectivity check (`SELECT 1`)
+3. Schema existence check (`alembic_version` table)
+4. Alembic migrations (when `AUTO_MIGRATE=true`)
+5. Admin user creation (idempotent, SAVEPOINT for race conditions)
+6. Stale temp file cleanup (threshold: `STALE_FILE_THRESHOLD_HOURS`, default 24h)
+7. Test database recreation (when `ENV=test` or `RECREATE_TEST_DB=true`)
+8. Application ready (accepts requests, task queue initialized)
+9. Shutdown: engine connections disposed
 
 ## 11.3 Docker
 
-Проверить `Dockerfile` и `docker-compose.yml`:
+Verify `Dockerfile` and `docker-compose.yml`:
 
-* Многостадийная сборка (multi-stage build)
-* Только необходимые зависимости в продакшене
-* Переменные окружения передаются корректно
-* Volumes для данных (если нужно)
-* Healthcheck (опционально)
+- Multi-stage build (dev, test, prod, prod-slim targets)
+- Only necessary dependencies in production image
+- Environment variables passed correctly
+- Volumes for data persistence (`postgres_data`, `app_data`)
+- Health checks (db: `pg_isready`, app: HTTP GET `/health`)
+- Non-root container
+- No secrets baked into image
+- `.env` not copied into image
 
 ## 11.4 Deployment Options
 
-Проверить SPEC.md раздел 24:
+**Development:**
 
-**Development**:
+- React dev server (port 5173) + FastAPI (port 8000) with CORS
+- Hot reload for both servers
+- Environment variables via `.env` files
 
-* React dev server (port 3000) + FastAPI (port 8000) с CORS
-* Hot reload для обоих серверов
-* Environment variables через `.env` файлы
+**Production (Option A — Recommended):**
 
-**Production (Вариант А)**:
+- FastAPI serves built React static files (`frontend/dist`)
+- Static files via `StaticFiles`
+- All non-API routes fall through to React `index.html`
 
-* FastAPI раздает собранные статические файлы React (`frontend/dist`)
-* Статические файлы через StaticFiles
+**Production (Option B — Nginx):**
 
-**Production (Вариант Б)**:
-
-* Nginx проксирует `/api` → FastAPI, остальное → React SPA
+- Nginx proxies `/api` → FastAPI, everything else → React SPA
+- SSL termination at Nginx
 
 ---
 
 # BLOCK 12 — No Overengineering Check
 
-Проверить отсутствие:
+Verify absence of:
 
-* Redux/Zustand (TanStack Query достаточно для серверного состояния)
-* Лишних слоев абстракции (axiosInstance → прямые вызовы API)
-* Дублирования Pydantic моделей
-* Сложных паттернов без необходимости (если простое решение работает)
-* Enterprise patterns где не требуется
+- Redux/Zustand (TanStack Query sufficient for server state)
+- Unnecessary abstraction layers (axiosInstance → direct API calls)
+- Duplicated Pydantic models
+- Complex patterns without necessity (if simple solution works)
+- Enterprise patterns where not required
 
 ---
 
-# Формат отчета (ОБЯЗАТЕЛЬНО)
-Создать файл: `C:\py_dev\mkobi\.ai\audit\project\audit_report_<number>.md` (свободный следующий номер)
+# Report Format
+
+Create file: `C:\py_dev\mkobi\.ai\audit\project\audit_report_<number>.md` (next available number)
 
 ## 1. Executive Summary
 
-Кратко:
+Briefly:
 
-* Общее качество системы
-* Основные риски
-* Readiness level (1-10)
-* Соответствие спецификациям (SPEC.md + )
+- Overall system quality
+- Main risks
+- Readiness level (1–10)
+- Specification compliance
 
 ---
 
 ## 2. Architecture Summary
 
-Кратко:
+Briefly:
 
-* Сильные стороны
-* Слабые стороны
-* Maintainability assessment
-* Соблюдение Clean Architecture
-* Соблюдение FSD (Frontend)
+- Strengths
+- Weaknesses
+- Maintainability assessment
+- Clean Architecture compliance
+- FSD compliance (Frontend)
 
 ---
 
 ## 3. Requirements Coverage
 
-Таблица (на основе SPEC.md и ):
+Table (based on `docs/SPEC.md` and all `docs/**/*.md`):
 
 | Requirement | Status | Notes |
-| ----------- | ------ | ----- |
-| JWT auth | PASS/FAIL | ... |
-| CSV.gz upload | PASS/FAIL | ... |
-| Polars processing | PASS/FAIL | ... |
+|-------------|--------|-------|
+| JWT auth with TokenWithUser | PASS/FAIL | ... |
+| CSV.gz upload with validation | PASS/FAIL | ... |
+| Polars processing pipeline | PASS/FAIL | ... |
+| JSONB normalization (dims key sort) | PASS/FAIL | ... |
 | React SPA (FSD) | PASS/FAIL | ... |
 | Plotly.js React charts | PASS/FAIL | ... |
-| StrEnum usage | PASS/FAIL | ... |
-| Logging (НЕ print) | PASS/FAIL | ... |
+| All 17 StrEnum classes | PASS/FAIL | ... |
+| Logging (NOT print) | PASS/FAIL | ... |
 | Type hints (backend) | PASS/FAIL | ... |
-| TypeScript (frontend) | PASS/FAIL | ... |
+| TypeScript strict (frontend) | PASS/FAIL | ... |
 | Pydantic models | PASS/FAIL | ... |
 | PostgreSQL + JSONB | PASS/FAIL | ... |
-| Role-based access | PASS/FAIL | ... |
+| Role-based access control | PASS/FAIL | ... |
+| Admin bypass | PASS/FAIL | ... |
+| 403/404 dual-signal | PASS/FAIL | ... |
 | TanStack Query | PASS/FAIL | ... |
 | React Hook Form + Zod | PASS/FAIL | ... |
+| Health check endpoints | PASS/FAIL | ... |
+| Rate limiting (fail-open/closed) | PASS/FAIL | ... |
+| Production credential enforcement | PASS/FAIL | ... |
+| Registration approval flow | PASS/FAIL | ... |
+| Task queue (in-memory MVP) | PASS/FAIL | ... |
+| Test database isolation | PASS/FAIL | ... |
 
 ---
 
-## 4. Findings (основной раздел)
+## 4. Findings (main section)
 
-Для каждой проблемы ОБЯЗАТЕЛЬНО:
+For each issue:
 
 | Severity | File | Line | Problem | Impact | Recommendation |
-| -------- | ---- | ---- | ------- | ------ | -------------- |
+|----------|------|------|---------|--------|----------------|
 | CRITICAL | api/upload.py | 84 | temp files not deleted | disk leaks | add finally cleanup |
 | HIGH | models/enums.py | 12 | dict used instead of StrEnum | maintainability | refactor to StrEnum |
 | MEDIUM | services/processing.py | 156 | print() instead of logger | logging standards | use logger.error() |
@@ -912,16 +1070,16 @@ logger = logging.getLogger(__name__)
 
 Severity:
 
-* **CRITICAL**: блокирует работу, security vulnerability, data loss
-* **HIGH**: серьезная проблема, влияет на стабильность или безопасность
-* **MEDIUM**: проблема качества, technical debt
-* **LOW**: style, naming, minor improvements
+- **CRITICAL**: blocks operation, security vulnerability, data loss
+- **HIGH**: serious issue affecting stability or security
+- **MEDIUM**: quality issue, technical debt
+- **LOW**: style, naming, minor improvements
 
 ---
 
 ## 5. File-Level Recommendations
 
-Для каждого проблемного файла:
+For each problematic file:
 
 ```text
 File: src/mkobi/data/processing/transformations.py
@@ -944,52 +1102,50 @@ Recommendations:
 
 ## 6. Missing Features vs Specification
 
-Отдельно перечислить:
+List separately:
 
-**Отсутствует (не реализовано)**:
+**Missing (not implemented):**
 
-* Feature X из SPEC.md раздел Y
-* Endpoint Z из 
+- Feature X from SPEC.md section Y
+- Endpoint Z from docs
 
-**Реализовано частично**:
+**Partially implemented:**
 
-* Feature A (не хватает B, C)
-* ...
+- Feature A (missing B, C)
 
-**Противоречит ТЗ**:
+**Contradicts specification:**
 
-* В коде X, в ТЗ Y
-* ...
+- Code has X, spec says Y
 
 ---
 
 ## 7. Frontend-Specific Findings
 
-Отдельный раздел для React SPA:
+Separate section for React SPA:
 
 ### 7.1 Architecture (FSD)
 
-* Соблюдение структуры features/shared/app
-* Отсутствие бизнес-логики в компонентах
-* Корректное использование TanStack Query
+- Compliance with features/shared/app structure
+- No business logic in components
+- Correct TanStack Query usage
 
 ### 7.2 TypeScript
 
-* Отсутствие `any`
-* Корректные типы для API
-* Zod schemas для форм
+- No `any`
+- Correct API types
+- Zod schemas for forms
 
 ### 7.3 Components
 
-* Все страницы из  реализованы
-* Chart rendering работает (Plotly.js React)
-* Filters применяются корректно
+- All pages from spec implemented
+- Chart rendering works (Plotly.js React)
+- Filters applied correctly
 
 ### 7.4 API Integration
 
-* axiosInstance настроен
-* JWT interceptors работают
-* Error handling (react-hot-toast)
+- axiosInstance configured
+- JWT interceptors work
+- Error handling (react-hot-toast)
 
 ---
 
@@ -997,17 +1153,19 @@ Recommendations:
 
 ### 8.1 Backend
 
-* JWT: корректно
-* Password hashing: bcrypt
-* SQL injection: защита через ORM
-* Upload: защита от path traversal, oversized files
-* Rate limiting: настроен/отсутствует
+- JWT: correct
+- Password hashing: bcrypt
+- SQL injection: protected via ORM
+- Upload: path traversal, oversized files protected
+- Rate limiting: configured
+- Production credential enforcement: active
+- CORS: explicit origins/methods/headers
 
 ### 8.2 Frontend
 
-* JWT storage: memory/httpOnly cookie (НЕ localStorage)
-* ProtectedRoute: работает
-* RoleBasedAccess: работает
+- JWT storage: memory/sessionStorage (NOT localStorage)
+- ProtectedRoute: works
+- RoleBasedAccess: works
 
 ---
 
@@ -1015,86 +1173,86 @@ Recommendations:
 
 ### 9.1 Backend
 
-* Processing: Polars используется, memory-efficient
-* DB: индексы настроены, GIN для JSONB
-* API: CORS, rate limiting
+- Processing: Polars used, memory-efficient
+- DB: indexes configured, GIN for JSONB
+- API: CORS, rate limiting
 
 ### 9.2 Frontend
 
-* Bundle size: оптимизирован (или нет)
-* React rendering: optimizations (memoization)
-* API calls: TanStack Query caching
+- Bundle size: optimized
+- React rendering: memoization
+- API calls: TanStack Query caching
 
 ---
 
 ## 10. Final Assessment
 
-Кратко оценить:
+Rate:
 
-* **Maintainability**: легко поддерживать? (1-10)
-* **Production Readiness**: готово к продакшену? (1-10)
-* **Scalability**: масштабируемость (1-10)
-* **Security**: уровень безопасности (1-10)
-* **Code Quality**: качество кода (1-10)
+- **Maintainability**: easy to maintain? (1–10)
+- **Production Readiness**: ready for production? (1–10)
+- **Scalability**: scalability (1–10)
+- **Security**: security level (1–10)
+- **Code Quality**: code quality (1–10)
 
-### Основные technical risks
+### Key Technical Risks
 
 1. Risk 1 (CRITICAL/HIGH/MEDIUM/LOW)
 2. Risk 2
 3. ...
 
-### Приоритет исправлений
+### Fix Priority
 
-1. Критичные (CRITICAL) — исправить немедленно
-2. Высокие (HIGH) — исправить до продакшена
-3. Средние (MEDIUM) — technical debt
-4. Низкие (LOW) — nice to have
+1. CRITICAL — fix immediately
+2. HIGH — fix before production
+3. MEDIUM — technical debt
+4. LOW — nice to have
 
 ---
 
-# Важные ограничения для аудитора (LLM)
+# Important Auditor Constraints
 
-## НЕ считать проблемой
+## Do NOT Flag As Issues
 
-* Простую архитектуру
-* Небольшое количество abstraction layers
-* Отсутствие enterprise patterns
-* Использование "простых" решений, если они работают и читаемы
+- Simple architecture
+- Small number of abstraction layers
+- Absence of enterprise patterns
+- "Simple" solutions that work and are readable
 
-## Считать проблемой
+## Flag As Issues
 
-* Сложность поддержки (hard to understand, modify)
-* Неявную логику (hidden behavior, side effects)
-* Небезопасность (security vulnerabilities)
-* Смешивание ответственности (business logic in routes)
-* Нестабильный processing (data loss, corruption)
-* Слабый access control (unauthorized access)
-* Плохую обработку ошибок (swallowed exceptions)
-* Использование print() вместо logging
-* Отсутствие StrEnum там, где уместно
-* Hardcoded strings вместо enum values
-* Отсутствие type hints
-* Прямой SQL через string interpolation
+- Hard to maintain (hard to understand, modify)
+- Implicit logic (hidden behavior, side effects)
+- Insecurity (security vulnerabilities)
+- Mixed responsibilities (business logic in routes)
+- Unstable processing (data loss, corruption)
+- Weak access control (unauthorized access)
+- Poor error handling (swallowed exceptions)
+- `print()` instead of logging
+- Missing `StrEnum` where appropriate
+- Hardcoded strings instead of enum values
+- Missing type hints
+- Raw SQL via string interpolation
 
-## Основной критерий
+## Primary Criterion
 
-Система должна быть:
+The system must be:
 
-* Понятной (читаемый код, clear intent)
-* Устойчивой (error handling, transactions, cleanup)
-* Безопасной (auth, access control, validation)
-* Легко поддерживаемой (modular, tested, typed)
-* Соответствующей спецификации (SPEC.md + )
+- Understandable (readable code, clear intent)
+- Resilient (error handling, transactions, cleanup)
+- Secure (auth, access control, validation)
+- Easily maintainable (modular, tested, typed)
+- Specification-compliant (`docs/SPEC.md` + all `docs/**/*.md`)
 
-## Специфичные требования к mkobi
+## mkobi-Specific Requirements
 
-* Package name: `mkobi`
-* StrEnum вместо dict/list для всех констант
-* Pydantic models в `src/mkobi/models/`
-* Logging через `logger = logging.getLogger(__name__)`
-* Type hints во всех функциях
-* Clean Architecture (разделение слоев)
-* FSD для frontend
-* Polars (НЕ pandas)
-* PostgreSQL + JSONB для агрегированных данных
-* Comments and logs MUST be in English (НЕ на русском)
+- Package name: `mkobi`
+- StrEnum for all 17 constant classes (NOT dict/list)
+- Pydantic models in `src/mkobi/models/`
+- Logging via `logger = logging.getLogger(__name__)`
+- Type hints on all functions
+- Clean Architecture (layer separation)
+- FSD for frontend
+- Polars (NOT pandas)
+- PostgreSQL + JSONB for aggregated data
+- Comments and logs MUST be in English (NOT Russian)

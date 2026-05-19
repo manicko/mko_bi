@@ -27,6 +27,13 @@ class TestLogin:
         data = response.json()
         assert "access_token" in data
         assert data["token_type"] == "bearer"
+        # Verify user data is included in response
+        assert "user" in data
+        assert data["user"]["email"] == test_user["email"]
+        assert "id" in data["user"]
+        assert "role" in data["user"]
+        assert "display_name" in data["user"]
+        assert "created_at" in data["user"]
 
     async def test_login_wrong_password(
         self, async_client: AsyncClient, test_user: dict

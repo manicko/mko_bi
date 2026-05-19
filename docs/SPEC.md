@@ -115,6 +115,10 @@ Access is validated on every request via the `dashboard_access` table.
 - **Fail-open rate limiter** — When Redis is unavailable, requests are allowed through by default (configurable to fail-closed).
 - **Production credential enforcement** — Application refuses to start in production with default credentials.
 - **Background task queue** — In-memory `TaskQueue` (MVP) with a documented migration path to Redis/RQ.
+- **Login returns user data** — The login endpoint returns `TokenWithUser` (token + user profile) to eliminate the need for a separate `/me` call after authentication.
+- **Admin bypass for dashboards** — Users with the `admin` role implicitly see all dashboards without requiring explicit `dashboard_access` entries.
+- **403/404 dual-signal for dashboard access** — The system distinguishes "dashboard not found" (HTTP 404) from "dashboard exists but no access" (HTTP 403) to avoid leaking dashboard existence information.
+- **`display_name` computed field** — The `UserRead` model exposes a computed `display_name` derived from the email prefix (text before `@`), available in all API responses returning user data.
 
 ---
 
@@ -123,9 +127,10 @@ Access is validated on every request via the `dashboard_access` table.
 | Version | Date       | Description                              |
 | ------- | ---------- | ---------------------------------------- |
 | 2.2     | 2026-05-16 | Updated with implemented features        |
+| 2.3     | 2026-05-19 | Added login user-in-response, admin bypass, 403/404 dual-signal, display_name |
 
 ---
 
 **Author:** Senior Python Architect
-**Date:** 2026-05-16
-**Version:** 2.2
+**Date:** 2026-05-19
+**Version:** 2.3

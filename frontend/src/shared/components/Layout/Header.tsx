@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../../features/auth/model/useAuth'
 
 export function Header() {
-  const { user, logout } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
 
   return (
@@ -14,17 +14,13 @@ export function Header() {
         </Typography>
         {user && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography variant="body2">{user.email}</Typography>
-            <Button color="inherit" onClick={() => navigate('/profile')}>
-              Profile
-            </Button>
             {user.role === 'admin' && (
               <Button color="inherit" onClick={() => navigate('/admin')}>
                 Admin
               </Button>
             )}
-            <Button color="inherit" onClick={logout}>
-              Logout
+            <Button color="inherit" onClick={() => navigate('/profile')}>
+              Profile
             </Button>
           </Box>
         )}

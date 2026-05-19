@@ -15,9 +15,9 @@ import { ChangePasswordPage } from '../features/users/ui/ChangePasswordPage'
 export function AppRoutes() {
   return (
     <Routes>
+      <Route path="/login" element={<LoginForm />} />
+      <Route path="/register" element={<RegisterForm />} />
       <Route element={<AppLayout />}>
-        <Route path="/login" element={<LoginForm />} />
-        <Route path="/register" element={<RegisterForm />} />
         <Route
           path="/dashboards"
           element={

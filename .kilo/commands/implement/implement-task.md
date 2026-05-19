@@ -99,14 +99,25 @@ Avoid:
 
 ## Step 5 — Validate Code Quality
 
-Run ruff and mypy checks on affected code.
+Run checks depending on what was changed:
+
+**Python files** (`*.py`):
+- Lint: `uv run ruff check <affected_files_or_dirs>`
+- Type check: `uv run mypy <affected_files_or_dirs>`
+
+**TypeScript / React files** (`*.ts`, `*.tsx`):
+- Type check: `npm run build` (runs `tsc -b`) — from `frontend/` directory
+- Lint: `npm run lint` — from `frontend/` directory
+
 Fix only issues directly related to the task.
 
 ---
 
 ## Step 6 — Validate Tests
 
-Run relevant tests.
+**Python:** Run `uv run pytest <path>` for relevant test files.
+**Frontend:** Run `npm run test` — from `frontend/` directory.
+
 If tests conflict with current architecture → update or remove tests.
 Do not degrade architecture to satisfy outdated tests.
 

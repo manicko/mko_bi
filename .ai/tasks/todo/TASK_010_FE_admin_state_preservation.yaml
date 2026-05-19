@@ -1,0 +1,48 @@
+id: TASK_010_FE_admin_state_preservation
+
+title: Preserve admin panel tab state when switching tabs
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Ensure admin panel tab state (pagination, sorting) is preserved when switching between tabs
+  by keeping tab content mounted but hidden instead of conditionally rendering.
+
+goals:
+  - All admin tabs stay mounted when switching tabs
+  - Hidden tabs use display: none to preserve DataGrid state
+  - Pagination and sorting state preserved when switching back to a tab
+  - No data re-fetching when returning to a previously visited tab
+
+files:
+  - path: frontend/src/features/admin/ui/AdminPanel.tsx
+    targets:
+      - type: component
+        name: AdminPanel
+    semantic_anchors:
+      update_zone:
+        type: jsx_block
+        value: Tab content rendering — replace conditional rendering with visibility-based pattern
+
+changes:
+  - action: update_code
+    description: Replace conditional rendering ({currentTab === 0 && <UserManagement />}) with visibility-based pattern (display: none/block)
+
+acceptance_criteria:
+  - All tabs remain mounted
+  - Pagination state preserved on tab switch
+  - Sorting state preserved on tab switch
+  - No unnecessary re-renders or data refetches
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+risk_level: low
+
+wave: 3
+
+plan_source: PLAN_01_admin_state_preservation.md

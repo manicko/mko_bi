@@ -56,7 +56,7 @@ Normalize phase input in step 2 before any directory lookups.
 
 Load {MAIN_CONTEXT} from:
 
-C:\py_dev\mkobi\docs\**
+C:\py_dev\mkobi\docs\SPEC.md
 C:\py_dev\mkobi\docs\STRUCT.md
 
 Summarize it and keep as {MAIN_CONTEXT} 

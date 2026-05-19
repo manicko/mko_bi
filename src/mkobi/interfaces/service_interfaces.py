@@ -144,6 +144,7 @@ class IDashboardService(abc.ABC):
         self,
         dashboard_id: UUID,
         user_id: UUID,
+        user_role: str | None = None,
         db: AsyncSession | None = None,
     ) -> DashboardRead | None:
         """Get dashboard by ID with access check."""
@@ -162,6 +163,7 @@ class IDashboardService(abc.ABC):
     async def get_user_dashboards(
         self,
         user_id: UUID,
+        user_role: str | None = None,
         db: AsyncSession | None = None,
     ) -> list[DashboardRead]:
         """Get user dashboards."""

@@ -1,108 +1,108 @@
 ---
-name: audit-db-structure 
-description: audit-db-structure 
+name: audit-db-structure
+description: audit-db-structure
 agent: auditor
 alwaysApply: false
 ---
 
-# Задание: аудит баз данных PostgreSQL в проекте (FastAPI)
+# Task: PostgreSQL Database Audit (mkobi BI Dashboard)
 
-## Состав команды для выполнения задания
+## Audit Team Roles
 
-- **Backend Architect** – определяет перечень требуемых баз (основная, тестовая, иные), архитектурные риски, требования масштабируемости и maintainability.
-- **Senior Python Developer** – выполняет поиск и анализ кода (репозитории, модели, миграции, конфиги), документирует схему БД и выявляет технический долг.
-- **DevOps / DB Admin** – проверяет окружения (dev/stage/prod), права, переменные окружения, reproducibility, backup/recovery и deployment constraints.
-- **QA Engineer** – проверяет изоляцию test DB, соответствие схемы тестовой среде, reproducibility и отсутствие environment leakage.
-
----
-
-# 1. Цель задания
-
-На основе анализа существующего кода, миграций, конфигурации и реальных PostgreSQL баз:
-
-1. **Перечислить все требуемые базы данных PostgreSQL**, используемые системой.
-2. Для каждой базы – **извлечь и задокументировать полную структуру**:
-   - таблицы;
-   - типы данных;
-   - связи;
-   - индексы;
-   - ограничения;
-   - триггеры;
-   - расширения;
-   - роли и права.
-3. Выявить:
-   - архитектурные проблемы;
-   - schema drift;
-   - migration drift;
-   - проблемы масштабируемости;
-   - проблемы maintainability;
-   - потенциальные точки деградации при росте системы.
-4. Составить рекомендации:
-   - что необходимо исправить;
-   - что нужно упростить;
-   - что нужно стандартизировать;
-   - что необходимо подготовить заранее для роста системы.
-
-> Важно:
-> - не описывать бизнес-логику приложения;
-> - не анализировать UI/API behavior;
-> - фокус только на database architecture, schema lifecycle и reproducibility.
-- структура базы может расходиться с кодом, т.к. приложение еще в разработке
+- **Backend Architect** — identifies required databases (main, test, others), architectural risks, scalability and maintainability requirements.
+- **Senior Python Developer** — searches and analyzes code (repositories, models, migrations, configs), documents DB schema, identifies technical debt.
+- **DevOps / DB Admin** — verifies environments (dev/stage/prod), permissions, env vars, reproducibility, backup/recovery, deployment constraints.
+- **QA Engineer** — verifies test DB isolation, schema compliance with test environment, reproducibility, no environment leakage.
 
 ---
 
-# 2. Этапы выполнения
+# 1. Task Objective
+
+Based on analysis of existing code, migrations, configuration, and real PostgreSQL databases:
+
+1. **List all required PostgreSQL databases** used by the system.
+2. For each database — **extract and document the complete structure**:
+   - tables
+   - data types
+   - relationships (FK)
+   - indexes
+   - constraints
+   - triggers
+   - extensions
+   - roles and permissions
+3. Identify:
+   - architectural problems
+   - schema drift
+   - migration drift
+   - scalability problems
+   - maintainability problems
+   - potential degradation points as the system grows
+4. Provide recommendations:
+   - what must be fixed
+   - what should be simplified
+   - what should be standardized
+   - what should be prepared in advance for system growth
+
+**Important:**
+- Do NOT describe application business logic
+- Do NOT analyze UI/API behavior
+- Focus ONLY on database architecture, schema lifecycle, and reproducibility
+- Schema may diverge from code since the application is still in development
 
 ---
 
-# 2.1. Аудит кода и окружения – поиск по файлам
-
-Необходимо просканировать репозиторий и окружения (dev/stage/prod).
+# 2. Execution Stages
 
 ---
 
-## 2.1.1. Перечень баз данных
+# 2.1. Code & Environment Audit — File Scanning
 
-Искать в:
+Scan the repository and environments (dev/stage/prod).
+
+---
+
+## 2.1.1. Database Inventory
+
+Search in:
 
 - `.env`
 - `docker-compose.yml`
-- `k8s secrets`
-- CI/CD конфигурациях
-- `config.py`
-- `settings.py`
-- `init_db.sh`
-- `create_dbs.sql`
-- `conftest.py`
-- pytest fixtures
+- `docker-compose.override.yml`
+- `docker-compose.test.yml`
+- k8s secrets
+- CI/CD configurations
+- `config.py` / `settings.py`
+- `init_db.sh` / `create_dbs.sql`
+- `conftest.py` and pytest fixtures
 
-Проверять:
+Check for:
+
 - `DATABASE_URL`
 - `TEST_DATABASE_URL`
 - `MIGRATION_DATABASE_URL`
-- дополнительные PostgreSQL DSN
+- Additional PostgreSQL DSNs
 
-### Результат
-
-Список баз с указанием:
+### Result
 
 | Logical Name | DSN Variable | Environment | Purpose | Creation Method |
 |---|---|---|---|---|
+| bidb | DATABASE_URL | dev/prod | Main application database | Docker / manual |
+| bidb_test | TEST_DATABASE_URL | test | Test database (isolated) | Auto-recreated on startup |
 
 ---
 
-## 2.1.2. Схема таблиц, связей, индексов для каждой базы
+## 2.1.2. Table Schema, Relationships, Indexes per Database
 
-Источники:
+Sources:
 
 - `alembic/versions/*.py`
-- SQLAlchemy модели
-- raw SQL миграции
-- init scripts
-- fixtures
-- интерактивный аудит PostgreSQL
+- SQLAlchemy models (`src/mkobi/db/models/`)
+- Raw SQL migrations
+- Init scripts
+- Fixtures
+- Interactive PostgreSQL audit
 
-Для каждой таблицы задокументировать:
+For each table document:
 
 - schema/table name
 - columns/types
@@ -114,127 +114,148 @@ alwaysApply: false
 - extensions
 - comments
 
-### Особое внимание
+### Special Attention
 
-Проверять:
+Verify:
 
-- UUID consistency
-- JSONB usage
-- timezone-aware timestamps
-- nullable correctness
-- async-compatible types/drivers
+- UUID consistency (all entity tables use UUID PK except `aggregated_data` which uses BIGSERIAL)
+- JSONB usage (vs JSON/TEXT)
+- Timezone-aware timestamps (TIMESTAMPTZ, not TIMESTAMP)
+- Nullable correctness
+- Async-compatible types/drivers (asyncpg)
 
-### Результат
+### Result
 
-Markdown-документ со структурой БД.
+Markdown document with complete DB schema.
 
 ---
 
-## 2.1.2.1. Проверка расхождений между ORM, миграциями и реальной БД
+## 2.1.2.1. Schema Drift Detection (ORM vs Alembic vs Real DB)
 
-Проверить согласованность:
+Verify consistency between:
 
-- ORM;
-- Alembic;
-- реальной PostgreSQL схемы.
+- ORM (SQLAlchemy models in `src/mkobi/db/models/`)
+- Alembic migrations (`alembic/versions/`)
+- Real PostgreSQL schema
 
-Выявлять:
+Detect:
 
-- отсутствующие таблицы;
-- отсутствующие поля;
-- несовпадения типов;
-- расхождения constraints;
-- расхождения индексов;
-- manual DB changes;
-- legacy columns/tables.
+- Missing tables
+- Missing columns
+- Type mismatches
+- Constraint discrepancies
+- Index discrepancies
+- Manual DB changes
+- Legacy columns/tables
 
-### Особое внимание
+### Special Attention
 
-- UUID vs INTEGER
-- JSONB vs JSON/TEXT
-- timezone-aware timestamps
-- async-compatible DB drivers
+- UUID vs INTEGER for PKs
+- JSONB vs JSON/TEXT for flexible columns
+- TIMESTAMPTZ vs TIMESTAMP
+- asyncpg driver usage
+- `aggregated_data.id` is BIGSERIAL (not UUID — intentional design)
 
-### Результат
+### Result
 
 Schema Drift Report.
 
 ---
 
-## 2.1.2.2. Аудит миграций и reproducibility схемы
+## 2.1.2.2. Migration Audit & Schema Reproducibility
 
-Проверить:
+Verify:
 
-- целостность migration chain;
-- reproducibility с нуля;
-- отсутствие broken revisions;
-- отсутствие циклических зависимостей;
-- возможность выполнить:
-  - `alembic upgrade head`
-  - на полностью пустой БД.
+- Migration chain integrity
+- Reproducibility from scratch
+- No broken revisions
+- No circular dependencies
+- Ability to run `alembic upgrade head` on a completely empty database
 
-Выявлять:
+Detect:
 
-- manual SQL changes;
-- non-idempotent migrations;
-- state-dependent migrations;
-- migration drift;
-- смешивание schema/data migrations.
+- Manual SQL changes outside migrations
+- Non-idempotent migrations
+- State-dependent migrations
+- Migration drift
+- Mixed schema/data migrations
 
-### Результат
+### PostgreSQL ENUM Types
+
+Verify ENUM types are created with `checkfirst=True` for idempotency:
+
+```python
+user_role_enum = ENUM('admin', 'editor', 'viewer', name='user_role')
+user_role_enum.create(op.get_bind(), checkfirst=True)
+```
+
+Expected ENUM types:
+
+| PostgreSQL ENUM | Values | StrEnum Class |
+|---|---|---|
+| `user_role` | admin, editor, viewer | `UserRole` |
+| `dashboard_permission_level` | view, edit, admin | `DashboardPermission` |
+| `graph_type` | bar, line, pie, table | `GraphType` |
+| `filter_type` | select, multiselect, range, date | `FilterType` |
+| `processing_status` | started, uploaded, processing, success, failed, completed | `ProcessingStatus` |
+| `registration_status` | pending, approved, rejected | `RegistrationStatus` |
+
+### Result
 
 Migration Audit Report.
 
 ---
 
-## 2.1.3. Роли и права доступа
+## 2.1.3. Roles & Permissions
 
-Искать в:
+Search in:
 
-- SQL scripts;
-- Docker init scripts;
-- Terraform/Ansible;
-- PostgreSQL grants.
+- SQL scripts
+- Docker init scripts
+- Terraform/Ansible
+- PostgreSQL grants
 
-Документировать:
+Document:
 
-- роли;
-- права;
-- ownership;
-- migration users;
-- runtime users.
+- Roles
+- Permissions
+- Ownership
+- Migration users
+- Runtime users
 
-### Проверить
+### Verify
 
-- separation of privileges;
-- least privilege principle;
-- отсутствие superuser usage приложением.
+- Separation of privileges
+- Least privilege principle
+- No superuser usage by application
 
-### Результат
+### Result
 
 Role & Permissions Report.
 
 ---
 
-## 2.1.4. Особенности test database
+## 2.1.4. Test Database Specifics
 
-Проверить:
+Verify:
 
-- isolation;
-- recreate strategy;
-- fixtures;
-- schema cleanup;
-- reuse-db;
-- transactional tests.
+- Isolation (separate `bidb_test` database)
+- Recreate strategy (drop + recreate when `RECREATE_TEST_DB=true` or `ENV=test`)
+- Fixtures
+- Schema cleanup (SAVEPOINT rollback per test)
+- Transactional tests
 
-### Проверить
+### Verify
 
-- test DB физически отделена;
-- отдельный DSN;
-- нет доступа к prod/dev;
-- migrations не затрагивают production.
+- Test DB is physically separate (`bidb_test` ≠ `bidb`)
+- Separate DSN (`TEST_DATABASE_URL`)
+- No access to prod/dev from test
+- Migrations don't affect production
+- Test engine uses `NullPool` (no connection pooling issues)
+- Each test runs in a SAVEPOINT that is rolled back after completion
+- Test database is dropped and recreated on session setup when `RECREATE_TEST_DB=true`
 
-### Результат
+### Result
 
 Test Isolation Report:
 - SAFE
@@ -243,162 +264,171 @@ Test Isolation Report:
 
 ---
 
-# 2.2. Архитектурный аудит database layer
+# 2.2. Architectural Audit of Database Layer
 
-## Цель
+## Goal
 
-Не только описать текущую структуру,
-но и определить:
+Not only describe the current structure, but also determine:
 
-- что сломается при росте системы;
-- что усложнит поддержку;
-- где architecture bottlenecks;
-- какие решения уже сейчас создают technical debt.
-
----
-
-## 2.2.1. Audit maintainability
-
-Проверить:
-
-- consistency naming;
-- consistency UUID strategy;
-- consistency timestamp strategy;
-- consistency FK strategy;
-- consistency index naming;
-- schema organization;
-- migration organization.
-
-Выявлять:
-
-- хаотичные naming conventions;
-- mixed ID strategies;
-- inconsistent defaults;
-- duplicate structures;
-- hardcoded schema assumptions;
-- hidden coupling между таблицами.
+- What will break as the system grows
+- What will complicate maintenance
+- Where architectural bottlenecks exist
+- What decisions already create technical debt
 
 ---
 
-## 2.2.2. Audit scalability
+## 2.2.1. Maintainability Audit
 
-Проверить:
+Verify:
 
-- потенциальные bottlenecks;
-- heavy JSONB overuse;
-- отсутствие нужных индексов;
-- full table scans;
-- oversized tables;
-- отсутствие partitioning strategy (если объёмы предполагаются большие);
-- aggregation hotspots;
-- growth risks.
+- Consistent naming conventions
+- Consistent UUID strategy (UUID for entities, BIGSERIAL for aggregated_data)
+- Consistent timestamp strategy (TIMESTAMPTZ everywhere)
+- Consistent FK strategy (CASCADE for dependent children, SET NULL for optional refs)
+- Consistent index naming (`idx_<table>_<column>`)
+- Schema organization (core, access, processing tables)
+- Migration organization (descriptive names, correct order)
 
-### Проверять особенно
+Detect:
 
-- таблицы логов;
-- aggregated data;
-- event/history tables;
-- processing tables.
-
-### Выявлять
-
-- потенциальные N+1 patterns;
-- expensive joins;
-- unbounded growth;
-- missing archival strategy.
+- Chaotic naming conventions
+- Mixed ID strategies
+- Inconsistent defaults
+- Duplicate structures
+- Hardcoded schema assumptions
+- Hidden coupling between tables
 
 ---
 
-## 2.2.3. Audit schema design quality
+## 2.2.2. Scalability Audit
 
-Проверить:
+Verify:
 
-- нормализацию;
-- justified denormalization;
-- consistency constraints;
-- nullable correctness;
-- FK correctness;
-- cascade behavior.
+- Potential bottlenecks
+- Heavy JSONB overuse
+- Missing needed indexes
+- Full table scans
+- Oversized tables
+- Missing archival strategy for log/event tables
+- Aggregation hotspots
+- Growth risks
 
-Выявлять:
+### Pay Special Attention To
 
-- weak integrity;
-- orphan risks;
-- missing constraints;
-- duplicated data;
-- incompatible data types;
-- dangerous cascade deletes.
+- `processing_logs` table (unbounded growth — consider archival)
+- `aggregated_data` table (grows with each upload × graphs × dimension combinations)
+- `registration_requests` table (grows over time)
 
----
+### Detect
 
-## 2.2.4. Audit operational stability
-
-Проверить:
-
-- reproducibility;
-- backup compatibility;
-- restore compatibility;
-- migration safety;
-- rollback safety;
-- startup safety.
-
-Выявлять:
-
-- schema states impossible to recreate;
-- manual-only steps;
-- hidden runtime dependencies;
-- environment-dependent behavior.
+- Potential N+1 patterns in repository queries
+- Expensive joins
+- Unbounded growth tables
+- Missing archival/purging strategy
 
 ---
 
-## 2.2.5. Audit async compatibility
+## 2.2.3. Schema Design Quality Audit
 
-Для FastAPI async architecture проверить:
+Verify:
 
-- async DB drivers;
-- sync engine usage;
-- blocking DB access;
-- connection lifecycle;
-- pool configuration;
-- transaction handling.
+- Normalization
+- Justified denormalization (JSONB for flexible configs)
+- Constraint consistency
+- Nullable correctness
+- FK correctness
+- Cascade behavior correctness
 
-Выявлять:
+### Cascade Behavior Reference
 
-- sync SQLAlchemy inside async runtime;
-- blocking migrations during requests;
-- leaked sessions/connections.
+| Parent | Child | On Delete |
+|---|---|---|
+| dashboards | graphs | CASCADE |
+| dashboards | aggregated_data | CASCADE |
+| dashboards | dashboard_access | CASCADE |
+| dashboards | dashboard_filters | CASCADE |
+| dashboards | processing_configs | CASCADE |
+| dashboards | processing_logs | SET NULL |
+| layouts | dashboards | SET NULL |
+| users (created_by) | dashboards | SET NULL |
+| users (reviewed_by) | registration_requests | SET NULL |
+| graphs | aggregated_data | CASCADE |
+| filters | dashboard_filters | CASCADE |
+| users | dashboard_access | CASCADE |
+
+### Detect
+
+- Weak integrity
+- Orphan risks
+- Missing constraints
+- Duplicated data
+- Incompatible data types
+- Dangerous cascade deletes
 
 ---
 
-## 2.2.6. Audit future extensibility
+## 2.2.4. Operational Stability Audit
 
-Проверить:
+Verify:
 
-- насколько схема готова к:
-  - новым dashboards;
-  - новым aggregation types;
-  - multi-tenant support;
-  - росту объёмов данных;
-  - новым environments.
+- Reproducibility (schema recreatable from scratch via Alembic)
+- Backup compatibility
+- Restore compatibility
+- Migration safety
+- Rollback safety
+- Startup safety (auto-migration works)
 
-### Выявлять
+Detect:
 
-- schema rigidity;
-- hardcoded assumptions;
-- tightly coupled structures;
-- migration fragility;
-- невозможность безопасного refactoring.
+- Schema states impossible to recreate
+- Manual-only steps
+- Hidden runtime dependencies
+- Environment-dependent behavior
 
 ---
 
-# 3. Результаты выполнения задания: 
+## 2.2.5. Async Compatibility Audit
 
-Создать файл: `C:\py_dev\mkobi\.ai\audit\db\audit_report_<number>.md` (свободный следующий номер)
+For FastAPI async architecture verify:
 
+- Async DB driver (asyncpg)
+- No sync engine usage in async context
+- No blocking DB access in request handlers
+- Connection lifecycle management
+- Pool configuration (asyncpg pool)
+- Transaction handling (async SQLAlchemy sessions)
 
+Detect:
 
+- Sync SQLAlchemy inside async runtime
+- Blocking migrations during requests
+- Leaked sessions/connections
 
-Содержание файла:
+---
+
+## 2.2.6. Future Extensibility Audit
+
+Verify readiness for:
+
+- New dashboards (schema supports any number)
+- New aggregation types (JSONB config is flexible)
+- Multi-tenant support (no tenant_id currently — assess if needed)
+- Data volume growth (indexing strategy, archival)
+- New environments (migration-based schema management)
+
+### Detect
+
+- Schema rigidity
+- Hardcoded assumptions
+- Tightly coupled structures
+- Migration fragility
+- Impossibility of safe refactoring
+
+---
+
+# 3. Expected Results
+
+Create file: `C:\py_dev\mkobi\.ai\audit\db\audit_report_<number>.md` (next available number)
 
 ### 1. Database Inventory
 
@@ -409,15 +439,15 @@ Test Isolation Report:
 
 ### 2. Schema Documentation
 
-Для каждой базы:
-- таблицы;
-- типы;
-- FK;
-- индексы;
-- triggers;
-- extensions;
-- sequences;
-- roles.
+For each database:
+- tables
+- types
+- FK
+- indexes
+- triggers
+- extensions
+- sequences
+- roles
 
 ---
 
@@ -444,16 +474,10 @@ Test Isolation Report:
 
 ### 6. Architectural Problems
 
-Таблица:
-
 | Severity | Area | Problem | Risk | Recommendation |
 |---|---|---|---|---|
 
-Severity:
-- CRITICAL
-- HIGH
-- MEDIUM
-- LOW
+Severity: CRITICAL, HIGH, MEDIUM, LOW
 
 ---
 
@@ -473,223 +497,177 @@ Severity:
 
 ### 9. Required Architectural Improvements
 
-Цель:
-- простая;
-- понятная;
-- предсказуемая;
-- поддерживаемая;
-- расширяемая архитектура.
-- не максимальная “enterprise architecture”;
-- не внедрение сложных паттернов;
-- не абстракции ради абстракций.
+Goal: simple, understandable, predictable, maintainable, extensible architecture.
+NOT maximum "enterprise architecture".
+NOT introducing complex patterns.
+NOT abstractions for abstractions' sake.
 
-### Рекомендации должны предлагаться ТОЛЬКО если они:
+### Recommendations must ONLY be made if they:
 
-- уменьшают вероятность ошибок;
-- упрощают поддержку;
-- уменьшают связность;
-- упрощают развитие системы;
-- устраняют реальный bottleneck;
-- устраняют реальный architectural risk;
-- устраняют schema drift;
-- улучшают reproducibility;
-- делают поведение системы более предсказуемым.
+- Reduce error probability
+- Simplify maintenance
+- Reduce coupling
+- Simplify system evolution
+- Eliminate a real bottleneck
+- Eliminate a real architectural risk
+- Eliminate schema drift
+- Improve reproducibility
+- Make system behavior more predictable
 
 ---
 
-### НЕ считать проблемой
+### Do NOT consider as problems:
 
-- небольшое количество таблиц;
-- простую структуру;
-- отсутствие microservices;
-- отсутствие CQRS;
-- отсутствие event sourcing;
-- отсутствие repository pattern;
-- отсутствие сложных abstraction layers;
-- отсутствие premature partitioning/sharding;
-- отсутствие сложной caching architecture;
-- отсутствие premature optimization.
-
----
-
-### Считать проблемой только если это реально влияет на:
-
-- maintainability;
-- reproducibility;
-- scalability;
-- integrity;
-- operational stability;
-- migration safety;
-- debugging complexity;
-- onboarding complexity;
-- test isolation;
-- predictable behavior.
+- Small number of tables
+- Simple structure
+- No microservices
+- No CQRS
+- No event sourcing
+- No repository pattern (SQLAlchemy sessions used directly)
+- No complex abstraction layers
+- No premature partitioning/sharding
+- No complex caching architecture
+- No premature optimization
 
 ---
 
-### Запрещено рекомендовать без явной причины
+### Consider as problems ONLY if they affect:
 
-- partitioning;
-- sharding;
-- message brokers;
-- distributed systems;
-- CQRS;
-- event sourcing;
-- multi-database split;
-- сложные abstraction layers;
-- generic repositories;
-- unnecessary normalization;
-- premature denormalization;
-- async rewrite без необходимости.
+- Maintainability
+- Reproducibility
+- Scalability
+- Integrity
+- Operational stability
+- Migration safety
+- Debugging complexity
+- Onboarding complexity
+- Test isolation
+- Predictable behavior
 
 ---
 
-### Каждая рекомендация должна отвечать на вопрос:
+### Forbidden to recommend without explicit reason:
 
-Что конкретно станет:
-- проще поддерживать,
-- проще расширять,
-- безопаснее изменять,
-- стабильнее эксплуатировать
+- Partitioning
+- Sharding
+- Message brokers
+- Distributed systems
+- CQRS
+- Event sourcing
+- Multi-database split
+- Complex abstraction layers
+- Generic repositories
+- Unnecessary normalization
+- Premature denormalization
+- Async rewrite without necessity
 
-после внедрения изменения.
+---
 
-Если ответа нет — рекомендацию не добавлять.
+### Each recommendation must answer:
 
-### Формат 
-Для каждой проблемы ОБЯЗАТЕЛЬНО указать:
+What specifically will become:
+- easier to maintain
+- easier to extend
+- safer to change
+- more stable to operate
+
+after implementing the change.
+
+If there is no answer — do not add the recommendation.
+
+### Format
+
+For each problem:
 
 | Severity | Category | Object | Current Problem | Failure Risk | Required Change | Why It Matters |
 |---|---|---|---|---|---|---|
 
-Где:
+Where:
 
-- `Severity`
-  - CRITICAL
-  - HIGH
-  - MEDIUM
-  - LOW
-
-- `Category`
-  - Schema Design
-  - Migrations
-  - Indexing
-  - Constraints
-  - Scaling
-  - Maintainability
-  - Async Compatibility
-  - Test Isolation
-  - Environment Separation
-  - Security
-  - Reproducibility
-
-- `Object`
-  Конкретный объект:
-  - таблица,
-  - индекс,
-  - migration,
-  - role,
-  - schema,
-  - env config,
-  - DB connection layer.
+- `Severity`: CRITICAL, HIGH, MEDIUM, LOW
+- `Category`: Schema Design, Migrations, Indexing, Constraints, Scaling, Maintainability, Async Compatibility, Test Isolation, Environment Separation, Security, Reproducibility
+- `Object`: specific table, index, migration, role, schema, env config, DB connection layer
 
 ---
 
-### Требования к рекомендациям
+### Recommendation Requirements
 
-Каждая рекомендация должна:
+Each recommendation must:
 
-- быть привязана к конкретному объекту;
-- описывать реальную проблему;
-- объяснять:
-  - почему это проблема;
-  - когда система начнёт деградировать;
-  - какой риск создаётся;
-- содержать конкретное изменение;
-- не содержать абстрактных советов.
+- Be tied to a specific object
+- Describe a real problem
+- Explain: why it's a problem, when the system will degrade, what risk is created
+- Contain a specific change
+- Not contain abstract advice
 
 ---
 
-### Запрещено писать рекомендации вида:
+### Forbidden recommendation phrases:
 
-- “улучшить архитектуру”
-- “добавить scalability”
-- “использовать best practices”
-- “рассмотреть оптимизацию”
-- “сделать код чище”
+- "improve architecture"
+- "add scalability"
+- "use best practices"
+- "consider optimization"
+- "make code cleaner"
 
 ---
 
-### Разрешены только конкретные рекомендации
+### Only concrete recommendations allowed
 
-Пример хорошей рекомендации:
+Good example:
 
 | Severity | Category | Object | Current Problem | Failure Risk | Required Change | Why It Matters |
 |---|---|---|---|---|---|---|
-| HIGH | Indexing | aggregated_data | отсутствует индекс по dashboard_id + graph_id | full table scan при росте данных | добавить composite btree index | запросы dashboard aggregation начнут деградировать после роста таблицы |
+| HIGH | Indexing | aggregated_data | missing composite index on (dashboard_id, graph_id) | full table scan as data grows | add composite btree index | dashboard aggregation queries will degrade after table growth |
 
 ---
 
-### Для scalability-проблем обязательно указывать
+### For scalability problems, specify:
 
-- что именно станет bottleneck;
-- при каком типе роста:
-  - рост строк,
-  - рост dashboards,
-  - рост concurrent users,
-  - рост aggregation volume;
-- какой компонент пострадает:
-  - inserts,
-  - filtering,
-  - joins,
-  - migrations,
-  - startup,
-  - backup/restore.
+- What exactly will become a bottleneck
+- At what type of growth: row growth, dashboard growth, concurrent users, aggregation volume
+- Which component will suffer: inserts, filtering, joins, migrations, startup, backup/restore
 
 ---
 
-### Для maintainability-проблем обязательно указывать
+### For maintainability problems, specify:
 
-- что усложняет поддержку;
-- почему это создаёт technical debt;
-- что затруднит:
-  - migrations,
-  - debugging,
-  - onboarding,
-  - schema evolution,
-  - refactoring.
+- What complicates maintenance
+- Why this creates technical debt
+- What will be harder: migrations, debugging, onboarding, schema evolution, refactoring
 
 ---
 
-### Для migration-проблем обязательно указывать
+### For migration problems, specify:
 
-- возможно ли восстановление БД с нуля;
-- какие migrations non-reproducible;
-- какие migrations зависят от runtime state;
-- какие migrations опасны для production.
+- Whether DB recovery from scratch is possible
+- Which migrations are non-reproducible
+- Which migrations depend on runtime state
+- Which migrations are dangerous for production
 
 ---
 
-### Для environment/test isolation обязательно указывать
+### For environment/test isolation, specify:
 
-- может ли test environment повредить dev/prod;
-- есть ли shared DB usage;
-- есть ли shared credentials;
-- возможны ли accidental destructive operations.
+- Whether test environment can damage dev/prod
+- Whether shared DB usage exists
+- Whether shared credentials exist
+- Whether accidental destructive operations are possible
+
 ---
 
-# 4. Критерии приёмки аудита
+# 4. Acceptance Criteria
 
-Аудит считается выполненным, если:
+Audit is considered complete if:
 
-- выявлены и описаны все PostgreSQL базы;
-- восстановлена структура всех схем;
-- выявлены расхождения между ORM / Alembic / реальной БД;
-- проверена reproducibility схемы;
-- выявлены архитектурные проблемы;
-- выявлены scalability risks;
-- задокументированы migration risks;
-- описаны technical debt и maintainability risks;
-- предоставлены конкретные рекомендации по улучшению;
-- рекомендации не содержат unnecessary enterprise overengineering;
-- выводы основаны на фактическом коде, миграциях и структуре БД.
+- All PostgreSQL databases are identified and described
+- Complete schema structure is restored
+- Schema drift between ORM / Alembic / real DB is identified
+- Schema reproducibility is verified
+- Architectural problems are identified
+- Scalability risks are identified
+- Migration risks are documented
+- Technical debt and maintainability risks are described
+- Concrete improvement recommendations are provided
+- Recommendations contain no unnecessary enterprise overengineering
+- Conclusions are based on actual code, migrations, and DB structure

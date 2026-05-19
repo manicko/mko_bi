@@ -55,9 +55,18 @@ Authenticate a user by email and password.
 ```json
 {
   "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-  "token_type": "bearer"
+  "token_type": "bearer",
+  "user": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "email": "user@example.com",
+    "role": "viewer",
+    "display_name": "user",
+    "created_at": "2026-04-24T16:02:46+03:00"
+  }
 }
 ```
+
+> The login response now includes the full user profile (`TokenWithUser` model), eliminating the need for a separate `/auth/me` call after login. The `display_name` field is computed from the email prefix (text before `@`).
 
 **Error responses:**
 
@@ -81,7 +90,7 @@ Authenticate a user via OAuth2 password flow (form-encoded).
 
 **Request:** `application/x-www-form-urlencoded` with `username` (email) and `password` fields.
 
-**Response** (`200 OK`): Same as [Login](#1-login).
+**Response** (`200 OK`): Same as [Login](#1-login), including the `user` field.
 
 ---
 
@@ -212,6 +221,8 @@ Refresh an expired or soon-to-expire JWT access token.
 
 Retrieve the currently authenticated user's profile.
 
+> **Note:** This endpoint is retained for backward compatibility. The preferred approach is to use the `user` field returned directly in the login response, which avoids an extra round-trip.
+
 | Attribute      | Value                                      |
 | -------------- | ------------------------------------------ |
 | **Method**     | `GET`                                      |
@@ -227,6 +238,7 @@ Retrieve the currently authenticated user's profile.
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "email": "user@example.com",
   "role": "viewer",
+  "display_name": "user",
   "created_at": "2026-04-24T16:02:46+03:00"
 }
 ```
@@ -317,8 +329,9 @@ Browser                          FastAPI
 2. Server applies rate limiting (5 attempts per 5-minute window per email)
 3. Server looks up user by email and verifies the bcrypt password hash
 4. On success, server creates a JWT access token containing `user_id`, `email`, and `role`
-5. Client stores the token in memory (production) or sessionStorage (development)
-6. Client redirects to the dashboard list page
+5. Server returns `TokenWithUser` — the token plus the full user profile (including computed `display_name`)
+6. Client stores the token and sets user state immediately (no separate `/me` call needed)
+7. Client redirects to the dashboard list page
 
 ---
 

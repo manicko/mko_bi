@@ -1,11 +1,11 @@
 """Unit tests for AuthService business logic."""
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
 import pytest
 
 from mkobi.core.security import hash_password, verify_password
-from mkobi.models.enums import UserRole
+from mkobi.models.enums import RegistrationStatus, UserRole
 from mkobi.models.user import UserRead
 from mkobi.services.auth_service import AuthService
 
@@ -126,12 +126,15 @@ class TestAuthService:
 
     async def test_login_user_success(self, auth_service, mock_user_repo):
         """Test successful login."""
+        from datetime import datetime
+
         test_password = "TestPass123!"
         mock_user = MagicMock()
         mock_user.password_hash = hash_password(test_password)
         mock_user.id = uuid4()
         mock_user.email = "test@example.com"
         mock_user.role = UserRole.ADMIN
+        mock_user.created_at = datetime.now()
         mock_user_repo.get_by_email_with_hash.return_value = mock_user
 
         result = await auth_service.login_user("test@example.com", test_password)
@@ -139,6 +142,10 @@ class TestAuthService:
         assert result is not None
         assert "access_token" in result
         assert result["token_type"] == "bearer"
+        assert "user" in result
+        assert result["user"].email == "test@example.com"
+        assert hasattr(result["user"], "display_name")
+        assert result["user"].display_name == "test"
 
     async def test_login_user_wrong_password(self, auth_service, mock_user_repo):
         """Test login with wrong password returns None."""
@@ -367,13 +374,39 @@ class TestAuthService:
             await auth_service.register_request("invalid-email", "127.0.0.1")
 
     async def test_register_request_duplicate(self, auth_service, mock_reg_request_repo):
-        """Test registration request fails for duplicate email."""
-        mock_reg_request_repo.get_by_email.return_value = MagicMock()
+        """Test registration request fails for duplicate email (PENDING status)."""
+        mock_request = MagicMock()
+        mock_request.status = RegistrationStatus.PENDING
+        mock_reg_request_repo.get_by_email.return_value = mock_request
 
-        with pytest.raises(ValueError, match="already exists"):
+        with pytest.raises(ValueError, match="A request for this email already exists"):
             await auth_service.register_request("duplicate@example.com", "127.0.0.1")
 
-    async def test_register_request_blocked_domain(self, auth_service):
+    async def test_register_request_duplicate_rejected(self, auth_service, mock_reg_request_repo):
+        """Test registration request fails with rejected status message."""
+        mock_request = MagicMock()
+        mock_request.status = RegistrationStatus.REJECTED
+        mock_reg_request_repo.get_by_email.return_value = mock_request
+
+        with pytest.raises(ValueError, match="Your request was rejected"):
+            await auth_service.register_request("rejected@example.com", "127.0.0.1")
+
+    async def test_register_request_duplicate_approved(self, auth_service, mock_reg_request_repo):
+        """Test registration request fails with approved status message."""
+        mock_request = MagicMock()
+        mock_request.status = RegistrationStatus.APPROVED
+        mock_reg_request_repo.get_by_email.return_value = mock_request
+
+        with pytest.raises(ValueError, match="A request for this email already exists"):
+            await auth_service.register_request("approved@example.com", "127.0.0.1")
+
+    async def test_register_request_blocked_domain(
+        self, auth_service, mock_reg_request_repo
+    ):
         """Test registration request rejects blocked email domains."""
-        with pytest.raises(ValueError, match="not allowed"):
+        mock_reg_request_repo.get_by_email.return_value = None
+
+        with pytest.raises(
+            ValueError, match="This email domain is not allowed for registration"
+        ):
             await auth_service.register_request("user@tempmail.com", "127.0.0.1")

@@ -22,7 +22,7 @@ from mkobi.core.security import (
 from mkobi.db.session import get_session
 from mkobi.interfaces.repository_interfaces import IRegistrationRequestRepository, IUserRepository
 from mkobi.interfaces.service_interfaces import IAuthService
-from mkobi.models.enums import UserRole
+from mkobi.models.enums import RegistrationStatus, UserRole
 from mkobi.models.user import UserRead
 
 logger = get_logger(__name__)
@@ -185,7 +185,7 @@ class AuthService(IAuthService):
             db: Optional database session.
 
         Returns:
-            dict: Token data if authentication successful, None otherwise.
+            dict: Token data with user data if authentication successful, None otherwise.
         """
         logger.info("Attempting user authentication", extra={"email": email})
 
@@ -201,6 +201,7 @@ class AuthService(IAuthService):
             return None
 
         logger.info("User successfully authenticated", extra={"email": email})
+        user_read = cast(UserRead, UserRead.model_validate(user_obj))
         return {
             "access_token": create_access_token({
                 "user_id": str(user_obj.id),
@@ -208,6 +209,7 @@ class AuthService(IAuthService):
                 "role": user_obj.role,
             }),
             "token_type": "bearer",
+            "user": user_read,
         }
 
 
@@ -227,17 +229,7 @@ class AuthService(IAuthService):
         result = await self.login_user(email, password, db)
         if result is None:
             return None
-
-        # Get user by email to return UserRead
-        if db is None:
-            async with get_session() as db:
-                user_obj = await self.user_repo.get_by_email(email=email, db=db)
-        else:
-            user_obj = await self.user_repo.get_by_email(email=email, db=db)
-
-        if user_obj is None:
-            return None
-        return cast(UserRead, UserRead.model_validate(user_obj))
+        return result["user"]
 
     def create_access_token(self, user_id: UUID, role: str) -> str:
         """Create access token for user.
@@ -390,29 +382,38 @@ class AuthService(IAuthService):
         # Extract and normalize email domain to lowercase for case-insensitive comparison
         email_domain = email.split('@')[1].lower()
 
+        if db is None:
+            async with get_session() as db:
+                return await self.register_request(email, ip, db)
+
+        # Check if request with this email already exists (before domain check)
+        existing_request = await self.reg_request_repo.get_by_email(email, db)
+        if existing_request is not None:
+            if existing_request.status in (
+                RegistrationStatus.PENDING,
+                RegistrationStatus.APPROVED,
+            ):
+                logger.warning(
+                    "Registration request already exists (active)",
+                    extra={"email": email, "status": existing_request.status.value}
+                )
+                raise ValueError("A request for this email already exists")
+            if existing_request.status == RegistrationStatus.REJECTED:
+                logger.warning(
+                    "Registration request already exists (rejected)",
+                    extra={"email": email, "status": existing_request.status.value}
+                )
+                raise ValueError(
+                    "Your request was rejected. Contact an administrator for more information."
+                )
+
         # Check if email domain is blocked
         if email_domain in self.blocked_domains_set:
             logger.warning(
                 "Registration attempt with blocked email domain",
                 extra={"email": email, "domain": email_domain}
             )
-            raise ValueError(
-                f"Registration with email domain '{email_domain}' is not allowed"
-            )
-
-        if db is None:
-            async with get_session() as db:
-                return await self.register_request(email, ip, db)
-
-        # Check if request with this email already exists
-        existing_request = await self.reg_request_repo.get_by_email(email, db)
-        if existing_request is not None:
-            logger.warning(
-                "Registration request already exists", extra={"email": email}
-            )
-            raise ValueError(
-                f"Registration request with email '{email}' already exists"
-            )
+            raise ValueError("This email domain is not allowed for registration")
 
         # Check if user with this email already exists
         existing_user = await self.user_repo.get_by_email(email=email, db=db)

@@ -78,7 +78,16 @@ export function UserProfile() {
 
       <Box sx={{ mb: 3 }}>
         <Typography variant="subtitle2" color="text.secondary">
-          Role
+          Display Name
+        </Typography>
+        <Typography variant="body1" sx={{ p: 1, bgcolor: 'grey.100', borderRadius: 1 }}>
+          {profile?.display_name}
+        </Typography>
+      </Box>
+
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="subtitle2" color="text.secondary">
+          Global Role
         </Typography>
         <Typography variant="body1" sx={{ p: 1, bgcolor: 'grey.100', borderRadius: 1 }}>
           {profile?.role}

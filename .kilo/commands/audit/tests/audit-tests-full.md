@@ -5,114 +5,199 @@ agent: auditor
 alwaysApply: false
 ---
 
-## Аудит качества тестов
+# Test Quality Audit — mkobi BI Dashboard
 
-### Цель
+## Objective
 
-Провести полный аудит тестового покрытия с целью:
-- Выявить и удалить/переписать тесты, не соответствующие текущей архитектуре и стилю кода;
-- Убедиться, что тесты проверяют **реальное поведение** системы, а не mocks или реализацию;
-- Проверить достаточность покрытия ключевых частей системы;
-- Гарантировать высокую диагностическую ценность тестов.
+Perform a complete audit of test coverage to:
+- Identify and delete/rewrite tests that don't match the current architecture and code style
+- Ensure tests verify **real system behavior**, not mocks or implementation details
+- Verify sufficient coverage of all key system parts
+- Guarantee high diagnostic value of tests
 
-**Основной принцип:** Production-код — источник истины. Тесты адаптируются под него, а не наоборот.
+**Core principle:** Production code is the source of truth. Tests adapt to it, not the other way around.
 
-### Anti-patterns (подлежат удалению или полной переработке)
+## Anti-Patterns (subject to deletion or complete rewrite)
 
-#### 1. Architecture / Contract Mismatch
-- Sync/async несоответствие
-- Использование устаревших методов, DTO, типов данных или контрактов
-- Тестирование удалённой или переименованной функциональности
-- Вынуждают держать legacy-код только ради прохождения тестов
+### 1. Architecture / Contract Mismatch
+- Sync/async mismatch (mkobi uses async SQLAlchemy 2.0 throughout)
+- Use of deprecated methods, DTOs, data types, or contracts
+- Testing removed or renamed functionality
+- Forces keeping legacy code just to pass tests
+- Uses `pandas` instead of `polars` (forbidden in mkobi)
+- Tests against old response shapes (e.g., pre-`TokenWithUser` login response)
 
-#### 2. Overmocking
-- Mock полностью заменяет бизнес-логику
-- Assertions проверяют значения из mock, а не реальный результат
-- Избыточное количество `patch`/`mock` без проверки side-effects
+### 2. Overmocking
+- Mock completely replaces business logic
+- Assertions check mock values, not real results
+- Excessive `patch`/`mock` without verifying side effects
+- Mocking Redis when `fakeredis` or real Redis would be more valuable
 
-#### 3. Tautological / Useless tests
-- `assert True`, отсутствие `assert` или тривиальные проверки
-- Проверяют очевидные вещи («объект создался», «статус 200»)
-- Повторяют реализацию вместо проверки бизнес-контракта
+### 3. Tautological / Useless Tests
+- `assert True`, missing `assert`, or trivial checks
+- Verify obvious things ("object created", "status 200")
+- Repeat implementation instead of verifying business contract
 
-#### 4. Wrong abstraction level
-- Тестируют private методы, internal details, конкретные SQL-запросы
-- Проверяют порядок вызовов вместо конечного результата и бизнес-правил
+### 4. Wrong Abstraction Level
+- Test private methods, internal details, specific SQL queries
+- Verify call order instead of final result and business rules
 
-#### 5. Fragile tests
-- Ломаются при рефакторинге без изменения поведения
-- Зависят от порядка запуска тестов, `sleep` или shared mutable state
+### 5. Fragile Tests
+- Break on refactoring without behavior change
+- Depend on test execution order, `sleep`, or shared mutable state
+- Don't use `pytest.mark.asyncio` properly
 
-#### 6. Poor business coverage
-- Игнорируют негативные сценарии и граничные условия
-- Используют примитивные данные вместо реалистичных
-- Не проверяют состояние БД, логов и side-effects
+### 6. Poor Business Coverage
+- Ignore negative scenarios and boundary conditions
+- Use primitive data instead of realistic data
+- Don't verify DB state, logs, and side effects
 
-### Дополнительные проверки
+## Additional Checks
 
-- **Test Pyramid**: баланс между unit, integration и e2e тестами (избегать перекоса в заmockанные unit-тесты)
-- Дублирование, copy-paste тестов и фикстур
+- **Test Pyramid**: balance between unit, integration, and e2e tests (avoid over-reliance on mocked unit tests)
+- Duplication, copy-paste tests and fixtures
 - Giant fixtures, hidden dependencies, shared mutable state
-- **Mutation resistance** — тест должен падать при нарушении бизнес-логики
+- **Mutation resistance** — test must fail when business logic is broken
 
-### 9.1 Стандарты использования pytest
+## 9.1 pytest Standards
 
-- Все тесты используют **pytest** (не unittest)
-- Фикстуры вынесены в `conftest.py`
-- Mocking только через `unittest.mock` или `pytest-mock`
+- All tests use **pytest** (not `unittest.TestCase`)
+- Fixtures extracted to `conftest.py`
+- Mocking only via `unittest.mock` or `pytest-mock`
+- Async tests use `pytest.mark.asyncio`
+- Test file naming: `test_*.py`
+- Test function naming: `test_*`
 
-### 9.2 Покрытие системы тестами
+## 9.2 System Coverage
 
-Проверить наличие тестов для всех ключевых частей системы:
+Verify tests exist for all key system parts:
 
-**Обязательные области покрытия:**
-- **Authentication & Authorization** (login, register, token refresh, permissions, roles)
-- **API Layer** — все публичные endpoints (успешные кейсы + все ошибки)
-- **Business Logic / Services** — основные бизнес-правила и сценарии
-- **Data Processing** (loaders, transformations, validations, aggregations)
-- **Repositories / Data Access** — CRUD операции и запросы
-- **External Integrations** (если есть)
-- **Configuration & Startup** — загрузка и валидация настроек
+### Required Coverage Areas
 
-**Особое внимание:**
-- Покрытие негативных сценариев и граничных условий
-- Наличие integration-тестов с реальной (тестовой) БД
-- Покрытие critical paths и наиболее важных бизнес-сценариев
+- **Authentication & Authorization**
+  - Login (returns `TokenWithUser` with `display_name`)
+  - Registration request (creates `registration_requests` record)
+  - Token refresh
+  - Password change
+  - Role-based access control (admin/editor/viewer)
+  - Admin bypass for dashboard access
+  - 403/404 dual-signal for dashboard access
 
-### Формат результата аудита (обязательно)
+- **API Layer** — all public endpoints (success cases + all error cases)
+  - Auth endpoints (login, register-request, refresh, me, change-password)
+  - Dashboard CRUD endpoints
+  - Graph CRUD endpoints
+  - Filter CRUD endpoints
+  - Layout CRUD endpoints
+  - Upload + processing endpoints
+  - Data retrieval endpoints
+  - Admin endpoints (users, registration-requests, logs)
+  - Health endpoints (`/health`, `/health/detailed`, `/`)
 
-Создать файл: `.ai/audit/tests/audit_report_<number>.md` (свободный следующий номер)
+- **Business Logic / Services**
+  - AuthService (login, password verification, JWT creation)
+  - DashboardService (access checks, admin bypass)
+  - DataService (upload pipeline, processing trigger)
+  - Registration approval flow (temp password via `secrets.token_urlsafe(16)`)
+  - Processing log lifecycle (`started` → `uploaded` → `processing` → `success`/`failed`)
 
-**Структура отчёта:**
+- **Data Processing**
+  - CSV/CSV.gz loading (Polars, not pandas)
+  - Data validation (schema, encoding, MIME-type)
+  - Transformations (per processing_configs)
+  - Aggregations (groupby, YoY, shares, custom metrics)
+  - Custom metrics formula parser (valid and invalid formulas)
+  - JSONB normalization (dims key recursive sorting)
+  - Temp file cleanup (success and failure paths)
 
-1. **Статистика**
-   - Всего тестов: N
-   - Критичных проблем: M
-   - Рекомендовано к удалению: K
-   - Общее покрытие (по модулям)
+- **Repositories / Data Access**
+  - CRUD operations for all entities
+  - Dashboard access queries
+  - JSONB containment queries (GIN index usage)
+  - UPSERT operations on `aggregated_data`
 
-2. **Таблица проблемных тестов**
+- **Configuration & Startup**
+  - Multi-source config loading (env, Docker secrets, .env, app.yaml)
+  - Production credential enforcement
+  - CORS origin validation
+  - Startup lifecycle (DB check, migrations, admin user creation, stale file cleanup)
+
+- **Task Queue**
+  - Task enqueue/status/result/error tracking
+  - Background worker execution
+  - Processing log updates during pipeline execution
+
+- **Pydantic Models**
+  - All request/response models
+  - StrEnum serialization
+  - Custom validators (CORS origins, admin credentials)
+  - `TokenWithUser` model (token + user with `display_name`)
+  - `UserRead` model (computed `display_name` from email prefix)
+
+### Special Attention
+- Negative scenario and boundary condition coverage
+- Integration tests with real test database (`bidb_test`)
+- Critical path coverage (upload → process → display)
+- Test database isolation (SAVEPOINT rollback, NullPool)
+- Fixture structure matches `docs/06-backend/testing.md` specification
+
+### Expected Test Files (per `docs/06-backend/testing.md`)
+
+```
+tests/
+├── conftest.py              # Shared fixtures (DB, auth, Redis mock)
+├── test_auth.py             # Auth API endpoint tests
+├── test_auth_service.py     # AuthService unit tests
+├── test_config.py           # Configuration loading tests
+├── test_dashboards_api.py   # Dashboard API endpoint tests
+├── test_data_service.py     # DataService unit tests
+├── test_filters.py          # Filter API tests
+├── test_graph_service.py    # GraphService unit tests
+├── test_graphs.py           # Graph API tests
+├── test_layouts.py          # Layout API tests
+├── test_processing_logs.py  # Processing log tests
+├── test_pydantic_models.py  # Pydantic model validation tests
+├── test_repositories.py     # Repository layer tests
+├── test_security.py         # Security utility tests
+├── test_storage_manager.py  # File storage tests
+├── test_upload_api.py       # Upload API endpoint tests
+└── test_users_api.py        # User management API tests
+```
+
+## Audit Result Format
+
+Create file: `.ai/audit/tests/audit_report_<number>.md` (next available number)
+
+**Report Structure:**
+
+1. **Statistics**
+   - Total tests: N
+   - Critical problems: M
+   - Recommended for deletion: K
+   - Coverage by module
+
+2. **Problematic Tests Table**
 
 | File | Test | Category | Problem | Action | Priority |
 |------|------|----------|---------|--------|----------|
 
-3. **Оценка покрытия** — какие важные области/сценарии не покрыты или покрыты слабо
+3. **Coverage Assessment** — which important areas/scenarios are uncovered or weakly covered
 
-4. **Ключевые находки** (с примерами)
+4. **Key Findings** (with examples)
 
-5. **План действий**
+5. **Action Plan**
    - Delete Required
    - Rewrite Required
-   - Improve (добавить негативные кейсы, integration-тесты и т.д.)
+   - Improve (add negative cases, integration tests, etc.)
 
-6. **Заблокированные рефакторинги** (если есть)
+6. **Blocked Refactorings** (if any)
 
-### Критерии приёмки
+## Acceptance Criteria
 
-- Чёткое разделение: что удалить / переписать / улучшить
-- Для каждого `ARCHITECTURE_CONFLICT` — ссылка на production-код
-- Приоритезация проблем
-- Рекомендации по улучшению тестовой культуры
-- Выявлены критические пробелы в покрытии
+- Clear separation: what to delete / rewrite / improve
+- For each `ARCHITECTURE_CONFLICT` — link to production code
+- Prioritization of problems
+- Recommendations for improving test culture
+- Critical coverage gaps identified
 
-**Правило:** Лучше удалить сомнительный тест, чем оставлять тест, который вводит в заблуждение или тормозит развитие проекта.
+**Rule:** Better to delete a questionable test than to keep a test that misleads or slows down project development.

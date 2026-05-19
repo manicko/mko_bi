@@ -24,8 +24,10 @@ export function RegisterForm() {
       setError(null)
       await registerRequest(data.email)
       setSuccess(true)
-    } catch {
-      setError('Failed to submit registration request. Please try again.')
+    } catch (error) {
+      const axiosError = error as { response?: { data?: { detail?: string } } }
+      const errorMessage = axiosError.response?.data?.detail || 'Failed to submit registration request. Please try again.'
+      setError(errorMessage)
     }
   }
 
@@ -33,7 +35,7 @@ export function RegisterForm() {
     return (
       <Box sx={{ maxWidth: 400, mx: 'auto', mt: 4, p: 3 }}>
         <Alert severity="success" sx={{ mb: 2 }}>
-          Registration request sent to administrator
+          Your request has been submitted. An administrator will review it.
         </Alert>
         <Typography sx={{ textAlign: 'center' }}>
           <Link to="/login">

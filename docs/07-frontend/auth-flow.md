@@ -73,7 +73,10 @@ Browser                          FastAPI
   │                                │ └──────────┬───────────┘
   │                                │            │
   │  200 OK                        │            │
-  │  { access_token, user }        │            │
+  │  { access_token, token_type,    │            │
+  │    user: { id, email, role,     │            │
+  │      display_name, created_at } │            │
+  │  }                              │            │
   │ ◄──────────────────────────────│            │
   │                                │
   │  Store token in memory/storage │
@@ -86,7 +89,7 @@ Browser                          FastAPI
 1. User submits the login form (`LoginForm.tsx`) with email and password.
 2. Form is validated via Zod (`loginSchema`): email format, password min 6 characters.
 3. `POST /api/v1/auth/login` is called via Axios.
-4. On success (`200`): token is stored, user profile is set in `useAuth` state, redirect to `/dashboards`.
+4. On success (`200`): token is stored, user profile (including `display_name`) is set in `useAuth` state, redirect to `/dashboards`.
 5. On failure (`401`/`429`): error alert is displayed.
 
 ## Registration Request Flow

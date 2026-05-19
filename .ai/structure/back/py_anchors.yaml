@@ -2617,6 +2617,13 @@
   value: ConfigDict
   stable_hash: 2cb11b7e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\auth.py
+- id: a1bfb4b0
+  symbol_path:
+  - TokenWithUser
+  type: function_call
+  value: ConfigDict
+  stable_hash: a1bfb4b0
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\auth.py
 - id: f8016f85
   symbol_path:
   - TokenData
@@ -3114,6 +3121,21 @@
   value: ConfigDict
   stable_hash: 5a960e96
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\user.py
+- id: 2d73b8ea
+  symbol_path:
+  - UserRead
+  - display_name
+  type: function_call
+  value: isinstance
+  stable_hash: 2d73b8ea
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\user.py
+- id: 9ff3270f
+  symbol_path:
+  - UserRead
+  - display_name
+  type: return_statement
+  stable_hash: 9ff3270f
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\user.py
 - id: bd808275
   symbol_path:
   - UserRead
@@ -3311,6 +3333,13 @@
   type: return_statement
   stable_hash: 98feca73
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
+- id: 80ad7698
+  symbol_path:
+  - AuthService
+  type: function_call
+  value: cast
+  stable_hash: 80ad7698
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
 - id: 98feca73
   symbol_path:
   - AuthService
@@ -3337,31 +3366,11 @@
   type: return_statement
   stable_hash: 98feca73
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
-- id: ad5b2f29
-  symbol_path:
-  - AuthService
-  type: function_call
-  value: get_session
-  stable_hash: ad5b2f29
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
 - id: 98feca73
   symbol_path:
   - AuthService
   type: return_statement
   stable_hash: 98feca73
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
-- id: 98feca73
-  symbol_path:
-  - AuthService
-  type: return_statement
-  stable_hash: 98feca73
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
-- id: 80ad7698
-  symbol_path:
-  - AuthService
-  type: function_call
-  value: cast
-  stable_hash: 80ad7698
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
 - id: 09ac50bd
   symbol_path:
@@ -3528,13 +3537,6 @@
   value: ValueError
   stable_hash: 1667d3f1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
-- id: 1667d3f1
-  symbol_path:
-  - AuthService
-  type: function_call
-  value: ValueError
-  stable_hash: 1667d3f1
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
 - id: ad5b2f29
   symbol_path:
   - AuthService
@@ -3547,6 +3549,20 @@
   - AuthService
   type: return_statement
   stable_hash: 98feca73
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
+- id: 1667d3f1
+  symbol_path:
+  - AuthService
+  type: function_call
+  value: ValueError
+  stable_hash: 1667d3f1
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
+- id: 1667d3f1
+  symbol_path:
+  - AuthService
+  type: function_call
+  value: ValueError
+  stable_hash: 1667d3f1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
 - id: 1667d3f1
   symbol_path:
@@ -3736,6 +3752,13 @@
   type: return_statement
   stable_hash: 858a2405
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
+- id: f7225794
+  symbol_path:
+  - DashboardService
+  type: function_call
+  value: PermissionDeniedException
+  stable_hash: f7225794
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
 - id: 858a2405
   symbol_path:
   - DashboardService
@@ -3969,19 +3992,12 @@
   type: return_statement
   stable_hash: 858a2405
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
-- id: 6c53723d
+- id: d3034f35
   symbol_path:
   - DashboardService
   type: function_call
-  value: select
-  stable_hash: 6c53723d
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
-- id: 5d564abb
-  symbol_path:
-  - DashboardService
-  type: function_call
-  value: list
-  stable_hash: 5d564abb
+  value: ValueError
+  stable_hash: d3034f35
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
 - id: 858a2405
   symbol_path:
@@ -8627,6 +8643,33 @@
   type: return_statement
   stable_hash: 1d353130
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\access_repo.py
+- id: 8cf2cc98
+  symbol_path:
+  - AccessRepository
+  type: function_call
+  value: select
+  stable_hash: 8cf2cc98
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\access_repo.py
+- id: 47e76e7b
+  symbol_path:
+  - AccessRepository
+  type: function_call
+  value: list
+  stable_hash: 47e76e7b
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\access_repo.py
+- id: f6d2d6e5
+  symbol_path:
+  - AccessRepository
+  type: function_call
+  value: len
+  stable_hash: f6d2d6e5
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\access_repo.py
+- id: 1d353130
+  symbol_path:
+  - AccessRepository
+  type: return_statement
+  stable_hash: 1d353130
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\access_repo.py
 - id: 3d56451e
   symbol_path:
   - AggregatedDataRepository
@@ -8926,6 +8969,40 @@
   type: function_call
   value: str
   stable_hash: 8a2ecc02
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_repo.py
+- id: e3f332b8
+  symbol_path:
+  - DashboardRepository
+  type: function_call
+  value: select
+  stable_hash: e3f332b8
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_repo.py
+- id: 046935c2
+  symbol_path:
+  - DashboardRepository
+  type: function_call
+  value: list
+  stable_hash: 046935c2
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_repo.py
+- id: 8a2ecc02
+  symbol_path:
+  - DashboardRepository
+  type: function_call
+  value: str
+  stable_hash: 8a2ecc02
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_repo.py
+- id: c684e901
+  symbol_path:
+  - DashboardRepository
+  type: function_call
+  value: len
+  stable_hash: c684e901
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_repo.py
+- id: a7ca38b3
+  symbol_path:
+  - DashboardRepository
+  type: return_statement
+  stable_hash: a7ca38b3
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_repo.py
 - id: e3f332b8
   symbol_path:
@@ -11740,11 +11817,11 @@
   type: return_statement
   stable_hash: 57af749b
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: 47e88ecc
+- id: b5733c90
   symbol_path: []
   type: function_call
-  value: Token
-  stable_hash: 47e88ecc
+  value: TokenWithUser
+  stable_hash: b5733c90
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
 - id: fbcfa73b
   symbol_path: []
@@ -12179,6 +12256,12 @@
   symbol_path: []
   type: return_statement
   stable_hash: 4b9ccc1a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards.py
+- id: f235a47d
+  symbol_path: []
+  type: function_call
+  value: HTTPException
+  stable_hash: f235a47d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards.py
 - id: f235a47d
   symbol_path: []

@@ -151,7 +151,7 @@ Analyze the phase to identify gray areas worth discussing.
 **Read the project description from 
 - [AGENTS.md](C:\py_dev\mkobi\AGENTS.md)
 - [project rules](C:\py_dev\mkobi\.ai\context\**)
-- [specification](C:\py_dev\mkobi\docs\**)
+- [specification](C:\py_dev\mkobi\docs\SPEC.md)
 - [structure](C:\py_dev\mkobi\docs\STRUCT.md) 
 
 (if exist) and determine:**

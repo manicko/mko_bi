@@ -32,6 +32,7 @@ from mkobi.models.dashboard import (
 )
 from mkobi.models.graph import GraphCreate, GraphRead
 from mkobi.services.dashboard_service import DashboardService
+from mkobi.utils.exceptions import PermissionDeniedException
 
 logger = logging.getLogger(__name__)
 
@@ -144,7 +145,7 @@ async def get_my_dashboards_endpoint(
 
     try:
         dashboards = await dashboard_service.get_user_dashboards(
-            user_id=current_user.id, db=db
+            user_id=current_user.id, user_role=current_user.role, db=db
         )
         logger.info(
             "Retrieved dashboards for user: user_id=%s, count=%s",
@@ -203,7 +204,7 @@ async def get_dashboard_endpoint(
 
     try:
         dashboard = await dashboard_service.get_dashboard(
-            dashboard_id, user_id=current_user.id, db=db
+            dashboard_id, user_id=current_user.id, user_role=current_user.role, db=db
         )
         if dashboard is None:
             logger.warning(
@@ -221,6 +222,11 @@ async def get_dashboard_endpoint(
             dashboard.name,
         )
         return dashboard
+    except PermissionDeniedException:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied",
+        ) from None
     except HTTPException:
         raise
     except Exception as e:

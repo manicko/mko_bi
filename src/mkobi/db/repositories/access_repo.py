@@ -224,3 +224,36 @@ class AccessRepository(IAccessRepository):
         except SQLAlchemyError as e:
             logger.error("Error getting access list: %s", e)
             raise
+
+    async def get_by_dashboard(
+        self, dashboard_id: UUID, db: AsyncSession
+    ) -> list[access_model.DashboardAccess]:
+        """Get all access records for a dashboard.
+
+        Args:
+            dashboard_id: Dashboard identifier (UUID).
+            db: Async database session.
+
+        Returns:
+            List of access records for the dashboard.
+        """
+        try:
+            result = await db.execute(
+                select(access_model.DashboardAccess).where(
+                    access_model.DashboardAccess.dashboard_id == dashboard_id
+                )
+            )
+            access_list = list(result.scalars().all())
+            logger.info(
+                "Access list retrieved for dashboard id=%s, count: %s",
+                dashboard_id,
+                len(access_list),
+            )
+            return access_list
+        except SQLAlchemyError as e:
+            logger.error(
+                "Error getting access list for dashboard id=%s: %s",
+                dashboard_id,
+                e,
+            )
+            raise

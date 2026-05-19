@@ -64,6 +64,14 @@
     - <RoleBasedAccess roles={['admin']}>
     - <ProtectedRoute>
     - <ProtectedRoute>
+- path: C:/py_dev/mkobi/frontend/src/test/setup.ts
+  module: C:.py_dev.mkobi.frontend.src.test.setup
+  layer: unknown
+  imports:
+    - '@testing-library/jest-dom'
+  components: []
+  hooks: []
+  jsx_tags: []
 - path: C:/py_dev/mkobi/frontend/src/features/auth/index.ts
   module: C:.py_dev.mkobi.frontend.src.features.auth.index
   layer: unknown
@@ -835,6 +843,11 @@
     - >-
       <Typography variant="body1" sx={{ p: 1, bgcolor: 'grey.100', borderRadius:
       1 }}>
+    - '<Box sx={{ mb: 3 }}>'
+    - <Typography variant="subtitle2" color="text.secondary">
+    - >-
+      <Typography variant="body1" sx={{ p: 1, bgcolor: 'grey.100', borderRadius:
+      1 }}>
     - '<Box sx={{ mt: 4 }}>'
     - |-
       <Button
@@ -893,10 +906,8 @@
     - <Toolbar>
     - '<Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>'
     - '<Box sx={{ display: ''flex'', alignItems: ''center'', gap: 2 }}>'
-    - <Typography variant="body2">
-    - <Button color="inherit" onClick={() => navigate('/profile')}>
     - <Button color="inherit" onClick={() => navigate('/admin')}>
-    - <Button color="inherit" onClick={logout}>
+    - <Button color="inherit" onClick={() => navigate('/profile')}>
 - path: C:/py_dev/mkobi/frontend/src/shared/components/Layout/index.ts
   module: C:.py_dev.mkobi.frontend.src.shared.components.Layout.index
   layer: component
@@ -932,6 +943,33 @@
     - <ListItemButton onClick={() => navigate('/dashboards')}>
     - <ListItem disablePadding>
     - <ListItemButton onClick={() => navigate('/admin')}>
+- path: C:/py_dev/mkobi/frontend/src/shared/types/__tests__/enums.test.ts
+  module: C:.py_dev.mkobi.frontend.src.shared.types.__tests__.enums.test
+  layer: unknown
+  imports:
+    - vitest
+    - ../enums
+  components: []
+  hooks: []
+  jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/shared/types/__tests__/formSchemas.test.ts
+  module: C:.py_dev.mkobi.frontend.src.shared.types.__tests__.formSchemas.test
+  layer: unknown
+  imports:
+    - vitest
+    - ../formSchemas
+  components: []
+  hooks: []
+  jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/features/auth/model/__tests__/authToken.test.ts
+  module: C:.py_dev.mkobi.frontend.src.features.auth.model.__tests__.authToken.test
+  layer: unknown
+  imports:
+    - vitest
+    - ../authToken
+  components: []
+  hooks: []
+  jsx_tags: []
 - path: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/BarChart.tsx
   module: C:.py_dev.mkobi.frontend.src.features.dashboards.ui.charts.BarChart
   layer: unknown
