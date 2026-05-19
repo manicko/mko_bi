@@ -28,6 +28,7 @@ C:\PY_DEV\MKOBI
 |   +---audit
 |   |   +---db
 |   |   |       audit_findings_01.md
+|   |   |       audit_report_02.md
 |   |   |       
 |   |   +---problems
 |   |   |       implementation_audit_01.md
@@ -88,22 +89,6 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
-|   |   |       TASK_001_docs_create_guides_dir_DONE.yaml
-|   |   |       TASK_002_docs_migrate_docker_guide_DONE.yaml
-|   |   |       TASK_003_docs_migrate_task_queue_guide_DONE.yaml
-|   |   |       TASK_004_docs_update_deployment_cross_refs_DONE.yaml
-|   |   |       TASK_005_docs_delete_legacy_files_DONE.yaml
-|   |   |       TASK_006_docs_update_spec_index_DONE.yaml
-|   |   |       TASK_007_db_generate_consolidated_migration_DONE.yaml
-|   |   |       TASK_008_db_write_consolidated_upgrade_DONE.yaml
-|   |   |       TASK_009_db_write_consolidated_downgrade_DONE.yaml
-|   |   |       TASK_010_db_validate_consolidated_migration_DONE.yaml
-|   |   |       TASK_011_db_delete_old_migrations_DONE.yaml
-|   |   |       TASK_012_fe_fix_upload_polling_bug_DONE.yaml
-|   |   |       TASK_013_fe_fix_user_mgmt_delete_loading_DONE.yaml
-|   |   |       TASK_014_fe_fix_admin_datagrid_state_DONE.yaml
-|   |   |       TASK_015_fe_fix_user_mgmt_inline_css_DONE.yaml
-|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml

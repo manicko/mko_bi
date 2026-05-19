@@ -12,7 +12,7 @@ services:
       ENV: development
       # Admin credentials (valid email format required)
       ADMIN_USERNAME: admin@example.com
-      ADMIN_PASSWORD: admin
+      ADMIN_PASSWORD: admin@example.com
       # Development can use a default JWT secret for local testing
       JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
       LOGGING__LEVEL: DEBUG

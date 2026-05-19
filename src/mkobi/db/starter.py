@@ -80,18 +80,20 @@ class DatabaseStarter:
             logger.error("Main database not accessible: %s", e)
             raise DatabaseNotFoundError(f"Main database not accessible: {e}") from e
 
-    def _get_alembic_revision(self) -> str | None:
+    async def _get_alembic_revision(self) -> str | None:
         """Get current alembic revision from database.
 
         Returns revision hash if schema is initialized, None otherwise.
         """
-        alembic_ini = self._config.alembic_ini_path
-        config = Config(alembic_ini)
-        main_url = self._config.main_database_url or get_config().DATABASE_URL
-        if main_url:
-            config.set_main_option("sqlalchemy.url", main_url)
         try:
-            return command.current(config, verbose=False)
+            # Query the alembic_version table directly to avoid asyncio.run issues
+            from sqlalchemy import text
+            async with self._main_engine.connect() as conn:
+                result = await conn.execute(text("SELECT version_num FROM alembic_version LIMIT 1"))
+                row = result.fetchone()
+                if row:
+                    return row[0]
+            return None
         except Exception:
             return None
 
@@ -120,7 +122,7 @@ class DatabaseStarter:
             await self._apply_migrations(main_url)
 
         # Check if schema is properly initialized via alembic
-        current_rev = self._get_alembic_revision()
+        current_rev = await self._get_alembic_revision()
         if not current_rev:
             raise SchemaNotFoundError(
                 "Database schema not initialized - no alembic revision found"
@@ -242,6 +244,7 @@ class DatabaseStarter:
                     password_hash=password_hash,
                     role=UserRole.ADMIN,
                 )
+                await db.commit()
                 logger.info("Admin user created successfully: %s", admin_email)
             except IntegrityError:
                 logger.warning(
