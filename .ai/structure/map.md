@@ -28,6 +28,8 @@ C:\PY_DEV\MKOBI
 |   +---audit
 |   |   +---db
 |   |   +---problems
+|   |   |       implementation_audit_01.md
+|   |   |       
 |   |   +---project
 |   |   +---test
 |   |   +---tests
@@ -60,26 +62,14 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
-|   |       PLAN_01_access_denied.md
-|   |       PLAN_01_admin_state_preservation.md
-|   |       PLAN_01_confirm_dialog.md
-|   |       PLAN_01_dashboard_list_table.md
-|   |       PLAN_01_dashboard_mgmt_confirm.md
-|   |       PLAN_01_registration_requests.md
-|   |       PLAN_01_short_uuid.md
-|   |       PLAN_01_toast_config.md
-|   |       PLAN_01_top_navigation.md
-|   |       PLAN_01_upload_modal.md
-|   |       PLAN_01_user_management_inline_edit.md
-|   |       PLAN_01_zod_v4_migration.md
+|   |       PLAN_01_legacy_docs_integration.md
+|   |       PLAN_02_migration_consolidation.md
 |   |       
 |   +---problems
-|   |   |   CONTEXT_01.md
-|   |   |   
 |   |   \---decisions
-|   |           DECISION_01.md
-|   |           
 |   +---researches
+|   |       RESEARCH_02.md
+|   |       
 |   +---structure
 |   |   |   map.md
 |   |   |   
@@ -93,28 +83,25 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
+|   |   |       TASK_001_FE_zod_v4_migration_DONE.yaml
+|   |   |       TASK_002_FE_toast_config_DONE.yaml
+|   |   |       TASK_003_FE_short_uuid_DONE.yaml
+|   |   |       TASK_004_FE_access_denied_DONE.yaml
+|   |   |       TASK_005_FE_confirm_dialog_DONE.yaml
+|   |   |       TASK_006_FE_dashboard_list_table_DONE.yaml
+|   |   |       TASK_007_FE_user_management_inline_edit_DONE.yaml
+|   |   |       TASK_008_FE_dashboard_mgmt_confirm_DONE.yaml
+|   |   |       TASK_009_FE_registration_requests_DONE.yaml
+|   |   |       TASK_010_FE_admin_state_preservation_DONE.yaml
+|   |   |       TASK_011_FE_upload_modal_DONE.yaml
+|   |   |       TASK_012_FE_top_navigation_DONE.yaml
+|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
-|   |   |       order.yaml
-|   |   |       TASK_001_FE_zod_v4_migration.yaml
-|   |   |       TASK_002_FE_toast_config.yaml
-|   |   |       TASK_003_FE_short_uuid.yaml
-|   |   |       TASK_004_FE_access_denied.yaml
-|   |   |       TASK_005_FE_confirm_dialog.yaml
-|   |   |       TASK_006_FE_dashboard_list_table.yaml
-|   |   |       TASK_007_FE_user_management_inline_edit.yaml
-|   |   |       TASK_008_FE_dashboard_mgmt_confirm.yaml
-|   |   |       TASK_009_FE_registration_requests.yaml
-|   |   |       TASK_010_FE_admin_state_preservation.yaml
-|   |   |       TASK_011_FE_upload_modal.yaml
-|   |   |       TASK_012_FE_top_navigation.yaml
-|   |   |       
 |   |   \---validation
-|   |           tasks_validated_findings_001.md
-|   |           
 |   +---templates
 |   |       decision.md
 |   |       ui-brand.md
@@ -18850,7 +18837,7 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           index-C5alNRlj.js
+|   |           index-4PaB84X5.js
 |   |           
 |   +---node_modules
 |   |   |   .package-lock.json
@@ -99588,7 +99575,7 @@ C:\PY_DEV\MKOBI
 |       |   |   |       
 |       |   |   \---ui
 |       |   |           FileDropzone.tsx
-|       |   |           UploadPage.tsx
+|       |   |           UploadModal.tsx
 |       |   |           
 |       |   \---users
 |       |       |   index.ts
@@ -99606,6 +99593,8 @@ C:\PY_DEV\MKOBI
 |       |   |       index.ts
 |       |   |       
 |       |   +---components
+|       |   |   |   AccessDenied.tsx
+|       |   |   |   ConfirmDialog.tsx
 |       |   |   |   index.ts
 |       |   |   |   NotFound.tsx
 |       |   |   |   PlaceholderPage.tsx
@@ -99618,15 +99607,21 @@ C:\PY_DEV\MKOBI
 |       |   |           index.ts
 |       |   |           Sidebar.tsx
 |       |   |           
-|       |   \---types
-|       |       |   api.types.ts
-|       |       |   enums.ts
-|       |       |   formSchemas.ts
-|       |       |   
-|       |       \---__tests__
-|       |               enums.test.ts
-|       |               formSchemas.test.ts
-|       |               
+|       |   +---hooks
+|       |   |       useConfirmDialog.ts
+|       |   |       
+|       |   +---types
+|       |   |   |   api.types.ts
+|       |   |   |   enums.ts
+|       |   |   |   formSchemas.ts
+|       |   |   |   
+|       |   |   \---__tests__
+|       |   |           enums.test.ts
+|       |   |           formSchemas.test.ts
+|       |   |           
+|       |   \---utils
+|       |           shortUuid.ts
+|       |           
 |       \---test
 |               setup.ts
 |               

@@ -1,7 +1,8 @@
 ---
-name: researcher
 description: Researches how to implement a phase before planning. Produces RESEARCH.md consumed by planner.
-steps: 140
+mode: all
+color: "#F59E0B"
+steps: 100
 
 permission:
   read: allow
@@ -17,9 +18,9 @@ permission:
     "*.yaml": allow
     "*.yml": allow
     "*": deny
-
-  bash:
-    "*": deny
+  websearch: allow
+  webfetch: allow
+  bash: allow
 color: "#1359e5"
 ---
 

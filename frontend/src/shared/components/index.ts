@@ -3,4 +3,6 @@ export { Header } from './Layout/Header'
 export { Sidebar } from './Layout/Sidebar'
 export { ProtectedRoute } from './ProtectedRoute'
 export { RoleBasedAccess } from './RoleBasedAccess'
+export { AccessDenied } from './AccessDenied'
+export { ConfirmDialog } from './ConfirmDialog'
 

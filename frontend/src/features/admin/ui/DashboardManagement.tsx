@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid'
+import { useState, useMemo, useCallback } from 'react'
+import { DataGrid, GridActionsCellItem, type GridRenderCellParams } from '@mui/x-data-grid'
 import type { GridColDef } from '@mui/x-data-grid'
 import {
   Box,
@@ -9,12 +9,14 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  Alert,
-  Snackbar,
 } from '@mui/material'
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, ManageAccounts as AccessIcon } from '@mui/icons-material'
 import { getDashboardsAdmin, createDashboard, updateDashboard, deleteDashboard } from '../api/adminApi'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useConfirmDialog } from '../../../shared/hooks/useConfirmDialog'
+import { ConfirmDialog } from '../../../shared/components/ConfirmDialog'
+import { shortUuid } from '../../../shared/utils/shortUuid'
+import { toast } from 'react-hot-toast'
 import type { DashboardAdmin } from '../../../shared/types/api.types'
 
 export function DashboardManagement() {
@@ -22,9 +24,9 @@ export function DashboardManagement() {
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedDashboard, setSelectedDashboard] = useState<DashboardAdmin | null>(null)
   const [formData, setFormData] = useState({ name: '', description: '' })
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' })
 
   const queryClient = useQueryClient()
+  const confirmDialog = useConfirmDialog()
 
   const { data: dashboards = [], isLoading } = useQuery({
     queryKey: ['admin', 'dashboards'],
@@ -37,10 +39,10 @@ export function DashboardManagement() {
       queryClient.invalidateQueries({ queryKey: ['admin', 'dashboards'] })
       setCreateDialogOpen(false)
       setFormData({ name: '', description: '' })
-      setSnackbar({ open: true, message: 'Dashboard created successfully', severity: 'success' })
+      toast.success('Dashboard created successfully')
     },
     onError: () => {
-      setSnackbar({ open: true, message: 'Failed to create dashboard', severity: 'error' })
+      toast.error('Failed to create dashboard')
     },
   })
 
@@ -50,10 +52,10 @@ export function DashboardManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'dashboards'] })
       setEditDialogOpen(false)
-      setSnackbar({ open: true, message: 'Dashboard updated successfully', severity: 'success' })
+      toast.success('Dashboard updated successfully')
     },
     onError: () => {
-      setSnackbar({ open: true, message: 'Failed to update dashboard', severity: 'error' })
+      toast.error('Failed to update dashboard')
     },
   })
 
@@ -61,10 +63,10 @@ export function DashboardManagement() {
     mutationFn: deleteDashboard,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'dashboards'] })
-      setSnackbar({ open: true, message: 'Dashboard deleted successfully', severity: 'success' })
+      toast.success('Dashboard deleted successfully')
     },
     onError: () => {
-      setSnackbar({ open: true, message: 'Failed to delete dashboard', severity: 'error' })
+      toast.error('Failed to delete dashboard')
     },
   })
 
@@ -81,25 +83,45 @@ export function DashboardManagement() {
     }
   }
 
-  const handleDelete = (dashboard: DashboardAdmin) => {
-    if (confirm(`Delete dashboard "${dashboard.name}"?`)) {
-      deleteMutation.mutate(dashboard.id)
-    }
-  }
+  const handleDelete = useCallback(
+    (dashboard: DashboardAdmin) => {
+      confirmDialog.confirm({
+        title: 'Delete Dashboard',
+        message: `Are you sure you want to delete "${dashboard.name}"?`,
+        confirmLabel: 'Delete',
+        onConfirm: () => {
+          void deleteMutation.mutateAsync(dashboard.id)
+        },
+      })
+    },
+    [confirmDialog, deleteMutation],
+  )
 
-  const openEditDialog = (dashboard: DashboardAdmin) => {
-    setSelectedDashboard(dashboard)
-    setFormData({ name: dashboard.name, description: dashboard.description || '' })
-    setEditDialogOpen(true)
-  }
+  const openEditDialog = useCallback(
+    (dashboard: DashboardAdmin) => {
+      setSelectedDashboard(dashboard)
+      setFormData({ name: dashboard.name, description: dashboard.description || '' })
+      setEditDialogOpen(true)
+    },
+    [],
+  )
 
-  const columns: GridColDef[] = [
-    { field: 'name', headerName: 'Name', width: 250 },
-    { field: 'description', headerName: 'Description', width: 300 },
-    { field: 'created_at', headerName: 'Created', width: 180 },
-    { field: 'updated_at', headerName: 'Updated', width: 180 },
-    { field: 'actions', headerName: 'Actions', type: 'actions', width: 200 },
-  ]
+  const columns: GridColDef[] = useMemo(
+    () => [
+      {
+        field: 'id',
+        headerName: 'ID',
+        width: 100,
+        renderCell: ({ value }: GridRenderCellParams) => shortUuid(String(value ?? '')),
+      },
+      { field: 'name', headerName: 'Name', width: 250 },
+      { field: 'description', headerName: 'Description', width: 300 },
+      { field: 'created_at', headerName: 'Created', width: 180 },
+      { field: 'updated_at', headerName: 'Updated', width: 180 },
+      { field: 'actions', headerName: 'Actions', type: 'actions', width: 200 },
+    ],
+    [],
+  )
 
   const rows = dashboards.map((dashboard) => ({
     id: dashboard.id,
@@ -153,7 +175,7 @@ export function DashboardManagement() {
         autoHeight
         pageSizeOptions={[10, 25, 50]}
         initialState={{
-          pagination: { paginationModel: { pageSize: 10 } },
+          pagination: { paginationModel: { pageSize: 25 } },
         }}
       />
 
@@ -213,13 +235,15 @@ export function DashboardManagement() {
         </DialogActions>
       </Dialog>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
-      </Snackbar>
+      <ConfirmDialog
+        open={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmLabel={confirmDialog.confirmLabel}
+        loading={deleteMutation.isPending}
+        onConfirm={confirmDialog.handleConfirm}
+        onCancel={confirmDialog.handleCancel}
+      />
     </Box>
   )
 }

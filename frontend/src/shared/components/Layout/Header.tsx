@@ -1,27 +1,96 @@
-import { AppBar, Box, Button, Toolbar, Typography } from '@mui/material'
-import { useNavigate } from 'react-router-dom'
+import { AppBar, Box, Button, IconButton, Toolbar, Typography, Menu, MenuItem } from '@mui/material'
+import { useNavigate, useLocation } from 'react-router-dom'
+import { useState } from 'react'
 import { useAuth } from '../../../features/auth/model/useAuth'
+import AccountCircle from '@mui/icons-material/AccountCircle'
+import LogoutIcon from '@mui/icons-material/Logout'
+
+interface NavItem {
+  label: string
+  path: string
+  roles?: string[]
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { label: 'Dashboards', path: '/dashboards' },
+  { label: 'Admin', path: '/admin', roles: ['admin'] },
+  { label: 'Profile', path: '/profile' },
+]
 
 export function Header() {
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+
+  const handleNavigation = (path: string) => {
+    void navigate(path)
+  }
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget)
+  }
+
+  const handleMenuClose = () => {
+    setAnchorEl(null)
+  }
+
+  const handleLogout = () => {
+    handleMenuClose()
+    void logout()
+    void navigate('/login')
+  }
+
+  const isActive = (path: string) => {
+    return location.pathname === path || (path === '/dashboards' && location.pathname.startsWith('/dashboard'))
+  }
 
   return (
     <AppBar position="static">
       <Toolbar>
-        <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+        <Typography variant="h6" component="div" sx={{ mr: 4 }}>
           MKOBI Dashboard
         </Typography>
+
         {user && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            {user.role === 'admin' && (
-              <Button color="inherit" onClick={() => navigate('/admin')}>
-                Admin
+          <Box sx={{ display: 'flex', flexGrow: 1 }}>
+            {NAV_ITEMS.filter(item => !item.roles || item.roles.includes(user.role)).map(item => (
+              <Button
+                key={item.path}
+                color={isActive(item.path) ? 'secondary' : 'inherit'}
+                onClick={() => handleNavigation(item.path)}
+                sx={{
+                  mr: 1,
+                  borderBottom: isActive(item.path) ? '2px solid' : 'none',
+                  borderBottomColor: 'secondary.main',
+                }}
+              >
+                {item.label}
               </Button>
-            )}
-            <Button color="inherit" onClick={() => navigate('/profile')}>
-              Profile
-            </Button>
+            ))}
+          </Box>
+        )}
+
+        {user && (
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <Typography variant="body2" sx={{ mr: 1 }}>
+              {user.email}
+            </Typography>
+            <IconButton color="inherit" onClick={handleMenuOpen}>
+              <AccountCircle />
+            </IconButton>
+            <Menu
+              anchorEl={anchorEl}
+              open={Boolean(anchorEl)}
+              onClose={handleMenuClose}
+              anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+              transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            >
+              <MenuItem onClick={handleLogout}>
+                <LogoutIcon sx={{ mr: 1, fontSize: 20 }} />
+                Logout
+              </MenuItem>
+            </Menu>
           </Box>
         )}
       </Toolbar>

@@ -2,7 +2,7 @@ id: TASK_007_FE_user_management_inline_edit
 
 title: Upgrade UserManagement with inline editing and ConfirmDialog
 
-status: pending
+status: done
 
 priority: high
 

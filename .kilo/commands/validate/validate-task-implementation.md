@@ -265,7 +265,7 @@ Detect:
 
 Create validation report:
 
-- `C:\py_dev\mkobi\.ai\problems\implementation_audit_<next_number>.md`
+- `C:\py_dev\mkobi\.ai\audit\problems\implementation_audit_<next_number>.md`
 
 Where:
 - `<next_number>` = next free sequential number

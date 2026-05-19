@@ -1,3 +1,3 @@
 export { FileDropzone } from './ui/FileDropzone'
-export { UploadPage } from './ui/UploadPage'
+export { UploadModal } from './ui/UploadModal'
 export { uploadApi } from './api/uploadApi'

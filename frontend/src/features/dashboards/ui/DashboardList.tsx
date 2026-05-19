@@ -1,15 +1,11 @@
 import { useNavigate } from 'react-router-dom'
-import {
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  CircularProgress,
-  Alert,
-  Grid,
-  Stack,
-} from '@mui/material'
+import { DataGrid, GridToolbar } from '@mui/x-data-grid'
+import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
+import { Stack, Typography, CircularProgress, Alert } from '@mui/material'
 import { useMyDashboards } from '../api/dashboardApi'
+import { shortUuid } from '../../../shared/utils/shortUuid'
+import { format } from 'date-fns'
+import type { DashboardSummary } from '../../../shared/types/api.types'
 
 export function DashboardList() {
   const navigate = useNavigate()
@@ -31,13 +27,52 @@ export function DashboardList() {
     )
   }
 
+  const columns: GridColDef<DashboardSummary>[] = [
+    {
+      field: 'id',
+      headerName: 'ID',
+      width: 120,
+      sortable: true,
+      renderCell: (params: GridRenderCellParams<DashboardSummary>) =>
+        shortUuid(params.row.id),
+    },
+    {
+      field: 'name',
+      headerName: 'Name',
+      flex: 1,
+      minWidth: 200,
+      sortable: true,
+    },
+    {
+      field: 'created_at',
+      headerName: 'Created',
+      width: 180,
+      sortable: true,
+      renderCell: (params: GridRenderCellParams<DashboardSummary>) =>
+        format(new Date(params.row.created_at), 'PPp'),
+    },
+  ]
+
   if (!dashboards || dashboards.length === 0) {
     return (
       <Stack sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
           My Dashboards
         </Typography>
-        <Alert severity="info">
+        <DataGrid
+          rows={[]}
+          columns={columns}
+          pageSizeOptions={[10, 25, 50]}
+          initialState={{
+            pagination: { paginationModel: { pageSize: 25 } },
+          }}
+          slots={{ toolbar: GridToolbar }}
+          slotProps={{
+            toolbar: { showQuickFilter: true },
+          }}
+          sx={{ mt: 2 }}
+        />
+        <Alert severity="info" sx={{ mt: 2 }}>
           No dashboards available. Contact an administrator to get access.
         </Alert>
       </Stack>
@@ -49,39 +84,22 @@ export function DashboardList() {
       <Typography variant="h4" gutterBottom>
         My Dashboards
       </Typography>
-      <Grid container spacing={2}>
-        {dashboards.map((dashboard) => (
-          <Grid key={dashboard.id} size={{ xs: 12, sm: 6, md: 4 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  {dashboard.name}
-                </Typography>
-                {dashboard.description && (
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    component="p"
-                    sx={{ mb: 2 }}
-                  >
-                    {dashboard.description}
-                  </Typography>
-                )}
-                <Typography variant="caption" sx={{ display: 'block', mb: 2 }}>
-                  Permission: {dashboard.permission}
-                </Typography>
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={() => navigate(`/dashboard/${dashboard.id}`)}
-                >
-                  Open
-                </Button>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+      <DataGrid
+        rows={dashboards}
+        columns={columns}
+        pageSizeOptions={[10, 25, 50]}
+        initialState={{
+          pagination: { paginationModel: { pageSize: 25 } },
+        }}
+        onRowClick={(params: { row: DashboardSummary }) =>
+          void navigate(`/dashboard/${params.row.id}`)
+        }
+        slots={{ toolbar: GridToolbar }}
+        slotProps={{
+          toolbar: { showQuickFilter: true },
+        }}
+        sx={{ mt: 2, cursor: 'pointer' }}
+      />
     </Stack>
   )
 }

@@ -20,7 +20,7 @@ permission:
     "*": deny
 
   bash:
-    "*": deny
+    "*": allow
 ---
 
 You are a senior dependency-aware refactoring planning and semantic task generation agent specializing in large-scale incremental system evolution.

@@ -18,6 +18,7 @@ export interface DashboardSummary {
   name: string
   description: string | null
   permission: DashboardPermission
+  created_at: string
 }
 
 export interface GraphData {

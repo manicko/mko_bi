@@ -35,10 +35,13 @@ Generate:
 
 # Workflow
 
-## Step 1 — Load Validated Findings
+## Step 1 — Load Validated Findings and plans
 
 Study:
-- `C:\py_dev\mkobi\.ai\audit\validated\**` and `C:\py_dev\mkobi\.ai\plans\**`
+- `C:\py_dev\mkobi\.ai\audit\validated\**` 
+- `C:\py_dev\mkobi\.ai\plans\**`
+
+For:
 - validated audit findings
 - safety validation results
 - rollout constraints

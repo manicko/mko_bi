@@ -26,7 +26,18 @@ export function App() {
       <BrowserRouter>
         <ThemeProvider theme={theme}>
           <CssBaseline />
-          <Toaster position="top-right" />
+          <Toaster
+            position="top-right"
+            gutter={8}
+            toastOptions={{
+              success: {
+                duration: 3000,
+              },
+              error: {
+                duration: 5000,
+              },
+            }}
+          />
           <AppRoutes />
         </ThemeProvider>
       </BrowserRouter>

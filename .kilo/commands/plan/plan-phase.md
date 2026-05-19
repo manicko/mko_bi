@@ -149,7 +149,7 @@ Write research findings to: C:\py_dev\mkobi\.ai\researches\RESEARCH_{file_number
 ```
 Task(
   prompt="First, read .kilo/agents/researcher.md for your role and instructions.\n\n" + research_prompt,
-  subagent_type="researcher",
+  subagent_type="Researcher",
   description="Research Phase {file_number}"
 )
 ```

@@ -2,7 +2,7 @@ id: TASK_006_FE_dashboard_list_table
 
 title: Convert DashboardList from Card grid to DataGrid table
 
-status: pending
+status: done
 
 priority: high
 

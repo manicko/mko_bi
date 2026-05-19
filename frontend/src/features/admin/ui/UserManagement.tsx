@@ -1,45 +1,23 @@
-import { useState } from 'react'
-import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid'
-import type { GridColDef } from '@mui/x-data-grid'
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Alert,
-  Snackbar,
-} from '@mui/material'
-import { Edit as EditIcon, Delete as DeleteIcon, Block as BlockIcon } from '@mui/icons-material'
+import { useState, useMemo, useCallback } from 'react'
+import { DataGrid, GridActionsCellItem, type GridRowId, type GridRenderCellParams } from '@mui/x-data-grid'
+import type { GridColDef, GridRowClassNameParams } from '@mui/x-data-grid'
+import { Box } from '@mui/material'
+import { Delete as DeleteIcon, Block as BlockIcon } from '@mui/icons-material'
 import { getUsers, changeUserRole, deleteUser } from '../api/adminApi'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { useConfirmDialog } from '../../../shared/hooks/useConfirmDialog'
+import { ConfirmDialog } from '../../../shared/components/ConfirmDialog'
+import { shortUuid } from '../../../shared/utils/shortUuid'
+import { toast } from 'react-hot-toast'
 import type { AdminUser } from '../../../shared/types/api.types'
+import { UserRole } from '../../../shared/types/enums'
 
-const columns: GridColDef[] = [
-  { field: 'email', headerName: 'Email', width: 250 },
-  { field: 'role', headerName: 'Role', width: 130 },
-  {
-    field: 'is_active',
-    headerName: 'Status',
-    width: 120,
-    valueGetter: (value: boolean) => (value ? 'Active' : 'Blocked'),
-  },
-  { field: 'created_at', headerName: 'Created', width: 180 },
-  { field: 'actions', headerName: 'Actions', type: 'actions', width: 150 },
-]
+const ROLE_OPTIONS = [UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER]
 
 export function UserManagement() {
-  const [roleDialogOpen, setRoleDialogOpen] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null)
-  const [newRole, setNewRole] = useState<string>('')
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' })
-
   const queryClient = useQueryClient()
+  const confirmDialog = useConfirmDialog()
+  const [savingRows, setSavingRows] = useState<GridRowId[]>([])
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin', 'users'],
@@ -48,26 +26,120 @@ export function UserManagement() {
 
   const roleMutation = useMutation({
     mutationFn: ({ userId, role }: { userId: string; role: string }) => changeUserRole(userId, role),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
-      setRoleDialogOpen(false)
-      setSnackbar({ open: true, message: 'Role updated successfully', severity: 'success' })
+    onSuccess: (_, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+      setSavingRows((prev) => prev.filter((id) => id !== variables.userId))
+      toast.success('Role updated successfully')
     },
-    onError: () => {
-      setSnackbar({ open: true, message: 'Failed to update role', severity: 'error' })
+    onError: (_, variables) => {
+      setSavingRows((prev) => prev.filter((id) => id !== variables.userId))
+      toast.error('Failed to update role')
     },
   })
 
   const deleteMutation = useMutation({
     mutationFn: deleteUser,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
-      setSnackbar({ open: true, message: 'User deleted successfully', severity: 'success' })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+      toast.success('User deleted successfully')
     },
     onError: () => {
-      setSnackbar({ open: true, message: 'Failed to delete user', severity: 'error' })
+      toast.error('Failed to delete user')
     },
   })
+
+  const handleProcessRowUpdate = useCallback(
+    async (newRow: AdminUser, oldRow: AdminUser) => {
+      if (newRow.role === oldRow.role) {
+        return newRow
+      }
+
+      setSavingRows((prev) => [...prev, newRow.id])
+
+      try {
+        await roleMutation.mutateAsync({ userId: newRow.id, role: newRow.role })
+      } catch {
+        setSavingRows((prev) => prev.filter((id) => id !== newRow.id))
+        throw new Error('Update failed')
+      }
+      return newRow
+    },
+    [roleMutation],
+  )
+
+  const getRowClassName = useCallback(
+    ({ id }: GridRowClassNameParams) => {
+      return savingRows.includes(id) ? 'row-saving' : ''
+    },
+    [savingRows],
+  )
+
+  const handleDelete = useCallback(
+    (user: AdminUser) => {
+      confirmDialog.confirm({
+        title: 'Delete User',
+        message: `Are you sure you want to delete ${user.email}?`,
+        confirmLabel: 'Delete',
+        onConfirm: () => {
+          void deleteMutation.mutateAsync(user.id)
+        },
+      })
+    },
+    [confirmDialog, deleteMutation],
+  )
+
+  const columns: GridColDef[] = useMemo(
+    () => [
+      {
+        field: 'id',
+        headerName: 'ID',
+        width: 100,
+        renderCell: ({ value }: GridRenderCellParams) => shortUuid(String(value ?? '')),
+      },
+      { field: 'email', headerName: 'Email', width: 250 },
+      {
+        field: 'role',
+        headerName: 'Role',
+        width: 130,
+        type: 'singleSelect',
+        valueOptions: ROLE_OPTIONS,
+        editable: true,
+      },
+      {
+        field: 'is_active',
+        headerName: 'Status',
+        width: 120,
+        valueGetter: (value: boolean) => (value ? 'Active' : 'Blocked'),
+      },
+      { field: 'created_at', headerName: 'Created', width: 180 },
+      {
+        field: 'actions',
+        headerName: 'Actions',
+        type: 'actions',
+        width: 150,
+        renderCell: ({ row }: GridRenderCellParams<AdminUser>) => (
+          <>
+            <GridActionsCellItem
+              icon={<BlockIcon />}
+              label="Block"
+              onClick={() => {
+                confirmDialog.confirm({
+                  title: 'Block User',
+                  message: `Are you sure you want to block ${row.email}?`,
+                  confirmLabel: 'Block',
+                  onConfirm: () => {
+                    toast('Block functionality coming soon')
+                  },
+                })
+              }}
+            />
+            <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={() => handleDelete(row)} />
+          </>
+        ),
+      },
+    ],
+    [confirmDialog, handleDelete],
+  )
 
   const rows = users.map((user) => ({
     id: user.id,
@@ -75,37 +147,6 @@ export function UserManagement() {
     role: user.role,
     is_active: user.is_active,
     created_at: new Date(user.created_at).toLocaleString(),
-    actions: (
-      <>
-        <GridActionsCellItem
-          icon={<EditIcon />}
-          label="Change Role"
-          onClick={() => {
-            setSelectedUser(user)
-            setNewRole(user.role)
-            setRoleDialogOpen(true)
-          }}
-        />
-        <GridActionsCellItem
-          icon={<BlockIcon />}
-          label="Block"
-          onClick={() => {
-            if (confirm(`Block user ${user.email}?`)) {
-              roleMutation.mutate({ userId: user.id, role: user.role })
-            }
-          }}
-        />
-        <GridActionsCellItem
-          icon={<DeleteIcon />}
-          label="Delete"
-          onClick={() => {
-            if (confirm(`Delete user ${user.email}?`)) {
-              deleteMutation.mutate(user.id)
-            }
-          }}
-        />
-      </>
-    ),
   }))
 
   return (
@@ -117,48 +158,29 @@ export function UserManagement() {
         autoHeight
         pageSizeOptions={[10, 25, 50]}
         initialState={{
-          pagination: { paginationModel: { pageSize: 10 } },
+          pagination: { paginationModel: { pageSize: 25 } },
         }}
+        processRowUpdate={handleProcessRowUpdate}
+        onProcessRowUpdateError={(error) => {
+          console.error('Row update error:', error)
+        }}
+        getRowClassName={getRowClassName}
       />
-
-      <Dialog open={roleDialogOpen} onClose={() => setRoleDialogOpen(false)}>
-        <DialogTitle>Change Role for {selectedUser?.email}</DialogTitle>
-        <DialogContent>
-          <FormControl fullWidth sx={{ mt: 2 }}>
-            <InputLabel>Role</InputLabel>
-            <Select
-              value={newRole}
-              label="Role"
-              onChange={(e) => setNewRole(e.target.value)}
-            >
-              <MenuItem value="admin">Admin</MenuItem>
-              <MenuItem value="editor">Editor</MenuItem>
-              <MenuItem value="viewer">Viewer</MenuItem>
-            </Select>
-          </FormControl>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setRoleDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={() => {
-              if (selectedUser) {
-                roleMutation.mutate({ userId: selectedUser.id, role: newRole })
-              }
-            }}
-            disabled={roleMutation.isPending}
-          >
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
-      </Snackbar>
+      <ConfirmDialog
+        open={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        confirmLabel={confirmDialog.confirmLabel}
+        onConfirm={confirmDialog.handleConfirm}
+        onCancel={confirmDialog.handleCancel}
+      />
+      <style>
+        {`
+          .row-saving {
+            background-color: #fef08a !important;
+          }
+        `}
+      </style>
     </Box>
   )
 }

@@ -1,20 +1,12 @@
 import { useState } from 'react'
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid'
 import type { GridColDef } from '@mui/x-data-grid'
-import {
-  Box,
-  Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Alert,
-  Snackbar,
-} from '@mui/material'
+import { Box, Chip } from '@mui/material'
 import { Check as ApproveIcon, Close as RejectIcon } from '@mui/icons-material'
 import { getRegistrationRequests, approveRequest, rejectRequest } from '../api/adminApi'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { ConfirmDialog } from '../../../shared/components/ConfirmDialog'
+import { toast } from 'react-hot-toast'
 import type { RegistrationRequestItem } from '../../../shared/types/api.types'
 
 const columns: GridColDef[] = [
@@ -37,7 +29,6 @@ export function RegistrationRequests() {
   const [selectedRequest, setSelectedRequest] = useState<RegistrationRequestItem | null>(null)
   const [actionType, setActionType] = useState<'approve' | 'reject'>('approve')
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
-  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' as 'success' | 'error' })
 
   const queryClient = useQueryClient()
 
@@ -51,10 +42,10 @@ export function RegistrationRequests() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'registration-requests'] })
       setConfirmDialogOpen(false)
-      setSnackbar({ open: true, message: 'Request approved successfully', severity: 'success' })
+      toast.success('Request approved successfully')
     },
     onError: () => {
-      setSnackbar({ open: true, message: 'Failed to approve request', severity: 'error' })
+      toast.error('Failed to approve request')
     },
   })
 
@@ -63,10 +54,10 @@ export function RegistrationRequests() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'registration-requests'] })
       setConfirmDialogOpen(false)
-      setSnackbar({ open: true, message: 'Request rejected successfully', severity: 'success' })
+      toast.success('Request rejected successfully')
     },
     onError: () => {
-      setSnackbar({ open: true, message: 'Failed to reject request', severity: 'error' })
+      toast.error('Failed to reject request')
     },
   })
 
@@ -112,44 +103,27 @@ export function RegistrationRequests() {
         autoHeight
         pageSizeOptions={[10, 25, 50]}
         initialState={{
-          pagination: { paginationModel: { pageSize: 10 } },
+          pagination: { paginationModel: { pageSize: 25 } },
         }}
       />
 
-      <Dialog open={confirmDialogOpen} onClose={() => setConfirmDialogOpen(false)}>
-        <DialogTitle>
-          {actionType === 'approve' ? 'Approve' : 'Reject'} Registration Request
-        </DialogTitle>
-        <DialogContent>
-          Are you sure you want to {actionType} the request for {selectedRequest?.email}?
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmDialogOpen(false)}>Cancel</Button>
-          <Button
-            onClick={() => {
-              if (selectedRequest) {
-                if (actionType === 'approve') {
-                  approveMutation.mutate(selectedRequest.id)
-                } else {
-                  rejectMutation.mutate(selectedRequest.id)
-                }
-              }
-            }}
-            color={actionType === 'approve' ? 'primary' : 'error'}
-            disabled={approveMutation.isPending || rejectMutation.isPending}
-          >
-            {actionType === 'approve' ? 'Approve' : 'Reject'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-      >
-        <Alert severity={snackbar.severity}>{snackbar.message}</Alert>
-      </Snackbar>
+      <ConfirmDialog
+        open={confirmDialogOpen}
+        title={`${actionType === 'approve' ? 'Approve' : 'Reject'} Registration Request`}
+        message={`Are you sure you want to ${actionType} the request for ${selectedRequest?.email}?`}
+        onConfirm={() => {
+          if (selectedRequest) {
+            if (actionType === 'approve') {
+              approveMutation.mutate(selectedRequest.id)
+            } else {
+              rejectMutation.mutate(selectedRequest.id)
+            }
+          }
+        }}
+        onCancel={() => setConfirmDialogOpen(false)}
+        loading={approveMutation.isPending || rejectMutation.isPending}
+        confirmLabel={actionType === 'approve' ? 'Approve' : 'Reject'}
+      />
     </Box>
   )
 }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import {
   Typography,
   CircularProgress,
@@ -10,6 +10,7 @@ import {
   Stack,
 } from '@mui/material'
 import { useDashboard, useAggregatedData, useInvalidateDashboard } from '../api/dashboardApi'
+import { UploadModal } from '../../upload/ui/UploadModal'
 import { DashboardFilters } from './DashboardFilters'
 import { PlotlyChart } from './charts'
 import type { GraphDataWithConfig, FilterDetail } from '../../../shared/types/api.types'
@@ -17,10 +18,11 @@ import type { FilterType } from '../../../shared/types/enums'
 
 export function DashboardView() {
   const { id } = useParams<{ id: string }>()
-  const navigate = useNavigate()
+
   const [filters, setFilters] = useState<
     Record<string, string | string[] | number | number[]>
   >({})
+  const [uploadModalOpen, setUploadModalOpen] = useState(false)
 
   const {
     data: dashboard,
@@ -91,7 +93,7 @@ export function DashboardView() {
         {canEdit && (
           <Button
             variant="contained"
-            onClick={() => navigate(`/dashboard/${id}/upload`)}
+            onClick={() => setUploadModalOpen(true)}
           >
             Upload Data
           </Button>
@@ -155,6 +157,18 @@ export function DashboardView() {
           )}
         </Grid>
       </Grid>
+
+      <UploadModal
+        open={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        dashboardId={id || ''}
+        onUploadComplete={() => {
+          setUploadModalOpen(false)
+          if (id) {
+            invalidateAggregatedData(id)
+          }
+        }}
+      />
     </Stack>
   )
 }

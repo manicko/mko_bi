@@ -2,7 +2,7 @@ id: TASK_001_FE_zod_v4_migration
 
 title: Migrate Zod schemas from v3 to v4 syntax
 
-status: pending
+status: done
 
 priority: high
 

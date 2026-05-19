@@ -10,7 +10,7 @@ alwaysApply: false
 
 ## Goal
 
-Analyze the current project implementation, development plans, and existing specification, then update `SPEC.md` by adding only truly significant functionality that is currently missing from the specification.
+Analyze the current project implementation, development plans, and existing specification, then update documentation: `C:\py_dev\mkobi\docs` by adding only truly significant functionality that is currently missing from the specification following instructions: `C:\py_dev\mkobi\docs\00-overview\doc-maintenance-rules.md`.
 
 ---
 
@@ -24,7 +24,7 @@ Review:
   `C:\py_dev\mkobi\docs\00-overview\doc-maintenance-rules.md`
 
 * Project specification structure  
-  `C:\py_dev\mkobi\docs\**`
+  `C:\py_dev\mkobi\docs\*`
 
 * Project architecture structure  
   `STRUCT.md`
@@ -115,7 +115,7 @@ Remove from `{feature_list}` everything that does not pass validation.
 
 For all validated items in `{feature_list}`, update the specification in:
 
-`C:\py_dev\mkobi\docs\**`
+`C:\py_dev\mkobi\docs\*`
 
 CRITICAL: STRICTLY FOLLOW REQUIREMENTS: C:\py_dev\mkobi\docs\00-overview\doc-maintenance-rules.md
 

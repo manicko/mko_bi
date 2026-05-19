@@ -12,6 +12,20 @@
   type: component
   value: AppRoutes
   stable_hash: 7077cf72
+- id: be6e2715
+  file: C:/py_dev/mkobi/frontend/src/shared/components/AccessDenied.tsx
+  symbol_path:
+    - AccessDenied
+  type: component
+  value: AccessDenied
+  stable_hash: be6e2715
+- id: 62d296a6
+  file: C:/py_dev/mkobi/frontend/src/shared/components/ConfirmDialog.tsx
+  symbol_path:
+    - ConfirmDialog
+  type: component
+  value: ConfirmDialog
+  stable_hash: 62d296a6
 - id: ae8ca5e0
   file: C:/py_dev/mkobi/frontend/src/shared/components/NotFound.tsx
   symbol_path:
@@ -40,6 +54,13 @@
   type: component
   value: RoleBasedAccess
   stable_hash: 64bcf966
+- id: 0e8e2505
+  file: C:/py_dev/mkobi/frontend/src/shared/hooks/useConfirmDialog.ts
+  symbol_path:
+    - useConfirmDialog
+  type: hook
+  value: useConfirmDialog
+  stable_hash: 0e8e2505
 - id: 8c604949
   file: C:/py_dev/mkobi/frontend/src/features/admin/ui/AdminPanel.tsx
   symbol_path:
@@ -166,13 +187,13 @@
   type: component
   value: FileDropzone
   stable_hash: 1f16405d
-- id: 2cd463a5
-  file: C:/py_dev/mkobi/frontend/src/features/upload/ui/UploadPage.tsx
+- id: e4c50459
+  file: C:/py_dev/mkobi/frontend/src/features/upload/ui/UploadModal.tsx
   symbol_path:
-    - UploadPage
+    - UploadModal
   type: component
-  value: UploadPage
-  stable_hash: 2cd463a5
+  value: UploadModal
+  stable_hash: e4c50459
 - id: 93aeffe8
   file: C:/py_dev/mkobi/frontend/src/features/users/ui/ChangePasswordPage.tsx
   symbol_path:

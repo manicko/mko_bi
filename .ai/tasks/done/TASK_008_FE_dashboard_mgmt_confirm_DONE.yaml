@@ -2,7 +2,7 @@ id: TASK_008_FE_dashboard_mgmt_confirm
 
 title: Upgrade DashboardManagement with ConfirmDialog and short UUID
 
-status: pending
+status: done
 
 priority: high
 
