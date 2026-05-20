@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import warnings
+
 import pytest
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -156,24 +158,79 @@ async def test_clear_dashboard_data_with_data(
 
 
 @pytest.mark.asyncio
-async def test_clear_graph_data_compat(async_db_session: AsyncSession):
-    """Test clear_graph_data compatibility method."""
+async def test_clear_graph_data_instance(async_db_session: AsyncSession):
+    """Test clear_graph_data instance method."""
     graph_id = uuid4()
+    manager = StorageManager(db=async_db_session)
 
-    deleted = await StorageManager.clear_graph_data_compat(
-        graph_id=graph_id,
-        db=async_db_session,
-    )
+    deleted = await manager.clear_graph_data(graph_id=graph_id)
     assert deleted == 0
 
 
 @pytest.mark.asyncio
-async def test_clear_dashboard_data_compat(async_db_session: AsyncSession):
-    """Test clear_dashboard_data compatibility method."""
+async def test_clear_dashboard_data_instance(async_db_session: AsyncSession):
+    """Test clear_dashboard_data instance method."""
+    dashboard_id = uuid4()
+    manager = StorageManager(db=async_db_session)
+
+    deleted = await manager.clear_dashboard_data(dashboard_id=dashboard_id)
+    assert deleted == 0
+
+
+@pytest.mark.asyncio
+async def test_clear_graph_data_compat_deprecated(async_db_session: AsyncSession):
+    """Test clear_graph_data_compat emits deprecation warning."""
+    graph_id = uuid4()
+
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        deleted = await StorageManager.clear_graph_data_compat(
+            graph_id=graph_id,
+            db=async_db_session,
+        )
+
+    assert deleted == 0
+    assert len(w) == 1
+    assert issubclass(w[0].category, DeprecationWarning)
+    assert "clear_graph_data_compat" in str(w[0].message)
+
+
+@pytest.mark.asyncio
+async def test_clear_dashboard_data_compat_deprecated(async_db_session: AsyncSession):
+    """Test clear_dashboard_data_compat emits deprecation warning."""
     dashboard_id = uuid4()
 
-    deleted = await StorageManager.clear_dashboard_data_compat(
-        dashboard_id=dashboard_id,
-        db=async_db_session,
-    )
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        deleted = await StorageManager.clear_dashboard_data_compat(
+            dashboard_id=dashboard_id,
+            db=async_db_session,
+        )
+
     assert deleted == 0
+    assert len(w) == 1
+    assert issubclass(w[0].category, DeprecationWarning)
+    assert "clear_dashboard_data_compat" in str(w[0].message)
+
+
+@pytest.mark.asyncio
+async def test_save_aggregated_data_deprecated(async_db_session: AsyncSession):
+    """Test save_aggregated_data emits deprecation warning."""
+    from mkobi.models.enums import UploadMode
+
+    dashboard_id = uuid4()
+    graph_id = uuid4()
+
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        await StorageManager.save_aggregated_data(
+            dashboard_id=dashboard_id,
+            graph_id=graph_id,
+            aggregated_results=[],
+            mode=UploadMode.OVERWRITE,
+            db=async_db_session,
+        )
+
+    assert len(w) == 1
+    assert issubclass(w[0].category, DeprecationWarning)
+    assert "save_aggregated_data" in str(w[0].message)

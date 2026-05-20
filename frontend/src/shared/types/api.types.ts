@@ -1,5 +1,5 @@
 import type { UserRole, DashboardPermission, GraphType, FilterType, ProcessingStatus, RegistrationStatus } from './enums'
-import type { Data, Layout } from 'plotly.js'
+import type { Data, Layout } from 'react-plotly.js'
 
 // Re-export Plotly types for convenience
 export type PlotlyData = Data

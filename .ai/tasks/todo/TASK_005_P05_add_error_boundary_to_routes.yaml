@@ -1,0 +1,68 @@
+id: TASK_005_P05_add_error_boundary_to_routes
+
+title: Add ErrorBoundary wrapper to protected routes in routes.tsx
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_003_P05_create_error_boundary_component
+
+description: >
+  Add ErrorBoundary as a layout route wrapping all protected routes inside AppLayout
+  in routes.tsx. Login/register are outside this boundary. The 404 route is outside
+  the ErrorBoundary since 404 is a routing event, not a crash.
+
+phase: PLAN_05 — Frontend Error Handling
+wave: 3
+
+finding_ref: BUG-25
+severity: medium
+
+goals:
+  - Wrap protected routes (dashboards, admin, profile) with ErrorBoundary as layout route
+  - Login and register routes outside route-level ErrorBoundary
+  - 404 route outside ErrorBoundary
+  - All existing route elements and wrappers unchanged
+
+files:
+  - path: frontend/src/app/routes.tsx
+    targets:
+      - type: component
+        name: AppRoutes
+    semantic_anchors:
+      insert_after:
+        type: jsx_element
+        value: "Add ErrorBoundary as layout route inside AppLayout, wrapping all protected routes"
+
+changes:
+  - action: add_error_boundary_wrapper
+    description: >
+      Add ErrorBoundary import and wrap protected routes.
+    code_hint: |
+      import { ErrorBoundary } from '../shared/components/ErrorBoundary'
+
+      // Inside AppLayout Route, before ProtectedRoute routes:
+      <Route element={<ErrorBoundary />}>
+        <Route path="/dashboards" element={<ProtectedRoute><DashboardList /></ProtectedRoute>} />
+        <Route path="/dashboard/:id" element={<ProtectedRoute><DashboardView /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute><RoleBasedAccess roles={['admin']}><AdminPanel /></RoleBasedAccess></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><UserProfile /></ProtectedRoute>} />
+        <Route path="/profile/change-password" element={<ProtectedRoute><ChangePasswordPage /></ProtectedRoute>} />
+      </Route>
+
+acceptance_criteria:
+  - ErrorBoundary wraps all protected routes (dashboards, admin, profile) as a layout route
+  - Login and register routes are outside the route-level ErrorBoundary
+  - 404 route remains outside the ErrorBoundary
+  - All existing route elements and wrappers (ProtectedRoute, RoleBasedAccess) remain unchanged
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+risk_level: low
+
+rollout_notes: >
+  Depends on TASK_003 (ErrorBoundary component).
+  Single-file change. The app-level ErrorBoundary in TASK_007 provides the safety net.

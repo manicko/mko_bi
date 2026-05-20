@@ -39,7 +39,7 @@ Authenticate a user by email and password.
 | **Method**     | `POST`                                     |
 | **Path**       | `/api/v1/auth/login`                       |
 | **Auth level** | Public                                     |
-| **Rate limit** | 5 attempts per 5 minutes per email         |
+| **Rate limit** | 5 attempts per 5 minutes per IP            |
 
 **Request body:**
 
@@ -86,7 +86,7 @@ Authenticate a user via OAuth2 password flow (form-encoded).
 | **Method**     | `POST`                                     |
 | **Path**       | `/api/v1/auth/login/form`                  |
 | **Auth level** | Public                                     |
-| **Rate limit** | 5 attempts per 5 minutes per email         |
+| **Rate limit** | 5 attempts per 5 minutes per IP            |
 
 **Request:** `application/x-www-form-urlencoded` with `username` (email) and `password` fields.
 
@@ -326,7 +326,7 @@ Browser                          FastAPI
 ```
 
 1. User submits email and password via the login form (`/login` page)
-2. Server applies rate limiting (5 attempts per 5-minute window per email)
+2. Server applies rate limiting (5 attempts per 5-minute window per IP)
 3. Server looks up user by email and verifies the bcrypt password hash
 4. On success, server creates a JWT access token containing `user_id`, `email`, and `role`
 5. Server returns `TokenWithUser` — the token plus the full user profile (including computed `display_name`)

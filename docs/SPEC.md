@@ -136,6 +136,17 @@ Access is validated on every request via the `dashboard_access` table.
 - **Short UUID display** — UUIDs displayed in tables are truncated to 8 characters via the shared `shortUuid` utility for improved readability.
 - **Admin tab state preservation** — The admin panel uses `display: none/block` to hide inactive tabs, preserving pagination and sorting state across tab switches.
 - **Zod v4 migration** — Frontend form validation uses Zod v4 API (`z.email()` instead of `z.string().email()`).
+- **Per-IP login rate limiting** — Login rate limiter uses per-IP keys (not per-email) to prevent email enumeration attacks. The rate limiter key was changed from `f"login:{email}`" to `f"login:{client_ip}`" to avoid leaking registered email addresses through rate limit side-channels.
+- **Migration advisory lock** — `_apply_migrations()` acquires a PostgreSQL advisory lock (`pg_advisory_lock(42)`) before running Alembic migrations, preventing concurrent migrations in multi-instance deployments (K8s replicas, multiple Gunicorn workers).
+- **Dedicated database role (least-privilege)** — The application connects using a dedicated `mkobi_app` role with limited privileges (`CONNECT`, `SELECT`, `INSERT`, `UPDATE`, `DELETE`) instead of the superuser `postgres` role. The superuser role is used only for DDL migrations.
+- **Migration job pattern** — Production Docker Compose uses a dedicated `migrate` service that runs before the app service starts, with `depends_on: service_completed_successfully` to ensure migrations complete before the application accepts requests.
+- **Stale processing heartbeat** — A periodic cleanup task marks processing logs stuck in `PROCESSING` state for more than 30 minutes (configurable) as `FAILED`, providing visibility into crashed workers and preventing indefinite `PROCESSING` states.
+- **Upload memory streaming** — File uploads use chunked streaming writes (`aiofiles` with 8KB chunks) instead of reading the entire file into memory, reducing memory pressure for large uploads (up to 100MB).
+- **Weak admin credential detection** — `validate_admin_credentials()` checks against a set of known-weak values (`{"admin", "administrator", "root", "test", "user"}` for usernames, `{"password", "123456", "admin", "secret", "test"}` for passwords) instead of only the exact string `"admin"`.
+- **Config reload for testing** — `get_config()` supports a `reload=True` parameter and `clear_config_cache()` function, allowing tests to reload configuration without monkeypatching the global singleton.
+- **Atomic UPSERT for admin user** — `ensure_admin_user()` uses `INSERT ... ON CONFLICT (email) DO NOTHING` instead of check-then-create, eliminating the TOCTOU race condition on concurrent startup.
+- **Sanitized database URL logging** — `_apply_migrations()` logs the database URL with `render_as_string(hide_password=True)` to prevent credential leakage in log files.
+- **LRU token cache** — `_token_cache` in permissions.py uses `functools.lru_cache(maxsize=1000)` instead of an unbounded dict, preventing memory leaks in long-running processes.
 
 ---
 
@@ -147,9 +158,10 @@ Access is validated on every request via the `dashboard_access` table.
 | 2.3     | 2026-05-19 | Added login user-in-response, admin bypass, 403/404 dual-signal, display_name |
 | 2.4     | 2026-05-19 | Upload modal (no page nav), top nav Header, DataGrid tables, ConfirmDialog pattern, toast notifications, short UUID display, Zod v4 migration, admin tab state preservation |
 | 2.5     | 2026-05-19 | Dashboard-filter binding API, dashboard access management endpoints, dashboard-scoped graph endpoints, file processing service, background data worker, processing log date filtering |
+| 2.6     | 2026-05-20 | Per-IP login rate limiting (email enumeration fix), migration advisory lock, dedicated DB role (least-privilege), migration job compose pattern, stale processing heartbeat, upload memory streaming, weak admin credential detection, config reload for testing, atomic UPSERT admin user, sanitized DB URL logging, LRU token cache |
 
 ---
 
 **Author:** Senior Python Architect
-**Date:** 2026-05-19
-**Version:** 2.5
+**Date:** 2026-05-20
+**Version:** 2.6

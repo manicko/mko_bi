@@ -14,11 +14,13 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
     CurrentUser,
     require_viewer_role,
     get_data_service,
+    get_db_dependency,
 )
 from mkobi.core.permissions import check_dashboard_access
 from mkobi.models.data import ProcessingResultData
@@ -40,6 +42,7 @@ router = APIRouter(prefix="/data", tags=["data"])
 async def get_aggregated_data_endpoint(
     current_user: CurrentUser,
     data_service: DataService = Depends(get_data_service),
+    db: AsyncSession = Depends(get_db_dependency),
     dashboard_id: UUID = Query(..., description="Dashboard ID"),
     graph_id: UUID = Query(..., description="Graph ID"),
     filters: str | None = Query(default=None, description="JSON string with filters"),
@@ -75,6 +78,7 @@ async def get_aggregated_data_endpoint(
         user_id=current_user.id,
         dashboard_id=dashboard_id,
         required_permission="view",
+        db=db,
     ):
         logger.warning(
             "Access denied to dashboard: dashboard_id=%s, user_id=%s",
@@ -101,6 +105,7 @@ async def get_aggregated_data_endpoint(
         result: list[ProcessingResultData] = await data_service.get_aggregated_data(
             dashboard_id=dashboard_id,
             graph_id=graph_id,
+            db=db,
         )
 
         logger.info(

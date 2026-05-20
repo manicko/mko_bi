@@ -224,7 +224,7 @@
   layer: unknown
   imports:
     - ./enums
-    - plotly.js
+    - react-plotly.js
   components: []
   hooks: []
   jsx_tags: []
@@ -1010,7 +1010,7 @@
   layer: unknown
   imports:
     - react-plotly.js
-    - plotly.js
+    - react-plotly.js
     - ../../../../shared/types/api.types
   components:
     - PlotlyChart

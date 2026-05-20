@@ -191,12 +191,27 @@ JWT__SECRET_KEY=<production-secret>
 ### Database Migrations
 
 - `AUTO_MIGRATE=true` — runs `alembic upgrade head` on container startup (default in docker-compose.yml)
+- **Migration advisory lock** — In multi-instance deployments (K8s replicas, multiple Gunicorn workers), parallel migrations can corrupt the schema. The `_apply_migrations()` method acquires a PostgreSQL advisory lock (`pg_advisory_lock(42)`) before running migrations, ensuring only one instance runs migrations at a time. The lock is released after completion, even on failure.
+- **Migration job pattern** — For production Docker Compose deployments, a dedicated `migrate` service runs `alembic upgrade head` before the app service starts. The app service depends on the migration service completing successfully (`depends_on: migrate: condition: service_completed_successfully`). This separates migration concerns from application startup and allows `AUTO_MIGRATE=false` in the app config.
 - Manual migration:
   ```bash
   docker compose exec app uv run alembic upgrade head
   # Check status:
   docker compose exec app uv run alembic current
   ```
+
+### Database Role (Least-Privilege)
+
+The application uses a dedicated database role (`mkobi_app`) with limited privileges instead of the superuser `postgres` role:
+
+| Role | Purpose | Privileges |
+| --- | --- | --- |
+| `postgres` | Migrations (DDL) | Superuser |
+| `mkobi_app` | Runtime operations | `CONNECT`, `SELECT`, `INSERT`, `UPDATE`, `DELETE` on tables; `USAGE` on sequences |
+
+This follows the least-privilege principle: any SQL injection or application bug is limited to the `mkobi_app` role's permissions and cannot execute superuser operations. The `postgres` role is used only for migrations that require DDL.
+
+The role is created via an initialization SQL script mounted to `/docker-entrypoint-initdb.d/` in the PostgreSQL container. The application's `DATABASE__USER` and `DATABASE__PASSWORD` point to the `mkobi_app` role.
 
 ### Volumes
 

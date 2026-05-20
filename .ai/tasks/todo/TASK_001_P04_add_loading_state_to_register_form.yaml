@@ -1,0 +1,100 @@
+id: TASK_001_P04_add_loading_state_to_register_form
+
+title: Add loading state to RegisterForm with MUI loading button
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  Add local isSubmitting state to RegisterForm. Use MUI Button's built-in `loading`
+  prop to show spinner and disable button during submission. Remove the shared
+  isLoading from useAuth() since it's never set during registerRequest().
+
+phase: PLAN_04 — Registration Request Fixes
+wave: 1
+
+finding_ref: BUG-17
+severity: low
+
+goals:
+  - Add local isSubmitting state to RegisterForm
+  - Use MUI Button loading prop for spinner + disabled state
+  - Remove isLoading from useAuth() destructuring
+  - Ensure finally block resets isSubmitting on error
+
+files:
+  - path: frontend/src/features/auth/ui/RegisterForm.tsx
+    targets:
+      - type: component
+        name: RegisterForm
+    semantic_anchors:
+      remove:
+        type: destructuring
+        value: "isLoading from useAuth()"
+      add:
+        type: state
+        value: "isSubmitting state"
+      update:
+        type: function
+        value: "onSubmit handler — set isSubmitting true/false"
+      update:
+        type: jsx_element
+        value: "Submit Button — add loading prop"
+
+changes:
+  - action: remove_isLoading
+    description: >
+      Remove isLoading from useAuth() destructuring.
+
+  - action: add_isSubmitting
+    description: >
+      Add local isSubmitting state.
+    code_hint: |
+      const [isSubmitting, setIsSubmitting] = useState(false)
+
+  - action: update_onSubmit
+    description: >
+      Update onSubmit to set isSubmitting in try/finally.
+    code_hint: |
+      const onSubmit = async (data: RegisterFormData) => {
+        try {
+          setError(null)
+          setIsSubmitting(true)
+          await registerRequest(data.email)
+          setSuccess(true)
+        } catch (error) {
+          const axiosError = error as { response?: { data?: { detail?: string } } }
+          const errorMessage = axiosError.response?.data?.detail || 'Failed to submit registration request. Please try again.'
+          setError(errorMessage)
+        } finally {
+          setIsSubmitting(false)
+        }
+      }
+
+  - action: update_button
+    description: >
+      Update submit Button to use MUI loading prop.
+    code_hint: |
+      <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}
+        loading={isSubmitting} loadingPosition="start">
+        {isSubmitting ? 'Sending...' : 'Submit Request'}
+      </Button>
+
+acceptance_criteria:
+  - On submit click: button shows spinner + "Sending..." text, button is disabled
+  - On success: setSuccess(true) triggers existing success view (unchanged)
+  - On error: button re-enables, error Alert shown (existing behavior preserved)
+  - Double-submit prevented: button disabled immediately via loading prop
+  - isLoading is no longer destructured from useAuth in this file
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+risk_level: low
+
+rollout_notes: >
+  Single-file change. Independent of other tasks.
+  Must complete before TASK_002_P04 (which also modifies RegisterForm.tsx).

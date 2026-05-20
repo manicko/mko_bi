@@ -85,5 +85,5 @@ dashboard_filters = Table(
     Base.metadata,
     Column("dashboard_id", PG_UUID(as_uuid=True), ForeignKey("dashboards.id", ondelete="CASCADE"), primary_key=True),
     Column("filter_id", PG_UUID(as_uuid=True), ForeignKey("filters.id", ondelete="CASCADE"), primary_key=True),
-    Index("idx_dashboard_filters_dashboard_filter", "dashboard_id", "filter_id"),
+    Index("idx_dashboard_filters_dashboard_id", "dashboard_id", "filter_id"),
 )

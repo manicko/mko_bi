@@ -1,0 +1,74 @@
+id: TASK_001_P05_create_shared_error_page_component
+
+title: Create shared ErrorPage component for 404 and 500 error variants
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  Create a new shared ErrorPage component that renders MUI-styled error pages for
+  both 404 and 500 variants. Uses WarningAmber icon, smart "Go to Home" navigation
+  (dashboards if authenticated, login if not), and environment-aware error details.
+
+phase: PLAN_05 — Frontend Error Handling
+wave: 1
+
+finding_ref: BUG-22, BUG-23, BUG-24
+severity: medium
+
+goals:
+  - Create ErrorPage component with variant prop ('404' | '500')
+  - 404: WarningAmber icon, "Page not found", subtext, "Go to Home" button
+  - 500: WarningAmber icon, error details (dev) or generic message (prod), "Reload page" + "Go to Home"
+  - Smart "Go to Home" based on useAuth().user
+  - Pure MUI sx prop styling — no Tailwind CSS
+
+files:
+  - path: frontend/src/shared/components/ErrorPage.tsx
+    targets:
+      - type: component
+        name: ErrorPage
+    semantic_anchors:
+      create:
+        type: new_file
+        value: "ErrorPage.tsx — shared error page component"
+
+changes:
+  - action: create_component
+    description: >
+      Create ErrorPage.tsx with variant prop for 404/500 rendering.
+    code_hint: |
+      import WarningAmber from '@mui/icons-material/WarningAmber'
+      import { Box, Container, Typography, Button } from '@mui/material'
+      import { useAuth } from '../../features/auth/model/useAuth'
+
+      interface ErrorPageProps {
+        variant: '404' | '500'
+        error?: Error | null
+      }
+
+      export function ErrorPage({ variant, error }: ErrorPageProps) {
+        const { user } = useAuth()
+        const isDev = import.meta.env.DEV
+        const goToHome = user ? '/dashboards' : '/login'
+        // ... renders 404 or 500 variant
+      }
+
+acceptance_criteria:
+  - ErrorPage variant="404" renders: WarningAmber icon, "Page not found", subtext, single "Go to Home" button
+  - ErrorPage variant="500" renders: WarningAmber icon, error details (dev) or generic message (prod), "Reload page" button, "Go to Home" link
+  - "Go to Home" links to /dashboards when user is non-null, /login when null
+  - No Tailwind CSS — pure MUI sx prop styling
+  - Uses path-based @mui/icons-material/WarningAmber import
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+risk_level: low
+
+rollout_notes: >
+  New file creation. No existing code dependencies.
+  Must complete before TASK_003_P05 (ErrorBoundary) and TASK_004_P05 (NotFound rewrite).

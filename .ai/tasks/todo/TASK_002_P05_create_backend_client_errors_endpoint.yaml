@@ -1,0 +1,91 @@
+id: TASK_002_P05_create_backend_client_errors_endpoint
+
+title: Create backend POST /api/v1/client-errors endpoint for frontend error reporting
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  Create a new backend endpoint POST /api/v1/client-errors that accepts a Pydantic
+  model with error details, componentStack, url, userAgent, and timestamp. Returns
+  204 No Content. Logs via logger.error(). No DB persistence — just logging.
+
+phase: PLAN_05 — Frontend Error Handling
+wave: 1
+
+finding_ref: BUG-27
+severity: medium
+
+goals:
+  - Create client_errors.py route file with Pydantic model and POST handler
+  - Register router in routes/__init__.py and app.py
+  - Return 204 No Content
+  - Log error via logger.error()
+
+files:
+  - path: src/mkobi/api/routes/client_errors.py
+    targets:
+      - type: function
+        name: report_client_error
+    semantic_anchors:
+      create:
+        type: new_file
+        value: "client_errors.py — route file for client error reporting"
+
+  - path: src/mkobi/api/routes/__init__.py
+    targets:
+      - type: import
+        name: client_errors
+    semantic_anchors:
+      add:
+        type: import_statement
+        value: "Import client_errors router and add to __all__"
+
+  - path: src/mkobi/app.py
+    targets:
+      - type: function_call
+        name: include_router
+    semantic_anchors:
+      add:
+        type: function_call
+        value: "Register client_errors router with prefix /api/v1"
+
+changes:
+  - action: create_route_file
+    description: >
+      Create src/mkobi/api/routes/client_errors.py with Pydantic model and POST handler.
+    code_hint: |
+      class ClientErrorPayload(BaseModel):
+          error: dict
+          componentStack: str | None = None
+          url: str
+          userAgent: str
+          timestamp: str
+
+      @router.post("", status_code=204, summary="Report client-side error")
+      async def report_client_error(payload: ClientErrorPayload) -> None:
+          logger.error("Client error: %s | url=%s | componentStack=%s",
+              payload.error.get("message", "Unknown"), payload.url, payload.componentStack)
+
+  - action: register_route
+    description: >
+      Add import and __all__ entry in __init__.py, register router in app.py.
+
+acceptance_criteria:
+  - POST /api/v1/client-errors accepts JSON payload with error, componentStack, url, userAgent, timestamp
+  - Returns HTTP 204 No Content
+  - Logs error message via logger.error()
+  - Invalid payload returns 422 (Pydantic validation — automatic)
+  - No database table or migration needed
+
+tests_to_run:
+  - cd src/mkobi && python -c "from mkobi.api.routes import client_errors; print('OK')"
+
+risk_level: low
+
+rollout_notes: >
+  New file creation + two registration changes. Independent of frontend tasks.
+  Backend-only change. Must complete before TASK_003_P05 (ErrorBoundary uses the endpoint).

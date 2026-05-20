@@ -13,8 +13,7 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, JSONResponse, Response
-from fastapi.staticfiles import StaticFiles
+from fastapi.responses import JSONResponse, Response
 from pydantic import ValidationError
 from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -295,6 +294,9 @@ def _setup_static_files(application: FastAPI) -> None:
     on the frontend build directory existing.
     """
     from pathlib import Path
+    from starlette.staticfiles import StaticFiles as BaseStaticFiles
+    from starlette.responses import FileResponse
+    from starlette.exceptions import HTTPException
 
     static_dir = Path("frontend/dist")
     index_path = static_dir / "index.html"
@@ -302,16 +304,29 @@ def _setup_static_files(application: FastAPI) -> None:
     # Only register static files and SPA fallback when frontend build exists
     if static_dir.exists() and index_path.exists():
         logger.info("Mounting static files from %s", static_dir)
+        
+        # Custom StaticFiles that falls back to index.html for non-existent files
+        class SPAStaticFiles(BaseStaticFiles):
+            """StaticFiles subclass that serves index.html for non-existent paths.
+            
+            This enables proper SPA routing where the React router handles
+            client-side navigation after the initial index.html is served.
+            """
+            async def get_response(self, path: str, scope: dict):
+                """Override to serve index.html for non-existent files."""
+                try:
+                    return await super().get_response(path, scope)
+                except HTTPException as exc:
+                    if exc.status_code == 404:
+                        # File not found - serve index.html for SPA routing
+                        return FileResponse(str(index_path))
+                    raise
+
         application.mount(
             "/",
-            StaticFiles(directory=str(static_dir), html=True),
+            SPAStaticFiles(directory=str(static_dir), html=True),
             name="static",
         )
-
-        @application.get("/{full_path:path}", include_in_schema=False)
-        async def spa_fallback(full_path: str) -> FileResponse:
-            """Serve index.html for all non-API routes (SPA fallback)."""
-            return FileResponse(str(index_path))
     else:
         logger.warning(
             "Static directory '%s' not found or missing index.html. "

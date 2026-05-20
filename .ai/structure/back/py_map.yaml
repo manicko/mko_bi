@@ -9,7 +9,6 @@
   - fastapi.middleware.cors
   - fastapi.middleware.gzip
   - fastapi.responses
-  - fastapi.staticfiles
   - pydantic
   - sqlalchemy
   - starlette.exceptions
@@ -21,7 +20,11 @@
   - mkobi.models.enums
   - mkobi.workers.data_worker
   - pathlib
-  classes: []
+  - starlette.staticfiles
+  - starlette.responses
+  - starlette.exceptions
+  classes:
+  - SPAStaticFiles
   functions:
   - create_app
   - _setup_static_files
@@ -1450,7 +1453,9 @@
   - _apply_groupby_aggregations
   - _calculate_yoy
   - _calculate_share
+  - _is_numeric_literal
   - _parse_formula
+  - _token_to_expr
   - _validate_formula_tokens
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\__init__.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.data.processing.__init__
@@ -1541,6 +1546,7 @@
   - typing
   - uuid
   - fastapi
+  - sqlalchemy.ext.asyncio
   - mkobi.api.deps
   - mkobi.core.permissions
   - mkobi.models.data

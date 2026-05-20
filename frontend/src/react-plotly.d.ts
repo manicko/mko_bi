@@ -12,4 +12,7 @@ declare module 'react-plotly.js' {
 
   const Plot: ComponentType<PlotParams>
   export default Plot
+
+  // Re-export plotly.js types for convenience
+  export type { Config, Data, Layout }
 }

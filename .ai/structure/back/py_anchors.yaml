@@ -201,32 +201,50 @@
   value: Path
   stable_hash: bf6b0792
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: 1775feb0
+- id: a0bca3f7
   symbol_path:
-  - _setup_static_files
-  type: function_call
-  value: StaticFiles
-  stable_hash: 1775feb0
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: cb2cb79f
-  symbol_path:
-  - _setup_static_files
-  type: function_call
-  value: str
-  stable_hash: cb2cb79f
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: 787dad0b
-  symbol_path:
+  - SPAStaticFiles
   - _setup_static_files
   type: return_statement
-  stable_hash: 787dad0b
+  stable_hash: a0bca3f7
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: 1e8aa33a
+- id: 8251b756
   symbol_path:
+  - SPAStaticFiles
+  - _setup_static_files
+  type: function_call
+  value: super
+  stable_hash: 8251b756
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
+- id: a0bca3f7
+  symbol_path:
+  - SPAStaticFiles
+  - _setup_static_files
+  type: return_statement
+  stable_hash: a0bca3f7
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
+- id: 5555fc9b
+  symbol_path:
+  - SPAStaticFiles
   - _setup_static_files
   type: function_call
   value: FileResponse
-  stable_hash: 1e8aa33a
+  stable_hash: 5555fc9b
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
+- id: bae0bbbc
+  symbol_path:
+  - SPAStaticFiles
+  - _setup_static_files
+  type: function_call
+  value: str
+  stable_hash: bae0bbbc
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
+- id: efc0b771
+  symbol_path:
+  - _setup_static_files
+  type: function_call
+  value: SPAStaticFiles
+  stable_hash: efc0b771
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
 - id: cb2cb79f
   symbol_path:
@@ -3923,25 +3941,32 @@
   type: return_statement
   stable_hash: 858a2405
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
-- id: 4137ad9d
+- id: e020fbd3
   symbol_path:
   - DashboardService
   type: function_call
-  value: isinstance
-  stable_hash: 4137ad9d
+  value: hasattr
+  stable_hash: e020fbd3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
+- id: e020fbd3
+  symbol_path:
+  - DashboardService
+  type: function_call
+  value: hasattr
+  stable_hash: e020fbd3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
+- id: bf9e0aee
+  symbol_path:
+  - DashboardService
+  type: function_call
+  value: dict
+  stable_hash: bf9e0aee
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
 - id: 858a2405
   symbol_path:
   - DashboardService
   type: return_statement
   stable_hash: 858a2405
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
-- id: 4137ad9d
-  symbol_path:
-  - DashboardService
-  type: function_call
-  value: isinstance
-  stable_hash: 4137ad9d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
 - id: 4137ad9d
   symbol_path:
@@ -11237,12 +11262,24 @@
   type: return_statement
   stable_hash: ef35d30d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
-- id: fe5f86c0
+- id: cfa50ac0
   symbol_path:
-  - _parse_formula
+  - _is_numeric_literal
   type: function_call
-  value: ValueError
-  stable_hash: fe5f86c0
+  value: float
+  stable_hash: cfa50ac0
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+- id: 3d1fbf01
+  symbol_path:
+  - _is_numeric_literal
+  type: return_statement
+  stable_hash: 3d1fbf01
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+- id: 3d1fbf01
+  symbol_path:
+  - _is_numeric_literal
+  type: return_statement
+  stable_hash: 3d1fbf01
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
 - id: fe5f86c0
   symbol_path:
@@ -11257,6 +11294,54 @@
   type: function_call
   value: len
   stable_hash: db3fc882
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+- id: db3fc882
+  symbol_path:
+  - _parse_formula
+  type: function_call
+  value: len
+  stable_hash: db3fc882
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+- id: 9550ef9c
+  symbol_path:
+  - _parse_formula
+  type: function_call
+  value: _is_numeric_literal
+  stable_hash: 9550ef9c
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+- id: fe5f86c0
+  symbol_path:
+  - _parse_formula
+  type: function_call
+  value: ValueError
+  stable_hash: fe5f86c0
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+- id: db3fc882
+  symbol_path:
+  - _parse_formula
+  type: function_call
+  value: len
+  stable_hash: db3fc882
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+- id: 9550ef9c
+  symbol_path:
+  - _parse_formula
+  type: function_call
+  value: _is_numeric_literal
+  stable_hash: 9550ef9c
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+- id: 46e9cf5e
+  symbol_path:
+  - _parse_formula
+  type: return_statement
+  stable_hash: 46e9cf5e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+- id: 3a3fca6e
+  symbol_path:
+  - _parse_formula
+  type: function_call
+  value: float
+  stable_hash: 3a3fca6e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
 - id: 46e9cf5e
   symbol_path:
@@ -11271,12 +11356,56 @@
   value: _validate_formula_tokens
   stable_hash: 1490fea7
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+- id: 9b2e7454
+  symbol_path:
+  - _parse_formula
+  - _token_to_expr
+  type: function_call
+  value: _is_numeric_literal
+  stable_hash: 9b2e7454
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+- id: 580ab9cb
+  symbol_path:
+  - _parse_formula
+  - _token_to_expr
+  type: return_statement
+  stable_hash: 580ab9cb
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+- id: 380822e7
+  symbol_path:
+  - _parse_formula
+  - _token_to_expr
+  type: function_call
+  value: float
+  stable_hash: 380822e7
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+- id: 580ab9cb
+  symbol_path:
+  - _parse_formula
+  - _token_to_expr
+  type: return_statement
+  stable_hash: 580ab9cb
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+- id: 66091cc4
+  symbol_path:
+  - _parse_formula
+  type: function_call
+  value: _token_to_expr
+  stable_hash: 66091cc4
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
 - id: db3fc882
   symbol_path:
   - _parse_formula
   type: function_call
   value: len
   stable_hash: db3fc882
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+- id: 66091cc4
+  symbol_path:
+  - _parse_formula
+  type: function_call
+  value: _token_to_expr
+  stable_hash: 66091cc4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
 - id: fe5f86c0
   symbol_path:
@@ -11297,6 +11426,13 @@
   type: function_call
   value: enumerate
   stable_hash: c46028af
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
+- id: 67c98b86
+  symbol_path:
+  - _validate_formula_tokens
+  type: function_call
+  value: _is_numeric_literal
+  stable_hash: 67c98b86
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
 - id: '02164135'
   symbol_path:
@@ -12872,6 +13008,12 @@
   type: function_call
   value: APIRouter
   stable_hash: 22eea90d
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py
+- id: c56416e2
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: c56416e2
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py
 - id: c56416e2
   symbol_path: []

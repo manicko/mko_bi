@@ -1,0 +1,94 @@
+id: TASK_003_P05_create_error_boundary_component
+
+title: Create ErrorBoundary class component with production error reporting
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_P05_create_shared_error_page_component
+
+description: >
+  Create a class-based ErrorBoundary component that catches render errors and renders
+  the 500 ErrorPage fallback. In development: logs to console. In production: POSTs
+  error details to /api/v1/client-errors (fire-and-forget, errors swallowed).
+
+phase: PLAN_05 — Frontend Error Handling
+wave: 2
+
+finding_ref: BUG-23, BUG-25, BUG-26
+severity: medium
+
+goals:
+  - Create class-based ErrorBoundary with getDerivedStateFromError and componentDidCatch
+  - Render ErrorPage variant="500" when hasError is true
+  - In dev: console.error logging
+  - In production: fire-and-forget POST to /api/v1/client-errors
+  - Fallback UI is static — no data fetching
+
+files:
+  - path: frontend/src/shared/components/ErrorBoundary.tsx
+    targets:
+      - type: class
+        name: ErrorBoundary
+    semantic_anchors:
+      create:
+        type: new_file
+        value: "ErrorBoundary.tsx — class-based error boundary component"
+
+changes:
+  - action: create_component
+    description: >
+      Create ErrorBoundary.tsx as a class component.
+    code_hint: |
+      import { Component, ErrorInfo, ReactNode } from 'react'
+      import { ErrorPage } from './ErrorPage'
+
+      interface ErrorBoundaryProps { children: ReactNode }
+      interface ErrorBoundaryState { hasError: boolean; error: Error | null }
+
+      export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+        constructor(props: ErrorBoundaryProps) {
+          super(props)
+          this.state = { hasError: false, error: null }
+        }
+        static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+          return { hasError: true, error }
+        }
+        componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+          if (import.meta.env.DEV) {
+            console.error('[ErrorBoundary]', error)
+          } else {
+            this.reportError(error, errorInfo.componentStack)
+          }
+        }
+        private reportError(error: Error, componentStack: string | null): void {
+          const payload = { error: { name: error.name, message: error.message, stack: error.stack },
+            componentStack, url: window.location.href, userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString() }
+          fetch('/api/v1/client-errors', { method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload) }).catch(() => {})
+        }
+        render(): ReactNode {
+          if (this.state.hasError) return <ErrorPage variant="500" error={this.state.error} />
+          return this.props.children
+        }
+      }
+
+acceptance_criteria:
+  - Class component with getDerivedStateFromError and componentDidCatch
+  - Renders ErrorPage variant="500" when hasError is true
+  - In dev: logs to console via console.error
+  - In production: POSTs to /api/v1/client-errors (fire-and-forget, errors swallowed)
+  - Fallback UI is static — no data fetching, no hooks that could fail
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+risk_level: low
+
+rollout_notes: >
+  Depends on TASK_001 (ErrorPage component).
+  New file creation. Must complete before TASK_005_P05 (routes.tsx) and TASK_007_P05 (providers.tsx).

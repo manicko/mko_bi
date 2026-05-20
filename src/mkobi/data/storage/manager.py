@@ -14,6 +14,7 @@ Features:
 from __future__ import annotations
 
 import logging
+import warnings
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
@@ -449,7 +450,17 @@ class StorageManager:
         mode: UploadMode,
         db: AsyncSession,
     ) -> None:
-        """Compatibility wrapper."""
+        """Compatibility wrapper.
+
+        .. deprecated::
+            Use instance method :meth:`save_aggregates` instead.
+        """
+        warnings.warn(
+            "save_aggregated_data classmethod is deprecated. Use instance method "
+            "save_aggregates instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         manager = cls(db)
 
         aggregates = [
@@ -475,6 +486,9 @@ class StorageManager:
     ) -> int:
         """Compatibility method with db parameter.
 
+        .. deprecated::
+            Use instance method :meth:`clear_graph_data` instead.
+
         Args:
             graph_id: Graph ID.
             db: Async SQLAlchemy session.
@@ -482,6 +496,12 @@ class StorageManager:
         Returns:
             Number of deleted records.
         """
+        warnings.warn(
+            "clear_graph_data_compat classmethod is deprecated. Use instance method "
+            "clear_graph_data instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         manager = cls(db)
         return await manager.clear_graph_data(graph_id=graph_id)
 
@@ -493,6 +513,9 @@ class StorageManager:
     ) -> int:
         """Compatibility method with db parameter.
 
+        .. deprecated::
+            Use instance method :meth:`clear_dashboard_data` instead.
+
         Args:
             dashboard_id: Dashboard ID.
             db: Async SQLAlchemy session.
@@ -500,5 +523,11 @@ class StorageManager:
         Returns:
             Number of deleted records.
         """
+        warnings.warn(
+            "clear_dashboard_data_compat classmethod is deprecated. Use instance "
+            "method clear_dashboard_data instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         manager = cls(db)
         return await manager.clear_dashboard_data(dashboard_id=dashboard_id)

@@ -1,0 +1,61 @@
+id: TASK_006_P05_add_403_toast_to_axios_interceptor
+
+title: Add 403 toast handling to axios response interceptor
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  Add a 403 handler to the axios response interceptor that shows toast.error('Access denied')
+  and keeps the user on the current page. The 403 handler is placed after 401 so both
+  can fire independently. Error is still rejected for TanStack Query handling.
+
+phase: PLAN_05 — Frontend Error Handling
+wave: 3
+
+finding_ref: BUG-28
+severity: low
+
+goals:
+  - Add 403 handler after 401 handler in response interceptor
+  - Show toast.error('Access denied') on 403
+  - User stays on current page (no redirect)
+  - Error still rejected via Promise.reject for TanStack Query
+
+files:
+  - path: frontend/src/shared/api/axiosInstance.ts
+    targets:
+      - type: function
+        name: response interceptor
+    semantic_anchors:
+      insert_after:
+        type: conditional
+        value: "Add 403 handler after 401 handler"
+
+changes:
+  - action: add_403_handler
+    description: >
+      Add 403 handler after existing 401 handler.
+    code_hint: |
+      if (error.response?.status === 403) {
+        toast.error('Access denied')
+      }
+
+acceptance_criteria:
+  - 403 responses trigger toast.error('Access denied')
+  - User stays on current page (no redirect)
+  - 401 behavior unchanged (remove token → toast → redirect to /login)
+  - Error is still rejected via Promise.reject(error) so TanStack Query handles it
+  - No new imports needed — toast is already imported
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+risk_level: low
+
+rollout_notes: >
+  Single-file change. Independent of other tasks.
+  Minimal addition — single conditional block.

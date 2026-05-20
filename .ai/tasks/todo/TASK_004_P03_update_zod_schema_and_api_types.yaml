@@ -1,0 +1,89 @@
+id: TASK_004_P03_update_zod_schema_and_api_types
+
+title: Update Zod schema + API types for dashboard creation
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  Update createDashboardSchema to enforce name (3-100 chars, alphanumeric+spaces+hyphens
+  regex) and description (max 200 chars). Add optional layout enum. Update
+  CreateDashboardRequest type to include optional layout field.
+
+phase: PLAN_03 — Admin Dashboard Creation
+wave: 1
+
+finding_ref: BUG-10, BUG-11
+severity: low
+
+goals:
+  - Update createDashboardSchema name validation: min 3, max 100, regex
+  - Update createDashboardSchema description: max 200 chars (was 500)
+  - Add optional layout enum to schema
+  - Add optional layout field to CreateDashboardRequest type
+
+files:
+  - path: frontend/src/shared/types/formSchemas.ts
+    targets:
+      - type: constant
+        name: createDashboardSchema
+    semantic_anchors:
+      update:
+        type: zod_schema
+        value: "createDashboardSchema — name validation, description max, layout enum"
+
+  - path: frontend/src/shared/types/api.types.ts
+    targets:
+      - type: interface
+        name: CreateDashboardRequest
+    semantic_anchors:
+      update:
+        type: interface_property
+        value: "Add optional layout field"
+
+changes:
+  - action: update_schema
+    description: >
+      Update createDashboardSchema with name regex, description max 200, layout enum.
+    code_hint: |
+      export const createDashboardSchema = z.object({
+        name: z.string()
+          .min(3, { error: 'Name must be at least 3 characters' })
+          .max(100, { error: 'Name must be at most 100 characters' })
+          .regex(/^[a-zA-Z0-9\s-]+$/, {
+            error: 'Name can only contain letters, numbers, spaces, and hyphens',
+          }),
+        description: z.string()
+          .max(200, { error: 'Description must be at most 200 characters' })
+          .optional(),
+        layout: z.enum(['single-column', 'two-columns', 'grid']).optional(),
+      })
+
+  - action: update_type
+    description: >
+      Add optional layout field to CreateDashboardRequest.
+    code_hint: |
+      export interface CreateDashboardRequest {
+        name: string
+        description?: string
+        layout?: 'single-column' | 'two-columns' | 'grid'
+      }
+
+acceptance_criteria:
+  - createDashboardSchema validates name: min 3, max 100, regex for alphanumeric+spaces+hyphens
+  - createDashboardSchema validates description: max 200 chars optional
+  - createDashboardSchema accepts optional layout enum
+  - CreateDashboardRequest includes optional layout field
+  - updateDashboardSchema and other schemas unchanged
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+risk_level: low
+
+rollout_notes: >
+  Frontend-only type/schema changes. Independent of backend tasks.
+  Must complete before TASK_005_P03 and TASK_006_P03 (which use updated types).

@@ -1,0 +1,90 @@
+id: TASK_002_P02_fix_login_error_display
+
+title: Fix login error display — interceptor skip for login endpoint + inline error with clear-on-change
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  Fix two issues: (1) The axios interceptor fires on ALL 401s including login failures,
+  causing redirect instead of showing inline error. (2) Login form error message says
+  "Invalid email or password" instead of "Invalid login or password". (3) Error does not
+  clear when user modifies form fields.
+
+phase: PLAN_02 — Frontend Bug Fixes
+wave: 1
+
+finding_ref: BUG-02
+severity: low
+
+goals:
+  - Skip redirect for 401 on /auth/login endpoint in axios interceptor
+  - Fix error message to "Invalid login or password"
+  - Add clear-on-change behavior using useWatch + useEffect
+
+files:
+  - path: frontend/src/shared/api/axiosInstance.ts
+    targets:
+      - type: function
+        name: response interceptor
+    semantic_anchors:
+      insert_after:
+        type: conditional
+        value: "if (error.response?.status === 401)"
+      changes:
+        - add login endpoint check to skip redirect
+
+  - path: frontend/src/features/auth/ui/LoginForm.tsx
+    targets:
+      - type: component
+        name: LoginForm
+    semantic_anchors:
+      update:
+        type: function_call
+        value: "setError('Invalid email or password')"
+        replacement: "setError('Invalid login or password')"
+      insert_after:
+        type: hook_call
+        value: "useForm"
+      add:
+        type: hook_call
+        value: "useWatch + useEffect for error clearing"
+
+changes:
+  - action: modify_interceptor
+    description: >
+      Add check for /auth/login in 401 handler to skip redirect and toast.
+    code_hint: |
+      # In axiosInstance.ts, inside the 401 block:
+      if (error.config?.url?.includes('/auth/login')) {
+        return Promise.reject(error)
+      }
+
+  - action: modify_form
+    description: >
+      Fix error message and add useWatch + useEffect for clear-on-change.
+    code_hint: |
+      # In LoginForm.tsx:
+      # 1. Destructure `control` from useForm
+      # 2. Add: const watchedFields = useWatch({ control })
+      # 3. Add: useEffect(() => { if (error) setError(null) }, [watchedFields.email, watchedFields.password, error, setError])
+      # 4. Fix: setError('Invalid login or password')
+
+acceptance_criteria:
+  - Login with wrong credentials: inline Alert shows "Invalid login or password", no redirect, no toast
+  - Login with correct credentials: navigates to /dashboards (unchanged)
+  - Modifying email or password field clears the error Alert
+  - 401 on non-login endpoints (e.g., expired token on /auth/me): still redirects to /login with toast
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+risk_level: low
+
+rollout_notes: >
+  Two-file change but both files are independent of other tasks.
+  The interceptor change is a simple conditional guard.
+  The form change adds standard react-hook-form patterns.

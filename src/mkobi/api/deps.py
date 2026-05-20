@@ -36,7 +36,9 @@ from mkobi.core.permissions import (
 )
 from mkobi.core.security import decode_token
 from mkobi.db.repositories.user_repo import UserRepository
-from mkobi.db.session import get_db, get_session  # noqa: F401 - re-exported for backwards compatibility
+# DEPRECATED: get_session is kept for backwards compatibility only.
+# External code may import it from here. Remove in v2.0.
+from mkobi.db.session import get_db, get_session  # noqa: F401
 from mkobi.models.enums import UserRole
 from mkobi.models.user import UserRead
 from mkobi.services.auth_service import AuthService

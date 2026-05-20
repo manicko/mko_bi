@@ -279,31 +279,29 @@ class DashboardService(IDashboardService):
         if db is None:
             async with get_session() as db:
                 return await self.update_dashboard(dashboard_id, update_data, config, db)
-        
+
+        # Normalize update_data to dict at method start
+        if update_data is None:
+            data = {}
+        elif hasattr(update_data, "model_dump"):
+            data = update_data.model_dump(exclude_unset=True)
+        elif hasattr(update_data, "dict"):
+            data = update_data.dict(exclude_unset=True)
+        else:
+            data = dict(update_data)
+
         # Handle config parameter if provided
         if config is not None:
-            if update_data is None:
-                update_data = {"config": config}
-            elif isinstance(update_data, dict):
-                update_data["config"] = config
-            else:
-                update_data = update_data.model_dump(exclude_unset=True)
-                update_data["config"] = config
+            data["config"] = config
 
-        if not update_data:
+        if not data:
             logger.warning(
                 "No data for dashboard update: dashboard_id=%s", dashboard_id
             )
             return None
 
         # Validate configuration if provided
-        config_to_validate = None
-        if update_data:
-            if isinstance(update_data, dict):
-                config_to_validate = update_data.get("config")
-            else:
-                config_to_validate = update_data.config
-
+        config_to_validate = data.get("config")
         if config_to_validate:
             if isinstance(config_to_validate, dict):
                 config_to_validate = DashboardConfig(**config_to_validate)
@@ -312,7 +310,7 @@ class DashboardService(IDashboardService):
         updated = await self.dashboard_repo.update(
             dashboard_id,
             db,
-            **update_data,
+            **data,
         )
         if updated is None:
             return None

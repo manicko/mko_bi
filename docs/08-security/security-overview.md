@@ -37,11 +37,15 @@ Rate limiting is applied to sensitive endpoints to prevent brute-force attacks a
 
 | Endpoint | Rate Limit | Scope |
 | --- | --- | --- |
-| `POST /api/v1/auth/login` | 5 attempts per 5 minutes | Per email |
-| `POST /api/v1/auth/login/form` | 5 attempts per 5 minutes | Per email |
+| `POST /api/v1/auth/login` | 5 attempts per 5 minutes | Per IP |
+| `POST /api/v1/auth/login/form` | 5 attempts per 5 minutes | Per IP |
 | `POST /api/v1/auth/register-request` | 3 attempts per hour | Per IP/email |
 | `POST /api/v1/upload/:dashboard_id` | Configured via env | Per user |
 | `POST /api/v1/upload/:dashboard_id/process` | Configured via env | Per user |
+
+### Email Enumeration Mitigation
+
+Login rate limiting uses **per-IP** keys (not per-email) to prevent email enumeration attacks. An attacker can determine whether an email is registered by observing which keys are rate-limited. By scoping rate limits to the client IP address, the system prevents this side-channel while maintaining effective brute-force protection.
 
 ### Rate Limiter Failure Behavior [HIGH-RISK]
 
