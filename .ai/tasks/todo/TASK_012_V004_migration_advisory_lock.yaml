@@ -1,0 +1,66 @@
+id: TASK_012_V004_migration_advisory_lock
+
+title: Add distributed advisory lock for Alembic migrations in multi-instance deployments
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  _apply_migrations() runs Alembic without a distributed lock. In multi-instance
+  deployments (K8s replicas, Gunicorn workers), parallel migrations can corrupt
+  the schema. This task adds pg_advisory_lock() before running migrations to ensure
+  only one instance runs migrations at a time.
+
+finding_ref: V-004
+severity: HIGH
+
+goals:
+  - Add pg_advisory_lock() before running Alembic migrations
+  - Ensure only one instance runs migrations at a time
+  - Release lock after migrations complete (even on failure)
+
+files:
+  - path: src/mkobi/db/starter.py
+    targets:
+      - type: class
+        name: DatabaseStarter
+      - type: method
+        name: _apply_migrations
+    semantic_anchors:
+      insert_before: alembic upgrade head command
+      insert_after: alembic upgrade head command (for lock release)
+
+changes:
+  - action: add_locking
+    description: >
+      Wrap the migration execution with pg_advisory_lock() to prevent concurrent
+      migrations in multi-instance deployments.
+    code_hint: |
+      async def _apply_migrations(self, db_url: str) -> None:
+          async with self.session_factory() as session:
+              # Acquire advisory lock (key: 42 for migrations)
+              await session.execute(text("SELECT pg_advisory_lock(42)"))
+              try:
+                  # Run migrations
+                  await session.commit()
+              finally:
+                  await session.execute(text("SELECT pg_advisory_unlock(42)"))
+
+acceptance_criteria:
+  - Advisory lock acquired before migrations run
+  - Advisory lock released after migrations complete (even on failure)
+  - Concurrent instances wait for lock instead of running parallel migrations
+  - Single-instance deployments still work correctly
+
+tests_to_run:
+  - pytest tests/ -k "migration or startup" -v
+
+risk_level: medium
+
+rollout_notes: >
+  Must be coordinated with deployment strategy. For K8s/multi-replica, critical.
+  For Docker Compose with single instance, lower urgency. Consider also using
+  an external migration job that runs before app startup.

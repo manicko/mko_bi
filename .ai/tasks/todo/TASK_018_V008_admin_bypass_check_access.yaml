@@ -1,0 +1,62 @@
+id: TASK_018_V008_admin_bypass_check_access
+
+title: Add admin bypass to check_dashboard_access() in permissions.py
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  check_dashboard_access() does not implement admin bypass. It always checks the
+  dashboard_access table, even for admins. Admin bypass is only in
+  DashboardService.get_dashboard(), not in the standalone function used by data.py
+  and dashboards.py. This task adds admin role check at the start of the function.
+
+finding_ref: V-008
+severity: MEDIUM
+
+goals:
+  - Add admin role check at the start of check_dashboard_access()
+  - Return True immediately for admin users
+  - Ensure consistent access control across all code paths
+
+files:
+  - path: src/mkobi/core/permissions.py
+    targets:
+      - type: function
+        name: check_dashboard_access
+    semantic_anchors:
+      insert_after: function signature
+      insert_before: dashboard_access table query
+
+changes:
+  - action: add_admin_bypass
+    description: >
+      Add admin role check at the start of check_dashboard_access().
+      If user role is UserRole.ADMIN, return True immediately.
+    code_hint: |
+      async def check_dashboard_access(
+          user_id: UUID, dashboard_id: UUID, db: AsyncSession
+      ) -> bool:
+          # Admin bypass
+          user = await UserRepository(db).get_by_id(user_id)
+          if user and user.role == UserRole.ADMIN:
+              return True
+          # Existing access check logic...
+
+acceptance_criteria:
+  - Admin users bypass dashboard_access table check
+  - Non-admin users still checked against dashboard_access table
+  - Consistent behavior across all endpoints using check_dashboard_access()
+  - No regression in access control
+
+tests_to_run:
+  - pytest tests/ -k "access or permission or admin" -v
+
+risk_level: low
+
+rollout_notes: >
+  Safe. No dependencies. Must be applied before admin users try to access
+  data endpoints without explicit access grants.

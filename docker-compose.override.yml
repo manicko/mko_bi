@@ -17,7 +17,7 @@ services:
       JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
       LOGGING__LEVEL: DEBUG
       AUTO_MIGRATE: "true"  # Run migration on startup to create schema
-      RECREATE_TEST_DB: "false"  # Disabled - test DB creation causes restart loop
+      RECREATE_TEST_DB: "true"
     volumes:
       # Mount source code for hot reload (writable for egg-info generation)
       - ./src:/app/src

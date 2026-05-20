@@ -1,0 +1,71 @@
+id: TASK_003_V005_admin_upsert_fix
+
+title: Fix admin user race condition with UPSERT in ensure_admin_user()
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  ensure_admin_user() uses a check-then-create pattern (get_by_email → if None → create)
+  which is a classic TOCTOU race condition. Two concurrent startups can both pass the
+  check before either creates the user. The IntegrityError catch is a partial mitigation
+  but still produces error logs. This task replaces the pattern with INSERT ... ON CONFLICT DO NOTHING.
+
+finding_ref: V-005
+severity: HIGH
+
+goals:
+  - Replace check-then-create with atomic UPSERT in ensure_admin_user()
+  - Eliminate race condition on concurrent startup
+  - Remove noisy IntegrityError logs
+
+files:
+  - path: src/mkobi/db/starter.py
+    targets:
+      - type: class
+        name: DatabaseStarter
+      - type: method
+        name: ensure_admin_user
+    semantic_anchors:
+      insert_after: existing ensure_admin_user method signature
+      replace: check-then-create logic with UPSERT
+
+changes:
+  - action: modify_method
+    description: >
+      Replace the check-then-create pattern with an atomic UPSERT using
+      INSERT ... ON CONFLICT DO NOTHING.
+    code_hint: |
+      async def ensure_admin_user(self) -> None:
+          async with self.session_factory() as session:
+              async with session.begin():
+                  await session.execute(
+                      text(
+                          "INSERT INTO users (id, email, hashed_password, role, is_active) "
+                          "VALUES (:id, :email, :password, :role, true) "
+                          "ON CONFLICT (email) DO NOTHING"
+                      ),
+                      {
+                          "id": str(uuid.uuid4()),
+                          "email": settings.admin_email,
+                          "password": hash_password(settings.admin_password),
+                          "role": UserRole.ADMIN,
+                      },
+                  )
+
+acceptance_criteria:
+  - ensure_admin_user() uses atomic UPSERT instead of check-then-create
+  - No IntegrityError logs on concurrent startup
+  - Admin user created correctly on first startup
+  - No-op (no error) when admin user already exists
+
+tests_to_run:
+  - pytest tests/ -k "admin or startup or ensure_admin" -v
+
+risk_level: low
+
+rollout_notes: >
+  Safe. UPSERT is atomic. No dependencies. Simple method replacement.

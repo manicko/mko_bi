@@ -1,0 +1,55 @@
+id: TASK_006_V012_sanitize_db_url_logging
+
+title: Sanitize database URL in _apply_migrations() to prevent credential leak
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  _apply_migrations() in starter.py logs the full database URL at INFO level,
+  which may contain credentials (username:password@host). This task sanitizes
+  the URL before logging using SQLAlchemy's render_as_string(hide_password=True).
+
+finding_ref: V-012
+severity: MEDIUM
+
+goals:
+  - Prevent credentials from being logged at INFO level
+  - Use URL rendering that hides password
+  - Preserve useful connection info (host, db name) in logs
+
+files:
+  - path: src/mkobi/db/starter.py
+    targets:
+      - type: class
+        name: DatabaseStarter
+      - type: method
+        name: _apply_migrations
+    semantic_anchors:
+      replace: logger.info("Running migrations for %s...", db_url)
+
+changes:
+  - action: modify_logging
+    description: >
+      Replace raw db_url logging with sanitized version that hides password.
+    code_hint: |
+      from sqlalchemy.engine import make_url
+      # ...
+      safe_url = make_url(db_url).render_as_string(hide_password=True)
+      logger.info("Running migrations for %s...", safe_url)
+
+acceptance_criteria:
+  - Database URL password is never logged
+  - Migration logging still shows host and database name
+  - No functional changes to migration logic
+
+tests_to_run:
+  - pytest tests/ -k "migration or startup" -v
+
+risk_level: low
+
+rollout_notes: >
+  Safe. No dependencies. Simple string formatting change.

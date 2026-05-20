@@ -1,0 +1,59 @@
+id: TASK_004_V010_token_cache_bounds
+
+title: Bound _token_cache with LRU eviction to prevent memory leak
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  _token_cache in permissions.py is a module-level dict with no size bounds or
+  periodic cleanup. In long-running processes with many unique tokens, this dict
+  grows unbounded causing a memory leak. This task replaces it with a bounded
+  LRU cache using functools.lru_cache.
+
+finding_ref: V-010
+severity: MEDIUM
+
+goals:
+  - Replace unbounded _token_cache dict with bounded LRU cache
+  - Prevent memory leak in long-running processes
+  - Preserve TTL-based caching behavior
+
+files:
+  - path: src/mkobi/core/permissions.py
+    targets:
+      - type: module_variable
+        name: _token_cache
+      - type: function
+        name: _decode_token_cached
+    semantic_anchors:
+      replace: module-level _token_cache dict declaration
+      replace: _decode_token_cached function body
+
+changes:
+  - action: replace_variable
+    description: >
+      Replace module-level _token_cache dict with functools.lru_cache wrapper.
+    code_hint: |
+      from functools import lru_cache
+
+      @lru_cache(maxsize=1000)
+      def _decode_token_cached(token: str) -> TokenData:
+          return decode_token(token)
+
+acceptance_criteria:
+  - _token_cache dict removed from module scope
+  - _decode_token_cached uses lru_cache with maxsize=1000
+  - Token decoding still works correctly
+  - Cache eviction works (old entries removed when maxsize reached)
+
+tests_to_run:
+  - pytest tests/ -k "token or permission or auth" -v
+
+risk_level: low
+
+rollout_notes: >
+  Safe. No dependencies. Drop-in replacement. lru_cache is thread-safe.

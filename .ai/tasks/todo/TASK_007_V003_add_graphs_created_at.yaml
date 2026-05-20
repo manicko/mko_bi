@@ -1,0 +1,68 @@
+id: TASK_007_V003_add_graphs_created_at
+
+title: Add missing created_at column to graphs table via Alembic migration
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_V001_drop_graphs_trigger
+
+description: >
+  The SQLAlchemy model (graphs.py) defines created_at: Mapped[datetime], but the
+  Alembic migration does not include a created_at column in the graphs table.
+  This causes MissingColumnError at runtime when querying graphs. This task adds
+  the missing column via a new Alembic migration.
+
+finding_ref: V-003
+severity: HIGH
+
+goals:
+  - Add created_at TIMESTAMPTZ column to graphs table with NOT NULL DEFAULT now()
+  - Make the schema match the ORM model expectation
+  - Ensure the migration is reproducible
+
+files:
+  - path: alembic/versions/<new_migration>/
+    targets:
+      - type: migration_operation
+        name: add_column
+    semantic_anchors:
+      insert_after: graphs table creation in new migration
+      operation: op.add_column('graphs', sa.Column('created_at', sa.TIMESTAMPTZ(), server_default=text('now()'), nullable=False))
+
+changes:
+  - action: create_migration
+    description: >
+      Create a new Alembic migration that adds created_at to the graphs table.
+    code_hint: |
+      def upgrade():
+          op.add_column(
+              "graphs",
+              sa.Column(
+                  "created_at",
+                  sa.TIMESTAMPTZ(),
+                  server_default=text("now()"),
+                  nullable=False,
+              ),
+          )
+
+      def downgrade():
+          op.drop_column("graphs", "created_at")
+
+acceptance_criteria:
+  - New migration created and passes upgrade/downgrade
+  - created_at column exists in graphs table
+  - Graph queries no longer raise MissingColumnError
+  - Existing rows have created_at populated from DEFAULT
+
+tests_to_run:
+  - pytest tests/ -k "graph" -v
+  - alembic upgrade head --sql (dry run verification)
+
+risk_level: low
+
+rollout_notes: >
+  Must be applied before any code that queries Graph.created_at is deployed.
+  Depends on TASK_001 to ensure the broken trigger is dropped first.

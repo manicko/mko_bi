@@ -1,107 +1,295 @@
-# Execution Order for mkobi Refactoring Tasks
-# Generated: 2026-05-19
-# Source plans: PLAN_01_legacy_docs_integration.md, PLAN_02_migration_consolidation.md
-# Source audit: implementation_audit_01.md
+# Execution Order for Validated Audit Findings — mkobi BI Dashboard
+# Generated: 2026-05-20
+# Source: .ai/audit/validated/audit_validated_findings_001.md
+#
+# Total tasks: 37
+# Execution groups: 6 (A through F)
+#
+# Group A (Immediate — no dependencies): TASK_001 through TASK_006
+# Group B (Schema changes — require migrations): TASK_007 through TASK_009
+# Group C (API changes — frontend coordination): TASK_010 through TASK_011
+# Group D (Infrastructure — deployment coordination): TASK_012 through TASK_014
+# Group E (Data worker fixes): TASK_015 through TASK_017
+# Group F (Access control & code quality): TASK_018 through TASK_025
+# Group G (Low priority cleanup): TASK_026 through TASK_035
+# Group H (Refactoring — requires test rewrite first): TASK_036 through TASK_037
 
-# Wave 1: Documentation Integration (PLAN_01) - Low risk, docs-only
-# Tasks can start immediately, no dependencies on other waves
-
-tasks:
-  # Wave 1: Documentation Integration - Sequential
-  - id: TASK_001_docs_create_guides_dir
+execution_order:
+  # ═══════════════════════════════════════════════════════════════
+  # PHASE 1: IMMEDIATE FIXES (Group A) — No dependencies
+  # Safe to apply immediately. Can run in parallel.
+  # ═══════════════════════════════════════════════════════════════
+  - id: TASK_001_V001_drop_graphs_trigger
+    phase: 1
+    group: A
     depends_on: []
-    wave: 1
-    group: docs
+    parallel_group: 1a
 
-  - id: TASK_002_docs_migrate_docker_guide
-    depends_on:
-      - TASK_001_docs_create_guides_dir
-    wave: 1
-    group: docs
-
-  - id: TASK_003_docs_migrate_task_queue_guide
-    depends_on:
-      - TASK_001_docs_create_guides_dir
-    wave: 1
-    group: docs
-
-  - id: TASK_004_docs_update_deployment_cross_refs
-    depends_on:
-      - TASK_002_docs_migrate_docker_guide
-    wave: 1
-    group: docs
-
-  - id: TASK_005_docs_delete_legacy_files
-    depends_on:
-      - TASK_002_docs_migrate_docker_guide
-      - TASK_003_docs_migrate_task_queue_guide
-      - TASK_004_docs_update_deployment_cross_refs
-    wave: 1
-    group: docs
-
-  - id: TASK_006_docs_update_spec_index
-    depends_on:
-      - TASK_005_docs_delete_legacy_files
-    wave: 1
-    group: docs
-
-  # Wave 2: Migration Consolidation (PLAN_02) - Medium risk, DB changes
-  # Independent from Wave 1, can run in parallel
-
-  - id: TASK_007_db_generate_consolidated_migration
+  - id: TASK_002_V002_add_composite_index
+    phase: 1
+    group: A
     depends_on: []
-    wave: 2
-    group: db
+    parallel_group: 1a
 
-  - id: TASK_008_db_write_consolidated_upgrade
-    depends_on:
-      - TASK_007_db_generate_consolidated_migration
-    wave: 2
-    group: db
-
-  - id: TASK_009_db_write_consolidated_downgrade
-    depends_on:
-      - TASK_008_db_write_consolidated_upgrade
-    wave: 2
-    group: db
-
-  - id: TASK_010_db_validate_consolidated_migration
-    depends_on:
-      - TASK_009_db_write_consolidated_downgrade
-    wave: 2
-    group: db
-
-  - id: TASK_011_db_delete_old_migrations
-    depends_on:
-      - TASK_010_db_validate_consolidated_migration
-    wave: 2
-    group: db
-
-  # Wave 3: Frontend Audit Fixes - Independent, can run in parallel with Waves 1 & 2
-  # All audit fixes are independent of each other
-
-  - id: TASK_012_fe_fix_upload_polling_bug
+  - id: TASK_003_V005_admin_upsert_fix
+    phase: 1
+    group: A
     depends_on: []
-    wave: 3
-    group: frontend_fixes
+    parallel_group: 1a
 
-  - id: TASK_013_fe_fix_user_mgmt_delete_loading
+  - id: TASK_004_V010_token_cache_bounds
+    phase: 1
+    group: A
     depends_on: []
-    wave: 3
-    group: frontend_fixes
+    parallel_group: 1a
 
-  - id: TASK_014_fe_fix_admin_datagrid_state
+  - id: TASK_005_V011_security_log_levels
+    phase: 1
+    group: A
     depends_on: []
-    wave: 3
-    group: frontend_fixes
+    parallel_group: 1a
 
-  - id: TASK_015_fe_fix_user_mgmt_inline_css
+  - id: TASK_006_V012_sanitize_db_url_logging
+    phase: 1
+    group: A
     depends_on: []
-    wave: 3
-    group: frontend_fixes
+    parallel_group: 1a
 
-# Parallel execution groups:
-# Wave 1: Sequential (docs dependency chain)
-# Wave 2: Sequential (DB migration dependency chain)
-# Wave 3: All 4 tasks can run in parallel (independent frontend fixes)
-# Waves 1, 2, 3 can run concurrently (different domains: docs, DB, frontend)
+  # ═══════════════════════════════════════════════════════════════
+  # PHASE 2: SCHEMA MIGRATIONS (Group B) — Require migrations
+  # Depend on Phase 1 completion (trigger must be dropped first)
+  # ═══════════════════════════════════════════════════════════════
+  - id: TASK_007_V003_add_graphs_created_at
+    phase: 2
+    group: B
+    depends_on:
+      - TASK_001_V001_drop_graphs_trigger
+    parallel_group: 2a
+
+  - id: TASK_008_V006_align_permission_server_default
+    phase: 2
+    group: B
+    depends_on:
+      - TASK_007_V003_add_graphs_created_at
+    parallel_group: 2b
+
+  - id: TASK_009_V035_remove_redundant_onupdate
+    phase: 2
+    group: B
+    depends_on:
+      - TASK_008_V006_align_permission_server_default
+    parallel_group: 2c
+
+  # ═══════════════════════════════════════════════════════════════
+  # PHASE 3: API CHANGES (Group C) — Frontend coordination
+  # Can run in parallel with Phase 2
+  # ═══════════════════════════════════════════════════════════════
+  - id: TASK_010_V007_admin_log_pagination
+    phase: 3
+    group: C
+    depends_on: []
+    parallel_group: 3a
+
+  - id: TASK_011_V028_fix_status_codes
+    phase: 3
+    group: C
+    depends_on: []
+    parallel_group: 3a
+
+  # ═══════════════════════════════════════════════════════════════
+  # PHASE 4: INFRASTRUCTURE (Group D) — Deployment coordination
+  # Depend on each other (lock before job)
+  # ═══════════════════════════════════════════════════════════════
+  - id: TASK_012_V004_migration_advisory_lock
+    phase: 4
+    group: D
+    depends_on: []
+    parallel_group: 4a
+
+  - id: TASK_013_V018_migration_job_compose
+    phase: 4
+    group: D
+    depends_on:
+      - TASK_012_V004_migration_advisory_lock
+    parallel_group: 4b
+
+  - id: TASK_014_V024_dedicated_db_role
+    phase: 4
+    group: D
+    depends_on: []
+    parallel_group: 4a
+
+  # ═══════════════════════════════════════════════════════════════
+  # PHASE 5: DATA WORKER FIXES (Group E) — Independent
+  # Can run in parallel with other phases
+  # ═══════════════════════════════════════════════════════════════
+  - id: TASK_015_V013_stale_processing_heartbeat
+    phase: 5
+    group: E
+    depends_on: []
+    parallel_group: 5a
+
+  - id: TASK_016_V014_fix_nested_transaction_store_aggregates
+    phase: 5
+    group: E
+    depends_on: []
+    parallel_group: 5a
+
+  - id: TASK_017_V015_invalid_dimensions_error
+    phase: 5
+    group: E
+    depends_on: []
+    parallel_group: 5a
+
+  # ═══════════════════════════════════════════════════════════════
+  # PHASE 6: ACCESS CONTROL & CODE QUALITY (Group F)
+  # Independent tasks
+  # ═══════════════════════════════════════════════════════════════
+  - id: TASK_018_V008_admin_bypass_check_access
+    phase: 6
+    group: F
+    depends_on: []
+    parallel_group: 6a
+
+  - id: TASK_019_V022_bind_unbind_filter_error_handling
+    phase: 6
+    group: F
+    depends_on: []
+    parallel_group: 6a
+
+  - id: TASK_020_V023_remove_create_db_sql
+    phase: 6
+    group: F
+    depends_on: []
+    parallel_group: 6a
+
+  - id: TASK_021_V025_wire_cleanup_old_logs
+    phase: 6
+    group: F
+    depends_on: []
+    parallel_group: 6a
+
+  - id: TASK_022_V019_login_rate_limit_enumeration
+    phase: 6
+    group: F
+    depends_on: []
+    parallel_group: 6a
+
+  - id: TASK_023_V020_v021_test_db_name_configurable
+    phase: 6
+    group: F
+    depends_on: []
+    parallel_group: 6a
+
+  - id: TASK_024_V016_config_reloadable
+    phase: 6
+    group: F
+    depends_on: []
+    parallel_group: 6a
+
+  - id: TASK_025_V017_weak_admin_credentials_check
+    phase: 6
+    group: F
+    depends_on: []
+    parallel_group: 6a
+
+  # ═══════════════════════════════════════════════════════════════
+  # PHASE 7: LOW PRIORITY CLEANUP (Group G)
+  # Independent tasks, can be done in any order
+  # ═══════════════════════════════════════════════════════════════
+  - id: TASK_026_V034_remove_dead_code_starter
+    phase: 7
+    group: G
+    depends_on:
+      - TASK_021_V025_wire_cleanup_old_logs
+    parallel_group: 7a
+
+  - id: TASK_027_V032_upload_memory_streaming
+    phase: 7
+    group: G
+    depends_on: []
+    parallel_group: 7a
+
+  - id: TASK_028_V031_parse_formula_numeric_literals
+    phase: 7
+    group: G
+    depends_on: []
+    parallel_group: 7a
+
+  - id: TASK_029_V033_plotly_type_imports
+    phase: 7
+    group: G
+    depends_on: []
+    parallel_group: 7a
+
+  - id: TASK_030_V032_data_route_pass_db_session
+    phase: 7
+    group: G
+    depends_on: []
+    parallel_group: 7a
+
+  - id: TASK_031_V027_index_naming_convention
+    phase: 7
+    group: G
+    depends_on: []
+    parallel_group: 7a
+
+  - id: TASK_032_V036_remove_bidb_schema_sql
+    phase: 7
+    group: G
+    depends_on: []
+    parallel_group: 7a
+
+  - id: TASK_033_V037_deprecation_comment_get_session
+    phase: 7
+    group: G
+    depends_on: []
+    parallel_group: 7a
+
+  - id: TASK_034_V038_deprecate_storage_manager_classmethods
+    phase: 7
+    group: G
+    depends_on: []
+    parallel_group: 7a
+
+  - id: TASK_035_V029_refactor_update_dashboard_params
+    phase: 7
+    group: G
+    depends_on: []
+    parallel_group: 7a
+
+  # ═══════════════════════════════════════════════════════════════
+  # PHASE 8: REFACTORING (Group H) — BLOCKED by test rewrite
+  # Do NOT start until test infrastructure is improved
+  # ═══════════════════════════════════════════════════════════════
+  - id: TASK_036_V009_transaction_boundaries
+    phase: 8
+    group: H
+    depends_on: []
+    parallel_group: 8a
+    blocked_by: "Test infrastructure rewrite required first"
+
+  - id: TASK_037_V026_consolidate_get_db
+    phase: 8
+    group: H
+    depends_on:
+      - TASK_036_V009_transaction_boundaries
+    parallel_group: 8b
+    blocked_by: "Test infrastructure rewrite required first"
+
+# ═══════════════════════════════════════════════════════════════
+# DEPENDENCY GRAPH SUMMARY
+# ═══════════════════════════════════════════════════════════════
+#
+# Phase 1 (Group A): 6 independent tasks — all can run in parallel
+# Phase 2 (Group B): 3 sequential tasks — each depends on previous
+# Phase 3 (Group C): 2 independent tasks — can run in parallel with Phase 2
+# Phase 4 (Group D): 3 tasks — TASK_013 depends on TASK_012; TASK_014 independent
+# Phase 5 (Group E): 3 independent tasks — can run in parallel
+# Phase 6 (Group F): 8 independent tasks — can run in parallel
+# Phase 7 (Group G): 10 tasks — TASK_026 depends on TASK_021; rest independent
+# Phase 8 (Group H): 2 tasks — TASK_037 depends on TASK_036; BLOCKED by test rewrite
+#
+# CRITICAL PATH: Phase 1 → Phase 2 (sequential chain of 3 migrations)
+# SAFE PARALLEL GROUPS: Phase 1 (6 tasks), Phases 3-7 (most tasks)
+# BLOCKED: Phase 8 until test infrastructure is improved

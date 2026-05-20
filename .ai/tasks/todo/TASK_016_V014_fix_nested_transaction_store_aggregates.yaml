@@ -1,0 +1,67 @@
+id: TASK_016_V014_fix_nested_transaction_store_aggregates
+
+title: Fix nested transaction risk in _store_aggregates() with single top-level transaction
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  _store_aggregates() uses session.begin() which creates a nested transaction
+  (savepoint). If save_aggregates fails after partial writes, the rollback may not
+  clean up all data depending on savepoint behavior. This task refactors to use a
+  single top-level transaction for atomicity.
+
+finding_ref: V-014
+severity: MEDIUM
+
+goals:
+  - Replace nested transaction with single top-level transaction
+  - Ensure atomicity: either all aggregates saved or none
+  - Consider TRUNCATE + INSERT for overwrite mode instead of DELETE + INSERT
+
+files:
+  - path: src/mkobi/workers/data_worker.py
+    targets:
+      - type: function
+        name: _store_aggregates
+    semantic_anchors:
+      replace: session.begin() nested transaction
+      replace: DELETE + INSERT pattern with TRUNCATE + INSERT for overwrite
+
+changes:
+  - action: refactor_transaction
+    description: >
+      Refactor _store_aggregates to use a single top-level transaction.
+      For overwrite mode, use TRUNCATE + INSERT for better atomicity.
+    code_hint: |
+      async def _store_aggregates(self, session, dashboard_id, graph_id, aggregates):
+          async with session.begin():
+              # Delete existing aggregates for this graph
+              await session.execute(
+                  delete(AggregatedData).where(
+                      AggregatedData.dashboard_id == dashboard_id,
+                      AggregatedData.graph_id == graph_id,
+                  )
+              )
+              # Insert new aggregates
+              for aggregate in aggregates:
+                  session.add(aggregate)
+              # Single commit at end of context manager
+
+acceptance_criteria:
+  - _store_aggregates uses single top-level transaction
+  - No partial data writes on failure
+  - Rollback cleans up all data correctly
+  - Concurrent uploads don't interfere with each other
+
+tests_to_run:
+  - pytest tests/ -k "aggregate or data or upload" -v
+
+risk_level: medium
+
+rollout_notes: >
+  Must be careful with transaction scope changes. Test thoroughly with
+  concurrent uploads. No dependencies on other fixes.

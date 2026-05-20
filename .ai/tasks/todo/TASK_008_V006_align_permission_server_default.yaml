@@ -1,0 +1,67 @@
+id: TASK_008_V006_align_permission_server_default
+
+title: Align dashboard_access.permission server_default between ORM and database
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_007_V003_add_graphs_created_at
+
+description: >
+  The ORM model declares server_default=text("'view'") for DashboardAccess.permission,
+  but the migration and live DB have no DEFAULT clause. Raw SQL INSERTs without
+  permission will fail with NOT NULL violation. This task adds the DB-level DEFAULT
+  via ALTER TABLE to match the ORM expectation.
+
+finding_ref: V-006
+severity: HIGH
+
+goals:
+  - Add DEFAULT 'view'::dashboard_permission_level to dashboard_access.permission column
+  - Align database reality with ORM model expectation
+  - Prevent NOT NULL violations on raw SQL inserts
+
+files:
+  - path: alembic/versions/<new_migration>/
+    targets:
+      - type: migration_operation
+        name: alter_column_default
+    semantic_anchors:
+      insert_after: dashboard_access table creation in new migration
+      operation: op.execute("ALTER TABLE dashboard_access ALTER COLUMN permission SET DEFAULT 'view'::dashboard_permission_level")
+
+changes:
+  - action: create_migration
+    description: >
+      Create a new Alembic migration that sets the server_default on the
+      permission column to match the ORM model.
+    code_hint: |
+      def upgrade():
+          op.execute(
+              "ALTER TABLE dashboard_access "
+              "ALTER COLUMN permission SET DEFAULT 'view'::dashboard_permission_level"
+          )
+
+      def downgrade():
+          op.execute(
+              "ALTER TABLE dashboard_access "
+              "ALTER COLUMN permission DROP DEFAULT"
+          )
+
+acceptance_criteria:
+  - New migration created and passes upgrade/downgrade
+  - dashboard_access.permission has DEFAULT 'view' in the database
+  - Raw SQL INSERT without permission value succeeds
+  - ORM model and database are consistent
+
+tests_to_run:
+  - pytest tests/ -k "access or permission or dashboard" -v
+  - alembic upgrade head --sql (dry run verification)
+
+risk_level: low
+
+rollout_notes: >
+  Must choose one direction: add DB default to match ORM. Adding DB default is
+  safer for backward compatibility. Depends on schema migration group ordering.

@@ -1,0 +1,66 @@
+id: TASK_037_V026_consolidate_get_db
+
+title: Consolidate duplicated get_db() from permissions.py into deps.py import
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_036_V009_transaction_boundaries
+
+description: >
+  get_db() in permissions.py and get_db_dependency() in deps.py are nearly
+  identical — both create a session context manager. This task consolidates
+  into a single dependency, importing from deps.py in permissions.py.
+
+finding_ref: V-026
+severity: MEDIUM
+
+goals:
+  - Remove duplicated get_db() from permissions.py
+  - Import from deps.py instead
+  - Single source of truth for session management
+
+files:
+  - path: src/mkobi/core/permissions.py
+    targets:
+      - type: function
+        name: get_db
+    semantic_anchors:
+      replace: get_db function definition with import from deps
+
+  - path: src/mkobi/api/deps.py
+    targets:
+      - type: function
+        name: get_db_dependency (or get_db)
+    semantic_anchors:
+      ensure: function is importable and reusable
+
+changes:
+  - action: consolidate
+    description: >
+      Remove get_db() from permissions.py and import from deps.py instead.
+    code_hint: |
+      # In permissions.py:
+      # Before:
+      @contextmanager
+      def get_db():
+          # ... duplicated session logic
+      # After:
+      from mkobi.api.deps import get_db_dependency as get_db
+
+acceptance_criteria:
+  - get_db() removed from permissions.py
+  - permissions.py imports from deps.py
+  - No functional changes
+  - All existing tests pass
+
+tests_to_run:
+  - pytest tests/ -k "permission or access" -v
+
+risk_level: low
+
+rollout_notes: >
+  Safe refactoring. No external dependencies. Should be done after TASK_036
+  to avoid conflicts with the transaction boundary refactoring.

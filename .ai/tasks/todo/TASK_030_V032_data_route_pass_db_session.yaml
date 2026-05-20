@@ -1,0 +1,54 @@
+id: TASK_030_V032_data_route_pass_db_session
+
+title: Pass db session from data route handler to service method
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  get_aggregated_data() route handler calls the service without passing the db
+  parameter, so the service creates its own session. The access check and data
+  query run in separate sessions, creating a small race condition window. This
+  task passes the db session from the route to the service method.
+
+finding_ref: V-032
+severity: LOW
+
+goals:
+  - Pass db session from route handler to service method
+  - Ensure access check and data query run in the same session
+  - Eliminate race condition between access check and data query
+
+files:
+  - path: src/mkobi/api/routes/data.py
+    targets:
+      - type: route_handler
+        name: get_aggregated_data endpoint
+    semantic_anchors:
+      modify: service method call to pass db parameter
+
+changes:
+  - action: pass_session
+    description: >
+      Pass the db session from the route handler to the service method.
+    code_hint: |
+      # Before:
+      data = await data_service.get_aggregated_data(dashboard_id, graph_id)
+      # After:
+      data = await data_service.get_aggregated_data(dashboard_id, graph_id, db=db)
+
+acceptance_criteria:
+  - db session passed from route to service
+  - Access check and data query run in same session
+  - No functional change in API behavior
+
+tests_to_run:
+  - pytest tests/ -k "data or aggregated" -v
+
+risk_level: low
+
+rollout_notes: >
+  Safe. No dependencies. Simple parameter pass-through.

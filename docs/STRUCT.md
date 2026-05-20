@@ -29,17 +29,21 @@ C:\PY_DEV\MKOBI
 |   |   +---db
 |   |   |       audit_findings_01.md
 |   |   |       audit_report_02.md
+|   |   |       audit_report_03.md
 |   |   |       
 |   |   +---problems
-|   |   |       implementation_audit_01.md
-|   |   |       
 |   |   +---project
-|   |   +---test
+|   |   |       audit_report_001.md
+|   |   |       audit_report_002_supplemental.md
+|   |   |       audit_report_003_final.md
+|   |   |       
 |   |   +---tests
 |   |   |       audit_report_001.md
 |   |   |       audit_report_1.md
 |   |   |       
 |   |   \---validated
+|   |           audit_validated_findings_001.md
+|   |           
 |   +---builders
 |   |   |   build.bat
 |   |   |   
@@ -68,14 +72,11 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
-|   |       PLAN_01_legacy_docs_integration.md
-|   |       PLAN_02_migration_consolidation.md
-|   |       
 |   +---problems
+|   |   |   CONTEXT_02.md
+|   |   |   
 |   |   \---decisions
 |   +---researches
-|   |       RESEARCH_02.md
-|   |       
 |   +---structure
 |   |   |   map.md
 |   |   |   
@@ -95,6 +96,43 @@ C:\PY_DEV\MKOBI
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
+|   |   |       TASK_001_V001_drop_graphs_trigger.yaml
+|   |   |       TASK_002_V002_add_composite_index.yaml
+|   |   |       TASK_003_V005_admin_upsert_fix.yaml
+|   |   |       TASK_004_V010_token_cache_bounds.yaml
+|   |   |       TASK_005_V011_security_log_levels.yaml
+|   |   |       TASK_006_V012_sanitize_db_url_logging.yaml
+|   |   |       TASK_007_V003_add_graphs_created_at.yaml
+|   |   |       TASK_008_V006_align_permission_server_default.yaml
+|   |   |       TASK_009_V035_remove_redundant_onupdate.yaml
+|   |   |       TASK_010_V007_admin_log_pagination.yaml
+|   |   |       TASK_011_V028_fix_status_codes.yaml
+|   |   |       TASK_012_V004_migration_advisory_lock.yaml
+|   |   |       TASK_013_V018_migration_job_compose.yaml
+|   |   |       TASK_014_V024_dedicated_db_role.yaml
+|   |   |       TASK_015_V013_stale_processing_heartbeat.yaml
+|   |   |       TASK_016_V014_fix_nested_transaction_store_aggregates.yaml
+|   |   |       TASK_017_V015_invalid_dimensions_error.yaml
+|   |   |       TASK_018_V008_admin_bypass_check_access.yaml
+|   |   |       TASK_019_V022_bind_unbind_filter_error_handling.yaml
+|   |   |       TASK_020_V023_remove_create_db_sql.yaml
+|   |   |       TASK_021_V025_wire_cleanup_old_logs.yaml
+|   |   |       TASK_022_V019_login_rate_limit_enumeration.yaml
+|   |   |       TASK_023_V020_v021_test_db_name_configurable.yaml
+|   |   |       TASK_024_V016_config_reloadable.yaml
+|   |   |       TASK_025_V017_weak_admin_credentials_check.yaml
+|   |   |       TASK_026_V034_remove_dead_code_starter.yaml
+|   |   |       TASK_027_V032_upload_memory_streaming.yaml
+|   |   |       TASK_028_V031_parse_formula_numeric_literals.yaml
+|   |   |       TASK_029_V033_plotly_type_imports.yaml
+|   |   |       TASK_030_V032_data_route_pass_db_session.yaml
+|   |   |       TASK_031_V027_index_naming_convention.yaml
+|   |   |       TASK_032_V036_remove_bidb_schema_sql.yaml
+|   |   |       TASK_033_V037_deprecation_comment_get_session.yaml
+|   |   |       TASK_034_V038_deprecate_storage_manager_classmethods.yaml
+|   |   |       TASK_035_V029_refactor_update_dashboard_params.yaml
+|   |   |       TASK_036_V009_transaction_boundaries.yaml
+|   |   |       TASK_037_V026_consolidate_get_db.yaml
 |   |   |       
 |   |   \---validation
 |   +---templates
@@ -102,10 +140,6 @@ C:\PY_DEV\MKOBI
 |   |       ui-brand.md
 |   |       
 |   +---tmp
-|   |       high_risk_checklist_01.md
-|   |       inventory_01.md
-|   |       migration_map_01.md
-|   |       
 |   \---verified
 +---.idea
 |   |   .gitignore

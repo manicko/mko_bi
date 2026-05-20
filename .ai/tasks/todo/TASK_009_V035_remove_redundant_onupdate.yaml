@@ -1,0 +1,91 @@
+id: TASK_009_V035_remove_redundant_onupdate
+
+title: Remove redundant onupdate=text("now()") from ORM models where triggers exist
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_008_V006_align_permission_server_default
+
+description: >
+  Both DB triggers and ORM onupdate=text("now()") set updated_at redundantly for
+  users, layouts, dashboards, and processing_configs tables. This is confusing and
+  the trigger mechanism is authoritative (works for raw SQL too). This task removes
+  the redundant onupdate from the ORM models.
+
+finding_ref: V-035
+severity: LOW
+
+goals:
+  - Remove onupdate=text("now()") from User, Dashboard, Layout, ProcessingConfig ORM models
+  - Keep DB triggers as the authoritative updated_at mechanism
+  - Eliminate confusion about which mechanism is authoritative
+
+files:
+  - path: src/mkobi/db/models/user.py
+    targets:
+      - type: class
+        name: User
+      - type: column
+        name: updated_at
+    semantic_anchors:
+      remove: onupdate=text("now()") from updated_at column definition
+
+  - path: src/mkobi/db/models/dashboard.py
+    targets:
+      - type: class
+        name: Dashboard
+      - type: column
+        name: updated_at
+    semantic_anchors:
+      remove: onupdate=text("now()") from updated_at column definition
+
+  - path: src/mkobi/db/models/layout.py
+    targets:
+      - type: class
+        name: Layout
+      - type: column
+        name: updated_at
+    semantic_anchors:
+      remove: onupdate=text("now()") from updated_at column definition
+
+  - path: src/mkobi/db/models/processing_configs.py
+    targets:
+      - type: class
+        name: ProcessingConfig
+      - type: column
+        name: updated_at
+    semantic_anchors:
+      remove: onupdate=text("now()") from updated_at column definition
+
+changes:
+  - action: remove_column_option
+    description: >
+      Remove onupdate=text("now()") from updated_at column in all 4 models.
+      The DB triggers handle updated_at automatically.
+    code_hint: |
+      # Before:
+      updated_at: Mapped[datetime] = mapped_column(
+          TIMESTAMPTZ, server_default=text("now()"), onupdate=text("now()")
+      )
+      # After:
+      updated_at: Mapped[datetime] = mapped_column(
+          TIMESTAMPTZ, server_default=text("now()")
+      )
+
+acceptance_criteria:
+  - onupdate removed from all 4 ORM models
+  - DB triggers still set updated_at on UPDATE
+  - No functional change in updated_at behavior
+  - All existing tests pass
+
+tests_to_run:
+  - pytest tests/ -v
+
+risk_level: low
+
+rollout_notes: >
+  Must ensure triggers exist before removing onupdate. Test thoroughly.
+  Depends on schema migration group being applied first.

@@ -1,0 +1,55 @@
+id: TASK_020_V023_remove_create_db_sql
+
+title: Remove divergent create_db.sql to eliminate schema documentation drift
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  create_db.sql diverges from the actual schema in 6+ ways (dashboards.config NULLABLE
+  mismatch, users.updated_at trigger redundancy, processing_logs.status ENUM mismatch,
+  etc.). It cannot be used to bootstrap new environments and is misleading to
+  developers. Alembic migrations are the source of truth.
+
+finding_ref: V-023
+severity: MEDIUM
+
+goals:
+  - Remove create_db.sql (or replace with pg_dump --schema-only output)
+  - Eliminate schema documentation drift
+  - Ensure Alembic migrations are the single source of truth
+
+files:
+  - path: create_db.sql
+    targets:
+      - type: file
+        name: create_db.sql
+    semantic_anchors:
+      delete: entire file
+
+changes:
+  - action: delete_file
+    description: >
+      Delete create_db.sql. If a reference schema is needed, generate it with
+      pg_dump --schema-only --no-owner from a clean Alembic migration.
+    code_hint: |
+      # Command to generate reference schema:
+      pg_dump --schema-only --no-owner bidb > schema_reference.sql
+
+acceptance_criteria:
+  - create_db.sql removed from repository
+  - No references to create_db.sql in documentation
+  - Alembic migrations remain the source of truth
+  - Developers directed to Alembic for schema reference
+
+tests_to_run:
+  - pytest tests/ -v (no test should reference create_db.sql)
+
+risk_level: low
+
+rollout_notes: >
+  Documentation/infrastructure change. No code impact. A divergent init script
+  is worse than no init script.

@@ -23,5 +23,4 @@ services:
 
   db:
     environment:
-      POSTGRES_DB: bidb_test
       POSTGRES_PASSWORD: ${DATABASE__PASSWORD:-1234}

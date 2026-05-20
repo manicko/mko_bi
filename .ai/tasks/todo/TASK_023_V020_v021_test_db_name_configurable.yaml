@@ -1,0 +1,63 @@
+id: TASK_023_V020_v021_test_db_name_configurable
+
+title: Make test database name configurable and add SQL injection protection in recreate_test_database()
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  recreate_test_database() hardcodes 'bidb_test' database name in raw SQL and uses
+  f-string interpolation with no SQL injection protection. This task makes the DB
+  name configurable via URL parsing and adds identifier validation.
+
+finding_ref: V-020, V-021
+severity: MEDIUM
+
+goals:
+  - Parse DB name from URL instead of hardcoding 'bidb_test'
+  - Add SQL injection protection for database name in raw SQL
+  - Use sqlalchemy.engine.url.make_url() for parsing
+
+files:
+  - path: src/mkobi/db/starter.py
+    targets:
+      - type: class
+        name: DatabaseStarter
+      - type: method
+        name: recreate_test_database
+    semantic_anchors:
+      replace: hardcoded 'bidb_test' string
+      replace: f-string SQL interpolation with validated identifier
+
+changes:
+  - action: refactor_method
+    description: >
+      Parse database name from URL and validate it against a safe pattern
+      before using in SQL.
+    code_hint: |
+      from sqlalchemy.engine.url import make_url
+      import re
+
+      def recreate_test_database(self):
+          url = make_url(self.db_url)
+          db_name = url.database
+          if not re.match(r'^[a-zA-Z0-9_]+$', db_name):
+              raise ValueError(f"Invalid database name: {db_name}")
+          # Use validated db_name in SQL
+
+acceptance_criteria:
+  - Database name parsed from URL, not hardcoded
+  - Database name validated against safe pattern
+  - Test database recreation works with different DB names
+  - No SQL injection vulnerability
+
+tests_to_run:
+  - pytest tests/ -k "test_db or recreate" -v
+
+risk_level: low
+
+rollout_notes: >
+  Safe. Test-only code. No dependencies.

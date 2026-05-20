@@ -1,0 +1,66 @@
+id: TASK_014_V024_dedicated_db_role
+
+title: Create dedicated database role with limited privileges (least-privilege principle)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Application uses superuser postgres role for all operations (runtime + migrations).
+  Any SQL injection or application bug can execute superuser operations. This task
+  creates a dedicated application role with limited privileges.
+
+finding_ref: V-024
+severity: MEDIUM
+
+goals:
+  - Create a dedicated application role (e.g., mkobi_app) with limited privileges
+  - Grant only necessary permissions (CONNECT, SELECT, INSERT, UPDATE, DELETE)
+  - Update connection strings to use the new role
+  - Keep postgres role for migrations only
+
+files:
+  - path: docker-compose.yml
+    targets:
+      - type: environment
+        name: POSTGRES_USER and related vars
+    semantic_anchors:
+      add: initialization script for creating mkobi_app role
+
+  - path: src/mkobi/config.py
+    targets:
+      - type: class
+        name: DatabaseSettings
+    semantic_anchors:
+      modify: database_url to use mkobi_app role
+
+changes:
+  - action: create_sql_script
+    description: >
+      Create an initialization SQL script that creates the mkobi_app role with
+      limited privileges. Update docker-compose to run this script on DB init.
+    code_hint: |
+      -- init-scripts/create-app-role.sql
+      CREATE ROLE mkobi_app WITH LOGIN PASSWORD 'secure_password';
+      GRANT CONNECT ON DATABASE bidb TO mkobi_app;
+      GRANT USAGE ON SCHEMA public TO mkobi_app;
+      GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO mkobi_app;
+      GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO mkobi_app;
+
+acceptance_criteria:
+  - mkobi_app role created in PostgreSQL
+  - Application connects using mkobi_app role
+  - Role has only necessary privileges (not superuser)
+  - Migrations still work (may need postgres role for DDL)
+
+tests_to_run:
+  - pytest tests/ -v (full test suite to verify connectivity)
+
+risk_level: medium
+
+rollout_notes: >
+  Infrastructure change. Must update connection strings and run GRANT statements.
+  Consider keeping postgres role for migrations (some DDL requires superuser).

@@ -1,0 +1,75 @@
+id: TASK_015_V013_stale_processing_heartbeat
+
+title: Add heartbeat/timeout mechanism for stale PROCESSING state in data worker
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  _update_processing_log_status() creates a new session for each status update.
+  If the worker crashes between file processing and final status update, the log
+  can be left in PROCESSING state forever. This task adds a timeout-based cleanup
+  job that marks stale PROCESSING entries as FAILED.
+
+finding_ref: V-013
+severity: MEDIUM
+
+goals:
+  - Add a timeout-based cleanup for stale PROCESSING entries
+  - Mark entries stuck in PROCESSING for > N minutes as FAILED
+  - Provide visibility into crashed workers
+
+files:
+  - path: src/mkobi/workers/data_worker.py
+    targets:
+      - type: function
+        name: _update_processing_log_status
+    semantic_anchors:
+      insert_after: existing status update logic
+
+  - path: src/mkobi/db/starter.py
+    targets:
+      - type: class
+        name: DatabaseStarter
+    semantic_anchors:
+      insert_into: startup() method to schedule cleanup task
+
+changes:
+  - action: add_cleanup_job
+    description: >
+      Add a periodic cleanup task that marks stale PROCESSING entries as FAILED.
+      Consider using a scheduled task or a background thread.
+    code_hint: |
+      async def cleanup_stale_processing_logs(self, timeout_minutes: int = 30):
+          async with self.session_factory() as session:
+              cutoff = datetime.utcnow() - timedelta(minutes=timeout_minutes)
+              await session.execute(
+                  update(ProcessingLog)
+                  .where(
+                      ProcessingLog.status == ProcessingStatus.PROCESSING,
+                      ProcessingLog.created_at < cutoff,
+                  )
+                  .values(
+                      status=ProcessingStatus.FAILED,
+                      error_message="Worker timeout - marked as failed by cleanup job",
+                  )
+              )
+              await session.commit()
+
+acceptance_criteria:
+  - Stale PROCESSING entries (>30 min) are marked as FAILED
+  - Cleanup job runs periodically (e.g., every 5 minutes)
+  - Active processing entries are not affected
+  - Admin can distinguish "still running" from "crashed"
+
+tests_to_run:
+  - pytest tests/ -k "processing or worker or data" -v
+
+risk_level: medium
+
+rollout_notes: >
+  Requires a background job or scheduled task. Moderate complexity.
+  No dependencies on other fixes.
