@@ -28,6 +28,12 @@
   value: DatabaseStarter
   stable_hash: 8f3c9f51
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
+- id: fa441590
+  symbol_path: []
+  type: function_call
+  value: start_stale_processing_cleanup_task
+  stable_hash: fa441590
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
 - id: 471a4919
   symbol_path:
   - create_app
@@ -454,6 +460,35 @@
   type: function_call
   value: Field
   stable_hash: f97e1b65
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: f97e1b65
+  symbol_path:
+  - Settings
+  type: function_call
+  value: Field
+  stable_hash: f97e1b65
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: f97e1b65
+  symbol_path:
+  - Settings
+  type: function_call
+  value: Field
+  stable_hash: f97e1b65
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: f97e1b65
+  symbol_path:
+  - Settings
+  type: function_call
+  value: Field
+  stable_hash: f97e1b65
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: '45645561'
+  symbol_path:
+  - Settings
+  - validate_admin_credentials
+  type: function_call
+  value: ValueError
+  stable_hash: '45645561'
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
 - id: '45645561'
   symbol_path:
@@ -1857,6 +1892,17 @@
   value: _check_access_with_session
   stable_hash: 28cbd9df
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\permissions.py
+- id: '21513320'
+  symbol_path: []
+  type: function_call
+  value: UserRepository
+  stable_hash: '21513320'
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\permissions.py
+- id: 5d4d840d
+  symbol_path: []
+  type: return_statement
+  stable_hash: 5d4d840d
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\permissions.py
 - id: 40b41c9a
   symbol_path: []
   type: function_call
@@ -1878,12 +1924,6 @@
   type: return_statement
   stable_hash: 5d4d840d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\permissions.py
-- id: 4746a231
-  symbol_path:
-  - _decode_token_cached
-  type: return_statement
-  stable_hash: 4746a231
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\permissions.py
 - id: 337c9272
   symbol_path:
   - _decode_token_cached
@@ -1896,6 +1936,13 @@
   - _decode_token_cached
   type: return_statement
   stable_hash: 4746a231
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\permissions.py
+- id: a0c09007
+  symbol_path:
+  - _decode_token_cached
+  type: function_call
+  value: lru_cache
+  stable_hash: a0c09007
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\permissions.py
 - id: 6e12cd56
   symbol_path: []
@@ -2483,33 +2530,19 @@
   type: return_statement
   stable_hash: 1d1f75d4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
-- id: b6906ae7
+- id: bb418170
   symbol_path:
   - DatabaseStarter
   type: function_call
-  value: create_async_engine
-  stable_hash: b6906ae7
+  value: make_url
+  stable_hash: bb418170
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
-- id: c9f0f404
+- id: 851b1e2f
   symbol_path:
   - DatabaseStarter
   type: function_call
-  value: text
-  stable_hash: c9f0f404
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
-- id: c9f0f404
-  symbol_path:
-  - DatabaseStarter
-  type: function_call
-  value: text
-  stable_hash: c9f0f404
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
-- id: c9f0f404
-  symbol_path:
-  - DatabaseStarter
-  type: function_call
-  value: text
-  stable_hash: c9f0f404
+  value: ValueError
+  stable_hash: 851b1e2f
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
 - id: b6906ae7
   symbol_path:
@@ -2517,6 +2550,27 @@
   type: function_call
   value: create_async_engine
   stable_hash: b6906ae7
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: c9f0f404
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: text
+  stable_hash: c9f0f404
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: c9f0f404
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: text
+  stable_hash: c9f0f404
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: c9f0f404
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: text
+  stable_hash: c9f0f404
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
 - id: c1abc614
   symbol_path:
@@ -2526,19 +2580,19 @@
   value: Config
   stable_hash: c1abc614
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: bb418170
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: make_url
+  stable_hash: bb418170
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
 - id: 8d138112
   symbol_path:
   - DatabaseStarter
   type: function_call
   value: get_config
   stable_hash: 8d138112
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
-- id: fc69d71c
-  symbol_path:
-  - DatabaseStarter
-  type: function_call
-  value: UserRepository
-  stable_hash: fc69d71c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
 - id: 2e8c07b6
   symbol_path:
@@ -2554,11 +2608,19 @@
   value: SessionLocal
   stable_hash: 5dd1eb36
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
-- id: 1d1f75d4
+- id: c9f0f404
   symbol_path:
   - DatabaseStarter
-  type: return_statement
-  stable_hash: 1d1f75d4
+  type: function_call
+  value: text
+  stable_hash: c9f0f404
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: e6dda3a6
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: str
+  stable_hash: e6dda3a6
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
 - id: a483e1cb
   symbol_path:
@@ -4171,6 +4233,20 @@
   value: get_redis_client
   stable_hash: cc428f93
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\data_service.py
+- id: c96a7b4f
+  symbol_path:
+  - DataService
+  type: function_call
+  value: isinstance
+  stable_hash: c96a7b4f
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\data_service.py
+- id: 0a03a9ac
+  symbol_path:
+  - DataService
+  type: function_call
+  value: Path
+  stable_hash: 0a03a9ac
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\data_service.py
 - id: 927fad5d
   symbol_path:
   - DataService
@@ -4622,6 +4698,13 @@
   value: ValueError
   stable_hash: 1121b1f2
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\file_processing.py
+- id: 1121b1f2
+  symbol_path:
+  - validate_file
+  type: function_call
+  value: ValueError
+  stable_hash: 1121b1f2
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\file_processing.py
 - id: 80128b2a
   symbol_path:
   - validate_file
@@ -4650,20 +4733,6 @@
   value: ValueError
   stable_hash: 1121b1f2
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\file_processing.py
-- id: 56b5029b
-  symbol_path:
-  - validate_file
-  type: function_call
-  value: len
-  stable_hash: 56b5029b
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\file_processing.py
-- id: 56b5029b
-  symbol_path:
-  - validate_file
-  type: function_call
-  value: len
-  stable_hash: 56b5029b
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\file_processing.py
 - id: 1121b1f2
   symbol_path:
   - validate_file
@@ -4671,19 +4740,11 @@
   value: ValueError
   stable_hash: 1121b1f2
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\file_processing.py
-- id: 56b5029b
+- id: dd521697
   symbol_path:
   - validate_file
-  type: function_call
-  value: len
-  stable_hash: 56b5029b
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\file_processing.py
-- id: 56b5029b
-  symbol_path:
-  - validate_file
-  type: function_call
-  value: len
-  stable_hash: 56b5029b
+  type: return_statement
+  stable_hash: dd521697
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\file_processing.py
 - id: ef0d5d78
   symbol_path: []
@@ -7034,6 +7095,41 @@
   value: UUID
   stable_hash: 4670ab99
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 3c75103c
+  symbol_path: []
+  type: function_call
+  value: timedelta
+  stable_hash: 3c75103c
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 71bdc9d8
+  symbol_path: []
+  type: function_call
+  value: update
+  stable_hash: 71bdc9d8
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 7da8af41
+  symbol_path: []
+  type: function_call
+  value: get_session
+  stable_hash: 7da8af41
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 71bdc9d8
+  symbol_path: []
+  type: function_call
+  value: update
+  stable_hash: 71bdc9d8
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 2f6f6eb3
+  symbol_path: []
+  type: return_statement
+  stable_hash: 2f6f6eb3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: ca6b712d
+  symbol_path: []
+  type: function_call
+  value: int
+  stable_hash: ca6b712d
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: f68a82da
   symbol_path: []
   type: function_call
@@ -7115,6 +7211,12 @@
   type: return_statement
   stable_hash: 2f6f6eb3
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 4806d5f0
+  symbol_path: []
+  type: function_call
+  value: ValueError
+  stable_hash: 4806d5f0
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: 588a8f2b
   symbol_path: []
   type: function_call
@@ -7162,6 +7264,12 @@
   type: function_call
   value: process_csv_background
   stable_hash: f3f614c6
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 29da043f
+  symbol_path: []
+  type: function_call
+  value: cleanup_stale_processing_logs
+  stable_hash: 29da043f
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: 0410533a
   symbol_path:
@@ -8018,13 +8126,6 @@
   value: text
   stable_hash: 4afe616c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\layout.py
-- id: 4afe616c
-  symbol_path:
-  - Layout
-  type: function_call
-  value: text
-  stable_hash: 4afe616c
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\layout.py
 - id: e874d1fa
   symbol_path:
   - Layout
@@ -8507,13 +8608,6 @@
   type: function_call
   value: DateTime
   stable_hash: 14c03dc0
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\user.py
-- id: 1b10922a
-  symbol_path:
-  - User
-  type: function_call
-  value: text
-  stable_hash: 1b10922a
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\user.py
 - id: 1b10922a
   symbol_path:
@@ -13901,11 +13995,35 @@
   value: Path
   stable_hash: d5378398
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
+- id: d5378398
+  symbol_path: []
+  type: function_call
+  value: Path
+  stable_hash: d5378398
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
+- id: 2480815e
+  symbol_path: []
+  type: function_call
+  value: get_config
+  stable_hash: 2480815e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
+- id: '46981350'
+  symbol_path: []
+  type: function_call
+  value: uuid4
+  stable_hash: '46981350'
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
 - id: 2c366a56
   symbol_path: []
   type: function_call
   value: len
   stable_hash: 2c366a56
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
+- id: 832ab036
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: 832ab036
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
 - id: ea214b68
   symbol_path: []

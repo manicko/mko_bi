@@ -6,7 +6,7 @@ These functions handle CSV processing, status updates, and database operations.
 
 import asyncio
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta, UTC
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +14,7 @@ from uuid import UUID
 
 import polars as pl
 from sqlalchemy import select, update
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.data.loaders.loader import CSVLoader
 from mkobi.data.processing.transformations import (
@@ -27,6 +28,9 @@ from mkobi.models.data import ProcessingConfig
 from mkobi.models.enums import ProcessingStatus
 
 logger = logging.getLogger(__name__)
+
+# Default timeout for stale processing logs (in minutes)
+DEFAULT_STALE_PROCESSING_TIMEOUT_MINUTES = 30
 
 
 async def _update_processing_log_status(
@@ -55,7 +59,7 @@ async def _update_processing_log_status(
             if started_at is not None:
                 values["started_at"] = started_at
             if status in (ProcessingStatus.SUCCESS, ProcessingStatus.FAILED):
-                values["finished_at"] = finished_at or datetime.now()
+                values["finished_at"] = finished_at or datetime.now(UTC)
 
             stmt = (
                 update(ProcessingLog)
@@ -67,6 +71,67 @@ async def _update_processing_log_status(
             logger.info(
                 "Processing log updated: task_id=%s, status=%s", task_id, status
             )
+
+
+async def cleanup_stale_processing_logs(
+    timeout_minutes: int = DEFAULT_STALE_PROCESSING_TIMEOUT_MINUTES,
+    session: AsyncSession | None = None,
+) -> int:
+    """Mark stale PROCESSING entries as FAILED.
+
+    This function should be called periodically to detect processing jobs
+    that were left in PROCESSING state due to worker crashes or timeouts.
+
+    Args:
+        timeout_minutes: Maximum age in minutes for entries to be considered stale.
+            Entries older than this will be marked as FAILED.
+        session: Optional database session. If None, creates a new session.
+
+    Returns:
+        int: Number of entries that were marked as FAILED.
+    """
+    cutoff = datetime.now(UTC) - timedelta(minutes=timeout_minutes)
+
+    if session is not None:  # Test mode - use provided session (already in transaction)
+        stmt = (
+            update(ProcessingLog)
+            .where(
+                ProcessingLog.status == ProcessingStatus.PROCESSING,
+                ProcessingLog.started_at < cutoff,
+            )
+            .values(
+                status=ProcessingStatus.FAILED,
+                message="Worker timeout - marked as failed by cleanup job",
+                finished_at=datetime.now(UTC),
+            )
+        )
+        result = await session.execute(stmt)
+        count = result.rowcount if result.rowcount is not None else 0
+    else:  # Production mode - create new session
+        async with get_session() as db:
+            async with db.begin():
+                stmt = (
+                    update(ProcessingLog)
+                    .where(
+                        ProcessingLog.status == ProcessingStatus.PROCESSING,
+                        ProcessingLog.started_at < cutoff,
+                    )
+                    .values(
+                        status=ProcessingStatus.FAILED,
+                        message="Worker timeout - marked as failed by cleanup job",
+                        finished_at=datetime.now(UTC),
+                    )
+                )
+                result = await db.execute(stmt)
+                count = result.rowcount if result.rowcount is not None else 0
+
+    if count > 0:
+        logger.info(
+            "Marked %d stale PROCESSING entries as FAILED (timeout=%dm)",
+            count,
+            timeout_minutes,
+        )
+    return int(count)
 
 
 async def _process_csv_file_async(
@@ -151,7 +216,7 @@ async def _process_csv_file_async(
             task_id=task_id,
             status=ProcessingStatus.SUCCESS,
             message=f"Processing completed successfully: {result_data['rows']} rows processed",
-            finished_at=datetime.now(),
+            finished_at=datetime.now(UTC),
         )
 
         # Clean up temp file
@@ -174,7 +239,7 @@ async def _process_csv_file_async(
             task_id=task_id,
             status=ProcessingStatus.FAILED,
             message=f"Processing failed: {error_msg}",
-            finished_at=datetime.now(),
+            finished_at=datetime.now(UTC),
         )
 
         # Clean up temp file on error
@@ -208,6 +273,8 @@ async def _store_aggregates(
     from mkobi.models.enums import UploadMode
 
     async with get_session() as session:
+        # Use session.begin() for explicit transaction control
+        # This ensures atomicity: either all aggregates are saved or none
         async with session.begin():
             result = await session.execute(
                 select(Graph).where(Graph.dashboard_id == dashboard_id)
@@ -228,20 +295,15 @@ async def _store_aggregates(
                         dim for dim in graph.dimensions if dim in df.columns
                     ] if graph.dimensions else []
                     if not valid_dimensions:
-                        logger.warning(
-                            "Graph %s has invalid or empty dimensions: %s. DataFrame columns: %s. Falling back to first 3 columns.",
-                            graph.id,
-                            graph.dimensions,
-                            list(df.columns),
+                        raise ValueError(
+                            f"Graph {graph.id} has no valid dimensions configured. "
+                            f"Dimensions: {graph.dimensions or 'empty'}. "
+                            f"Available DataFrame columns: {list(df.columns)}. "
+                            "Please set dimensions in the graph configuration."
                         )
-                        # Fallback to original behavior if dimensions are invalid
-                        dims = {
-                            k: v for k, v in row.items() if k in df.columns[:3]
-                        }
-                    else:
-                        dims = {
-                            k: v for k, v in row.items() if k in valid_dimensions
-                        }
+                    dims = {
+                        k: v for k, v in row.items() if k in valid_dimensions
+                    }
                     metrics = {k: v for k, v in row.items() if k not in dims}
 
                     aggregates.append(
@@ -338,3 +400,29 @@ def process_csv_background_sync(
             mode=mode,
         )
     )
+
+
+async def start_stale_processing_cleanup_task(
+    interval_seconds: int = 300,  # Run every 5 minutes by default
+    timeout_minutes: int = DEFAULT_STALE_PROCESSING_TIMEOUT_MINUTES,
+) -> None:
+    """Start background task for cleaning up stale processing logs.
+
+    This function runs indefinitely, periodically checking for and marking
+    stale PROCESSING entries as FAILED.
+
+    Args:
+        interval_seconds: Interval between cleanup runs in seconds.
+        timeout_minutes: Timeout threshold for considering entries stale.
+    """
+    logger.info(
+        "Starting stale processing cleanup task (interval=%ds, timeout=%dm)",
+        interval_seconds,
+        timeout_minutes,
+    )
+    while True:
+        try:
+            await cleanup_stale_processing_logs(timeout_minutes=timeout_minutes)
+        except Exception as e:
+            logger.exception("Error during stale processing cleanup: %s", e)
+        await asyncio.sleep(interval_seconds)

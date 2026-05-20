@@ -10,8 +10,9 @@ All operations require authentication and appropriate permissions.
 
 from pathlib import Path
 from typing import NoReturn
-from uuid import UUID
+from uuid import UUID, uuid4
 
+import aiofiles
 from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -36,6 +37,9 @@ from mkobi.services.data_service import DataService
 router = APIRouter(prefix="/upload", tags=["upload"])
 
 logger = get_logger(__name__)
+
+# Chunk size for streaming file uploads (8KB)
+CHUNK_SIZE = 8192
 
 
 @router.post(
@@ -133,21 +137,33 @@ async def upload_file_endpoint(
                 detail="Rate limit exceeded for uploads",
             )
 
-        # Read file content directly from UploadFile
+        # Read and stream file content to temporary location
         filename = file.filename or "unknown"
         sanitized_filename = Path(filename).name
-        file_content = await file.read()
+
+        # Create temporary file path with unique name
+        upload_dir = Path(get_config().upload_temp_dir)
+        upload_dir.mkdir(parents=True, exist_ok=True)
+        temp_file_path = upload_dir / f"upload_{uuid4()}_{sanitized_filename}"
+
+        # Stream file in chunks to reduce memory pressure
+        total_bytes = 0
+        async with aiofiles.open(temp_file_path, "wb") as f:
+            while chunk := await file.read(CHUNK_SIZE):
+                await f.write(chunk)
+                total_bytes += len(chunk)
+
         await file.close()
 
         logger.info(
-            "File content read",
-            extra={"file_name": sanitized_filename, "size_bytes": len(file_content)},
+            "File streamed to disk",
+            extra={"file_name": sanitized_filename, "size_bytes": total_bytes},
         )
 
         # Call service (validation is in service layer)
         try:
             result = await data_service.process_upload(
-                file_content=file_content,
+                file_path=str(temp_file_path),
                 dashboard_id=dashboard_id,
                 user_id=current_user.id,
                 filename=filename,

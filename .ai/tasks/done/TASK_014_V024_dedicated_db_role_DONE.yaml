@@ -2,7 +2,7 @@ id: TASK_014_V024_dedicated_db_role
 
 title: Create dedicated database role with limited privileges (least-privilege principle)
 
-status: pending
+status: done
 
 priority: medium
 

@@ -14,6 +14,9 @@ from mkobi.models.enums import EnvironmentEnum, FileExtensionEnum, MimeTypeEnum
 
 logger = logging.getLogger(__name__)
 
+WEAK_USERNAMES = {"admin", "administrator", "root", "test", "user"}
+WEAK_PASSWORDS = {"password", "123456", "admin", "secret", "test"}
+
 
 def _set_nested_value(data: dict[str, Any], key: str, value: Any) -> None:
     """Set a nested value in a dict using __ as separator.
@@ -76,7 +79,7 @@ class DatabaseSettings(BaseModel):
     host: str = "localhost"
     port: int = 5432
     dbname: str = "bidb"
-    user: str = "postgres"
+    user: str = "mkobi_app"
     password: str | None = None
     test_dbname: str = "bidb_test"
 
@@ -243,7 +246,10 @@ class Settings(BaseSettings):
     admin_password: str = Field(default="admin", alias="ADMIN_PASSWORD")
 
     # --- Cleanup Settings ---
+    logs_retention_days: int = Field(default=30, alias="LOGS_RETENTION_DAYS")
     stale_file_threshold_hours: int = Field(default=24, alias="STALE_FILE_THRESHOLD_HOURS")
+    stale_processing_timeout_minutes: int = Field(default=30, alias="STALE_PROCESSING_TIMEOUT_MINUTES")
+    stale_processing_cleanup_interval_seconds: int = Field(default=300, alias="STALE_PROCESSING_CLEANUP_INTERVAL_SECONDS")
 
     # --- Rate Limiter ---
     rate_limiter_fail_closed: bool = Field(default=False, alias="RATE_LIMITER_FAIL_CLOSED")
@@ -256,14 +262,18 @@ class Settings(BaseSettings):
         This validator ensures they are explicitly set via environment variables.
         """
         if self.environment == EnvironmentEnum.PRODUCTION:
-            if self.admin_username == "admin" or self.admin_password == "admin":
+            if self.admin_username.lower() in WEAK_USERNAMES:
                 raise ValueError(
-                    "Default admin credentials are not allowed in production. "
-                    "Set ADMIN_USERNAME and ADMIN_PASSWORD environment variables."
+                    f"Admin username '{self.admin_username}' is too common. "
+                    "Please choose a more secure username."
+                )
+            if self.admin_password.lower() in WEAK_PASSWORDS:
+                raise ValueError(
+                    "Admin password is too common. Please choose a more secure password."
                 )
         else:
             # Log warning in development if defaults are used
-            if self.admin_username == "admin":
+            if self.admin_username.lower() in WEAK_USERNAMES:
                 logger.warning(
                     "Using default admin username in %s environment - "
                     "set ADMIN_USERNAME for production use",
@@ -455,16 +465,30 @@ class Settings(BaseSettings):
 _settings: Settings | None = None
 
 
-def get_config() -> Settings:
+def get_config(*, reload: bool = False) -> Settings:
     """Return configuration instance.
 
     Uses singleton pattern with caching to ensure
     a single configuration source in the application.
 
+    Args:
+        reload: If True, force reload of configuration from environment.
+            Primarily useful for testing with different configs.
+
     Returns:
         Settings: Configuration instance.
     """
     global _settings
-    if _settings is None:
+    if _settings is None or reload:
         _settings = Settings()
     return _settings
+
+
+def clear_config_cache() -> None:
+    """Clear the cached configuration instance.
+
+    Primarily useful for testing scenarios where different
+    configuration instances need to be tested.
+    """
+    global _settings
+    _settings = None

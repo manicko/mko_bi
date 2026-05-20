@@ -1,13 +1,15 @@
 """Tests for processing logs functionality."""
 
 import pytest
+from datetime import datetime, timedelta, UTC
 from uuid import uuid4
-from datetime import datetime
 
 from mkobi.models.enums import ProcessingStatus
 from mkobi.models.processing_logs import ProcessingLogFilter, ProcessingLogRead, ProcessingLogCreate
 from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
 from mkobi.services.processing_log_service import ProcessingLogService
+from mkobi.workers.data_worker import cleanup_stale_processing_logs
+from mkobi.db.models.processing_logs import ProcessingLog
 
 
 class TestProcessingLogFilter:
@@ -228,3 +230,92 @@ class TestProcessingLogService:
         logs = await service.get_filtered(filters, async_db_session)
         assert len(logs) == 1
         assert logs[0].status == ProcessingStatus.SUCCESS
+
+
+class TestStaleProcessingCleanup:
+    """Tests for stale processing cleanup functionality."""
+
+    @pytest.mark.asyncio
+    async def test_cleanup_stale_processing_logs(self, async_db_session):
+        """Test that stale PROCESSING entries are marked as FAILED."""
+        repo = ProcessingLogRepository()
+
+        # Create a stale PROCESSING log (started 40 minutes ago - older than default 30 min timeout)
+        old_time = datetime.now(UTC) - timedelta(minutes=40)
+        stale_log = await repo.create_log(
+            dashboard_id=None,
+            status=ProcessingStatus.PROCESSING,
+            message="Processing started",
+            db=async_db_session,
+        )
+        # Manually set started_at to simulate old entry
+        from sqlalchemy import update as sa_update
+        stmt = sa_update(ProcessingLog).where(ProcessingLog.id == stale_log.id).values({"started_at": old_time})
+        await async_db_session.execute(stmt)
+        await async_db_session.commit()
+
+        # Create a fresh PROCESSING log (should not be affected)
+        fresh_log = await repo.create_log(
+            dashboard_id=None,
+            status=ProcessingStatus.PROCESSING,
+            message="Fresh processing",
+            db=async_db_session,
+        )
+
+        # Create a SUCCESS log (should not be affected)
+        success_log = await repo.create_log(
+            dashboard_id=None,
+            status=ProcessingStatus.SUCCESS,
+            message="Success",
+            db=async_db_session,
+        )
+
+        # Run cleanup with 30 minute timeout, passing the test session
+        count = await cleanup_stale_processing_logs(timeout_minutes=30, session=async_db_session)
+
+        assert count == 1, "Should have marked 1 stale entry as FAILED"
+
+        # Verify stale log is now FAILED
+        updated_stale = await repo.get_by_id(stale_log.id, db=async_db_session)
+        assert updated_stale is not None
+        assert updated_stale.status == ProcessingStatus.FAILED
+        assert "Worker timeout" in updated_stale.message or updated_stale.message is not None
+
+        # Verify fresh log is still PROCESSING
+        fresh = await repo.get_by_id(fresh_log.id, db=async_db_session)
+        assert fresh is not None
+        assert fresh.status == ProcessingStatus.PROCESSING
+
+        # Verify SUCCESS log is unchanged
+        success = await repo.get_by_id(success_log.id, db=async_db_session)
+        assert success is not None
+        assert success.status == ProcessingStatus.SUCCESS
+
+    @pytest.mark.asyncio
+    async def test_cleanup_no_stale_entries(self, async_db_session):
+        """Test cleanup when there are no stale entries."""
+        repo = ProcessingLogRepository()
+
+        # Delete any stale entries from previous runs to ensure test isolation
+        from sqlalchemy import delete
+        from mkobi.db.models.processing_logs import ProcessingLog
+        await async_db_session.execute(
+            delete(ProcessingLog).where(
+                ProcessingLog.status == ProcessingStatus.PROCESSING,
+                ProcessingLog.started_at < datetime.now(UTC) - timedelta(minutes=1),
+            )
+        )
+        await async_db_session.commit()
+
+        # Create only fresh entries
+        await repo.create_log(
+            dashboard_id=None,
+            status=ProcessingStatus.PROCESSING,
+            message="Fresh processing",
+            db=async_db_session,
+        )
+
+        # Run cleanup with test session
+        count = await cleanup_stale_processing_logs(timeout_minutes=30, session=async_db_session)
+
+        assert count == 0, "Should have marked 0 entries as FAILED"

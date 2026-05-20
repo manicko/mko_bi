@@ -2,7 +2,7 @@ id: TASK_004_V010_token_cache_bounds
 
 title: Bound _token_cache with LRU eviction to prevent memory leak
 
-status: pending
+status: done
 
 priority: medium
 

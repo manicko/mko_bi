@@ -43,14 +43,11 @@ Normalize phase input in step 2 before any directory lookups.
 
 <process>
 
+## 0. Ask user for a DECISION {file_numbers}  he needs to discuss. 
+Stop and wait for the response.
+
 
 ## 1. Preparation
-
-- `--research` flag to force re-research
-- `--skip-research` flag to skip research
-- `--gaps` flag for gap closure mode
-- `--skip-validate` flag to bypass validation loop
-
 
 **Check for existing research and plans:**
 
@@ -65,6 +62,8 @@ Summarize it and keep as {MAIN_CONTEXT}
 ## 2. Ensure Decisions Directory Exists and Load DECISION_*.md files
 
 Load List of files and their numbers from `C:\py_dev\mkobi\.ai\problems\decisions\*`
+
+keep only mentioned by user {file_numbers} (step 0)
 
 ## 3. For each file go though steps below one by one:
 ### 3.1 Get next {file_number} and {short_description}
@@ -110,7 +109,6 @@ Display stage banner:
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 RESEARCHING PHASE {X}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
 ◆ Spawning researcher...
 ```
 

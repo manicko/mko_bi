@@ -5,7 +5,7 @@ Implements IProcessingLogRepository interface.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, UTC
 from uuid import UUID
 from typing import cast
 
@@ -52,7 +52,7 @@ class ProcessingLogRepository(IProcessingLogRepository):
                 "dashboard_id": dashboard_id,
                 "status": status,
                 "message": message,
-                "started_at": datetime.now(),
+                "started_at": datetime.now(UTC),
             }
             log_obj = processing_log_model.ProcessingLog(**log_data)
             db.add(log_obj)
@@ -100,7 +100,7 @@ class ProcessingLogRepository(IProcessingLogRepository):
 
             # Set finished_at on successful completion or error
             if status in (ProcessingStatus.SUCCESS, ProcessingStatus.FAILED):
-                log_obj.finished_at = datetime.now()
+                log_obj.finished_at = datetime.now(UTC)
 
             await db.flush()
             logger.info("Log status updated: id=%s, status=%s", log_id, status)

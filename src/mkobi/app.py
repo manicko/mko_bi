@@ -4,6 +4,7 @@ This module provides the create_app() function to create
 a FastAPI instance using the factory pattern.
 """
 
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from typing import Any
@@ -22,8 +23,14 @@ from mkobi.api import routes
 from mkobi.config import get_config
 from mkobi.core.logging_config import setup_logging
 from mkobi.db.session import get_session
-from mkobi.db.starter import DatabaseStarter, DatabaseStarterConfig, DatabaseNotFoundError, SchemaNotFoundError
+from mkobi.db.starter import (
+    DatabaseStarter,
+    DatabaseStarterConfig,
+    DatabaseNotFoundError,
+    SchemaNotFoundError,
+)
 from mkobi.models.enums import EnvironmentEnum
+from mkobi.workers.data_worker import start_stale_processing_cleanup_task
 
 # Get configuration and setup logging
 config = get_config()
@@ -52,12 +59,27 @@ async def lifespan(app: FastAPI):
         migration_script_path=config.migration_script_path,
         alembic_ini_path=config.alembic_ini_path,
         recreate_test_db=config.recreate_test_db,
+        logs_retention_days=config.logs_retention_days,
     )
     starter = DatabaseStarter(starter_config)
+    
+    # Background task for stale processing cleanup
+    cleanup_task: asyncio.Task[None] | None = None
+    
     try:
         logger.info("Initializing application...")
         await starter.startup()
         logger.info("Application initialized successfully")
+        
+        # Start background cleanup task for stale processing logs
+        cleanup_task = asyncio.create_task(
+            start_stale_processing_cleanup_task(
+                interval_seconds=config.stale_processing_cleanup_interval_seconds,
+                timeout_minutes=config.stale_processing_timeout_minutes,
+            )
+        )
+        logger.info("Started stale processing cleanup background task")
+        
         yield
     except DatabaseNotFoundError as e:
         logger.error("Database not found: %s", e)
@@ -70,6 +92,16 @@ async def lifespan(app: FastAPI):
         raise
     finally:
         logger.info("Shutting down application...")
+        
+        # Cancel background cleanup task
+        if cleanup_task is not None and not cleanup_task.done():
+            cleanup_task.cancel()
+            try:
+                await cleanup_task
+            except asyncio.CancelledError:
+                pass
+            logger.info("Stale processing cleanup task cancelled")
+        
         await starter.shutdown()
 
 

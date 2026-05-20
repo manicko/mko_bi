@@ -124,7 +124,6 @@ Thumbs.db
 
 # SQL and database files not needed in container
 *.sql
-create_db.sql
 bidb_schema.sql
 DB_STRUCTURE.md
 DBSTR.md

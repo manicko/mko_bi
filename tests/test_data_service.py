@@ -2,18 +2,13 @@
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
+import tempfile
+import gzip
+import io
 
 import pytest
 
-from mkobi.models.data import (
-    ProcessingResult,
-    ProcessingResultData,
-    ProcessingStatus,
-    ProcessingStatusResponse,
-)
 from mkobi.models.enums import (
-    FileExtensionEnum,
-    MimeTypeEnum,
     ProcessingStatus as ProcessingStatusEnum,
     UploadMode,
 )
@@ -49,10 +44,14 @@ class TestDataService:
         log_repo.create_log.return_value.id = log_id
         log_repo.create_log.return_value.status = ProcessingStatusEnum.UPLOADED
 
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+            tmp.write(csv_content)
+            tmp_path = Path(tmp.name)
+
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
             with patch("mkobi.services.file_processing.enqueue_job") as mock_enqueue:
                 result = await data_service.process_upload(
-                    file_content=csv_content,
+                    file_path=tmp_path,
                     dashboard_id=dashboard_id,
                     user_id=uuid4(),
                     filename="test.csv",
@@ -78,10 +77,14 @@ class TestDataService:
         log_repo.create_log.return_value.id = log_id
         log_repo.create_log.return_value.status = ProcessingStatusEnum.UPLOADED
 
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+            tmp.write(csv_content)
+            tmp_path = Path(tmp.name)
+
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
             with patch("mkobi.services.file_processing.enqueue_job"):
                 result = await data_service.process_upload(
-                    file_content=csv_content,
+                    file_path=tmp_path,
                     dashboard_id=dashboard_id,
                     user_id=user_id,
                     filename="data.csv",
@@ -98,12 +101,16 @@ class TestDataService:
         user_id = uuid4()
         csv_content = b"name,value\nfoo,1\n"
 
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+            tmp.write(csv_content)
+            tmp_path = Path(tmp.name)
+
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=False):
             from mkobi.core.permissions import PermissionError
 
             with pytest.raises(PermissionError):
                 await data_service.process_upload(
-                    file_content=csv_content,
+                    file_path=tmp_path,
                     dashboard_id=dashboard_id,
                     user_id=user_id,
                     filename="data.csv",
@@ -119,9 +126,13 @@ class TestDataService:
         log_repo.create_log.return_value.id = log_id
         log_repo.create_log.return_value.status = ProcessingStatusEnum.UPLOADED
 
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+            tmp.write(csv_content)
+            tmp_path = Path(tmp.name)
+
         with patch("mkobi.services.file_processing.enqueue_job"):
             result = await data_service.process_upload(
-                file_content=csv_content,
+                file_path=tmp_path,
                 dashboard_id=dashboard_id,
                 user_id=None,
                 filename="data.csv",
@@ -134,9 +145,13 @@ class TestDataService:
         """Test upload rejects invalid MIME type."""
         dashboard_id = uuid4()
 
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+            tmp.write(b"some data")
+            tmp_path = Path(tmp.name)
+
         with pytest.raises(ValueError, match="Invalid MIME-type"):
             await data_service.process_upload(
-                file_content=b"some data",
+                file_path=tmp_path,
                 dashboard_id=dashboard_id,
                 filename="data.csv",
                 content_type="application/octet-stream",
@@ -146,9 +161,13 @@ class TestDataService:
         """Test upload rejects invalid file extension."""
         dashboard_id = uuid4()
 
+        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as tmp:
+            tmp.write(b"some data")
+            tmp_path = Path(tmp.name)
+
         with pytest.raises(ValueError, match="Invalid file format"):
             await data_service.process_upload(
-                file_content=b"some data",
+                file_path=tmp_path,
                 dashboard_id=dashboard_id,
                 filename="data.txt",
                 content_type="text/csv",
@@ -157,11 +176,17 @@ class TestDataService:
     async def test_process_upload_file_too_large(self, data_service, mock_repos):
         """Test upload rejects file exceeding size limit."""
         dashboard_id = uuid4()
-        large_content = b"x" * (101 * 1024 * 1024)
+        # Create a file larger than the limit (101MB)
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+            # Write in chunks to avoid memory issues
+            chunk = b"x" * (1024 * 1024)  # 1MB chunk
+            for _ in range(102):  # > 101MB
+                tmp.write(chunk)
+            tmp_path = Path(tmp.name)
 
         with pytest.raises(ValueError, match="exceeds maximum size"):
             await data_service.process_upload(
-                file_content=large_content,
+                file_path=tmp_path,
                 dashboard_id=dashboard_id,
                 filename="large.csv",
                 content_type="text/csv",
@@ -169,9 +194,6 @@ class TestDataService:
 
     async def test_process_upload_csv_gz(self, data_service, mock_repos):
         """Test upload with gzip compressed CSV."""
-        import gzip
-        import io
-
         agg_repo, log_repo, graph_repo = mock_repos
         dashboard_id = uuid4()
         csv_content = b"date,category,revenue\n2023-01-01,A,100.5\n"
@@ -179,15 +201,19 @@ class TestDataService:
         log_repo.create_log.return_value.id = log_id
         log_repo.create_log.return_value.status = ProcessingStatusEnum.UPLOADED
 
+        buf = io.BytesIO()
+        with gzip.GzipFile(fileobj=buf, mode="wb") as gz:
+            gz.write(csv_content)
+        gz_content = buf.getvalue()
+
+        with tempfile.NamedTemporaryFile(suffix=".csv.gz", delete=False) as tmp:
+            tmp.write(gz_content)
+            tmp_path = Path(tmp.name)
+
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
             with patch("mkobi.services.file_processing.enqueue_job"):
-                buf = io.BytesIO()
-                with gzip.GzipFile(fileobj=buf, mode="wb") as gz:
-                    gz.write(csv_content)
-                gz_content = buf.getvalue()
-
                 result = await data_service.process_upload(
-                    file_content=gz_content,
+                    file_path=tmp_path,
                     dashboard_id=dashboard_id,
                     user_id=uuid4(),
                     filename="data.csv.gz",
@@ -492,14 +518,20 @@ class TestDataService:
     async def test_validate_file_mime_skip(self, data_service):
         """Test MIME validation skips when content_type is None."""
         from mkobi.services.file_processing import validate_file
-        validate_file(filename="test.csv", file_content=b"data", content_type=None, max_file_size=data_service._max_file_size)
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+            tmp.write(b"data")
+            tmp_path = Path(tmp.name)
+        validate_file(file_path=tmp_path, filename="test.csv", content_type=None, max_file_size=data_service._max_file_size)
 
     async def test_validate_file_valid_csv(self, data_service):
         """Test validation passes for valid CSV file."""
         from mkobi.services.file_processing import validate_file
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+            tmp.write(b"name,value\ntest,1\n" * 10)
+            tmp_path = Path(tmp.name)
         validate_file(
+            file_path=tmp_path,
             filename="test.csv",
-            file_content=b"name,value\ntest,1\n" * 10,
             content_type="text/csv",
             max_file_size=data_service._max_file_size,
         )
@@ -507,9 +539,12 @@ class TestDataService:
     async def test_validate_file_valid_gz(self, data_service):
         """Test validation passes for valid .csv.gz file."""
         from mkobi.services.file_processing import validate_file
+        with tempfile.NamedTemporaryFile(suffix=".csv.gz", delete=False) as tmp:
+            tmp.write(b"compressed data")
+            tmp_path = Path(tmp.name)
         validate_file(
+            file_path=tmp_path,
             filename="test.csv.gz",
-            file_content=b"compressed data",
             content_type="application/gzip",
             max_file_size=data_service._max_file_size,
         )
@@ -517,10 +552,13 @@ class TestDataService:
     async def test_validate_file_invalid_extension(self, data_service):
         """Test validation rejects .txt extension."""
         from mkobi.services.file_processing import validate_file
+        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as tmp:
+            tmp.write(b"some text")
+            tmp_path = Path(tmp.name)
         with pytest.raises(ValueError, match="Invalid file format"):
             validate_file(
+                file_path=tmp_path,
                 filename="test.txt",
-                file_content=b"some text",
                 content_type="text/csv",  # Valid MIME but wrong extension
                 max_file_size=data_service._max_file_size,
             )
@@ -528,10 +566,13 @@ class TestDataService:
     async def test_validate_file_invalid_mime(self, data_service):
         """Test validation rejects disallowed MIME type."""
         from mkobi.services.file_processing import validate_file
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+            tmp.write(b"data")
+            tmp_path = Path(tmp.name)
         with pytest.raises(ValueError, match="Invalid MIME-type"):
             validate_file(
+                file_path=tmp_path,
                 filename="test.csv",
-                file_content=b"data",
                 content_type="application/octet-stream",
                 max_file_size=data_service._max_file_size,
             )

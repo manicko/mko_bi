@@ -176,7 +176,7 @@ async def approve_registration_request_admin_endpoint(
 
         if req["status"] != RegistrationStatus.PENDING:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_409_CONFLICT,
                 detail=f"Request already {req['status']}",
             )
 
@@ -239,7 +239,7 @@ async def reject_registration_request_admin_endpoint(
 
         if req["status"] != RegistrationStatus.PENDING:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_409_CONFLICT,
                 detail=f"Request already {req['status']}",
             )
 

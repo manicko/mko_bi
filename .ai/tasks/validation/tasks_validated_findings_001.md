@@ -100,7 +100,7 @@ All task file targets were verified against the actual codebase:
 | TASK_017 | `src/mkobi/workers/data_worker.py` | dimension processing | ✅ Exists |
 | TASK_018 | `src/mkobi/core/permissions.py` | `check_dashboard_access` | ✅ Line 210 |
 | TASK_019 | `src/mkobi/api/routes/dashboards.py` | `bind_filter_endpoint`, `unbind_filter_endpoint` | ✅ Lines 478, 550 |
-| TASK_020 | `create_db.sql` | file deletion | ✅ File exists |
+| TASK_020 | `create_db.sql` | file deletion | ✅ **COMPLETE** — file removed, docs updated to reference Alembic |
 | TASK_021 | `src/mkobi/db/starter.py` | `cleanup_old_logs` | ✅ Line 254 |
 | TASK_022 | `src/mkobi/api/routes/auth.py` | login rate limiter | ✅ Line 45-50 |
 | TASK_023 | `src/mkobi/db/starter.py` | `recreate_test_database` | ✅ Exists |

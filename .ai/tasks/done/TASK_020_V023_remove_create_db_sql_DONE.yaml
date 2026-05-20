@@ -2,7 +2,7 @@ id: TASK_020_V023_remove_create_db_sql
 
 title: Remove divergent create_db.sql to eliminate schema documentation drift
 
-status: pending
+status: completed
 
 priority: medium
 

@@ -5,6 +5,7 @@ data processing status for dashboards.
 """
 
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
@@ -75,7 +76,7 @@ class DataService(IDataService):
 
     async def process_upload(
         self,
-        file_content: bytes,
+        file_path: str | Path,
         dashboard_id: UUID,
         user_id: UUID | None = None,
         filename: str | None = None,
@@ -86,7 +87,7 @@ class DataService(IDataService):
         """Process uploaded file and save aggregates.
 
         Args:
-            file_content: Raw file content bytes.
+            file_path: Path to the uploaded file (already streamed to disk).
             dashboard_id: Target dashboard ID.
             user_id: Optional user ID for permission check.
             filename: Original filename.
@@ -98,20 +99,21 @@ class DataService(IDataService):
             UploadResponse with task information.
         """
         actual_db = db
+        file_path_obj = Path(file_path) if isinstance(file_path, str) else file_path
         if actual_db is None:
             async with get_session() as session:
                 return await self._execute_upload(
-                    file_content, dashboard_id, user_id,
+                    file_path_obj, dashboard_id, user_id,
                     filename, content_type, mode, session,
                 )
         return await self._execute_upload(
-            file_content, dashboard_id, user_id,
+            file_path_obj, dashboard_id, user_id,
             filename, content_type, mode, actual_db,
         )
 
     async def _execute_upload(
         self,
-        file_content: bytes,
+        file_path: Path,
         dashboard_id: UUID,
         user_id: UUID | None,
         filename: str | None,
@@ -137,7 +139,7 @@ class DataService(IDataService):
                 )
 
         log_id = await process_upload_with_session(
-            file_content=file_content,
+            file_path=file_path,
             dashboard_id=dashboard_id,
             log_repo=self.log_repo,
             filename=filename,

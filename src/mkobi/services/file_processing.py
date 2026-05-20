@@ -8,7 +8,6 @@ from pathlib import Path
 from typing import Any, cast
 from uuid import UUID
 
-import aiofiles
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.config import get_config
@@ -44,26 +43,35 @@ def validate_mime_type(content_type: str | None) -> None:
 
 
 def validate_file(
+    file_path: Path,
     filename: str | None,
-    file_content: bytes,
     content_type: str | None,
     max_file_size: int,
-) -> None:
+) -> int:
     """Validate uploaded file.
 
     Checks file content, MIME type, format, and size limits.
 
     Args:
+        file_path: Path to the uploaded file.
         filename: Original filename from upload.
-        file_content: Raw file bytes.
         content_type: MIME type from upload header.
         max_file_size: Maximum allowed file size in bytes.
+
+    Returns:
+        int: The file size in bytes.
 
     Raises:
         ValueError: If any validation check fails.
     """
-    # 1. Check file content is not empty
-    if not file_content:
+    # 1. Check file exists and get size
+    if not file_path.exists():
+        raise ValueError("File not found")
+
+    file_size = file_path.stat().st_size
+
+    # Check file content is not empty
+    if file_size == 0:
         raise ValueError("File content is empty")
 
     # 2. Check MIME-type
@@ -86,25 +94,26 @@ def validate_file(
         )
 
     # 4. Check file size
-    if len(file_content) > max_file_size:
+    if file_size > max_file_size:
         logger.error(
             "File exceeds maximum size: %s (%d > %d)",
             filename,
-            len(file_content),
+            file_size,
             max_file_size,
         )
         raise ValueError(
             f"File '{filename}' exceeds maximum size "
-            f"({len(file_content)} > {max_file_size} bytes)"
+            f"({file_size} > {max_file_size} bytes)"
         )
 
     logger.info(
-        "File validated successfully: %s (%d bytes)", filename, len(file_content)
+        "File validated successfully: %s (%d bytes)", filename, file_size
     )
+    return file_size
 
 
 async def process_upload_with_session(
-    file_content: bytes,
+    file_path: Path,
     dashboard_id: UUID,
     log_repo: Any,
     filename: str | None,
@@ -115,11 +124,11 @@ async def process_upload_with_session(
 ) -> UUID:
     """Process uploaded file with an active session.
 
-    Validates, saves to temp storage, creates processing log,
+    Validates, renames to final location with log ID, creates processing log,
     and enqueues the background job.
 
     Args:
-        file_content: Raw file content bytes.
+        file_path: Path to the uploaded file (already streamed to temp).
         dashboard_id: Target dashboard ID.
         log_repo: Processing log repository.
         filename: Original filename.
@@ -133,12 +142,11 @@ async def process_upload_with_session(
 
     Raises:
         ValueError: If file validation fails.
-        OSError: If file cannot be written to disk.
+        OSError: If file cannot be moved to final location.
     """
-    # Validate file
-    validate_file(filename, file_content, content_type, max_file_size)
+    # Validate file at temp path
+    file_size = validate_file(file_path, filename, content_type, max_file_size)
 
-    # Save file to temporary directory
     config = get_config()
     upload_dir = Path(config.upload_temp_dir)
     upload_dir.mkdir(parents=True, exist_ok=True)
@@ -150,7 +158,7 @@ async def process_upload_with_session(
         else ".csv"
     )
 
-    # Create processing log entry with STARTED status
+    # Create processing log entry with STARTED status first
     log = await log_repo.create_log(
         db=db,
         dashboard_id=dashboard_id,
@@ -158,15 +166,15 @@ async def process_upload_with_session(
         message=f"Upload started with mode={mode}",
     )
     await db.flush()
-    temp_file_path = upload_dir / f"{log.id}{file_ext}"
 
-    try:
-        async with aiofiles.open(temp_file_path, mode="wb") as f:
-            await f.write(file_content)
-        logger.info("File saved: path=%s, mode=%s", temp_file_path, mode)
-    except Exception as e:
-        logger.error("File save error: %s", e)
-        raise
+    # Move file to final location with log ID as filename
+    final_file_path = upload_dir / f"{log.id}{file_ext}"
+    file_path.replace(final_file_path)
+
+    logger.info(
+        "File moved to final location: path=%s, size=%d, mode=%s",
+        final_file_path, file_size, mode
+    )
 
     # Update status to UPLOADED after file is saved successfully
     await log_repo.update_status(
@@ -182,7 +190,7 @@ async def process_upload_with_session(
 
     await enqueue_job(
         process_csv_background,
-        file_path=str(temp_file_path),
+        file_path=str(final_file_path),
         dashboard_id=str(dashboard_id),
         task_id=str(log.id),
         log_id=str(log.id),

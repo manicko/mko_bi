@@ -4,6 +4,7 @@ Defines contracts for all services in the system.
 """
 
 import abc
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
@@ -363,7 +364,7 @@ class IDataService(abc.ABC):
     @abc.abstractmethod
     async def process_upload(
         self,
-        file_content: bytes,
+        file_path: str | Path,
         dashboard_id: UUID,
         user_id: UUID | None = None,
         filename: str | None = None,

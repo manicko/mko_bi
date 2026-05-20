@@ -3,7 +3,7 @@ import logging
 import os
 from logging.config import fileConfig
 
-from sqlalchemy import Connection, pool
+from sqlalchemy import Connection, pool, text
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from alembic import context
@@ -51,6 +51,10 @@ if db_url:
 
 logger = logging.getLogger("alembic.env")
 
+# Advisory lock key for migration synchronization
+# Used to prevent concurrent migrations in multi-instance deployments
+MIGRATION_ADVISORY_LOCK_KEY = 42
+
 
 def run_migrations_offline() -> None:
     """Run migrations in 'offline' mode.
@@ -89,7 +93,12 @@ def do_run_migrations(sync_connection: Connection) -> None:
 
 
 async def run_async_migrations() -> None:
-    """Run migrations in 'online' async mode."""
+    """Run migrations in 'online' async mode.
+
+    Uses pg_advisory_lock to prevent concurrent migrations in multi-instance
+    deployments. The lock is acquired before running migrations and released
+    afterwards, even if migrations fail.
+    """
     db_url = config.get_main_option("sqlalchemy.url")
     if db_url is None:
         raise ValueError("Database URL is not configured in alembic.ini or env.py")
@@ -99,8 +108,31 @@ async def run_async_migrations() -> None:
     )
 
     async with connectable.connect() as connection:
-        await connection.run_sync(do_run_migrations)
+        try:
+            # Acquire advisory lock to prevent concurrent migrations
+            await connection.execute(
+                text(f"SELECT pg_advisory_lock({MIGRATION_ADVISORY_LOCK_KEY})")
+            )
+            await connection.commit()
 
+            try:
+                await connection.run_sync(do_run_migrations)
+            finally:
+                # Always release the advisory lock
+                await connection.execute(
+                    text(f"SELECT pg_advisory_unlock({MIGRATION_ADVISORY_LOCK_KEY})")
+                )
+                await connection.commit()
+        except Exception:
+            # Ensure lock is released on any error
+            try:
+                await connection.execute(
+                    text(f"SELECT pg_advisory_unlock({MIGRATION_ADVISORY_LOCK_KEY})")
+                )
+                await connection.commit()
+            except Exception:
+                pass
+            raise
     await connectable.dispose()
 
 

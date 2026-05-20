@@ -9,7 +9,6 @@ from sqlalchemy import (
     ForeignKey,
     String,
     Text,
-    func,
     text,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
@@ -76,7 +75,6 @@ class Dashboard(Base):
         DateTime(timezone=True),
         nullable=False,
         server_default=text("now()"),
-        onupdate=func.now(),
     )
 
     # Relationship with access rights

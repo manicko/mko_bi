@@ -446,20 +446,35 @@ def _calculate_share(
     return result
 
 
+def _is_numeric_literal(token: str) -> bool:
+    """Check if token is a numeric literal (int or float, including negative).
+
+    Args:
+        token: Token string to check.
+
+    Returns:
+        True if token represents a numeric literal, False otherwise.
+    """
+    try:
+        float(token)
+        return True
+    except ValueError:
+        return False
+
+
 def _parse_formula(formula: str) -> pl.Expr:
     """Parse simple formula into Polars expression.
 
-    Supports only binary arithmetic operators (+, -, *, /) between column names.
-    All tokens (including numeric literals like "100") are treated as column
-    references via ``pl.col()``. For numeric literal support or complex
-    expressions, pre-compute the value in a separate step or use the
-    ``simpleeval`` library (not currently a dependency).
+    Supports binary arithmetic operators (+, -, *, /) between column names
+    and numeric literals.
 
     Supported syntax
     -----------------
     - Single column: ``"revenue"`` → ``pl.col("revenue")``
+    - Single literal: ``"100"`` → ``pl.lit(100)``
     - Binary op: ``"revenue / cost"`` → ``pl.col("revenue") / pl.col("cost")``
     - Chained: ``"a + b - c"`` → left-to-right evaluation
+    - Numeric literals: ``"revenue * 100"`` → ``pl.col("revenue") * pl.lit(100)``
 
     Known limitations
     -----------------
@@ -467,15 +482,13 @@ def _parse_formula(formula: str) -> pl.Expr:
     - **No operator precedence** – all operations evaluate strictly
       left-to-right (e.g. ``"a + b * c"`` means ``(a + b) * c``, not
       ``a + (b * c)``).
-    - **No numeric literals** – every operand is wrapped in ``pl.col()``,
-      so ``"revenue * 100"`` looks for a column named ``"100"``.
     - **Column names** must match ``[a-zA-Z_][a-zA-Z0-9_]*``; names with
       spaces or special characters are not supported.
     - **No unary operators** – expressions like ``"-value"`` are invalid.
 
     Args:
-        formula: Formula string containing column names and operators,
-            e.g. ``"revenue / cost"``.
+        formula: Formula string containing column names, operators, and/or
+            numeric literals, e.g. ``"revenue / cost"`` or ``"revenue * 100"``.
 
     Returns:
         pl.Expr: Polars expression representing the formula.
@@ -490,29 +503,60 @@ def _parse_formula(formula: str) -> pl.Expr:
     tokens = re.split(r'([+\-*/])', formula)
     tokens = [t.strip() for t in tokens if t.strip()]
 
+    # Handle negative numbers: merge '-' followed immediately by a number into a negative literal
+    # e.g., ['100', '-', '5'] becomes ['100', '-', '-5'] when '-' at position 2 is followed by a number
+    # But only when the previous token was an operator (meaning we're expecting an operand)
+    _OPERATORS = {"+", "-", "*", "/"}
+    merged: list[str] = []
+    i = 0
+    while i < len(tokens):
+        if (merged and
+            merged[-1] in _OPERATORS and
+            i + 1 < len(tokens) and
+            tokens[i] == "-" and
+            _is_numeric_literal(tokens[i + 1])):
+            # This is a negative number literal after an operator
+            merged.append("-" + tokens[i + 1])
+            i += 2
+        else:
+            merged.append(tokens[i])
+            i += 1
+
+    tokens = merged
+
     if not tokens:
         raise ValueError("Formula must not be empty")
 
     if len(tokens) == 1:
-        return pl.col(tokens[0])
+        token = tokens[0]
+        if _is_numeric_literal(token):
+            return pl.lit(float(token))
+        return pl.col(token)
 
-    # Validate token pattern: column, op, column, op, column, ...
+    # Validate token pattern: operand, op, operand, op, operand, ...
     _validate_formula_tokens(tokens)
 
-    expr = pl.col(tokens[0])
+    def _token_to_expr(token: str) -> pl.Expr:
+        """Convert token to appropriate Polars expression."""
+        if _is_numeric_literal(token):
+            return pl.lit(float(token))
+        return pl.col(token)
+
+    expr = _token_to_expr(tokens[0])
     i = 1
     while i < len(tokens):
         op = tokens[i]
         next_token = tokens[i + 1]
+        next_expr = _token_to_expr(next_token)
 
         if op == "+":
-            expr = expr + pl.col(next_token)
+            expr = expr + next_expr
         elif op == "-":
-            expr = expr - pl.col(next_token)
+            expr = expr - next_expr
         elif op == "*":
-            expr = expr * pl.col(next_token)
+            expr = expr * next_expr
         elif op == "/":
-            expr = expr / pl.col(next_token)
+            expr = expr / next_expr
         else:
             raise ValueError(
                 f"Unsupported operator '{op}' in formula: {formula!r}"
@@ -525,8 +569,9 @@ def _parse_formula(formula: str) -> pl.Expr:
 def _validate_formula_tokens(tokens: list[str]) -> None:
     """Validate that formula tokens follow the expected pattern.
 
-    Expects alternating column names and binary operators, starting
-    and ending with a column name: ``col op col op col ...``.
+    Expects alternating operands (column names or numeric literals) and binary
+    operators, starting and ending with an operand:
+    ``operand op operand op operand ...``.
 
     Args:
         tokens: List of parsed formula tokens.
@@ -539,11 +584,12 @@ def _validate_formula_tokens(tokens: list[str]) -> None:
 
     for idx, token in enumerate(tokens):
         if idx % 2 == 0:
-            # Even indices must be column names
-            if not _VALID_COLUMN_RE.match(token):
+            # Even indices must be column names or numeric literals
+            if not _is_numeric_literal(token) and not _VALID_COLUMN_RE.match(token):
                 raise ValueError(
-                    f"Invalid column name {token!r} at position {idx} "
-                    f"in formula. Column names must match [a-zA-Z_][a-zA-Z0-9_]*"
+                    f"Invalid operand {token!r} at position {idx} "
+                    f"in formula. Operands must be column names matching "
+                    f"[a-zA-Z_][a-zA-Z0-9_]* or numeric literals"
                 )
         else:
             # Odd indices must be operators
@@ -552,9 +598,9 @@ def _validate_formula_tokens(tokens: list[str]) -> None:
                     f"Expected operator at position {idx}, got {token!r}"
                 )
 
-    # Token count must be odd (starts and ends with column name)
+    # Token count must be odd (starts and ends with operand)
     if len(tokens) % 2 == 0:
         raise ValueError(
-            "Malformed formula: formula must end with a column name, "
+            "Malformed formula: formula must end with an operand, "
             "not an operator"
         )

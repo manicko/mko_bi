@@ -2,7 +2,7 @@ id: TASK_011_V028_fix_status_codes
 
 title: Change registration approval/rejection status codes from 400 to 409 Conflict
 
-status: pending
+status: done
 
 priority: low
 

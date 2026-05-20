@@ -113,9 +113,9 @@ cors_origins:
 set "PGPASSWORD=1234" & psql -h localhost -p 5432 -U postgres -c "CREATE DATABASE bidb;"
 ```
 
-Or use the script:
+**Note:** Use Alembic migrations for schema setup:
 ```bash
-set "PGPASSWORD=1234" & psql -h localhost -p 5432 -U postgres -f create_db.sql
+uv run alembic upgrade head
 ```
 
 ## Running the Application

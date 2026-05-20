@@ -146,7 +146,7 @@ def hash_password(password: str) -> str:
     password_bytes = truncated_password.encode("utf-8")
     salt = bcrypt.gensalt(rounds=SALT_ROUNDS)
     password_hash = bcrypt.hashpw(password_bytes, salt)
-    logger.info("Password hashed successfully")
+    logger.debug("Password hashed successfully")
     return password_hash.decode("latin-1")
 
 
@@ -176,7 +176,7 @@ def verify_password(password: str, hashed_password: str) -> bool:
     try:
         result = bcrypt.checkpw(password_bytes, hash_bytes)
         if result:
-            logger.info("Password verified successfully")
+            logger.debug("Password verified successfully")
         else:
             logger.warning("Password verification failed")
         return result
@@ -257,7 +257,7 @@ def decode_token(token: str) -> dict[str, Any] | None:
             get_config().jwt.secret_key,
             algorithms=[get_config().jwt.algorithm],
         )
-        logger.info("JWT token decoded successfully")
+        logger.debug("JWT token decoded successfully")
         return payload
     except JWTError as e:
         logger.error("JWT token decode error: %s", e)

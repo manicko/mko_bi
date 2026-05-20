@@ -6,17 +6,19 @@ and applies Alembic migrations according to the environment.
 
 import asyncio
 import logging
+import re
 import sys
+import uuid
 from datetime import datetime, timedelta
 from typing import cast
 
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import text
-from sqlalchemy.exc import IntegrityError
+from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from mkobi.config import get_config
-from mkobi.db.repositories.user_repo import UserRepository
+from mkobi.core.security import hash_password
 from mkobi.models.enums import EnvironmentEnum, UserRole
 from mkobi.services.file_cleanup import cleanup_stale_temp_files
 
@@ -65,7 +67,6 @@ class DatabaseStarter:
     def __init__(self, config: DatabaseStarterConfig | None = None) -> None:
         self._config = config or DatabaseStarterConfig()
         self._main_engine: AsyncEngine | None = None
-        self._test_engine: AsyncEngine | None = None
 
     async def _check_db_connection(self) -> None:
         """Check database connectivity with timeout."""
@@ -74,7 +75,7 @@ class DatabaseStarter:
             async with asyncio.timeout(DB_CONNECT_TIMEOUT):
                 async with self._main_engine.connect() as conn:
                     await conn.execute(text("SELECT 1"))
-        except asyncio.TimeoutError:
+        except TimeoutError:
             raise DatabaseNotFoundError("Database connection timed out") from None
         except Exception as e:
             logger.error("Main database not accessible: %s", e)
@@ -137,6 +138,9 @@ class DatabaseStarter:
         if deleted_count > 0:
             logger.info("Cleaned up %d orphaned temp files during startup", deleted_count)
 
+        # Clean up old processing logs based on retention policy
+        await self.cleanup_old_logs()
+
         # Handle test database
         if self._config.env == EnvironmentEnum.TEST or self._config.recreate_test_db:
             await self.recreate_test_database()
@@ -152,8 +156,15 @@ class DatabaseStarter:
 
         logger.info("Recreating test database...")
 
-        # Parse the test URL to get the base connection details
-        # Connect to 'postgres' database to be able to drop/create bidb_test
+        # Parse the test URL to get the database name
+        parsed_url = make_url(test_url)
+        db_name = parsed_url.database
+
+        # Validate database name against safe pattern to prevent SQL injection
+        if not db_name or not re.match(r"^[a-zA-Z0-9_]+$", db_name):
+            raise ValueError(f"Invalid database name: {db_name}")
+
+        # Connect to 'postgres' database to be able to drop/create target database
         base_url = test_url.rsplit("/", 1)[0] + "/postgres"
 
         # Create engine connected to 'postgres' database with autocommit
@@ -165,16 +176,17 @@ class DatabaseStarter:
         # Drop and recreate test database
         try:
             async with admin_engine.connect() as conn:
-                # Terminate existing connections to bidb_test
+                # Terminate existing connections to the target database
                 await conn.execute(
                     text(
                         "SELECT pg_terminate_backend(pid) "
                         "FROM pg_stat_activity "
-                        "WHERE datname = 'bidb_test'"
-                    )
+                        "WHERE datname = :db_name"
+                    ),
+                    {"db_name": db_name},
                 )
-                await conn.execute(text("DROP DATABASE IF EXISTS bidb_test"))
-                await conn.execute(text("CREATE DATABASE bidb_test"))
+                await conn.execute(text(f"DROP DATABASE IF EXISTS {db_name}"))
+                await conn.execute(text(f"CREATE DATABASE {db_name}"))
             await admin_engine.dispose()
         except Exception as e:
             logger.error("Failed to recreate test database: %s", e)
@@ -182,14 +194,16 @@ class DatabaseStarter:
             raise
 
         # Apply migrations to test database
-        migration_engine = create_async_engine(test_url)
         await self._apply_migrations(test_url)
-        await migration_engine.dispose()
 
         logger.info("Test database recreated successfully")
 
     async def _apply_migrations(self, db_url: str) -> None:
-        """Apply Alembic migrations to the specified database."""
+        """Apply Alembic migrations to the specified database.
+
+        Advisory lock is acquired in alembic/env.py to prevent concurrent
+        migrations in multi-instance deployments.
+        """
 
         def _sync_migrate() -> None:
             """Synchronous migration function for to_thread."""
@@ -199,10 +213,11 @@ class DatabaseStarter:
             config = Config(alembic_ini)
             config.set_main_option("sqlalchemy.url", db_url)
 
-            # Run migrations
+            # Run migrations (advisory lock handled in alembic/env.py)
             command.upgrade(config, "head")
 
-        logger.info("Running migrations for %s...", db_url)
+        safe_url = make_url(db_url).render_as_string(hide_password=True)
+        logger.info("Running migrations for %s...", safe_url)
         await asyncio.to_thread(_sync_migrate)
         logger.info("Migrations applied successfully")
 
@@ -210,6 +225,7 @@ class DatabaseStarter:
         """Create admin user if it does not already exist.
 
         Idempotent — safe to run multiple times.
+        Uses atomic UPSERT to avoid race conditions on concurrent startup.
         """
         from mkobi.db.session import get_async_sessionlocal
 
@@ -223,33 +239,24 @@ class DatabaseStarter:
                 "Using default admin username - set ADMIN_USERNAME environment variable"
             )
 
-        logger.info("Ensuring admin user exists: %s", admin_email)
-
-        user_repo = UserRepository()
         SessionLocal = await get_async_sessionlocal()
 
         async with SessionLocal() as db:
-            try:
-                user = await user_repo.get_by_email(email=admin_email, db=db)
-                if user is not None:
-                    logger.info("Admin user already exists: %s", admin_email)
-                    return
-
-                from mkobi.core.security import hash_password
-
-                password_hash = hash_password(admin_password)
-                await user_repo.create(
-                    db=db,
-                    email=admin_email,
-                    password_hash=password_hash,
-                    role=UserRole.ADMIN,
+            async with db.begin():
+                await db.execute(
+                    text(
+                        "INSERT INTO users (id, email, password_hash, role, is_active) "
+                        "VALUES (:id, :email, :password, :role, true) "
+                        "ON CONFLICT (email) DO NOTHING"
+                    ),
+                    {
+                        "id": str(uuid.uuid4()),
+                        "email": admin_email,
+                        "password": hash_password(admin_password),
+                        "role": UserRole.ADMIN,
+                    },
                 )
-                await db.commit()
-                logger.info("Admin user created successfully: %s", admin_email)
-            except IntegrityError:
-                logger.warning(
-                    "Admin user already exists (IntegrityError): %s", admin_email
-                )
+            logger.info("Admin user ensured: %s", admin_email)
 
     async def cleanup_old_logs(self) -> None:
         """Clean up old processing logs based on retention policy."""
@@ -276,9 +283,6 @@ class DatabaseStarter:
         if self._main_engine:
             await self._main_engine.dispose()
             self._main_engine = None
-        if self._test_engine:
-            await self._test_engine.dispose()
-            self._test_engine = None
         logger.info("Database engines disposed")
 
 

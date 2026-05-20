@@ -15,8 +15,12 @@ services:
       POSTGRES_USER: postgres
       # Production requires explicit database password (no default)
       POSTGRES_PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD must be set for production}
+      # Application role password (can be different from postgres password)
+      MKOBI_APP_PASSWORD: ${MKOBI_APP_PASSWORD:-secure_password_placeholder}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Mount initialization scripts to create app role on first run
+      - ./docker/init-scripts:/docker-entrypoint-initdb.d:ro
     ports:
       - "5432:5432"
     healthcheck:
@@ -26,6 +30,30 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # Migration service - runs alembic migrations before app starts
+  # This ensures database schema is up-to-date before the application starts
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      ENV: ${ENV:-production}
+      DATABASE__HOST: db
+      DATABASE__PORT: 5432
+      DATABASE__USER: postgres
+      DATABASE__PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD must be set for production}
+      DATABASE__DBNAME: bidb
+      DATABASE__TEST_DBNAME: bidb_test
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:?JWT__SECRET_KEY must be set for production}
+      JWT__ALGORITHM: HS256
+    depends_on:
+      db:
+        condition: service_healthy
+    # Run migrations once and exit - no restart needed
+    restart: "no"
+
   app:
     build:
       context: .
@@ -34,15 +62,17 @@ services:
       args:
         - UV_VERSION=latest
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       db:
         condition: service_healthy
     environment:
       ENV: ${ENV:-production}
       DATABASE__HOST: db
       DATABASE__PORT: 5432
-      DATABASE__USER: postgres
-      # Production requires explicit database password (no default)
-      DATABASE__PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD must be set for production}
+      # Application role with limited privileges for runtime operations
+      DATABASE__USER: mkobi_app
+      DATABASE__PASSWORD: ${MKOBI_APP_PASSWORD:-secure_password_placeholder}
       DATABASE__DBNAME: bidb
       DATABASE__TEST_DBNAME: bidb_test
       # SECURITY: JWT__SECRET_KEY MUST be set explicitly in production.

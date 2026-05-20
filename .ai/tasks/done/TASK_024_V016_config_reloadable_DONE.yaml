@@ -2,7 +2,7 @@ id: TASK_024_V016_config_reloadable
 
 title: Add reload mechanism to get_config() for testing flexibility
 
-status: pending
+status: done
 
 priority: medium
 

@@ -1,8 +1,8 @@
-id: TASK_021_V025_wire_cleanup_old_logs
+id: TASK_021_V025_wire_cleanup_old_logs_DONE
 
 title: Wire cleanup_old_logs() into startup lifecycle or remove dead code
 
-status: pending
+status: done
 
 priority: medium
 

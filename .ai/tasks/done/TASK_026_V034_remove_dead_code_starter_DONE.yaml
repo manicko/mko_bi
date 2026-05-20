@@ -1,6 +1,6 @@
 id: TASK_026_V034_remove_dead_code_starter
 
-title: Remove dead code from DatabaseStarter (_test_engine, migration_engine, cleanup_old_logs)
+title: Remove dead code from DatabaseStarter (_test_engine, migration_engine)
 
 status: pending
 
@@ -11,10 +11,12 @@ depends_on:
 
 description: >
   self._test_engine is declared but never assigned or used. migration_engine is
-  created but never used. cleanup_old_logs() is defined but never called (handled
-  in TASK_021). This task removes the unused field and unused engine creation.
+  created but never used. cleanup_old_logs() is now wired into startup (handled
+  in TASK_021 and completed). This task removes the unused field and unused
+  engine creation.
 
 finding_ref: V-034
+
 severity: LOW
 
 goals:
@@ -54,3 +56,4 @@ risk_level: low
 
 rollout_notes: >
   Safe. Pure cleanup. Depends on TASK_021 for cleanup_old_logs decision.
+  Note: cleanup_old_logs is now wired into startup and should not be removed.

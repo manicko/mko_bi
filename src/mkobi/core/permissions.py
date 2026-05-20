@@ -11,7 +11,7 @@ viewer can only read.
 """
 
 import logging
-import time
+from functools import lru_cache
 from typing import Any
 from collections.abc import AsyncGenerator
 from uuid import UUID
@@ -27,12 +27,6 @@ from mkobi.models.enums import DashboardPermission, UserRole
 from mkobi.models.user import UserRead
 
 logger = logging.getLogger(__name__)
-
-
-# --- TTL Cache for token decoding ---
-# Cache entry: {token: (decoded_data, timestamp)}
-_token_cache: dict[str, tuple[dict[str, Any] | None, float]] = {}
-_TOKEN_CACHE_TTL_SECONDS = 300  # 5 minutes
 
 
 class RolePermissions:
@@ -265,6 +259,17 @@ async def _check_access_with_session(
         True if access exists, False otherwise.
     """
     try:
+        # Admin bypass: admins can access any dashboard
+        user_repo = UserRepository()
+        user = await user_repo.get(id=user_id, db=db)
+        if user and user.role == UserRole.ADMIN:
+            logger.info(
+                "Dashboard access granted by admin bypass: user_id=%s, dashboard_id=%s",
+                user_id,
+                dashboard_id,
+            )
+            return True
+
         # Get user access level
         access_repo = AccessRepository()
         permission = await access_repo.check_access(
@@ -327,8 +332,12 @@ async def _check_access_with_session(
         return False
 
 
+@lru_cache(maxsize=1000)
 def _decode_token_cached(token: str) -> dict[str, Any] | None:
-    """Cached token decoding with TTL.
+    """Cached token decoding with LRU eviction.
+
+    Uses functools.lru_cache with maxsize=1000 for bounded memory usage.
+    Oldest entries are evicted when cache is full.
 
     Args:
         token: JWT token.
@@ -336,20 +345,7 @@ def _decode_token_cached(token: str) -> dict[str, Any] | None:
     Returns:
         dict[str, Any] | None: Decoded token data or None.
     """
-    current_time = time.time()
-    
-    # Check if token is in cache and not expired
-    if token in _token_cache:
-        cached_data, timestamp = _token_cache[token]
-        if current_time - timestamp < _TOKEN_CACHE_TTL_SECONDS:
-            return cached_data
-        # Remove expired entry
-        del _token_cache[token]
-    
-    # Decode token and cache with timestamp
     result: dict[str, Any] | None = decode_token(token)
-    _token_cache[token] = (result, current_time)
-    
     return result
 
 

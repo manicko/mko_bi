@@ -2,7 +2,6 @@
 import gzip
 import tempfile
 from pathlib import Path
-from uuid import UUID
 
 import pytest
 from fastapi import status
@@ -12,9 +11,8 @@ from mkobi.core.security import hash_password, create_access_token
 from mkobi.db.models.dashboard import Dashboard
 from mkobi.db.repositories.access_repo import AccessRepository
 from mkobi.db.repositories.dashboard_repo import DashboardRepository
-from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
 from mkobi.db.repositories.user_repo import UserRepository
-from mkobi.models.enums import DashboardPermission, ProcessingStatus
+from mkobi.models.enums import DashboardPermission
 import uuid
 
 
@@ -226,20 +224,28 @@ N,South,Product12,999999.99,249999.99,2023-01-14,999
 
     async def test_upload_no_permission(
         self,
-        authenticated_client: AsyncClient,
-        test_user: dict,
+        async_client: AsyncClient,
+        editor_user: dict,
         test_dashboard: Dashboard,
         csv_file: Path,
     ) -> None:
-        """Test upload without permission (should return 403)."""
-        # Use authenticated_client but DO NOT grant access
+        """Test upload without permission (should return 403 for non-admin)."""
+        # Use editor_user (non-admin) without granting dashboard access
         # This way, the API returns 403 Forbidden
-        with open(csv_file, "rb") as f:
-            response = await authenticated_client.post(
-                f"/upload/{test_dashboard.id}",
-                files={"file": ("test.csv", f, "text/csv")},
-            )
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        client_with_editor_auth = async_client
+        client_with_editor_auth.headers.update(
+            {"Authorization": f"Bearer {editor_user['token']}"}
+        )
+        try:
+            with open(csv_file, "rb") as f:
+                response = await client_with_editor_auth.post(
+                    f"/upload/{test_dashboard.id}",
+                    files={"file": ("test.csv", f, "text/csv")},
+                )
+            assert response.status_code == status.HTTP_403_FORBIDDEN
+        finally:
+            # Restore original headers for other tests
+            client_with_editor_auth.headers.pop("Authorization", None)
 
     async def test_upload_mode_overwrite(
         self,

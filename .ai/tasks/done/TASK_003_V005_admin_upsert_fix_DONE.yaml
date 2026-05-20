@@ -2,9 +2,10 @@ id: TASK_003_V005_admin_upsert_fix
 
 title: Fix admin user race condition with UPSERT in ensure_admin_user()
 
-status: pending
+status: done
 
 priority: high
+
 
 depends_on: []
 

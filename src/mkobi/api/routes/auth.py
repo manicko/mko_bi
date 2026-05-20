@@ -40,14 +40,17 @@ async def _handle_login(
     email: str,
     password: str,
     auth_service,
+    request: Request,
 ) -> TokenWithUser:
     """Common login logic and error handling."""
-    # Apply rate limiting for login attempts
+    # Apply rate limiting for login attempts based on client IP
+    # IP-based rate limiting prevents email enumeration via rate limit side-channel
+    client_ip = request.client.host if request.client else "unknown"
     rate_limiter = auth_service._rate_limiter
     if not await rate_limiter.check_rate_limit(
-        f"login:{email}", max_attempts=5, ttl=300
+        f"login:{client_ip}", max_attempts=5, ttl=300
     ):
-        logger.warning("Login rate limit exceeded", extra={"email": email})
+        logger.warning("Login rate limit exceeded", extra={"ip": client_ip})
         raise HTTPException(
             status_code=status.HTTP_429_TOO_MANY_REQUESTS,
             detail="Too many login attempts. Try again later.",
@@ -81,6 +84,7 @@ async def _handle_login(
     description="Authenticates user by email and password, returns JWT token with user data.",
 )
 async def login(
+    request: Request,
     login_data: LoginRequest,
     auth_service=Depends(get_auth_service),
 ) -> TokenWithUser:
@@ -89,6 +93,7 @@ async def login(
         email=login_data.email,
         password=login_data.password,
         auth_service=auth_service,
+        request=request,
     )
 
 
@@ -100,6 +105,7 @@ async def login(
     description="Authentication via OAuth2 form. Calls common /login logic.",
 )
 async def login_form(
+    request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service=Depends(get_auth_service),
 ) -> TokenWithUser:
@@ -108,6 +114,7 @@ async def login_form(
         email=form_data.username,
         password=form_data.password,
         auth_service=auth_service,
+        request=request,
     )
 
 

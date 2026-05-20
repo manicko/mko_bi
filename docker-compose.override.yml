@@ -10,6 +10,9 @@ services:
     user: root
     environment:
       ENV: development
+      # Application role for runtime operations (limited privileges)
+      DATABASE__USER: mkobi_app
+      DATABASE__PASSWORD: ${MKOBI_APP_PASSWORD:-dev_password}
       # Admin credentials (valid email format required)
       ADMIN_USERNAME: admin@example.com
       ADMIN_PASSWORD: admin@example.com
@@ -35,6 +38,7 @@ services:
   db:
     environment:
       POSTGRES_PASSWORD: ${DATABASE__PASSWORD:-1234}
+      MKOBI_APP_PASSWORD: ${MKOBI_APP_PASSWORD:-dev_password}
     # Expose port for local development tools
     ports:
       - "5432:5432"

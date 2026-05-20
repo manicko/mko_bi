@@ -294,3 +294,62 @@ class TestCORSOrigins(TestSettingsBase):
         settings = Settings()
         assert settings.cors_origins == ["http://from-env:3000"]
         assert "https://example.com" not in settings.cors_origins
+
+
+class TestGetConfigReload:
+    """Tests for get_config() reload mechanism."""
+
+    def test_get_config_returns_singleton(self, monkeypatch):
+        """Test that get_config returns the same instance by default."""
+        from mkobi.config import get_config, clear_config_cache
+
+        # Clear cache first to start fresh
+        clear_config_cache()
+
+        config1 = get_config()
+        config2 = get_config()
+        assert config1 is config2
+
+    def test_get_config_reload_returns_new_instance(self, monkeypatch):
+        """Test that get_config(reload=True) returns a new instance."""
+        from mkobi.config import get_config, clear_config_cache
+
+        # Clear cache first to start fresh
+        clear_config_cache()
+
+        config1 = get_config()
+        config2 = get_config(reload=True)
+        assert config1 is not config2
+
+    def test_clear_config_cache_allows_new_instance(self, monkeypatch):
+        """Test that clear_config_cache allows creating a new config instance."""
+        from mkobi.config import get_config, clear_config_cache
+
+        # Clear cache first to start fresh
+        clear_config_cache()
+
+        config1 = get_config()
+        clear_config_cache()
+        config2 = get_config()
+        assert config1 is not config2
+
+    def test_get_config_reload_with_different_env(self, monkeypatch):
+        """Test reload picks up new environment variables."""
+        from mkobi.config import get_config, clear_config_cache
+
+        # Clear cache first
+        clear_config_cache()
+
+        # Set initial env
+        monkeypatch.setenv("DATABASE__HOST", "initial-host")
+        config1 = get_config()
+        assert config1.database.host == "initial-host"
+
+        # Change env and reload
+        monkeypatch.setenv("DATABASE__HOST", "new-host")
+        config2 = get_config(reload=True)
+        assert config2.database.host == "new-host"
+
+        # Verify singleton still works (returns same instance as last call)
+        config3 = get_config()
+        assert config3 is config2

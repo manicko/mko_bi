@@ -2,7 +2,7 @@ id: TASK_013_V018_migration_job_compose
 
 title: Add migration job/service to Docker Compose for production deployments
 
-status: pending
+status: done
 
 priority: medium
 

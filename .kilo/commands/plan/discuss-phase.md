@@ -9,17 +9,14 @@ allowed-tools:
   - list_files
   - search_files
   - ask_followup_question
+  - execute_command
+  - new_task
+  - browser_action
+  - use_mcp_tool
 ---
 
 <objective>
 Extract implementation decisions that downstream agents need — researcher and planner will use DECISION_{file_number}.md to know what to investigate and what choices are locked.
-
-**How it works:**
-
-1. Analyze the problems in `C:\py_dev\mkobi\.ai\problems\CONTEXT_*.md` to identify gray areas (UI, UX, behavior, etc.)
-2. Present gray areas — user selects which to discuss
-3. Deep-dive each selected area until satisfied
-4. Create DECISION_{file_number}.md with decisions that guide research and planning
 
 **Output:** new file `.ai\problems\decisions\DECISION_{file_number}.md` — decisions clear enough that downstream agents can act without asking the user again
 </objective>
@@ -28,31 +25,27 @@ Extract implementation decisions that downstream agents need — researcher and 
 .kilo/skills/discuss-phase/SKILL.md
 .ai/templates/decision.md
 </execution_context>
-
 <context>
-**Study user problems in**:
-`C:\py_dev\mkobi\.ai\problems\CONTEXT_*.md`
-
-
-Study `C:\py_dev\mkobi\.ai\problems\decisions\DECISION_*md`
-to define next free file number: {file_number} (required)
-
 
 **Load project information:**
 [AGENTS.md](C:\py_dev\mkobi\AGENTS.md)
 [project rules](C:\py_dev\mkobi\.ai\context\**)
 [specification](C:\py_dev\mkobi\docs\SPEC.md)
 [structure](C:\py_dev\mkobi\docs\STRUCT.md)
+and summarize
+
 </context>
 
 <process>
-1. Keep {file_number} 
-2. Check if DECISION_{file_number}.md exists (offer update/view/skip if yes)
-3. **Analyze phase** — Identify domain and generate phase-specific gray areas
-4. **Present gray areas** — Multi-select: which to discuss? (NO skip option)
-5. **Deep-dive each area** — 4 questions per area, then offer more/next
-6. **Write DECISION_{file_number}.md** — Sections match areas discussed
-7. Offer next steps (research or plan)
+1. Ask user for a CONTEXT {file_numbers} he needs to discuss. Stop and wait for the response.
+2. Load all content of CONTEXT_*.md with stored  "{file_numbers}" from `C:\py_dev\mkobi\.ai\problems\CONTEXT_*.md`
+3. Keep first {file_number} from {file_numbers}
+4. Check if DECISION_{file_number}.md exists (offer update/view/skip/find unique {file_number})
+5. **Analyze phase** — Identify domain and generate phase-specific gray areas (UI, UX, behavior, etc.)
+6. **Present gray areas** — Multi-select: which to discuss? (NO skip option)
+7. **Deep-dive each area** — 4 questions per area, then offer more/next
+8. **Write DECISION_{file_number}.md** — Sections match areas discussed
+9. Offer next steps (research or plan)
 
 **CRITICAL: Scope guardrail**
 

@@ -2,12 +2,12 @@
 # Generated: 2026-05-20
 # Source: .ai/audit/validated/audit_validated_findings_001.md
 #
-# Total tasks: 37
+# Total tasks: 36
 # Execution groups: 6 (A through F)
 #
 # Group A (Immediate — no dependencies): TASK_001 through TASK_006
 # Group B (Schema changes — require migrations): TASK_007 through TASK_009
-# Group C (API changes — frontend coordination): TASK_010 through TASK_011
+# Group C (API changes — frontend coordination): TASK_011
 # Group D (Infrastructure — deployment coordination): TASK_012 through TASK_014
 # Group E (Data worker fixes): TASK_015 through TASK_017
 # Group F (Access control & code quality): TASK_018 through TASK_025
@@ -84,12 +84,6 @@ execution_order:
   # PHASE 3: API CHANGES (Group C) — Frontend coordination
   # Can run in parallel with Phase 2
   # ═══════════════════════════════════════════════════════════════
-  - id: TASK_010_V007_admin_log_pagination
-    phase: 3
-    group: C
-    depends_on: []
-    parallel_group: 3a
-
   - id: TASK_011_V028_fix_status_codes
     phase: 3
     group: C
@@ -283,7 +277,7 @@ execution_order:
 #
 # Phase 1 (Group A): 6 independent tasks — all can run in parallel
 # Phase 2 (Group B): 3 sequential tasks — each depends on previous
-# Phase 3 (Group C): 2 independent tasks — can run in parallel with Phase 2
+# Phase 3 (Group C): 1 task — can run in parallel with Phase 2
 # Phase 4 (Group D): 3 tasks — TASK_013 depends on TASK_012; TASK_014 independent
 # Phase 5 (Group E): 3 independent tasks — can run in parallel
 # Phase 6 (Group F): 8 independent tasks — can run in parallel
