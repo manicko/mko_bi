@@ -204,14 +204,18 @@ Do NOT degrade architecture for outdated tests.
 
 ---
 
-## 5. Detect External Problems
+## 5. If unrelated issues discovered:
 
-If unrelated issues discovered:
+Create or extend reports:`C:\py_dev\mkobi\.ai\audit\problems\`
+If problem does NOT exist create a new detailed problem report
 
-Check:
-`C:\py_dev\mkobi\.ai\audit\problems`
-
-Create or extend reports if needed.
+Include:
+- description
+- affected modules
+- risk
+- root cause
+- architectural impact
+- suggested direction
 
 Do NOT fix unrelated problems unless blocking.
 
@@ -225,6 +229,7 @@ REQUIRED:
 2. Move task file to:`C:\py_dev\mkobi\.ai\tasks\done`
 3. Verify  {TASK_FILE_ABS_PATH} absent from`C:\py_dev\mkobi\.ai\tasks\todo`
 4. Verify ALL completion conditions
+5. Unrelated issues reported to C:\py_dev\mkobi\.ai\audit\problems\
 
 </required_workflow>
 

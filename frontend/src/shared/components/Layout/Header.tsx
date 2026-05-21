@@ -1,9 +1,10 @@
-import { AppBar, Box, Button, IconButton, Toolbar, Typography, Menu, MenuItem } from '@mui/material'
+import { AppBar, Box, Button, IconButton, Toolbar, Typography, Menu, MenuItem, Divider } from '@mui/material'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useState } from 'react'
 import { useAuth } from '../../../features/auth/model/useAuth'
 import AccountCircle from '@mui/icons-material/AccountCircle'
 import LogoutIcon from '@mui/icons-material/Logout'
+import Settings from '@mui/icons-material/Settings'
 
 interface NavItem {
   label: string
@@ -14,7 +15,6 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboards', path: '/dashboards' },
   { label: 'Admin', path: '/admin', roles: ['admin'] },
-  { label: 'Profile', path: '/profile' },
 ]
 
 export function Header() {
@@ -57,12 +57,12 @@ export function Header() {
             {NAV_ITEMS.filter(item => !item.roles || item.roles.includes(user.role)).map(item => (
               <Button
                 key={item.path}
-                color={isActive(item.path) ? 'secondary' : 'inherit'}
+                color={isActive(item.path) ? 'success' : 'inherit'}
                 onClick={() => handleNavigation(item.path)}
                 sx={{
                   mr: 1,
                   borderBottom: isActive(item.path) ? '2px solid' : 'none',
-                  borderBottomColor: 'secondary.main',
+                  borderBottomColor: 'success.light',
                 }}
               >
                 {item.label}
@@ -86,6 +86,11 @@ export function Header() {
               anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
               transformOrigin={{ vertical: 'top', horizontal: 'right' }}
             >
+              <MenuItem onClick={() => { handleMenuClose(); void navigate('/profile') }}>
+                <Settings sx={{ mr: 1, fontSize: 20 }} />
+                Profile
+              </MenuItem>
+              <Divider />
               <MenuItem onClick={handleLogout}>
                 <LogoutIcon sx={{ mr: 1, fontSize: 20 }} />
                 Logout

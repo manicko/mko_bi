@@ -5,4 +5,6 @@ export { ProtectedRoute } from './ProtectedRoute'
 export { RoleBasedAccess } from './RoleBasedAccess'
 export { AccessDenied } from './AccessDenied'
 export { ConfirmDialog } from './ConfirmDialog'
+export { ErrorBoundary } from './ErrorBoundary'
+export { ErrorPage } from './ErrorPage'
 

@@ -40,7 +40,9 @@ description: Standards for building scalable, maintainable React and Next.js app
 - Keep styling predictable and maintainable
 - Avoid unstructured global CSS
 - Prefer design tokens and reusable spacing/typography systems
-- Prefer Tailwind utility consistency or structured CSS modules strategy
+- **MUI only** — Use `@mui/material` + `@mui/icons-material` + `@mui/x-data-grid` (community) as the sole UI framework. No Tailwind, no Bootstrap, no other CSS frameworks.
+- **License requirement** — All dependencies must use MIT or similarly permissive licenses (BSD, Apache 2.0, ISC, Unlicense). No paid, proprietary, or "free for open source only" packages. Verify license before adding any dependency.
+- **Styling: `sx` prop for one-offs, `styled()` for reusable** — Use `sx` for single-use, small, layout-specific styles. Use `styled()` for anything repeated ≥3 times, UI primitives, or app-wide reusable components.
 - Avoid overengineering frontend abstractions
 - Optimize for maintainability and developer experience
 - All comments and log messages must be in **English**

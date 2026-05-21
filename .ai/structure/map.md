@@ -22,11 +22,11 @@ C:\PY_DEV\MKOBI
 +---.ai
 |   |   config.json
 |   |   
-|   +---.ai
 |   +---audit
 |   |   +---db
 |   |   +---problems
 |   |   |       implementation_audit_001.md
+|   |   |       implementation_audit_002.md
 |   |   |       
 |   |   +---project
 |   |   +---tests
@@ -61,29 +61,16 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
-|   |       PLAN_02.md
-|   |       PLAN_03.md
-|   |       PLAN_04.md
-|   |       PLAN_05.md
+|   |       PLAN_06.md
 |   |       
 |   +---problems
-|   |   |   CONTEXT_02.md
-|   |   |   CONTEXT_03.md
-|   |   |   CONTEXT_04.md
-|   |   |   CONTEXT_05.md
-|   |   |   CONTEXT_06.md
-|   |   |   
 |   |   \---decisions
-|   |           DECISION_02.md
-|   |           DECISION_03.md
-|   |           DECISION_04.md
-|   |           DECISION_05.md
-|   |           
 |   +---researches
 |   |       RESEARCH_02.md
 |   |       RESEARCH_03.md
 |   |       RESEARCH_04.md
 |   |       RESEARCH_05.md
+|   |       RESEARCH_06.md
 |   |       
 |   +---structure
 |   |   |   map.md
@@ -104,39 +91,15 @@ C:\PY_DEV\MKOBI
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
-|   |   |       TASK_001_P02_remove_password_length_validation.yaml
-|   |   |       TASK_001_P03_make_config_optional_add_name_validation.yaml
-|   |   |       TASK_001_P04_add_loading_state_to_register_form.yaml
-|   |   |       TASK_001_P05_create_shared_error_page_component.yaml
-|   |   |       TASK_002_P02_fix_login_error_display.yaml
-|   |   |       TASK_002_P03_fix_transaction_handling_add_description.yaml
-|   |   |       TASK_002_P04_fix_enter_key_form_submission.yaml
-|   |   |       TASK_002_P05_create_backend_client_errors_endpoint.yaml
-|   |   |       TASK_003_P02_remove_status_column_and_block_action.yaml
-|   |   |       TASK_003_P03_update_create_endpoint_commit_description.yaml
-|   |   |       TASK_003_P04_fix_admin_table_stale_data_empty_state_blocked_domains.yaml
-|   |   |       TASK_003_P05_create_error_boundary_component.yaml
-|   |   |       TASK_004_P02_add_profile_to_user_menu.yaml
-|   |   |       TASK_004_P03_update_zod_schema_and_api_types.yaml
-|   |   |       TASK_004_P05_rewrite_notfound_from_tailwind_to_mui.yaml
-|   |   |       TASK_005_P02_remove_is_active_from_admin_user.yaml
-|   |   |       TASK_005_P03_update_dashboard_management_ui.yaml
-|   |   |       TASK_005_P05_add_error_boundary_to_routes.yaml
-|   |   |       TASK_006_P03_update_create_dashboard_api_function.yaml
-|   |   |       TASK_006_P05_add_403_toast_to_axios_interceptor.yaml
-|   |   |       TASK_007_P03_update_create_dashboard_tests.yaml
-|   |   |       TASK_007_P05_add_app_level_error_boundary_and_exports.yaml
 |   |   |       
 |   |   \---validation
 |   |           tasks_validated_findings_001.md
 |   |           tasks_validated_findings_002.md
 |   |           
-|   +---templates
-|   |       decision.md
-|   |       ui-brand.md
-|   |       
-|   +---tmp
-|   \---verified
+|   \---templates
+|           decision.md
+|           ui-brand.md
+|           
 +---.idea
 |   |   .gitignore
 |   |   .name
@@ -4148,12 +4111,6 @@ C:\PY_DEV\MKOBI
 |               lastfailed
 |               nodeids
 |               
-+---.roo
-|   |   mcp.json
-|   |   
-|   \---rules-code
-|           rules.md
-|           
 +---.ruff_cache
 |   |   .gitignore
 |   |   CACHEDIR.TAG
@@ -4231,6 +4188,7 @@ C:\PY_DEV\MKOBI
 |           3799095370338655179
 |           3943775776542244984
 |           4073547250558669416
+|           4666518430813917687
 |           4822613425997244324
 |           4925289080536601073
 |           5178735118944880258
@@ -99941,6 +99899,8 @@ C:\PY_DEV\MKOBI
 |       |   +---components
 |       |   |   |   AccessDenied.tsx
 |       |   |   |   ConfirmDialog.tsx
+|       |   |   |   ErrorBoundary.tsx
+|       |   |   |   ErrorPage.tsx
 |       |   |   |   index.ts
 |       |   |   |   NotFound.tsx
 |       |   |   |   PlaceholderPage.tsx
@@ -101135,6 +101095,7 @@ C:\PY_DEV\MKOBI
 |   |   |   +---routes
 |   |   |   |   |   admin.py
 |   |   |   |   |   auth.py
+|   |   |   |   |   client_errors.py
 |   |   |   |   |   dashboards.py
 |   |   |   |   |   data.py
 |   |   |   |   |   filters.py
@@ -101149,6 +101110,7 @@ C:\PY_DEV\MKOBI
 |   |   |   |   \---__pycache__
 |   |   |   |           admin.cpython-314.pyc
 |   |   |   |           auth.cpython-314.pyc
+|   |   |   |           client_errors.cpython-314.pyc
 |   |   |   |           dashboards.cpython-314.pyc
 |   |   |   |           data.cpython-314.pyc
 |   |   |   |           filters.cpython-314.pyc

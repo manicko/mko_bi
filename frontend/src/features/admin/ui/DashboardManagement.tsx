@@ -9,6 +9,11 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Alert,
 } from '@mui/material'
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, ManageAccounts as AccessIcon } from '@mui/icons-material'
 import { getDashboardsAdmin, createDashboard, updateDashboard, deleteDashboard } from '../api/adminApi'
@@ -23,7 +28,8 @@ export function DashboardManagement() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedDashboard, setSelectedDashboard] = useState<DashboardAdmin | null>(null)
-  const [formData, setFormData] = useState({ name: '', description: '' })
+  const [formData, setFormData] = useState({ name: '', description: '', layout: '' })
+  const [error, setError] = useState<string | null>(null)
 
   const queryClient = useQueryClient()
   const confirmDialog = useConfirmDialog()
@@ -38,11 +44,11 @@ export function DashboardManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin', 'dashboards'] })
       setCreateDialogOpen(false)
-      setFormData({ name: '', description: '' })
-      toast.success('Dashboard created successfully')
+      setFormData({ name: '', description: '', layout: '' })
+      setError(null)
     },
-    onError: () => {
-      toast.error('Failed to create dashboard')
+    onError: (err: Error) => {
+      setError(err.message || 'Failed to create dashboard')
     },
   })
 
@@ -71,7 +77,11 @@ export function DashboardManagement() {
   })
 
   const handleCreate = () => {
-    createMutation.mutate(formData)
+    createMutation.mutate({
+      name: formData.name,
+      description: formData.description,
+      layout: formData.layout || undefined,
+    })
   }
 
   const handleEdit = () => {
@@ -160,7 +170,8 @@ export function DashboardManagement() {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => {
-            setFormData({ name: '', description: '' })
+            setFormData({ name: '', description: '', layout: '' })
+            setError(null)
             setCreateDialogOpen(true)
           }}
         >
@@ -196,8 +207,22 @@ export function DashboardManagement() {
             multiline
             rows={3}
             value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value.slice(0, 200) })}
+            helperText={`${formData.description.length}/200`}
           />
+          <FormControl fullWidth sx={{ mt: 2 }}>
+            <InputLabel>Layout</InputLabel>
+            <Select
+              value={formData.layout || ''}
+              label="Layout"
+              onChange={(e) => setFormData({ ...formData, layout: e.target.value })}
+            >
+              <MenuItem value="single-column">Single column</MenuItem>
+              <MenuItem value="two-columns">Two columns</MenuItem>
+              <MenuItem value="grid">Grid</MenuItem>
+            </Select>
+          </FormControl>
+          {error && (<Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>)}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setCreateDialogOpen(false)}>Cancel</Button>

@@ -55,6 +55,7 @@ class DashboardService(IDashboardService):
         name: str,
         config: dict[str, Any],
         owner_id: UUID,
+        description: str | None = None,
         db: AsyncSession | None = None,
     ) -> DashboardRead:
         """Create new dashboard.
@@ -63,6 +64,7 @@ class DashboardService(IDashboardService):
             name: Dashboard name.
             config: Dashboard configuration in JSON-compatible dict format.
             owner_id: Owner user identifier.
+            description: Optional dashboard description.
             db: Async database session.
 
         Returns:
@@ -74,7 +76,11 @@ class DashboardService(IDashboardService):
         """
         if db is None:
             async with get_session() as db:
-                return await self.create_dashboard(name, config, owner_id, db)
+                result = await self.create_dashboard(
+                    name, config, owner_id, description, db
+                )
+                await db.commit()
+                return result
 
         config_obj = DashboardConfig(**config)
         self._validate_config(config_obj)
@@ -86,6 +92,7 @@ class DashboardService(IDashboardService):
                 name=name,
                 config=config_obj.model_dump(),
                 created_by=owner_id,
+                description=description,
             )
 
             if dashboard_obj is None:
@@ -111,10 +118,6 @@ class DashboardService(IDashboardService):
                 owner_id,
                 dashboard_obj.id,
             )
-
-            # Commit the transaction
-            await db.commit()
-            logger.info("Transaction committed for dashboard id=%s", dashboard_obj.id)
 
             # Convert to Pydantic model with layout data
             return await self._dashboard_to_read(dashboard_obj, db)

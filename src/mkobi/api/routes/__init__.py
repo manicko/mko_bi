@@ -1,27 +1,29 @@
 """API routes package."""
 
 from mkobi.api.routes import (
+    admin,
     auth,
-    users,
+    client_errors,
     dashboards,
-    layouts,
-    upload,
     data,
     filters,
+    layouts,
     processing_configs,
     processing_logs,
-    admin,
+    upload,
+    users,
 )
 
 __all__ = [
+    "admin",
     "auth",
-    "users",
+    "client_errors",
     "dashboards",
-    "layouts",
-    "upload",
     "data",
     "filters",
+    "layouts",
     "processing_configs",
     "processing_logs",
-    "admin",
+    "upload",
+    "users",
 ]

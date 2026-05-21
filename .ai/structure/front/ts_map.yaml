@@ -26,6 +26,7 @@
     - '@mui/material/CssBaseline'
     - react-hot-toast
     - ./routes
+    - ../shared/components/ErrorBoundary
   components:
     - App
   hooks: []
@@ -33,6 +34,7 @@
     - <QueryClientProvider client={queryClient}>
     - <BrowserRouter>
     - <ThemeProvider theme={theme}>
+    - <ErrorBoundary>
 - path: C:/py_dev/mkobi/frontend/src/app/routes.tsx
   module: C:.py_dev.mkobi.frontend.src.app.routes
   layer: unknown
@@ -42,6 +44,7 @@
     - ../shared/components/RoleBasedAccess
     - ../shared/components/Layout
     - ../shared/components/NotFound
+    - ../shared/components/ErrorBoundary
     - ../features/auth/ui/LoginForm
     - ../features/auth/ui/RegisterForm
     - ../features/dashboards/ui/DashboardList
@@ -55,6 +58,7 @@
   jsx_tags:
     - <Routes>
     - <Route element={<AppLayout />}>
+    - <Route element={<ErrorBoundary />}>
     - <ProtectedRoute>
     - <ProtectedRoute>
     - <ProtectedRoute>
@@ -151,6 +155,87 @@
     - <DialogActions>
     - <Button onClick={onCancel}>
     - <Button onClick={onConfirm} color="error" disabled={loading} autoFocus>
+- path: C:/py_dev/mkobi/frontend/src/shared/components/ErrorBoundary.tsx
+  module: C:.py_dev.mkobi.frontend.src.shared.components.ErrorBoundary
+  layer: component
+  imports:
+    - react
+    - ./ErrorPage
+  components: []
+  hooks: []
+  jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/shared/components/ErrorPage.tsx
+  module: C:.py_dev.mkobi.frontend.src.shared.components.ErrorPage
+  layer: component
+  imports:
+    - '@mui/icons-material/WarningAmber'
+    - '@mui/material'
+    - react-router-dom
+    - ../../features/auth/model/useAuth
+  components:
+    - ErrorPage
+  hooks: []
+  jsx_tags:
+    - <Container maxWidth="md">
+    - |-
+      <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  minHeight: '60vh',
+                  textAlign: 'center',
+                  py: 4,
+                }}
+              >
+    - <Typography variant="h3" component="h1" gutterBottom>
+    - '<Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>'
+    - |-
+      <Button
+                  component={RouterLink}
+                  to={goToHome}
+                  variant="contained"
+                  size="large"
+                >
+    - <Container maxWidth="md">
+    - |-
+      <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '60vh',
+                textAlign: 'center',
+                py: 4,
+              }}
+            >
+    - <Typography variant="h3" component="h1" gutterBottom>
+    - '<Box sx={{ mb: 2, textAlign: ''left'', width: ''100%'', maxWidth: 500 }}>'
+    - '<Typography variant="body2" color="error" sx={{ mb: 1 }}>'
+    - |-
+      <Typography
+                      variant="caption"
+                      component="pre"
+                      sx={{
+                        display: 'block',
+                        bgcolor: 'grey.100',
+                        p: 1,
+                        borderRadius: 1,
+                        overflow: 'auto',
+                        fontSize: '0.7rem',
+                      }}
+                    >
+    - '<Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>'
+    - '<Box sx={{ display: ''flex'', gap: 2 }}>'
+    - <Button variant="outlined" onClick={handleReload}>
+    - |-
+      <Button
+                  component={RouterLink}
+                  to={goToHome}
+                  variant="contained"
+                >
 - path: C:/py_dev/mkobi/frontend/src/shared/components/index.ts
   module: C:.py_dev.mkobi.frontend.src.shared.components.index
   layer: component
@@ -162,19 +247,11 @@
   module: C:.py_dev.mkobi.frontend.src.shared.components.NotFound
   layer: component
   imports:
-    - react-router-dom
+    - ./ErrorPage
   components:
     - NotFound
   hooks: []
-  jsx_tags:
-    - <div className="flex min-h-screen flex-col items-center justify-center">
-    - <h1 className="text-6xl font-bold text-gray-800">
-    - <p className="mt-4 text-lg text-gray-600">
-    - |-
-      <Link
-              to="/dashboards"
-              className="mt-6 text-blue-600 hover:text-blue-800 underline"
-            >
+  jsx_tags: []
 - path: C:/py_dev/mkobi/frontend/src/shared/components/PlaceholderPage.tsx
   module: C:.py_dev.mkobi.frontend.src.shared.components.PlaceholderPage
   layer: component
@@ -305,7 +382,8 @@
                 variant="contained"
                 startIcon={<AddIcon />}
                 onClick={() => {
-                  setFormData({ name: '', description: '' })
+                  setFormData({ name: '', description: '', layout: '' })
+                  setError(null)
                   setCreateDialogOpen(true)
                 }}
               >
@@ -314,6 +392,18 @@
       maxWidth="sm" fullWidth>
     - <DialogTitle>
     - <DialogContent>
+    - '<FormControl fullWidth sx={{ mt: 2 }}>'
+    - <InputLabel>
+    - |-
+      <Select
+                    value={formData.layout || ''}
+                    label="Layout"
+                    onChange={(e) => setFormData({ ...formData, layout: e.target.value })}
+                  >
+    - <MenuItem value="single-column">
+    - <MenuItem value="two-columns">
+    - <MenuItem value="grid">
+    - '<Alert severity="error" sx={{ mt: 2 }}>'
     - <DialogActions>
     - <Button onClick={() => setCreateDialogOpen(false)}>
     - >-
@@ -389,6 +479,7 @@
     - RegistrationRequests
   hooks: []
   jsx_tags:
+    - '<Typography sx={{ p: 3, textAlign: ''center'', color: ''text.secondary'' }}>'
     - <Box>
 - path: C:/py_dev/mkobi/frontend/src/features/admin/ui/UserManagement.tsx
   module: C:.py_dev.mkobi.frontend.src.features.admin.ui.UserManagement
@@ -486,13 +577,13 @@
     - '<Typography sx={{ textAlign: ''center'' }}>'
     - <Link to="/login">
     - >-
-      <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ maxWidth:
-      400, mx: 'auto', mt: 4, p: 3 }}>
+      <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{
+      maxWidth: 400, mx: 'auto', mt: 4, p: 3 }}>
     - <Typography variant="h4" component="h1" gutterBottom>
     - '<Alert severity="error" sx={{ mb: 2 }}>'
-    - >-
+    - |-
       <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}
-      disabled={isLoading}>
+              loading={isSubmitting} loadingPosition="start">
     - '<Typography sx={{ mt: 2, textAlign: ''center'' }}>'
     - <Link to="/login">
 - path: C:/py_dev/mkobi/frontend/src/features/dashboards/api/dashboardApi.ts
@@ -543,7 +634,7 @@
                   multiple
                   value={selectedValues}
                   label={filter.name}
-                  onChange={(e) => onChange(e.target.value as string[])}
+                  onChange={(e) => onChange(e.target.value)}
                   renderValue={(selected) => (
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                       {(selected as string[]).map((val) => (
@@ -875,6 +966,7 @@
     - ../../../features/auth/model/useAuth
     - '@mui/icons-material/AccountCircle'
     - '@mui/icons-material/Logout'
+    - '@mui/icons-material/Settings'
   components:
     - Header
   hooks: []
@@ -886,12 +978,12 @@
     - |-
       <Button
                       key={item.path}
-                      color={isActive(item.path) ? 'secondary' : 'inherit'}
+                      color={isActive(item.path) ? 'success' : 'inherit'}
                       onClick={() => handleNavigation(item.path)}
                       sx={{
                         mr: 1,
                         borderBottom: isActive(item.path) ? '2px solid' : 'none',
-                        borderBottomColor: 'secondary.main',
+                        borderBottomColor: 'success.light',
                       }}
                     >
     - '<Box sx={{ display: ''flex'', alignItems: ''center'' }}>'
@@ -905,6 +997,9 @@
                     anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
                     transformOrigin={{ vertical: 'top', horizontal: 'right' }}
                   >
+    - >-
+      <MenuItem onClick={() => { handleMenuClose(); void navigate('/profile')
+      }}>
     - <MenuItem onClick={handleLogout}>
 - path: C:/py_dev/mkobi/frontend/src/shared/components/Layout/index.ts
   module: C:.py_dev.mkobi.frontend.src.shared.components.Layout.index

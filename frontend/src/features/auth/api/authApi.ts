@@ -8,7 +8,7 @@ export async function login(email: string, password: string): Promise<AuthRespon
 }
 
 export async function registerRequest(email: string): Promise<RegistrationResponse> {
-  const response = await axiosInstance.post<RegistrationResponse>('/auth/register-request', { email } as RegistrationRequest)
+  const response = await axiosInstance.post<RegistrationResponse>('/auth/register-request', { email })
   return response.data
 }
 

@@ -2771,6 +2771,68 @@
   value: ConfigDict
   stable_hash: 181438e0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
+- id: 3fe7cd60
+  symbol_path:
+  - DashboardCreate
+  type: function_call
+  value: DashboardConfig
+  stable_hash: 3fe7cd60
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
+- id: 799f30d1
+  symbol_path:
+  - DashboardCreate
+  - validate_name
+  type: function_call
+  value: len
+  stable_hash: 799f30d1
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
+- id: 335f861c
+  symbol_path:
+  - DashboardCreate
+  - validate_name
+  type: function_call
+  value: ValueError
+  stable_hash: 335f861c
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
+- id: 799f30d1
+  symbol_path:
+  - DashboardCreate
+  - validate_name
+  type: function_call
+  value: len
+  stable_hash: 799f30d1
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
+- id: 335f861c
+  symbol_path:
+  - DashboardCreate
+  - validate_name
+  type: function_call
+  value: ValueError
+  stable_hash: 335f861c
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
+- id: 335f861c
+  symbol_path:
+  - DashboardCreate
+  - validate_name
+  type: function_call
+  value: ValueError
+  stable_hash: 335f861c
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
+- id: 7193edaf
+  symbol_path:
+  - DashboardCreate
+  - validate_name
+  type: return_statement
+  stable_hash: 7193edaf
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
+- id: 7fee0e7f
+  symbol_path:
+  - DashboardCreate
+  - validate_name
+  type: function_call
+  value: field_validator
+  stable_hash: 7fee0e7f
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
 - id: b931f84b
   symbol_path:
   - DashboardCreate
@@ -12409,6 +12471,12 @@
   type: return_statement
   stable_hash: 57af749b
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
+- id: e7ff6c9c
+  symbol_path: []
+  type: function_call
+  value: APIRouter
+  stable_hash: e7ff6c9c
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\client_errors.py
 - id: 2d50e1e5
   symbol_path: []
   type: function_call
@@ -12426,12 +12494,6 @@
   type: function_call
   value: Depends
   stable_hash: 4e067ced
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards.py
-- id: 029de7f7
-  symbol_path: []
-  type: function_call
-  value: DashboardCreate
-  stable_hash: 029de7f7
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards.py
 - id: 4b9ccc1a
   symbol_path: []

@@ -1,6 +1,8 @@
+import re
 from datetime import datetime
 from typing import Any
-from pydantic import BaseModel, ConfigDict
+
+from pydantic import BaseModel, ConfigDict, field_validator
 from uuid import UUID
 
 from mkobi.models.enums import GraphType
@@ -50,8 +52,19 @@ class DashboardCreate(BaseModel):
 
     name: str
     description: str | None = None
-    config: DashboardConfig
+    config: DashboardConfig = DashboardConfig(graph_types=[GraphType.BAR])
     layout_id: UUID | None = None
+
+    @field_validator('name')
+    @classmethod
+    def validate_name(cls, v: str) -> str:
+        if len(v) < 3:
+            raise ValueError('Name must be at least 3 characters')
+        if len(v) > 100:
+            raise ValueError('Name must be at most 100 characters')
+        if not re.match(r'^[a-zA-Z0-9\s-]+$', v):
+            raise ValueError('Name can only contain letters, numbers, spaces, and hyphens')
+        return v
 
     model_config = ConfigDict(
         from_attributes=True,

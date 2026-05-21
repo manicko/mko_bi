@@ -4,6 +4,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles'
 import CssBaseline from '@mui/material/CssBaseline'
 import { Toaster } from 'react-hot-toast'
 import { AppRoutes } from './routes'
+import { ErrorBoundary } from '../shared/components/ErrorBoundary'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -38,7 +39,9 @@ export function App() {
               },
             }}
           />
-          <AppRoutes />
+          <ErrorBoundary>
+            <AppRoutes />
+          </ErrorBoundary>
         </ThemeProvider>
       </BrowserRouter>
     </QueryClientProvider>

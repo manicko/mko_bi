@@ -59,7 +59,7 @@ class TestGraphsAPI:
         dashboard_response = await async_client.post(
             "/dashboards/",
             json={
-                "name": f"test_dashboard_{uuid.uuid4().hex[:8]}",
+                "name": f"test-dashboard-{uuid.uuid4().hex[:8]}",
                 "description": "Test",
                 "config": {"graph_types": ["bar"]},
             },
@@ -80,7 +80,7 @@ class TestGraphsAPI:
             f"/dashboards/{dashboard_id}/graphs",
             json={
                 "dashboard_id": str(dashboard_id),
-                "name": "test_graph",
+                "name": "test-graph",
                 "type": "bar",
                 "config": {"xaxis": {"title": "X"}},
                 "dimensions": ["category"],
@@ -109,7 +109,7 @@ class TestGraphsAPI:
         dashboard_response = await async_client.post(
             "/dashboards/",
             json={
-                "name": f"test_dashboard_{uuid.uuid4().hex[:8]}",
+                "name": f"test-dashboard-{uuid.uuid4().hex[:8]}",
                 "description": "Test",
                 "config": {"graph_types": ["bar", "line"]},
             },

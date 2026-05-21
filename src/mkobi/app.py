@@ -157,6 +157,7 @@ def create_app() -> FastAPI:
 
     # Register routers with /api/v1 prefix
     application.include_router(routes.auth.router, prefix="/api/v1")
+    application.include_router(routes.client_errors.router, prefix="/api/v1")
     application.include_router(routes.users.router, prefix="/api/v1")
     application.include_router(routes.dashboards.router, prefix="/api/v1")
     application.include_router(routes.layouts.router, prefix="/api/v1")

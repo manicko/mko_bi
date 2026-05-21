@@ -3,6 +3,7 @@ import { ProtectedRoute } from '../shared/components/ProtectedRoute'
 import { RoleBasedAccess } from '../shared/components/RoleBasedAccess'
 import { AppLayout } from '../shared/components/Layout'
 import { NotFound } from '../shared/components/NotFound'
+import { ErrorBoundary } from '../shared/components/ErrorBoundary'
 import { LoginForm } from '../features/auth/ui/LoginForm'
 import { RegisterForm } from '../features/auth/ui/RegisterForm'
 import { DashboardList } from '../features/dashboards/ui/DashboardList'
@@ -17,49 +18,51 @@ export function AppRoutes() {
       <Route path="/login" element={<LoginForm />} />
       <Route path="/register" element={<RegisterForm />} />
       <Route element={<AppLayout />}>
-        <Route
-          path="/dashboards"
-          element={
-            <ProtectedRoute>
-              <DashboardList />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/:id"
-          element={
-            <ProtectedRoute>
-              <DashboardView />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute>
-              <RoleBasedAccess roles={['admin']}>
-                <AdminPanel />
-              </RoleBasedAccess>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <UserProfile />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/profile/change-password"
-          element={
-            <ProtectedRoute>
-              <ChangePasswordPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route path="/" element={<Navigate to="/dashboards" replace />} />
+        <Route element={<ErrorBoundary />}>
+          <Route
+            path="/dashboards"
+            element={
+              <ProtectedRoute>
+                <DashboardList />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dashboard/:id"
+            element={
+              <ProtectedRoute>
+                <DashboardView />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute>
+                <RoleBasedAccess roles={['admin']}>
+                  <AdminPanel />
+                </RoleBasedAccess>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
+                <UserProfile />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile/change-password"
+            element={
+              <ProtectedRoute>
+                <ChangePasswordPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route path="/" element={<Navigate to="/dashboards" replace />} />
+        </Route>
         <Route path="*" element={<NotFound />} />
       </Route>
     </Routes>

@@ -71,25 +71,21 @@ async def create_dashboard_endpoint(
         HTTPException 422: If data validation failed.
         HTTPException 500: On database error.
     """
-    dashboard = DashboardCreate(
-        name=dashboard_data.name,
-        description=dashboard_data.description,
-        config=dashboard_data.config,
-    )
-
     logger.info(
         "Creating dashboard: name=%s, owner_id=%s",
-        dashboard.name,
+        dashboard_data.name,
         current_user.id,
     )
 
     try:
         result = await dashboard_service.create_dashboard(
-            name=dashboard.name,
-            config=dashboard.config.model_dump(),
+            name=dashboard_data.name,
+            config=dashboard_data.config.model_dump(),
             owner_id=current_user.id,
+            description=dashboard_data.description,
             db=db,
         )
+        await db.commit()
 
         logger.info(
             "Dashboard created successfully: id=%s, name=%s",
@@ -106,7 +102,7 @@ async def create_dashboard_endpoint(
     except Exception as e:
         logger.error(
             "Error creating dashboard name=%s: %s",
-            dashboard.name,
+            dashboard_data.name,
             e,
             exc_info=True,
         )

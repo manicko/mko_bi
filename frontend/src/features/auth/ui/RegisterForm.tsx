@@ -7,7 +7,8 @@ import { useState } from 'react'
 import { registerSchema, type RegisterFormData } from '../../../shared/types/formSchemas'
 
 export function RegisterForm() {
-  const { registerRequest, isLoading } = useAuth()
+  const { registerRequest } = useAuth()
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
@@ -22,12 +23,15 @@ export function RegisterForm() {
   const onSubmit = async (data: RegisterFormData) => {
     try {
       setError(null)
+      setIsSubmitting(true)
       await registerRequest(data.email)
       setSuccess(true)
     } catch (error) {
       const axiosError = error as { response?: { data?: { detail?: string } } }
       const errorMessage = axiosError.response?.data?.detail || 'Failed to submit registration request. Please try again.'
       setError(errorMessage)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -47,7 +51,7 @@ export function RegisterForm() {
   }
 
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ maxWidth: 400, mx: 'auto', mt: 4, p: 3 }}>
+    <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ maxWidth: 400, mx: 'auto', mt: 4, p: 3 }}>
       <Typography variant="h4" component="h1" gutterBottom>
         Register
       </Typography>
@@ -67,8 +71,9 @@ export function RegisterForm() {
         helperText={errors.email?.message}
       />
 
-      <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }} disabled={isLoading}>
-        {isLoading ? 'Submitting...' : 'Submit Request'}
+      <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}
+        loading={isSubmitting} loadingPosition="start">
+        {isSubmitting ? 'Sending...' : 'Submit Request'}
       </Button>
 
       <Typography sx={{ mt: 2, textAlign: 'center' }}>

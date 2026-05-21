@@ -37,6 +37,7 @@ description: Standards for creating modern, clean, maintainable, and consistent 
 - Optimize UX for real-world workflows, not only ideal scenarios
 - Avoid trendy UI patterns that reduce usability
 - Prefer stable and maintainable design systems over one-off custom solutions
+- **MUI is the sole UI framework** — All components must use `@mui/material`. No Tailwind, no Bootstrap, no mixing CSS frameworks.
 - Ensure frontend implementation matches intended UX behavior consistently
 - All visible text should be clear, concise, and user-oriented
 - Avoid ambiguous labels, buttons, or navigation items

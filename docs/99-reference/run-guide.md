@@ -131,23 +131,25 @@ The application will be available at: http://127.0.0.1:8000
 ### Logs on Successful Startup
 
 ```
-INFO:     Will watch for changes in these directories: ['C:\\py_exp\\mkobi']
+INFO:     Will watch for changes in these directories: ['C:\\py_dev\\mkobi']
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 INFO:     Started reloader process [21368] using StatReload
 Configuring CORS with allowed origins: [...]
-Mounting Dash application at /dashboards
-Initializing Dash application
-Dash application initialized successfully
 Starting database initialization for ENV=development
 Database exists and is accessible
 Database initialization completed
 ```
 
-## Accessing Dash
+## Accessing the Application
 
-After starting, Dash will be available at:
-- **Dashboards list**: http://localhost:8000/dashboards/
-- **Specific dashboard**: http://localhost:8000/dashboards/dashboard/{dashboard_id}
+After starting, the React SPA will be available at:
+- **Root/Login**: http://localhost:8000/
+- **Dashboards list**: http://localhost:8000/dashboards
+- **Specific dashboard**: http://localhost:8000/dashboard/{dashboard_id}
+- **Admin panel**: http://localhost:8000/admin
+- **Profile**: http://localhost:8000/profile
+
+> In development, the React dev server runs separately on http://localhost:5173 and proxies API requests to FastAPI on port 8000. See [Deployment](../10-deployment/deployment.md) for details.
 
 ## Health Checks
 

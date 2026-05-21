@@ -193,17 +193,9 @@ If updates return 500:
 
 ## Project Structure
 
-The Layout API implementation is in:
-- `src/mkobi/api/routes/layouts.py` - API routes
-- `src/mkobi/services/layout_service.py` - Business logic
-- `src/mkobi/db/repositories/layout_repo.py` - Database operations
-- `src/mkobi/models/layout.py` - Pydantic models
-- `src/mkobi/db/models/layout.py` - SQLAlchemy models
-
-## Related Task Files
-
-- `TODO/DEV/TASK_012_layout_api_405_fix_DONE.md` - Fixed 405 errors
-- `TODO/DEV/TASK_016_layout_api_routes_fix_DONE.md` - Fixed route registration
-- `TODO/DEV/TASK_017_test_db_recreation_fix.md` - Database recreation issues
-- `TODO/DEV/TASK_018_jwt_token_payload_fix.md` - JWT token issues
-- `TODO/DEV/TASK_019_layout_update_500_fix.md` - 500 error fixes
+The API implementation follows Clean Architecture:
+- `src/mkobi/api/routes/` — API route handlers per domain (auth, dashboards, layouts, graphs, filters, upload, admin, client-errors)
+- `src/mkobi/services/` — Business logic services
+- `src/mkobi/db/repositories/` — Data access layer
+- `src/mkobi/models/` — Pydantic models for request/response validation
+- `src/mkobi/db/models/` — SQLAlchemy ORM models

@@ -21,7 +21,7 @@
 #        TASK_007_P03     TASK_005_P03  TASK_006_P03
 #
 # PLAN_04 (Registration Request Fixes):
-#   TASK_001_P04  TASK_003_P04
+#   TASK_001_P04
 #        │
 #        ▼
 #   TASK_002_P04
@@ -44,7 +44,7 @@ tasks:
   # === WAVE 1 — Fully Parallel (No dependencies) ===
   # PLAN_02: TASK_001, TASK_002, TASK_003
   # PLAN_03: TASK_001, TASK_002, TASK_004
-  # PLAN_04: TASK_001, TASK_003
+  # PLAN_04: TASK_001
   # PLAN_05: TASK_001, TASK_002
 
   - id: TASK_001_P02_remove_password_length_validation
@@ -78,11 +78,6 @@ tasks:
     wave: 1
 
   - id: TASK_001_P04_add_loading_state_to_register_form
-    depends_on: []
-    phase: PLAN_04
-    wave: 1
-
-  - id: TASK_003_P04_fix_admin_table_stale_data_empty_state_blocked_domains
     depends_on: []
     phase: PLAN_04
     wave: 1
@@ -186,8 +181,8 @@ tasks:
     wave: 4
 
 # === Summary ===
-# Total tasks: 22
-# Wave 1 (parallel): 10 tasks
+# Total tasks: 21
+# Wave 1 (parallel): 9 tasks
 # Wave 2 (parallel): 6 tasks
 # Wave 3 (parallel): 4 tasks
 # Wave 4 (parallel): 2 tasks

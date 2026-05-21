@@ -19,7 +19,7 @@ class TestGetMyDashboards:
         repo = DashboardRepository()
         dashboard = await repo.create(
             db=async_db_session,
-            name="test_my_dashboard",
+            name="test-my-dashboard",
             created_by=test_user["id"],
         )
         await async_db_session.flush()
@@ -51,7 +51,7 @@ class TestGetDashboardDetail:
         repo = DashboardRepository()
         dashboard = await repo.create(
             db=async_db_session,
-            name="test_detail_dashboard",
+            name="test-detail-dashboard",
             created_by=test_user["id"],
         )
         await async_db_session.flush()
@@ -70,7 +70,7 @@ class TestGetDashboardDetail:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["id"] == str(dashboard.id)
-        assert data["name"] == "test_detail_dashboard"
+        assert data["name"] == "test-detail-dashboard"
 
     async def test_get_dashboard_no_access(
         self, async_client: AsyncClient, async_db_session
@@ -100,7 +100,7 @@ class TestGetDashboardDetail:
         await async_db_session.flush()
         dashboard = await repo.create(
             db=async_db_session,
-            name="test_no_access_dashboard",
+            name="test-no-access-dashboard",
             created_by=other_user.id,
         )
         await async_db_session.flush()
@@ -150,14 +150,14 @@ class TestCreateDashboard:
         response = await authenticated_client.post(
             "/dashboards/",
             json={
-                "name": "new_dashboard",
+                "name": "new-dashboard",
                 "description": "Test desc",
-                "config": {"graph_types": ["bar"]},
             },
         )
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
-        assert data["name"] == "new_dashboard"
+        assert data["name"] == "new-dashboard"
+        assert data["description"] == "Test desc"
 
     async def test_create_dashboard_forbidden(
         self, async_client: AsyncClient, async_db_session
@@ -183,7 +183,7 @@ class TestCreateDashboard:
 
         response = await async_client.post(
             "/dashboards/",
-            json={"name": "forbidden_dashboard"},
+            json={"name": "forbidden-dashboard"},
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
@@ -199,7 +199,7 @@ class TestUpdateDashboard:
         access_repo = AccessRepository()
         dashboard = await repo.create(
             db=async_db_session,
-            name="update_test_dashboard",
+            name="update-test-dashboard",
             created_by=test_user["id"],
         )
         await async_db_session.flush()
@@ -240,7 +240,7 @@ class TestUpdateDashboard:
         dashboard_repo = DashboardRepository()
         dashboard = await dashboard_repo.create(
             db=async_db_session,
-            name="update_forbidden_dashboard",
+            name="update-forbidden-dashboard",
             created_by=user.id,
         )
         await async_db_session.flush()
@@ -269,7 +269,7 @@ class TestDeleteDashboard:
         access_repo = AccessRepository()
         dashboard = await repo.create(
             db=async_db_session,
-            name="delete_test_dashboard",
+            name="delete-test-dashboard",
             created_by=test_user["id"],
         )
         await async_db_session.flush()
@@ -305,7 +305,7 @@ class TestDeleteDashboard:
         dashboard_repo = DashboardRepository()
         dashboard = await dashboard_repo.create(
             db=async_db_session,
-            name="delete_forbidden_dashboard",
+            name="delete-forbidden-dashboard",
             created_by=user.id,
         )
         await async_db_session.flush()
@@ -351,7 +351,7 @@ class TestAccessControl:
         await async_db_session.flush()
         dashboard = await repo.create(
             db=async_db_session,
-            name="access_test_dashboard",
+            name="access-test-dashboard",
             created_by=other_user.id,
         )
         await async_db_session.flush()
@@ -371,7 +371,7 @@ class TestAccessControl:
         repo = DashboardRepository()
         dashboard = await repo.create(
             db=async_db_session,
-            name="access_test_dashboard2",
+            name="access-test-dashboard2",
             created_by=test_user["id"],
         )
         await async_db_session.flush()
@@ -412,7 +412,7 @@ class TestAdminBypass:
         repo = DashboardRepository()
         other_dashboard = await repo.create(
             db=async_db_session,
-            name="other_user_dashboard",
+            name="other-user-dashboard",
             created_by=other_user.id,
         )
         await async_db_session.flush()

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid'
 import type { GridColDef } from '@mui/x-data-grid'
-import { Box, Chip } from '@mui/material'
+import { Box, Chip, Typography } from '@mui/material'
 import { Check as ApproveIcon, Close as RejectIcon } from '@mui/icons-material'
 import { getRegistrationRequests, approveRequest, rejectRequest } from '../api/adminApi'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -35,6 +35,7 @@ export function RegistrationRequests() {
   const { data: requests = [], isLoading } = useQuery({
     queryKey: ['admin', 'registration-requests'],
     queryFn: getRegistrationRequests,
+    refetchOnMount: 'always',
   })
 
   const approveMutation = useMutation({
@@ -94,6 +95,14 @@ export function RegistrationRequests() {
     ),
   }))
 
+  function NoRegistrationRequestsOverlay() {
+    return (
+      <Typography sx={{ p: 3, textAlign: 'center', color: 'text.secondary' }}>
+        No pending registration requests
+      </Typography>
+    )
+  }
+
   return (
     <Box>
       <DataGrid
@@ -105,6 +114,7 @@ export function RegistrationRequests() {
         initialState={{
           pagination: { paginationModel: { pageSize: 25 } },
         }}
+        slots={{ noRowsOverlay: NoRegistrationRequestsOverlay }}
       />
 
       <ConfirmDialog

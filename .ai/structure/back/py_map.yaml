@@ -437,7 +437,8 @@
   - DashboardCreate
   - DashboardRead
   - DashboardUpdate
-  functions: []
+  functions:
+  - validate_name
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\data.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.models.data
   layer: unknown
@@ -1519,6 +1520,16 @@
   - mkobi.models.auth
   - mkobi.models.user
   classes: []
+  functions: []
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\client_errors.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.client_errors
+  layer: unknown
+  imports:
+  - typing
+  - fastapi
+  - pydantic
+  classes:
+  - ClientErrorPayload
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.dashboards

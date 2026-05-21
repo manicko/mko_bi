@@ -63,7 +63,7 @@ export function FileDropzone({ onFilesSelected, onFileRemove, selectedFiles, max
       'application/x-gzip': ['.gz'],
     },
     maxFiles,
-  } as DropzoneOptions)
+  })
 
   const getFileIcon = (fileName: string) => {
     if (fileName.endsWith('.csv.gz')) return <DescriptionIcon />

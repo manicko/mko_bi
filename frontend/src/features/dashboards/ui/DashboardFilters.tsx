@@ -93,7 +93,7 @@ interface FilterFieldProps {
 }
 
 function FilterField({ filter, value, onChange }: FilterFieldProps) {
-  const config = filter.config as FilterConfig
+  const config = filter.config
 
   switch (filter.type) {
     case 'select':
@@ -123,7 +123,7 @@ function FilterField({ filter, value, onChange }: FilterFieldProps) {
             multiple
             value={selectedValues}
             label={filter.name}
-            onChange={(e) => onChange(e.target.value as string[])}
+            onChange={(e) => onChange(e.target.value)}
             renderValue={(selected) => (
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
                 {(selected as string[]).map((val) => (
@@ -154,7 +154,7 @@ function FilterField({ filter, value, onChange }: FilterFieldProps) {
             value={rangeValue}
             min={config.min || 0}
             max={config.max || 100}
-            onChange={(_, newValue) => onChange(newValue as [number, number])}
+            onChange={(_, newValue) => onChange(newValue)}
             valueLabelDisplay="auto"
           />
         </Box>
@@ -168,7 +168,7 @@ function FilterField({ filter, value, onChange }: FilterFieldProps) {
           size="small"
           label={filter.name}
           type="date"
-          value={(value as string) || ''}
+          value={(value) || ''}
           onChange={(e) => onChange(e.target.value)}
           slotProps={{ inputLabel: { shrink: true } }}
         />

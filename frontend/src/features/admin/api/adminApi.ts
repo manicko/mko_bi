@@ -24,7 +24,7 @@ export async function createUser(data: CreateUserRequest): Promise<AdminUser> {
 }
 
 export async function changeUserRole(userId: string, role: string): Promise<AdminUser> {
-  const response = await axiosInstance.patch<AdminUser>(`/admin/users/${userId}/role`, { role } as UpdateUserRoleRequest)
+  const response = await axiosInstance.patch<AdminUser>(`/admin/users/${userId}/role`, { role })
   return response.data
 }
 
@@ -53,7 +53,14 @@ export async function getDashboardsAdmin(): Promise<DashboardAdmin[]> {
 }
 
 export async function createDashboard(data: CreateDashboardRequest): Promise<DashboardAdmin> {
-  const response = await axiosInstance.post<DashboardAdmin>('/dashboards', data)
+  const payload: Record<string, unknown> = { name: data.name }
+  if (data.description) {
+    payload.description = data.description
+  }
+  if (data.layout) {
+    payload.config = { graph_types: ['bar'], layout: data.layout }
+  }
+  const response = await axiosInstance.post<DashboardAdmin>('/dashboards', payload)
   return response.data
 }
 

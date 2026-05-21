@@ -181,7 +181,6 @@ export interface AdminUser {
   id: string
   email: string
   role: UserRole
-  is_active: boolean
   created_at: string
 }
 
@@ -217,6 +216,7 @@ export interface DashboardAdmin {
 export interface CreateDashboardRequest {
   name: string
   description?: string
+  layout?: 'single-column' | 'two-columns' | 'grid'
 }
 
 export interface UpdateDashboardRequest {

@@ -26,6 +26,13 @@
   type: component
   value: ConfirmDialog
   stable_hash: 62d296a6
+- id: 18b40241
+  file: C:/py_dev/mkobi/frontend/src/shared/components/ErrorPage.tsx
+  symbol_path:
+    - ErrorPage
+  type: component
+  value: ErrorPage
+  stable_hash: 18b40241
 - id: ae8ca5e0
   file: C:/py_dev/mkobi/frontend/src/shared/components/NotFound.tsx
   symbol_path:

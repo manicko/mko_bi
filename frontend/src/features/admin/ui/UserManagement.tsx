@@ -2,7 +2,7 @@ import { useState, useMemo, useCallback } from 'react'
 import { DataGrid, GridActionsCellItem, type GridRowId, type GridRenderCellParams } from '@mui/x-data-grid'
 import type { GridColDef, GridRowClassNameParams } from '@mui/x-data-grid'
 import { Box } from '@mui/material'
-import { Delete as DeleteIcon, Block as BlockIcon } from '@mui/icons-material'
+import { Delete as DeleteIcon } from '@mui/icons-material'
 import { getUsers, changeUserRole, deleteUser } from '../api/adminApi'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useConfirmDialog } from '../../../shared/hooks/useConfirmDialog'
@@ -13,6 +13,9 @@ import type { AdminUser } from '../../../shared/types/api.types'
 import { UserRole } from '../../../shared/types/enums'
 
 const ROLE_OPTIONS = [UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER]
+
+// Row type for DataGrid - same as AdminUser since is_active was removed
+type UserRow = AdminUser
 
 export function UserManagement() {
   const queryClient = useQueryClient()
@@ -49,7 +52,7 @@ export function UserManagement() {
   })
 
   const handleProcessRowUpdate = useCallback(
-    async (newRow: AdminUser, oldRow: AdminUser) => {
+    async (newRow: UserRow, oldRow: UserRow) => {
       if (newRow.role === oldRow.role) {
         return newRow
       }
@@ -88,13 +91,13 @@ export function UserManagement() {
     [confirmDialog, deleteMutation],
   )
 
-  const columns: GridColDef[] = useMemo(
-    () => [
+  const columns = useMemo(
+    (): GridColDef<UserRow>[] => [
       {
         field: 'id',
         headerName: 'ID',
         width: 100,
-        renderCell: ({ value }: GridRenderCellParams) => shortUuid(String(value ?? '')),
+        renderCell: ({ value }: GridRenderCellParams<UserRow>) => shortUuid(String(value ?? '')),
       },
       { field: 'email', headerName: 'Email', width: 250 },
       {
@@ -105,53 +108,32 @@ export function UserManagement() {
         valueOptions: ROLE_OPTIONS,
         editable: true,
       },
-      {
-        field: 'is_active',
-        headerName: 'Status',
-        width: 120,
-        valueGetter: (value: boolean) => (value ? 'Active' : 'Blocked'),
-      },
       { field: 'created_at', headerName: 'Created', width: 180 },
       {
         field: 'actions',
         headerName: 'Actions',
         type: 'actions',
         width: 150,
-        renderCell: ({ row }: GridRenderCellParams<AdminUser>) => (
-          <>
-            <GridActionsCellItem
-              icon={<BlockIcon />}
-              label="Block"
-              onClick={() => {
-                confirmDialog.confirm({
-                  title: 'Block User',
-                  message: `Are you sure you want to block ${row.email}?`,
-                  confirmLabel: 'Block',
-                  onConfirm: () => {
-                    toast('Block functionality coming soon')
-                  },
-                })
-              }}
-            />
-            <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={() => handleDelete(row)} />
-          </>
-        ),
+renderCell: ({ row }: GridRenderCellParams<UserRow>) => (
+           <>
+             <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={() => handleDelete(row)} />
+           </>
+         ),
       },
     ],
-    [confirmDialog, handleDelete],
+    [handleDelete],
   )
 
-  const rows = users.map((user) => ({
+  const rows: UserRow[] = users.map((user) => ({
     id: user.id,
     email: user.email,
     role: user.role,
-    is_active: user.is_active,
     created_at: new Date(user.created_at).toLocaleString(),
   }))
 
   return (
     <Box>
-      <DataGrid
+      <DataGrid<UserRow>
         rows={rows}
         columns={columns}
         loading={isLoading}

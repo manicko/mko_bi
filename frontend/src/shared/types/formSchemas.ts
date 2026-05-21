@@ -1,11 +1,11 @@
 import { z } from 'zod'
 
-const BLOCKED_DOMAINS = ['tempmail.com', 'throwawaymail.com']
+const BLOCKED_DOMAINS = ['tempmail.com', 'throwaway.email']
 
 // Login form schema
 export const loginSchema = z.object({
   email: z.email({ error: 'Invalid email format' }),
-  password: z.string().min(6, { error: 'Password must be at least 6 characters' }),
+  password: z.string().min(1, { error: 'Password is required' }),
 })
 
 export type LoginFormData = z.infer<typeof loginSchema>
@@ -22,8 +22,14 @@ export type RegisterFormData = z.infer<typeof registerSchema>
 
 // Dashboard creation schema
 export const createDashboardSchema = z.object({
-  name: z.string().min(1, { error: 'Dashboard name is required' }).max(100, { error: 'Dashboard name is too long' }),
-  description: z.string().max(500, { error: 'Description is too long' }).optional(),
+  name: z.string()
+    .min(3, { error: 'Name must be at least 3 characters' })
+    .max(100, { error: 'Name must be at most 100 characters' })
+    .regex(/^[a-zA-Z0-9\s-]+$/, {
+      error: 'Name can only contain letters, numbers, spaces, and hyphens',
+    }),
+  description: z.string().max(200, { error: 'Description must be at most 200 characters' }).optional(),
+  layout: z.enum(['single-column', 'two-columns', 'grid']).optional(),
 })
 
 export type CreateDashboardFormData = z.infer<typeof createDashboardSchema>

@@ -135,6 +135,7 @@ class IDashboardService(abc.ABC):
         name: str,
         config: dict[str, Any],
         owner_id: UUID,
+        description: str | None = None,
         db: AsyncSession | None = None,
     ) -> DashboardRead:
         """Create new dashboard."""

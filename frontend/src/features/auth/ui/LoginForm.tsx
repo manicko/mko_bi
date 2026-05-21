@@ -1,9 +1,9 @@
-import { useForm } from 'react-hook-form'
+import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../'
 import { Box, Button, TextField, Typography, Alert } from '@mui/material'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { loginSchema, type LoginFormData } from '../../../shared/types/formSchemas'
 
 export function LoginForm() {
@@ -12,6 +12,7 @@ export function LoginForm() {
   const [error, setError] = useState<string | null>(null)
 
   const {
+    control,
     register,
     handleSubmit,
     formState: { errors },
@@ -19,13 +20,22 @@ export function LoginForm() {
     resolver: zodResolver(loginSchema),
   })
 
+  // Clear error when user modifies form fields
+  const watchedFields = useWatch({ control })
+  useEffect(() => {
+    if (error) {
+      setError(null)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [watchedFields.email, watchedFields.password])
+
   const onSubmit = async (data: LoginFormData) => {
     try {
       setError(null)
       await login(data.email, data.password)
       navigate('/dashboards')
     } catch {
-      setError('Invalid email or password')
+      setError('Invalid login or password')
     }
   }
 

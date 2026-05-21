@@ -30,9 +30,16 @@ axiosInstance.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
+      // Skip redirect/toast for login endpoint - let inline form error handle it
+      if (error.config?.url?.includes('/auth/login')) {
+        return Promise.reject(error)
+      }
       removeToken()
       toast.error('Session expired. Please login again.')
       window.location.href = '/login'
+    }
+    if (error.response?.status === 403) {
+      toast.error('Access denied')
     }
     return Promise.reject(error)
   }

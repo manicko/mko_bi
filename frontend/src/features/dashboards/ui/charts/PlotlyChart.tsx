@@ -15,7 +15,7 @@ export function PlotlyChart({
   config,
   style,
 }: PlotlyChartProps) {
-  const chartData = Array.isArray(data) ? (data as Data[]) : [data as Data]
+  const chartData = Array.isArray(data) ? (data) : [data]
 
   return (
     <Plot
