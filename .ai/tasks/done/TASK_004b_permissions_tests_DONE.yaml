@@ -1,0 +1,133 @@
+id: TASK_004b_permissions_tests
+
+title: Write tests for core/permissions.py functions
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_004a_service_integration_tests
+
+description: >
+  The core/permissions.py module has zero test coverage. It contains critical access control
+  logic used throughout the application: check_dashboard_access(), get_current_user(),
+  check_role(), RolePermissions class, and the get_db() function.
+
+  When TASK_005 removes the `db=None` fallback from check_dashboard_access() and get_current_user(),
+  these functions will need to be tested with explicit `db` parameters. This task creates
+  tests before that refactoring happens.
+
+  This task creates a new test file `tests/test_permissions.py` that tests:
+    - RolePermissions class methods (can_create_dashboards, can_edit_dashboards, etc.)
+    - check_role() function with various role combinations
+    - check_dashboard_access() with explicit db parameter (admin bypass, viewer access, no access)
+    - get_current_user() with explicit db parameter (valid token, invalid token, expired token)
+    - get_db() generator function (session creation and cleanup)
+
+goals:
+  - Create tests/test_permissions.py with comprehensive permission tests
+  - Test RolePermissions with all role types
+  - Test check_role() with all role hierarchy combinations
+  - Test check_dashboard_access() with real db session, covering admin bypass and access levels
+  - Test get_current_user() with real db session, covering valid/invalid tokens
+  - Test get_db() session lifecycle
+  - All tests pass with pytest tests/test_permissions.py -x -v
+
+files:
+  - path: tests/test_permissions.py
+    targets:
+      - type: module
+        name: test_permissions
+    semantic_anchors:
+      insert_after:
+        type: existing_file
+        value: tests/conftest.py
+
+  - path: src/mkobi/core/permissions.py
+    targets:
+      - type: function
+        name: check_dashboard_access
+      - type: function
+        name: get_current_user
+      - type: function
+        name: check_role
+      - type: class
+        name: RolePermissions
+      - type: function
+        name: get_db
+    semantic_anchors:
+      notes: "Read-only analysis for test creation. No changes to source in this task."
+
+changes:
+  - action: create_file
+    description: Create test file for permissions module
+    file: tests/test_permissions.py
+    notes: |
+      Use existing conftest.py fixtures: async_db_session, test_user, auth_headers.
+      
+      Test structure:
+      
+      class TestRolePermissions:
+        - test_admin_can_create_dashboards: assert RolePermissions.can_create_dashboards(ADMIN) is True
+        - test_editor_cannot_create_dashboards: assert RolePermissions.can_create_dashboards(EDITOR) is False
+        - test_admin_can_edit_dashboards: assert True
+        - test_viewer_cannot_edit_dashboards: assert False
+        - test_all_can_view_dashboards: assert all roles return True
+        - test_only_admin_can_manage_users: assert only ADMIN returns True
+        - test_admin_and_editor_can_upload_data: assert ADMIN and EDITOR True, VIEWER False
+      
+      class TestCheckRole:
+        - test_admin_above_editor: check_role(ADMIN, EDITOR) is True
+        - test_editor_below_admin: check_role(EDITOR, ADMIN) is False
+        - test_same_role: check_role(VIEWER, VIEWER) is True
+        - test_admin_above_viewer: check_role(ADMIN, VIEWER) is True
+        - test_viewer_below_editor: check_role(VIEWER, EDITOR) is False
+      
+      class TestCheckDashboardAccess:
+        - Uses async_db_session fixture
+        - Creates real users with different roles
+        - Creates real dashboard and access records
+        - test_admin_bypass: admin gets access without explicit access record
+        - test_viewer_with_access: viewer with VIEW permission gets access
+        - test_viewer_no_access: viewer without access record gets denied
+        - test_editor_edit_access: editor with EDIT permission can edit
+        - test_viewer_cannot_edit: viewer with VIEW permission cannot edit
+        - test_invalid_permission_raises: invalid permission string raises ValueError
+        - All calls pass db=async_db_session explicitly
+      
+      class TestGetCurrentUser:
+        - Uses async_db_session fixture
+        - test_valid_token: create user, generate token, verify get_current_user returns UserRead
+        - test_invalid_token: verify AuthenticationError raised
+        - test_user_not_found: valid token but user deleted, verify AuthenticationError
+        - test_empty_token: verify AuthenticationError
+        - All calls pass db=async_db_session explicitly
+      
+      class TestGetDb:
+        - test_get_db_yields_session: verify get_db() yields an AsyncSession
+        - test_get_db_closes_session: verify session is closed after generator exits
+
+acceptance_criteria:
+  - tests/test_permissions.py exists and is syntactically valid
+  - All tests pass: pytest tests/test_permissions.py -x -v
+  - RolePermissions class fully tested
+  - check_role() tested with all role combinations
+  - check_dashboard_access() tested with real db and explicit db parameter
+  - get_current_user() tested with real db and explicit db parameter
+  - get_db() session lifecycle tested
+  - No test depends on the db=None fallback pattern
+
+tests_to_run:
+  - pytest tests/test_permissions.py -x -v
+
+risk_level: low
+
+rollout_notes: |
+  Depends on TASK_004a because it uses the same async_db_session fixture pattern.
+  This task only creates tests — no production code changes.
+  Tests are designed to remain valid after TASK_005 removes db=None fallbacks.
+
+validated_finding_refs:
+  - VF-001
+  - VF-002

@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { useDropzone, type DropzoneOptions, type FileRejection } from 'react-dropzone'
+import { useDropzone, type FileRejection } from 'react-dropzone'
 import {
   Box,
   Typography,

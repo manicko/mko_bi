@@ -38,11 +38,12 @@ router = APIRouter(prefix="/admin", tags=["admin"])
 )
 async def get_users_admin_endpoint(
     user_service=Depends(get_user_service),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> list[UserRead]:
     """Get all users (admin endpoint)."""
     logger.info("Admin: getting all users")
     try:
-        users_data = await user_service.get_all_users()
+        users_data = await user_service.get_all_users(db=db)
         return [UserRead(**user) for user in users_data]
     except Exception as e:
         logger.error("Error getting users: %s", e)
@@ -64,11 +65,12 @@ async def update_user_role_admin_endpoint(
     user_id: UUID,
     user_data: UserUpdateRequest,
     user_service=Depends(get_user_service),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> UserRead:
     """Update user role (admin endpoint)."""
     logger.info("Admin: updating user role: id=%s, new_role=%s", user_id, user_data.role)
     try:
-        updated = await user_service.update_user_role(user_id=user_id, role=user_data.role)
+        updated = await user_service.update_user_role(user_id=user_id, role=user_data.role, db=db)
         if updated is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -98,11 +100,12 @@ async def update_user_role_admin_endpoint(
 async def delete_user_admin_endpoint(
     user_id: UUID,
     user_service=Depends(get_user_service),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> None:
     """Delete user (admin endpoint)."""
     logger.info("Admin: deleting user: id=%s", user_id)
     try:
-        result = await user_service.delete_user(user_id=user_id)
+        result = await user_service.delete_user(user_id=user_id, db=db)
         if not result:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,

@@ -1,7 +1,6 @@
 import { axiosInstance } from '../../../shared/api/axiosInstance'
 import type {
   AdminUser,
-  UpdateUserRoleRequest,
   CreateUserRequest,
   RegistrationRequestItem,
   DashboardAdmin,

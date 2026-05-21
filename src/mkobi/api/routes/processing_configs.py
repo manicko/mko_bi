@@ -37,7 +37,7 @@ async def get_config_endpoint(
     processing_config_service: ProcessingConfigService = Depends(get_processing_config_service),
 ) -> ProcessingConfigRead:
     try:
-        config = await processing_config_service.get_by_dashboard_id(dashboard_id)
+        config = await processing_config_service.get_by_dashboard_id(dashboard_id, db=db)
         if config is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -75,6 +75,7 @@ async def upsert_config_endpoint(
             )
         config = await processing_config_service.upsert(
             dashboard_id=dashboard_id,
+            db=db,
             settings=config_update.settings,
         )
         return config
@@ -103,7 +104,7 @@ async def delete_config_endpoint(
     processing_config_service: ProcessingConfigService = Depends(get_processing_config_service),
 ) -> None:
     try:
-        await processing_config_service.delete(dashboard_id)
+        await processing_config_service.delete(dashboard_id, db=db)
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

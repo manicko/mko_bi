@@ -47,8 +47,9 @@ export function useProcessingStatus(logId: string | null, enabled: boolean = tru
     queryKey: ['processingStatus', logId],
     queryFn: () => uploadApi.getProcessingStatus(logId!),
     enabled: enabled && !!logId,
-    refetchInterval: (data) => {
+    refetchInterval: (query) => {
       // Stop polling when processing is complete or failed
+      const data = query.state.data
       if (data?.status === 'completed' || data?.status === 'success' || data?.status === 'failed') {
         return false
       }

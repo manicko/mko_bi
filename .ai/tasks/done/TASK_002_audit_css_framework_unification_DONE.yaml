@@ -1,0 +1,83 @@
+id: TASK_002_audit_css_framework_unification
+
+title: Audit — verify CSS framework unification (MUI-only, no Pro, no Tailwind)
+
+status: done
+
+priority: low
+
+depends_on: []
+
+description: >
+  Read-only audit to verify that the frontend codebase uses MUI v9 as the sole UI framework
+  with community DataGrid, no DataGrid Pro imports, no Tailwind, no license keys, and no
+  styled() usage in production code. This is PLAN_06 Wave 1 TASK_01.
+
+goals:
+  - Verify zero DataGrid Pro imports
+  - Verify zero MUI license key usage
+  - Verify zero Tailwind references
+  - Verify all DataGrid imports are community edition
+  - Verify zero styled() calls in production code
+  - Document audit results (pass/fail per check)
+
+files: []
+
+semantic_anchors: []
+
+changes:
+  - action: audit
+    description: Run grep-based verification commands (read-only, no code changes)
+    verification_commands:
+      - command: 'cd frontend && grep -r "DataGridPro\|data-grid-pro\|@mui/x-data-grid-pro" src/'
+        expected: 0 matches
+      - command: 'cd frontend && grep -r "LicenseInfo\|setLicenseKey\|licenseKey" src/'
+        expected: 0 matches
+      - command: 'cd frontend && grep -r "tailwind" package.json'
+        expected: 0 matches
+      - command: 'cd frontend && find . -name "tailwind.config.*" -not -path "*/node_modules/*"'
+        expected: 0 results
+      - command: 'cd frontend && grep -r "@mui/x-data-grid" src/'
+        expected: 10 matches across 5 files, all from '@mui/x-data-grid' (no -pro suffix)
+      - command: 'cd frontend && grep -r "styled(" src/ | grep -v "node_modules"'
+        expected: 0 matches in production code
+
+audit_results:
+  check_1_datagrid_pro:
+    description: Verify zero DataGrid Pro imports
+    command: grep -r "DataGridPro|data-grid-pro|@mui/x-data-grid-pro" src/
+    result: PASS - 0 matches found
+  check_2_license_keys:
+    description: Verify zero MUI license key usage
+    command: grep -r "LicenseInfo|setLicenseKey|licenseKey" src/
+    result: PASS - 0 matches found
+  check_3_tailwind_package:
+    description: Verify zero Tailwind references in package.json
+    command: grep -r "tailwind" package.json
+    result: PASS - 0 matches found
+  check_4_tailwind_config:
+    description: Verify zero tailwind.config files exist
+    command: find . -name "tailwind.config.*" -not -path "*/node_modules/*"
+    result: PASS - 0 results found
+  check_5_datagrid_community:
+    description: Verify DataGrid imports are community edition
+    command: grep -r "@mui/x-data-grid" src/
+    result: PASS - 10 matches found across 5 files in src/features/, all from '@mui/x-data-grid' (no -pro suffix)
+  check_6_styled_usage:
+    description: Verify zero styled() calls in production code
+    command: grep -r "styled(" src/
+    result: PASS - 0 matches found
+
+acceptance_criteria:
+  - All 6 grep/find commands return expected results
+  - Audit results documented (pass/fail for each check)
+  - No code changes made
+
+tests_to_run: []
+
+risk_level: none
+
+rollout_notes: >
+  Read-only audit. No code changes. Zero risk.
+
+plan_ref: PLAN_06

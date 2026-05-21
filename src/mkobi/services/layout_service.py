@@ -13,7 +13,6 @@ from typing import Any, cast
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mkobi.db.session import get_session
 from mkobi.interfaces.repository_interfaces import ILayoutRepository
 from mkobi.interfaces.service_interfaces import ILayoutService
 from mkobi.models.layout import LayoutRead, LayoutUpdate
@@ -38,14 +37,14 @@ class LayoutService(ILayoutService):
         self,
         name: str,
         definition: dict[str, Any],
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> LayoutRead:
         """Create a new layout.
 
         Args:
             name: Layout name.
             definition: Layout structure (grid, graphs, filters, bindings).
-            db: Optional database session.
+            db: Async database session.
 
         Returns:
             LayoutRead: Model of the created layout.
@@ -54,10 +53,6 @@ class LayoutService(ILayoutService):
             ValueError: If layout with this name already exists.
         """
         logger.info("Creating layout: name=%s", name)
-
-        if db is None:
-            async with get_session() as db:
-                return await self.create_layout(name, definition, db)
 
         existing = await self.layout_repo.get_by_name(name, db)
         if existing:
@@ -79,22 +74,18 @@ class LayoutService(ILayoutService):
             raise
 
     async def get_layout(
-        self, layout_id: UUID, db: AsyncSession | None = None
+        self, layout_id: UUID, db: AsyncSession
     ) -> LayoutRead | None:
         """Get layout by ID.
 
         Args:
             layout_id: Layout identifier.
-            db: Optional database session.
+            db: Async database session.
 
         Returns:
             LayoutRead or None if not found.
         """
         logger.info("Getting layout: layout_id=%s", layout_id)
-
-        if db is None:
-            async with get_session() as db_session:
-                return await self.get_layout(layout_id, db_session)
 
         layout_obj = await self.layout_repo.get(layout_id, db)
         if not layout_obj:
@@ -103,21 +94,17 @@ class LayoutService(ILayoutService):
         return cast(LayoutRead, LayoutRead.model_validate(layout_obj))
 
     async def get_all_layouts(
-        self, db: AsyncSession | None = None
+        self, db: AsyncSession
     ) -> list[LayoutRead]:
         """Get all layouts.
 
         Args:
-            db: Optional database session.
+            db: Async database session.
 
         Returns:
             List of all layouts.
         """
         logger.info("Getting all layouts")
-
-        if db is None:
-            async with get_session() as db_session:
-                return await self.get_all_layouts(db_session)
 
         layout_objs = await self.layout_repo.get_all(db)
         return [LayoutRead.model_validate(layout_obj) for layout_obj in layout_objs]
@@ -126,7 +113,7 @@ class LayoutService(ILayoutService):
         self,
         layout_id: UUID,
         update_data: LayoutUpdate,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> LayoutRead | None:
         """Update layout.
 
@@ -136,16 +123,12 @@ class LayoutService(ILayoutService):
         Args:
             layout_id: Layout identifier.
             update_data: Data to update (LayoutUpdate model).
-            db: Optional database session.
+            db: Async database session.
 
         Returns:
             LayoutRead: Updated layout model, or None if not found.
         """
         logger.info("Updating layout: layout_id=%s", layout_id)
-
-        if db is None:
-            async with get_session() as db_session:
-                return await self.update_layout(layout_id, update_data, db_session)
 
         # Check existence
         existing = await self.layout_repo.get(layout_id, db)
@@ -185,22 +168,18 @@ class LayoutService(ILayoutService):
             raise
 
     async def delete_layout(
-        self, layout_id: UUID, db: AsyncSession | None = None
+        self, layout_id: UUID, db: AsyncSession
     ) -> bool:
         """Delete layout.
 
         Args:
             layout_id: Layout identifier.
-            db: Optional database session.
+            db: Async database session.
 
         Returns:
             True if deletion successful, False if not found.
         """
         logger.info("Deleting layout: layout_id=%s", layout_id)
-
-        if db is None:
-            async with get_session() as db_session:
-                return await self.delete_layout(layout_id, db_session)
 
         try:
             result: bool = await self.layout_repo.delete(layout_id, db)

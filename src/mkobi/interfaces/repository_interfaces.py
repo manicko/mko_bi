@@ -5,6 +5,7 @@ Used for dependency injection and breaking cyclic imports.
 """
 
 import abc
+from datetime import datetime
 from typing import Any
 from uuid import UUID
 
@@ -279,6 +280,7 @@ class IProcessingLogRepository(abc.ABC):
         status: Any,
         message: str | None,
         db: AsyncSession,
+        finished_at: datetime | None = None,
     ) -> None:
         """Update processing log status."""
         pass

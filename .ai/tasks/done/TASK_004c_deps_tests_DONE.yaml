@@ -1,0 +1,125 @@
+id: TASK_004c_deps_tests
+
+title: Write tests for api/deps.py FastAPI dependencies
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_004a_service_integration_tests
+
+description: >
+  The api/deps.py module provides FastAPI dependencies for authentication, authorization,
+  and dependency injection. It has zero test coverage. When TASK_005 and TASK_006 modify
+  the session handling (removing db=None, consolidating get_db), these dependencies will
+  be affected.
+
+  This task creates tests for the dependency functions using the existing async_client
+  and async_db_session fixtures from conftest.py. The tests verify:
+    - get_db_dependency() creates and yields a session
+    - get_current_user_dependency() authenticates via token
+    - require_admin_role() / require_editor_role() / require_viewer_role() enforce roles
+    - require_dashboard_read_access() / write_access() / admin_access() enforce permissions
+    - DI factory functions (get_auth_service, get_dashboard_service, etc.) return correct types
+
+goals:
+  - Create tests/test_deps.py with tests for FastAPI dependency functions
+  - Test get_db_dependency session lifecycle
+  - Test get_current_user_dependency with valid/invalid tokens
+  - Test role requirement dependencies (admin, editor, viewer)
+  - Test dashboard access dependencies (read, write, admin)
+  - Test DI factory functions return correct service types
+  - All tests pass with pytest tests/test_deps.py -x -v
+
+files:
+  - path: tests/test_deps.py
+    targets:
+      - type: module
+        name: test_deps
+    semantic_anchors:
+      insert_after:
+        type: existing_file
+        value: tests/conftest.py
+
+  - path: src/mkobi/api/deps.py
+    targets:
+      - type: function
+        name: get_db_dependency
+      - type: function
+        name: get_current_user_dependency
+      - type: function
+        name: require_admin_role
+      - type: function
+        name: require_editor_role
+      - type: function
+        name: require_viewer_role
+    semantic_anchors:
+      notes: "Read-only analysis for test creation. No changes to source in this task."
+
+changes:
+  - action: create_file
+    description: Create test file for FastAPI dependencies
+    file: tests/test_deps.py
+    notes: |
+      Use existing conftest.py fixtures: async_db_session, async_client, test_user, auth_headers.
+      
+      Test structure:
+      
+      class TestGetDbDependency:
+        - test_get_db_yields_session: call get_db_dependency(), verify it yields AsyncSession
+        - test_get_db_session_usable: verify yielded session can execute queries
+      
+      class TestGetCurrentUserDependency:
+        - Use async_client to hit a protected endpoint (/auth/me) with valid token
+        - test_valid_token_returns_user: verify 200 response with correct user data
+        - test_invalid_token_returns_401: verify 401 for bad token
+        - test_missing_token_returns_401: verify 401 for no token
+      
+      class TestRoleRequirements:
+        - test_admin_endpoint_with_admin_user: admin accesses admin-only, gets 200
+        - test_admin_endpoint_with_viewer_user: viewer accesses admin-only, gets 403
+        - test_editor_endpoint_with_editor_user: editor accesses editor+, gets 200
+        - test_editor_endpoint_with_viewer_user: viewer accesses editor+, gets 403
+        - test_viewer_endpoint_with_any_user: any authenticated user gets 200
+      
+      class TestDashboardAccessDependencies:
+        - test_read_access_with_permission: user with VIEW can read dashboard
+        - test_read_access_without_permission: user without access gets 403
+        - test_write_access_with_edit_permission: user with EDIT can write
+        - test_write_access_with_view_only: user with VIEW gets 403 for write
+        - test_admin_access_with_admin_permission: user with ADMIN can admin
+        - test_admin_access_with_edit_permission: user with EDIT gets 403 for admin
+      
+      class TestDIFactories:
+        - test_get_auth_service_returns_auth_service: verify isinstance(result, AuthService)
+        - test_get_dashboard_service_returns_dashboard_service: verify isinstance
+        - test_get_graph_service_returns_graph_service: verify isinstance
+        - test_get_data_service_returns_data_service: verify isinstance
+        - test_get_filter_service_returns_filter_service: verify isinstance
+        - test_get_layout_service_returns_layout_service: verify isinstance
+
+acceptance_criteria:
+  - tests/test_deps.py exists and is syntactically valid
+  - All tests pass: pytest tests/test_deps.py -x -v
+  - get_db_dependency lifecycle tested
+  - get_current_user_dependency tested with valid and invalid tokens
+  - Role requirement dependencies tested with different user roles
+  - Dashboard access dependencies tested with different permission levels
+  - DI factory functions tested for correct return types
+  - Tests use async_client fixture for HTTP-level dependency testing
+
+tests_to_run:
+  - pytest tests/test_deps.py -x -v
+
+risk_level: low
+
+rollout_notes: |
+  Depends on TASK_004a because it uses the same async_db_session and async_client fixtures.
+  This task only creates tests — no production code changes.
+  Tests are designed to remain valid after TASK_005 and TASK_006 modify session handling.
+  Can run in parallel with TASK_004b (different test file, same fixture dependencies).
+
+validated_finding_refs:
+  - VF-001
+  - VF-003

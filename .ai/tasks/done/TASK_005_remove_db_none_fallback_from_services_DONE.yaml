@@ -1,0 +1,192 @@
+id: TASK_005_remove_db_none_fallback_from_services
+
+title: Remove db=None fallback pattern from all service methods
+
+status: done
+
+priority: medium
+
+depends_on:
+  - TASK_004a_service_integration_tests
+  - TASK_004b_permissions_tests
+
+description: >
+  Systemic refactoring to remove the `db: AsyncSession | None = None` fallback pattern from
+  all 8 service classes (72 method signatures). When called without a `db` parameter, each
+  service method currently creates its own session internally, breaking transaction atomicity.
+  This task makes `db: AsyncSession` mandatory in all service method signatures.
+  
+
+goals:
+  - Remove `db: AsyncSession | None = None` from all service methods
+  - Make `db: AsyncSession` mandatory in all service method signatures
+  - Remove `db: AsyncSession | None = None` from `check_dashboard_access()` in permissions.py
+  - Update all callers to pass `db` explicitly
+  - Preserve backward compatibility via FastAPI dependency injection
+
+files:
+  - path: src/mkobi/services/auth_service.py
+    targets:
+      - type: class
+        name: AuthService
+    semantic_anchors:
+      modify:
+        type: method_signature
+        pattern: "db: AsyncSession | None = None"
+        replacement: "db: AsyncSession"
+    affected_methods:
+      - register_user
+      - login_user
+      - get_user_by_id
+      - verify_token
+      - change_password
+      - delete_user
+      - get_user_by_email
+      - check_rate_limit
+      - list_users
+
+  - path: src/mkobi/services/data_service.py
+    targets:
+      - type: class
+        name: DataService
+    semantic_anchors:
+      modify:
+        type: method_signature
+        pattern: "db: AsyncSession | None = None"
+        replacement: "db: AsyncSession"
+    affected_methods:
+      - process_upload
+      - get_aggregated_data
+      - get_processing_status
+      - cancel_processing
+      - retry_processing
+      - get_processing_history
+      - delete_processing_data
+
+  - path: src/mkobi/services/dashboard_service.py
+    targets:
+      - type: class
+        name: DashboardService
+    semantic_anchors:
+      modify:
+        type: method_signature
+        pattern: "db: AsyncSession | None = None"
+        replacement: "db: AsyncSession"
+    affected_methods:
+      - create_dashboard
+      - get_dashboard
+      - list_dashboards
+      - update_dashboard
+      - delete_dashboard
+      - get_dashboard_by_name
+      - get_dashboard_config
+      - update_dashboard_config
+      - get_dashboard_layout
+      - set_dashboard_layout
+      - get_dashboard_graphs
+      - get_dashboard_filters
+      - get_dashboard_users
+
+  - path: src/mkobi/services/layout_service.py
+    targets:
+      - type: class
+        name: LayoutService
+    semantic_anchors:
+      modify:
+        type: method_signature
+        pattern: "db: AsyncSession | None = None"
+        replacement: "db: AsyncSession"
+
+  - path: src/mkobi/services/graph_service.py
+    targets:
+      - type: class
+        name: GraphService
+    semantic_anchors:
+      modify:
+        type: method_signature
+        pattern: "db: AsyncSession | None = None"
+        replacement: "db: AsyncSession"
+
+  - path: src/mkobi/services/filter_service.py
+    targets:
+      - type: class
+        name: FilterService
+    semantic_anchors:
+      modify:
+        type: method_signature
+        pattern: "db: AsyncSession | None = None"
+        replacement: "db: AsyncSession"
+
+  - path: src/mkobi/services/processing_config_service.py
+    targets:
+      - type: class
+        name: ProcessingConfigService
+    semantic_anchors:
+      modify:
+        type: method_signature
+        pattern: "db: AsyncSession | None = None"
+        replacement: "db: AsyncSession"
+
+  - path: src/mkobi/services/processing_log_service.py
+    targets:
+      - type: class
+        name: ProcessingLogService
+    semantic_anchors:
+      modify:
+        type: method_signature
+        pattern: "db: AsyncSession | None = None"
+        replacement: "db: AsyncSession"
+
+  - path: src/mkobi/core/permissions.py
+    targets:
+      - type: function
+        name: check_dashboard_access
+    semantic_anchors:
+      modify:
+        type: function_signature
+        pattern: "db: AsyncSession | None = None"
+        replacement: "db: AsyncSession"
+
+changes:
+  - action: modify_signature
+    description: Replace `db: AsyncSession | None = None` with `db: AsyncSession` in all service methods
+    pattern: "db: AsyncSession | None = None"
+    replacement: "db: AsyncSession"
+    scope: all service classes (8 files, ~72 methods)
+
+  - action: remove_code
+    description: Remove internal session creation logic (the `if db is None: db = ...` blocks)
+    pattern: "if db is None:"
+    scope: all service classes
+
+  - action: modify_signature
+    description: Replace `db: AsyncSession | None = None` with `db: AsyncSession` in check_dashboard_access
+    file: src/mkobi/core/permissions.py
+    function: check_dashboard_access
+
+acceptance_criteria:
+  - Zero occurrences of `db: AsyncSession | None = None` in service files
+  - Zero occurrences of `db: AsyncSession | None = None` in permissions.py
+  - All service methods require `db: AsyncSession` as mandatory parameter
+  - All callers pass `db` explicitly
+  - Full test suite passes
+  - No runtime regressions
+
+tests_to_run:
+  - pytest tests/ -x -v
+
+risk_level: high
+
+execution_blocked_reason: >
+  Test quality must be improved before this task can be safely executed. The existing
+  test suite has overmocked service tests that will break when signatures change.
+  A comprehensive test harness should be created first.
+
+rollout_notes: >
+  Must be done as a single atomic change across all services. Cannot be incrementally
+  rolled out (changing some services but not others would create inconsistency).
+  Requires full test suite rewrite for overmocked service tests.
+
+validated_finding_refs:
+  - VF-001
+  - VF-002

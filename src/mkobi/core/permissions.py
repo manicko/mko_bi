@@ -13,7 +13,6 @@ viewer can only read.
 import logging
 from functools import lru_cache
 from typing import Any
-from collections.abc import AsyncGenerator
 from uuid import UUID
 
 from jose import JWTError
@@ -22,89 +21,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mkobi.core.security import decode_token
 from mkobi.db.repositories.access_repo import AccessRepository
 from mkobi.db.repositories.user_repo import UserRepository
-from mkobi.db.session import get_session
 from mkobi.models.enums import DashboardPermission, UserRole
 from mkobi.models.user import UserRead
 
 logger = logging.getLogger(__name__)
-
-
-class RolePermissions:
-    """Class for checking access rights based on roles.
-
-    Determines which roles have access to certain operations.
-    """
-
-    CAN_CREATE_DASHBOARDS: list[UserRole] = [UserRole.ADMIN]
-    CAN_EDIT_DASHBOARDS: list[UserRole] = [UserRole.ADMIN, UserRole.EDITOR]
-    CAN_VIEW_DASHBOARDS: list[UserRole] = [
-        UserRole.ADMIN,
-        UserRole.EDITOR,
-        UserRole.VIEWER,
-    ]
-    CAN_MANAGE_USERS: list[UserRole] = [UserRole.ADMIN]
-    CAN_UPLOAD_DATA: list[UserRole] = [UserRole.ADMIN, UserRole.EDITOR]
-
-    @classmethod
-    def can_create_dashboards(cls, user_role: UserRole) -> bool:
-        """Check if user can create dashboards."""
-        return user_role in cls.CAN_CREATE_DASHBOARDS
-
-    @classmethod
-    def can_edit_dashboards(cls, user_role: UserRole) -> bool:
-        """Check if user can edit dashboards."""
-        return user_role in cls.CAN_EDIT_DASHBOARDS
-
-    @classmethod
-    def can_view_dashboards(cls, user_role: UserRole) -> bool:
-        """Check if user can view dashboards."""
-        return user_role in cls.CAN_VIEW_DASHBOARDS
-
-    @classmethod
-    def can_manage_users(cls, user_role: UserRole) -> bool:
-        """Check if user can manage users."""
-        return user_role in cls.CAN_MANAGE_USERS
-
-    @classmethod
-    def can_upload_data(cls, user_role: UserRole) -> bool:
-        """Check if user can upload data."""
-        return user_role in cls.CAN_UPLOAD_DATA
-
-
-def check_permission(user_role: UserRole, required: list[UserRole]) -> bool:
-    """Check if user has required permissions.
-
-    Args:
-        user_role: User's role.
-        required: List of roles that have access.
-
-    Returns:
-        bool: True if user has access, False otherwise.
-    """
-    result = user_role in required
-    logger.debug(
-        "Permission check: user_role=%s, required=%s -> %s",
-        user_role,
-        [r.value for r in required],
-        result,
-    )
-    return result
-
-
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    """FastAPI dependency for getting database session.
-
-    Creates a new async session for each request and closes it after completion.
-
-    Yields:
-        AsyncSession: Async SQLAlchemy session.
-    """
-    async with get_session() as db:
-        try:
-            yield db
-        finally:
-            # Explicit close for guarantee
-            await db.close()
 
 
 # --- Constants ---
@@ -204,16 +124,16 @@ def check_role(user_role: UserRole, required_role: UserRole) -> bool:
 async def check_dashboard_access(
     user_id: UUID,
     dashboard_id: UUID,
+    db: AsyncSession,
     required_permission: str = "view",
-    db: AsyncSession | None = None,
 ) -> bool:
     """Check if user has access to dashboard.
 
     Args:
         user_id: User identifier.
         dashboard_id: Dashboard identifier.
+        db: Async database session.
         required_permission: Required access level (view/edit/admin).
-        db: Async database session. If not provided, a new one is created.
 
     Returns:
         True if access exists, False otherwise.
@@ -229,16 +149,9 @@ async def check_dashboard_access(
     if required_permission not in [e.value for e in DashboardPermission]:
         raise ValueError(f"Allowed values: {[e.value for e in DashboardPermission]}")
 
-    # If session is not provided, create a new one via context manager
-    if db is None:
-        async with get_session() as session:
-            return await _check_access_with_session(
-                user_id, dashboard_id, required_permission, session
-            )
-    else:
-        return await _check_access_with_session(
-            user_id, dashboard_id, required_permission, db
-        )
+    return await _check_access_with_session(
+        user_id, dashboard_id, required_permission, db
+    )
 
 
 async def _check_access_with_session(
@@ -351,7 +264,7 @@ def _decode_token_cached(token: str) -> dict[str, Any] | None:
 
 async def get_current_user(
     token: str,
-    db: AsyncSession | None = None,
+    db: AsyncSession,
 ) -> UserRead:
     """Get current user by token.
 
@@ -360,7 +273,7 @@ async def get_current_user(
 
     Args:
         token: JWT access token.
-        db: Async database session. If not provided, a new one is created.
+        db: Async database session.
 
     Returns:
         UserRead: User model with data from database (without password hash).
@@ -368,12 +281,7 @@ async def get_current_user(
     Raises:
         AuthenticationError: If token is invalid or user not found.
     """
-    # If session is not provided, create a new one via context manager
-    if db is None:
-        async with get_session() as session:
-            return await _get_current_user_with_session(token, session)
-    else:
-        return await _get_current_user_with_session(token, db)
+    return await _get_current_user_with_session(token, db)
 
 
 async def _get_current_user_with_session(

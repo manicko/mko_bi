@@ -157,7 +157,6 @@ def create_app() -> FastAPI:
 
     # Register routers with /api/v1 prefix
     application.include_router(routes.auth.router, prefix="/api/v1")
-    application.include_router(routes.client_errors.router, prefix="/api/v1")
     application.include_router(routes.users.router, prefix="/api/v1")
     application.include_router(routes.dashboards.router, prefix="/api/v1")
     application.include_router(routes.layouts.router, prefix="/api/v1")
@@ -168,23 +167,10 @@ def create_app() -> FastAPI:
     application.include_router(routes.processing_logs.router, prefix="/api/v1")
     application.include_router(routes.admin.router, prefix="/api/v1")
 
-    # Setup static files for React SPA (after all API routes)
-    _setup_static_files(application)
-
-    # Root endpoint
-    @application.get("/", tags=["health"])
-    async def root() -> dict[str, str | int]:
-        """Root endpoint for API health check."""
-        return {
-            "message": "BI Dashboard API",
-            "status": "active",
-            "version": "1.0.0",
-        }
-
     @application.get("/health", tags=["health"])
     async def health_check() -> Response:
         """Application health check endpoint.
-        
+
         Verifies database connectivity by executing a simple query.
         Returns 503 if database is not accessible.
         """
@@ -205,7 +191,7 @@ def create_app() -> FastAPI:
     @application.get("/health/detailed", tags=["health"])
     async def detailed_health_check() -> dict[str, Any]:
         """Detailed health check with component status.
-        
+
         Checks database connectivity and returns detailed status information.
         This endpoint is intended for admin use and monitoring systems.
         """
@@ -213,9 +199,9 @@ def create_app() -> FastAPI:
             "status": "healthy",
             "components": {},
         }
-        
+
         components: dict[str, Any] = {}
-        
+
         # Check database connectivity
         try:
             async with get_session() as db:
@@ -231,16 +217,19 @@ def create_app() -> FastAPI:
                 "status": "disconnected",
                 "error": str(e),
             }
-        
+
         # Check if static files are mounted
         import os
         components["static_files"] = {
             "status": "available" if os.path.isdir("frontend/dist") else "unavailable",
             "path": "frontend/dist",
         }
-        
+
         health_status["components"] = components
         return health_status
+
+    # Setup static files for React SPA (after all health endpoints)
+    _setup_static_files(application)
 
     # Exception handlers
     @application.exception_handler(StarletteHTTPException)
@@ -290,9 +279,9 @@ def create_app() -> FastAPI:
 def _setup_static_files(application: FastAPI) -> None:
     """Sets up static file serving for React SPA.
 
-    Mounts static files from frontend/dist and configures
-    SPA fallback for all non-API routes. Both are conditional
-    on the frontend build directory existing.
+    Mounts static files from frontend/dist with SPA fallback enabled.
+    Uses custom SPAStaticFiles class to serve index.html for non-existent
+    paths, enabling proper client-side routing for the React application.
     """
     from pathlib import Path
     from starlette.staticfiles import StaticFiles as BaseStaticFiles
@@ -305,15 +294,16 @@ def _setup_static_files(application: FastAPI) -> None:
     # Only register static files and SPA fallback when frontend build exists
     if static_dir.exists() and index_path.exists():
         logger.info("Mounting static files from %s", static_dir)
-        
+
         # Custom StaticFiles that falls back to index.html for non-existent files
         class SPAStaticFiles(BaseStaticFiles):
             """StaticFiles subclass that serves index.html for non-existent paths.
-            
+
             This enables proper SPA routing where the React router handles
             client-side navigation after the initial index.html is served.
             """
-            async def get_response(self, path: str, scope: dict):
+
+            async def get_response(self, path: str, scope: dict[str, Any]):
                 """Override to serve index.html for non-existent files."""
                 try:
                     return await super().get_response(path, scope)

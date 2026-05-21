@@ -7,7 +7,7 @@ app:
   version: "1.0.0"
 
 # Database migrations
-auto_migrate: true
+auto_migrate: false
 migration_script_path: "alembic"
 alembic_ini_path: "alembic.ini"
 

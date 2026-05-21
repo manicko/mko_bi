@@ -4,10 +4,35 @@
 # =============================================================================
 
 services:
+  # Migration service - runs alembic migrations before app starts (same as production)
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      ENV: development
+      DATABASE__HOST: db
+      DATABASE__PORT: 5432
+      DATABASE__USER: postgres
+      DATABASE__PASSWORD: ${DATABASE__PASSWORD:-1234}
+      DATABASE__DBNAME: bidb
+      DATABASE__TEST_DBNAME: bidb_test
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
+      JWT__ALGORITHM: HS256
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
   app:
     build:
       target: dev
     user: root
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
     environment:
       ENV: development
       # Application role for runtime operations (limited privileges)
@@ -19,8 +44,8 @@ services:
       # Development can use a default JWT secret for local testing
       JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
       LOGGING__LEVEL: DEBUG
-      AUTO_MIGRATE: "true"  # Run migration on startup to create schema
-      RECREATE_TEST_DB: "true"
+      AUTO_MIGRATE: "false"
+      RECREATE_TEST_DB: "false"
     volumes:
       # Mount source code for hot reload (writable for egg-info generation)
       - ./src:/app/src

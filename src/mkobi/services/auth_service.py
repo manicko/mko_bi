@@ -19,7 +19,6 @@ from mkobi.core.security import (
     hash_password,
     verify_password,
 )
-from mkobi.db.session import get_session
 from mkobi.interfaces.repository_interfaces import IRegistrationRequestRepository, IUserRepository
 from mkobi.interfaces.service_interfaces import IAuthService
 from mkobi.models.enums import RegistrationStatus, UserRole
@@ -116,16 +115,16 @@ class AuthService(IAuthService):
         self,
         email: str,
         password: str,
+        db: AsyncSession,
         role: str = "viewer",
-        db: AsyncSession | None = None,
     ) -> UserRead:
         """Register new user.
 
         Args:
             email: User email (will be validated).
             password: User password (will be hashed).
+            db: Async database session.
             role: User role (admin, editor, viewer).
-            db: Optional database session.
 
         Returns:
             UserRead: Model without password.
@@ -137,10 +136,6 @@ class AuthService(IAuthService):
         self._validate_role(role)
         self._validate_email_format(email)
         logger.info("Starting user registration", extra={"email": email, "role": role})
-
-        if db is None:
-            async with get_session() as db:
-                return await self.register_user(email, password, role, db)
 
         await self._check_email_uniqueness(email, db)
 
@@ -175,23 +170,19 @@ class AuthService(IAuthService):
         self,
         email: str,
         password: str,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> dict[str, Any] | None:
         """Authenticate user by email and password.
 
         Args:
             email: User email.
             password: User password.
-            db: Optional database session.
+            db: Async database session.
 
         Returns:
             dict: Token data with user data if authentication successful, None otherwise.
         """
         logger.info("Attempting user authentication", extra={"email": email})
-
-        if db is None:
-            async with get_session() as db:
-                return await self.login_user(email, password, db)
 
         user_obj = await self.user_repo.get_by_email_with_hash(email=email, db=db)
         if user_obj is None:
@@ -214,7 +205,7 @@ class AuthService(IAuthService):
 
 
     async def authenticate_user(
-        self, email: str, password: str, db: AsyncSession | None = None
+        self, email: str, password: str, db: AsyncSession
     ) -> UserRead | None:
         """Authenticate user and return user data.
 
@@ -244,7 +235,7 @@ class AuthService(IAuthService):
         return str(create_access_token({"user_id": str(user_id), "email": "", "role": role}))
 
     async def refresh_token(
-        self, user_id: UUID, email: str, role: str, db: Any | None = None
+        self, user_id: UUID, email: str, role: str
     ) -> dict[str, Any]:
         """Refresh JWT token.
 
@@ -284,22 +275,18 @@ class AuthService(IAuthService):
         return dict(payload)
 
     async def get_user_by_id(
-        self, user_id: UUID, db: AsyncSession | None = None
+        self, user_id: UUID, db: AsyncSession
     ) -> UserRead | None:
         """Get user by ID.
 
         Args:
             user_id: User ID.
-            db: Optional database session.
+            db: Async database session.
 
         Returns:
             UserRead: User model without password, or None.
         """
         logger.info("Getting user by id", extra={"user_id": str(user_id)})
-
-        if db is None:
-            async with get_session() as db:
-                return await self.get_user_by_id(user_id, db)
 
         user_obj = await self.user_repo.get(user_id, db)
         if user_obj is None:
@@ -309,22 +296,18 @@ class AuthService(IAuthService):
         return cast(UserRead, UserRead.model_validate(user_obj))
 
     async def get_user_by_email(
-        self, email: str, db: AsyncSession | None = None
+        self, email: str, db: AsyncSession
     ) -> UserRead | None:
         """Get user by email.
 
         Args:
             email: User email.
-            db: Optional database session.
+            db: Async database session.
 
         Returns:
             UserRead: User model without password, or None.
         """
         logger.info("Getting user by email", extra={"email": email})
-
-        if db is None:
-            async with get_session() as db:
-                return await self.get_user_by_email(email, db)
 
         user_obj = await self.user_repo.get_by_email(email=email, db=db)
         if user_obj is None:
@@ -338,7 +321,7 @@ class AuthService(IAuthService):
         email: str,
         password: str,
         role: UserRole,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> UserRead:
         """Create new user (admin only).
 
@@ -346,22 +329,22 @@ class AuthService(IAuthService):
             email: User email.
             password: User password.
             role: User role.
-            db: Optional database session.
+            db: Async database session.
 
         Returns:
             UserRead: Created user model.
         """
-        return await self.register_user(email, password, role, db)
+        return await self.register_user(email, password, db, role)
 
     async def register_request(
-        self, email: str, ip: str | None, db: AsyncSession | None = None
+        self, email: str, ip: str | None, db: AsyncSession
     ) -> dict[str, Any]:
         """Create registration request.
 
         Args:
             email: User email.
+            db: Async database session.
             ip: Client IP address.
-            db: Optional database session.
 
         Returns:
             dict: Created request data.
@@ -381,10 +364,6 @@ class AuthService(IAuthService):
 
         # Extract and normalize email domain to lowercase for case-insensitive comparison
         email_domain = email.split('@')[1].lower()
-
-        if db is None:
-            async with get_session() as db:
-                return await self.register_request(email, ip, db)
 
         # Check if request with this email already exists (before domain check)
         existing_request = await self.reg_request_repo.get_by_email(email, db)
@@ -450,7 +429,7 @@ class AuthService(IAuthService):
         user_id: UUID,
         current_password: str,
         new_password: str,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> bool:
         """Change user password.
 
@@ -458,7 +437,7 @@ class AuthService(IAuthService):
             user_id: User ID.
             current_password: Current password for verification.
             new_password: New password to set.
-            db: Optional database session.
+            db: Async database session.
 
         Returns:
             True if password changed successfully.
@@ -467,12 +446,6 @@ class AuthService(IAuthService):
             ValueError: If current password is wrong or new password equals current.
         """
         logger.info("Password change attempt", extra={"user_id": str(user_id)})
-
-        if db is None:
-            async with get_session() as db:
-                return await self.change_password(
-                    user_id, current_password, new_password, db
-                )
 
         # Get user by ID with hash for verification
         user_obj = await self.user_repo.get_with_hash(user_id, db)

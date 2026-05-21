@@ -45,7 +45,7 @@ class FilterService(IFilterService):
         name: str,
         type_: str,
         config: FilterConfigDict,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> FilterRead:
         """Create new global filter.
 
@@ -61,9 +61,6 @@ class FilterService(IFilterService):
         Raises:
             ValueError: If validation fails.
         """
-        if db is None:
-            raise ValueError("db session is required for create_filter")
-
         self._validate_filter_type(type_)
         self._validate_filter_name(name)
         self._validate_filter_config(config)
@@ -103,7 +100,7 @@ class FilterService(IFilterService):
     async def get_filter_by_id(
         self,
         filter_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> FilterRead | None:
         """Get filter by ID.
 
@@ -114,9 +111,6 @@ class FilterService(IFilterService):
         Returns:
             FilterRead or None if not found.
         """
-        if db is None:
-            raise ValueError("db session is required for get_filter_by_id")
-
         try:
             filter_obj = await self.filter_repo.get(filter_id, db)
             if filter_obj is None:
@@ -130,7 +124,7 @@ class FilterService(IFilterService):
     async def get_filter_by_name(
         self,
         name: str,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> FilterRead | None:
         """Get filter by name.
 
@@ -141,9 +135,6 @@ class FilterService(IFilterService):
         Returns:
             FilterRead or None if not found.
         """
-        if db is None:
-            raise ValueError("db session is required for get_filter_by_name")
-
         try:
             filter_obj = await self.filter_repo.get_by_name(name, db)
             if filter_obj is None:
@@ -156,7 +147,7 @@ class FilterService(IFilterService):
 
     async def get_all_filters(
         self,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> list[FilterRead]:
         """Get all filters.
 
@@ -166,9 +157,6 @@ class FilterService(IFilterService):
         Returns:
             list[FilterRead]: List of all filters.
         """
-        if db is None:
-            raise ValueError("db session is required for get_all_filters")
-
         try:
             filters = await self.filter_repo.get_all(db)
             return [FilterRead.model_validate(f) for f in filters]
@@ -180,7 +168,7 @@ class FilterService(IFilterService):
         self,
         filter_id: UUID,
         updates: FilterUpdate,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> FilterRead | None:
         """Update filter.
 
@@ -192,9 +180,6 @@ class FilterService(IFilterService):
         Returns:
             FilterRead or None if not found.
         """
-        if db is None:
-            raise ValueError("db session is required for update_filter")
-
         # Check if filter exists
         existing = await self.filter_repo.get(filter_id, db=db)
         if existing is None:
@@ -245,7 +230,7 @@ class FilterService(IFilterService):
     async def delete_filter(
         self,
         filter_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> bool:
         """Delete filter.
 
@@ -256,9 +241,6 @@ class FilterService(IFilterService):
         Returns:
             bool: True if deletion successful.
         """
-        if db is None:
-            raise ValueError("db session is required for delete_filter")
-
         try:
             result = await self.filter_repo.delete(filter_id, db)
             await db.commit()

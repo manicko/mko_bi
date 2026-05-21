@@ -1,0 +1,94 @@
+id: TASK_006_consolidate_get_db_functions
+
+title: Consolidate get_db() duplication between permissions.py and deps.py
+
+status: done
+
+priority: low
+
+depends_on:
+  - TASK_005_remove_db_none_fallback_from_services
+  - TASK_004c_deps_tests
+
+description: >
+  Remove the duplicated `get_db()` function from `src/mkobi/core/permissions.py` and
+  consolidate session creation logic. The function in `permissions.py` (line 94) and
+  `get_db_dependency()` in `api/deps.py` (line 91) are nearly identical.
+  
+
+goals:
+  - Remove `get_db()` from `core/permissions.py`
+  - Move shared session factory to `db/session.py` (neutral location)
+  - Have both `permissions.py` and `deps.py` import from `db/session.py`
+  - Preserve Clean Architecture dependency direction
+
+files:
+  - path: src/mkobi/core/permissions.py
+    targets:
+      - type: function
+        name: get_db
+    semantic_anchors:
+      remove:
+        type: function_definition
+        value: get_db
+
+  - path: src/mkobi/api/deps.py
+    targets:
+      - type: function
+        name: get_db_dependency
+    semantic_anchors:
+      modify:
+        type: function_definition
+        value: get_db_dependency
+
+  - path: src/mkobi/db/session.py
+    targets:
+      - type: module
+        name: session
+    semantic_anchors:
+      insert_after:
+        type: existing_function
+        value: get_session
+
+changes:
+  - action: add_function
+    description: Add shared session factory function to db/session.py
+    file: src/mkobi/db/session.py
+    function_name: get_db_session
+    notes: >
+      Create a shared async generator function that creates and yields an AsyncSession.
+      This is the neutral location that both core/permissions.py and api/deps.py can import.
+
+  - action: replace_import
+    description: Update permissions.py to import from db/session.py instead of defining its own get_db
+    file: src/mkobi/core/permissions.py
+    remove: local get_db function definition
+    add_import: from mkobi.db.session import get_db_session
+
+  - action: replace_implementation
+    description: Update deps.py get_db_dependency to use shared session factory from db/session.py
+    file: src/mkobi/api/deps.py
+    notes: >
+      Refactor get_db_dependency to delegate to the shared session factory in db/session.py,
+      or keep the existing implementation if it already uses get_session from db/session.py.
+
+acceptance_criteria:
+  - `get_db()` removed from `core/permissions.py`
+  - Shared session factory exists in `db/session.py`
+  - `core/permissions.py` imports from `db/session.py` (not from `api.deps`)
+  - `api/deps.py` imports from `db/session.py`
+  - No core -> api import dependency
+  - Full test suite passes
+
+tests_to_run:
+  - pytest tests/ -x -v
+
+risk_level: low
+
+rollout_notes: >
+  Safe to execute after TASK_005 stabilizes. The dependency direction concern is resolved
+  by using `db/session.py` as the neutral shared location. Both modules already import
+  from `db/session.py`, so no new import cycles are created.
+
+validated_finding_refs:
+  - VF-003

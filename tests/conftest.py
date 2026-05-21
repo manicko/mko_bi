@@ -10,8 +10,8 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.pool import NullPool
 
-# Set required environment variables BEFORE importing any mkobi modules
-# Use pydantic-settings nested env vars (double underscore)
+# Set required environment variables before ANY mkobi module imports
+# This must be at the very top of this file before other imports
 os.environ["ENV"] = "test"
 os.environ["DATABASE__HOST"] = "localhost"
 os.environ["DATABASE__PORT"] = "5432"
@@ -24,17 +24,66 @@ os.environ["REDIS__HOST"] = "localhost"
 os.environ["REDIS__PORT"] = "6379"
 os.environ["RECREATE_TEST_DB"] = "true"
 
-# Test PostgreSQL database (async)
-# Use get_config() to be consistent with the app
-from mkobi.config import get_config
-from mkobi.core.security import create_access_token, hash_password
-from mkobi.db.repositories.user_repo import UserRepository
 
+def pytest_load_initial_conftests(early_config, parser, args):
+    """Pytest hook that runs before conftest.py is fully loaded.
+    
+    This ensures environment variables are set before ANY test modules
+    are imported during collection.
+    """
+    os.environ["ENV"] = "test"
+    os.environ["DATABASE__HOST"] = "localhost"
+    os.environ["DATABASE__PORT"] = "5432"
+    os.environ["DATABASE__DBNAME"] = "bidb_test"
+    os.environ["DATABASE__USER"] = "postgres"
+    os.environ["DATABASE__PASSWORD"] = "1234"
+    os.environ["DATABASE__TEST_DBNAME"] = "bidb_test"
+    os.environ["JWT__SECRET_KEY"] = "test_secret_key_change_in_production"
+    os.environ["REDIS__HOST"] = "localhost"
+    os.environ["REDIS__PORT"] = "6379"
+    os.environ["RECREATE_TEST_DB"] = "true"
+
+# Import config module - this will create the singleton with test env vars
+from mkobi.config import clear_config_cache, get_config, Settings  # noqa: E402, F401
+
+# Clear any cached config from previous imports and initialize with test env vars
+clear_config_cache()
 _config = get_config()
-# Use TEST_DATABASE_URL for test async engine (explicitly for test database)
-TEST_ASYNC_DB_URL = str(_config.TEST_DATABASE_URL)
 
-# Import models for metadata registration
+# Validate that JWT secret key is set before proceeding
+if _config.jwt.secret_key is None:
+    raise RuntimeError(
+        "JWT__SECRET_KEY must be set in environment before tests run. "
+        f"Current value: {repr(_config.jwt.secret_key)}"
+    )
+
+
+def pytest_sessionstart(session):
+    """Ensure config is properly initialized at session start.
+    
+    This hook runs after conftest.py is loaded but before any tests run,
+    ensuring all imports have access to the correct test configuration.
+    """
+    from mkobi.config import clear_config_cache, get_config
+    
+    # Re-clear and reinitialize to ensure clean state after any early imports
+    clear_config_cache()
+    config = get_config()
+    
+    if config.jwt.secret_key is None:
+        raise RuntimeError(
+            "JWT__SECRET_KEY must be set in environment before tests run. "
+            f"Current value: {repr(config.jwt.secret_key)}"
+        )
+
+
+def pytest_configure(config):
+    """Ensure config is properly initialized before tests run."""
+    # Config should already be initialized above, this is just a sanity check
+    _ = _config  # noqa: F841
+
+
+# Import models for metadata registration (after config is initialized)
 from mkobi.db.models import (  # noqa: E402, F401
     AggregatedData,
     Dashboard,
@@ -46,6 +95,16 @@ from mkobi.db.models import (  # noqa: E402, F401
     ProcessingLog,
     User,
 )
+
+# Import security functions (after config is initialized)
+from mkobi.core.security import (  # noqa: E402, F401
+    AsyncRateLimiter,
+    create_access_token,
+    hash_password,
+)
+from mkobi.db.repositories.user_repo import UserRepository  # noqa: E402, F401
+
+TEST_ASYNC_DB_URL = str(_config.TEST_DATABASE_URL)
 
 
 class MockRedis:
@@ -306,9 +365,21 @@ async def baseline_data(setup_test_database):
 
 
 @pytest.fixture
+def mock_db():
+    """Mock AsyncSession for unit tests that don't need a real database.
+
+    Service methods now require db as a mandatory parameter.
+    This fixture provides a MagicMock that satisfies the type checker
+    for unit tests with mocked repositories.
+    """
+    from unittest.mock import AsyncMock
+    return AsyncMock(spec=AsyncSession)
+
+
+@pytest.fixture
 async def async_client(async_db_session):
     """Fixture for creating async HTTP client.
-    
+
     Overrides the get_db_dependency to use the test's session.
     This ensures the API and test use the same session.
     """

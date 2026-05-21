@@ -6,12 +6,12 @@ All methods are async and comply with task 011_processing_logs.md requirements.
 """
 
 import logging
+from datetime import datetime
 from typing import cast
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mkobi.db.session import get_session
 from mkobi.interfaces.repository_interfaces import IProcessingLogRepository
 from mkobi.interfaces.service_interfaces import IProcessingLogService
 from mkobi.models.enums import ProcessingStatus
@@ -40,55 +40,42 @@ class ProcessingLogService(IProcessingLogService):
         self,
         dashboard_id: UUID,
         status: str,
+        db: AsyncSession,
         message: str | None = None,
-        db: AsyncSession | None = None,
     ) -> ProcessingLogRead:
         """Create processing log entry."""
-        if db is None:
-            async with get_session() as db:
-                return await self.create_processing_log(
-                    dashboard_id, status, message, db
-                )
-
         log = await self.log_repo.create_log(dashboard_id, ProcessingStatus(status), message, db)
         return cast(ProcessingLogRead, ProcessingLogRead.model_validate(log))
 
     async def get_processing_logs_by_dashboard(
-        self, dashboard_id: UUID, db: AsyncSession | None = None
+        self, dashboard_id: UUID, db: AsyncSession
     ) -> list[ProcessingLogRead]:
         """Get processing logs by dashboard ID."""
-        if db is None:
-            async with get_session() as db:
-                return await self.get_processing_logs_by_dashboard(dashboard_id, db)
-
-        logs = await self.log_repo.get_by_dashboard(dashboard_id, db)
-        return cast(list[ProcessingLogRead], logs)  # Already returns list[ProcessingLogRead]
+        return await self.log_repo.get_by_dashboard(dashboard_id, db)
 
     async def get_processing_logs_by_status(
-        self, status: str, db: AsyncSession | None = None
+        self, status: str, db: AsyncSession
     ) -> list[ProcessingLogRead]:
         """Get processing logs by status."""
-        if db is None:
-            async with get_session() as db:
-                return await self.get_processing_logs_by_status(status, db)
-
         filters = ProcessingLogFilter(status=ProcessingStatus(status))
-        logs = await self.log_repo.get_filtered(filters, db)
-        return cast(list[ProcessingLogRead], logs)  # Already returns list[ProcessingLogRead]
+        return await self.log_repo.get_filtered(filters, db)
 
     async def update_processing_log(
         self,
         log_id: UUID,
         status: str | None,
         message: str | None,
-        finished_at: str | None,  # Ignored, calculated from status
-        db: AsyncSession | None = None,
+        finished_at: str | None,
+        db: AsyncSession,
     ) -> ProcessingLogRead | None:
         """Update processing log entry."""
-        if db is None:
-            async with get_session() as db:
-                return await self.update_processing_log(
-                    log_id, status, message, finished_at, db
+        parsed_finished_at = None
+        if finished_at is not None:
+            try:
+                parsed_finished_at = datetime.fromisoformat(finished_at)
+            except ValueError:
+                logger.warning(
+                    "Invalid finished_at format: %s, using None", finished_at
                 )
 
         await self.log_repo.update_status(
@@ -96,18 +83,16 @@ class ProcessingLogService(IProcessingLogService):
             ProcessingStatus(status) if status else ProcessingStatus.STARTED,
             message,
             db,
+            finished_at=parsed_finished_at,
         )
 
-        log = await self.log_repo.get_latest_by_dashboard(log_id, db)
+        log = await self.log_repo.get_by_id(log_id, db)
         return log  # Already returns ProcessingLogRead | None
 
     async def delete_processing_log(
-        self, log_id: UUID, db: AsyncSession | None = None
+        self, log_id: UUID, db: AsyncSession
     ) -> bool:
         """Delete processing log entry."""
-        if db is None:
-            async with get_session() as db:
-                return await self.delete_processing_log(log_id, db)
 
         # Get the log first to find its dashboard_id
         log = await self.log_repo.get_by_id(log_id, db)
@@ -115,7 +100,8 @@ class ProcessingLogService(IProcessingLogService):
             return False
 
         # Delete all logs for the dashboard
-        return await self.log_repo.delete(log.dashboard_id, db)
+        result: bool = await self.log_repo.delete(log.dashboard_id, db)
+        return result
 
     async def create_started_log(
         self, dashboard_id: UUID | None, db: AsyncSession
@@ -135,7 +121,7 @@ class ProcessingLogService(IProcessingLogService):
         await self.log_repo.update_status(
             log_id, ProcessingStatus.UPLOADED, "File uploaded successfully", db
         )
-        log = await self.log_repo.get_latest_by_dashboard(log_id, db)
+        log = await self.log_repo.get_by_id(log_id, db)
         return log
 
     async def update_to_processing(
@@ -146,7 +132,7 @@ class ProcessingLogService(IProcessingLogService):
         await self.log_repo.update_status(
             log_id, ProcessingStatus.PROCESSING, "Processing data", db
         )
-        log = await self.log_repo.get_latest_by_dashboard(log_id, db)
+        log = await self.log_repo.get_by_id(log_id, db)
         return log
 
     async def update_to_success(
@@ -177,8 +163,7 @@ class ProcessingLogService(IProcessingLogService):
     ) -> list[ProcessingLogRead]:
         """Get filtered processing logs."""
         logger.info("Getting filtered logs: filters=%s", filters)
-        result = await self.log_repo.get_filtered(filters, db)
-        return cast(list[ProcessingLogRead], result)
+        return await self.log_repo.get_filtered(filters, db)
 
 
 

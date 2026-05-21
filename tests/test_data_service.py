@@ -35,7 +35,7 @@ class TestDataService:
 
     # --- process_upload tests ---
 
-    async def test_process_upload_success(self, data_service, mock_repos):
+    async def test_process_upload_success(self, data_service, mock_repos, mock_db):
         """Test successful file upload and processing."""
         agg_repo, log_repo, graph_repo = mock_repos
         dashboard_id = uuid4()
@@ -57,6 +57,7 @@ class TestDataService:
                     filename="test.csv",
                     content_type="text/csv",
                     mode=UploadMode.OVERWRITE,
+                    db=mock_db,
                 )
 
         assert result.task_id == log_id
@@ -67,7 +68,7 @@ class TestDataService:
         log_repo.create_log.assert_called_once()
         mock_enqueue.assert_called_once()
 
-    async def test_process_upload_with_user(self, data_service, mock_repos):
+    async def test_process_upload_with_user(self, data_service, mock_repos, mock_db):
         """Test upload when user_id is provided and has access."""
         agg_repo, log_repo, graph_repo = mock_repos
         dashboard_id = uuid4()
@@ -90,11 +91,12 @@ class TestDataService:
                     filename="data.csv",
                     content_type="text/csv",
                     mode=UploadMode.APPEND,
+                    db=mock_db,
                 )
 
         assert result.status == ProcessingStatusEnum.UPLOADED
 
-    async def test_process_upload_no_permission(self, data_service, mock_repos):
+    async def test_process_upload_no_permission(self, data_service, mock_repos, mock_db):
         """Test upload fails when user lacks permission."""
         agg_repo, log_repo, graph_repo = mock_repos
         dashboard_id = uuid4()
@@ -115,9 +117,10 @@ class TestDataService:
                     user_id=user_id,
                     filename="data.csv",
                     content_type="text/csv",
+                    db=mock_db,
                 )
 
-    async def test_process_upload_no_user_skips_permission(self, data_service, mock_repos):
+    async def test_process_upload_no_user_skips_permission(self, data_service, mock_repos, mock_db):
         """Test upload with no user_id skips permission check."""
         agg_repo, log_repo, graph_repo = mock_repos
         dashboard_id = uuid4()
@@ -137,11 +140,12 @@ class TestDataService:
                 user_id=None,
                 filename="data.csv",
                 content_type="text/csv",
+                db=mock_db,
             )
 
         assert result.task_id == log_id
 
-    async def test_process_upload_invalid_mime_type(self, data_service, mock_repos):
+    async def test_process_upload_invalid_mime_type(self, data_service, mock_repos, mock_db):
         """Test upload rejects invalid MIME type."""
         dashboard_id = uuid4()
 
@@ -155,9 +159,10 @@ class TestDataService:
                 dashboard_id=dashboard_id,
                 filename="data.csv",
                 content_type="application/octet-stream",
+                db=mock_db,
             )
 
-    async def test_process_upload_invalid_extension(self, data_service, mock_repos):
+    async def test_process_upload_invalid_extension(self, data_service, mock_repos, mock_db):
         """Test upload rejects invalid file extension."""
         dashboard_id = uuid4()
 
@@ -171,9 +176,10 @@ class TestDataService:
                 dashboard_id=dashboard_id,
                 filename="data.txt",
                 content_type="text/csv",
+                db=mock_db,
             )
 
-    async def test_process_upload_file_too_large(self, data_service, mock_repos):
+    async def test_process_upload_file_too_large(self, data_service, mock_repos, mock_db):
         """Test upload rejects file exceeding size limit."""
         dashboard_id = uuid4()
         # Create a file larger than the limit (101MB)
@@ -190,9 +196,10 @@ class TestDataService:
                 dashboard_id=dashboard_id,
                 filename="large.csv",
                 content_type="text/csv",
+                db=mock_db,
             )
 
-    async def test_process_upload_csv_gz(self, data_service, mock_repos):
+    async def test_process_upload_csv_gz(self, data_service, mock_repos, mock_db):
         """Test upload with gzip compressed CSV."""
         agg_repo, log_repo, graph_repo = mock_repos
         dashboard_id = uuid4()
@@ -218,13 +225,14 @@ class TestDataService:
                     user_id=uuid4(),
                     filename="data.csv.gz",
                     content_type="application/gzip",
+                    db=mock_db,
                 )
 
         assert result.status == ProcessingStatusEnum.UPLOADED
 
     # --- get_aggregated_data tests ---
 
-    async def test_get_aggregated_data_success(self, data_service, mock_repos):
+    async def test_get_aggregated_data_success(self, data_service, mock_repos, mock_db):
         """Test successful retrieval of aggregated data."""
         agg_repo, log_repo, graph_repo = mock_repos
         dashboard_id = uuid4()
@@ -235,24 +243,24 @@ class TestDataService:
         mock_record.dashboard_id = dashboard_id
         agg_repo.get_by_graph_id.return_value = [mock_record]
 
-        result = await data_service.get_aggregated_data(dashboard_id, graph_id)
+        result = await data_service.get_aggregated_data(dashboard_id, graph_id, db=mock_db)
 
         assert len(result) == 1
         assert result[0]["dashboard_id"] == dashboard_id
         agg_repo.get_by_graph_id.assert_called_once()
 
-    async def test_get_aggregated_data_empty(self, data_service, mock_repos):
+    async def test_get_aggregated_data_empty(self, data_service, mock_repos, mock_db):
         """Test aggregated data returns empty list when no data."""
         agg_repo, log_repo, graph_repo = mock_repos
         agg_repo.get_by_graph_id.return_value = []
 
-        result = await data_service.get_aggregated_data(uuid4(), uuid4())
+        result = await data_service.get_aggregated_data(uuid4(), uuid4(), db=mock_db)
 
         assert result == []
 
     # --- get_available_metrics tests ---
 
-    async def test_get_available_metrics_success(self, data_service, mock_repos):
+    async def test_get_available_metrics_success(self, data_service, mock_repos, mock_db):
         """Test getting available metrics from graphs."""
         agg_repo, log_repo, graph_repo = mock_repos
         dashboard_id = uuid4()
@@ -260,22 +268,22 @@ class TestDataService:
         mock_graph.metrics = ["revenue", "sales", "profit"]
         graph_repo.get_by_dashboard_id.return_value = [mock_graph]
 
-        result = await data_service.get_available_metrics(dashboard_id)
+        result = await data_service.get_available_metrics(dashboard_id, db=mock_db)
 
         assert set(result) == {"revenue", "sales", "profit"}
 
-    async def test_get_available_metrics_no_graphs(self, data_service, mock_repos):
+    async def test_get_available_metrics_no_graphs(self, data_service, mock_repos, mock_db):
         """Test available metrics returns empty when no graphs exist."""
         agg_repo, log_repo, graph_repo = mock_repos
         graph_repo.get_by_dashboard_id.return_value = []
 
-        result = await data_service.get_available_metrics(uuid4())
+        result = await data_service.get_available_metrics(uuid4(), db=mock_db)
 
         assert result == []
 
     # --- get_available_dimensions tests ---
 
-    async def test_get_available_dimensions_success(self, data_service, mock_repos):
+    async def test_get_available_dimensions_success(self, data_service, mock_repos, mock_db):
         """Test getting available dimensions from graphs."""
         agg_repo, log_repo, graph_repo = mock_repos
         dashboard_id = uuid4()
@@ -283,11 +291,11 @@ class TestDataService:
         mock_graph.dimensions = ["category", "year"]
         graph_repo.get_by_dashboard_id.return_value = [mock_graph]
 
-        result = await data_service.get_available_dimensions(dashboard_id)
+        result = await data_service.get_available_dimensions(dashboard_id, db=mock_db)
 
         assert set(result) == {"category", "year"}
 
-    async def test_get_available_dimensions_multiple_graphs(self, data_service, mock_repos):
+    async def test_get_available_dimensions_multiple_graphs(self, data_service, mock_repos, mock_db):
         """Test dimensions aggregated from multiple graphs."""
         agg_repo, log_repo, graph_repo = mock_repos
         dashboard_id = uuid4()
@@ -297,13 +305,13 @@ class TestDataService:
         graph2.dimensions = ["region", "year"]
         graph_repo.get_by_dashboard_id.return_value = [graph1, graph2]
 
-        result = await data_service.get_available_dimensions(dashboard_id)
+        result = await data_service.get_available_dimensions(dashboard_id, db=mock_db)
 
         assert set(result) == {"category", "year", "region"}
 
     # --- trigger_processing tests ---
 
-    async def test_trigger_processing_success(self, data_service, mock_repos):
+    async def test_trigger_processing_success(self, data_service, mock_repos, mock_db):
         """Test successful processing trigger."""
         agg_repo, log_repo, graph_repo = mock_repos
         task_id = uuid4()
@@ -318,13 +326,13 @@ class TestDataService:
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
             with patch("mkobi.services.data_service.enqueue_processing_job"):
                 with patch("mkobi.services.data_service.find_task_file", return_value="/tmp/test.csv"):
-                    result = await data_service.trigger_processing(task_id, dashboard_id, user_id)
+                    result = await data_service.trigger_processing(task_id, dashboard_id, user_id, db=mock_db)
 
         assert result.task_id == task_id
         assert result.status == ProcessingStatusEnum.PROCESSING
         log_repo.update_status.assert_called_once()
 
-    async def test_trigger_processing_no_permission(self, data_service, mock_repos):
+    async def test_trigger_processing_no_permission(self, data_service, mock_repos, mock_db):
         """Test trigger processing fails without permission."""
         agg_repo, log_repo, graph_repo = mock_repos
         task_id = uuid4()
@@ -338,18 +346,18 @@ class TestDataService:
             from mkobi.core.permissions import PermissionError
 
             with pytest.raises(PermissionError):
-                await data_service.trigger_processing(task_id, dashboard_id, user_id)
+                await data_service.trigger_processing(task_id, dashboard_id, user_id, db=mock_db)
 
-    async def test_trigger_processing_task_not_found(self, data_service, mock_repos):
+    async def test_trigger_processing_task_not_found(self, data_service, mock_repos, mock_db):
         """Test trigger processing raises error for unknown task."""
         agg_repo, log_repo, graph_repo = mock_repos
         log_repo.get_by_id.return_value = None
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
             with pytest.raises(ValueError, match="Processing task.*not found"):
-                await data_service.trigger_processing(uuid4(), uuid4(), uuid4())
+                await data_service.trigger_processing(uuid4(), uuid4(), uuid4(), db=mock_db)
 
-    async def test_trigger_processing_file_not_found(self, data_service, mock_repos):
+    async def test_trigger_processing_file_not_found(self, data_service, mock_repos, mock_db):
         """Test trigger processing raises error when file is missing."""
         agg_repo, log_repo, graph_repo = mock_repos
         task_id = uuid4()
@@ -362,11 +370,11 @@ class TestDataService:
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
             with patch("mkobi.services.data_service.find_task_file", side_effect=ValueError("File for task.*not found")):
                 with pytest.raises(ValueError, match="File for task.*not found"):
-                    await data_service.trigger_processing(task_id, dashboard_id, user_id)
+                    await data_service.trigger_processing(task_id, dashboard_id, user_id, db=mock_db)
 
     # --- get_processing_status tests ---
 
-    async def test_get_processing_status_success(self, data_service, mock_repos):
+    async def test_get_processing_status_success(self, data_service, mock_repos, mock_db):
         """Test getting processing status for an active task."""
         agg_repo, log_repo, graph_repo = mock_repos
         task_id = uuid4()
@@ -378,13 +386,13 @@ class TestDataService:
         log_repo.get_by_id.return_value = mock_log
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            result = await data_service.get_processing_status(task_id, user_id)
+            result = await data_service.get_processing_status(task_id, user_id, db=mock_db)
 
         assert result.task_id == task_id
         assert result.status == ProcessingStatusEnum.PROCESSING
         assert result.progress == 50
 
-    async def test_get_processing_status_no_permission(self, data_service, mock_repos):
+    async def test_get_processing_status_no_permission(self, data_service, mock_repos, mock_db):
         """Test processing status fails without permission."""
         agg_repo, log_repo, graph_repo = mock_repos
         mock_log = MagicMock()
@@ -394,17 +402,17 @@ class TestDataService:
             from mkobi.core.permissions import PermissionError
 
             with pytest.raises(PermissionError):
-                await data_service.get_processing_status(uuid4(), uuid4())
+                await data_service.get_processing_status(uuid4(), uuid4(), db=mock_db)
 
-    async def test_get_processing_status_task_not_found(self, data_service, mock_repos):
+    async def test_get_processing_status_task_not_found(self, data_service, mock_repos, mock_db):
         """Test processing status for non-existent task."""
         agg_repo, log_repo, graph_repo = mock_repos
         log_repo.get_by_id.return_value = None
 
         with pytest.raises(ValueError, match="Processing task.*not found"):
-            await data_service.get_processing_status(uuid4(), uuid4())
+            await data_service.get_processing_status(uuid4(), uuid4(), db=mock_db)
 
-    async def test_get_processing_status_completed(self, data_service, mock_repos):
+    async def test_get_processing_status_completed(self, data_service, mock_repos, mock_db):
         """Test processing status for completed task shows 100%."""
         agg_repo, log_repo, graph_repo = mock_repos
         task_id = uuid4()
@@ -416,11 +424,11 @@ class TestDataService:
         log_repo.get_by_id.return_value = mock_log
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            result = await data_service.get_processing_status(task_id, user_id)
+            result = await data_service.get_processing_status(task_id, user_id, db=mock_db)
 
         assert result.progress == 100
 
-    async def test_get_processing_status_failed(self, data_service, mock_repos):
+    async def test_get_processing_status_failed(self, data_service, mock_repos, mock_db):
         """Test processing status for failed task shows 0%."""
         agg_repo, log_repo, graph_repo = mock_repos
         task_id = uuid4()
@@ -432,13 +440,13 @@ class TestDataService:
         log_repo.get_by_id.return_value = mock_log
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            result = await data_service.get_processing_status(task_id, user_id)
+            result = await data_service.get_processing_status(task_id, user_id, db=mock_db)
 
         assert result.progress == 0
 
     # --- get_processing_result tests ---
 
-    async def test_get_processing_result_success(self, data_service, mock_repos):
+    async def test_get_processing_result_success(self, data_service, mock_repos, mock_db):
         """Test getting processing result for completed task."""
         agg_repo, log_repo, graph_repo = mock_repos
         task_id = uuid4()
@@ -454,12 +462,12 @@ class TestDataService:
         graph_repo.get_by_dashboard_id.return_value = [mock_graph]
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            result = await data_service.get_processing_result(task_id, user_id)
+            result = await data_service.get_processing_result(task_id, user_id, db=mock_db)
 
         assert result.success is True
         assert result.rows_processed == 1
 
-    async def test_get_processing_result_not_complete(self, data_service, mock_repos):
+    async def test_get_processing_result_not_complete(self, data_service, mock_repos, mock_db):
         """Test processing result returns not-success for incomplete task."""
         agg_repo, log_repo, graph_repo = mock_repos
         task_id = uuid4()
@@ -470,12 +478,12 @@ class TestDataService:
         log_repo.get_by_id.return_value = mock_log
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            result = await data_service.get_processing_result(task_id, user_id)
+            result = await data_service.get_processing_result(task_id, user_id, db=mock_db)
 
         assert result.success is False
         assert "Processing not complete" in result.message
 
-    async def test_get_processing_result_no_permission(self, data_service, mock_repos):
+    async def test_get_processing_result_no_permission(self, data_service, mock_repos, mock_db):
         """Test processing result fails without permission."""
         agg_repo, log_repo, graph_repo = mock_repos
         mock_log = MagicMock()
@@ -485,17 +493,17 @@ class TestDataService:
             from mkobi.core.permissions import PermissionError
 
             with pytest.raises(PermissionError):
-                await data_service.get_processing_result(uuid4(), uuid4())
+                await data_service.get_processing_result(uuid4(), uuid4(), db=mock_db)
 
-    async def test_get_processing_result_task_not_found(self, data_service, mock_repos):
+    async def test_get_processing_result_task_not_found(self, data_service, mock_repos, mock_db):
         """Test processing result raises error for unknown task."""
         agg_repo, log_repo, graph_repo = mock_repos
         log_repo.get_by_id.return_value = None
 
         with pytest.raises(ValueError, match="Processing task.*not found"):
-            await data_service.get_processing_result(uuid4(), uuid4())
+            await data_service.get_processing_result(uuid4(), uuid4(), db=mock_db)
 
-    async def test_get_processing_result_no_graphs(self, data_service, mock_repos):
+    async def test_get_processing_result_no_graphs(self, data_service, mock_repos, mock_db):
         """Test processing result when dashboard has no graphs."""
         agg_repo, log_repo, graph_repo = mock_repos
         task_id = uuid4()
@@ -508,7 +516,7 @@ class TestDataService:
         graph_repo.get_by_dashboard_id.return_value = []
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            result = await data_service.get_processing_result(task_id, user_id)
+            result = await data_service.get_processing_result(task_id, user_id, db=mock_db)
 
         assert result.success is True
         assert result.rows_processed == 0

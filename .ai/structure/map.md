@@ -25,14 +25,9 @@ C:\PY_DEV\MKOBI
 |   +---audit
 |   |   +---db
 |   |   +---problems
-|   |   |       implementation_audit_001.md
-|   |   |       implementation_audit_002.md
-|   |   |       
 |   |   +---project
 |   |   +---tests
 |   |   \---validated
-|   |           audit_validated_findings_001.md
-|   |           
 |   +---builders
 |   |   |   build.bat
 |   |   |   
@@ -61,8 +56,6 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
-|   |       PLAN_06.md
-|   |       
 |   +---problems
 |   |   \---decisions
 |   +---researches
@@ -85,6 +78,16 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
+|   |   |       TASK_001_remove_unused_typescript_imports_DONE.yaml
+|   |   |       TASK_002_audit_css_framework_unification_DONE.yaml
+|   |   |       TASK_003_audit_react_code_standards_DONE.yaml
+|   |   |       TASK_004a_service_integration_tests_DONE.yaml
+|   |   |       TASK_004b_permissions_tests_DONE.yaml
+|   |   |       TASK_004c_deps_tests_DONE.yaml
+|   |   |       TASK_004_add_license_checker_DONE.yaml
+|   |   |       TASK_005_remove_db_none_fallback_from_services_DONE.yaml
+|   |   |       TASK_006_consolidate_get_db_functions_DONE.yaml
+|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
@@ -4190,6 +4193,7 @@ C:\PY_DEV\MKOBI
 |           4073547250558669416
 |           4666518430813917687
 |           4822613425997244324
+|           4826675141430873430
 |           4925289080536601073
 |           5178735118944880258
 |           5182174678267865401
@@ -19201,6 +19205,9 @@ C:\PY_DEV\MKOBI
 |   |   |       gl-style-validate
 |   |   |       gl-style-validate.cmd
 |   |   |       gl-style-validate.ps1
+|   |   |       glob
+|   |   |       glob.cmd
+|   |   |       glob.ps1
 |   |   |       glslify
 |   |   |       glslify.cmd
 |   |   |       glslify.ps1
@@ -19210,12 +19217,18 @@ C:\PY_DEV\MKOBI
 |   |   |       json5
 |   |   |       json5.cmd
 |   |   |       json5.ps1
+|   |   |       license-checker-rseidelsohn
+|   |   |       license-checker-rseidelsohn.cmd
+|   |   |       license-checker-rseidelsohn.ps1
 |   |   |       loose-envify
 |   |   |       loose-envify.cmd
 |   |   |       loose-envify.ps1
 |   |   |       lz-string
 |   |   |       lz-string.cmd
 |   |   |       lz-string.ps1
+|   |   |       mkdirp
+|   |   |       mkdirp.cmd
+|   |   |       mkdirp.ps1
 |   |   |       nanoid
 |   |   |       nanoid.cmd
 |   |   |       nanoid.ps1
@@ -19225,6 +19238,9 @@ C:\PY_DEV\MKOBI
 |   |   |       node-which
 |   |   |       node-which.cmd
 |   |   |       node-which.ps1
+|   |   |       nopt
+|   |   |       nopt.cmd
+|   |   |       nopt.ps1
 |   |   |       parser
 |   |   |       parser.cmd
 |   |   |       parser.ps1
@@ -22251,6 +22267,20 @@ C:\PY_DEV\MKOBI
 |   |   |               retrier.min.js
 |   |   |               retrier.mjs
 |   |   |               
+|   |   +---@isaacs
+|   |   |   \---cliui
+|   |   |       |   index.mjs
+|   |   |       |   LICENSE.txt
+|   |   |       |   package.json
+|   |   |       |   README.md
+|   |   |       |   
+|   |   |       \---build
+|   |   |           |   index.cjs
+|   |   |           |   index.d.cts
+|   |   |           |   
+|   |   |           \---lib
+|   |   |                   index.js
+|   |   |                   
 |   |   +---@jridgewell
 |   |   |   +---gen-mapping
 |   |   |   |   |   LICENSE
@@ -73985,6 +74015,99 @@ C:\PY_DEV\MKOBI
 |   |   |               useRefCallback.js
 |   |   |               useRefCallback.mjs
 |   |   |               
+|   |   +---@npmcli
+|   |   |   \---fs
+|   |   |       |   LICENSE.md
+|   |   |       |   package.json
+|   |   |       |   README.md
+|   |   |       |   
+|   |   |       +---lib
+|   |   |       |   |   index.js
+|   |   |       |   |   move-file.js
+|   |   |       |   |   readdir-scoped.js
+|   |   |       |   |   with-temp-dir.js
+|   |   |       |   |   
+|   |   |       |   +---common
+|   |   |       |   |       get-options.js
+|   |   |       |   |       node.js
+|   |   |       |   |       
+|   |   |       |   \---cp
+|   |   |       |           errors.js
+|   |   |       |           index.js
+|   |   |       |           LICENSE
+|   |   |       |           polyfill.js
+|   |   |       |           
+|   |   |       \---node_modules
+|   |   |           +---.bin
+|   |   |           |       semver
+|   |   |           |       semver.cmd
+|   |   |           |       semver.ps1
+|   |   |           |       
+|   |   |           \---semver
+|   |   |               |   index.js
+|   |   |               |   LICENSE
+|   |   |               |   package.json
+|   |   |               |   preload.js
+|   |   |               |   range.bnf
+|   |   |               |   README.md
+|   |   |               |   
+|   |   |               +---bin
+|   |   |               |       semver.js
+|   |   |               |       
+|   |   |               +---classes
+|   |   |               |       comparator.js
+|   |   |               |       index.js
+|   |   |               |       range.js
+|   |   |               |       semver.js
+|   |   |               |       
+|   |   |               +---functions
+|   |   |               |       clean.js
+|   |   |               |       cmp.js
+|   |   |               |       coerce.js
+|   |   |               |       compare-build.js
+|   |   |               |       compare-loose.js
+|   |   |               |       compare.js
+|   |   |               |       diff.js
+|   |   |               |       eq.js
+|   |   |               |       gt.js
+|   |   |               |       gte.js
+|   |   |               |       inc.js
+|   |   |               |       lt.js
+|   |   |               |       lte.js
+|   |   |               |       major.js
+|   |   |               |       minor.js
+|   |   |               |       neq.js
+|   |   |               |       parse.js
+|   |   |               |       patch.js
+|   |   |               |       prerelease.js
+|   |   |               |       rcompare.js
+|   |   |               |       rsort.js
+|   |   |               |       satisfies.js
+|   |   |               |       sort.js
+|   |   |               |       truncate.js
+|   |   |               |       valid.js
+|   |   |               |       
+|   |   |               +---internal
+|   |   |               |       constants.js
+|   |   |               |       debug.js
+|   |   |               |       identifiers.js
+|   |   |               |       lrucache.js
+|   |   |               |       parse-options.js
+|   |   |               |       re.js
+|   |   |               |       
+|   |   |               \---ranges
+|   |   |                       gtr.js
+|   |   |                       intersects.js
+|   |   |                       ltr.js
+|   |   |                       max-satisfying.js
+|   |   |                       min-satisfying.js
+|   |   |                       min-version.js
+|   |   |                       outside.js
+|   |   |                       simplify.js
+|   |   |                       subset.js
+|   |   |                       to-comparators.js
+|   |   |                       valid.js
+|   |   |                       
 |   |   +---@oxc-project
 |   |   |   \---types
 |   |   |           LICENSE
@@ -73992,6 +74115,30 @@ C:\PY_DEV\MKOBI
 |   |   |           README.md
 |   |   |           types.d.ts
 |   |   |           
+|   |   +---@pkgjs
+|   |   |   \---parseargs
+|   |   |       |   .editorconfig
+|   |   |       |   CHANGELOG.md
+|   |   |       |   index.js
+|   |   |       |   LICENSE
+|   |   |       |   package.json
+|   |   |       |   README.md
+|   |   |       |   utils.js
+|   |   |       |   
+|   |   |       +---examples
+|   |   |       |       is-default-value.js
+|   |   |       |       limit-long-syntax.js
+|   |   |       |       negate.js
+|   |   |       |       no-repeated-options.js
+|   |   |       |       ordered-options.mjs
+|   |   |       |       simple-hard-coded.js
+|   |   |       |       
+|   |   |       \---internal
+|   |   |               errors.js
+|   |   |               primordials.js
+|   |   |               util.js
+|   |   |               validators.js
+|   |   |               
 |   |   +---@plotly
 |   |   |   +---d3
 |   |   |   |   |   .gitattributes
@@ -78383,6 +78530,14 @@ C:\PY_DEV\MKOBI
 |   |   |                   node.d.ts
 |   |   |                   node.js
 |   |   |                   
+|   |   +---abbrev
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---lib
+|   |   |           index.js
+|   |   |           
 |   |   +---abs-svg-path
 |   |   |       index.js
 |   |   |       package.json
@@ -79972,6 +80127,25 @@ C:\PY_DEV\MKOBI
 |   |   |       register-expect.js
 |   |   |       register-should.js
 |   |   |       
+|   |   +---chalk
+|   |   |   |   index.d.ts
+|   |   |   |   license
+|   |   |   |   package.json
+|   |   |   |   readme.md
+|   |   |   |   
+|   |   |   +---node_modules
+|   |   |   |   \---ansi-styles
+|   |   |   |           index.d.ts
+|   |   |   |           index.js
+|   |   |   |           license
+|   |   |   |           package.json
+|   |   |   |           readme.md
+|   |   |   |           
+|   |   |   \---source
+|   |   |           index.js
+|   |   |           templates.js
+|   |   |           util.js
+|   |   |           
 |   |   +---clamp
 |   |   |       .npmignore
 |   |   |       index.js
@@ -80018,6 +80192,22 @@ C:\PY_DEV\MKOBI
 |   |   |               package.json
 |   |   |               readme.md
 |   |   |               test.mjs
+|   |   |               
+|   |   +---color-convert
+|   |   |   |   CHANGELOG.md
+|   |   |   |   conversions.js
+|   |   |   |   index.js
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   route.js
+|   |   |   |   
+|   |   |   \---node_modules
+|   |   |       \---color-name
+|   |   |               index.js
+|   |   |               LICENSE
+|   |   |               package.json
+|   |   |               README.md
 |   |   |               
 |   |   +---color-id
 |   |   |       .eslintrc.json
@@ -87897,6 +88087,11 @@ C:\PY_DEV\MKOBI
 |   |   |   \---src
 |   |   |           earcut.js
 |   |   |           
+|   |   +---eastasianwidth
+|   |   |       eastasianwidth.js
+|   |   |       package.json
+|   |   |       README.md
+|   |   |       
 |   |   +---electron-to-chromium
 |   |   |       chromium-versions.js
 |   |   |       chromium-versions.json
@@ -87924,6 +88119,25 @@ C:\PY_DEV\MKOBI
 |   |   |   \---test
 |   |   |           mock.json
 |   |   |           test.js
+|   |   |           
+|   |   +---emoji-regex
+|   |   |   |   index.d.ts
+|   |   |   |   index.js
+|   |   |   |   LICENSE-MIT.txt
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   RGI_Emoji.d.ts
+|   |   |   |   RGI_Emoji.js
+|   |   |   |   text.d.ts
+|   |   |   |   text.js
+|   |   |   |   
+|   |   |   \---es2015
+|   |   |           index.d.ts
+|   |   |           index.js
+|   |   |           RGI_Emoji.d.ts
+|   |   |           RGI_Emoji.js
+|   |   |           text.d.ts
+|   |   |           text.js
 |   |   |           
 |   |   +---end-of-stream
 |   |   |       index.js
@@ -89890,6 +90104,50 @@ C:\PY_DEV\MKOBI
 |   |   |       readme.md
 |   |   |       test.js
 |   |   |       
+|   |   +---foreground-child
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---dist
+|   |   |       +---commonjs
+|   |   |       |       all-signals.d.ts
+|   |   |       |       all-signals.d.ts.map
+|   |   |       |       all-signals.js
+|   |   |       |       all-signals.js.map
+|   |   |       |       index.d.ts
+|   |   |       |       index.d.ts.map
+|   |   |       |       index.js
+|   |   |       |       index.js.map
+|   |   |       |       package.json
+|   |   |       |       proxy-signals.d.ts
+|   |   |       |       proxy-signals.d.ts.map
+|   |   |       |       proxy-signals.js
+|   |   |       |       proxy-signals.js.map
+|   |   |       |       watchdog.d.ts
+|   |   |       |       watchdog.d.ts.map
+|   |   |       |       watchdog.js
+|   |   |       |       watchdog.js.map
+|   |   |       |       
+|   |   |       \---esm
+|   |   |               all-signals.d.ts
+|   |   |               all-signals.d.ts.map
+|   |   |               all-signals.js
+|   |   |               all-signals.js.map
+|   |   |               index.d.ts
+|   |   |               index.d.ts.map
+|   |   |               index.js
+|   |   |               index.js.map
+|   |   |               package.json
+|   |   |               proxy-signals.d.ts
+|   |   |               proxy-signals.d.ts.map
+|   |   |               proxy-signals.js
+|   |   |               proxy-signals.js.map
+|   |   |               watchdog.d.ts
+|   |   |               watchdog.d.ts.map
+|   |   |               watchdog.js
+|   |   |               watchdog.js.map
+|   |   |               
 |   |   +---form-data
 |   |   |   |   CHANGELOG.md
 |   |   |   |   index.d.ts
@@ -90133,6 +90391,157 @@ C:\PY_DEV\MKOBI
 |   |   |           example.js
 |   |   |           index.js
 |   |   |           
+|   |   +---glob
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---dist
+|   |   |   |   +---commonjs
+|   |   |   |   |       glob.d.ts
+|   |   |   |   |       glob.d.ts.map
+|   |   |   |   |       glob.js
+|   |   |   |   |       glob.js.map
+|   |   |   |   |       has-magic.d.ts
+|   |   |   |   |       has-magic.d.ts.map
+|   |   |   |   |       has-magic.js
+|   |   |   |   |       has-magic.js.map
+|   |   |   |   |       ignore.d.ts
+|   |   |   |   |       ignore.d.ts.map
+|   |   |   |   |       ignore.js
+|   |   |   |   |       ignore.js.map
+|   |   |   |   |       index.d.ts
+|   |   |   |   |       index.d.ts.map
+|   |   |   |   |       index.js
+|   |   |   |   |       index.js.map
+|   |   |   |   |       package.json
+|   |   |   |   |       pattern.d.ts
+|   |   |   |   |       pattern.d.ts.map
+|   |   |   |   |       pattern.js
+|   |   |   |   |       pattern.js.map
+|   |   |   |   |       processor.d.ts
+|   |   |   |   |       processor.d.ts.map
+|   |   |   |   |       processor.js
+|   |   |   |   |       processor.js.map
+|   |   |   |   |       walker.d.ts
+|   |   |   |   |       walker.d.ts.map
+|   |   |   |   |       walker.js
+|   |   |   |   |       walker.js.map
+|   |   |   |   |       
+|   |   |   |   \---esm
+|   |   |   |           bin.d.mts
+|   |   |   |           bin.d.mts.map
+|   |   |   |           bin.mjs
+|   |   |   |           bin.mjs.map
+|   |   |   |           glob.d.ts
+|   |   |   |           glob.d.ts.map
+|   |   |   |           glob.js
+|   |   |   |           glob.js.map
+|   |   |   |           has-magic.d.ts
+|   |   |   |           has-magic.d.ts.map
+|   |   |   |           has-magic.js
+|   |   |   |           has-magic.js.map
+|   |   |   |           ignore.d.ts
+|   |   |   |           ignore.d.ts.map
+|   |   |   |           ignore.js
+|   |   |   |           ignore.js.map
+|   |   |   |           index.d.ts
+|   |   |   |           index.d.ts.map
+|   |   |   |           index.js
+|   |   |   |           index.js.map
+|   |   |   |           package.json
+|   |   |   |           pattern.d.ts
+|   |   |   |           pattern.d.ts.map
+|   |   |   |           pattern.js
+|   |   |   |           pattern.js.map
+|   |   |   |           processor.d.ts
+|   |   |   |           processor.d.ts.map
+|   |   |   |           processor.js
+|   |   |   |           processor.js.map
+|   |   |   |           walker.d.ts
+|   |   |   |           walker.d.ts.map
+|   |   |   |           walker.js
+|   |   |   |           walker.js.map
+|   |   |   |           
+|   |   |   \---node_modules
+|   |   |       +---balanced-match
+|   |   |       |   |   index.js
+|   |   |       |   |   LICENSE.md
+|   |   |       |   |   package.json
+|   |   |       |   |   README.md
+|   |   |       |   |   
+|   |   |       |   \---.github
+|   |   |       |           FUNDING.yml
+|   |   |       |           
+|   |   |       +---brace-expansion
+|   |   |       |   |   index.js
+|   |   |       |   |   LICENSE
+|   |   |       |   |   package.json
+|   |   |       |   |   README.md
+|   |   |       |   |   
+|   |   |       |   \---.github
+|   |   |       |           FUNDING.yml
+|   |   |       |           
+|   |   |       \---minimatch
+|   |   |           |   LICENSE
+|   |   |           |   package.json
+|   |   |           |   README.md
+|   |   |           |   
+|   |   |           \---dist
+|   |   |               +---commonjs
+|   |   |               |       assert-valid-pattern.d.ts
+|   |   |               |       assert-valid-pattern.d.ts.map
+|   |   |               |       assert-valid-pattern.js
+|   |   |               |       assert-valid-pattern.js.map
+|   |   |               |       ast.d.ts
+|   |   |               |       ast.d.ts.map
+|   |   |               |       ast.js
+|   |   |               |       ast.js.map
+|   |   |               |       brace-expressions.d.ts
+|   |   |               |       brace-expressions.d.ts.map
+|   |   |               |       brace-expressions.js
+|   |   |               |       brace-expressions.js.map
+|   |   |               |       escape.d.ts
+|   |   |               |       escape.d.ts.map
+|   |   |               |       escape.js
+|   |   |               |       escape.js.map
+|   |   |               |       index.d.ts
+|   |   |               |       index.d.ts.map
+|   |   |               |       index.js
+|   |   |               |       index.js.map
+|   |   |               |       package.json
+|   |   |               |       unescape.d.ts
+|   |   |               |       unescape.d.ts.map
+|   |   |               |       unescape.js
+|   |   |               |       unescape.js.map
+|   |   |               |       
+|   |   |               \---esm
+|   |   |                       assert-valid-pattern.d.ts
+|   |   |                       assert-valid-pattern.d.ts.map
+|   |   |                       assert-valid-pattern.js
+|   |   |                       assert-valid-pattern.js.map
+|   |   |                       ast.d.ts
+|   |   |                       ast.d.ts.map
+|   |   |                       ast.js
+|   |   |                       ast.js.map
+|   |   |                       brace-expressions.d.ts
+|   |   |                       brace-expressions.d.ts.map
+|   |   |                       brace-expressions.js
+|   |   |                       brace-expressions.js.map
+|   |   |                       escape.d.ts
+|   |   |                       escape.d.ts.map
+|   |   |                       escape.js
+|   |   |                       escape.js.map
+|   |   |                       index.d.ts
+|   |   |                       index.d.ts.map
+|   |   |                       index.js
+|   |   |                       index.js.map
+|   |   |                       package.json
+|   |   |                       unescape.d.ts
+|   |   |                       unescape.d.ts.map
+|   |   |                       unescape.js
+|   |   |                       unescape.js.map
+|   |   |                       
 |   |   +---glob-parent
 |   |   |       index.js
 |   |   |       LICENSE
@@ -90650,6 +91059,13 @@ C:\PY_DEV\MKOBI
 |   |   |   \---test
 |   |   |           index.js
 |   |   |           
+|   |   +---has-flag
+|   |   |       index.d.ts
+|   |   |       index.js
+|   |   |       license
+|   |   |       package.json
+|   |   |       readme.md
+|   |   |       
 |   |   +---has-hover
 |   |   |       .eslintrc.json
 |   |   |       .npmignore
@@ -90847,6 +91263,26 @@ C:\PY_DEV\MKOBI
 |   |   |   \---src
 |   |   |           index.js
 |   |   |           
+|   |   +---hosted-git-info
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---lib
+|   |   |   |       from-url.js
+|   |   |   |       hosts.js
+|   |   |   |       index.js
+|   |   |   |       parse-url.js
+|   |   |   |       
+|   |   |   \---node_modules
+|   |   |       \---lru-cache
+|   |   |               index.d.ts
+|   |   |               index.js
+|   |   |               index.mjs
+|   |   |               LICENSE
+|   |   |               package.json
+|   |   |               README.md
+|   |   |               
 |   |   +---html-encoding-sniffer
 |   |   |   |   LICENSE.txt
 |   |   |   |   package.json
@@ -90989,6 +91425,13 @@ C:\PY_DEV\MKOBI
 |   |   |       package.json
 |   |   |       readme.md
 |   |   |       
+|   |   +---is-fullwidth-code-point
+|   |   |       index.d.ts
+|   |   |       index.js
+|   |   |       license
+|   |   |       package.json
+|   |   |       readme.md
+|   |   |       
 |   |   +---is-glob
 |   |   |       index.js
 |   |   |       LICENSE
@@ -91056,6 +91499,34 @@ C:\PY_DEV\MKOBI
 |   |   |   \---test
 |   |   |           basic.js
 |   |   |           
+|   |   +---jackspeak
+|   |   |   |   LICENSE.md
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---dist
+|   |   |       +---commonjs
+|   |   |       |       index.d.ts
+|   |   |       |       index.d.ts.map
+|   |   |       |       index.js
+|   |   |       |       index.js.map
+|   |   |       |       package.json
+|   |   |       |       parse-args-cjs.cjs.map
+|   |   |       |       parse-args-cjs.d.cts.map
+|   |   |       |       parse-args.d.ts
+|   |   |       |       parse-args.js
+|   |   |       |       
+|   |   |       \---esm
+|   |   |               index.d.ts
+|   |   |               index.d.ts.map
+|   |   |               index.js
+|   |   |               index.js.map
+|   |   |               package.json
+|   |   |               parse-args.d.ts
+|   |   |               parse-args.d.ts.map
+|   |   |               parse-args.js
+|   |   |               parse-args.js.map
+|   |   |               
 |   |   +---js-tokens
 |   |   |       CHANGELOG.md
 |   |   |       index.js
@@ -92033,6 +92504,98 @@ C:\PY_DEV\MKOBI
 |   |   |           index.js
 |   |   |           parse-string.js
 |   |   |           
+|   |   +---license-checker-rseidelsohn
+|   |   |   |   CHANGELOG.md
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   SECURITY.md
+|   |   |   |   
+|   |   |   +---bin
+|   |   |   |       license-checker-rseidelsohn.js
+|   |   |   |       
+|   |   |   +---lib
+|   |   |   |       args.js
+|   |   |   |       exitProcessOrWarnIfNeeded.js
+|   |   |   |       getLicenseTitle.js
+|   |   |   |       index.d.ts
+|   |   |   |       index.js
+|   |   |   |       indexHelpers.js
+|   |   |   |       license-files.js
+|   |   |   |       licenseCheckerHelpers.js
+|   |   |   |       usageMessage.js
+|   |   |   |       
+|   |   |   \---node_modules
+|   |   |       +---.bin
+|   |   |       |       semver
+|   |   |       |       semver.cmd
+|   |   |       |       semver.ps1
+|   |   |       |       
+|   |   |       \---semver
+|   |   |           |   index.js
+|   |   |           |   LICENSE
+|   |   |           |   package.json
+|   |   |           |   preload.js
+|   |   |           |   range.bnf
+|   |   |           |   README.md
+|   |   |           |   
+|   |   |           +---bin
+|   |   |           |       semver.js
+|   |   |           |       
+|   |   |           +---classes
+|   |   |           |       comparator.js
+|   |   |           |       index.js
+|   |   |           |       range.js
+|   |   |           |       semver.js
+|   |   |           |       
+|   |   |           +---functions
+|   |   |           |       clean.js
+|   |   |           |       cmp.js
+|   |   |           |       coerce.js
+|   |   |           |       compare-build.js
+|   |   |           |       compare-loose.js
+|   |   |           |       compare.js
+|   |   |           |       diff.js
+|   |   |           |       eq.js
+|   |   |           |       gt.js
+|   |   |           |       gte.js
+|   |   |           |       inc.js
+|   |   |           |       lt.js
+|   |   |           |       lte.js
+|   |   |           |       major.js
+|   |   |           |       minor.js
+|   |   |           |       neq.js
+|   |   |           |       parse.js
+|   |   |           |       patch.js
+|   |   |           |       prerelease.js
+|   |   |           |       rcompare.js
+|   |   |           |       rsort.js
+|   |   |           |       satisfies.js
+|   |   |           |       sort.js
+|   |   |           |       truncate.js
+|   |   |           |       valid.js
+|   |   |           |       
+|   |   |           +---internal
+|   |   |           |       constants.js
+|   |   |           |       debug.js
+|   |   |           |       identifiers.js
+|   |   |           |       lrucache.js
+|   |   |           |       parse-options.js
+|   |   |           |       re.js
+|   |   |           |       
+|   |   |           \---ranges
+|   |   |                   gtr.js
+|   |   |                   intersects.js
+|   |   |                   ltr.js
+|   |   |                   max-satisfying.js
+|   |   |                   min-satisfying.js
+|   |   |                   min-version.js
+|   |   |                   outside.js
+|   |   |                   simplify.js
+|   |   |                   subset.js
+|   |   |                   to-comparators.js
+|   |   |                   valid.js
+|   |   |                   
 |   |   +---lightningcss
 |   |   |   |   LICENSE
 |   |   |   |   package.json
@@ -92072,6 +92635,12 @@ C:\PY_DEV\MKOBI
 |   |   |       license
 |   |   |       package.json
 |   |   |       readme.md
+|   |   |       
+|   |   +---lodash.clonedeep
+|   |   |       index.js
+|   |   |       LICENSE
+|   |   |       package.json
+|   |   |       README.md
 |   |   |       
 |   |   +---lodash.merge
 |   |   |       index.js
@@ -93598,6 +94167,44 @@ C:\PY_DEV\MKOBI
 |   |   |           unknown.js
 |   |   |           whitespace.js
 |   |   |           
+|   |   +---minipass
+|   |   |   |   LICENSE.md
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---dist
+|   |   |       +---commonjs
+|   |   |       |       index.d.ts
+|   |   |       |       index.d.ts.map
+|   |   |       |       index.js
+|   |   |       |       index.js.map
+|   |   |       |       package.json
+|   |   |       |       
+|   |   |       \---esm
+|   |   |               index.d.ts
+|   |   |               index.d.ts.map
+|   |   |               index.js
+|   |   |               index.js.map
+|   |   |               package.json
+|   |   |               
+|   |   +---mkdirp
+|   |   |   |   CHANGELOG.md
+|   |   |   |   index.js
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   readme.markdown
+|   |   |   |   
+|   |   |   +---bin
+|   |   |   |       cmd.js
+|   |   |   |       
+|   |   |   \---lib
+|   |   |           find-made.js
+|   |   |           mkdirp-manual.js
+|   |   |           mkdirp-native.js
+|   |   |           opts-arg.js
+|   |   |           path-arg.js
+|   |   |           use-native.js
+|   |   |           
 |   |   +---mouse-event-offset
 |   |   |       .npmignore
 |   |   |       index.js
@@ -93777,11 +94384,118 @@ C:\PY_DEV\MKOBI
 |   |   |       \---release-schedule
 |   |   |               release-schedule.json
 |   |   |               
+|   |   +---nopt
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---bin
+|   |   |   |       nopt.js
+|   |   |   |       
+|   |   |   \---lib
+|   |   |           debug.js
+|   |   |           nopt-lib.js
+|   |   |           nopt.js
+|   |   |           type-defs.js
+|   |   |           
+|   |   +---normalize-package-data
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---lib
+|   |   |   |       extract_description.js
+|   |   |   |       fixer.js
+|   |   |   |       make_warning.js
+|   |   |   |       normalize.js
+|   |   |   |       safe_format.js
+|   |   |   |       typos.json
+|   |   |   |       warning_messages.json
+|   |   |   |       
+|   |   |   \---node_modules
+|   |   |       +---.bin
+|   |   |       |       semver
+|   |   |       |       semver.cmd
+|   |   |       |       semver.ps1
+|   |   |       |       
+|   |   |       \---semver
+|   |   |           |   index.js
+|   |   |           |   LICENSE
+|   |   |           |   package.json
+|   |   |           |   preload.js
+|   |   |           |   range.bnf
+|   |   |           |   README.md
+|   |   |           |   
+|   |   |           +---bin
+|   |   |           |       semver.js
+|   |   |           |       
+|   |   |           +---classes
+|   |   |           |       comparator.js
+|   |   |           |       index.js
+|   |   |           |       range.js
+|   |   |           |       semver.js
+|   |   |           |       
+|   |   |           +---functions
+|   |   |           |       clean.js
+|   |   |           |       cmp.js
+|   |   |           |       coerce.js
+|   |   |           |       compare-build.js
+|   |   |           |       compare-loose.js
+|   |   |           |       compare.js
+|   |   |           |       diff.js
+|   |   |           |       eq.js
+|   |   |           |       gt.js
+|   |   |           |       gte.js
+|   |   |           |       inc.js
+|   |   |           |       lt.js
+|   |   |           |       lte.js
+|   |   |           |       major.js
+|   |   |           |       minor.js
+|   |   |           |       neq.js
+|   |   |           |       parse.js
+|   |   |           |       patch.js
+|   |   |           |       prerelease.js
+|   |   |           |       rcompare.js
+|   |   |           |       rsort.js
+|   |   |           |       satisfies.js
+|   |   |           |       sort.js
+|   |   |           |       truncate.js
+|   |   |           |       valid.js
+|   |   |           |       
+|   |   |           +---internal
+|   |   |           |       constants.js
+|   |   |           |       debug.js
+|   |   |           |       identifiers.js
+|   |   |           |       lrucache.js
+|   |   |           |       parse-options.js
+|   |   |           |       re.js
+|   |   |           |       
+|   |   |           \---ranges
+|   |   |                   gtr.js
+|   |   |                   intersects.js
+|   |   |                   ltr.js
+|   |   |                   max-satisfying.js
+|   |   |                   min-satisfying.js
+|   |   |                   min-version.js
+|   |   |                   outside.js
+|   |   |                   simplify.js
+|   |   |                   subset.js
+|   |   |                   to-comparators.js
+|   |   |                   valid.js
+|   |   |                   
 |   |   +---normalize-svg-path
 |   |   |       index.js
 |   |   |       package.json
 |   |   |       Readme.md
 |   |   |       
+|   |   +---npm-normalize-package-bin
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---lib
+|   |   |           index.js
+|   |   |           
 |   |   +---number-is-integer
 |   |   |       index.js
 |   |   |       license
@@ -93839,6 +94553,26 @@ C:\PY_DEV\MKOBI
 |   |   |       package.json
 |   |   |       readme.md
 |   |   |       
+|   |   +---package-json-from-dist
+|   |   |   |   LICENSE.md
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---dist
+|   |   |       +---commonjs
+|   |   |       |       index.d.ts
+|   |   |       |       index.d.ts.map
+|   |   |       |       index.js
+|   |   |       |       index.js.map
+|   |   |       |       package.json
+|   |   |       |       
+|   |   |       \---esm
+|   |   |               index.d.ts
+|   |   |               index.d.ts.map
+|   |   |               index.js
+|   |   |               index.js.map
+|   |   |               package.json
+|   |   |               
 |   |   +---parent-module
 |   |   |       index.js
 |   |   |       license
@@ -93947,6 +94681,51 @@ C:\PY_DEV\MKOBI
 |   |   |       package.json
 |   |   |       README.md
 |   |   |       
+|   |   +---path-scurry
+|   |   |   |   LICENSE.md
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---dist
+|   |   |   |   +---commonjs
+|   |   |   |   |       index.d.ts
+|   |   |   |   |       index.d.ts.map
+|   |   |   |   |       index.js
+|   |   |   |   |       index.js.map
+|   |   |   |   |       package.json
+|   |   |   |   |       
+|   |   |   |   \---esm
+|   |   |   |           index.d.ts
+|   |   |   |           index.d.ts.map
+|   |   |   |           index.js
+|   |   |   |           index.js.map
+|   |   |   |           package.json
+|   |   |   |           
+|   |   |   \---node_modules
+|   |   |       \---lru-cache
+|   |   |           |   LICENSE
+|   |   |           |   package.json
+|   |   |           |   README.md
+|   |   |           |   
+|   |   |           \---dist
+|   |   |               +---commonjs
+|   |   |               |       index.d.ts
+|   |   |               |       index.d.ts.map
+|   |   |               |       index.js
+|   |   |               |       index.js.map
+|   |   |               |       index.min.js
+|   |   |               |       index.min.js.map
+|   |   |               |       package.json
+|   |   |               |       
+|   |   |               \---esm
+|   |   |                       index.d.ts
+|   |   |                       index.d.ts.map
+|   |   |                       index.js
+|   |   |                       index.js.map
+|   |   |                       index.min.js
+|   |   |                       index.min.js.map
+|   |   |                       package.json
+|   |   |                       
 |   |   +---path-type
 |   |   |       index.d.ts
 |   |   |       index.js
@@ -96349,6 +97128,57 @@ C:\PY_DEV\MKOBI
 |   |   |   \---TransitionGroupContext
 |   |   |           package.json
 |   |   |           
+|   |   +---read-installed-packages
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   read-installed.js
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---.github
+|   |   |   |   \---workflows
+|   |   |   |           builld.yml
+|   |   |   |           
+|   |   |   \---test
+|   |   |       |   cyclic-extraneous-peer-deps.js
+|   |   |       |   empty.js
+|   |   |       |   extraneous-dev.js
+|   |   |       |   extraneous.js
+|   |   |       |   grandparent-peer-dev.js
+|   |   |       |   grandparent-peer.js
+|   |   |       |   issue-40.js
+|   |   |       |   linked-dep-dev-deps-extraneous.js
+|   |   |       |   peer-dep-at-latest.js
+|   |   |       |   
+|   |   |       \---fixtures
+|   |   |           +---extraneous-detected
+|   |   |           |       package.json
+|   |   |           |       
+|   |   |           +---extraneous-dev-dep
+|   |   |           |       package.json
+|   |   |           |       
+|   |   |           +---grandparent-peer
+|   |   |           |       package.json
+|   |   |           |       
+|   |   |           \---grandparent-peer-dev
+|   |   |                   package.json
+|   |   |                   
+|   |   +---read-package-json
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---lib
+|   |   |   |       read-json.js
+|   |   |   |       
+|   |   |   \---node_modules
+|   |   |       \---json-parse-even-better-errors
+|   |   |           |   LICENSE.md
+|   |   |           |   package.json
+|   |   |           |   README.md
+|   |   |           |   
+|   |   |           \---lib
+|   |   |                   index.js
+|   |   |                   
 |   |   +---readable-stream
 |   |   |   |   .travis.yml
 |   |   |   |   CONTRIBUTING.md
@@ -97004,6 +97834,55 @@ C:\PY_DEV\MKOBI
 |   |   |       README.md
 |   |   |       test.js
 |   |   |       
+|   |   +---signal-exit
+|   |   |   |   LICENSE.txt
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---dist
+|   |   |       +---cjs
+|   |   |       |       browser.d.ts
+|   |   |       |       browser.d.ts.map
+|   |   |       |       browser.js
+|   |   |       |       browser.js.map
+|   |   |       |       index.d.ts
+|   |   |       |       index.d.ts.map
+|   |   |       |       index.js
+|   |   |       |       index.js.map
+|   |   |       |       package.json
+|   |   |       |       signals.d.ts
+|   |   |       |       signals.d.ts.map
+|   |   |       |       signals.js
+|   |   |       |       signals.js.map
+|   |   |       |       
+|   |   |       \---mjs
+|   |   |               browser.d.ts
+|   |   |               browser.d.ts.map
+|   |   |               browser.js
+|   |   |               browser.js.map
+|   |   |               index.d.ts
+|   |   |               index.d.ts.map
+|   |   |               index.js
+|   |   |               index.js.map
+|   |   |               package.json
+|   |   |               signals.d.ts
+|   |   |               signals.d.ts.map
+|   |   |               signals.js
+|   |   |               signals.js.map
+|   |   |               
+|   |   +---slide
+|   |   |   |   index.js
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---lib
+|   |   |           async-map-ordered.js
+|   |   |           async-map.js
+|   |   |           bind-actor.js
+|   |   |           chain.js
+|   |   |           slide.js
+|   |   |           
 |   |   +---source-map
 |   |   |   |   CHANGELOG.md
 |   |   |   |   LICENSE
@@ -97051,6 +97930,53 @@ C:\PY_DEV\MKOBI
 |   |   |           source-node.js
 |   |   |           util.js
 |   |   |           
+|   |   +---spdx-compare
+|   |   |       index.js
+|   |   |       LICENSE.md
+|   |   |       package.json
+|   |   |       README.md
+|   |   |       test.log
+|   |   |       
+|   |   +---spdx-correct
+|   |   |       index.js
+|   |   |       LICENSE
+|   |   |       package.json
+|   |   |       README.md
+|   |   |       
+|   |   +---spdx-exceptions
+|   |   |       deprecated.json
+|   |   |       index.json
+|   |   |       package.json
+|   |   |       README.md
+|   |   |       
+|   |   +---spdx-expression-parse
+|   |   |       AUTHORS
+|   |   |       index.js
+|   |   |       LICENSE
+|   |   |       package.json
+|   |   |       parse.js
+|   |   |       README.md
+|   |   |       scan.js
+|   |   |       
+|   |   +---spdx-license-ids
+|   |   |       deprecated.json
+|   |   |       index.json
+|   |   |       package.json
+|   |   |       README.md
+|   |   |       
+|   |   +---spdx-ranges
+|   |   |       index.json
+|   |   |       LICENSE.md
+|   |   |       outdated.log
+|   |   |       package.json
+|   |   |       README.md
+|   |   |       
+|   |   +---spdx-satisfies
+|   |   |       index.js
+|   |   |       LICENSE
+|   |   |       package.json
+|   |   |       README.md
+|   |   |       
 |   |   +---stack-trace
 |   |   |   |   .npmignore
 |   |   |   |   License
@@ -97157,6 +98083,40 @@ C:\PY_DEV\MKOBI
 |   |   |       readme.md
 |   |   |       test.js
 |   |   |       
+|   |   +---string-width
+|   |   |       index.d.ts
+|   |   |       index.js
+|   |   |       license
+|   |   |       package.json
+|   |   |       readme.md
+|   |   |       
+|   |   +---string-width-cjs
+|   |   |   |   index.d.ts
+|   |   |   |   index.js
+|   |   |   |   license
+|   |   |   |   package.json
+|   |   |   |   readme.md
+|   |   |   |   
+|   |   |   \---node_modules
+|   |   |       +---emoji-regex
+|   |   |       |   |   index.d.ts
+|   |   |       |   |   index.js
+|   |   |       |   |   LICENSE-MIT.txt
+|   |   |       |   |   package.json
+|   |   |       |   |   README.md
+|   |   |       |   |   text.js
+|   |   |       |   |   
+|   |   |       |   \---es2015
+|   |   |       |           index.js
+|   |   |       |           text.js
+|   |   |       |           
+|   |   |       \---strip-ansi
+|   |   |               index.d.ts
+|   |   |               index.js
+|   |   |               license
+|   |   |               package.json
+|   |   |               readme.md
+|   |   |               
 |   |   +---string_decoder
 |   |   |   |   .travis.yml
 |   |   |   |   LICENSE
@@ -97174,6 +98134,28 @@ C:\PY_DEV\MKOBI
 |   |   |               package.json
 |   |   |               README.md
 |   |   |               
+|   |   +---strip-ansi
+|   |   |   |   index.d.ts
+|   |   |   |   index.js
+|   |   |   |   license
+|   |   |   |   package.json
+|   |   |   |   readme.md
+|   |   |   |   
+|   |   |   \---node_modules
+|   |   |       \---ansi-regex
+|   |   |               index.d.ts
+|   |   |               index.js
+|   |   |               license
+|   |   |               package.json
+|   |   |               readme.md
+|   |   |               
+|   |   +---strip-ansi-cjs
+|   |   |       index.d.ts
+|   |   |       index.js
+|   |   |       license
+|   |   |       package.json
+|   |   |       readme.md
+|   |   |       
 |   |   +---strip-indent
 |   |   |       index.d.ts
 |   |   |       index.js
@@ -97239,6 +98221,13 @@ C:\PY_DEV\MKOBI
 |   |   |                   sort.js
 |   |   |                   within.js
 |   |   |                   
+|   |   +---supports-color
+|   |   |       browser.js
+|   |   |       index.js
+|   |   |       license
+|   |   |       package.json
+|   |   |       readme.md
+|   |   |       
 |   |   +---supports-preserve-symlinks-flag
 |   |   |   |   .eslintrc
 |   |   |   |   .nycrc
@@ -97613,6 +98602,21 @@ C:\PY_DEV\MKOBI
 |   |   |           mappingTable.json
 |   |   |           regexes.js
 |   |   |           statusMapping.js
+|   |   |           
+|   |   +---treeify
+|   |   |   |   .travis.yml
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   treeify.js
+|   |   |   |   
+|   |   |   +---examples
+|   |   |   |       eukaryotes.html
+|   |   |   |       eukaryotes.js
+|   |   |   |       fs_tree.js
+|   |   |   |       
+|   |   |   \---test
+|   |   |           tree-test.js
 |   |   |           
 |   |   +---ts-api-utils
 |   |   |   |   LICENSE.md
@@ -98545,6 +99549,12 @@ C:\PY_DEV\MKOBI
 |   |   |       package.json
 |   |   |       README.md
 |   |   |       
+|   |   +---validate-npm-package-license
+|   |   |       index.js
+|   |   |       LICENSE
+|   |   |       package.json
+|   |   |       README.md
+|   |   |       
 |   |   +---vite
 |   |   |   |   client.d.ts
 |   |   |   |   LICENSE.md
@@ -98939,6 +99949,61 @@ C:\PY_DEV\MKOBI
 |   |   |               zh-CN.js
 |   |   |               zh-HK.js
 |   |   |               zh-TW.js
+|   |   |               
+|   |   +---wrap-ansi
+|   |   |   |   index.d.ts
+|   |   |   |   index.js
+|   |   |   |   license
+|   |   |   |   package.json
+|   |   |   |   readme.md
+|   |   |   |   
+|   |   |   \---node_modules
+|   |   |       \---ansi-styles
+|   |   |               index.d.ts
+|   |   |               index.js
+|   |   |               license
+|   |   |               package.json
+|   |   |               readme.md
+|   |   |               
+|   |   +---wrap-ansi-cjs
+|   |   |   |   index.js
+|   |   |   |   license
+|   |   |   |   package.json
+|   |   |   |   readme.md
+|   |   |   |   
+|   |   |   \---node_modules
+|   |   |       +---ansi-styles
+|   |   |       |       index.d.ts
+|   |   |       |       index.js
+|   |   |       |       license
+|   |   |       |       package.json
+|   |   |       |       readme.md
+|   |   |       |       
+|   |   |       +---emoji-regex
+|   |   |       |   |   index.d.ts
+|   |   |       |   |   index.js
+|   |   |       |   |   LICENSE-MIT.txt
+|   |   |       |   |   package.json
+|   |   |       |   |   README.md
+|   |   |       |   |   text.js
+|   |   |       |   |   
+|   |   |       |   \---es2015
+|   |   |       |           index.js
+|   |   |       |           text.js
+|   |   |       |           
+|   |   |       +---string-width
+|   |   |       |       index.d.ts
+|   |   |       |       index.js
+|   |   |       |       license
+|   |   |       |       package.json
+|   |   |       |       readme.md
+|   |   |       |       
+|   |   |       \---strip-ansi
+|   |   |               index.d.ts
+|   |   |               index.js
+|   |   |               license
+|   |   |               package.json
+|   |   |               readme.md
 |   |   |               
 |   |   +---wrappy
 |   |   |       LICENSE
@@ -101360,14 +102425,17 @@ C:\PY_DEV\MKOBI
     |   test_config.py
     |   test_dashboards_api.py
     |   test_data_service.py
+    |   test_deps.py
     |   test_filters.py
     |   test_graphs.py
     |   test_graph_service.py
     |   test_layouts.py
+    |   test_permissions.py
     |   test_processing_logs.py
     |   test_pydantic_models.py
     |   test_repositories.py
     |   test_security.py
+    |   test_services_integration.py
     |   test_storage_manager.py
     |   test_upload_api.py
     |   test_users_api.py
@@ -101381,15 +102449,18 @@ C:\PY_DEV\MKOBI
             test_data_loader.cpython-314-pytest-9.0.3.pyc
             test_data_processing.cpython-314-pytest-9.0.3.pyc
             test_data_service.cpython-314-pytest-9.0.3.pyc
+            test_deps.cpython-314-pytest-9.0.3.pyc
             test_filters.cpython-314-pytest-9.0.3.pyc
             test_graphs.cpython-314-pytest-9.0.3.pyc
             test_graph_service.cpython-314-pytest-9.0.3.pyc
             test_layouts.cpython-314-pytest-9.0.3.pyc
             test_models.cpython-314-pytest-9.0.3.pyc
+            test_permissions.cpython-314-pytest-9.0.3.pyc
             test_processing_logs.cpython-314-pytest-9.0.3.pyc
             test_pydantic_models.cpython-314-pytest-9.0.3.pyc
             test_repositories.cpython-314-pytest-9.0.3.pyc
             test_security.cpython-314-pytest-9.0.3.pyc
+            test_services_integration.cpython-314-pytest-9.0.3.pyc
             test_share_calculation.cpython-314-pytest-9.0.3.pyc
             test_storage_manager.cpython-314-pytest-9.0.3.pyc
             test_upload_api.cpython-314-pytest-9.0.3.pyc

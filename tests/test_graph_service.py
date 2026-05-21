@@ -40,7 +40,7 @@ class TestGraphService:
 
     # --- create tests ---
 
-    async def test_create_graph_success(self, graph_service, mock_graph_repo):
+    async def test_create_graph_success(self, graph_service, mock_graph_repo, mock_db):
         """Test successful graph creation."""
         dashboard_id = uuid4()
         mock_graph_repo.create.return_value = self._make_graph_obj(
@@ -55,14 +55,14 @@ class TestGraphService:
             dimensions=["month"],
             metrics=["revenue"],
         )
-        result = await graph_service.create(data)
+        result = await graph_service.create(data, db=mock_db)
 
         assert isinstance(result, GraphRead)
         assert result.name == "Sales"
         assert result.type == GraphType.BAR
         mock_graph_repo.create.assert_called_once()
 
-    async def test_create_graph_empty_name_raises(self, graph_service, mock_graph_repo):
+    async def test_create_graph_empty_name_raises(self, graph_service, mock_graph_repo, mock_db):
         """Test graph creation fails with empty name."""
         data = GraphCreate(
             name="",
@@ -74,16 +74,16 @@ class TestGraphService:
         )
 
         with pytest.raises(ValueError, match="Graph name cannot be empty"):
-            await graph_service.create(data)
+            await graph_service.create(data, db=mock_db)
 
-    async def test_create_graph_invalid_type_raises(self, graph_service, mock_graph_repo):
+    async def test_create_graph_invalid_type_raises(self, graph_service, mock_graph_repo, mock_db):
         """Test graph creation fails with invalid type via direct dict bypass."""
         with pytest.raises(ValueError, match="Invalid graph type"):
             await graph_service._validate_graph_data(
                 MagicMock(name="Test", type="invalid_type", dashboard_id=uuid4())
             )
 
-    async def test_create_graph_repo_returns_none_raises(self, graph_service, mock_graph_repo):
+    async def test_create_graph_repo_returns_none_raises(self, graph_service, mock_graph_repo, mock_db):
         """Test graph creation fails when repo returns None."""
         mock_graph_repo.create.return_value = None
 
@@ -97,31 +97,31 @@ class TestGraphService:
         )
 
         with pytest.raises(ValueError, match="Failed to create graph"):
-            await graph_service.create(data)
+            await graph_service.create(data, db=mock_db)
 
     # --- get tests ---
 
-    async def test_get_graph_found(self, graph_service, mock_graph_repo):
+    async def test_get_graph_found(self, graph_service, mock_graph_repo, mock_db):
         """Test getting graph by ID when it exists."""
         graph_id = uuid4()
         mock_graph_repo.get.return_value = self._make_graph_obj(graph_id=graph_id)
 
-        result = await graph_service.get(graph_id)
+        result = await graph_service.get(graph_id, db=mock_db)
 
         assert isinstance(result, GraphRead)
         assert result.id == graph_id
 
-    async def test_get_graph_not_found(self, graph_service, mock_graph_repo):
+    async def test_get_graph_not_found(self, graph_service, mock_graph_repo, mock_db):
         """Test getting graph by ID when it doesn't exist."""
         mock_graph_repo.get.return_value = None
 
-        result = await graph_service.get(uuid4())
+        result = await graph_service.get(uuid4(), db=mock_db)
 
         assert result is None
 
     # --- update tests ---
 
-    async def test_update_graph_success(self, graph_service, mock_graph_repo):
+    async def test_update_graph_success(self, graph_service, mock_graph_repo, mock_db):
         """Test successful graph update."""
         graph_id = uuid4()
         mock_graph_repo.update.return_value = self._make_graph_obj(
@@ -129,21 +129,21 @@ class TestGraphService:
         )
 
         data = GraphUpdate(name="Updated Graph")
-        result = await graph_service.update(graph_id, data)
+        result = await graph_service.update(graph_id, data, db=mock_db)
 
         assert isinstance(result, GraphRead)
         assert result.name == "Updated Graph"
 
-    async def test_update_graph_not_found(self, graph_service, mock_graph_repo):
+    async def test_update_graph_not_found(self, graph_service, mock_graph_repo, mock_db):
         """Test update returns None when graph not found."""
         mock_graph_repo.update.return_value = None
 
         data = GraphUpdate(name="Nonexistent")
-        result = await graph_service.update(uuid4(), data)
+        result = await graph_service.update(uuid4(), data, db=mock_db)
 
         assert result is None
 
-    async def test_update_graph_partial(self, graph_service, mock_graph_repo):
+    async def test_update_graph_partial(self, graph_service, mock_graph_repo, mock_db):
         """Test partial update only changes provided fields."""
         graph_id = uuid4()
         mock_graph_repo.update.return_value = self._make_graph_obj(
@@ -151,32 +151,32 @@ class TestGraphService:
         )
 
         data = GraphUpdate(name="Updated Name")
-        result = await graph_service.update(graph_id, data)
+        result = await graph_service.update(graph_id, data, db=mock_db)
 
         assert result.name == "Updated Name"
         mock_graph_repo.update.assert_called_once()
 
     # --- delete tests ---
 
-    async def test_delete_graph_success(self, graph_service, mock_graph_repo):
+    async def test_delete_graph_success(self, graph_service, mock_graph_repo, mock_db):
         """Test successful graph deletion."""
         mock_graph_repo.delete.return_value = True
 
-        result = await graph_service.delete(uuid4())
+        result = await graph_service.delete(uuid4(), db=mock_db)
 
         assert result is True
 
-    async def test_delete_graph_not_found(self, graph_service, mock_graph_repo):
+    async def test_delete_graph_not_found(self, graph_service, mock_graph_repo, mock_db):
         """Test deletion returns False when graph not found."""
         mock_graph_repo.delete.return_value = False
 
-        result = await graph_service.delete(uuid4())
+        result = await graph_service.delete(uuid4(), db=mock_db)
 
         assert result is False
 
     # --- list_by_dashboard tests ---
 
-    async def test_list_by_dashboard_with_graphs(self, graph_service, mock_graph_repo):
+    async def test_list_by_dashboard_with_graphs(self, graph_service, mock_graph_repo, mock_db):
         """Test listing graphs for a dashboard with results."""
         dashboard_id = uuid4()
         mock_graph_repo.get_by_dashboard_id.return_value = [
@@ -184,51 +184,51 @@ class TestGraphService:
             self._make_graph_obj(name="Graph 2", dashboard_id=dashboard_id),
         ]
 
-        result = await graph_service.list_by_dashboard(dashboard_id)
+        result = await graph_service.list_by_dashboard(dashboard_id, db=mock_db)
 
         assert len(result) == 2
         assert all(isinstance(g, GraphRead) for g in result)
 
-    async def test_list_by_dashboard_empty(self, graph_service, mock_graph_repo):
+    async def test_list_by_dashboard_empty(self, graph_service, mock_graph_repo, mock_db):
         """Test listing graphs for dashboard with no graphs."""
         mock_graph_repo.get_by_dashboard_id.return_value = []
 
-        result = await graph_service.list_by_dashboard(uuid4())
+        result = await graph_service.list_by_dashboard(uuid4(), db=mock_db)
 
         assert result == []
 
     # --- get_graphs_by_dashboard tests ---
 
-    async def test_get_graphs_by_dashboard(self, graph_service, mock_graph_repo):
+    async def test_get_graphs_by_dashboard(self, graph_service, mock_graph_repo, mock_db):
         """Test get_graphs_by_dashboard alias method."""
         dashboard_id = uuid4()
         mock_graph_repo.get_by_dashboard_id.return_value = [
             self._make_graph_obj(dashboard_id=dashboard_id)
         ]
 
-        result = await graph_service.get_graphs_by_dashboard(dashboard_id)
+        result = await graph_service.get_graphs_by_dashboard(dashboard_id, db=mock_db)
 
         assert len(result) == 1
 
     # --- get_graph_by_name_and_dashboard tests ---
 
-    async def test_get_graph_by_name_and_dashboard_found(self, graph_service, mock_graph_repo):
+    async def test_get_graph_by_name_and_dashboard_found(self, graph_service, mock_graph_repo, mock_db):
         """Test finding graph by name and dashboard."""
         dashboard_id = uuid4()
         mock_graph_repo.get_by_name_and_dashboard.return_value = self._make_graph_obj(
             name="Revenue Chart", dashboard_id=dashboard_id
         )
 
-        result = await graph_service.get_graph_by_name_and_dashboard("Revenue Chart", dashboard_id)
+        result = await graph_service.get_graph_by_name_and_dashboard("Revenue Chart", dashboard_id, db=mock_db)
 
         assert isinstance(result, GraphRead)
         assert result.name == "Revenue Chart"
 
-    async def test_get_graph_by_name_and_dashboard_not_found(self, graph_service, mock_graph_repo):
+    async def test_get_graph_by_name_and_dashboard_not_found(self, graph_service, mock_graph_repo, mock_db):
         """Test finding graph by name returns None when missing."""
         mock_graph_repo.get_by_name_and_dashboard.return_value = None
 
-        result = await graph_service.get_graph_by_name_and_dashboard("Missing", uuid4())
+        result = await graph_service.get_graph_by_name_and_dashboard("Missing", uuid4(), db=mock_db)
 
         assert result is None
 

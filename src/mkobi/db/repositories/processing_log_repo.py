@@ -74,6 +74,7 @@ class ProcessingLogRepository(IProcessingLogRepository):
         status: ProcessingStatus,
         message: str | None,
         db: AsyncSession,
+        finished_at: datetime | None = None,
     ) -> None:
         """Update processing log status.
 
@@ -82,6 +83,7 @@ class ProcessingLogRepository(IProcessingLogRepository):
             status: New status.
             message: Message (optional).
             db: Async database session.
+            finished_at: Explicit finished_at timestamp (optional).
         """
         try:
             result = await db.execute(
@@ -98,8 +100,10 @@ class ProcessingLogRepository(IProcessingLogRepository):
             if message is not None:
                 log_obj.message = message
 
-            # Set finished_at on successful completion or error
-            if status in (ProcessingStatus.SUCCESS, ProcessingStatus.FAILED):
+            # Set finished_at on successful completion or error, or use explicit value
+            if finished_at is not None:
+                log_obj.finished_at = finished_at
+            elif status in (ProcessingStatus.SUCCESS, ProcessingStatus.FAILED):
                 log_obj.finished_at = datetime.now(UTC)
 
             await db.flush()

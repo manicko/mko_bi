@@ -16,7 +16,6 @@ from mkobi.core.logging_config import get_logger
 from mkobi.core.permissions import check_dashboard_access, PermissionError
 from mkobi.core.redis_client import get_redis_client
 from mkobi.core.security import RateLimiter
-from mkobi.db.session import get_session
 from mkobi.interfaces.repository_interfaces import (
     IAggregatedDataRepository,
     IGraphRepository,
@@ -78,37 +77,30 @@ class DataService(IDataService):
         self,
         file_path: str | Path,
         dashboard_id: UUID,
+        db: AsyncSession,
         user_id: UUID | None = None,
         filename: str | None = None,
         content_type: str | None = None,
         mode: UploadMode = UploadMode.OVERWRITE,
-        db: AsyncSession | None = None,
     ) -> UploadResponse:
         """Process uploaded file and save aggregates.
 
         Args:
             file_path: Path to the uploaded file (already streamed to disk).
             dashboard_id: Target dashboard ID.
+            db: Async database session.
             user_id: Optional user ID for permission check.
             filename: Original filename.
             content_type: MIME type of uploaded file.
             mode: Upload mode (OVERWRITE clears old data, APPEND keeps it).
-            db: Optional database session.
 
         Returns:
             UploadResponse with task information.
         """
-        actual_db = db
         file_path_obj = Path(file_path) if isinstance(file_path, str) else file_path
-        if actual_db is None:
-            async with get_session() as session:
-                return await self._execute_upload(
-                    file_path_obj, dashboard_id, user_id,
-                    filename, content_type, mode, session,
-                )
         return await self._execute_upload(
             file_path_obj, dashboard_id, user_id,
-            filename, content_type, mode, actual_db,
+            filename, content_type, mode, db,
         )
 
     async def _execute_upload(
@@ -162,14 +154,9 @@ class DataService(IDataService):
         self,
         dashboard_id: UUID,
         graph_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> list[ProcessingResultData]:
         """Get aggregated data for graph."""
-        if db is None:
-            async with get_session() as session:
-                return await self._get_aggregated_data_with_session(
-                    dashboard_id, graph_id, session,
-                )
         return await self._get_aggregated_data_with_session(
             dashboard_id, graph_id, db,
         )
@@ -192,12 +179,9 @@ class DataService(IDataService):
         ]
 
     async def get_available_metrics(
-        self, dashboard_id: UUID, db: AsyncSession | None = None,
+        self, dashboard_id: UUID, db: AsyncSession,
     ) -> list[str]:
         """Get available metrics for dashboard."""
-        if db is None:
-            async with get_session() as session:
-                return await self._get_available_metrics_with_session(dashboard_id, session)
         return await self._get_available_metrics_with_session(dashboard_id, db)
 
     async def _get_available_metrics_with_session(
@@ -212,12 +196,9 @@ class DataService(IDataService):
         return list(metrics)
 
     async def get_available_dimensions(
-        self, dashboard_id: UUID, db: AsyncSession | None = None,
+        self, dashboard_id: UUID, db: AsyncSession,
     ) -> list[str]:
         """Get available dimensions for dashboard."""
-        if db is None:
-            async with get_session() as session:
-                return await self._get_available_dimensions_with_session(dashboard_id, session)
         return await self._get_available_dimensions_with_session(dashboard_id, db)
 
     async def _get_available_dimensions_with_session(
@@ -236,15 +217,10 @@ class DataService(IDataService):
         task_id: UUID,
         dashboard_id: UUID,
         user_id: UUID,
+        db: AsyncSession,
         processing_config: dict[str, Any] | None = None,
-        db: AsyncSession | None = None,
     ) -> ProcessingStatusResponse:
         """Trigger processing of uploaded file."""
-        if db is None:
-            async with get_session() as session:
-                return await self.trigger_processing(
-                    task_id, dashboard_id, user_id, processing_config, session
-                )
         if user_id:
             has_access = await check_dashboard_access(
                 user_id=user_id, dashboard_id=dashboard_id,
@@ -287,12 +263,9 @@ class DataService(IDataService):
         self,
         task_id: UUID,
         user_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> ProcessingStatusResponse:
         """Get processing status."""
-        if db is None:
-            async with get_session() as session:
-                return await self.get_processing_status(task_id, user_id, session)
         log = await self.log_repo.get_by_id(task_id, db)
         if log is None:
             raise ValueError(f"Processing task {task_id} not found")
@@ -318,12 +291,9 @@ class DataService(IDataService):
         self,
         task_id: UUID,
         user_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> ProcessingResult:
         """Get processing result."""
-        if db is None:
-            async with get_session() as session:
-                return await self.get_processing_result(task_id, user_id, session)
         log = await self.log_repo.get_by_id(task_id, db)
         if log is None:
             raise ValueError(f"Processing task {task_id} not found")

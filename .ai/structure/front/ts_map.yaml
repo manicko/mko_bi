@@ -620,29 +620,11 @@
     - <Button variant="outlined" onClick={handleResetFilters} size="small">
     - <FormControl fullWidth size="small">
     - <InputLabel>
-    - |-
-      <Select
-                  value={(value as string) || ''}
-                  label={filter.name}
-                  onChange={(e) => onChange(e.target.value)}
-                >
+    - "<Select\r\n            value={(value as string) || ''}\r\n            label={filter.name}\r\n            onChange={(e) => onChange(e.target.value)}\r\n          >"
     - <MenuItem key={opt.value} value={opt.value}>
     - <FormControl fullWidth size="small">
     - <InputLabel>
-    - |-
-      <Select
-                  multiple
-                  value={selectedValues}
-                  label={filter.name}
-                  onChange={(e) => onChange(e.target.value)}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {(selected as string[]).map((val) => (
-                        <Chip key={val} label={val} size="small" />
-                      ))}
-                    </Box>
-                  )}
-                >
+    - "<Select\r\n            multiple\r\n            value={selectedValues}\r\n            label={filter.name}\r\n            onChange={(e) => onChange(e.target.value)}\r\n            renderValue={(selected) => (\r\n              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>\r\n                {(selected as string[]).map((val) => (\r\n                  <Chip key={val} label={val} size=\"small\" />\r\n                ))}\r\n              </Box>\r\n            )}\r\n          >"
     - '<Box sx={{ display: ''flex'', flexWrap: ''wrap'', gap: 0.5 }}>'
     - <MenuItem key={opt.value} value={opt.value}>
     - <Box>
@@ -748,41 +730,11 @@
   hooks: []
   jsx_tags:
     - <Box>
-    - |-
-      <Paper
-              {...getRootProps()}
-              sx={{
-                p: 3,
-                border: '2px dashed',
-                borderColor: isDragActive ? 'primary.main' : 'grey.300',
-                backgroundColor: isDragActive ? 'action.hover' : 'background.paper',
-                cursor: 'pointer',
-                textAlign: 'center',
-                transition: 'all 0.2s ease-in-out',
-                '&:hover': {
-                  borderColor: 'primary.main',
-                  backgroundColor: 'action.hover',
-                },
-              }}
-            >
+    - "<Paper\r\n        {...getRootProps()}\r\n        sx={{\r\n          p: 3,\r\n          border: '2px dashed',\r\n          borderColor: isDragActive ? 'primary.main' : 'grey.300',\r\n          backgroundColor: isDragActive ? 'action.hover' : 'background.paper',\r\n          cursor: 'pointer',\r\n          textAlign: 'center',\r\n          transition: 'all 0.2s ease-in-out',\r\n          '&:hover': {\r\n            borderColor: 'primary.main',\r\n            backgroundColor: 'action.hover',\r\n          },\r\n        }}\r\n      >"
     - <Typography variant="h6" color="textSecondary">
     - '<Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>'
     - '<List sx={{ mt: 2 }}>'
-    - |-
-      <ListItem
-                    key={file.name}
-                    sx={{
-                      border: '1px solid',
-                      borderColor: 'grey.300',
-                      borderRadius: 1,
-                      mb: 1,
-                    }}
-                    secondaryAction={
-                      <IconButton edge="end" onClick={() => onFileRemove(file.name)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    }
-                  >
+    - "<ListItem\r\n              key={file.name}\r\n              sx={{\r\n                border: '1px solid',\r\n                borderColor: 'grey.300',\r\n                borderRadius: 1,\r\n                mb: 1,\r\n              }}\r\n              secondaryAction={\r\n                <IconButton edge=\"end\" onClick={() => onFileRemove(file.name)}>\r\n                  <DeleteIcon />\r\n                </IconButton>\r\n              }\r\n            >"
     - <IconButton edge="end" onClick={() => onFileRemove(file.name)}>
     - <ListItemIcon>
 - path: C:/py_dev/mkobi/frontend/src/features/upload/ui/UploadModal.tsx

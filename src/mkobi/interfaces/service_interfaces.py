@@ -30,28 +30,28 @@ class IAuthService(abc.ABC):
 
     @abc.abstractmethod
     async def register_user(
-        self, email: str, password: str, role: str, db: AsyncSession | None = None
+        self, email: str, password: str, db: AsyncSession, role: str = "viewer"
     ) -> UserRead:
         """Register new user."""
         pass
 
     @abc.abstractmethod
     async def authenticate_user(
-        self, email: str, password: str, db: AsyncSession | None = None
+        self, email: str, password: str, db: AsyncSession
     ) -> UserRead | None:
         """Authenticate user and return data."""
         pass
 
     @abc.abstractmethod
     async def login_user(
-        self, email: str, password: str, db: AsyncSession | None = None
+        self, email: str, password: str, db: AsyncSession
     ) -> dict[str, Any] | None:
         """Perform login and return JWT token."""
         pass
 
     @abc.abstractmethod
     async def refresh_token(
-        self, user_id: UUID, email: str, role: str, db: AsyncSession | None = None
+        self, user_id: UUID, email: str, role: str
     ) -> dict[str, Any]:
         """Refresh JWT token."""
         pass
@@ -68,21 +68,21 @@ class IAuthService(abc.ABC):
 
     @abc.abstractmethod
     async def register_request(
-        self, email: str, ip: str | None, db: AsyncSession | None = None
+        self, email: str, ip: str | None, db: AsyncSession
     ) -> dict[str, Any]:
         """Create registration request."""
         pass
 
     @abc.abstractmethod
     async def get_user_by_id(
-        self, user_id: UUID, db: AsyncSession | None = None
+        self, user_id: UUID, db: AsyncSession
     ) -> UserRead | None:
         """Get user by ID."""
         pass
 
     @abc.abstractmethod
     async def get_user_by_email(
-        self, email: str, db: AsyncSession | None = None
+        self, email: str, db: AsyncSession
     ) -> UserRead | None:
         """Get user by email."""
         pass
@@ -135,8 +135,8 @@ class IDashboardService(abc.ABC):
         name: str,
         config: dict[str, Any],
         owner_id: UUID,
+        db: AsyncSession,
         description: str | None = None,
-        db: AsyncSession | None = None,
     ) -> DashboardRead:
         """Create new dashboard."""
         pass
@@ -146,8 +146,8 @@ class IDashboardService(abc.ABC):
         self,
         dashboard_id: UUID,
         user_id: UUID,
+        db: AsyncSession,
         user_role: str | None = None,
-        db: AsyncSession | None = None,
     ) -> DashboardRead | None:
         """Get dashboard by ID with access check."""
         pass
@@ -156,7 +156,7 @@ class IDashboardService(abc.ABC):
     async def get_dashboard_by_name(
         self,
         name: str,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> DashboardRead | None:
         """Get dashboard by name."""
         pass
@@ -165,8 +165,8 @@ class IDashboardService(abc.ABC):
     async def get_user_dashboards(
         self,
         user_id: UUID,
+        db: AsyncSession,
         user_role: str | None = None,
-        db: AsyncSession | None = None,
     ) -> list[DashboardRead]:
         """Get user dashboards."""
         pass
@@ -175,9 +175,9 @@ class IDashboardService(abc.ABC):
     async def update_dashboard(
         self,
         dashboard_id: UUID,
+        db: AsyncSession,
         update_data: dict[str, Any] | None = None,
         config: dict[str, Any] | None = None,
-        db: AsyncSession | None = None,
     ) -> DashboardRead | None:
         """Update dashboard."""
         pass
@@ -186,7 +186,7 @@ class IDashboardService(abc.ABC):
     async def delete_dashboard(
         self,
         dashboard_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> bool:
         """Delete dashboard."""
         pass
@@ -194,7 +194,7 @@ class IDashboardService(abc.ABC):
     @abc.abstractmethod
     async def get_all_dashboards(
         self,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> list[DashboardRead]:
         """Get all dashboards."""
         pass
@@ -205,7 +205,7 @@ class IDashboardService(abc.ABC):
         dashboard_id: UUID,
         user_id: UUID,
         permission: str,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> bool:
         """Grant access to dashboard."""
         pass
@@ -215,7 +215,7 @@ class IDashboardService(abc.ABC):
         self,
         dashboard_id: UUID,
         user_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> bool:
         """Revoke access to dashboard."""
         pass
@@ -224,7 +224,7 @@ class IDashboardService(abc.ABC):
     async def get_dashboard_access_list(
         self,
         dashboard_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> list[dict[str, Any]]:
         """Get access list for dashboard."""
         pass
@@ -242,7 +242,7 @@ class IGraphService(abc.ABC):
         config: dict[str, Any],
         dimensions: list[str],
         metrics: list[str],
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> GraphRead:
         """Create new graph."""
         pass
@@ -251,7 +251,7 @@ class IGraphService(abc.ABC):
     async def get_graph_by_id(
         self,
         graph_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> GraphRead | None:
         """Get graph by ID."""
         pass
@@ -261,7 +261,7 @@ class IGraphService(abc.ABC):
         self,
         name: str,
         dashboard_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> GraphRead | None:
         """Get graph by name and dashboard ID."""
         pass
@@ -270,7 +270,7 @@ class IGraphService(abc.ABC):
     async def get_graphs_by_dashboard(
         self,
         dashboard_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> list[GraphRead]:
         """Get graphs by dashboard ID."""
         pass
@@ -284,7 +284,7 @@ class IGraphService(abc.ABC):
         config: dict[str, Any] | None,
         dimensions: list[str] | None,
         metrics: list[str] | None,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> GraphRead | None:
         """Update graph."""
         pass
@@ -293,7 +293,7 @@ class IGraphService(abc.ABC):
     async def delete_graph(
         self,
         graph_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> bool:
         """Delete graph."""
         pass
@@ -308,7 +308,7 @@ class IFilterService(abc.ABC):
         name: str,
         type_: str,
         config: FilterConfigDict,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> FilterRead:
         """Create new filter."""
         pass
@@ -317,7 +317,7 @@ class IFilterService(abc.ABC):
     async def get_filter_by_id(
         self,
         filter_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> FilterRead | None:
         """Get filter by ID."""
         pass
@@ -326,7 +326,7 @@ class IFilterService(abc.ABC):
     async def get_filter_by_name(
         self,
         name: str,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> FilterRead | None:
         """Get filter by name."""
         pass
@@ -336,7 +336,7 @@ class IFilterService(abc.ABC):
         self,
         filter_id: UUID,
         updates: FilterUpdate,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> FilterRead | None:
         """Update filter."""
         pass
@@ -345,7 +345,7 @@ class IFilterService(abc.ABC):
     async def delete_filter(
         self,
         filter_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> bool:
         """Delete filter."""
         pass
@@ -353,7 +353,7 @@ class IFilterService(abc.ABC):
     @abc.abstractmethod
     async def get_all_filters(
         self,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> list[FilterRead]:
         """Get all filters."""
         pass
@@ -367,11 +367,11 @@ class IDataService(abc.ABC):
         self,
         file_path: str | Path,
         dashboard_id: UUID,
+        db: AsyncSession,
         user_id: UUID | None = None,
         filename: str | None = None,
         content_type: str | None = None,
         mode: UploadMode = UploadMode.OVERWRITE,
-        db: AsyncSession | None = None,
     ) -> UploadResponse:
         """Process uploaded file and save aggregates."""
         pass
@@ -382,8 +382,8 @@ class IDataService(abc.ABC):
         task_id: UUID,
         dashboard_id: UUID,
         user_id: UUID,
+        db: AsyncSession,
         processing_config: dict[str, Any] | None = None,
-        db: AsyncSession | None = None,
     ) -> ProcessingStatusResponse:
         """Trigger processing of uploaded file."""
         pass
@@ -393,7 +393,7 @@ class IDataService(abc.ABC):
         self,
         task_id: UUID,
         user_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> ProcessingStatusResponse:
         """Get processing status."""
         pass
@@ -403,7 +403,7 @@ class IDataService(abc.ABC):
         self,
         task_id: UUID,
         user_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> ProcessingResult:
         """Get processing result."""
         pass
@@ -413,7 +413,7 @@ class IDataService(abc.ABC):
         self,
         dashboard_id: UUID,
         graph_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> list[ProcessingResultData]:
         """Get aggregated data for graph."""
         pass
@@ -422,7 +422,7 @@ class IDataService(abc.ABC):
     async def get_available_metrics(
         self,
         dashboard_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> list[str]:
         """Get available metrics for dashboard."""
         pass
@@ -431,7 +431,7 @@ class IDataService(abc.ABC):
     async def get_available_dimensions(
         self,
         dashboard_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> list[str]:
         """Get available dimensions for dashboard."""
         pass
@@ -445,7 +445,7 @@ class IProcessingConfigService(abc.ABC):
         self,
         dashboard_id: UUID,
         settings: ProcessingSettingsDict,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> ProcessingConfigRead:
         """Create processing config for dashboard."""
         pass
@@ -454,7 +454,7 @@ class IProcessingConfigService(abc.ABC):
     async def get_processing_config_by_dashboard(
         self,
         dashboard_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> ProcessingConfigRead | None:
         """Get processing config by dashboard ID."""
         pass
@@ -464,7 +464,7 @@ class IProcessingConfigService(abc.ABC):
         self,
         dashboard_id: UUID,
         settings: ProcessingSettingsDict,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> ProcessingConfigRead | None:
         """Update processing config."""
         pass
@@ -473,7 +473,7 @@ class IProcessingConfigService(abc.ABC):
     async def delete_processing_config(
         self,
         dashboard_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> bool:
         """Delete processing config."""
         pass
@@ -487,8 +487,8 @@ class IProcessingLogService(abc.ABC):
         self,
         dashboard_id: UUID,
         status: str,
+        db: AsyncSession,
         message: str | None = None,
-        db: AsyncSession | None = None,
     ) -> ProcessingLogRead:
         """Create processing log entry."""
         pass
@@ -497,7 +497,7 @@ class IProcessingLogService(abc.ABC):
     async def get_processing_logs_by_dashboard(
         self,
         dashboard_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> list[ProcessingLogRead]:
         """Get processing logs by dashboard ID."""
         pass
@@ -506,7 +506,7 @@ class IProcessingLogService(abc.ABC):
     async def get_processing_logs_by_status(
         self,
         status: str,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> list[ProcessingLogRead]:
         """Get processing logs by status."""
         pass
@@ -518,7 +518,7 @@ class IProcessingLogService(abc.ABC):
         status: str | None,
         message: str | None,
         finished_at: str | None,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> ProcessingLogRead | None:
         """Update processing log entry."""
         pass
@@ -527,7 +527,7 @@ class IProcessingLogService(abc.ABC):
     async def delete_processing_log(
         self,
         log_id: UUID,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> bool:
         """Delete processing log entry."""
         pass
@@ -541,21 +541,21 @@ class ILayoutService(abc.ABC):
         self,
         name: str,
         definition: dict[str, Any],
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> LayoutRead:
         """Create new layout."""
         pass
 
     @abc.abstractmethod
     async def get_layout(
-        self, layout_id: UUID, db: AsyncSession | None = None
+        self, layout_id: UUID, db: AsyncSession
     ) -> LayoutRead | None:
         """Get layout by ID."""
         pass
 
     @abc.abstractmethod
     async def get_all_layouts(
-        self, db: AsyncSession | None = None
+        self, db: AsyncSession
     ) -> list[LayoutRead]:
         """Get all layouts."""
         pass
@@ -565,14 +565,14 @@ class ILayoutService(abc.ABC):
         self,
         layout_id: UUID,
         update_data: LayoutUpdate,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> LayoutRead | None:
         """Update layout."""
         pass
 
     @abc.abstractmethod
     async def delete_layout(
-        self, layout_id: UUID, db: AsyncSession | None = None
+        self, layout_id: UUID, db: AsyncSession
     ) -> bool:
         """Delete layout."""
         pass

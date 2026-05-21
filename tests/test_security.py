@@ -208,8 +208,9 @@ class TestDecodeToken:
         token = create_access_token({"user_id": 1})
         # Try to decode with different key (simulating an error)
         with patch("mkobi.core.security.get_config") as mock_get_config:
-            mock_get_config.return_value.JWT_SECRET_KEY = "wrong_secret"
-            mock_get_config.return_value.JWT_ALGORITHM = "HS256"
+            mock_config = mock_get_config.return_value
+            mock_config.jwt.secret_key = "wrong_secret"
+            mock_config.jwt.algorithm = "HS256"
             result = decode_token(token)
             assert result is None
 
@@ -227,8 +228,8 @@ class TestDecodeToken:
         payload = {"user_id": 1}
         token = jwt.encode(
             payload,
-            get_config().jwt_secret_key,
-            algorithm=get_config().jwt_algorithm,
+            get_config().jwt.secret_key,
+            algorithm=get_config().jwt.algorithm,
         )
         decoded = decode_token(token)
         assert decoded is not None

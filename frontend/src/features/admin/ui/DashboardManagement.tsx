@@ -28,7 +28,7 @@ export function DashboardManagement() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedDashboard, setSelectedDashboard] = useState<DashboardAdmin | null>(null)
-  const [formData, setFormData] = useState({ name: '', description: '', layout: '' })
+  const [formData, setFormData] = useState<{ name: string; description: string; layout: 'single-column' | 'two-columns' | 'grid' | '' }>({ name: '', description: '', layout: '' })
   const [error, setError] = useState<string | null>(null)
 
   const queryClient = useQueryClient()
@@ -110,7 +110,7 @@ export function DashboardManagement() {
   const openEditDialog = useCallback(
     (dashboard: DashboardAdmin) => {
       setSelectedDashboard(dashboard)
-      setFormData({ name: dashboard.name, description: dashboard.description || '' })
+      setFormData({ name: dashboard.name, description: dashboard.description || '', layout: '' })
       setEditDialogOpen(true)
     },
     [],

@@ -1,8 +1,9 @@
-import { Component, ErrorInfo, ReactNode } from 'react'
+import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { Outlet } from 'react-router-dom'
 import { ErrorPage } from './ErrorPage'
 
 interface ErrorBoundaryProps {
-  children: ReactNode
+  children?: ReactNode
 }
 
 interface ErrorBoundaryState {
@@ -28,7 +29,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     }
   }
 
-  private reportError(error: Error, componentStack: string | null): void {
+  private reportError(error: Error, componentStack: string | null | undefined): void {
     const payload = {
       error: { name: error.name, message: error.message, stack: error.stack },
       componentStack,
@@ -47,6 +48,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (this.state.hasError) {
       return <ErrorPage variant="500" error={this.state.error} />
     }
-    return this.props.children
+    // Support both children (direct) and Outlet (nested routes in React Router v6)
+    return this.props.children ?? <Outlet />
   }
 }

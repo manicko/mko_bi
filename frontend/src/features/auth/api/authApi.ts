@@ -1,5 +1,5 @@
 import { axiosInstance } from '../../../shared/api/axiosInstance'
-import type { AuthResponse, UserProfile, RegistrationRequest, RegistrationResponse } from '../../../shared/types/api.types'
+import type { AuthResponse, UserProfile, RegistrationResponse } from '../../../shared/types/api.types'
 import { removeToken } from '../model/authToken'
 
 export async function login(email: string, password: string): Promise<AuthResponse> {

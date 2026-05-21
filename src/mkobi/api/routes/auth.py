@@ -14,8 +14,9 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from mkobi.api.deps import get_auth_service, get_current_user_dependency, require_admin_role
+from mkobi.api.deps import get_auth_service, get_current_user_dependency, require_admin_role, get_db_dependency
 from mkobi.config import get_config
 from mkobi.core.logging_config import get_logger
 from mkobi.core import redis_client
@@ -41,6 +42,7 @@ async def _handle_login(
     password: str,
     auth_service,
     request: Request,
+    db: AsyncSession,
 ) -> TokenWithUser:
     """Common login logic and error handling."""
     # Apply rate limiting for login attempts based on client IP
@@ -58,7 +60,7 @@ async def _handle_login(
 
     logger.info("Login attempt", extra={"email": email})
 
-    token_data = await auth_service.login_user(email, password)
+    token_data = await auth_service.login_user(email, password, db=db)
 
     if token_data is None:
         logger.warning("Login failed", extra={"email": email})
@@ -87,6 +89,7 @@ async def login(
     request: Request,
     login_data: LoginRequest,
     auth_service=Depends(get_auth_service),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> TokenWithUser:
     """User login endpoint."""
     return await _handle_login(
@@ -94,6 +97,7 @@ async def login(
         password=login_data.password,
         auth_service=auth_service,
         request=request,
+        db=db,
     )
 
 
@@ -108,6 +112,7 @@ async def login_form(
     request: Request,
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service=Depends(get_auth_service),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> TokenWithUser:
     """Login endpoint via OAuth2 form."""
     return await _handle_login(
@@ -115,6 +120,7 @@ async def login_form(
         password=form_data.password,
         auth_service=auth_service,
         request=request,
+        db=db,
     )
 
 
@@ -129,6 +135,7 @@ async def register(
     register_data: RegisterRequest,
     auth_service=Depends(get_auth_service),
     admin_user: UserRead = Depends(require_admin_role),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> Token:
     """Admin-only user registration endpoint (deprecated for public use).
 
@@ -157,6 +164,7 @@ async def register(
         user = await auth_service.register_user(
             email=register_data.email,
             password=register_data.password,
+            db=db,
             role=register_data.role,
         )
     except ValueError as e:
@@ -306,6 +314,7 @@ async def change_password(
     password_data: ChangePasswordRequest,
     current_user: UserRead = Depends(get_current_user_dependency),
     auth_service=Depends(get_auth_service),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> dict[str, Any]:
     """Password change endpoint.
 
@@ -340,6 +349,7 @@ async def change_password(
             user_id=current_user.id,
             current_password=password_data.current_password,
             new_password=password_data.new_password,
+            db=db,
         )
     except ValueError as e:
         logger.warning(
@@ -374,6 +384,7 @@ async def register_request(
     request_data: RegistrationRequestCreate,
     request: Request,
     auth_service=Depends(get_auth_service),
+    db: AsyncSession = Depends(get_db_dependency),
 ) -> dict[str, Any]:
     """Registration request creation endpoint.
 
@@ -422,6 +433,7 @@ async def register_request(
     try:
         result = await auth_service.register_request(
             email=request_data.email,
+            db=db,
             ip=client_ip,
         )
     except ValueError as e:

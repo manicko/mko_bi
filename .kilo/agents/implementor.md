@@ -2,7 +2,7 @@
 description: Senior implementation agent responsible for safely executing semantic development tasks, modifying production code, preserving architectural integrity, and following project standards and conventions
 mode: all
 color: "#10B981"
-steps: 140
+steps: 200
 
 permission:
   read: allow

@@ -11,7 +11,6 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mkobi.db.session import get_session
 from mkobi.interfaces.repository_interfaces import IProcessingConfigRepository
 from mkobi.interfaces.service_interfaces import IProcessingConfigService
 from mkobi.models.processing_configs import ProcessingConfigRead
@@ -63,22 +62,18 @@ class ProcessingConfigService(IProcessingConfigService):
             raise ValueError("Field 'timezone' must be a non-empty string")
 
     async def get_by_dashboard_id(
-        self, dashboard_id: UUID, db: AsyncSession | None = None
+        self, dashboard_id: UUID, db: AsyncSession
     ) -> ProcessingConfigRead | None:
         """Get processing config by dashboard ID.
 
         Args:
             dashboard_id: Dashboard identifier.
-            db: Optional database session.
+            db: Async database session.
 
         Returns:
             ProcessingConfigRead or None if not found.
         """
         logger.info("Getting config: dashboard_id=%s", dashboard_id)
-
-        if db is None:
-            async with get_session() as db:
-                return await self.get_by_dashboard_id(dashboard_id, db)
 
         config_obj = await self.config_repo.get(dashboard_id, db)
         if config_obj is None:
@@ -93,15 +88,15 @@ class ProcessingConfigService(IProcessingConfigService):
     async def upsert(
         self,
         dashboard_id: UUID,
-        settings: ProcessingSettingsDict,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
+        settings: ProcessingSettingsDict | None = None,
     ) -> ProcessingConfigRead:
         """Create or update processing config.
 
         Args:
             dashboard_id: Dashboard identifier.
+            db: Async database session.
             settings: Processing settings.
-            db: Optional database session.
 
         Returns:
             ProcessingConfigRead: Config model.
@@ -110,11 +105,8 @@ class ProcessingConfigService(IProcessingConfigService):
             ValueError: If settings structure is incorrect.
         """
         logger.info("Upsert config: dashboard_id=%s", dashboard_id)
-        await self._validate_settings(settings)
-
-        if db is None:
-            async with get_session() as db:
-                return await self.upsert(dashboard_id, settings, db)
+        if settings is not None:
+            await self._validate_settings(settings)
 
         existing = await self.config_repo.get(dashboard_id, db)
         if existing:
@@ -144,21 +136,17 @@ class ProcessingConfigService(IProcessingConfigService):
                 ProcessingConfigRead, ProcessingConfigRead.model_validate(created)
             )
 
-    async def delete(self, dashboard_id: UUID, db: AsyncSession | None = None) -> bool:
+    async def delete(self, dashboard_id: UUID, db: AsyncSession) -> bool:
         """Delete processing config.
 
         Args:
             dashboard_id: Dashboard identifier.
-            db: Optional database session.
+            db: Async database session.
 
         Returns:
             True if deletion successful.
         """
         logger.info("Deleting config: dashboard_id=%s", dashboard_id)
-
-        if db is None:
-            async with get_session() as db:
-                return await self.delete(dashboard_id, db)
 
         result: bool = await self.config_repo.delete(dashboard_id, db)
         if result:
@@ -175,13 +163,13 @@ class ProcessingConfigService(IProcessingConfigService):
         self,
         dashboard_id: UUID,
         settings: ProcessingSettingsDict,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> ProcessingConfigRead:
         """Create processing config for dashboard."""
-        return await self.upsert(dashboard_id, settings, db)
+        return await self.upsert(dashboard_id, db, settings=settings)
 
     async def get_processing_config_by_dashboard(
-        self, dashboard_id: UUID, db: AsyncSession | None = None
+        self, dashboard_id: UUID, db: AsyncSession
     ) -> ProcessingConfigRead | None:
         """Get processing config by dashboard ID."""
         return await self.get_by_dashboard_id(dashboard_id, db)
@@ -190,13 +178,13 @@ class ProcessingConfigService(IProcessingConfigService):
         self,
         dashboard_id: UUID,
         settings: ProcessingSettingsDict,
-        db: AsyncSession | None = None,
+        db: AsyncSession,
     ) -> ProcessingConfigRead | None:
         """Update processing config."""
-        return await self.upsert(dashboard_id, settings, db)
+        return await self.upsert(dashboard_id, db, settings=settings)
 
     async def delete_processing_config(
-        self, dashboard_id: UUID, db: AsyncSession | None = None
+        self, dashboard_id: UUID, db: AsyncSession
     ) -> bool:
         """Delete processing config."""
         return await self.delete(dashboard_id, db)

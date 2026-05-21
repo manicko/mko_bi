@@ -204,27 +204,18 @@
   imports:
   - functools
   - typing
-  - collections.abc
   - uuid
   - jose
   - sqlalchemy.ext.asyncio
   - mkobi.core.security
   - mkobi.db.repositories.access_repo
   - mkobi.db.repositories.user_repo
-  - mkobi.db.session
   - mkobi.models.enums
   - mkobi.models.user
   classes:
-  - RolePermissions
   - PermissionError
   - AuthenticationError
   functions:
-  - can_create_dashboards
-  - can_edit_dashboards
-  - can_view_dashboards
-  - can_manage_users
-  - can_upload_data
-  - check_permission
   - _get_role_level
   - check_role
   - _decode_token_cached
@@ -338,6 +329,7 @@
   module: C:_dev.mkobi..ai.builders.......src.mkobi.interfaces.repository_interfaces
   layer: unknown
   imports:
+  - datetime
   - typing
   - uuid
   - sqlalchemy.ext.asyncio
@@ -664,7 +656,6 @@
   - mkobi.core.logging_config
   - mkobi.core.redis_client
   - mkobi.core.security
-  - mkobi.db.session
   - mkobi.interfaces.repository_interfaces
   - mkobi.interfaces.service_interfaces
   - mkobi.models.enums
@@ -686,7 +677,6 @@
   - uuid
   - sqlalchemy.ext.asyncio
   - mkobi.db.models
-  - mkobi.db.session
   - mkobi.interfaces.service_interfaces
   - mkobi.interfaces.repository_interfaces
   - mkobi.models.dashboard
@@ -713,7 +703,6 @@
   - mkobi.core.permissions
   - mkobi.core.redis_client
   - mkobi.core.security
-  - mkobi.db.session
   - mkobi.interfaces.repository_interfaces
   - mkobi.interfaces.service_interfaces
   - mkobi.models.data
@@ -781,7 +770,6 @@
   - typing
   - uuid
   - sqlalchemy.ext.asyncio
-  - mkobi.db.session
   - mkobi.interfaces.repository_interfaces
   - mkobi.interfaces.service_interfaces
   - mkobi.models.graph
@@ -797,7 +785,6 @@
   - uuid
   - typing
   - sqlalchemy.ext.asyncio
-  - mkobi.db.session
   - mkobi.interfaces.repository_interfaces
   - mkobi.interfaces.service_interfaces
   - mkobi.models.layout
@@ -812,7 +799,6 @@
   - typing
   - uuid
   - sqlalchemy.ext.asyncio
-  - mkobi.db.session
   - mkobi.interfaces.repository_interfaces
   - mkobi.interfaces.service_interfaces
   - mkobi.models.processing_configs
@@ -825,10 +811,10 @@
   module: C:_dev.mkobi..ai.builders.......src.mkobi.services.processing_log_service
   layer: unknown
   imports:
+  - datetime
   - typing
   - uuid
   - sqlalchemy.ext.asyncio
-  - mkobi.db.session
   - mkobi.interfaces.repository_interfaces
   - mkobi.interfaces.service_interfaces
   - mkobi.models.enums
@@ -1512,6 +1498,7 @@
   - typing
   - fastapi
   - fastapi.security
+  - sqlalchemy.ext.asyncio
   - mkobi.api.deps
   - mkobi.config
   - mkobi.core.logging_config

@@ -13,7 +13,7 @@ import {
   Paper,
   Box,
 } from '@mui/material'
-import type { FilterDetail, FilterConfig } from '../../../shared/types/api.types'
+import type { FilterDetail } from '../../../shared/types/api.types'
 
 interface DashboardFiltersProps {
   filters: FilterDetail[]

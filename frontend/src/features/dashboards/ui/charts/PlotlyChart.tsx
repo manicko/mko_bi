@@ -1,5 +1,5 @@
 import Plot from 'react-plotly.js'
-import type { Config, Data } from 'react-plotly.js'
+import type { Config } from 'react-plotly.js'
 import type { PlotlyData, PlotlyLayout } from '../../../../shared/types/api.types'
 
 interface PlotlyChartProps {

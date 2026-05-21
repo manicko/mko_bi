@@ -231,6 +231,51 @@ class TestProcessingLogService:
         assert len(logs) == 1
         assert logs[0].status == ProcessingStatus.SUCCESS
 
+    @pytest.mark.asyncio
+    async def test_update_processing_log_with_finished_at(self, service, async_db_session):
+        """Test update_processing_log with custom finished_at timestamp."""
+        # Create a log first
+        log = await service.create_started_log(None, async_db_session)
+
+        # Update with custom finished_at (UTC-aware for consistency)
+        custom_finished = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
+        result = await service.update_processing_log(
+            log_id=log.id,
+            status="success",
+            message="Custom finished",
+            finished_at=custom_finished,
+            db=async_db_session,
+        )
+
+        assert result is not None
+        assert result.status == ProcessingStatus.SUCCESS
+        assert result.message == "Custom finished"
+        # finished_at should be close to our custom time (within 1 second tolerance)
+        assert result.finished_at is not None
+        expected_time = datetime.fromisoformat(custom_finished)
+        diff = abs((result.finished_at - expected_time).total_seconds())
+        assert diff < 1.0, "finished_at should be close to the custom timestamp"
+
+    @pytest.mark.asyncio
+    async def test_update_processing_log_invalid_finished_at(self, service, async_db_session):
+        """Test update_processing_log with invalid finished_at format."""
+        # Create a log first
+        log = await service.create_started_log(None, async_db_session)
+
+        # Update with invalid finished_at - should fall back to None/default behavior
+        result = await service.update_processing_log(
+            log_id=log.id,
+            status="success",
+            message="Invalid timestamp",
+            finished_at="not-a-valid-timestamp",
+            db=async_db_session,
+        )
+
+        assert result is not None
+        assert result.status == ProcessingStatus.SUCCESS
+        # finished_at should be set automatically for SUCCESS
+        assert result.finished_at is not None
+
 
 class TestStaleProcessingCleanup:
     """Tests for stale processing cleanup functionality."""
