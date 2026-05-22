@@ -1,3 +1,4 @@
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict, EmailStr
 from uuid import UUID
 
@@ -51,6 +52,33 @@ class RegistrationRequestResponse(BaseModel):
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "email": "user@example.com",
                 "status": "pending",
+            }
+        },
+    )
+
+
+class RegistrationRequestItem(BaseModel):
+    """Registration request item for admin listing."""
+
+    id: UUID
+    email: EmailStr
+    status: str
+    requested_by_ip: str | None = None
+    reviewed_by: UUID | None = None
+    reviewed_at: datetime | None = None
+    created_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "id": "550e8400-e29b-41d4-a716-446655440000",
+                "email": "user@example.com",
+                "status": "pending",
+                "requested_by_ip": "192.168.1.1",
+                "reviewed_by": None,
+                "reviewed_at": None,
+                "created_at": "2026-04-24T16:02:46+03:00",
             }
         },
     )

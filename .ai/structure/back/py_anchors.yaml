@@ -233,6 +233,14 @@
   value: str
   stable_hash: bae0bbbc
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
+- id: f587aff8
+  symbol_path:
+  - SPAStaticFiles
+  - _setup_static_files
+  type: function_call
+  value: HTTPException
+  stable_hash: f587aff8
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
 - id: efc0b771
   symbol_path:
   - _setup_static_files
@@ -2799,6 +2807,13 @@
   type: function_call
   value: ConfigDict
   stable_hash: ba61d81a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
+- id: 595c08a5
+  symbol_path:
+  - DashboardAdmin
+  type: function_call
+  value: ConfigDict
+  stable_hash: 595c08a5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
 - id: 5effa8f7
   symbol_path:
@@ -11874,6 +11889,41 @@
   type: function_call
   value: APIRouter
   stable_hash: 2d50e1e5
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards.py
+- id: 4e067ced
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: 4e067ced
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards.py
+- id: 4e067ced
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: 4e067ced
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards.py
+- id: 4b9ccc1a
+  symbol_path: []
+  type: return_statement
+  stable_hash: 4b9ccc1a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards.py
+- id: fd304807
+  symbol_path: []
+  type: function_call
+  value: DashboardAdmin
+  stable_hash: fd304807
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards.py
+- id: f235a47d
+  symbol_path: []
+  type: function_call
+  value: HTTPException
+  stable_hash: f235a47d
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards.py
+- id: 4e067ced
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: 4e067ced
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards.py
 - id: 4e067ced
   symbol_path: []

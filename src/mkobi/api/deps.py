@@ -28,6 +28,7 @@ if TYPE_CHECKING:
     from mkobi.services.layout_service import LayoutService
     from mkobi.services.processing_config_service import ProcessingConfigService
     from mkobi.services.processing_log_service import ProcessingLogService
+    from mkobi.services.user_service import UserService
 
 from mkobi.core.permissions import (
     check_dashboard_access,
@@ -244,7 +245,7 @@ def get_auth_service(
 
 def get_user_service(
     user_repo=Depends(get_user_repository),
-):
+) -> "UserService":
     """DI factory for user service.
 
     Args:
@@ -254,6 +255,7 @@ def get_user_service(
         UserService: User service implementation.
     """
     from mkobi.services.user_service import UserService
+
     return UserService(user_repo)
 
 
@@ -446,7 +448,7 @@ async def get_current_user_dependency(
             )
 
         logger.info("User authenticated: user_id=%s", user_id)
-        return user
+        return UserRead.model_validate(user)
     except ExpiredSignatureError as e:
         logger.warning("Token expired")
         raise HTTPException(

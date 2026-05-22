@@ -2,7 +2,7 @@
 
 import logging
 import secrets
-from typing import Any, cast
+from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -16,8 +16,10 @@ from mkobi.api.deps import (
     get_user_service,
     require_admin_role,
 )
+from mkobi.interfaces import IUserService
 from mkobi.models.enums import RegistrationStatus, UserRole
 from mkobi.models.user import UserRead, UserUpdateRequest
+from mkobi.models.auth import RegistrationRequestItem
 from mkobi.services.auth_service import AuthService
 
 logger = logging.getLogger(__name__)
@@ -37,14 +39,13 @@ router = APIRouter(prefix="/admin", tags=["admin"], redirect_slashes=False)
     dependencies=[Depends(require_admin_role)],
 )
 async def get_users_admin_endpoint(
-    user_service=Depends(get_user_service),
+    user_service: IUserService = Depends(get_user_service),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> list[UserRead]:
     """Get all users (admin endpoint)."""
     logger.info("Admin: getting all users")
     try:
-        users_data = await user_service.get_all_users(db=db)
-        return [UserRead(**user) for user in users_data]
+        return await user_service.get_all_users(db=db)
     except Exception as e:
         logger.error("Error getting users: %s", e)
         raise HTTPException(
@@ -76,7 +77,7 @@ async def update_user_role_admin_endpoint(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found",
             )
-        return cast(UserRead, updated)
+        return updated
     except ValueError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -129,7 +130,7 @@ async def delete_user_admin_endpoint(
 
 @router.get(
     "/registration-requests",
-    response_model=list[dict[str, Any]],
+    response_model=list[RegistrationRequestItem],
     status_code=status.HTTP_200_OK,
     summary="List registration requests (admin)",
     description="Returns list of all registration requests. Admin only.",
@@ -138,12 +139,12 @@ async def delete_user_admin_endpoint(
 async def get_registration_requests_admin_endpoint(
     db: AsyncSession = Depends(get_db_dependency),
     repo=Depends(get_registration_request_repository),
-) -> list[dict[str, Any]]:
+) -> list[RegistrationRequestItem]:
     """Get all registration requests (admin endpoint)."""
     logger.info("Admin: getting registration requests")
     try:
         requests = await repo.get_all(db)
-        return cast(list[dict[str, Any]], requests)
+        return [RegistrationRequestItem.model_validate(req) for req in requests]
     except Exception as e:
         logger.error("Error getting registration requests: %s", e)
         raise HTTPException(
@@ -177,16 +178,16 @@ async def approve_registration_request_admin_endpoint(
                 detail="Registration request not found",
             )
 
-        if req["status"] != RegistrationStatus.PENDING:
+        if req.status != RegistrationStatus.PENDING:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Request already {req['status']}",
+                detail=f"Request already {req.status}",
             )
 
         # Create user with random temporary password
         temp_password = secrets.token_urlsafe(16)
         user = await auth_service.create_user(
-            email=req["email"],
+            email=req.email,
             password=temp_password,
             role=UserRole.VIEWER,
             db=db,
@@ -240,10 +241,10 @@ async def reject_registration_request_admin_endpoint(
                 detail="Registration request not found",
             )
 
-        if req["status"] != RegistrationStatus.PENDING:
+        if req.status != RegistrationStatus.PENDING:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
-                detail=f"Request already {req['status']}",
+                detail=f"Request already {req.status}",
             )
 
         # Update request status

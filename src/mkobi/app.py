@@ -315,17 +315,20 @@ def _setup_static_files(application: FastAPI) -> None:
                 Returns:
                     Response for the requested path or index.html for SPA routes.
                 """
-                # Don't serve SPA fallback for API routes - they should return 404 from FastAPI
-                if path.startswith("api/"):
-                    raise HTTPException(status_code=404, detail="Not found")
-
-                try:
-                    return await super().get_response(path, scope)
-                except HTTPException as exc:
-                    if exc.status_code == 404:
-                        # File not found - serve index.html for SPA routing
-                        return FileResponse(str(index_path))
-                    raise
+                # Don't intercept API routes - let FastAPI handle them
+                # The path comes without leading slash in StaticFiles context
+                # API paths are "api/*" when they reach here
+                if not path.startswith("api/"):
+                    try:
+                        return await super().get_response(path, scope)
+                    except HTTPException as exc:
+                        if exc.status_code == 404:
+                            # File not found - serve index.html for SPA routing
+                            return FileResponse(str(index_path))
+                        raise
+                # For API routes, return 404 to let FastAPI's exception handler format it
+                # This prevents SPA fallback for API routes
+                raise HTTPException(status_code=404, detail="Not found")
 
         application.mount(
             "/",

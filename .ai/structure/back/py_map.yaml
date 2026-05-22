@@ -430,6 +430,7 @@
   - DashboardCreate
   - DashboardRead
   - DashboardUpdate
+  - DashboardAdmin
   functions:
   - validate_name
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\data.py

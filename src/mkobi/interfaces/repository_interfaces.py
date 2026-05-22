@@ -133,6 +133,11 @@ class IRegistrationRequestRepository(abc.ABC):
         pass
 
     @abc.abstractmethod
+    async def get_by_id(self, request_id: UUID, db: AsyncSession) -> Any | None:
+        """Get registration request by ID."""
+        pass
+
+    @abc.abstractmethod
     async def get_by_email(self, email: str, db: AsyncSession) -> Any | None:
         """Get registration request by email."""
         pass
@@ -144,7 +149,7 @@ class IRegistrationRequestRepository(abc.ABC):
 
     @abc.abstractmethod
     async def update_status(
-        self, request_id: UUID, status: str, db: AsyncSession
+        self, request_id: UUID, status: str, db: AsyncSession, reviewed_by: UUID | None = None
     ) -> Any | None:
         """Update registration request status."""
         pass

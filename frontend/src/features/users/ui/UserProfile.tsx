@@ -8,14 +8,13 @@ import { toast } from 'react-hot-toast'
 
 export function UserProfile() {
   const navigate = useNavigate()
-  const { user, logout } = useAuth()
+  const { logout } = useAuth()
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   const { data: profile, isLoading, error } = useQuery({
     queryKey: ['profile'],
     queryFn: getProfile,
-    initialData: user,
   })
 
   const isAdmin = profile?.role === 'admin'

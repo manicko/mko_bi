@@ -56,9 +56,7 @@ export async function createDashboard(data: CreateDashboardRequest): Promise<Das
   if (data.description) {
     payload.description = data.description
   }
-  if (data.layout) {
-    payload.config = { graph_types: ['bar'], layout: data.layout }
-  }
+  // config is optional - will use backend default if not provided
   const response = await axiosInstance.post<DashboardAdmin>('/dashboards', payload)
   return response.data
 }
