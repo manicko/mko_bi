@@ -21,7 +21,7 @@ from mkobi.models.enums import ProcessingStatus
 from mkobi.models.processing_logs import ProcessingLogFilter, ProcessingLogRead
 from mkobi.services.processing_log_service import ProcessingLogService
 
-router = APIRouter(prefix="/admin/logs", tags=["admin", "processing_logs"])
+router = APIRouter(prefix="/admin/logs", tags=["admin", "processing_logs"], redirect_slashes=False)
 
 
 @router.get(

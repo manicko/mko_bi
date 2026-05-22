@@ -34,7 +34,7 @@ from mkobi.models.user import UserRead
 
 logger = get_logger(__name__)
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["auth"], redirect_slashes=False)
 
 
 async def _handle_login(

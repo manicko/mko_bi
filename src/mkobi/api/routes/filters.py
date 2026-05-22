@@ -29,7 +29,7 @@ from mkobi.services.filter_service import FilterService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(tags=["filters"])
+router = APIRouter(tags=["filters"], redirect_slashes=False)
 
 
 @router.post(

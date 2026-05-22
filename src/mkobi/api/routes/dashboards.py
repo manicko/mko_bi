@@ -26,6 +26,7 @@ from mkobi.api.deps import (
 )
 from mkobi.models.access import AccessGrant
 from mkobi.models.dashboard import (
+    DashboardAdmin,
     DashboardCreate,
     DashboardRead,
     DashboardUpdate,
@@ -37,6 +38,48 @@ from mkobi.utils.exceptions import PermissionDeniedException
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/dashboards", tags=["dashboards"])
+
+
+@router.get(
+    "/",
+    response_model=list[DashboardAdmin],
+    status_code=status.HTTP_200_OK,
+    summary="List all dashboards (admin)",
+    description="Returns list of all dashboards. Available only to admins.",
+    dependencies=[Depends(require_admin_role)],
+)
+async def get_dashboards_admin_endpoint(
+    db: AsyncSession = Depends(get_db_dependency),
+    dashboard_service: DashboardService = Depends(get_dashboard_service),
+) -> list[DashboardAdmin]:
+    """Get all dashboards for admin panel.
+
+    Args:
+        db: Database session.
+        dashboard_service: Injected dashboard service.
+
+    Returns:
+        list[DashboardAdmin]: List of dashboards without full config.
+    """
+    logger.info("Admin: getting all dashboards")
+    try:
+        dashboards = await dashboard_service.get_all_dashboards(db=db)
+        return [
+            DashboardAdmin(
+                id=d.id,
+                name=d.name,
+                description=d.description,
+                created_at=d.created_at,
+                updated_at=d.updated_at,
+            )
+            for d in dashboards
+        ]
+    except Exception as e:
+        logger.error("Error getting all dashboards: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error getting dashboards",
+        ) from e
 
 
 @router.post(

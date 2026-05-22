@@ -48,7 +48,8 @@ DOCKER_TARGET=prod docker compose up -d
 
 ```bash
 # Start development environment with hot reload
-docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
+
+
 
 # View logs
 docker compose -f docker-compose.yml -f docker-compose.override.yml logs -f app

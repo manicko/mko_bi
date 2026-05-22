@@ -13,7 +13,7 @@ from pydantic import BaseModel
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/client-errors", tags=["client-errors"])
+router = APIRouter(prefix="/client-errors", tags=["client-errors"], redirect_slashes=False)
 
 
 class ClientErrorPayload(BaseModel):

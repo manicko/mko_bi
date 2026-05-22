@@ -34,7 +34,7 @@ from mkobi.models.data import (
 from mkobi.models.enums import UploadMode
 from mkobi.services.data_service import DataService
 
-router = APIRouter(prefix="/upload", tags=["upload"])
+router = APIRouter(prefix="/upload", tags=["upload"], redirect_slashes=False)
 
 logger = get_logger(__name__)
 

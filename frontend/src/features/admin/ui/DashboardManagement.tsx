@@ -128,9 +128,37 @@ export function DashboardManagement() {
       { field: 'description', headerName: 'Description', width: 300 },
       { field: 'created_at', headerName: 'Created', width: 180 },
       { field: 'updated_at', headerName: 'Updated', width: 180 },
-      { field: 'actions', headerName: 'Actions', type: 'actions', width: 200 },
+      {
+        field: 'actions',
+        headerName: 'Actions',
+        width: 200,
+        sortable: false,
+        filterable: false,
+        renderCell: ({ row }: GridRenderCellParams<DashboardAdmin>) => (
+          <>
+            <GridActionsCellItem
+              icon={<EditIcon />}
+              label="Edit"
+              onClick={() => openEditDialog(row)}
+            />
+            <GridActionsCellItem
+              icon={<AccessIcon />}
+              label="Access"
+              onClick={() => {
+                // TODO: Implement access management dialog
+                alert('Access management not yet implemented')
+              }}
+            />
+            <GridActionsCellItem
+              icon={<DeleteIcon />}
+              label="Delete"
+              onClick={() => handleDelete(row)}
+            />
+          </>
+        ),
+      },
     ],
-    [],
+    [handleDelete, openEditDialog],
   )
 
   const rows = dashboards.map((dashboard) => ({
@@ -139,28 +167,6 @@ export function DashboardManagement() {
     description: dashboard.description || '',
     created_at: new Date(dashboard.created_at).toLocaleString(),
     updated_at: new Date(dashboard.updated_at).toLocaleString(),
-    actions: (
-      <>
-        <GridActionsCellItem
-          icon={<EditIcon />}
-          label="Edit"
-          onClick={() => openEditDialog(dashboard)}
-        />
-        <GridActionsCellItem
-          icon={<AccessIcon />}
-          label="Access"
-          onClick={() => {
-            // TODO: Implement access management dialog
-            alert('Access management not yet implemented')
-          }}
-        />
-        <GridActionsCellItem
-          icon={<DeleteIcon />}
-          label="Delete"
-          onClick={() => handleDelete(dashboard)}
-        />
-      </>
-    ),
   }))
 
   return (

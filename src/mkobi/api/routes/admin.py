@@ -22,7 +22,7 @@ from mkobi.services.auth_service import AuthService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+router = APIRouter(prefix="/admin", tags=["admin"], redirect_slashes=False)
 
 
 # --- User Management ---

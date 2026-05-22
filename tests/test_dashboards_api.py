@@ -390,6 +390,55 @@ class TestAccessControl:
         assert response.status_code == status.HTTP_200_OK
 
 
+class TestGetDashboardsAdmin:
+    """Tests for GET /api/v1/dashboards/ endpoint (admin list all)."""
+
+    async def test_get_all_dashboards_admin(
+        self, authenticated_client: AsyncClient, async_db_session, test_user: dict
+    ) -> None:
+        """Test getting all dashboards as admin."""
+        repo = DashboardRepository()
+        dashboard = await repo.create(
+            db=async_db_session,
+            name="test-admin-dashboard",
+            created_by=test_user["id"],
+        )
+        await async_db_session.flush()
+
+        response = await authenticated_client.get("/dashboards/")
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert isinstance(data, list)
+        assert any(d["id"] == str(dashboard.id) for d in data)
+        assert any(d["name"] == "test-admin-dashboard" for d in data)
+
+    async def test_get_all_dashboards_forbidden(
+        self, async_client: AsyncClient, async_db_session
+    ) -> None:
+        """Test getting all dashboards without admin role (403)."""
+        from mkobi.db.repositories.user_repo import UserRepository
+        from mkobi.core.security import create_access_token
+
+        user_repo = UserRepository()
+        viewer_user = await user_repo.create(
+            db=async_db_session,
+            email="viewer_dashboards@example.com",
+            password_hash="hash",
+            role=UserRole.VIEWER,
+        )
+        await async_db_session.flush()
+
+        # Login as viewer
+        token = create_access_token({
+            "user_id": str(viewer_user.id),
+            "email": viewer_user.email,
+        })
+        async_client.headers["Authorization"] = f"Bearer {token}"
+
+        response = await async_client.get("/dashboards/")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
 class TestAdminBypass:
     """Tests for admin bypass functionality."""
 

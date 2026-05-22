@@ -25,7 +25,7 @@ from mkobi.services.layout_service import LayoutService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/layouts", tags=["layouts"])
+router = APIRouter(prefix="/layouts", tags=["layouts"], redirect_slashes=False)
 
 
 @router.post(

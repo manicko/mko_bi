@@ -301,10 +301,24 @@ def _setup_static_files(application: FastAPI) -> None:
 
             This enables proper SPA routing where the React router handles
             client-side navigation after the initial index.html is served.
+
+            Note: API routes (/api/*) should not trigger SPA fallback - they return 404.
             """
 
             async def get_response(self, path: str, scope: dict[str, Any]):
-                """Override to serve index.html for non-existent files."""
+                """Override to serve index.html for non-existent files.
+
+                Args:
+                    path: Requested file path.
+                    scope: ASGI scope dictionary.
+
+                Returns:
+                    Response for the requested path or index.html for SPA routes.
+                """
+                # Don't serve SPA fallback for API routes - they should return 404 from FastAPI
+                if path.startswith("api/"):
+                    raise HTTPException(status_code=404, detail="Not found")
+
                 try:
                     return await super().get_response(path, scope)
                 except HTTPException as exc:

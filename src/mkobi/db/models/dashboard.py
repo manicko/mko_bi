@@ -95,7 +95,7 @@ class Dashboard(Base):
     )
 
     # Relationship with layout
-    layout: Mapped[Layout] = relationship(
+    layout: Mapped[Layout | None] = relationship(
         "Layout",
         back_populates="dashboards",
         lazy="selectin",

@@ -23,7 +23,7 @@ from mkobi.services.user_service import UserService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/users", tags=["users"], redirect_slashes=False)
 
 
 @router.post(

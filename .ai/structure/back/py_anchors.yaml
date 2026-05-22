@@ -2408,6 +2408,12 @@
   value: DatabaseNotFoundError
   stable_hash: c76c607f
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: 1d1f75d4
+  symbol_path:
+  - DatabaseStarter
+  type: return_statement
+  stable_hash: 1d1f75d4
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
 - id: c9f0f404
   symbol_path:
   - DatabaseStarter
@@ -2420,6 +2426,13 @@
   - DatabaseStarter
   type: return_statement
   stable_hash: 1d1f75d4
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: 2c93ad9e
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: cast
+  stable_hash: 2c93ad9e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
 - id: 1d1f75d4
   symbol_path:
@@ -3459,6 +3472,13 @@
   - AuthService
   type: return_statement
   stable_hash: 98feca73
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
+- id: 80ad7698
+  symbol_path:
+  - AuthService
+  type: function_call
+  value: cast
+  stable_hash: 80ad7698
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
 - id: 09ac50bd
   symbol_path:

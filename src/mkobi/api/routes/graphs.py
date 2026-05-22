@@ -27,7 +27,7 @@ from mkobi.models.graph import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/graphs", tags=["graphs"])
+router = APIRouter(prefix="/graphs", tags=["graphs"], redirect_slashes=False)
 
 
 # --- Global graph endpoints ---

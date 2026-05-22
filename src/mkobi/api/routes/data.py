@@ -28,7 +28,7 @@ from mkobi.services.data_service import DataService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/data", tags=["data"])
+router = APIRouter(prefix="/data", tags=["data"], redirect_slashes=False)
 
 
 @router.get(

@@ -47,8 +47,8 @@ export async function rejectRequest(requestId: string): Promise<void> {
 
 // Dashboard Management API
 export async function getDashboardsAdmin(): Promise<DashboardAdmin[]> {
-  const response = await axiosInstance.get<DashboardAdmin[]>('/dashboards')
-  return response.data
+    const response = await axiosInstance.get<DashboardAdmin[]>('/dashboards/')
+    return response.data
 }
 
 export async function createDashboard(data: CreateDashboardRequest): Promise<DashboardAdmin> {
