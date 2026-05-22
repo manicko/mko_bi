@@ -220,7 +220,7 @@ class AuthService(IAuthService):
         result = await self.login_user(email, password, db)
         if result is None:
             return None
-        return result["user"]
+        return cast(UserRead, result["user"])
 
     def create_access_token(self, user_id: UUID, role: str) -> str:
         """Create access token for user.

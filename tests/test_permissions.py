@@ -3,6 +3,8 @@
 Tests for access control functions.
 """
 
+from uuid import uuid4
+
 import pytest
 
 from mkobi.core.permissions import (
@@ -152,7 +154,7 @@ class TestCheckDashboardAccess:
         dashboard_repo = DashboardRepository()
         dashboard = await dashboard_repo.create(
             db=async_db_session,
-            name="No Access Test Dashboard",
+            name=f"No Access Test Dashboard {uuid4().hex[:8]}",
         )
         await async_db_session.commit()
 

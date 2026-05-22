@@ -240,9 +240,9 @@ class IGraphService(abc.ABC):
         name: str,
         type_: str,
         config: dict[str, Any],
-        dimensions: list[str],
-        metrics: list[str],
         db: AsyncSession,
+        dimensions: list[str] | None = None,
+        metrics: list[str] | None = None,
     ) -> GraphRead:
         """Create new graph."""
         pass
@@ -279,12 +279,12 @@ class IGraphService(abc.ABC):
     async def update_graph(
         self,
         graph_id: UUID,
-        name: str | None,
-        type_: str | None,
-        config: dict[str, Any] | None,
-        dimensions: list[str] | None,
-        metrics: list[str] | None,
         db: AsyncSession,
+        name: str | None = None,
+        type_: str | None = None,
+        config: dict[str, Any] | None = None,
+        dimensions: list[str] | None = None,
+        metrics: list[str] | None = None,
     ) -> GraphRead | None:
         """Update graph."""
         pass

@@ -181,8 +181,9 @@ class TestDashboardServiceIntegration:
     @pytest.fixture
     async def dashboard(self, dashboard_service, async_db_session, owner_id):
         """Create and return a dashboard for testing."""
+        unique_name = f"Test Dashboard {uuid4().hex[:8]}"
         result = await dashboard_service.create_dashboard(
-            name="Test Dashboard",
+            name=unique_name,
             config={"graph_types": ["bar", "line"]},
             owner_id=owner_id,
             db=async_db_session,
@@ -212,7 +213,8 @@ class TestDashboardServiceIntegration:
         )
         assert result is not None
         assert result.id == dashboard.id
-        assert result.name == "Test Dashboard"
+        # dashboard name now uses unique suffix
+        assert result.name.startswith("Test Dashboard")
 
     async def test_list_dashboards_with_db(self, dashboard_service, async_db_session, owner_id):
         """Test listing dashboards."""
@@ -684,8 +686,9 @@ class TestProcessingLogServiceIntegration:
     @pytest.fixture
     async def dashboard_id(self, dashboard_service, async_db_session, owner_id):
         """Create and return a valid dashboard ID."""
+        unique_name = f"Test Dashboard {uuid4().hex[:8]}"
         dashboard = await dashboard_service.create_dashboard(
-            name="Test Dashboard",
+            name=unique_name,
             config={"graph_types": ["bar"]},
             owner_id=owner_id,
             db=async_db_session,

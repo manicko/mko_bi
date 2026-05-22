@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
     CurrentUser,
-    get_db,
+    get_db_dependency,
     get_processing_config_service,
     require_editor_role,
     require_viewer_role,
@@ -33,7 +33,7 @@ router = APIRouter(prefix="/processing-configs", tags=["processing_configs"])
 async def get_config_endpoint(
     dashboard_id: UUID,
     current_user: CurrentUser,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
     processing_config_service: ProcessingConfigService = Depends(get_processing_config_service),
 ) -> ProcessingConfigRead:
     try:
@@ -64,7 +64,7 @@ async def upsert_config_endpoint(
     dashboard_id: UUID,
     config_update: ProcessingConfigUpdate,
     current_user: CurrentUser,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
     processing_config_service: ProcessingConfigService = Depends(get_processing_config_service),
 ) -> ProcessingConfigRead:
     try:
@@ -100,7 +100,7 @@ async def upsert_config_endpoint(
 async def delete_config_endpoint(
     dashboard_id: UUID,
     current_user: CurrentUser,
-    db: AsyncSession = Depends(get_db),
+    db: AsyncSession = Depends(get_db_dependency),
     processing_config_service: ProcessingConfigService = Depends(get_processing_config_service),
 ) -> None:
     try:

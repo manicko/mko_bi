@@ -62,19 +62,6 @@
   value: FastAPI
   stable_hash: c3cdc22b
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: 4fe459d7
-  symbol_path:
-  - create_app
-  type: function_call
-  value: _setup_static_files
-  stable_hash: 4fe459d7
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: debbb177
-  symbol_path:
-  - create_app
-  type: return_statement
-  stable_hash: debbb177
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
 - id: 10c71e16
   symbol_path:
   - create_app
@@ -141,6 +128,13 @@
   - create_app
   type: return_statement
   stable_hash: debbb177
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
+- id: 4fe459d7
+  symbol_path:
+  - create_app
+  type: function_call
+  value: _setup_static_files
+  stable_hash: 4fe459d7
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
 - id: debbb177
   symbol_path:
@@ -1994,6 +1988,33 @@
   type: return_statement
   stable_hash: 212ac2e3
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\redis_client.py
+- id: 942e622e
+  symbol_path:
+  - _get_config
+  type: function_call
+  value: get_config
+  stable_hash: 942e622e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
+- id: 14d0410e
+  symbol_path:
+  - _get_config
+  type: function_call
+  value: clear_config_cache
+  stable_hash: 14d0410e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
+- id: 942e622e
+  symbol_path:
+  - _get_config
+  type: function_call
+  value: get_config
+  stable_hash: 942e622e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
+- id: d87787c7
+  symbol_path:
+  - _get_config
+  type: return_statement
+  stable_hash: d87787c7
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
 - id: 624a3e8a
   symbol_path:
   - RateLimiter
@@ -2148,6 +2169,13 @@
   type: return_statement
   stable_hash: 61aac835
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
+- id: 67a7590d
+  symbol_path:
+  - create_access_token
+  type: function_call
+  value: _get_config
+  stable_hash: 67a7590d
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
 - id: e323977e
   symbol_path:
   - create_access_token
@@ -2162,13 +2190,6 @@
   value: str
   stable_hash: a6802b4c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
-- id: 7426b6ad
-  symbol_path:
-  - create_access_token
-  type: function_call
-  value: get_config
-  stable_hash: 7426b6ad
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
 - id: b3a07c1b
   symbol_path:
   - create_access_token
@@ -2176,19 +2197,12 @@
   value: timedelta
   stable_hash: b3a07c1b
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
-- id: 7426b6ad
+- id: 795938ac
   symbol_path:
   - create_access_token
   type: function_call
-  value: get_config
-  stable_hash: 7426b6ad
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
-- id: 7426b6ad
-  symbol_path:
-  - create_access_token
-  type: function_call
-  value: get_config
-  stable_hash: 7426b6ad
+  value: ValueError
+  stable_hash: 795938ac
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
 - id: 05eceb5a
   symbol_path:
@@ -2196,19 +2210,19 @@
   type: return_statement
   stable_hash: 05eceb5a
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
-- id: c97163de
+- id: 4b6c2114
   symbol_path:
   - decode_token
   type: function_call
-  value: get_config
-  stable_hash: c97163de
+  value: _get_config
+  stable_hash: 4b6c2114
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
-- id: c97163de
+- id: a3d35b30
   symbol_path:
   - decode_token
   type: function_call
-  value: get_config
-  stable_hash: c97163de
+  value: ValueError
+  stable_hash: a3d35b30
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
 - id: 6bbf3907
   symbol_path:

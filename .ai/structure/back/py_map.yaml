@@ -241,6 +241,7 @@
   - RateLimiter
   - AsyncRateLimiter
   functions:
+  - _get_config
   - __init__
   - check_rate_limit
   - __init__

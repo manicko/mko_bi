@@ -86,6 +86,8 @@ class DatabaseStarter:
 
         Returns revision hash if schema is initialized, None otherwise.
         """
+        if self._main_engine is None:
+            return None
         try:
             # Query the alembic_version table directly to avoid asyncio.run issues
             from sqlalchemy import text
@@ -93,7 +95,7 @@ class DatabaseStarter:
                 result = await conn.execute(text("SELECT version_num FROM alembic_version LIMIT 1"))
                 row = result.fetchone()
                 if row:
-                    return row[0]
+                    return cast(str, row[0])
             return None
         except Exception:
             return None
