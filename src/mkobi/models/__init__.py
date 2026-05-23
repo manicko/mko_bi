@@ -4,7 +4,6 @@ from mkobi.models.auth import (
     Token,
     TokenData,
     TokenWithUser,
-    RefreshRequest,
 )
 from mkobi.models.data import (
     AggregatedData,
@@ -78,7 +77,6 @@ __all__ = [
     "Token",
     "TokenData",
     "TokenWithUser",
-    "RefreshRequest",
     # Users
     "UserCreate",
     "UserDB",

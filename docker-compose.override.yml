@@ -38,6 +38,8 @@ services:
       # Application role for runtime operations (limited privileges)
       DATABASE__USER: mkobi_app
       DATABASE__PASSWORD: ${MKOBI_APP_PASSWORD:-dev_password}
+      DATABASE__ADMIN_USER: postgres
+      DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-1234}
       # Admin credentials (valid email format required)
       ADMIN_USERNAME: admin@example.com
       ADMIN_PASSWORD: admin@example.com
@@ -45,7 +47,7 @@ services:
       JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
       LOGGING__LEVEL: DEBUG
       AUTO_MIGRATE: "false"
-      RECREATE_TEST_DB: "false"
+      RECREATE_TEST_DB: "true"
     volumes:
       # Mount source code for hot reload (writable for egg-info generation)
       - ./src:/app/src

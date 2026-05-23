@@ -67,6 +67,11 @@ class IAuthService(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def validate_refresh_token(self, token: str) -> dict[str, Any] | None:
+        """Validate refresh token and return user data if valid."""
+        pass
+
+    @abc.abstractmethod
     async def register_request(
         self, email: str, ip: str | None, db: AsyncSession
     ) -> dict[str, Any]:

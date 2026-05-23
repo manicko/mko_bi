@@ -4,29 +4,47 @@ This module provides endpoints for:
 - Registering new users
 - User login (authentication)
 - JWT token refresh
+- User logout
 - Creating registration requests
 
 All endpoints return standardized JSON responses.
 """
 
 from ipaddress import ip_address
-from typing import Any
+from typing import Annotated, Any
+from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mkobi.api.deps import get_auth_service, get_current_user_dependency, require_admin_role, get_db_dependency
+from mkobi.api.deps import (
+    get_auth_service,
+    get_current_user_dependency,
+    require_admin_role,
+    get_db_dependency,
+)
+from mkobi.db.repositories.user_repo import UserRepository
 from mkobi.config import get_config
 from mkobi.core.logging_config import get_logger
 from mkobi.core import redis_client
-from mkobi.core.security import AsyncRateLimiter
+from mkobi.core.security import (
+    AsyncRateLimiter,
+    COOKIE_HTTPONLY,
+    COOKIE_SECURE,
+    COOKIE_SAMESITE,
+    COOKIE_NAME,
+    create_access_token,
+    create_refresh_token,
+    validate_refresh_token,
+    delete_secure_cookie,
+)
 from mkobi.models.auth import (
     ChangePasswordRequest,
     LoginRequest,
-    RefreshRequest,
     RegisterRequest,
     RegistrationRequestCreate,
+    SuccessResponse,
     Token,
     TokenWithUser,
 )
@@ -42,6 +60,7 @@ async def _handle_login(
     password: str,
     auth_service,
     request: Request,
+    response: Response,
     db: AsyncSession,
 ) -> TokenWithUser:
     """Common login logic and error handling."""
@@ -71,6 +90,21 @@ async def _handle_login(
         )
 
     logger.info("Login successful", extra={"email": email})
+
+    # Create refresh token and set as httpOnly cookie
+    user = token_data["user"]
+    refresh_token = create_refresh_token(
+        data={"sub": str(user.id), "email": user.email, "role": user.role}
+    )
+    response.set_cookie(
+        key=COOKIE_NAME,
+        value=refresh_token,
+        httponly=COOKIE_HTTPONLY,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=get_config().jwt.refresh_token_expire_minutes * 60,
+    )
+
     return TokenWithUser(
         access_token=token_data["access_token"],
         token_type="bearer",
@@ -87,6 +121,7 @@ async def _handle_login(
 )
 async def login(
     request: Request,
+    response: Response,
     login_data: LoginRequest,
     auth_service=Depends(get_auth_service),
     db: AsyncSession = Depends(get_db_dependency),
@@ -97,6 +132,7 @@ async def login(
         password=login_data.password,
         auth_service=auth_service,
         request=request,
+        response=response,
         db=db,
     )
 
@@ -110,6 +146,7 @@ async def login(
 )
 async def login_form(
     request: Request,
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service=Depends(get_auth_service),
     db: AsyncSession = Depends(get_db_dependency),
@@ -120,6 +157,7 @@ async def login_form(
         password=form_data.password,
         auth_service=auth_service,
         request=request,
+        response=response,
         db=db,
     )
 
@@ -165,7 +203,7 @@ async def register(
             email=register_data.email,
             password=register_data.password,
             db=db,
-            role=register_data.role,
+            role=register_data.role.value,
         )
     except ValueError as e:
         logger.warning(
@@ -173,7 +211,7 @@ async def register(
             extra={"email": register_data.email, "error": str(e)},
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         ) from e
     except Exception as e:
@@ -207,31 +245,39 @@ async def register(
     response_model=Token,
     status_code=status.HTTP_200_OK,
     summary="Refresh token",
-    description="Refreshes expired JWT access token.",
+    description="Refreshes expired JWT access token using httpOnly refresh token cookie.",
 )
 async def refresh(
-    refresh_data: RefreshRequest,
-    auth_service=Depends(get_auth_service),
+    request: Request,
+    session: Annotated[AsyncSession, Depends(get_db_dependency)],
 ) -> Token:
     """Token refresh endpoint.
 
-    Accepts refresh token (in current implementation - same JWT),
+    Accepts refresh token from httpOnly cookie,
     decodes it and issues new access token.
 
     Args:
-        refresh_data: Model with refresh token.
-        auth_service: Authentication service.
+        request: Request object to access cookies.
+        session: Async database session.
 
     Returns:
         Token: Model with new access_token and token_type.
 
     Raises:
         HTTPException 401: Invalid or expired token.
-        HTTPException 422: Data validation error.
     """
+    refresh_token_value = request.cookies.get(COOKIE_NAME)
+    if not refresh_token_value:
+        logger.warning("No refresh token in cookies")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Refresh token not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     logger.info("Token refresh attempt")
 
-    payload = auth_service.verify_token(refresh_data.refresh_token)
+    payload = validate_refresh_token(refresh_token_value)
     if payload is None:
         logger.warning("Invalid refresh token")
         raise HTTPException(
@@ -240,41 +286,30 @@ async def refresh(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    user_id = payload.get("user_id")
-    email = payload.get("email")
-    role = payload.get("role")
-
-    if user_id is None or email is None or role is None:
-        logger.warning("Token missing required data")
+    user_id = payload.get("sub")
+    if user_id is None:
+        logger.warning("Token missing user_id")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
-    try:
-        token_data = await auth_service.refresh_token(user_id, email, role)
-    except ValueError as e:
-        logger.warning(
-            "User not found during token refresh", extra={"user_id": user_id}
-        )
+    user = await UserRepository().get(UUID(user_id), session)
+    if user is None:
+        logger.warning("User not found during refresh", extra={"user_id": user_id})
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
             headers={"WWW-Authenticate": "Bearer"},
-        ) from e
-    except Exception as e:
-        logger.error(
-            "Token refresh error",
-            extra={"user_id": user_id, "error": str(e)},
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Token creation error",
-        ) from e
+
+    access_token = create_access_token(
+        data={"sub": str(user.id), "email": user.email, "role": user.role}
+    )
 
     logger.info("Token refreshed successfully", extra={"user_id": user_id})
-    return Token(access_token=token_data["access_token"], token_type="bearer")
+    return Token(access_token=access_token, token_type="bearer")
 
 
 @router.get(
@@ -302,6 +337,33 @@ async def get_current_user_info(
     """
     logger.info("Current user data request", extra={"email": current_user.email})
     return current_user
+
+
+@router.post(
+    "/logout",
+    response_model=SuccessResponse,
+    status_code=status.HTTP_200_OK,
+    summary="User logout",
+    description="Logout current user by clearing refresh token cookie.",
+)
+async def logout(
+    response: Response,
+    current_user: Annotated[UserRead, Depends(get_current_user_dependency)],
+) -> SuccessResponse:
+    """Logout endpoint.
+
+    Clears the refresh token cookie and logs the user out.
+
+    Args:
+        response: FastAPI Response object to set/delete cookies.
+        current_user: Currently authenticated user.
+
+    Returns:
+        SuccessResponse: Success message.
+    """
+    logger.info("User logging out", extra={"email": current_user.email})
+    delete_secure_cookie(response, COOKIE_NAME)
+    return SuccessResponse(message="Logged out successfully")
 
 
 @router.post(
@@ -442,7 +504,7 @@ async def register_request(
             extra={"email": request_data.email, "error": str(e)},
         )
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail=str(e),
         ) from e
     except Exception as e:

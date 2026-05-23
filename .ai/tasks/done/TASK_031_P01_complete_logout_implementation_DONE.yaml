@@ -1,0 +1,66 @@
+id: TASK_031_P01_complete_logout_implementation
+
+title: Complete logout with cookie clearing
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_026_P01_create_logout_endpoint
+  - TASK_030_P01_add_cookie_utilities
+
+phase: PLAN_01
+wave: 3
+
+description: >
+  Complete the logout endpoint implementation by integrating the cookie
+  deletion utility function. Ensures the refresh token cookie is properly
+  cleared on logout.
+
+finding_ref: PLAN_01_WAVE_3
+severity: medium
+
+goals:
+  - Logout clears refresh token cookie using delete_cookie utility
+  - Returns standardized success response
+  - Validates current user authentication
+
+files:
+  - path: src/mkobi/api/routes/auth.py
+    targets:
+      - type: function
+        name: logout_endpoint
+    semantic_anchors:
+      modify:
+        type: function_definition
+        value: logout
+    changes:
+      - action: modify_function
+        description: Use delete_cookie utility in logout endpoint
+        code_hint: |
+          @router.post("/logout", response_model=SuccessResponse)
+          async def logout(
+              current_user: Annotated[UserInDB, Depends(get_current_user)],
+              response: Response,
+          ) -> SuccessResponse:
+              """Logout current user by clearing refresh token cookie."""
+              logger.info("User %s logging out", current_user.email)
+              delete_cookie(response, COOKIE_NAME)
+              return SuccessResponse(message="Logged out successfully")
+
+acceptance_criteria:
+  - Logout clears refresh token cookie
+  - Returns standardized success response
+  - User authentication is validated before logout
+  - Cookie deletion uses security constants
+
+tests_to_run:
+  - "pytest tests/ -k test_auth -v"
+  - Manual API test: logout and verify cookie is removed
+
+risk_level: low
+
+rollout_notes: >
+  Depends on TASK_026 (endpoint structure) and TASK_030 (cookie utilities).
+  Finalizes the logout flow.

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { UserProfile } from '../../../shared/types/api.types'
-import { login as apiLogin, registerRequest as apiRegisterRequest, getProfile as apiGetProfile, logoutClient } from '../api/authApi'
+import { login as apiLogin, registerRequest as apiRegisterRequest, getProfile as apiGetProfile, logout as apiLogout, logoutClient, refreshToken as apiRefreshToken } from '../api/authApi'
 import { getToken, setToken, removeToken } from './authToken'
 
 export function useAuth() {
@@ -36,7 +36,12 @@ export function useAuth() {
     await apiRegisterRequest(email)
   }, [])
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    try {
+      await apiLogout()
+    } catch {
+      // Ignore errors - user may already be logged out server-side
+    }
     removeToken()
     logoutClient()
     setUser(null)
@@ -45,12 +50,26 @@ export function useAuth() {
   useEffect(() => {
     const token = getToken()
     if (!token) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setIsLoading(false)
+      // No access token - try silent refresh using refresh cookie
+      void (async () => {
+        try {
+          const response = await apiRefreshToken()
+          setToken(response.access_token)
+          // After refresh, fetch profile
+          const profile = await apiGetProfile()
+          setUser(profile)
+        } catch {
+          // Refresh failed or no refresh cookie - user needs to login
+          removeToken()
+          setUser(null)
+        } finally {
+          setIsLoading(false)
+        }
+      })()
       return
     }
 
-    const fetchProfile = async () => {
+    void (async () => {
       try {
         setIsLoading(true)
         const profile = await apiGetProfile()
@@ -61,13 +80,12 @@ export function useAuth() {
       } finally {
         setIsLoading(false)
       }
-    }
-
-    fetchProfile()
+    })()
   }, [])
 
   return {
     user,
+    accessToken: getToken(),
     isLoading,
     login,
     logout,

@@ -1,0 +1,170 @@
+id: TASK_017_D17_fix_test_db_creation_dev
+
+title: Fix Test Database Creation in Dev Environment
+
+status: rejected
+
+priority: high
+
+depends_on: []
+
+phase: DOCKER_HARDENING
+wave: 1
+
+# =============================================================================
+# REJECTION NOTICE
+# =============================================================================
+# Status: REJECTED — STALE TASK (Already Implemented)
+# Date: 2026-05-23
+# Validator: validator agent
+#
+# REJECTION REASON:
+# The entire task is stale. Both the code fix and the docker-compose override
+# changes described in this task are already implemented in the current codebase.
+#
+# EVIDENCE:
+# 1. src/mkobi/db/starter.py:155-189 — recreate_test_database() already uses
+#    self._config.test_admin_database_url (or get_config().test_admin_database_url)
+#    for the admin connection, NOT the test_url derivation the task proposes to fix.
+#
+# 2. src/mkobi/config.py:417-435 — TEST_ADMIN_DATABASE_URL property already exists
+#    and constructs the admin URL using database.admin_user and database.admin_password.
+#
+# 3. src/mkobi/config.py:86-87 — DatabaseSettings already has admin_user and
+#    admin_password fields.
+#
+# 4. docker-compose.override.yml:41-42 — The dev override already provides
+#    DATABASE__ADMIN_USER: postgres and DATABASE__ADMIN_PASSWORD.
+#
+# The old code the task references (deriving base_url from test_url via rsplit)
+# does not exist in the current starter.py. The fix was already applied.
+#
+# REQUIRED FIX BEFORE RECONSIDERATION:
+# None — the task is already done. It should be moved to the done/ directory
+# or deleted. No implementation work is needed.
+# =============================================================================
+
+description: >
+  [REJECTED — STALE] The dev override sets RECREATE_TEST_DB: "true" and DATABASE__USER: mkobi_app for the
+  app service, but test database recreation requires superuser privileges (CREATE DATABASE)
+  that mkobi_app lacks. The recreate_test_database() method in db/starter.py derives its
+  admin connection URL from the test_url (mkobi_app credentials) instead of using the
+  TEST_ADMIN_DATABASE_URL (postgres superuser credentials). This causes test DB creation
+  to fail silently or error out in dev mode.
+
+  NOTE: This description is outdated. The current starter.py already uses TEST_ADMIN_DATABASE_URL.
+
+finding_ref: INTERNAL — Dev environment test DB creation gap
+severity: high
+
+goals:
+  - recreate_test_database() uses postgres superuser credentials for admin operations
+  - Dev override provides admin DB credentials for test DB creation
+  - Test database is automatically created on app startup in dev mode
+  - No impact on production (RECREATE_TEST_DB is "false" in base compose)
+
+files:
+  - path: src/mkobi/db/starter.py
+    targets:
+      - type: method
+        name: DatabaseStarter.recreate_test_database
+    semantic_anchors:
+      insert_after:
+        type: statement
+        value: "test_url = self._config.test_database_url or get_config().test_database_url"
+    changes:
+      - action: modify_method
+        description: >
+          [STALE] Replace the admin connection URL derivation. Instead of deriving base_url from
+          test_url (which uses mkobi_app credentials), use the TEST_ADMIN_DATABASE_URL
+          from config which provides postgres superuser credentials.
+          NOTE: This change is already implemented in the current codebase.
+        old_code_hint: |
+          # Connect to 'postgres' database to be able to drop/create target database
+          base_url = test_url.rsplit("/", 1)[0] + "/postgres"
+
+          # Create engine connected to 'postgres' database with autocommit
+          admin_engine = create_async_engine(
+              base_url,
+              isolation_level="AUTOCOMMIT",
+          )
+        new_code_hint: |
+          # Use admin URL with superuser credentials for CREATE DATABASE operations
+          admin_url = get_config().TEST_ADMIN_DATABASE_URL
+          if not admin_url:
+              logger.warning(
+                  "TEST_ADMIN_DATABASE_URL not configured — "
+                  "set DATABASE__ADMIN_USER and DATABASE__ADMIN_PASSWORD for test DB creation"
+              )
+              return
+
+          # Create engine connected to 'postgres' database with autocommit
+          admin_engine = create_async_engine(
+              admin_url,
+              isolation_level="AUTOCOMMIT",
+          )
+
+  - path: docker-compose.override.yml
+    targets:
+      - type: service
+        name: app
+    semantic_anchors:
+      insert_after:
+        type: directive
+        value: "RECREATE_TEST_DB: \"true\""
+    changes:
+      - action: add_directive
+        description: Add admin DB credentials for test DB recreation in dev
+        code_hint: |
+          # Admin credentials for test database (re)creation (requires superuser)
+          DATABASE__ADMIN_USER: postgres
+          DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD}
+
+acceptance_criteria:
+  - App starts in dev mode and automatically creates bidb_test database
+  - Test database is accessible and has correct schema (migrations applied)
+  - Tests can run against bidb_test
+  - Production docker-compose.yml is unchanged (RECREATE_TEST_DB: "false")
+  - If DATABASE__ADMIN_PASSWORD is not set, a warning is logged and test DB creation is skipped
+
+docker_health_checks:
+  - name: All containers running
+    command: "docker compose ps --format json"
+    expected: "All services (db, migrate, app) show 'running' status"
+  - name: App container healthy
+    command: "curl -sf http://localhost:8000/health"
+    expected: "Returns HTTP 200"
+  - name: App logs show test DB created
+    command: "docker compose logs app --tail 80"
+    expected: "Logs contain 'Test database recreated successfully' or 'recreate_test_database' success message"
+  - name: bidb_test database exists
+    command: "docker compose exec db psql -U postgres -c \"SELECT datname FROM pg_database WHERE datname = 'bidb_test';\""
+    expected: "Returns one row with 'bidb_test'"
+  - name: bidb_test has schema (migrations applied)
+    command: "docker compose exec db psql -U postgres -d bidb_test -c \"SELECT version_num FROM alembic_version LIMIT 1;\""
+    expected: "Returns an alembic revision hash (not empty)"
+  - name: No container restarts
+    command: "docker compose ps --format '{{.Name}} {{.Status}}'"
+    expected: "No container shows 'restarting' or 'unhealthy' status"
+  - name: App logs show no critical errors
+    command: "docker compose logs app --tail 100"
+    expected: "No CRITICAL lines; no 'Failed to recreate test database' errors"
+
+tests_to_run:
+  - "docker compose down -v && docker compose up -d"
+  - "docker compose logs app --tail 80 | grep -i 'test database'"
+  - "docker compose exec db psql -U postgres -c \"SELECT datname FROM pg_database WHERE datname = 'bidb_test';\""
+  - "docker compose exec app python -m pytest tests/ -v --timeout=60"
+
+risk_level: medium
+
+rollout_notes: >
+  [REJECTED — STALE] This task described fixing test DB creation in dev environment.
+  The bug was in db/starter.py where recreate_test_database() derived admin URL from
+  test_url (mkobi_app) instead of using TEST_ADMIN_DATABASE_URL (postgres superuser).
+  The dev override fix ensures DATABASE__ADMIN_PASSWORD is available. Production is
+  unaffected since RECREATE_TEST_DB is "false" there.
+
+  HOWEVER, this fix is already implemented in the current codebase. The starter.py
+  already uses test_admin_database_url from config, and the override already provides
+  DATABASE__ADMIN_USER and DATABASE__ADMIN_PASSWORD. No action needed.

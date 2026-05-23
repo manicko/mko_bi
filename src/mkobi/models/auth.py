@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 from uuid import UUID
 
 from mkobi.models.enums import UserRole
@@ -83,6 +83,14 @@ class RegistrationRequestItem(BaseModel):
         },
     )
 
+    @field_validator("requested_by_ip", mode="before")
+    @classmethod
+    def serialize_ip(cls, v: object) -> str | None:
+        """Convert IP address object to string representation."""
+        if v is None:
+            return None
+        return str(v)
+
 
 class RegisterRequest(BaseModel):
     """Register request model."""
@@ -159,21 +167,6 @@ class TokenData(BaseModel):
     )
 
 
-class RefreshRequest(BaseModel):
-    """Token refresh request model."""
-
-    refresh_token: str
-
-    model_config = ConfigDict(
-        from_attributes=True,
-        json_schema_extra={
-            "example": {
-                "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-            }
-        },
-    )
-
-
 class ChangePasswordRequest(BaseModel):
     """Password change request model."""
 
@@ -188,6 +181,21 @@ class ChangePasswordRequest(BaseModel):
                 "current_password": "old_password123",
                 "new_password": "new_secure_password456",
                 "confirm_password": "new_secure_password456",
+            }
+        },
+    )
+
+
+class SuccessResponse(BaseModel):
+    """Standardized success response model."""
+
+    message: str
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "message": "Logged out successfully",
             }
         },
     )

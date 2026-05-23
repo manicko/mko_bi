@@ -1,0 +1,62 @@
+id: TASK_004_P02_url_protected_route_trailing_slash_guard
+
+title: Verify ProtectedRoute redirects preserve slashless paths
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+phase: PLAN_02
+wave: 2
+
+description: >
+  Verify that ProtectedRoute redirect to /login does not introduce trailing
+  slashes. This is a verification task — the existing code at
+  ProtectedRoute.tsx line 22 already uses to="/login" (no trailing slash),
+  so no code change should be needed. Confirm the redirect target is correct
+  and location.state.from preserves the normalized path.
+
+finding_ref: PLAN_02_WAVE_2
+severity: low
+
+goals:
+  - Verify ProtectedRoute Navigate to="/login" has no trailing slash
+  - Confirm location.state.from preserves normalized path
+  - No code change needed if already correct
+
+files:
+  - path: frontend/src/shared/components/ProtectedRoute.tsx
+    targets:
+      - type: component
+        name: ProtectedRoute
+      - type: jsx_element
+        name: Navigate
+    semantic_anchors:
+      verify:
+        type: attribute
+        value: 'to="/login"'
+    changes:
+      - action: verify_no_change
+        description: Verify Navigate to="/login" has no trailing slash
+        code_hint: |
+          // Expected existing code (line 22):
+          return <Navigate to="/login" state={{ from: location }} replace />;
+          // No trailing slash on "/login" — correct.
+
+acceptance_criteria:
+  - Unauthenticated user accessing /dashboards/ → redirect to /login (not /login/)
+  - location.state.from preserves the normalized path
+  - No code change needed (verification-only task)
+
+tests_to_run:
+  - "npm test"
+  - Manual: access /dashboards/ without auth → redirected to /login
+
+risk_level: low
+
+rollout_notes: >
+  Verification-only task. If the Navigate target already uses "/login"
+  (no trailing slash), this task is a no-op. If a trailing slash is found,
+  fix it. Independent of other Wave 2 tasks.

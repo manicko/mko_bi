@@ -245,7 +245,7 @@ def get_auth_service(
 
 def get_user_service(
     user_repo=Depends(get_user_repository),
-) -> "UserService":
+) -> UserService:
     """DI factory for user service.
 
     Args:

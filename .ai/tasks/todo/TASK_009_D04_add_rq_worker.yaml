@@ -1,0 +1,92 @@
+id: TASK_009_D04_add_rq_worker
+
+title: Add rq-worker Service to Docker Compose
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+phase: DOCKER_HARDENING
+wave: 1
+
+description: >
+  Redis is configured in docker-compose.yml but no rq-worker service exists in any
+  compose file. Background task processing (file uploads, data aggregation) has no
+  worker container. The worker code exists in src/mkobi/workers/data_worker.py.
+  Add an rq-worker service to enable background processing in production.
+
+finding_ref: DOCKER-004
+severity: high
+
+goals:
+  - Add rq-worker service to docker-compose.yml or a production-profile compose file
+  - Worker connects to the existing Redis service
+  - Worker uses the same app image and environment as the main app
+  - Background processing works in production
+
+files:
+  - path: docker-compose.yml
+    targets:
+      - type: service
+        name: rq-worker (new)
+    semantic_anchors:
+      insert_after:
+        type: service
+        name: redis
+    changes:
+      - action: add_service
+        description: Add rq-worker service
+        code_hint: |
+          rq-worker:
+            <<: *app-common
+            command: ["uv", "run", "rq", "worker", "--url", "redis://redis:6379/0"]
+            depends_on:
+              redis:
+                condition: service_healthy
+              migrate:
+                condition: service_completed_successfully
+            profiles:
+              - production
+
+acceptance_criteria:
+  - rq-worker service is defined in docker-compose.yml
+  - Worker connects to Redis service
+  - Worker starts after Redis is healthy and migrations complete
+  - Background tasks are processed by the worker
+
+docker_health_checks:
+  - name: Production profile starts all services
+    command: "docker compose --profile production up -d"
+    expected: "All services including rq-worker start"
+  - name: rq-worker container running
+    command: "docker compose ps rq-worker --format json"
+    expected: "rq-worker container shows 'running' status"
+  - name: rq-worker logs show connection to Redis
+    command: "docker compose logs rq-worker --tail 30"
+    expected: "Logs show worker started and connected to Redis (no connection errors)"
+  - name: Redis container healthy
+    command: "docker compose ps redis --format json"
+    expected: "redis container shows 'healthy' status"
+  - name: App container still healthy
+    command: "curl -sf http://localhost:8000/health"
+    expected: "Returns HTTP 200"
+  - name: No container restarts
+    command: "docker compose ps --format '{{.Name}} {{.Status}}'"
+    expected: "No container shows 'restarting' or 'unhealthy' status"
+  - name: rq-worker depends_on respected
+    command: "docker compose logs rq-worker --tail 5"
+    expected: "Worker started only after Redis healthy and migrate completed"
+
+tests_to_run:
+  - "docker compose --profile production up -d"
+  - "docker compose logs rq-worker  # verify worker started and connected to Redis"
+  - "curl -sf http://localhost:8000/health  # verify app still healthy"
+  - "Trigger a background task and verify it's processed"
+
+risk_level: medium
+
+rollout_notes: >
+  HIGH priority. Standalone addition. Reference docs/03-processing/task-queue.md for
+  specification. Worker code exists at src/mkobi/workers/data_worker.py.

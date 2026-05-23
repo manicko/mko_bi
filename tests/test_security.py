@@ -8,7 +8,9 @@ from mkobi.core.security import (
     hash_password,
     verify_password,
     create_access_token,
+    create_refresh_token,
     decode_token,
+    validate_refresh_token,
     _truncate_password,
 )
 from mkobi.config import get_config
@@ -251,6 +253,61 @@ class TestDecodeToken:
         assert decoded["email"] == "test@example.com"
         assert decoded["role"] == "admin"
         assert decoded["permissions"] == ["view", "edit"]
+
+
+class TestValidateRefreshToken:
+    """Tests for validate_refresh_token function."""
+
+    def test_valid_refresh_token(self):
+        """Valid refresh token should return payload."""
+        data = {"user_id": 123, "email": "test@example.com", "role": "user"}
+        token = create_refresh_token(data)
+        payload = validate_refresh_token(token)
+        assert payload is not None
+        assert payload["user_id"] == 123
+        assert payload["email"] == "test@example.com"
+        assert payload["role"] == "user"
+
+    def test_invalid_refresh_token_returns_none(self):
+        """Invalid refresh token should return None."""
+        result = validate_refresh_token("invalid.token.here")
+        assert result is None
+
+    def test_empty_refresh_token_returns_none(self):
+        """Empty refresh token should return None."""
+        result = validate_refresh_token("")
+        assert result is None
+
+    def test_malformed_refresh_token_returns_none(self):
+        """Malformed refresh token should return None."""
+        result = validate_refresh_token("not.a.token")
+        assert result is None
+
+    def test_expired_refresh_token_returns_none(self):
+        """Expired refresh token should return None."""
+        # Create expired token manually
+        from datetime import datetime, UTC
+        expired_payload = {
+            "user_id": 1,
+            "exp": datetime.now(UTC) - timedelta(seconds=1),  # Already expired
+        }
+        expired_token = jwt.encode(
+            expired_payload,
+            get_config().jwt.secret_key,
+            algorithm=get_config().jwt.algorithm,
+        )
+        result = validate_refresh_token(expired_token)
+        assert result is None
+
+    def test_refresh_token_with_wrong_signature_returns_none(self):
+        """Refresh token with wrong signature should return None."""
+        token = create_refresh_token({"user_id": 1})
+        with patch("mkobi.core.security.get_config") as mock_get_config:
+            mock_config = mock_get_config.return_value
+            mock_config.jwt.secret_key = "wrong_secret"
+            mock_config.jwt.algorithm = "HS256"
+            result = validate_refresh_token(token)
+            assert result is None
 
 
 class TestIntegration:

@@ -31,6 +31,11 @@ export interface LoginRequest {
   password: string
 }
 
+export interface Token {
+  access_token: string
+  token_type: string
+}
+
 export interface AuthResponse {
   access_token: string
   token_type: string

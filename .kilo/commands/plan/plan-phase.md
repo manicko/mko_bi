@@ -1,7 +1,7 @@
 ---
 name: plan-phase
 description: Create detailed execution plan for a phase {file_number} (PLAN_{file_number}.md) with validation loop
-argument-hint: "[file_number] [--research] [--skip-research] [--gaps] [--skip-validate]"
+argument-hint: "[file_number]"
 agent: planner
 allowed-tools:
   - read_file
@@ -14,32 +14,11 @@ allowed-tools:
   - use_mcp_tool
 ---
 
-<execution_context>
-.ai/templates/ui-brand.md
-</execution_context>
 
 <objective>
-Create executable phase prompts (PLAN_{file_number}.md files) for a roadmap phase with integrated research and validation.
-
-**Default flow:** Research (if needed) → Plan → validate → Done
-
-**Orchestrator role:** Parse arguments, validate phase, research domain (unless skipped or exists), spawn planner agent, validate plans with plan-checker, iterate until plans pass or max iterations reached, present results.
-
-**Why subagents:** Research and planning burn context fast. validation uses fresh context. User sees the flow between agents in main context.
+Create executable phase prompts (PLAN_ {file_number} .md files) for a roadmap phase with integrated research and validation.
 </objective>
 
-<context>
-Phase number {file_number}: (optional - auto-detects next unplanned phase if not provided)
-
-**Flags:**
-
-- `--research` — Force re-research even if RESEARCH_{file_number}.md exists
-- `--skip-research` — Skip research entirely, go straight to planning
-- `--gaps` — Gap closure mode (reads validation.md, skips research)
-- `--skip-validate` — Skip planner → checker validation loop
-
-Normalize phase input in step 2 before any directory lookups.
-</context>
 
 <process>
 
@@ -48,16 +27,12 @@ Stop and wait for the response.
 
 
 ## 1. Preparation
-
-**Check for existing research and plans:**
-
 Load {MAIN_CONTEXT} from:
 
 C:\py_dev\mkobi\docs\SPEC.md
 C:\py_dev\mkobi\docs\STRUCT.md
 
 Summarize it and keep as {MAIN_CONTEXT} 
-
 
 ## 2. Ensure Decisions Directory Exists and Load DECISION_*.md files
 
@@ -76,32 +51,16 @@ keep only mentioned by user {file_numbers} (step 0)
 
 ### 3.3 Handle Research
 
-**If `--gaps` flag:** Skip research (gap closure uses validation.md instead).
-
-**If `--skip-research` flag:** Skip to step 3.4 
-
-**Check config for research setting:**
-
-```powershell
-$WORKFLOW_RESEARCH = if (Test-Path .ai/config.json) {
-    (Get-Content .gsd/config.json -Raw) -match '"research"\s*:\s*(true|false)' ? $matches[1] : "true"
-} else { "true" }
-```
-
-**If `workflow.research` is `false` AND `--research` flag NOT set:** Skip to step 3.4
-
-**Otherwise:**
-
 Check for existing research with the same file number:
 `C:\py_dev\mkobi\.ai\researches\RESEARCH_{file_number}.md`
 {file_number} - from previous steps 
 
-**If RESEARCH.md exists AND `--research` flag NOT set:**
+**If RESEARCH.md exists**
 
 - Display: `Using existing research: RESEARCH_{file_number}.md`
 - Skip to step 3.4 Check Existing Plans 
 
-**If RESEARCH.md missing OR `--research` flag set:**
+**If RESEARCH.md missing**
 
 Display stage banner:
 
@@ -126,13 +85,12 @@ Answer: "What do I need to know to PLAN this phase well?"
 </objective>
 
 <phase_context>
-**IMPORTANT:** If DECISION_{file_number}.md exists below, it contains user decisions from /discuss-phase.md.
-
-- **Decisions section** = Locked choices — research THESE deeply, don't explore alternatives
+**IMPORTANT:** 
+**Decisions section**
+{DECISION_CONTENT} = Locked choices — research THESE deeply, don't explore alternatives
 - **KiloCode's Discretion section** = Your freedom areas — research options, make recommendations
 - **Deferred Ideas section** = Out of scope — ignore completely
 
-{DECISION_CONTENT}
 </phase_context>
 
 <additional_context>
@@ -140,6 +98,7 @@ Answer: "What do I need to know to PLAN this phase well?"
 </additional_context>
 
 <output>
+IMPORTANT: 
 Write research findings to: C:\py_dev\mkobi\.ai\researches\RESEARCH_{file_number}.md
 </output>
 ```

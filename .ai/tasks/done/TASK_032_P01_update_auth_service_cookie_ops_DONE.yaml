@@ -1,0 +1,59 @@
+id: TASK_032_P01_update_auth_service_cookie_ops
+
+title: Update AuthService for cookie-based refresh operations
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_024_P01_add_refresh_token_creation
+
+phase: PLAN_01
+wave: 3
+
+description: >
+  Update AuthService to support cookie-based token refresh operations.
+  Remove any RefreshRequest dependencies and ensure token creation uses
+  the new security utilities.
+
+finding_ref: PLAN_01_WAVE_3
+severity: medium
+
+goals:
+  - AuthService methods updated for cookie-based flow
+  - No breaking changes to existing functionality
+  - Proper error handling maintained
+  - Remove RefreshRequest dependencies
+
+files:
+  - path: src/mkobi/services/auth_service.py
+    targets:
+      - type: class
+        name: AuthService
+    semantic_anchors:
+      modify:
+        type: class_definition
+        value: AuthService
+    changes:
+      - action: modify_method
+        description: Update token-related methods for cookie flow
+        code_hint: |
+          # Update create_access_token to support refresh token data
+          # Remove any RefreshRequest model usage
+          # Ensure verify_token works with both access and refresh tokens
+
+acceptance_criteria:
+  - AuthService methods are updated for cookie-based flow
+  - No breaking changes to existing functionality
+  - Proper error handling maintained
+  - No RefreshRequest references remain
+
+tests_to_run:
+  - "pytest tests/ -k test_auth_service -v"
+
+risk_level: medium
+
+rollout_notes: >
+  Must maintain backward compatibility with existing callers.
+  Service layer should not know about cookies (that's the route layer's job).

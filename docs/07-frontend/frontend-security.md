@@ -67,7 +67,24 @@ The Axios request interceptor checks token expiration before every API request:
 
 ### Token Refresh
 
-The backend provides `POST /api/v1/auth/refresh` for token renewal. The current frontend implementation does not use automatic token refresh — users are redirected to login when their session expires.
+The frontend implements an automatic cookie-based token refresh mechanism:
+
+**Silent refresh on mount:** When the app initializes and no access token exists in memory, the frontend automatically attempts a silent refresh by calling `POST /api/v1/auth/refresh` with `withCredentials: true`. This sends the httpOnly refresh cookie to the backend without any user interaction. If successful, the user stays logged in across page refreshes.
+
+**Request queue for concurrent 401s:** The axios response interceptor implements a request queuing mechanism to handle concurrent token expiries:
+
+1. When a `401` is received and no refresh is in progress (`isRefreshing = false`):
+   - Sets `isRefreshing = true`
+   - Calls `POST /api/v1/auth/refresh` with the httpOnly cookie
+   - On success: updates the in-memory access token, retries all queued requests
+   - On failure: clears the token, redirects to `/login`
+2. When a `401` is received while a refresh is already in progress (`isRefreshing = true`):
+   - The failed request is added to the `failedQueue`
+   - After the refresh completes, all queued requests are retried with the new token
+
+This prevents race conditions where multiple concurrent requests could trigger duplicate refresh calls.
+
+**Logout:** The logout flow calls `POST /api/v1/auth/logout` (which clears the refresh cookie on the backend), then clears the in-memory access token on the frontend, and redirects to `/login`.
 
 ---
 

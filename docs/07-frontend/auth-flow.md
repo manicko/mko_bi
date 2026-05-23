@@ -197,9 +197,32 @@ When a session expires (token expires or is invalidated):
 
 1. The next API call returns `401`.
 2. The Axios response interceptor catches the `401`.
-3. Token is removed from storage.
-4. Error toast is displayed: "Session expired. Please login again."
+3. The interceptor attempts a **silent refresh** by calling `POST /api/v1/auth/refresh` with `withCredentials: true` (sending the httpOnly cookie).
+4. **On successful refresh:** The new access token is stored in memory, and the original request is retried. The user experiences no interruption.
+5. **On failed refresh** (no cookie, invalid cookie, user deleted): The token is removed from storage, an error toast is displayed ("Session expired. Please login again."), and the user is redirected to `/login`.
+
+### Concurrent 401 Handling
+
+When multiple requests fail with `401` simultaneously (e.g., right after token expiry), the axios interceptor ensures only one refresh call is made:
+
+- The first `401` triggers the refresh and sets `isRefreshing = true`.
+- Subsequent `401`s are queued in `failedQueue`.
+- After the refresh completes, all queued requests are retried with the new access token.
+- If the refresh fails, all queued requests are rejected and the user is redirected to login.
+
+### Silent Refresh on App Initialization
+
+On app mount, `useAuth` checks if an access token exists in memory. If not, it attempts a silent refresh using the httpOnly cookie. This keeps users logged in across page refreshes without requiring re-authentication. During the refresh, `ProtectedRoute` shows a loading spinner to prevent a flash of the login page.
+
+## Logout Flow
+
+1. User clicks logout in the Header menu.
+2. Frontend calls `POST /api/v1/auth/logout` with the access token.
+3. Backend validates the token and clears the `mkobi_refresh_token` cookie.
+4. Frontend clears the in-memory access token.
 5. User is redirected to `/login`.
+
+> The logout API call is fire-and-forget on the frontend — if it fails (network error), the frontend still clears local state and redirects.
 
 ## Cross-References
 

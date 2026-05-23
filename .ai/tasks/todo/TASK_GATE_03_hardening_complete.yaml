@@ -1,0 +1,118 @@
+id: TASK_GATE_03_hardening_complete
+
+title: GATE — Verify Docker Stack After Docker Hardening Wave 1
+
+status: pending
+
+priority: critical
+
+depends_on:
+  - TASK_008_D01_fix_root_user_dev
+  - TASK_009_D04_add_rq_worker
+  - TASK_010_D11_remove_exposed_ports
+  - TASK_011_D12_fix_test_compose_passwords
+  - TASK_017_D17_fix_test_db_creation_dev
+
+phase: DOCKER_HARDENING
+wave: 1
+type: gate
+
+description: >
+  Verification gate after completing Docker Hardening Wave 1. Multiple security
+  and infrastructure changes were made: root user fix, rq-worker addition, port
+  exposure removal, test compose password fix, and test DB creation fix. This
+  gate ensures the full stack remains stable and all changes work together.
+
+  This is a READ-ONLY verification task — no source code changes.
+
+goals:
+  - Confirm all containers healthy after all hardening changes
+  - Verify app runs as non-root user
+  - Verify rq-worker connects to Redis
+  - Verify test database is created automatically
+  - Verify ports not exposed on host
+  - Verify no regressions in existing functionality
+
+files: []
+
+acceptance_criteria:
+  - All containers running and healthy
+  - App runs as non-root user
+  - rq-worker functional with Redis
+  - Test database bidb_test exists with schema
+  - DB/Redis ports not exposed on host
+  - No container restart loops
+
+docker_health_checks:
+  # === Container Status ===
+  - name: All containers running
+    command: "docker compose ps --format '{{.Name}} {{.Status}}'"
+    expected: "db: running (healthy), migrate: exited (0), app: running"
+  - name: No restarting containers
+    command: "docker compose ps --format '{{.Name}} {{.Status}}' | grep -c 'restarting\\|unhealthy'"
+    expected: "Count is 0"
+
+  # === Security: Non-root User ===
+  - name: App runs as non-root
+    command: "docker compose exec app whoami"
+    expected: "Returns 'app', NOT 'root'"
+  - name: App can still write to mounted volumes
+    command: "docker compose exec app touch /app/src/test_write && docker compose exec app rm /app/src/test_write"
+    expected: "Write succeeds without permission errors"
+
+  # === Database Layer ===
+  - name: DB container healthy
+    command: "docker compose exec db pg_isready -U postgres"
+    expected: "Returns 'accepting connections'"
+  - name: Main database has schema
+    command: "docker compose exec db psql -U postgres -d bidb -c \"SELECT version_num FROM alembic_version LIMIT 1;\""
+    expected: "Returns alembic revision hash"
+  - name: Test database bidb_test exists
+    command: "docker compose exec db psql -U postgres -c \"SELECT datname FROM pg_database WHERE datname = 'bidb_test';\""
+    expected: "Returns 'bidb_test' row"
+  - name: Test database has schema
+    command: "docker compose exec db psql -U postgres -d bidb_test -c \"SELECT version_num FROM alembic_version LIMIT 1;\""
+    expected: "Returns alembic revision hash"
+
+  # === Application Layer ===
+  - name: App health endpoint
+    command: "curl -sf http://localhost:8000/health"
+    expected: "HTTP 200"
+  - name: App logs clean
+    command: "docker compose logs app --tail 100"
+    expected: "No ERROR or CRITICAL lines; no permission errors"
+
+  # === Network Isolation ===
+  - name: DB port NOT on host (base compose)
+    command: "docker compose up -d 2>/dev/null; ! timeout 2 bash -c 'echo > /dev/tcp/localhost/5432' 2>/dev/null"
+    expected: "Port 5432 not directly accessible on host"
+  - name: App can reach DB via internal network
+    command: "docker compose exec app python -c \"import socket; s = socket.create_connection(('db', 5432), timeout=5); print('OK'); s.close()\""
+    expected: "Prints 'OK'"
+
+  # === rq-worker (Production Profile) ===
+  - name: rq-worker starts with production profile
+    command: "docker compose --profile production up -d && docker compose ps rq-worker --format '{{.Status}}'"
+    expected: "rq-worker container shows 'running' status"
+  - name: rq-worker connected to Redis
+    command: "docker compose logs rq-worker --tail 30"
+    expected: "No connection errors; worker started successfully"
+
+  # === Resource Stability ===
+  - name: No memory/CPU issues
+    command: "docker stats --no-stream --format '{{.Name}} {{.CPUPerc}} {{.MemUsage}}' app db"
+    expected: "CPU reasonable, no OOM"
+
+tests_to_run:
+  - "docker compose down -v && docker compose build app && docker compose up -d"
+  - "docker compose exec app whoami  # should be 'app'"
+  - "curl -sf http://localhost:8000/health"
+  - "docker compose exec db psql -U postgres -c \"SELECT datname FROM pg_database;\"  # check bidb_test"
+  - "docker compose --profile production up -d && docker compose logs rq-worker"
+
+risk_level: low
+
+rollout_notes: >
+  READ-ONLY gate task. No code changes. If any check fails, fix the underlying
+  hardening task before proceeding. This gate must pass before considering
+  Docker Hardening Wave 1 complete.

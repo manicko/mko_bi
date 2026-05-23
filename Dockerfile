@@ -52,7 +52,8 @@ WORKDIR /app
 RUN addgroup --system app && adduser --system --group app
 
 # -----------------------------------------------------------------------------
-# Stage: dev - Development with HOT RELOAD (--reload flag)
+# Stage: dev - Development image
+# Hot reload controlled via docker-compose.override.yml
 # -----------------------------------------------------------------------------
 FROM base AS dev
 
@@ -77,8 +78,8 @@ RUN mkdir -p /app/data/uploads /app/data/logs /app/data/tmp_uploads && \
 
 EXPOSE 8000
 
-# Hot reload enabled for development
-CMD ["uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
+# Default CMD - override via docker-compose.override.yml for reload control
+CMD ["uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # -----------------------------------------------------------------------------
 # Stage: test - Testing environment

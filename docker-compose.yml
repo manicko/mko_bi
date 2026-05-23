@@ -73,6 +73,8 @@ services:
       # Application role with limited privileges for runtime operations
       DATABASE__USER: mkobi_app
       DATABASE__PASSWORD: ${MKOBI_APP_PASSWORD:-secure_password_placeholder}
+      DATABASE__ADMIN_USER: postgres
+      DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD must be set for production}
       DATABASE__DBNAME: bidb
       DATABASE__TEST_DBNAME: bidb_test
       # SECURITY: JWT__SECRET_KEY MUST be set explicitly in production.

@@ -3,6 +3,7 @@
 from fastapi import status
 from httpx import AsyncClient
 
+from mkobi.core.security import create_refresh_token
 from mkobi.db.repositories.registration_request_repo import (
     RegistrationRequestRepository,
 )
@@ -58,6 +59,33 @@ class TestLogin:
             },
         )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+    async def test_login_sets_refresh_token_cookie(
+        self, async_client: AsyncClient, test_user: dict
+    ) -> None:
+        """Test that login sets refresh token as httpOnly cookie."""
+        response = await async_client.post(
+            "/auth/login",
+            json={
+                "email": test_user["email"],
+                "password": "TestPass123!",
+            },
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        # Verify access token in JSON response
+        data = response.json()
+        assert "access_token" in data
+        assert data["token_type"] == "bearer"
+        assert "user" in data
+
+        # Verify refresh token cookie is set
+        assert "set-cookie" in response.headers
+        set_cookie = response.headers["set-cookie"]
+        assert "mkobi_refresh_token" in set_cookie
+        assert "httponly" in set_cookie.lower()
+        assert "secure" in set_cookie.lower()
+        assert "samesite=strict" in set_cookie.lower()
 
 
 class TestRegisterRequest:
@@ -128,3 +156,89 @@ class TestGetMe:
         """Test getting current user without token (401)."""
         response = await async_client.get("/auth/me")
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+class TestLogout:
+    """Tests for logout endpoint."""
+
+    async def test_logout_authenticated(
+        self, authenticated_client: AsyncClient, test_user: dict
+    ) -> None:
+        """Test logout with valid token."""
+        response = await authenticated_client.post("/auth/logout")
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["message"] == "Logged out successfully"
+        # Verify cookie header is present (setting cookie for deletion)
+        assert "set-cookie" in response.headers or "refresh_token" in str(
+            response.headers.get("set-cookie", "")
+        )
+
+    async def test_logout_unauthenticated(self, async_client: AsyncClient) -> None:
+        """Test logout without token (401)."""
+        response = await async_client.post("/auth/logout")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+class TestRefreshToken:
+    """Tests for token refresh endpoint."""
+
+    async def test_refresh_missing_cookie(self, async_client: AsyncClient) -> None:
+        """Test refresh without cookie returns 401."""
+        response = await async_client.post("/auth/refresh")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        data = response.json()
+        assert "detail" in data
+
+    async def test_refresh_invalid_token(self, async_client: AsyncClient) -> None:
+        """Test refresh with invalid token returns 401."""
+        response = await async_client.post(
+            "/auth/refresh",
+            cookies={"mkobi_refresh_token": "invalid.token.here"},
+        )
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        data = response.json()
+        assert "detail" in data
+
+    async def test_refresh_valid_token(
+        self, async_client: AsyncClient, test_user: dict
+    ) -> None:
+        """Test refresh with valid token returns new access token."""
+        # Create a valid refresh token for the test user
+        refresh_token = create_refresh_token(
+            data={
+                "sub": str(test_user["id"]),
+                "email": test_user["email"],
+                "role": test_user["role"],
+            }
+        )
+
+        response = await async_client.post(
+            "/auth/refresh",
+            cookies={"mkobi_refresh_token": refresh_token},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert "access_token" in data
+        assert data["token_type"] == "bearer"
+
+    async def test_refresh_nonexistent_user(
+        self, async_client: AsyncClient
+    ) -> None:
+        """Test refresh with token for non-existent user returns 401."""
+        # Create a refresh token for a user that doesn't exist
+        refresh_token = create_refresh_token(
+            data={
+                "sub": "00000000-0000-0000-0000-000000000001",
+                "email": "nonexistent@example.com",
+                "role": "viewer",
+            }
+        )
+
+        response = await async_client.post(
+            "/auth/refresh",
+            cookies={"mkobi_refresh_token": refresh_token},
+        )
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        data = response.json()
+        assert "User not found" in data["detail"]

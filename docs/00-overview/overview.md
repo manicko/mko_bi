@@ -152,7 +152,7 @@ The FastAPI backend exposes the following endpoint groups:
 
 | Group               | Description                                    | Access        |
 | ------------------- | ---------------------------------------------- | ------------- |
-| Auth                | Login, register-request, change-password, refresh, me | Public/Any    |
+| Auth                | Login, register-request, change-password, refresh (cookie-based), logout, me | Public/Any    |
 | Users               | CRUD operations                                | Admin         |
 | Dashboards          | CRUD operations, access management, filter binding | Admin+        |
 | Layouts             | CRUD operations                                | Admin         |

@@ -1,0 +1,61 @@
+id: TASK_022_P01_update_jwt_config
+
+title: Update JWT token expiration defaults
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+phase: PLAN_01
+wave: 1
+
+description: >
+  Modify config.py to include refresh token expiration setting and change
+  access token default from 30 to 15 minutes. This is the foundational
+  configuration change enabling the cookie-based refresh token flow.
+
+finding_ref: PLAN_01_WAVE_1
+severity: medium
+
+goals:
+  - Add refresh_token_expire_minutes to JWTSettings class
+  - Change access_token_expire_minutes from 30 to 15
+  - Ensure configuration loads without errors
+
+files:
+  - path: src/mkobi/config.py
+    targets:
+      - type: class
+        name: JWTSettings
+    semantic_anchors:
+      insert_after:
+        type: class_definition
+        value: JWTSettings
+    changes:
+      - action: modify_field
+        description: Change access_token_expire_minutes from 30 to 15
+        field: access_token_expire_minutes
+        old_value: "access_token_expire_minutes: int = 30"
+        new_value: "access_token_expire_minutes: int = 15"
+      - action: add_field
+        description: Add refresh_token_expire_minutes field (7 days)
+        field: refresh_token_expire_minutes
+        value: "refresh_token_expire_minutes: int = 10080"
+
+acceptance_criteria:
+  - JWTSettings class has refresh_token_expire_minutes attribute
+  - Access token default expiration is 15 minutes
+  - Configuration loads without errors
+  - No breaking changes to existing functionality
+
+tests_to_run:
+  - "pytest tests/ -k test_config -v"
+  - "python -c \"from mkobi.config import get_config; c = get_config(); assert c.jwt.access_token_expire_minutes == 15; assert c.jwt.refresh_token_expire_minutes == 10080\""
+
+risk_level: low
+
+rollout_notes: >
+  Non-breaking configuration change. Easy to revert.
+  Environment-based configuration ensures no hardcoded values.

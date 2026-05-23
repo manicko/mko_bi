@@ -62,6 +62,7 @@
   - __call__
   - __repr__
   - database_url
+  - admin_database_url
   - __init__
   - validate_admin_credentials
   - validate_cors_origins
@@ -71,7 +72,9 @@
   - _ensure_upload_dir
   - DATABASE_URL
   - TEST_DATABASE_URL
+  - TEST_ADMIN_DATABASE_URL
   - test_database_url
+  - test_admin_database_url
   - jwt_secret_key
   - jwt_algorithm
   - upload_temp_dir
@@ -111,6 +114,7 @@
   - mkobi.services.layout_service
   - mkobi.services.processing_config_service
   - mkobi.services.processing_log_service
+  - mkobi.services.user_service
   - mkobi.core.permissions
   - mkobi.core.security
   - mkobi.db.repositories.user_repo
@@ -234,6 +238,7 @@
   imports:
   - datetime
   - typing
+  - fastapi
   - jose
   - mkobi.config
   - uuid
@@ -249,7 +254,11 @@
   - hash_password
   - verify_password
   - create_access_token
+  - create_refresh_token
   - decode_token
+  - validate_refresh_token
+  - set_secure_cookie
+  - delete_secure_cookie
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\task_queue.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.core.task_queue
   layer: unknown
@@ -299,6 +308,7 @@
   imports:
   - datetime
   - typing
+  - urllib.parse
   - alembic
   - alembic.config
   - sqlalchemy
@@ -378,6 +388,7 @@
   functions:
   - create_access_token
   - verify_token
+  - validate_refresh_token
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\interfaces\__init__.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.interfaces.__init__
   layer: unknown
@@ -400,6 +411,7 @@
   module: C:_dev.mkobi..ai.builders.......src.mkobi.models.auth
   layer: unknown
   imports:
+  - datetime
   - pydantic
   - uuid
   - mkobi.models.enums
@@ -408,13 +420,15 @@
   - LoginRequest
   - RegistrationRequestCreate
   - RegistrationRequestResponse
+  - RegistrationRequestItem
   - RegisterRequest
   - Token
   - TokenWithUser
   - TokenData
-  - RefreshRequest
   - ChangePasswordRequest
-  functions: []
+  - SuccessResponse
+  functions:
+  - serialize_ip
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.models.dashboard
   layer: unknown
@@ -671,6 +685,7 @@
   - _validate_email_format
   - create_access_token
   - verify_token
+  - validate_refresh_token
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.services.dashboard_service
   layer: unknown
@@ -1487,8 +1502,10 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.interfaces
   - mkobi.models.enums
   - mkobi.models.user
+  - mkobi.models.auth
   - mkobi.services.auth_service
   classes: []
   functions: []
@@ -1498,10 +1515,12 @@
   imports:
   - ipaddress
   - typing
+  - uuid
   - fastapi
   - fastapi.security
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.db.repositories.user_repo
   - mkobi.config
   - mkobi.core.logging_config
   - mkobi.core

@@ -1,0 +1,68 @@
+id: TASK_026_P01_create_logout_endpoint
+
+title: Create logout endpoint structure
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+phase: PLAN_01
+wave: 1
+
+description: >
+  Create the initial POST /auth/logout endpoint that clears the refresh token
+  cookie. This establishes the route structure; cookie clearing logic will be
+  completed in Wave 3.
+
+finding_ref: PLAN_01_WAVE_1
+severity: medium
+
+goals:
+  - Add POST /auth/logout route to api/routes/auth.py
+  - Endpoint requires valid JWT token
+  - Returns standardized success response
+
+files:
+  - path: src/mkobi/api/routes/auth.py
+    targets:
+      - type: route
+        name: router
+    semantic_anchors:
+      insert_after:
+        type: route_definition
+        pattern: "@router.post"
+    changes:
+      - action: add_route
+        description: Add logout endpoint
+        code_hint: |
+          @router.post("/logout", response_model=SuccessResponse)
+          async def logout(
+              current_user: Annotated[UserInDB, Depends(get_current_user)],
+          ) -> SuccessResponse:
+              """Logout current user by clearing refresh token cookie."""
+              logger.info("User %s logging out", current_user.email)
+              response = SuccessResponse(message="Logged out successfully")
+              response.delete_cookie(
+                  key=COOKIE_NAME,
+                  httponly=COOKIE_HTTPONLY,
+                  secure=COOKIE_SECURE,
+                  samesite=COOKIE_SAMESITE,
+              )
+              return response
+
+acceptance_criteria:
+  - Endpoint requires valid JWT token
+  - Returns standardized success response
+  - Cookie is cleared on response
+  - Proper logging of logout event
+
+tests_to_run:
+  - "pytest tests/ -k test_auth -v"
+
+risk_level: low
+
+rollout_notes: >
+  Initial implementation. Cookie deletion utility functions
+  will be added in Wave 2 and integrated here in Wave 3.

@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios'
 import { toast } from 'react-hot-toast'
-import { getTokenWithExpirationCheck, removeToken } from '../../features/auth/model/authToken'
+import { getTokenWithExpirationCheck, removeToken, setToken } from '../../features/auth/model/authToken'
+import { refreshToken } from '../../features/auth/api/authApi'
 
 export const axiosInstance = axios.create({
   baseURL: '/api/v1',
@@ -22,22 +23,80 @@ axiosInstance.interceptors.request.use(
     }
     return config
   },
-  (error) => Promise.reject(error)
+  (error) => Promise.reject(error instanceof Error ? error : new Error(String(error)))
 )
+
+// Request queuing for concurrent 401 handling
+let isRefreshing = false
+let failedQueue: Array<{
+  resolve: (token: string) => void
+  reject: (error: Error) => void
+}> = []
+
+const processQueue = (error: Error | null, token: string | null = null): void => {
+  failedQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error)
+    } else {
+      prom.resolve(token!)
+    }
+  })
+  failedQueue = []
+}
 
 // Response interceptor - handle errors
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
     if (error.response?.status === 401) {
       // Skip redirect/toast for login endpoint - let inline form error handle it
       if (error.config?.url?.includes('/auth/login')) {
         return Promise.reject(error)
       }
-      removeToken()
-      toast.error('Session expired. Please login again.')
-      window.location.href = '/login'
+
+      const originalConfig = error.config
+
+      // If config is missing, reject immediately
+      if (!originalConfig) {
+        removeToken()
+        toast.error('Session expired. Please login again.')
+        window.location.href = '/login'
+        return Promise.reject(error)
+      }
+
+      // If already refreshing, queue the request
+      if (isRefreshing) {
+        return new Promise<string>((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        })
+          .then((token) => {
+            originalConfig.headers.Authorization = `Bearer ${token}`
+            return axiosInstance(originalConfig)
+          })
+          .catch((err) => Promise.reject(err instanceof Error ? err : new Error(String(err))))
+      }
+
+      // Mark as refreshing and attempt token refresh
+      isRefreshing = true
+
+      try {
+        const newToken = await refreshToken()
+        setToken(newToken.access_token)
+        processQueue(null, newToken.access_token)
+        originalConfig.headers.Authorization = `Bearer ${newToken.access_token}`
+        return axiosInstance(originalConfig)
+      } catch (err) {
+        const errorToReject = err instanceof Error ? err : new Error(String(err))
+        processQueue(errorToReject, null)
+        removeToken()
+        toast.error('Session expired. Please login again.')
+        window.location.href = '/login'
+        return Promise.reject(errorToReject)
+      } finally {
+        isRefreshing = false
+      }
     }
+
     if (error.response?.status === 403) {
       toast.error('Access denied')
     }

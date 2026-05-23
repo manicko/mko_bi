@@ -1,0 +1,69 @@
+id: TASK_033_P01_add_refresh_token_validation_service
+
+title: Add refresh token validation service method
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_027_P01_add_token_validation
+  - TASK_032_P01_update_auth_service_cookie_ops
+
+phase: PLAN_01
+wave: 3
+
+description: >
+  Add a validate_refresh_token method to AuthService that wraps the security
+  module's validation function. This provides a clean service-layer interface
+  for token validation.
+
+finding_ref: PLAN_01_WAVE_3
+severity: medium
+
+goals:
+  - Add validate_refresh_token method to AuthService
+  - Use security module validation function
+  - Return user data if valid
+  - Consistent with service architecture
+
+files:
+  - path: src/mkobi/services/auth_service.py
+    targets:
+      - type: class
+        name: AuthService
+    semantic_anchors:
+      insert_after:
+        type: method_definition
+        value: verify_token
+    changes:
+      - action: add_method
+        description: Add validate_refresh_token method to AuthService
+        code_hint: |
+          async def validate_refresh_token(
+              self, token: str
+          ) -> dict[str, Any] | None:
+              """Validate a refresh token and return user data.
+              
+              Args:
+                  token: The refresh token string.
+                  
+              Returns:
+                  User data dict if valid, None otherwise.
+              """
+              return validate_refresh_token(token)
+
+acceptance_criteria:
+  - Method integrates with existing AuthService
+  - Proper error handling
+  - Consistent with service architecture
+  - Method is properly documented
+
+tests_to_run:
+  - "pytest tests/ -k test_auth_service -v"
+
+risk_level: low
+
+rollout_notes: >
+  Thin wrapper around security.validate_refresh_token.
+  Follows existing AuthService method patterns.

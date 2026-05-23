@@ -54,6 +54,7 @@ async def lifespan(app: FastAPI):
         env=config.environment,
         main_database_url=config.DATABASE_URL,
         test_database_url=config.TEST_DATABASE_URL,
+        test_admin_database_url=config.TEST_ADMIN_DATABASE_URL,
         auto_migrate=config.auto_migrate,
         migration_script_path=config.migration_script_path,
         alembic_ini_path=config.alembic_ini_path,

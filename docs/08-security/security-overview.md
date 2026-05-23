@@ -192,9 +192,34 @@ Registration requests are checked against a configurable email domain blocklist:
 
 - Tokens are signed and contain expiration (`exp` claim)
 - Payload contains: `user_id`, `email`, `role`
-- **Production:** Tokens stored in memory only (not in `localStorage` or cookies — XSS-safe)
-- **Development:** Tokens stored in `sessionStorage` for convenience
-- Axios interceptors attach the token to every request and handle `401` responses
+- **Access tokens:** 15-minute expiration, stored in memory on the frontend (not in `localStorage` or cookies — XSS-safe)
+- **Refresh tokens:** 7-day expiration, stored in httpOnly cookies (`mkobi_refresh_token`), set with `Secure`, `HttpOnly`, and `SameSite=Strict` attributes
+- Axios interceptors attach the access token to every request and handle `401` responses by attempting a silent refresh
+
+---
+
+## Cookie Security
+
+The `mkobi_refresh_token` cookie is the cornerstone of the refresh token security model. It is used exclusively for storing the refresh token and has the following attributes:
+
+| Attribute | Value | Purpose |
+| --- | --- | --- |
+| `HttpOnly` | `true` | Prevents JavaScript access, mitigating XSS-based token theft |
+| `Secure` | `true` | Cookie is only sent over HTTPS, preventing interception on plaintext connections |
+| `SameSite` | `Strict` | Cookie is not sent on cross-site requests, mitigating CSRF attacks |
+| `Max-Age` | `604800` (7 days) | Refresh token lifetime |
+| `Path` | `/` | Available to all API routes |
+
+### Cookie Lifecycle
+
+1. **Set on login:** `POST /api/v1/auth/login` sets the cookie via `Set-Cookie` header
+2. **Read on refresh:** `POST /api/v1/auth/refresh` reads the cookie to obtain the refresh token
+3. **Cleared on logout:** `POST /api/v1/auth/logout` sets `Max-Age=0` to clear the cookie
+4. **Not accessible to JS:** The `HttpOnly` flag ensures client-side JavaScript cannot read or manipulate the cookie
+
+### Backend Cookie Utilities
+
+The `core/security.py` module provides `set_cookie()` and `delete_cookie()` helper functions that enforce consistent cookie attributes across all auth endpoints. All auth routes use these utilities instead of calling `Response.set_cookie()` directly.
 
 ---
 

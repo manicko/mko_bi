@@ -53,6 +53,7 @@
     - ../features/users/ui/UserProfile
     - ../features/users/ui/ChangePasswordPage
   components:
+    - TrailingSlashRedirect
     - AppRoutes
   hooks: []
   jsx_tags:
@@ -108,6 +109,7 @@
     - axios
     - react-hot-toast
     - ../../features/auth/model/authToken
+    - ../../features/auth/api/authApi
   components: []
   hooks: []
   jsx_tags: []
@@ -540,10 +542,11 @@
     - react-hook-form
     - '@hookform/resolvers/zod'
     - react-router-dom
-    - ../
     - '@mui/material'
     - react
     - ../../../shared/types/formSchemas
+    - ../api/authApi
+    - ../model/authToken
   components:
     - LoginForm
   hooks: []
@@ -555,7 +558,7 @@
     - '<Alert severity="error" sx={{ mb: 2 }}>'
     - >-
       <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }}
-      disabled={isLoading}>
+      disabled={isSubmitting}>
     - '<Typography sx={{ mt: 2, textAlign: ''center'' }}>'
     - <Link to="/register">
 - path: C:/py_dev/mkobi/frontend/src/features/auth/ui/RegisterForm.tsx

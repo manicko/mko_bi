@@ -1,0 +1,66 @@
+id: TASK_007_03_07_fix_deployment_doc
+
+title: Update deployment.md to Reflect Actual Docker Dev Workflow
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_03_01_fix_dev_reload
+  - TASK_002_03_02_simplify_dev_env
+  - TASK_003_03_03_add_frontend_dev_service
+  - TASK_004_03_04_add_vite_proxy
+  - TASK_005_03_05_remove_frontend_dist_mount
+
+phase: PLAN_03
+wave: 3
+
+description: >
+  docs/10-deployment/deployment.md has a Docker Deployment section that references
+  the old override workflow, lists non-existent prod-slim target, and doesn't mention
+  the frontend dev server. Update to match the actual Docker setup after Waves 1-2.
+
+finding_ref: DOCKER-003
+severity: high
+
+goals:
+  - Update Quick Start section to clarify dev vs prod workflow
+  - Add note about frontend dev server on port 5173
+  - Update Dockerfile targets table to match actual targets (remove prod-slim)
+  - Deployment doc matches actual Docker behavior
+
+files:
+  - path: docs/10-deployment/deployment.md
+    targets:
+      - type: section
+        name: "Docker Deployment"
+      - type: table
+        name: "Dockerfile Targets"
+    semantic_anchors:
+      insert_after:
+        type: heading
+        value: "Quick Start"
+    changes:
+      - action: update_section
+        description: Clarify docker compose up -d behavior for dev vs prod
+      - action: add_note
+        description: Add note about frontend dev server on port 5173
+      - action: update_table
+        description: Remove prod-slim from Dockerfile targets table
+
+acceptance_criteria:
+  - Deployment doc matches actual Docker behavior
+  - Developers can follow the doc to set up both local and Docker dev environments
+  - All commands in the doc work as described
+  - No references to non-existent prod-slim stage
+
+tests_to_run:
+  - "Verify all commands in the doc work as described"
+  - "Follow the deployment doc from scratch in a clean environment"
+
+risk_level: low
+
+rollout_notes: >
+  Documentation-only change. Depends on Waves 1-2 being complete.
+  Related to DOCKER-003 (HIGH).

@@ -11,6 +11,7 @@ import sys
 import uuid
 from datetime import datetime, timedelta
 from typing import cast
+from urllib.parse import urlparse, urlunparse
 
 from alembic import command
 from alembic.config import Config
@@ -45,6 +46,7 @@ class DatabaseStarterConfig:
         env: EnvironmentEnum = EnvironmentEnum.DEVELOPMENT,
         main_database_url: str | None = None,
         test_database_url: str | None = None,
+        test_admin_database_url: str | None = None,
         auto_migrate: bool = False,
         migration_script_path: str = "alembic",
         alembic_ini_path: str = "alembic.ini",
@@ -54,6 +56,7 @@ class DatabaseStarterConfig:
         self.env = env
         self.main_database_url = main_database_url
         self.test_database_url = test_database_url
+        self.test_admin_database_url = test_admin_database_url
         self.auto_migrate = auto_migrate
         self.migration_script_path = migration_script_path
         self.alembic_ini_path = alembic_ini_path
@@ -152,6 +155,7 @@ class DatabaseStarter:
     async def recreate_test_database(self) -> None:
         """Recreate test database from scratch."""
         test_url = self._config.test_database_url or get_config().test_database_url
+        admin_url = self._config.test_admin_database_url or get_config().test_admin_database_url
         if not test_url:
             logger.warning("Test database URL not configured, skipping")
             return
@@ -166,12 +170,21 @@ class DatabaseStarter:
         if not db_name or not re.match(r"^[a-zA-Z0-9_]+$", db_name):
             raise ValueError(f"Invalid database name: {db_name}")
 
-        # Connect to 'postgres' database to be able to drop/create target database
-        base_url = test_url.rsplit("/", 1)[0] + "/postgres"
+        # Use admin URL for database creation (requires CREATEDB privilege)
+        # Fall back to test_url if admin_url not configured (for backwards compatibility)
+        base_url = admin_url or test_url
+        # Reconstruct URL pointing to postgres database for admin operations
+        parsed_admin = urlparse(base_url)
+        admin_base_url = urlunparse((
+            parsed_admin.scheme,
+            parsed_admin.netloc,
+            "/postgres",  # Connect to postgres db for CREATE DATABASE
+            None, None, None
+        ))
 
         # Create engine connected to 'postgres' database with autocommit
         admin_engine = create_async_engine(
-            base_url,
+            admin_base_url,
             isolation_level="AUTOCOMMIT",
         )
 

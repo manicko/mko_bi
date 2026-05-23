@@ -1,0 +1,65 @@
+id: TASK_001_P02_url_nginx_trailing_slash_rewrite
+
+title: Add nginx rewrite to strip trailing slashes
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+phase: PLAN_02
+wave: 1
+
+description: >
+  Add a rewrite directive inside the nginx location / block that removes
+  trailing slashes from all non-file, non-API URLs before they reach the SPA
+  fallback. This ensures canonical URL handling — dashboards/ and dashboards
+  resolve to the same route.
+
+finding_ref: PLAN_02_WAVE_1
+severity: low
+
+goals:
+  - Add trailing slash rewrite rule to nginx config
+  - API paths (/api/*) remain unaffected
+  - Health endpoint (/health) remains unaffected
+  - Static assets remain unaffected
+  - 301 permanent redirect for SEO
+
+files:
+  - path: nginx/nginx.conf
+    targets:
+      - type: block
+        name: location /
+    semantic_anchors:
+      insert_before:
+        type: directive
+        value: "try_files $uri $uri/ /index.html;"
+    changes:
+      - action: add_directive
+        description: Add rewrite rule to strip trailing slashes
+        code_hint: |
+          rewrite ^/(.*)/$ /$1 permanent;
+
+acceptance_criteria:
+  - GET /dashboards/ returns 301 with Location: /dashboards
+  - GET /dashboard/123/ returns 301 with Location: /dashboard/123
+  - GET /admin/ returns 301 with Location: /admin
+  - GET /api/v1/auth/login/ returns 200 (no redirect, handled by location /api)
+  - GET /health returns 200 (no redirect, handled by location /health)
+  - GET /dashboards returns 200 (no redirect)
+  - Static assets (.js, .css, .png) return 200 (no redirect)
+
+tests_to_run:
+  - "docker compose exec nginx nginx -t"
+  - "curl -I http://localhost/dashboards/"  # expect 301
+  - "curl -I http://localhost/dashboards"    # expect 200
+  - "curl -I http://localhost/api/v1/health" # expect 200
+
+risk_level: low
+
+rollout_notes: >
+  Standard nginx rewrite directive. Only applies to location / block,
+  so /api/* and /health are unaffected (they match their own location
+  blocks first). Rollback: remove the rewrite line and reload nginx.

@@ -1,189 +1,228 @@
-# Execution Ordering — mkobi BI Dashboard Refactoring
-# Generated: 2026-05-20
-# Source Plans: PLAN_02, PLAN_03, PLAN_04, PLAN_05
+# Execution Order — Refactoring Plan
+# Generated: 2026-05-23
+# Source: .ai/audit/validated/audit_validated_findings_001.md
+# Plan: .ai/plans/PLAN_03.md + Docker Hardening tasks
 #
-# Dependency DAG:
+# GATE tasks are READ-ONLY verification checkpoints between waves.
+# They have type: gate and no source code changes.
+# A gate must pass before starting the next wave.
 #
-# PLAN_02 (Frontend Bug Fixes):
-#   TASK_001_P02  TASK_002_P02  TASK_003_P02  TASK_004_P02
-#                                    │
-#                                    ▼
-#                             TASK_005_P02
-#
-# PLAN_03 (Admin Dashboard Creation):
-#   TASK_001_P03  TASK_002_P03  TASK_004_P03
-#        │            │            │
-#        └──────┬─────┘            │
-#               ▼                  │
-#        TASK_003_P03              │
-#               │                  │
-#               ▼                  ▼
-#        TASK_007_P03     TASK_005_P03  TASK_006_P03
-#
-# PLAN_04 (Registration Request Fixes):
-#   TASK_001_P04
-#        │
-#        ▼
-#   TASK_002_P04
-#
-# PLAN_05 (Frontend Error Handling):
-#   TASK_001_P05  TASK_002_P05
-#        │
-#        ├──────────────┐
-#        ▼              ▼
-#   TASK_003_P05   TASK_004_P05
-#        │              │
-#        ├──────┬───────┘
-#        ▼      ▼
-#   TASK_005_P05  TASK_006_P05
-#        │
-#        ▼
-#   TASK_007_P05
+# Phase 0 — Validated Audit Findings (VF-001 to VF-005): All independent, can run in parallel
+# Phase 1 — PLAN_03 Wave 1: Backend Hot Reload Fix (no dependencies)
+# Phase 2 — PLAN_03 Wave 2: Frontend Dev Server (no dependencies, parallel with Wave 1)
+# Phase 3 — Docker Hardening Wave 1: Security fixes (no dependencies)
+# Gate 1 — Verify after Wave 1
+# Gate 2 — Verify after Wave 2
+# Gate 3 — Verify after Hardening Wave 1
+# Phase 4 — PLAN_03 Wave 3: Documentation Alignment (depends on Waves 1-2)
+# Phase 5 — Docker Hardening Wave 2: Low-priority fixes (no dependencies)
+# Gate 4 — Final full-stack verification
 
 tasks:
-  # === WAVE 1 — Fully Parallel (No dependencies) ===
-  # PLAN_02: TASK_001, TASK_002, TASK_003
-  # PLAN_03: TASK_001, TASK_002, TASK_004
-  # PLAN_04: TASK_001
-  # PLAN_05: TASK_001, TASK_002
+  # === Phase 0: Validated Audit Findings (VF-001 to VF-005) ===
+  # All 5 findings are independent — can run in parallel
+  # VF-001 is BLOCKING for production — must be fixed first in deployment
 
-  - id: TASK_001_P02_remove_password_length_validation
+  - id: TASK_018_VF001_fix_token_payload_key
     depends_on: []
-    phase: PLAN_02
-    wave: 1
+    phase: VALIDATED_FINDINGS_001
+    wave: 0
+    group: auth_bug_fixes
 
-  - id: TASK_002_P02_fix_login_error_display
+  - id: TASK_019_VF002_use_set_secure_cookie_in_login
     depends_on: []
-    phase: PLAN_02
-    wave: 1
+    phase: VALIDATED_FINDINGS_001
+    wave: 0
+    group: auth_bug_fixes
 
-  - id: TASK_003_P02_remove_status_column_and_block_action
+  - id: TASK_020_VF003_remove_duplicate_login_cookie_test
     depends_on: []
-    phase: PLAN_02
-    wave: 1
+    phase: VALIDATED_FINDINGS_001
+    wave: 0
+    group: auth_bug_fixes
 
-  - id: TASK_001_P03_make_config_optional_add_name_validation
+  - id: TASK_021_VF004_remove_redundant_removeToken
+    depends_on: []
+    phase: VALIDATED_FINDINGS_001
+    wave: 0
+    group: auth_bug_fixes
+
+  - id: TASK_022_VF005_make_cookie_secure_configurable
+    depends_on: []
+    phase: VALIDATED_FINDINGS_001
+    wave: 0
+    group: auth_bug_fixes
+
+  # === Phase 1: PLAN_03 Wave 1 — Backend Hot Reload ===
+  - id: TASK_001_03_01_fix_dev_reload
     depends_on: []
     phase: PLAN_03
     wave: 1
+    group: wave1_backend
 
-  - id: TASK_002_P03_fix_transaction_handling_add_description
+  - id: TASK_002_03_02_simplify_dev_env
     depends_on: []
     phase: PLAN_03
     wave: 1
+    group: wave1_backend
 
-  - id: TASK_004_P03_update_zod_schema_and_api_types
+  # === Phase 2: PLAN_03 Wave 2 — Frontend Dev Server ===
+  - id: TASK_003_03_03_add_frontend_dev_service
     depends_on: []
     phase: PLAN_03
-    wave: 1
-
-  - id: TASK_001_P04_add_loading_state_to_register_form
-    depends_on: []
-    phase: PLAN_04
-    wave: 1
-
-  - id: TASK_001_P05_create_shared_error_page_component
-    depends_on: []
-    phase: PLAN_05
-    wave: 1
-
-  - id: TASK_002_P05_create_backend_client_errors_endpoint
-    depends_on: []
-    phase: PLAN_05
-    wave: 1
-
-  # === WAVE 2 — Depends on Wave 1 ===
-  # PLAN_02: TASK_004 (independent), TASK_005 (depends on TASK_003_P02)
-  # PLAN_03: TASK_003 (depends on TASK_001_P03 + TASK_002_P03)
-  # PLAN_04: TASK_002 (depends on TASK_001_P04)
-  # PLAN_05: TASK_003 (depends on TASK_001_P05), TASK_004 (depends on TASK_001_P05)
-
-  - id: TASK_004_P02_add_profile_to_user_menu
-    depends_on: []
-    phase: PLAN_02
     wave: 2
+    group: wave2_frontend
 
-  - id: TASK_005_P02_remove_is_active_from_admin_user
+  - id: TASK_004_03_04_add_vite_proxy
     depends_on:
-      - TASK_003_P02_remove_status_column_and_block_action
-    phase: PLAN_02
-    wave: 2
-
-  - id: TASK_003_P03_update_create_endpoint_commit_description
-    depends_on:
-      - TASK_001_P03_make_config_optional_add_name_validation
-      - TASK_002_P03_fix_transaction_handling_add_description
+      - TASK_003_03_03_add_frontend_dev_service
     phase: PLAN_03
     wave: 2
+    group: wave2_frontend
 
-  - id: TASK_002_P04_fix_enter_key_form_submission
+  - id: TASK_005_03_05_remove_frontend_dist_mount
     depends_on:
-      - TASK_001_P04_add_loading_state_to_register_form
-    phase: PLAN_04
+      - TASK_003_03_03_add_frontend_dev_service
+    phase: PLAN_03
     wave: 2
+    group: wave2_frontend
 
-  - id: TASK_003_P05_create_error_boundary_component
+  # === Phase 3: Docker Hardening Wave 1 — Security & Critical Fixes ===
+  - id: TASK_008_D01_fix_root_user_dev
+    depends_on: []
+    phase: DOCKER_HARDENING
+    wave: 1
+    group: hardening_security
+
+  - id: TASK_009_D04_add_rq_worker
+    depends_on: []
+    phase: DOCKER_HARDENING
+    wave: 1
+    group: hardening_security
+
+  - id: TASK_010_D11_remove_exposed_ports
+    depends_on: []
+    phase: DOCKER_HARDENING
+    wave: 1
+    group: hardening_security
+
+  - id: TASK_011_D12_fix_test_compose_passwords
+    depends_on: []
+    phase: DOCKER_HARDENING
+    wave: 1
+    group: hardening_security
+
+  - id: TASK_017_D17_fix_test_db_creation_dev
+    depends_on: []
+    phase: DOCKER_HARDENING
+    wave: 1
+    group: hardening_security
+
+  # === GATE 1: Verify after PLAN_03 Wave 1 ===
+  - id: TASK_GATE_01_wave1_complete
     depends_on:
-      - TASK_001_P05_create_shared_error_page_component
-    phase: PLAN_05
+      - TASK_001_03_01_fix_dev_reload
+      - TASK_002_03_02_simplify_dev_env
+    phase: PLAN_03
+    wave: 1
+    group: gate
+    type: gate
+
+  # === GATE 2: Verify after PLAN_03 Wave 2 ===
+  - id: TASK_GATE_02_wave2_complete
+    depends_on:
+      - TASK_003_03_03_add_frontend_dev_service
+      - TASK_004_03_04_add_vite_proxy
+      - TASK_005_03_05_remove_frontend_dist_mount
+    phase: PLAN_03
     wave: 2
+    group: gate
+    type: gate
 
-  - id: TASK_004_P05_rewrite_notfound_from_tailwind_to_mui
+  # === GATE 3: Verify after Docker Hardening Wave 1 ===
+  - id: TASK_GATE_03_hardening_complete
     depends_on:
-      - TASK_001_P05_create_shared_error_page_component
-    phase: PLAN_05
-    wave: 2
+      - TASK_008_D01_fix_root_user_dev
+      - TASK_009_D04_add_rq_worker
+      - TASK_010_D11_remove_exposed_ports
+      - TASK_011_D12_fix_test_compose_passwords
+      - TASK_017_D17_fix_test_db_creation_dev
+    phase: DOCKER_HARDENING
+    wave: 1
+    group: gate
+    type: gate
 
-  # === WAVE 3 — Depends on Wave 2 ===
-  # PLAN_03: TASK_005 + TASK_006 (depend on TASK_004_P03)
-  # PLAN_05: TASK_005 (depends on TASK_003_P05), TASK_006 (independent)
-
-  - id: TASK_005_P03_update_dashboard_management_ui
+  # === Phase 4: PLAN_03 Wave 3 — Documentation Alignment ===
+  - id: TASK_006_03_06_fix_docker_guide
     depends_on:
-      - TASK_004_P03_update_zod_schema_and_api_types
+      - TASK_GATE_01_wave1_complete
+      - TASK_GATE_02_wave2_complete
     phase: PLAN_03
     wave: 3
+    group: wave3_docs
 
-  - id: TASK_006_P03_update_create_dashboard_api_function
+  - id: TASK_007_03_07_fix_deployment_doc
     depends_on:
-      - TASK_004_P03_update_zod_schema_and_api_types
+      - TASK_GATE_01_wave1_complete
+      - TASK_GATE_02_wave2_complete
     phase: PLAN_03
     wave: 3
+    group: wave3_docs
 
-  - id: TASK_005_P05_add_error_boundary_to_routes
-    depends_on:
-      - TASK_003_P05_create_error_boundary_component
-    phase: PLAN_05
-    wave: 3
-
-  - id: TASK_006_P05_add_403_toast_to_axios_interceptor
+  # === Phase 5: Docker Hardening Wave 2 — Low Priority Fixes ===
+  - id: TASK_012_D13_make_mirror_configurable
     depends_on: []
-    phase: PLAN_05
-    wave: 3
+    phase: DOCKER_HARDENING
+    wave: 2
+    group: hardening_low
 
-  # === WAVE 4 — Final integration ===
-  # PLAN_03: TASK_007 (depends on backend TASK_001_P03 + TASK_002_P03 + TASK_003_P03)
-  # PLAN_05: TASK_007 (depends on TASK_003_P05 + TASK_005_P05)
+  - id: TASK_013_D10_add_nginx_api_comment
+    depends_on: []
+    phase: DOCKER_HARDENING
+    wave: 2
+    group: hardening_low
 
-  - id: TASK_007_P03_update_create_dashboard_tests
+  - id: TASK_014_D16_remove_redundant_mounts
+    depends_on: []
+    phase: DOCKER_HARDENING
+    wave: 2
+    group: hardening_low
+
+  - id: TASK_015_D14_document_env_tradeoff
+    depends_on: []
+    phase: DOCKER_HARDENING
+    wave: 2
+    group: hardening_low
+
+  - id: TASK_016_D15_document_superuser_migration
+    depends_on: []
+    phase: DOCKER_HARDENING
+    wave: 2
+    group: hardening_low
+
+  # === GATE 4: Final Full-Stack Verification ===
+  - id: TASK_GATE_04_full_stack
     depends_on:
-      - TASK_001_P03_make_config_optional_add_name_validation
-      - TASK_002_P03_fix_transaction_handling_add_description
-      - TASK_003_P03_update_create_endpoint_commit_description
-    phase: PLAN_03
-    wave: 4
+      - TASK_GATE_01_wave1_complete
+      - TASK_GATE_02_wave2_complete
+      - TASK_GATE_03_hardening_complete
+      - TASK_006_03_06_fix_docker_guide
+      - TASK_007_03_07_fix_deployment_doc
+      - TASK_012_D13_make_mirror_configurable
+      - TASK_013_D10_add_nginx_api_comment
+      - TASK_014_D16_remove_redundant_mounts
+      - TASK_015_D14_document_env_tradeoff
+      - TASK_016_D15_document_superuser_migration
+    phase: FINAL
+    wave: final
+    group: gate
+    type: gate
 
-  - id: TASK_007_P05_add_app_level_error_boundary_and_exports
-    depends_on:
-      - TASK_003_P05_create_error_boundary_component
-      - TASK_005_P05_add_error_boundary_to_routes
-    phase: PLAN_05
-    wave: 4
-
-# === Summary ===
-# Total tasks: 21
-# Wave 1 (parallel): 9 tasks
-# Wave 2 (parallel): 6 tasks
-# Wave 3 (parallel): 4 tasks
-# Wave 4 (parallel): 2 tasks
-# Blocked tasks (not included): TASK_036, TASK_037 (require test quality improvements first)
+# Parallel execution groups:
+# Group auth_bug_fixes: TASK_018, TASK_019, TASK_020, TASK_021, TASK_022 (all can run in parallel)
+# Group wave1_backend: TASK_001, TASK_002 (can run in parallel)
+# Group wave2_frontend: TASK_003, then TASK_004 + TASK_005 (parallel after TASK_003)
+# Group hardening_security: TASK_008, TASK_009, TASK_010, TASK_011, TASK_017 (all can run in parallel)
+# Group wave3_docs: TASK_006, TASK_007 (can run in parallel, after Gates 1 & 2)
+# Group hardening_low: TASK_012-TASK_016 (all can run in parallel)
+# Group gate: GATE_01, GATE_02, GATE_03 (each gates its wave); GATE_04 (final, after all)

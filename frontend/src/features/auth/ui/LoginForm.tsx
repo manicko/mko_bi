@@ -1,15 +1,16 @@
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate, Link } from 'react-router-dom'
-import { useAuth } from '../'
 import { Box, Button, TextField, Typography, Alert } from '@mui/material'
 import { useState, useEffect } from 'react'
 import { loginSchema, type LoginFormData } from '../../../shared/types/formSchemas'
+import { login as loginApi } from '../api/authApi'
+import { setToken } from '../model/authToken'
 
 export function LoginForm() {
-  const { login, isLoading } = useAuth()
   const navigate = useNavigate()
   const [error, setError] = useState<string | null>(null)
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const {
     control,
@@ -32,10 +33,15 @@ export function LoginForm() {
   const onSubmit = async (data: LoginFormData) => {
     try {
       setError(null)
-      await login(data.email, data.password)
+      setIsSubmitting(true)
+      const response = await loginApi(data.email, data.password)
+      setToken(response.access_token)
       navigate('/dashboards')
-    } catch {
-      setError('Invalid login or password')
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Login failed'
+      setError(message)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -70,8 +76,8 @@ export function LoginForm() {
         helperText={errors.password?.message}
       />
 
-      <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }} disabled={isLoading}>
-        {isLoading ? 'Loading...' : 'Login'}
+      <Button type="submit" variant="contained" fullWidth sx={{ mt: 2 }} disabled={isSubmitting}>
+        {isSubmitting ? 'Loading...' : 'Login'}
       </Button>
 
       <Typography sx={{ mt: 2, textAlign: 'center' }}>

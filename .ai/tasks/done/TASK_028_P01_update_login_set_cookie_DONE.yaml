@@ -1,0 +1,76 @@
+id: TASK_028_P01_update_login_set_cookie
+
+title: Modify login to set httpOnly refresh token cookie
+
+status: completed
+
+priority: high
+
+depends_on:
+  - TASK_024_P01_add_refresh_token_creation
+  - TASK_025_P01_configure_cookie_security
+
+phase: PLAN_01
+wave: 2
+
+description: >
+  Update the login endpoint to set an httpOnly refresh token cookie alongside
+  the access token in the JSON response. The refresh token cookie uses secure
+  attributes from the cookie security constants.
+
+finding_ref: PLAN_01_WAVE_2
+severity: high
+
+goals:
+  - Login returns TokenWithUser with access_token in JSON body
+  - Refresh token cookie is set with httponly, secure, samesite attributes
+  - Cookie expiration set to 7 days
+  - Return standard JSON response
+
+files:
+  - path: src/mkobi/api/routes/auth.py
+    targets:
+      - type: function
+        name: login_endpoint
+    semantic_anchors:
+      insert_after:
+        type: function_call
+        value: create_access_token
+    changes:
+      - action: modify_function
+        description: Add refresh token cookie setting to login endpoint
+        code_hint: |
+          # After creating access token, also create refresh token
+          refresh_token = create_refresh_token(
+              data={"sub": str(user.id), "email": user.email, "role": user.role}
+          )
+          response = TokenWithUser(
+              access_token=access_token,
+              token_type="bearer",
+              user=UserRead.model_validate(user),
+          )
+          response.set_cookie(
+              key=COOKIE_NAME,
+              value=refresh_token,
+              httponly=COOKIE_HTTPONLY,
+              secure=COOKIE_SECURE,
+              samesite=COOKIE_SAMESITE,
+              max_age=get_config().jwt.refresh_token_expire_minutes * 60,
+          )
+          return response
+
+acceptance_criteria:
+  - Login returns TokenWithUser with access_token
+  - Refresh token cookie is set with correct security attributes
+  - Cookie expiration matches refresh_token_expire_minutes
+  - Return standard JSON response
+
+tests_to_run:
+  - "pytest tests/ -k test_auth -v"
+  - Manual API test: login and verify cookie is present
+
+risk_level: medium
+
+rollout_notes: >
+  Must use Response.set_cookie() or similar FastAPI mechanism.
+  Ensure the response type supports cookie setting.

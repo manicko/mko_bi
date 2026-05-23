@@ -147,6 +147,11 @@ Access is validated on every request via the `dashboard_access` table.
 - **Atomic UPSERT for admin user** — `ensure_admin_user()` uses `INSERT ... ON CONFLICT (email) DO NOTHING` instead of check-then-create, eliminating the TOCTOU race condition on concurrent startup.
 - **Sanitized database URL logging** — `_apply_migrations()` logs the database URL with `render_as_string(hide_password=True)` to prevent credential leakage in log files.
 - **LRU token cache** — `_token_cache` in permissions.py uses `functools.lru_cache(maxsize=1000)` instead of an unbounded dict, preventing memory leaks in long-running processes.
+- **Cookie-based refresh tokens** — Refresh tokens are stored in httpOnly cookies (`mkobi_refresh_token`) instead of the request body, eliminating XSS-based token theft. The access token lifetime was reduced from 30 to 15 minutes; refresh tokens live 7 days. Login sets the cookie, refresh reads from it, logout clears it.
+- **POST /auth/logout endpoint** — Dedicated logout endpoint that clears the refresh token cookie. The frontend calls this on logout and then clears the in-memory access token.
+- **Frontend silent refresh** — On app initialization, if no access token exists, the frontend attempts a silent refresh using the httpOnly cookie. This keeps users logged in across page refreshes without requiring re-authentication.
+- **Request queue for concurrent 401s** — The axios interceptor implements a request queue (`failedQueue`) with an `isRefreshing` flag. When multiple requests fail with 401 simultaneously, only one refresh call is made; all queued requests are retried after the refresh completes.
+- **ProtectedRoute loading state** — `ProtectedRoute` shows a loading spinner during silent refresh to prevent flash of login page for valid sessions with expired access tokens.
 
 ---
 
@@ -159,9 +164,10 @@ Access is validated on every request via the `dashboard_access` table.
 | 2.4     | 2026-05-19 | Upload modal (no page nav), top nav Header, DataGrid tables, ConfirmDialog pattern, toast notifications, short UUID display, Zod v4 migration, admin tab state preservation |
 | 2.5     | 2026-05-19 | Dashboard-filter binding API, dashboard access management endpoints, dashboard-scoped graph endpoints, file processing service, background data worker, processing log date filtering |
 | 2.6     | 2026-05-20 | Per-IP login rate limiting (email enumeration fix), migration advisory lock, dedicated DB role (least-privilege), migration job compose pattern, stale processing heartbeat, upload memory streaming, weak admin credential detection, config reload for testing, atomic UPSERT admin user, sanitized DB URL logging, LRU token cache |
+| 2.7     | 2026-05-23 | Cookie-based refresh token flow: httpOnly refresh cookies (7-day TTL), 15-min access tokens, POST /auth/logout endpoint, frontend silent refresh on mount, request queue for concurrent 401s, ProtectedRoute loading state during refresh |
 
 ---
 
 **Author:** Senior Python Architect
-**Date:** 2026-05-20
-**Version:** 2.6
+**Date:** 2026-05-23
+**Version:** 2.7

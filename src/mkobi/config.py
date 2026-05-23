@@ -82,6 +82,11 @@ class DatabaseSettings(BaseModel):
     user: str = "mkobi_app"
     password: str | None = None
     test_dbname: str = "bidb_test"
+    # Admin credentials for database administration operations (test DB creation)
+    admin_user: str = "postgres"
+    admin_password: str | None = None
+
+    model_config = {"extra": "ignore"}
 
     @property
     def database_url(self) -> PostgresDsn:
@@ -95,13 +100,34 @@ class DatabaseSettings(BaseModel):
             path=self.dbname,
         )
 
+    @property
+    def admin_database_url(self) -> str | None:
+        """Build PostgreSQL admin connection URL for database creation operations.
+
+        Uses the postgres superuser for CREATE DATABASE/DROP DATABASE operations
+        which require CREATEDB privilege that application user doesn't have.
+        """
+        if not self.admin_password:
+            return None
+        return str(
+            PostgresDsn.build(
+                scheme="postgresql+asyncpg",
+                username=self.admin_user,
+                password=self.admin_password,
+                host=self.host,
+                port=self.port,
+                path=self.dbname,
+            )
+        )
+
 
 class JWTSettings(BaseModel):
     """JWT authentication settings."""
 
     secret_key: str | None = None
     algorithm: str = "HS256"
-    access_token_expire_minutes: int = 30
+    access_token_expire_minutes: int = 15
+    refresh_token_expire_minutes: int = 10080
 
 
 class RedisSettings(BaseModel):
@@ -307,6 +333,7 @@ class Settings(BaseSettings):
         "env_nested_delimiter": "__",
         "case_sensitive": False,
         "extra": "ignore",
+        "env_file": ".env",
     }
 
     @classmethod
@@ -388,9 +415,34 @@ class Settings(BaseSettings):
         )
 
     @property
+    def TEST_ADMIN_DATABASE_URL(self) -> str | None:
+        """Construct admin connection URL for test database (re)creation.
+
+        Uses postgres superuser credentials for CREATE DATABASE operations
+        which require CREATEDB privilege that the application user lacks.
+        """
+        if not self.database.admin_password:
+            return None
+        return str(
+            PostgresDsn.build(
+                scheme="postgresql+asyncpg",
+                username=self.database.admin_user,
+                password=self.database.admin_password,
+                host=self.database.host,
+                port=self.database.port,
+                path="postgres",  # Connect to default postgres db for admin ops
+            )
+        )
+
+    @property
     def test_database_url(self) -> str | None:
         """Alias for TEST_DATABASE_URL."""
         return self.TEST_DATABASE_URL
+
+    @property
+    def test_admin_database_url(self) -> str | None:
+        """Alias for TEST_ADMIN_DATABASE_URL."""
+        return self.TEST_ADMIN_DATABASE_URL
 
     @property
     def jwt_secret_key(self) -> str | None:

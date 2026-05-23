@@ -1,0 +1,60 @@
+id: TASK_006_P02_url_seo_analytics_check
+
+title: Verify no trailing slashes in frontend code and navigation
+
+status: done
+
+priority: medium
+
+depends_on:
+  - TASK_001_P02_url_nginx_trailing_slash_rewrite
+  - TASK_003_P02_url_react_trailing_slash_redirect
+
+phase: PLAN_02
+wave: 3
+
+description: >
+  Confirm that canonical URLs are consistent and no trailing-slash variants
+  leak into analytics or SEO. Verify no hardcoded trailing slashes exist
+  in frontend navigation links, <Link to=".../"> patterns, or
+  navigate(".../") calls.
+
+finding_ref: PLAN_02_WAVE_3
+severity: low
+
+goals:
+  - No <Link to=".../"> patterns in codebase
+  - No navigate(".../") calls in codebase
+  - All internal links use slashless paths
+  - No duplicate content risk from trailing-slash variants
+
+# VERIFICATION RESULTS
+findings:
+  - check: grep for 'to=".*/"' in frontend/src/
+    result: PASS - No matches found
+  - check: grep for "navigate.*/" in frontend/src/
+    result: PASS - No matches found (all navigate paths use slashless URLs)
+  - check: grep for trailing slashes in route path definitions
+    result: PASS - No trailing slashes in route paths
+  - check: sitemap.xml for trailing slashes
+    result: N/A - No sitemap.xml exists in project
+  - check: rel="canonical" link tags
+    result: PASS - Not needed, nginx handles via 301 redirects
+
+all_checks_passed: true
+
+acceptance_criteria:
+  - grep for 'to=".*/"' returns no matches - PASSED
+  - grep for "navigate.*/" returns no matches - PASSED (all uses are slashless)
+  - All <Link> and navigate() calls use slashless paths - PASSED
+  - No hardcoded trailing slashes in frontend code - PASSED
+
+tests_to_run:
+  - 'grep -r "to=\".*/\"" frontend/src/'   # No matches - PASSED
+  - 'grep -r "navigate.*/" frontend/src/'   # No matches - PASSED
+
+risk_level: low
+
+rollout_notes: >
+  Verification-only task. All checks passed. Codebase is clean of
+  trailing slash variants in navigation code.

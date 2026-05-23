@@ -1,0 +1,71 @@
+id: TASK_027_P01_add_token_validation
+
+title: Add refresh token validation function
+
+status: completed
+
+priority: high
+
+depends_on:
+  - TASK_024_P01_add_refresh_token_creation
+
+phase: PLAN_01
+wave: 2
+
+description: >
+  Create a function in security.py to validate refresh tokens and extract user
+  data. This function handles expired/invalid tokens gracefully and is used
+  by the cookie-based refresh endpoint.
+
+finding_ref: PLAN_01_WAVE_2
+severity: high
+
+goals:
+  - Add validate_refresh_token function to core/security.py
+  - Function returns None for invalid/expired tokens
+  - Extracts user_id, email, role from valid tokens
+  - Proper error logging for malformed tokens
+
+files:
+  - path: src/mkobi/core/security.py
+    targets:
+      - type: function
+        name: decode_token
+    semantic_anchors:
+      insert_after:
+        type: function_definition
+        value: decode_token
+    changes:
+      - action: add_function
+        description: Add validate_refresh_token function
+        code_hint: |
+          def validate_refresh_token(token: str) -> dict[str, Any] | None:
+              """Validate a refresh token and return payload if valid.
+              
+              Returns None for expired or invalid tokens.
+              """
+              try:
+                  payload = jwt.decode(
+                      token,
+                      get_config().jwt.secret_key.get_secret_value(),
+                      algorithms=[get_config().jwt.algorithm],
+                  )
+                  return payload
+              except JWTError as exc:
+                  logger.warning("Invalid refresh token: %s", exc)
+                  return None
+
+acceptance_criteria:
+  - Function returns None for invalid/expired tokens
+  - Function extracts user_id, email, role from valid tokens
+  - Proper error handling for malformed tokens
+  - Function is properly documented
+
+tests_to_run:
+  - "pytest tests/ -k test_security -v"
+
+risk_level: medium
+
+rollout_notes: >
+  Security-critical function. Must handle all JWT error cases.
+  Depends on TASK_024 for token creation (to test round-trip).

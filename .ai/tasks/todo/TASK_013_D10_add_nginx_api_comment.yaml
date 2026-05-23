@@ -1,0 +1,57 @@
+id: TASK_013_D10_add_nginx_api_comment
+
+title: Add Comment Documenting Nginx /api Prefix Behavior
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+phase: DOCKER_HARDENING
+wave: 2
+
+description: >
+  nginx/nginx.conf proxies /api to app:8000. Requests to /api/foo reach FastAPI as
+  /api/foo. Since routes are /api/v1/*, the nginx /api prefix correctly catches them
+  via prefix match. This is technically correct but undocumented. Add a comment in
+  nginx.conf explaining the prefix matching behavior.
+
+finding_ref: DOCKER-010
+severity: medium
+
+goals:
+  - Add comment in nginx.conf documenting /api prefix matching behavior
+  - Clarify that /api prefix is intentional and matches FastAPI router prefix /api/v1/*
+  - No functional changes to nginx config
+
+files:
+  - path: nginx/nginx.conf
+    targets:
+      - type: block
+        name: location /api
+    semantic_anchors:
+      insert_before:
+        type: block
+        value: "location /api {"
+    changes:
+      - action: add_comment
+        description: Add comment explaining /api prefix matching behavior
+        code_hint: |
+          # /api prefix is intentional — matches FastAPI router prefix /api/v1/*
+          # Requests to /api/v1/* are forwarded to the app container as-is
+
+acceptance_criteria:
+  - Comment added before location /api block in nginx.conf
+  - Comment clearly explains the prefix matching behavior
+  - No functional changes to nginx config
+  - nginx -t passes
+
+tests_to_run:
+  - "docker exec nginx nginx -t"
+  - "Verify /api/v1/* requests still reach the backend correctly"
+
+risk_level: low
+
+rollout_notes: >
+  Documentation-only change. No functional impact. Standalone fix.

@@ -1,0 +1,72 @@
+id: TASK_039_P01_frontend_update_login_form
+
+title: Update LoginForm to handle cookie-based refresh
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_035_P01_frontend_refresh_api
+
+phase: PLAN_01
+wave: 4
+
+description: >
+  Update the LoginForm component to work with the new cookie-based token flow.
+  The form should call the login API and store only the access token locally;
+  the refresh token is handled automatically via httpOnly cookie.
+
+finding_ref: PLAN_01_WAVE_4
+severity: medium
+
+goals:
+  - LoginForm calls login API and stores access token
+  - No changes needed to form fields
+  - Error handling preserved
+  - Redirect to dashboard on success
+
+files:
+  - path: frontend/src/features/auth/ui/LoginForm.tsx
+    targets:
+      - type: component
+        name: LoginForm
+    semantic_anchors:
+      modify:
+        type: function_definition
+        value: LoginForm
+    changes:
+      - action: modify_handler
+        description: Update onSubmit handler to use new token flow
+        code_hint: |
+          const onSubmit = async (data: LoginFormData) => {
+            try {
+              setError(null);
+              setIsLoading(true);
+              const response = await login(data.email, data.password);
+              setAccessToken(response.access_token);
+              navigate("/dashboards");
+            } catch (err: unknown) {
+              const message = err instanceof Error ? err.message : "Login failed";
+              setError(message);
+            } finally {
+              setIsLoading(false);
+            }
+          };
+
+acceptance_criteria:
+  - LoginForm stores only access token locally
+  - Refresh token is handled via cookie (no frontend code needed)
+  - Error handling works correctly
+  - Redirect to dashboard on success
+
+tests_to_run:
+  - "npm test -- --testPathPattern=LoginForm --verbose"
+  - Manual test: login and verify cookie is set
+
+risk_level: low
+
+rollout_notes: >
+  Depends on TASK_035 for API function.
+  Minimal changes - the form mostly works as-is since the backend
+  now sets the cookie automatically.

@@ -17,6 +17,7 @@ from mkobi.core.security import (
     create_access_token,
     decode_token,
     hash_password,
+    validate_refresh_token,
     verify_password,
 )
 from mkobi.interfaces.repository_interfaces import IRegistrationRequestRepository, IUserRepository
@@ -237,7 +238,7 @@ class AuthService(IAuthService):
     async def refresh_token(
         self, user_id: UUID, email: str, role: str
     ) -> dict[str, Any]:
-        """Refresh JWT token.
+        """Refresh JWT access token for user.
 
         Args:
             user_id: User ID.
@@ -245,13 +246,17 @@ class AuthService(IAuthService):
             role: User role.
 
         Returns:
-            dict: New token data.
+            dict: New token data with access_token and token_type.
         """
-        logger.info("Refreshing token", extra={"user_id": user_id})
+        logger.info("Refreshing token", extra={"user_id": str(user_id)})
 
-        token = create_access_token({"user_id": user_id, "email": email, "role": role})
+        token = create_access_token({
+            "user_id": str(user_id),
+            "email": email,
+            "role": role,
+        })
 
-        logger.info("Token refreshed", extra={"user_id": user_id})
+        logger.info("Token refreshed", extra={"user_id": str(user_id)})
         return {
             "access_token": token,
             "token_type": "bearer",
@@ -273,6 +278,23 @@ class AuthService(IAuthService):
 
         logger.info("Token verified", extra={"user_id": payload.get("user_id")})
         return dict(payload)
+
+    def validate_refresh_token(self, token: str) -> dict[str, Any] | None:
+        """Validate a refresh token and return user data.
+
+        Args:
+            token: The refresh token string.
+
+        Returns:
+            User data dict if valid, None otherwise.
+        """
+        logger.info("Validating refresh token")
+        result = validate_refresh_token(token)
+        if result is None:
+            logger.warning("Invalid refresh token")
+            return None
+        logger.info("Refresh token validated", extra={"user_id": result.get("user_id")})
+        return dict(result)
 
     async def get_user_by_id(
         self, user_id: UUID, db: AsyncSession

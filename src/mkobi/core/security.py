@@ -8,6 +8,7 @@ from typing import Any
 import bcrypt
 import redis
 import redis.asyncio as aioredis
+from fastapi import Response
 from jose import JWTError, jwt
 
 from mkobi.config import get_config, clear_config_cache
@@ -40,6 +41,12 @@ def _get_config():
 # Constants
 SALT_ROUNDS: int = 12
 MAX_PASSWORD_LENGTH: int = 72
+
+# Cookie security defaults
+COOKIE_HTTPONLY: bool = True
+COOKIE_SECURE: bool = True
+COOKIE_SAMESITE: str = "strict"
+COOKIE_NAME: str = "mkobi_refresh_token"
 
 
 class RateLimiter:
@@ -255,6 +262,46 @@ def create_access_token(
     return encoded_jwt
 
 
+def create_refresh_token(data: dict[str, Any]) -> str:
+    """Create JWT refresh token with extended expiration.
+
+    Token contains provided data and expiration time (exp).
+    Uses refresh_token_expire_minutes from config (default 7 days = 10080 minutes).
+
+    Args:
+        data: Data to include in the token (e.g., user_id, email).
+
+    Returns:
+        str: Encoded JWT refresh token.
+
+    Example:
+        >>> token = create_refresh_token({"user_id": 1, "email": "user@example.com"})
+        >>> isinstance(token, str)
+        True
+    """
+    config = _get_config()
+    to_encode = data.copy()
+    # Convert UUID objects to strings for JWT serialization
+    for key, value in to_encode.items():
+        if isinstance(value, UUID):
+            to_encode[key] = str(value)
+
+    expire = datetime.now(UTC) + timedelta(
+        minutes=config.jwt.refresh_token_expire_minutes
+    )
+    to_encode.update({"exp": expire})
+    secret_key = config.jwt.secret_key
+    if secret_key is None:
+        raise ValueError("JWT_SECRET_KEY must be configured")
+    encoded_jwt: str = jwt.encode(
+        to_encode,
+        secret_key,
+        algorithm=config.jwt.algorithm,
+    )
+    logger.info("JWT refresh token created successfully")
+    return encoded_jwt
+
+
 def decode_token(token: str) -> dict[str, Any] | None:
     """Decode and validate JWT token.
 
@@ -294,3 +341,81 @@ def decode_token(token: str) -> dict[str, Any] | None:
     except Exception as e:
         logger.error("Unexpected error decoding token: %s", e)
         return None
+
+
+def validate_refresh_token(token: str) -> dict[str, Any] | None:
+    """Validate a refresh token and return payload if valid.
+
+    Verifies token signature and expiration time.
+    Returns None for expired or invalid tokens.
+    Used by the cookie-based refresh endpoint to extract user data.
+
+    Args:
+        token: JWT refresh token to validate.
+
+    Returns:
+        dict[str, Any] | None: Decoded token payload containing user_id,
+            email, and role if valid; None if token is invalid or expired.
+    """
+    config = _get_config()
+    secret_key = config.jwt.secret_key
+    if secret_key is None:
+        logger.warning("JWT_SECRET_KEY not configured for refresh token validation")
+        return None
+    try:
+        payload: dict[str, Any] = jwt.decode(
+            token,
+            secret_key,
+            algorithms=[config.jwt.algorithm],
+        )
+        logger.debug("Refresh token validated successfully")
+        return payload
+    except JWTError as exc:
+        logger.warning("Invalid refresh token: %s", exc)
+        return None
+    except Exception as exc:
+        logger.error("Unexpected error validating refresh token: %s", exc)
+        return None
+
+
+def set_secure_cookie(
+    response: Response,
+    key: str,
+    value: str,
+    max_age: int | None = None,
+) -> None:
+    """Set a secure cookie on the response.
+
+    Uses security constants for httponly, secure, and samesite attributes.
+
+    Args:
+        response: FastAPI Response object to set cookie on.
+        key: Cookie name.
+        value: Cookie value.
+        max_age: Cookie max age in seconds. If None, cookie becomes a session cookie.
+    """
+    response.set_cookie(
+        key=key,
+        value=value,
+        httponly=COOKIE_HTTPONLY,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+        max_age=max_age,
+    )
+
+
+def delete_secure_cookie(response: Response, key: str) -> None:
+    """Delete a cookie from the response.
+
+    Uses security constants for httponly, secure, and samesite attributes.
+
+    Args:
+        response: FastAPI Response object to delete cookie from.
+        key: Cookie name to delete.
+    """
+    response.delete_cookie(
+        key=key,
+        httponly=COOKIE_HTTPONLY,
+        secure=COOKIE_SECURE,
+        samesite=COOKIE_SAMESITE,
+    )

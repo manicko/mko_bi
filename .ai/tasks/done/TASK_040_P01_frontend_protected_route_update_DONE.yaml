@@ -1,0 +1,71 @@
+id: TASK_040_P01_frontend_protected_route_update
+
+title: Update ProtectedRoute for cookie-based auth
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_036_P01_frontend_silent_refresh
+
+phase: PLAN_01
+wave: 4
+
+description: >
+  Update the ProtectedRoute component to handle the cookie-based authentication
+  flow. The component should attempt silent refresh if no access token exists
+  but a refresh cookie might be present.
+
+finding_ref: PLAN_01_WAVE_4
+severity: medium
+
+goals:
+  - ProtectedRoute checks for access token
+  - Attempts silent refresh if no token
+  - Shows loading state during refresh
+  - Redirects to login if refresh fails
+
+files:
+  - path: frontend/src/shared/components/ProtectedRoute.tsx
+    targets:
+      - type: component
+        name: ProtectedRoute
+    semantic_anchors:
+      modify:
+        type: function_definition
+        value: ProtectedRoute
+    changes:
+      - action: modify_component
+        description: Add silent refresh check to ProtectedRoute
+        code_hint: |
+          const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+            const { accessToken, isLoading } = useAuth();
+            const location = useLocation();
+
+            if (isLoading) {
+              return <LoadingSpinner />;
+            }
+
+            if (!accessToken) {
+              return <Navigate to="/login" state={{ from: location }} replace />;
+            }
+
+            return <>{children}</>;
+          };
+
+acceptance_criteria:
+  - ProtectedRoute shows loading during silent refresh
+  - Redirects to login if no token after refresh
+  - Renders children if token exists
+  - No flash of login page for valid sessions
+
+tests_to_run:
+  - "npm test -- --testPathPattern=ProtectedRoute --verbose"
+  - Manual test: access protected route after token expiry
+
+risk_level: low
+
+rollout_notes: >
+  Depends on TASK_036 for silent refresh in useAuth.
+  Must show loading state to prevent flash of login page.

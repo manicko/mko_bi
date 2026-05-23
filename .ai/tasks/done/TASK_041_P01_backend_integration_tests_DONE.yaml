@@ -1,0 +1,102 @@
+id: TASK_041_P01_backend_integration_tests
+
+title: Write backend integration tests for cookie-based auth
+
+status: done
+
+priority: high
+
+depends_on:
+  - TASK_028_P01_update_login_set_cookie
+  - TASK_029_P01_rewrite_refresh_endpoint
+  - TASK_031_P01_complete_logout_implementation
+
+phase: PLAN_01
+wave: 5
+
+description: >
+  Write comprehensive backend integration tests for the cookie-based
+  authentication flow. Tests cover login with cookie setting, refresh
+  from cookie, logout with cookie clearing, and edge cases.
+
+finding_ref: PLAN_01_WAVE_5
+severity: high
+
+goals:
+  - Test login sets refresh token cookie
+  - Test refresh reads from cookie
+  - Test logout clears cookie
+  - Test refresh fails without cookie
+  - Test refresh fails with invalid cookie
+
+files:
+  - path: tests/test_auth_api.py
+    targets:
+      - type: file
+        name: test_auth_api
+    semantic_anchors:
+      insert_after:
+        type: test_function
+        pattern: "def test_"
+    changes:
+      - action: add_test_functions
+        description: Add cookie-based auth integration tests
+        code_hint: |
+          def test_login_sets_refresh_cookie(client: AsyncClient, test_user: UserDB):
+              """Test that login sets httpOnly refresh token cookie."""
+              response = client.post("/auth/login", data={
+                  "username": test_user.email,
+                  "password": "testpassword",
+              })
+              assert response.status_code == 200
+              cookies = response.cookies
+              assert "mkobi_refresh_token" in cookies
+              # Cookie should be httpOnly (not accessible via JS)
+              # Note: TestClient exposes cookies but real browser won't
+
+          def test_refresh_reads_from_cookie(client: AsyncClient, test_user: UserDB):
+              """Test that refresh endpoint reads token from cookie."""
+              # First login to get refresh cookie
+              login_response = client.post("/auth/login", data={
+                  "username": test_user.email,
+                  "password": "testpassword",
+              })
+              # Then refresh using the cookie
+              refresh_response = client.post("/auth/refresh")
+              assert refresh_response.status_code == 200
+              assert "access_token" in refresh_response.json()
+
+          def test_refresh_fails_without_cookie(client: AsyncClient):
+              """Test that refresh fails without refresh cookie."""
+              response = client.post("/auth/refresh")
+              assert response.status_code == 401
+              assert response.json()["detail"] == "Refresh token missing"
+
+          def test_logout_clears_cookie(client: AsyncClient, test_user: UserDB):
+              """Test that logout clears the refresh token cookie."""
+              # Login first
+              client.post("/auth/login", data={
+                  "username": test_user.email,
+                  "password": "testpassword",
+              })
+              # Logout
+              response = client.post("/auth/logout")
+              assert response.status_code == 200
+              # Cookie should be cleared
+              cookies = response.cookies
+              assert "mkobi_refresh_token" not in cookies or cookies["mkobi_refresh_token"] == ""
+
+acceptance_criteria:
+  - All cookie-based auth flows are tested
+  - Tests pass with pytest
+  - Edge cases covered (missing cookie, invalid cookie)
+  - Tests are deterministic and isolated
+
+tests_to_run:
+  - "pytest tests/test_auth_api.py -v"
+
+risk_level: low
+
+rollout_notes: >
+  Depends on all backend Wave 2 and Wave 3 tasks being complete.
+  Uses FastAPI TestClient which handles cookies automatically.
