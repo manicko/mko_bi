@@ -169,6 +169,35 @@ Each task should:
 - preserve architectural boundaries
 - avoid broad file rewrites
 
+# Verification Task Rules
+
+Every implementation task MUST be followed by a verification task.
+
+Verification task must:
+- depend on the implementation task it verifies
+- define concrete pass/fail criteria (build, tests, smoke check)
+- reference the implementation task as `verifies: TASK_XXX_name`
+- on failure: return the implementation task to `status: rework`
+- on success: mark implementation task as `status: verified`
+
+Pattern:
+```
+TASK_001_implement_feature   → implementation
+TASK_002_verify_feature      → verification (depends_on: TASK_001)
+TASK_003_implement_next      → depends_on: TASK_002 (blocks on failure)
+```
+
+For code changes, verification task must include:
+- `tests_to_run` — specific test files/commands to execute
+- `smoke_check` — minimal manual or automated check (build, lint, health endpoint)
+- `rollback_task` — reference to the task that reverts changes if verification fails
+
+For infrastructure changes (Docker, config, migrations):
+- verification task runs the actual service/command
+- failure returns the infrastructure task for rework
+
+Never chain a new implementation task without a verification task in between.
+
 # Dependency Graph Rules
 
 Build execution order using:
@@ -224,16 +253,22 @@ Produce:
 - execution-ready yaml task files
 - dependency-safe rollout plans
 
-Tasks must include:
+Implementation tasks must include:
 - affected files
 - symbol targets
 - semantic anchors
 - dependency constraints
 - intended changes
 - risks
-- validation steps
 - acceptance criteria
-- tests to run
+- tests_to_run
+
+Verification tasks must include:
+- verifies: <task_id>
+- verification_steps: [build, test, smoke_check]
+- pass_criteria
+- failure_action: return <task_id> to rework
+- rollback_task (if applicable)
 
 Do NOT:
 - redesign architecture

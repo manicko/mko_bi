@@ -7,6 +7,8 @@ alwaysApply: false
 
 # Task Execution Workflow
 
+> **Prerequisite:** Docker services must be running before executing tests, lint, or type checks. See: `docs/11-guides/docker.md`
+
 ## Objective
 
 Execute validated semantic development tasks safely while:

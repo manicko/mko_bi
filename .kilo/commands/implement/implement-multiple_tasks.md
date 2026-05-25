@@ -15,6 +15,8 @@ allowed-tools:
 <objective>
 Execute implementation tasks through an planner + implementor workflow.
 
+> **Prerequisite:** Docker services must be running before executing tests, lint, or type checks. See: `docs/11-guides/docker.md`
+
 The planner:
 - manages task iteration
 - loads shared project context

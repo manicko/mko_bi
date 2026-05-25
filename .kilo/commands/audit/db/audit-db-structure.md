@@ -7,47 +7,43 @@ alwaysApply: false
 
 # Task: PostgreSQL Database Audit (mkobi BI Dashboard)
 
-## Audit Team Roles
+> **Prerequisite:** Docker services (especially `db`) must be running. See: `docs/11-guides/docker.md`
 
-- **Backend Architect** — identifies required databases (main, test, others), architectural risks, scalability and maintainability requirements.
-- **Senior Python Developer** — searches and analyzes code (repositories, models, migrations, configs), documents DB schema, identifies technical debt.
-- **DevOps / DB Admin** — verifies environments (dev/stage/prod), permissions, env vars, reproducibility, backup/recovery, deployment constraints.
-- **QA Engineer** — verifies test DB isolation, schema compliance with test environment, reproducibility, no environment leakage.
-
----
-
-# 1. Task Objective
+## Objective
 
 Based on analysis of existing code, migrations, configuration, and real PostgreSQL databases:
 
 1. **List all required PostgreSQL databases** used by the system.
-2. For each database — **extract and document the complete structure**:
-   - tables
-   - data types
-   - relationships (FK)
-   - indexes
-   - constraints
-   - triggers
-   - extensions
-   - roles and permissions
-3. Identify:
-   - architectural problems
-   - schema drift
-   - migration drift
-   - scalability problems
-   - maintainability problems
-   - potential degradation points as the system grows
+2. For each database — **extract and document the complete structure**.
+3. Identify architectural problems, schema drift, scalability risks, maintainability issues.
 4. Provide recommendations:
    - what must be fixed
    - what should be simplified
    - what should be standardized
-   - what should be prepared in advance for system growth
+   - what should be prepared for system growth
+   - what docs should be updated when code has evolved beyond them
 
 **Important:**
 - Do NOT describe application business logic
 - Do NOT analyze UI/API behavior
 - Focus ONLY on database architecture, schema lifecycle, and reproducibility
 - Schema may diverge from code since the application is still in development
+- When schema diverges from docs, recommend updating docs OR fixing schema — whichever is more maintainable
+
+## Recommendation Types
+
+Label every finding:
+- `[SPEC-DEVIATION]` — schema differs from docs. Decide: fix schema or update docs.
+- `[BEST-PRACTICE]` — improvement beyond current spec. Advisory, not mandatory.
+- `[DOC-UPDATE]` — docs should reflect current schema reality.
+
+## Research
+
+Use `websearch` to verify current best practices for:
+- PostgreSQL JSONB indexing and query patterns
+- Alembic migration strategies for zero-downtime deployments
+- PostgreSQL ENUM type management
+- asyncpg connection pooling and performance
 
 ---
 
@@ -474,8 +470,13 @@ For each database:
 
 ### 6. Architectural Problems
 
-| Severity | Area | Problem | Risk | Recommendation |
-|---|---|---|---|---|
+| Severity | Type | Area | Problem | Risk | Recommendation |
+|----------|------|------|---------|------|----------------|
+| HIGH | [SPEC-DEVIATION] | Indexing | aggregated_data missing composite index | full table scan | add index or update spec |
+| MEDIUM | [BEST-PRACTICE] | Scaling | processing_logs unbounded growth | table bloat | add archival strategy |
+| LOW | [DOC-UPDATE] | Schema | ENUM types differ from docs | confusion | update docs to match |
+
+Type column: `[SPEC-DEVIATION]`, `[BEST-PRACTICE]`, or `[DOC-UPDATE]`.
 
 Severity: CRITICAL, HIGH, MEDIUM, LOW
 
@@ -593,12 +594,12 @@ Where:
 ### Recommendation Requirements
 
 Each recommendation must:
-
 - Be tied to a specific object
 - Describe a real problem
 - Explain: why it's a problem, when the system will degrade, what risk is created
 - Contain a specific change
 - Not contain abstract advice
+- Include label: `[SPEC-DEVIATION]`, `[BEST-PRACTICE]`, or `[DOC-UPDATE]`
 
 ---
 

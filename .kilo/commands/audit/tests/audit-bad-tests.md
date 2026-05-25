@@ -5,9 +5,35 @@ agent: auditor
 alwaysApply: false
 ---
 
-# Objective
+# Test Quality Audit — mkobi BI Dashboard
 
-Identify tests that do not match the current architecture and style of the production code, especially if they force changes to production code to satisfy tests rather than the other way around.
+> **Prerequisite:** Docker services must be running before executing any test commands. See: `docs/11-guides/docker.md`
+
+## Objective
+
+Identify tests that:
+1. **Don't match current architecture** — outdated contracts, wrong patterns, force production code to satisfy tests
+2. **Have low verification value** — don't test business logic, only check status codes or mock calls
+3. **Should be improved or removed** — redundant, fragile, or testing the wrong thing
+
+Also recommend **missing test coverage** for critical business flows that have no tests at all.
+
+## Recommendation Types
+
+Label every finding:
+- `[TEST-DELETE]` — test is harmful or worthless; delete it
+- `[TEST-REWRITE]` — test intent is right but implementation is wrong; rewrite
+- `[TEST-UPDATE]` — test needs minor updates to match current code
+- `[BEST-PRACTICE]` — missing test coverage or quality improvement; advisory
+- `[DOC-UPDATE]` — test reveals that docs/spec are wrong, not the code
+
+## Research
+
+Use `websearch` to verify current best practices for:
+- pytest async testing patterns
+- FastAPI test client patterns (httpx AsyncClient)
+- SQLAlchemy async test fixtures
+- Meaningful test coverage vs coverage for its own sake
 
 ## Bad Test Indicators (subject to deletion or complete rewrite):
 
@@ -66,12 +92,18 @@ Identify tests that do not match the current architecture and style of the produ
 
 **Rule:** If a test requires significant changes to production code just to make the test pass — delete that test.
 
+**Rule:** If a test was written for old code and the code has legitimately evolved, update the test — don't revert the code.
+
+**Rule:** When a test fails because the spec was wrong (not the code), recommend updating the spec, not the code.
+
 ## Report Format
 
 Create file: `.ai/audit/tests/audit_report_<number>.md` (next available number)
 
-| FilePath | TestName (function name) | Problem | Recommendation |
-|----------|------------------------|---------|----------------|
-| tests/test_auth.py | test_login_old_response | Checks only `{access_token}`, not `TokenWithUser` with `display_name` | Rewrite to verify full response shape |
-| tests/test_processing.py | test_process_uses_pandas | Imports pandas instead of polars | Delete — violates mkobi tech stack |
-| tests/test_upload.py | test_no_assert | Has no assert statement | Delete or add meaningful assertions |
+| FilePath | TestName | Type | Problem | Recommendation |
+|----------|----------|------|---------|----------------|
+| tests/test_auth.py | test_login_old_response | [TEST-REWRITE] | Checks only `{access_token}`, not `TokenWithUser` with `display_name` | Rewrite to verify full response shape |
+| tests/test_processing.py | test_process_uses_pandas | [TEST-DELETE] | Imports pandas instead of polars | Delete — violates mkobi tech stack |
+| tests/test_upload.py | test_no_assert | [TEST-DELETE] | Has no assert statement | Delete or add meaningful assertions |
+| tests/test_dashboards.py | — | [BEST-PRACTICE] | No tests for 403/404 dual-signal | Add negative scenario tests |
+| tests/test_upload.py | test_upload_cleanup | [DOC-UPDATE] | Test expects old cleanup behavior, code evolved | Update test to match current `platformdirs` cleanup |

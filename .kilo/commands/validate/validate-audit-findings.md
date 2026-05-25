@@ -5,24 +5,18 @@ agent: validator
 alwaysApply: false
 ---
 
-# System Integrity Validation Workflow
+# Audit Findings Validation Workflow
 
 ## Objective
 
-Validate:
-- audit findings
-- architectural consistency
-- dependency graphs
-- semantic targeting stability
-- rollout safety
-- execution applicability
+Validate audit findings:
+- `[SPEC-DEVIATION]` — verify the deviation is real and determine whether code or docs should change
+- `[BEST-PRACTICE]` — verify feasibility and ROI; reject if overengineered
+- `[DOC-UPDATE]` — verify the proposed doc change is accurate
 
-Reject:
-- stale findings
-- unsafe rollout plans
-- unstable semantic targeting
-- overengineered recommendations
-- invalid execution assumptions
+Separate validated findings into:
+- **Mandatory fixes** — security, data loss, correctness issues
+- **Advisory recommendations** — improvements worth doing but not blocking
 
 ## Constraints
 
@@ -84,6 +78,7 @@ Validate:
 - operational value
 - maintenance impact
 - current applicability
+- whether the fix target is correct (code vs docs)
 
 Mark findings as invalid if:
 - already implemented
@@ -94,6 +89,21 @@ Mark findings as invalid if:
 - operationally unsafe
 - overly complex
 - conflicting with current direction
+- the code choice is actually better than the doc (flip to DOC-UPDATE)
+
+For `[SPEC-DEVIATION]` findings:
+- Determine: should code change or docs change?
+- If code is better than docs → reclassify as `[DOC-UPDATE]`
+- If docs are better than code → keep as spec deviation to fix
+
+For `[BEST-PRACTICE]` findings:
+- Verify the recommendation is not overengineered
+- Verify ROI is positive for project size
+- Reject if it adds complexity without clear maintenance benefit
+
+For `[DOC-UPDATE]` findings:
+- Verify the proposed doc change accurately reflects code reality
+- Low risk, usually safe to approve
 
 Merge:
 - duplicated findings
@@ -205,6 +215,7 @@ The document must exclude:
 For every validated finding include:
 - finding id
 - title
+- type: `[SPEC-DEVIATION]` / `[BEST-PRACTICE]` / `[DOC-UPDATE]`
 - severity
 - description
 - impact
@@ -214,6 +225,12 @@ For every validated finding include:
 - dependency notes
 - rollout considerations
 - validation notes
+- classification: **mandatory** or **advisory**
+
+Separate sections in the output:
+1. **Mandatory fixes** — must be addressed (security, data loss, correctness)
+2. **Advisory recommendations** — recommended improvements (best practices, doc updates)
+3. **Doc updates needed** — documents that should be revised to reflect code reality
 
 Merge:
 - duplicated findings

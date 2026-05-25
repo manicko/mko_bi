@@ -15,6 +15,7 @@ Validate semantic implementation tasks before execution to ensure:
 - dependency correctness
 - semantic target stability
 - rollout survivability
+- correct handling of different finding types (spec-deviation vs best-practice vs doc-update)
 
 Reject:
 - unsafe tasks
@@ -22,6 +23,7 @@ Reject:
 - ambiguous targeting
 - invalid dependency sequencing
 - architecture-breaking changes
+- tasks that should be doc-updates instead of code changes
 
 ## Constraints
 

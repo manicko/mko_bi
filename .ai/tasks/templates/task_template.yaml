@@ -59,3 +59,33 @@ tests_to_run:
   - tests/test_user_creation.py
 
 risk_level: medium
+
+---
+# Verification task template (follows every implementation task)
+
+id: verify_task_template
+
+title: Verify — <implementation task title>
+
+type: verification
+
+status: pending
+
+depends_on:
+  - task_XXX_implementation_task
+
+verifies: task_XXX_implementation_task
+
+verification_steps:
+  - build: <command to build, e.g. "docker compose build">
+  - test: <test command, e.g. "pytest tests/test_user_creation.py -v">
+  - smoke_check: <minimal check, e.g. "curl /health or lint">
+
+pass_criteria:
+  - build succeeds
+  - all tests pass
+  - smoke_check returns expected result
+
+failure_action: return task_XXX_implementation_task to rework
+
+rollback_task: task_YYY_rollback_if_applicable  # optional

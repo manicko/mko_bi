@@ -7,34 +7,31 @@ alwaysApply: false
 
 # Detailed Project Audit — mkobi BI Dashboard
 
+> **Prerequisite:** Docker services must be running before executing tests, lint, or type checks. See: `docs/11-guides/docker.md`
+
 ## Objective
 
-Perform a comprehensive audit of the BI Dashboard System (`mkobi`) for compliance with the project specification (`docs/SPEC.md` and all `docs/**/*.md`).
+Audit the BI Dashboard System for:
+1. **Spec compliance** — does code match `docs/SPEC.md` and related docs?
+2. **Best practices** — does it follow current standards beyond the spec?
+3. **Doc accuracy** — when code legitimately diverges, recommend updating docs.
 
-**Audit focus:**
+Spec docs are the **baseline**, not the target. Recommend evolution, not just compliance.
 
-- **Backend (FastAPI)**: architecture, security, data processing correctness, type safety
-- **Frontend (React SPA)**: FSD architecture, type safety, API integration, UI components
-- **Data Layer**: PostgreSQL schema, migrations, JSONB usage, indexes
-- **DevOps**: Docker, deployment readiness, configuration
+## Recommendation Types
 
-**Quality criteria:**
+Label every finding:
+- `[SPEC-DEVIATION]` — code differs from docs. Decide: fix code or update docs.
+- `[BEST-PRACTICE]` — improvement beyond current spec. Advisory, not mandatory.
+- `[DOC-UPDATE]` — docs should reflect current code reality or new direction.
 
-- Clean Architecture (strict layer separation)
-- Separation of Concerns (domain boundaries)
-- Strict modularity
-- No overengineering
-- Full type safety (Python type hints + Pydantic, TypeScript)
-- Code standards compliance (ruff, mypy)
-- Proper logging (structured logging, NOT `print`)
-- `StrEnum` for all fixed values (17 classes)
-- Package name: `mkobi`
+## Research
 
-**AVOID:**
-
-- enterprise overengineering
-- unnecessary abstractions
-- complex patterns without justification
+Use `websearch` to verify current best practices for:
+- FastAPI async patterns, security, and deployment
+- React 18+ performance, hooks patterns, bundle optimization
+- PostgreSQL JSONB query patterns, index strategies
+- Polars lazy evaluation and memory efficiency
 
 ---
 
@@ -1061,11 +1058,11 @@ Table (based on `docs/SPEC.md` and all `docs/**/*.md`):
 
 For each issue:
 
-| Severity | File | Line | Problem | Impact | Recommendation |
-|----------|------|------|---------|--------|----------------|
-| CRITICAL | api/upload.py | 84 | temp files not deleted | disk leaks | add finally cleanup |
-| HIGH | models/enums.py | 12 | dict used instead of StrEnum | maintainability | refactor to StrEnum |
-| MEDIUM | services/processing.py | 156 | print() instead of logger | logging standards | use logger.error() |
+| Severity | Type | File | Line | Problem | Impact | Recommendation |
+|----------|------|------|------|---------|--------|----------------|
+| CRITICAL | [SPEC-DEVIATION] | api/upload.py | 84 | temp files not deleted | disk leaks | add finally cleanup |
+| HIGH | [BEST-PRACTICE] | models/enums.py | 12 | dict used instead of StrEnum | maintainability | refactor to StrEnum |
+| MEDIUM | [DOC-UPDATE] | services/processing.py | 156 | print() instead of logger | logging standards | replace + update spec |
 | LOW | frontend/src/features/auth/ui/LoginForm.tsx | 23 | any type used | type safety | add interface |
 
 Severity:

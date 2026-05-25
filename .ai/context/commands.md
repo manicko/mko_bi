@@ -8,6 +8,18 @@
 
 ---
 
+## Docker — Required for All Checks and Tests
+
+> **Before running any tests, lint, type checks, or database operations — ensure Docker services are running.**
+> Full setup and start instructions: [`docs/11-guides/docker.md`](../11-guides/docker.md)
+
+Quick check:
+```powershell
+docker compose -f docker/docker-compose.yml ps
+```
+
+---
+
 ## Python (backend) — use `uv run` for all commands
 
 | Task | Command |

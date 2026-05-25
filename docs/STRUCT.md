@@ -8,10 +8,6 @@ C:\PY_DEV\MKOBI
 |   .gitignore
 |   AGENTS.md
 |   alembic.ini
-|   docker-compose.override.yml
-|   docker-compose.test.yml
-|   docker-compose.yml
-|   Dockerfile
 |   mypy.ini
 |   package-lock.json
 |   package.json
@@ -25,6 +21,9 @@ C:\PY_DEV\MKOBI
 |   +---audit
 |   |   +---db
 |   |   +---docker
+|   |   |       audit_report_001.md
+|   |   |       audit_report_002.md
+|   |   |       
 |   |   +---problems
 |   |   +---project
 |   |   +---tests
@@ -57,21 +56,9 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
-|   |   |   PLAN_01.md
-|   |   |   
 |   |   \---tasks
-|   |           order.yaml
-|   |           TASK_025_STC_rewrite_compose_test.yaml
-|   |           TASK_026_STC_cleanup_compose_yml.yaml
-|   |           TASK_027_STC_verify_parallel_execution.yaml
-|   |           TASK_028_STC_fix_conftest_env.yaml
-|   |           
 |   +---problems
-|   |   |   CONTEXT_01.md
-|   |   |   
 |   |   \---decisions
-|   |           DECISION_01.md
-|   |           
 |   +---researches
 |   |       RESEARCH_01.md
 |   |       
@@ -88,21 +75,11 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
-|   |   |       TASK_025_STC_rewrite_compose_test_DONE.yaml
-|   |   |       TASK_026_STC_cleanup_compose_yml_DONE.yaml
-|   |   |       TASK_027_STC_fix_conftest_env_DONE.yaml
-|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
-|   |   |       order.yaml
-|   |   |       TASK_028_STC_fix_override_yml.yaml
-|   |   |       TASK_029_STC_verify_parallel_execution.yaml
-|   |   |       TASK_030_STC_audit_docker_issues.yaml
-|   |   |       TASK_031_DOCKER_RESTRUCTURE_folder.yaml
-|   |   |       
 |   |   \---validation
 |   \---templates
 |           decision.md
@@ -18832,6 +18809,7 @@ C:\PY_DEV\MKOBI
 |           9c2c6ea7-8b18-4321-897b-00ce5fdf26ab.csv.gz
 |           9c400828-aeca-4d58-bfc9-46ed289c0439.csv
 |           9c8bfb47-bef7-4ace-b335-56e107750aa0.csv
+|           9cad28b7-054b-48e0-8fb8-38a501ead1f1.csv
 |           9ccfdc40-ac0a-4f7c-91f3-00f8d4c8833a.csv
 |           9d022b3d-b5ed-425b-92c8-abe31bf88c56.csv
 |           9d033ba0-dfdb-4cf9-bc57-48b7fbe4d835.csv
@@ -19136,6 +19114,7 @@ C:\PY_DEV\MKOBI
 |           deca7de8-9dd3-4a89-b4af-42bd0d9ac242.csv
 |           deedbd42-9802-43e5-87d0-40199abe2852.csv
 |           def07511-fdaf-477c-b3d7-eab8a966101e.csv
+|           df19aecf-194b-47ef-9848-b70bb1b19661.csv.gz
 |           df30ccd1-2740-4748-815f-7250bf813c03.csv
 |           df311948-19c7-41f4-a3e1-7ca6dd789205.csv
 |           df3638e0-12fa-4e3d-8763-75add320e331.csv
@@ -19155,6 +19134,7 @@ C:\PY_DEV\MKOBI
 |           e374dd67-f611-4946-9574-a1112688a82d.csv
 |           e39ff198-8b35-4a41-b9ba-45181aa73b2e.csv
 |           e3b5933a-5a58-4522-bce7-55dec34f4e8e.csv
+|           e3d6bbe2-68a2-4e75-b2ed-c5ce88ac5b49.csv
 |           e4416b13-880c-4b6a-979b-0c86a503d669.csv
 |           e4a7ed79-a357-4ee3-8cb8-407b1cf5e8a4.csv
 |           e52bffa5-fc08-401b-878c-d4084e037cd3.csv.gz
@@ -19185,6 +19165,7 @@ C:\PY_DEV\MKOBI
 |           ebf4889f-f159-4717-9e11-d6a6098597f0.csv
 |           ec26c596-9d5f-457a-8b46-f7e3a734ef51.csv.gz
 |           ec668aaf-a5e4-437d-9786-03146cf79c28.csv
+|           ec818e22-55b2-4df9-a033-f73ac8192763.csv
 |           ec8309e7-1a6b-43da-8932-6014e0e5d104.csv
 |           ec89a36c-3881-4716-a04d-1dd8a6ec9147.csv
 |           ec995645-a831-4893-b24f-fa8b41ab1636.csv
@@ -19390,8 +19371,16 @@ C:\PY_DEV\MKOBI
 |           upload_fe483881-0415-4616-ba62-ce6529f66e80_test.txt
 |           
 +---docker
-|   \---init-scripts
-|           01-create-app-role.sh
+|   |   docker-compose.override.yml
+|   |   docker-compose.test.yml
+|   |   docker-compose.yml
+|   |   Dockerfile
+|   |   
+|   +---init-scripts
+|   |       01-create-app-role.sh
+|   |       
+|   \---nginx
+|           nginx.conf
 |           
 +---docs
 |   |   README.md
@@ -100269,10 +100258,6 @@ C:\PY_DEV\MKOBI
 |       \---test
 |               setup.ts
 |               
-+---nginx
-|   |   nginx.conf
-|   |   
-|   \---mime.types
 +---node_modules
 |   |   .package-lock.json
 |   |   

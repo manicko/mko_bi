@@ -5,9 +5,104 @@ agent: auditor
 alwaysApply: false
 ---
 
-# Docker & Runtime Environment Audit — mkobi BI Dockerfile
+# Docker & Runtime Environment Audit — mkobi BI Dashboard
 
-## Dockerfile Verification
+## Objective
+
+Audit Docker setup for:
+1. **Runtime correctness** — does Docker actually start? Do containers run without errors?
+2. **Config validation** — does config match `docs/` requirements?
+3. **Best practices** — does it follow current Docker/security standards beyond the spec?
+4. **Doc accuracy** — when code diverges from docs, which is right?
+
+**You MUST run Docker and verify it actually works. Static file checks alone are not sufficient.**
+
+## Recommendation Types
+
+Label every finding:
+- `[RUNTIME-ERROR]` — Docker fails to start, containers crash, services unreachable
+- `[SPEC-DEVIATION]` — config differs from docs. Decide: fix config or update docs.
+- `[BEST-PRACTICE]` — improvement beyond current spec. Advisory, not mandatory.
+- `[DOC-UPDATE]` — docs should reflect current config reality.
+
+## Research
+
+Use `websearch` to verify current best practices for:
+- Docker security hardening
+- Multi-stage build patterns
+- Health check strategies
+- Production deployment patterns
+
+---
+
+## Step 1 — Start Docker and Check Runtime Status
+
+**This step is mandatory. Do not skip.**
+
+### 1.1 Start services
+
+```powershell
+docker compose -f docker/docker-compose.yml up -d
+```
+
+Wait 30 seconds for services to initialize.
+
+### 1.2 Check container status
+
+```powershell
+docker compose -f docker/docker-compose.yml ps
+```
+
+Verify all containers are in `running` or `healthy` state. If any container is `exited`, `restarting`, or `unhealthy` — this is a `[RUNTIME-ERROR]`.
+
+### 1.3 Check logs for ALL services
+
+For **each** service (app, db, redis), run:
+
+```powershell
+docker compose -f docker/docker-compose.yml logs <service>
+```
+
+Check for:
+- **ERROR** or **FATAL** level messages
+- Database connection failures (authentication errors, connection refused, database not found)
+- Missing credentials or misconfigured passwords
+- Import errors, missing modules, startup failures
+- Health check failures
+- Permission errors
+
+**Every ERROR in logs must become a finding in the report.**
+
+### 1.4 Check inter-service connectivity
+
+```powershell
+# Check if app reaches database
+docker compose -f docker/docker-compose.yml logs app | Select-String -Pattern "database|db|postgresql|password|connection"
+
+# Check if database is ready
+docker compose -f docker/docker-compose.yml logs db | Select-String -Pattern "ready|accepting|listening"
+```
+
+### 1.5 Verify health endpoints
+
+```powershell
+# App health
+curl http://localhost:8000/health
+
+# If app is not reachable, check: is port 8000 mapped? Did the app crash?
+```
+
+### Document runtime findings
+
+Record:
+- Which containers started successfully and which didn't
+- Every error from logs with full context (service, timestamp, error message, stack trace)
+- Root cause analysis for each error (wrong password? missing role? mismatched config?)
+- Inter-service connectivity issues
+
+---
+
+## Step 2 — Dockerfile Analysis
 
 ### Build Structure
 
@@ -31,7 +126,7 @@ alwaysApply: false
 
 ### Runtime
 
-- Correct startup command: `uv run uvicorn mkobi.main:app --host 0.0.0.0 --port 8000`
+- Correct startup command
 - Healthcheck configured: `HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -f http://localhost:8000/health || exit 1`
 - `uv` used as package manager (not pip directly)
 - Predictable working directory (`/app`)
@@ -39,7 +134,7 @@ alwaysApply: false
 
 ---
 
-## Docker Compose / Orchestration Verification
+## Step 3 — Docker Compose Analysis
 
 ### Service Separation
 
@@ -68,6 +163,7 @@ alwaysApply: false
 
 - `ENV` — environment name (development/test/production)
 - `DATABASE__HOST`, `DATABASE__PORT`, `DATABASE__PASSWORD` — DB connection
+- `MKOBI_APP_PASSWORD` — application DB role password
 - `JWT__SECRET_KEY` — JWT signing key (required in production)
 - `CORS_ORIGINS` — explicit allowed origins
 - `AUTO_MIGRATE=true` — runs Alembic migrations on startup
@@ -89,21 +185,17 @@ alwaysApply: false
 
 ---
 
-## Persistence & Temp Files
-
-### Verify
+## Step 4 — Persistence & Temp Files
 
 - Temp files directory: `/app/data` (mounted volume, survives container restarts)
 - Temp file cleanup: application removes files after processing (success and failure)
-- Stale temp file cleanup: `DatabaseStarter` removes orphaned files on startup (threshold: `STALE_FILE_THRESHOLD_HOURS`, default 24h)
+- Stale temp file cleanup: `DatabaseStarter` removes orphaned files on startup
 - PostgreSQL data persisted via named volume
 - Redis data persisted via named volume (if used)
 
 ---
 
-## Production Readiness
-
-### Verify
+## Step 5 — Production Readiness
 
 - Environment-based configuration (no `.env` in production)
 - Configurable ports and hosts via env vars
@@ -112,30 +204,44 @@ alwaysApply: false
 - CORS origins explicitly configured (no wildcards)
 - Health check endpoint available at `/health`
 - `AUTO_MIGRATE=true` for automatic schema migrations
-- Production credential enforcement (refuses to start without `JWT__SECRET_KEY` and `DATABASE__PASSWORD`)
+- Production credential enforcement
 
 ---
 
-## Dependency Management
+## Step 6 — Cross-Reference Runtime Errors with Config
 
-### Verify
+For **every** `[RUNTIME-ERROR]` found in Step 1:
 
-- `uv` used as package manager
-- `uv.lock` present and committed (reproducible installs)
-- `pyproject.toml` defines all dependencies
-- Lock file consistent with `pyproject.toml`
-- No pip fallback in Dockerfile
+1. Identify which config file/setting causes the error
+2. Trace the value through the chain: compose file → env var → container → application config → database connection
+3. Determine root cause: is it a missing var? wrong password? init script not running? role not created?
+4. Provide a concrete fix with the exact config change needed
+
+**Example pattern:**
+```
+Log: "password authentication failed for user \"mkobi_app\""
+→ Compose sets MKOBI_APP_PASSWORD via env var
+→ App config reads it and constructs connection string
+→ DB init script creates role with CREATE USER mkobi_app PASSWORD '...'
+→ Mismatch: password in compose doesn't match what init script sets, OR init script didn't run, OR role doesn't exist yet at app startup
+→ Fix: [specific change to reconcile the password]
+```
 
 ---
 
 ## What Counts as Problems
 
-### CRITICAL
+### CRITICAL (from runtime)
+- Container exits or crashes on startup
+- Database connection fails (wrong password, role missing, DB unreachable)
+- Authentication errors preventing app startup
+- Health endpoint unreachable
+
+### CRITICAL (from static analysis)
 - Container runs as root
 - Secrets baked into image
 - Debug mode enabled in production
 - Mutable runtime behavior (state stored only in container)
-- No health check configured
 
 ### HIGH
 - No dependency pinning (missing `uv.lock`)
@@ -157,38 +263,56 @@ alwaysApply: false
 
 Create file: `C:\py_dev\mkobi\.ai\audit\docker\audit_report_<number>.md` (next available number)
 
+### Runtime Status Summary
+
+```
+Containers:
+- app:    [running | exited | restarting] — [brief status]
+- db:     [running | exited | restarting] — [brief status]
+- redis:  [running | exited | restarting] — [brief status]
+
+Health endpoint: [reachable | unreachable] — [response or error]
+```
+
 ### Findings Table
 
-| Severity | File | Line | Problem | Impact | Recommendation |
-|----------|------|------|---------|--------|----------------|
-| CRITICAL | Dockerfile | 12 | container runs as root | security risk | add non-root user |
-| HIGH | docker-compose.yml | 45 | no volume for postgres_data | data loss on restart | add named volume |
-| MEDIUM | Dockerfile | 28 | dev dependencies in prod | larger attack scope | use multi-stage build |
+| Severity | Type | File | Line | Problem | Impact | Recommendation |
+|----------|------|------|------|---------|--------|----------------|
+| CRITICAL | [RUNTIME-ERROR] | - | - | `password authentication failed for user "mkobi_app"` — DB init script didn't create the role or password mismatch | App cannot start at all | Fix DB init script or reconcile MKOBI_APP_PASSWORD |
+| CRITICAL | [SPEC-DEVIATION] | docker-compose.yml | 23 | MKOBI_APP_PASSWORD defaults to placeholder | Role may have wrong password | Enforce with `${MKOBI_APP_PASSWORD:?...}` |
+| HIGH | [BEST-PRACTICE] | Dockerfile | 45 | No HEALTHCHECK in Dockerfile | Image not self-contained for k8s/ECS | Add HEALTHCHECK instruction |
+| MEDIUM | [DOC-UPDATE] | docker-compose.yml | 28 | Dev dependencies in prod | Larger attack scope | Update spec or split stages |
+
+Type column: `[RUNTIME-ERROR]`, `[SPEC-DEVIATION]`, `[BEST-PRACTICE]`, or `[DOC-UPDATE]`.
 
 ### Final Assessment
 
-```text
-Deployment Readiness:
-- READY
-- PARTIALLY READY
-- NOT READY
 ```
+Deployment Readyв/ / LOOKS_GOOD  
+:- READY- PARTIALLY_READY
+- NOT_READY
+```
+
+### Runtime Errors Section (if any)
+
+For each runtime error:
+- Full error message and stack trace excerpt
+- Root cause analysis
+- Config chain trace (how the bad value flows from compose → app → DB)
+- Exact fix needed
 
 ### File-Level Recommendations
 
 For each problematic file:
 
-```text
-File: Dockerfile
+```
+File: docker/docker-compose.yml
 
 Problems:
-- single-stage build (no multi-stage)
-- runs as root
-- .env copied into image
+- MKOBI_APP_PASSWORD not enforced
+- Hardcoded dev secret in override
 
 Recommendations:
-- implement multi-stage build (base/dev/test/prod)
-- add non-root USER instruction
-- remove .env COPY, use env vars or Docker secrets
-- add HEALTHCHECK instruction
+- Use ${MKOBI_APP_PASSWORD:?MKOBI_APP_PASSWORD is required}
+- Use ${JWT__SECRET_KEY:-dev-secret-key-for-local-development} in override
 ```

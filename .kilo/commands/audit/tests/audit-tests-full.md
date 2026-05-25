@@ -7,6 +7,8 @@ alwaysApply: false
 
 # Test Quality Audit — mkobi BI Dashboard
 
+> **Prerequisite:** Docker services must be running before executing any test commands. See: `docs/11-guides/docker.md`
+
 ## Objective
 
 Perform a complete audit of test coverage to:
@@ -14,8 +16,26 @@ Perform a complete audit of test coverage to:
 - Ensure tests verify **real system behavior**, not mocks or implementation details
 - Verify sufficient coverage of all key system parts
 - Guarantee high diagnostic value of tests
+- Recommend missing test coverage for critical business flows
 
-**Core principle:** Production code is the source of truth. Tests adapt to it, not the other way around.
+**Core principle:** Production code is the source of truth. Tests adapt to it, not the other way around. When tests and docs conflict with production code, update tests and docs — not the code.
+
+## Recommendation Types
+
+Label every finding:
+- `[TEST-DELETE]` — test is harmful or worthless; delete it
+- `[TEST-REWRITE]` — test intent is right but implementation is wrong; rewrite
+- `[TEST-UPDATE]` — test needs minor updates to match current code
+- `[BEST-PRACTICE]` — missing test coverage or quality improvement; advisory
+- `[DOC-UPDATE]` — test reveals that docs/spec are wrong, not the code
+
+## Research
+
+Use `websearch` to verify current best practices for:
+- pytest async testing patterns (pytest-asyncio)
+- FastAPI test client patterns (httpx AsyncClient vs TestClient)
+- SQLAlchemy async test fixtures and session management
+- Meaningful test coverage metrics vs coverage for its own sake
 
 ## Anti-Patterns (subject to deletion or complete rewrite)
 
@@ -178,17 +198,23 @@ Create file: `.ai/audit/tests/audit_report_<number>.md` (next available number)
 
 2. **Problematic Tests Table**
 
-| File | Test | Category | Problem | Action | Priority |
-|------|------|----------|---------|--------|----------|
+| File | Test | Type | Category | Problem | Action | Priority |
+|------|------|------|----------|---------|--------|----------|
+| tests/test_auth.py | test_login_old_response | [TEST-REWRITE] | Contract | Checks only `{access_token}`, not `TokenWithUser` | Rewrite | HIGH |
+| tests/test_processing.py | test_process_uses_pandas | [TEST-DELETE] | Architecture | Imports pandas instead of polars | Delete | HIGH |
+| tests/test_upload.py | test_no_assert | [TEST-DELETE] | Quality | No assert statement | Delete | MEDIUM |
+| tests/test_dashboards.py | — | [BEST-PRACTICE] | Coverage | No tests for 403/404 dual-signal | Add tests | HIGH |
+| tests/test_upload.py | test_upload_cleanup | [DOC-UPDATE] | Contract | Expects old cleanup behavior | Update test + spec | LOW |
 
 3. **Coverage Assessment** — which important areas/scenarios are uncovered or weakly covered
 
 4. **Key Findings** (with examples)
 
 5. **Action Plan**
-   - Delete Required
-   - Rewrite Required
+   - Delete Required (tests that force wrong production code changes)
+   - Rewrite Required (tests with right intent, wrong implementation)
    - Improve (add negative cases, integration tests, etc.)
+   - Doc Updates (tests that revealed spec/docs are wrong)
 
 6. **Blocked Refactorings** (if any)
 

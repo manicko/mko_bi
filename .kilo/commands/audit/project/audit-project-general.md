@@ -7,14 +7,31 @@ alwaysApply: false
 
 # General Project Audit — mkobi BI Dashboard
 
+> **Prerequisite:** Docker services must be running before executing tests, lint, or type checks. See: `docs/11-guides/docker.md`
+
 ## Objective
 
-Perform a general audit of the **mkobi** project (Backend + Frontend + Data Layer + DevOps) for compliance with:
-- Project specification (`docs/SPEC.md` and all `docs/**/*.md`)
-- Clean Architecture (backend) and Feature-Sliced Design (frontend) principles
-- Code quality, security, and maintainability standards
+Audit the project for:
+1. **Spec compliance** — does code match `docs/SPEC.md` and related docs?
+2. **Best practices** — does it match current standards beyond the spec?
+3. **Doc accuracy** — when code legitimately diverges, which should change?
 
-**Guiding principle:** Production code must be understandable, safe, maintainable, and specification-compliant. Simplicity is preferred over unnecessary complexity.
+Spec docs are the **baseline**, not the target. Recommend evolution, not just compliance.
+
+## Recommendation Types
+
+Label every finding:
+- `[SPEC-DEVIATION]` — code differs from docs. Decide: fix code or update docs.
+- `[BEST-PRACTICE]` — improvement beyond current spec. Advisory, not mandatory.
+- `[DOC-UPDATE]` — docs should reflect current code reality or new direction.
+
+## Research
+
+Use `websearch` to verify current best practices for:
+- FastAPI async patterns and security
+- React 18+ performance and patterns
+- PostgreSQL JSONB indexing and query optimization
+- Polars data processing patterns
 
 ---
 
@@ -301,11 +318,11 @@ Create file: `C:\py_dev\mkobi\.ai\audit\project\audit_report_<number>.md` (next 
 
 **Findings table format:**
 
-| Severity | Component | File | Problem | Recommendation |
-|----------|-----------|------|---------|----------------|
-| CRITICAL | Security | upload.py | No temp file cleanup | Add `finally` block with `os.remove()` |
-| HIGH | Auth | routes.py | String literal role check | Use `UserRole.ADMIN` StrEnum |
-| MEDIUM | API | dashboards.py | Missing rate limit | Add `@rate_limit` decorator |
+| Severity | Type | Component | File | Problem | Recommendation |
+|----------|------|-----------|------|---------|----------------|
+| CRITICAL | [SPEC-DEVIATION] | Security | upload.py | No temp file cleanup | Add `finally` block with `os.remove()` |
+| HIGH | [BEST-PRACTICE] | Auth | routes.py | String literal role check | Use `UserRole.ADMIN` StrEnum |
+| MEDIUM | [DOC-UPDATE] | API | dashboards.py | Missing rate limit | Add `@rate_limit` decorator + update spec |
 
 ---
 

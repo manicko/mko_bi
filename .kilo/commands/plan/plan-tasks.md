@@ -172,6 +172,33 @@ Task requirements:
 
 ---
 
+## Step 5.5 — Insert Verification Tasks
+
+After EVERY implementation task, insert a verification task.
+
+Pattern:
+```
+TASK_001_implement_X
+TASK_002_verify_X          ← depends_on: TASK_001
+TASK_003_implement_Y       ← depends_on: TASK_002
+```
+
+Verification task must:
+- have `type: verification`
+- reference the implementation task via `verifies: TASK_XXX_name`
+- define `verification_steps` (build, test, smoke_check)
+- define `pass_criteria`
+- define `failure_action: return TASK_XXX to rework`
+- for infrastructure: run the actual service and confirm it works
+- for code: run tests_to_run and confirm they pass
+
+Rules:
+- No implementation task may be followed directly by another implementation task
+- Verification tasks are mandatory, not optional
+- Numbering must stay sequential (implementation N, verification N+1)
+
+---
+
 ## Step 6 — Generate Execution Ordering
 
 Use template:

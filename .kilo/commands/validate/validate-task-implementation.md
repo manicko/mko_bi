@@ -7,6 +7,8 @@ alwaysApply: false
 
 # Implementation Audit Workflow
 
+> **Prerequisite:** Docker services must be running before executing any test commands during validation. See: `docs/11-guides/docker.md`
+
 ## Objective
 
 Audit completed implementation tasks to ensure:
@@ -17,6 +19,7 @@ Audit completed implementation tasks to ensure:
 - rollout safety
 - maintainability
 - requirement completeness
+- doc updates were applied (when tasks included doc changes)
 
 Detect:
 - incomplete implementations
@@ -27,6 +30,7 @@ Detect:
 - stale assumptions
 - partial rollouts
 - broken contracts
+- missing doc updates (code changed but docs weren't updated)
 
 Provide:
 - detailed audit findings
@@ -34,6 +38,7 @@ Provide:
 - quality assessment
 - risk analysis
 - execution verdict
+- separated: mandatory rework vs advisory improvements
 
 ---
 
