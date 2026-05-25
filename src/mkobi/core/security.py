@@ -44,7 +44,6 @@ MAX_PASSWORD_LENGTH: int = 72
 
 # Cookie security defaults
 COOKIE_HTTPONLY: bool = True
-COOKIE_SECURE: bool = True
 COOKIE_SAMESITE: str = "strict"
 COOKIE_NAME: str = "mkobi_refresh_token"
 
@@ -387,6 +386,7 @@ def set_secure_cookie(
     """Set a secure cookie on the response.
 
     Uses security constants for httponly, secure, and samesite attributes.
+    The secure attribute is configurable via environment variable.
 
     Args:
         response: FastAPI Response object to set cookie on.
@@ -394,11 +394,12 @@ def set_secure_cookie(
         value: Cookie value.
         max_age: Cookie max age in seconds. If None, cookie becomes a session cookie.
     """
+    config = get_config()
     response.set_cookie(
         key=key,
         value=value,
         httponly=COOKIE_HTTPONLY,
-        secure=COOKIE_SECURE,
+        secure=config.app.cookie_secure,
         samesite=COOKIE_SAMESITE,
         max_age=max_age,
     )
@@ -408,14 +409,16 @@ def delete_secure_cookie(response: Response, key: str) -> None:
     """Delete a cookie from the response.
 
     Uses security constants for httponly, secure, and samesite attributes.
+    The secure attribute is configurable via environment variable.
 
     Args:
         response: FastAPI Response object to delete cookie from.
         key: Cookie name to delete.
     """
+    config = get_config()
     response.delete_cookie(
         key=key,
         httponly=COOKIE_HTTPONLY,
-        secure=COOKIE_SECURE,
+        secure=config.app.cookie_secure,
         samesite=COOKIE_SAMESITE,
     )

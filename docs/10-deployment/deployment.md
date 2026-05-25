@@ -157,17 +157,19 @@ docker compose --profile production up -d
 
 ## Docker Deployment
 
-The project uses a multi-stage Dockerfile supporting dev, test, prod, and prod-slim targets. See [Docker Guide](../11-guides/docker.md) for the full Docker specification.
+The project uses a multi-stage Dockerfile supporting dev, test, and prod targets. See [Docker Guide](../11-guides/docker.md) for the full Docker specification.
 
 ### Quick Start
 
-```bash
+ ```bash
 # Production (default target)
 docker compose up -d
 
-# Development with hot reload
+# Development with hot reload and frontend dev server
 docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 ```
+
+**Note:** Development mode includes the frontend service running on port 5173 (Vite dev server with hot reload). Access the application at http://localhost:5173.
 
 ### Dockerfile Targets
 
@@ -176,8 +178,7 @@ docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
 | `base` | python:3.12-slim-bookworm | System only | — | Shared base |
 | `dev` | base | All (incl. dev) | 1 (--reload) | Local dev |
 | `test` | base | All (incl. dev) | 1 (pytest) | CI/CD |
-| `prod` | prod-base | Production only | 4 | Production |
-| `prod-slim` | python:3.12-slim | Minimal runtime | 1 | Constrained environments |
+| `prod` | base | Production only | 4 | Production |
 
 ### Required Production Variables
 

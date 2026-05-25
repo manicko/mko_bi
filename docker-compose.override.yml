@@ -15,36 +15,48 @@ services:
       ENV: development
       DATABASE__HOST: db
       DATABASE__PORT: 5432
-      DATABASE__USER: postgres
-      DATABASE__PASSWORD: ${DATABASE__PASSWORD:-1234}
       DATABASE__DBNAME: bidb
       DATABASE__TEST_DBNAME: bidb_test
-      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
       JWT__ALGORITHM: HS256
     depends_on:
       db:
         condition: service_healthy
     restart: "no"
 
+  # Frontend development server with Vite hot reload
+  frontend:
+    image: node:20-alpine
+    working_dir: /app
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    command: ["sh", "-c", "npm install && npm run dev -- --host 0.0.0.0"]
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+    # No depends_on - frontend can start independently
+
   app:
     build:
       target: dev
-    user: root
     depends_on:
       migrate:
         condition: service_completed_successfully
     environment:
       ENV: development
-      # Application role for runtime operations (limited privileges)
+      DATABASE__HOST: db
+      DATABASE__PORT: 5432
       DATABASE__USER: mkobi_app
-      DATABASE__PASSWORD: ${MKOBI_APP_PASSWORD:-dev_password}
+      DATABASE__PASSWORD: ${MKOBI_APP_PASSWORD:-secure_password}
       DATABASE__ADMIN_USER: postgres
-      DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-1234}
+      DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-postgres}
+      DATABASE__DBNAME: bidb
+      DATABASE__TEST_DBNAME: bidb_test
+      JWT__ALGORITHM: HS256
       # Admin credentials (valid email format required)
       ADMIN_USERNAME: admin@example.com
       ADMIN_PASSWORD: admin@example.com
-      # Development can use a default JWT secret for local testing
-      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
       LOGGING__LEVEL: DEBUG
       AUTO_MIGRATE: "false"
       RECREATE_TEST_DB: "true"
@@ -55,17 +67,15 @@ services:
       - ./tests:/app/tests
       - ./pyproject.toml:/app/pyproject.toml
       - ./uv.lock:/app/uv.lock
-      # Mount frontend build for SPA serving (run 'cd frontend && npm run build' locally)
-      - ./frontend/dist:/app/frontend/dist
-    command: ["uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     # Remove healthcheck in dev for faster startup
     healthcheck:
       disable: true
 
   db:
-    environment:
-      POSTGRES_PASSWORD: ${DATABASE__PASSWORD:-1234}
-      MKOBI_APP_PASSWORD: ${MKOBI_APP_PASSWORD:-dev_password}
     # Expose port for local development tools
     ports:
       - "5432:5432"
+
+volumes:
+  frontend_node_modules:

@@ -1,0 +1,57 @@
+id: TASK_016_D15_document_superuser_migration
+
+title: Document Postgres Superuser for Migrations as Known Trade-off
+
+status: completed
+
+priority: low
+
+depends_on: []
+
+phase: DOCKER_HARDENING
+wave: 2
+
+description: >
+  docker-compose.yml uses DATABASE__USER: postgres (superuser) for the migration service.
+  This violates least-privilege but is a common pattern for migrations. Document this
+  as a known trade-off with the option to use a dedicated migration role in the future.
+
+finding_ref: DOCKER-015
+severity: low
+
+goals:
+  - Document the superuser usage for migrations as a known trade-off
+  - Add a comment in docker-compose.yml near the migrate service
+  - Optionally note the future improvement: dedicated migration role with DDL privileges
+
+files:
+  - path: docker-compose.yml
+    targets:
+      - type: service
+        name: migrate
+    semantic_anchors:
+      insert_before:
+        type: block
+        value: "migrate:"
+    changes:
+      - action: add_comment
+        description: Document superuser usage as known trade-off
+        code_hint: |
+          # NOTE: Using postgres superuser for migrations is a common pattern.
+          # For improved security, consider creating a dedicated migration role
+          # with DDL privileges only (not superuser) in production environments.
+
+acceptance_criteria:
+  - Comment added to docker-compose.yml documenting the trade-off
+  - No functional changes to the migration service
+  - Migration service still works as before
+
+tests_to_run:
+  - "docker compose up migrate"
+  - "Verify migrations run successfully"
+
+risk_level: low
+
+rollout_notes: >
+  Documentation-only change. Known trade-off. No functional impact.
+  Future improvement: create a dedicated migration role with DDL privileges.

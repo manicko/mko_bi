@@ -1,0 +1,87 @@
+id: TASK_001_03_01_fix_dev_reload
+
+title: Fix Dev Override CMD to Enable Hot Reload
+
+status: complete
+
+priority: high
+
+depends_on: []
+
+phase: PLAN_03
+wave: 1
+
+description: >
+  The docker-compose.override.yml overrides the app CMD to `uvicorn ...` without
+  `--reload`, breaking backend hot reload in Docker dev mode. The Dockerfile dev
+  stage already has `--reload` in its CMD, but the override replaces it entirely.
+  Fix the override to include `--reload`.
+
+finding_ref: DOCKER-007
+severity: medium
+
+goals:
+  - Add --reload flag to the override command directive
+  - Backend container auto-restarts on Python file changes
+  - docker compose up -d gives hot reload out of the box
+
+files:
+  - path: docker-compose.override.yml
+    targets:
+      - type: service
+        name: app
+      - type: directive
+        name: command
+    semantic_anchors:
+      insert_after:
+        type: directive
+        value: "command: [\"uvicorn\", \"src.mkobi.main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\"]"
+    changes:
+      - action: modify_directive
+        description: Add --reload flag to the uvicorn command
+        old_value: "command: [\"uvicorn\", \"src.mkobi.main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\"]"
+        new_value: "command: [\"uvicorn\", \"src.mkobi.main:app\", \"--host\", \"0.0.0.0\", \"--port\", \"8000\", \"--reload\"]"
+
+acceptance_criteria:
+  - Backend container restarts code on file changes inside the container
+  - docker compose up -d (with override auto-loaded) gives hot reload out of the box
+  - No change to production docker-compose.yml
+
+docker_health_checks:
+  # Verify all containers start and reach healthy state
+  - name: All containers running
+    command: "docker compose ps --format json"
+    expected: "All services (db, migrate, app) show 'running' status"
+  - name: DB container healthy
+    command: "docker compose ps db --format json"
+    expected: "db container shows 'healthy' status (healthcheck passed)"
+  - name: Migrate service completed
+    command: "docker compose ps migrate --format json"
+    expected: "migrate service shows 'exited' with exit code 0 (ran once, succeeded)"
+  - name: App container running
+    command: "docker compose ps app --format json"
+    expected: "app container shows 'running' status"
+  - name: App responds to health endpoint
+    command: "curl -sf http://localhost:8000/health"
+    expected: "Returns HTTP 200 with JSON response"
+  - name: App logs show no errors
+    command: "docker compose logs app --tail 50"
+    expected: "No ERROR or CRITICAL lines in recent logs; 'Application startup complete' present"
+  - name: No container restarts
+    command: "docker compose ps --format '{{.Name}} {{.Status}}'"
+    expected: "No container shows 'restarting' or 'unhealthy' status"
+  - name: Hot reload functional
+    command: "touch src/mkobi/main.py && sleep 3 && docker compose logs app --tail 20"
+    expected: "Logs show 'Reloading...' or 'Stat reloaded' confirming hot reload triggered"
+
+tests_to_run:
+  - "docker compose down -v && docker compose up -d"
+  - "docker compose logs migrate  # verify migrations ran"
+  - "curl -sf http://localhost:8000/health  # verify app is up"
+  - "touch src/mkobi/main.py && sleep 3 && docker compose logs app --tail 20  # verify reload"
+
+risk_level: low
+
+rollout_notes: >
+  Standalone fix. Only affects docker-compose.override.yml (dev only).
+  Production docker-compose.yml is untouched. Rollback: remove --reload from override.

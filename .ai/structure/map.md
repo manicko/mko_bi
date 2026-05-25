@@ -26,15 +26,9 @@ C:\PY_DEV\MKOBI
 |   |   +---db
 |   |   +---docker
 |   |   +---problems
-|   |   |       implementation_audit_001.md
-|   |   |       
 |   |   +---project
 |   |   +---tests
-|   |   |       URL_NORMALIZATION_TEST_RESULTS.md
-|   |   |       
 |   |   \---validated
-|   |           audit_validated_findings_001.md
-|   |           
 |   +---builders
 |   |   |   build.bat
 |   |   |   
@@ -63,11 +57,11 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
-|   |   |   PLAN_03.md
-|   |   |   
 |   |   \---tasks
-|   |           TASK_01_01.md
-|   |           
+|   +---problems
+|   |   |   CONTEXT_01.md
+|   |   |   
+|   |   \---decisions
 |   +---structure
 |   |   |   map.md
 |   |   |   
@@ -81,66 +75,43 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
-|   |   |       TASK_001_P02_url_nginx_trailing_slash_rewrite_DONE.yaml
-|   |   |       TASK_002_P02_url_nginx_verify_reload_DONE.yaml
-|   |   |       TASK_003_P02_url_react_trailing_slash_redirect_DONE.yaml
-|   |   |       TASK_004_P02_url_protected_route_trailing_slash_guard_DONE.yaml
-|   |   |       TASK_005_P02_url_e2e_normalization_test_DONE.yaml
-|   |   |       TASK_006_P02_url_seo_analytics_check_DONE.yaml
-|   |   |       TASK_022_P01_update_jwt_config_DONE.yaml
-|   |   |       TASK_023_P01_remove_refresh_request_model_DONE.yaml
-|   |   |       TASK_024_P01_add_refresh_token_creation_DONE.yaml
-|   |   |       TASK_025_P01_configure_cookie_security_DONE.yaml
-|   |   |       TASK_026_P01_create_logout_endpoint_DONE.yaml
-|   |   |       TASK_027_P01_add_token_validation_DONE.yaml
-|   |   |       TASK_028_P01_update_login_set_cookie_DONE.yaml
-|   |   |       TASK_029_P01_rewrite_refresh_endpoint_DONE.yaml
-|   |   |       TASK_030_P01_add_cookie_utilities_DONE.yaml
-|   |   |       TASK_031_P01_complete_logout_implementation_DONE.yaml
-|   |   |       TASK_032_P01_update_auth_service_cookie_ops_DONE.yaml
-|   |   |       TASK_033_P01_add_refresh_token_validation_service_DONE.yaml
-|   |   |       TASK_034_P01_add_db_user_lookup_to_refresh_DONE.yaml
-|   |   |       TASK_035_P01_frontend_refresh_api_DONE.yaml
-|   |   |       TASK_036_P01_frontend_silent_refresh_DONE.yaml
-|   |   |       TASK_037_P01_frontend_request_queue_DONE.yaml
-|   |   |       TASK_038_P01_frontend_logout_complete_DONE.yaml
-|   |   |       TASK_039_P01_frontend_update_login_form_DONE.yaml
-|   |   |       TASK_040_P01_frontend_protected_route_update_DONE.yaml
-|   |   |       TASK_041_P01_backend_integration_tests_DONE.yaml
+|   |   |       TASK_001_03_01_fix_dev_reload_DONE.yaml
+|   |   |       TASK_002_03_02_simplify_dev_env_DONE.yaml
+|   |   |       TASK_003_03_03_add_frontend_dev_service_DONE.yaml
+|   |   |       TASK_004_03_04_add_vite_proxy_DONE.yaml
+|   |   |       TASK_005_03_05_remove_frontend_dist_mount_DONE.yaml
+|   |   |       TASK_006_03_06_fix_docker_guide_DONE.yaml
+|   |   |       TASK_007_03_07_fix_deployment_doc_DONE.yaml
+|   |   |       TASK_008_D01_fix_root_user_dev_DONE.yaml
+|   |   |       TASK_009_D04_add_rq_worker_DONE.yaml
+|   |   |       TASK_010_D11_remove_exposed_ports_DONE.yaml
+|   |   |       TASK_011_D12_fix_test_compose_passwords_DONE.yaml
+|   |   |       TASK_012_D13_make_mirror_configurable_DONE.yaml
+|   |   |       TASK_013_D10_add_nginx_api_comment_DONE.yaml
+|   |   |       TASK_014_D16_remove_redundant_mounts_DONE.yaml
+|   |   |       TASK_015_D14_document_env_tradeoff_DONE.yaml
+|   |   |       TASK_016_D15_document_superuser_migration_DONE.yaml
+|   |   |       TASK_018_VF001_fix_token_payload_key_DONE.yaml
+|   |   |       TASK_019_VF002_use_set_secure_cookie_in_login_DONE.yaml
+|   |   |       TASK_020_VF003_remove_duplicate_login_cookie_test_DONE.yaml
+|   |   |       TASK_021_VF004_remove_redundant_removeToken_DONE.yaml
+|   |   |       TASK_022_VF005_make_cookie_secure_configurable_DONE.yaml
+|   |   |       TASK_023_FIX_test_db_dev_DONE.yaml
+|   |   |       TASK_024_FIX_frontend_dev_DONE.yaml
+|   |   |       TASK_GATE_01_wave1_complete.yaml
+|   |   |       TASK_GATE_01_wave1_complete_DONE.yaml
+|   |   |       TASK_GATE_02_wave2_complete_DONE.yaml
+|   |   |       TASK_GATE_03_hardening_complete.yaml
+|   |   |       TASK_GATE_04_full_stack_DONE.yaml
 |   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
-|   |   \---todo
-|   |           order.yaml
-|   |           TASK_001_03_01_fix_dev_reload.yaml
-|   |           TASK_002_03_02_simplify_dev_env.yaml
-|   |           TASK_003_03_03_add_frontend_dev_service.yaml
-|   |           TASK_004_03_04_add_vite_proxy.yaml
-|   |           TASK_005_03_05_remove_frontend_dist_mount.yaml
-|   |           TASK_006_03_06_fix_docker_guide.yaml
-|   |           TASK_007_03_07_fix_deployment_doc.yaml
-|   |           TASK_008_D01_fix_root_user_dev.yaml
-|   |           TASK_009_D04_add_rq_worker.yaml
-|   |           TASK_010_D11_remove_exposed_ports.yaml
-|   |           TASK_011_D12_fix_test_compose_passwords.yaml
-|   |           TASK_012_D13_make_mirror_configurable.yaml
-|   |           TASK_013_D10_add_nginx_api_comment.yaml
-|   |           TASK_014_D16_remove_redundant_mounts.yaml
-|   |           TASK_015_D14_document_env_tradeoff.yaml
-|   |           TASK_016_D15_document_superuser_migration.yaml
-|   |           TASK_017_D17_fix_test_db_creation_dev.yaml
-|   |           TASK_018_VF001_fix_token_payload_key.yaml
-|   |           TASK_019_VF002_use_set_secure_cookie_in_login.yaml
-|   |           TASK_020_VF003_remove_duplicate_login_cookie_test.yaml
-|   |           TASK_021_VF004_remove_redundant_removeToken.yaml
-|   |           TASK_022_VF005_make_cookie_secure_configurable.yaml
-|   |           TASK_GATE_01_wave1_complete.yaml
-|   |           TASK_GATE_02_wave2_complete.yaml
-|   |           TASK_GATE_03_hardening_complete.yaml
-|   |           TASK_GATE_04_full_stack.yaml
-|   |           
+|   |   +---todo
+|   |   |       order.yaml
+|   |   |       
+|   |   \---validation
 |   \---templates
 |           decision.md
 |           ui-brand.md
@@ -5169,6 +5140,7 @@ C:\PY_DEV\MKOBI
 |   |       |           types.cpython-314.pyc
 |   |       |           utils.cpython-314.pyc
 |   |       |           _compat.cpython-314.pyc
+|   |       |           _textwrap.cpython-314.pyc
 |   |       |           _utils.cpython-314.pyc
 |   |       |           _winconsole.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
@@ -5292,15 +5264,19 @@ C:\PY_DEV\MKOBI
 |   |       |   |   croniter.py
 |   |       |   |   __init__.py
 |   |       |   |   
-|   |       |   \---tests
-|   |       |           base.py
-|   |       |           test_croniter.py
-|   |       |           test_croniter_dst_repetition.py
-|   |       |           test_croniter_hash.py
-|   |       |           test_croniter_random.py
-|   |       |           test_croniter_range.py
-|   |       |           test_croniter_speed.py
-|   |       |           __init__.py
+|   |       |   +---tests
+|   |       |   |       base.py
+|   |       |   |       test_croniter.py
+|   |       |   |       test_croniter_dst_repetition.py
+|   |       |   |       test_croniter_hash.py
+|   |       |   |       test_croniter_random.py
+|   |       |   |       test_croniter_range.py
+|   |       |   |       test_croniter_speed.py
+|   |       |   |       __init__.py
+|   |       |   |       
+|   |       |   \---__pycache__
+|   |       |           croniter.cpython-314.pyc
+|   |       |           __init__.cpython-314.pyc
 |   |       |           
 |   |       +---croniter-6.2.2.dist-info
 |   |       |   |   INSTALLER
@@ -5328,16 +5304,29 @@ C:\PY_DEV\MKOBI
 |   |       |   |       __init__.py
 |   |       |   |       
 |   |       |   +---tz
-|   |       |   |       tz.py
-|   |       |   |       win.py
-|   |       |   |       _common.py
-|   |       |   |       _factories.py
+|   |       |   |   |   tz.py
+|   |       |   |   |   win.py
+|   |       |   |   |   _common.py
+|   |       |   |   |   _factories.py
+|   |       |   |   |   __init__.py
+|   |       |   |   |   
+|   |       |   |   \---__pycache__
+|   |       |   |           tz.cpython-314.pyc
+|   |       |   |           win.cpython-314.pyc
+|   |       |   |           _common.cpython-314.pyc
+|   |       |   |           _factories.cpython-314.pyc
+|   |       |   |           __init__.cpython-314.pyc
+|   |       |   |           
+|   |       |   +---zoneinfo
+|   |       |   |       dateutil-zoneinfo.tar.gz
+|   |       |   |       rebuild.py
 |   |       |   |       __init__.py
 |   |       |   |       
-|   |       |   \---zoneinfo
-|   |       |           dateutil-zoneinfo.tar.gz
-|   |       |           rebuild.py
-|   |       |           __init__.py
+|   |       |   \---__pycache__
+|   |       |           relativedelta.cpython-314.pyc
+|   |       |           _common.cpython-314.pyc
+|   |       |           _version.cpython-314.pyc
+|   |       |           __init__.cpython-314.pyc
 |   |       |           
 |   |       +---dns
 |   |       |   |   asyncbackend.py
@@ -15957,13 +15946,20 @@ C:\PY_DEV\MKOBI
 |   |       |   |   __init__.py
 |   |       |   |   
 |   |       |   +---cli
-|   |       |   |       cli.py
-|   |       |   |       cli_cron.py
-|   |       |   |       helpers.py
-|   |       |   |       workers.py
-|   |       |   |       __init__.py
-|   |       |   |       __main__.py
-|   |       |   |       
+|   |       |   |   |   cli.py
+|   |       |   |   |   cli_cron.py
+|   |       |   |   |   helpers.py
+|   |       |   |   |   workers.py
+|   |       |   |   |   __init__.py
+|   |       |   |   |   __main__.py
+|   |       |   |   |   
+|   |       |   |   \---__pycache__
+|   |       |   |           cli.cpython-314.pyc
+|   |       |   |           cli_cron.cpython-314.pyc
+|   |       |   |           helpers.cpython-314.pyc
+|   |       |   |           workers.cpython-314.pyc
+|   |       |   |           __init__.cpython-314.pyc
+|   |       |   |           
 |   |       |   +---contrib
 |   |       |   |       __init__.py
 |   |       |   |       
@@ -15980,6 +15976,8 @@ C:\PY_DEV\MKOBI
 |   |       |   \---__pycache__
 |   |       |           command.cpython-314.pyc
 |   |       |           connections.cpython-314.pyc
+|   |       |           cron.cpython-314.pyc
+|   |       |           cron_scheduler_registry.cpython-314.pyc
 |   |       |           defaults.cpython-314.pyc
 |   |       |           dependency.cpython-314.pyc
 |   |       |           exceptions.cpython-314.pyc
@@ -16001,6 +15999,7 @@ C:\PY_DEV\MKOBI
 |   |       |           types.cpython-314.pyc
 |   |       |           utils.cpython-314.pyc
 |   |       |           version.cpython-314.pyc
+|   |       |           worker_pool.cpython-314.pyc
 |   |       |           worker_registration.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
@@ -19485,7 +19484,7 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           index-DrVMI6rp.js
+|   |           index-D0FpUCQ4.js
 |   |           
 |   +---node_modules
 |   |   |   .package-lock.json

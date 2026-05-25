@@ -1,0 +1,87 @@
+id: TASK_GATE_03_hardening_complete
+
+title: GATE — Verify Docker Stack After Docker Hardening Wave 1
+
+status: pending
+
+priority: critical
+
+depends_on:
+  - TASK_008_D01_fix_root_user_dev
+  - TASK_009_D04_add_rq_worker
+  - TASK_010_D11_remove_exposed_ports
+  - TASK_011_D12_fix_test_compose_passwords
+  - TASK_017_D17_fix_test_db_creation_dev
+
+phase: DOCKER_HARDENING
+wave: 1
+type: gate
+
+description: >
+  Verification gate after completing Docker Hardening Wave 1. This gate ensures
+  the Docker stack is healthy after security hardening changes: non-root user,
+  RQ worker service, removed exposed ports, and test compose password fixes.
+
+  This is a READ-ONLY verification task — no source code changes.
+
+goals:
+  - Confirm all containers start and are healthy
+  - Verify app runs as non-root user
+  - Verify RQ worker is running
+  - Verify no unnecessary ports are exposed
+  - Verify test database creation works
+
+files: []
+
+acceptance_criteria:
+  - All containers running and healthy
+  - App container runs as non-root user
+  - RQ worker container running
+  - No unnecessary exposed ports
+  - Test database can be created
+  - No container restart loops
+
+docker_health_checks:
+  # === Container Status ===
+  - name: All containers running
+    command: "docker compose ps --format '{{.Name}} {{.Status}}'"
+    expected: "db, redis, app, rq_worker all running"
+  - name: No restarting containers
+    command: "docker compose ps --format '{{.Name}} {{.Status}}' | grep -c 'restarting\\|unhealthy'"
+    expected: "Count is 0"
+
+  # === Security ===
+  - name: App runs as non-root
+    command: "docker compose exec app whoami"
+    expected: "Returns 'app' (not 'root')"
+  - name: RQ worker running
+    command: "docker compose ps rq_worker --format '{{.Status}}'"
+    expected: "rq_worker shows 'running'"
+
+  # === Database ===
+  - name: DB healthy
+    command: "docker compose exec db pg_isready -U postgres"
+    expected: "Returns 'accepting connections'"
+  - name: Test DB creation works
+    command: "docker compose exec db psql -U postgres -c \"SELECT datname FROM pg_database WHERE datname = 'bidb_test';\""
+    expected: "Returns bidb_test row (if RECREATE_TEST_DB=true)"
+
+  # === Application ===
+  - name: App health
+    command: "curl -sf http://localhost:8000/health"
+    expected: "HTTP 200"
+  - name: App logs clean
+    command: "docker compose logs app --tail 50"
+    expected: "No ERROR or CRITICAL lines"
+
+tests_to_run:
+  - "docker compose down -v && docker compose up -d"
+  - "docker compose ps"
+  - "docker compose exec app whoami"
+  - "curl -sf http://localhost:8000/health"
+
+risk_level: low
+
+rollout_notes: >
+  READ-ONLY gate task. No code changes. If any check fails, fix the underlying
+  hardening task before proceeding to Wave 2.

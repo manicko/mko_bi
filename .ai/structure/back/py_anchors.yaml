@@ -2373,6 +2373,20 @@
   type: return_statement
   stable_hash: 407706f1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
+- id: '54162887'
+  symbol_path:
+  - set_secure_cookie
+  type: function_call
+  value: get_config
+  stable_hash: '54162887'
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
+- id: ca2ecdf8
+  symbol_path:
+  - delete_secure_cookie
+  type: function_call
+  value: get_config
+  stable_hash: ca2ecdf8
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\security.py
 - id: 2116aef1
   symbol_path:
   - TaskQueue
@@ -2666,6 +2680,55 @@
   type: function_call
   value: create_async_engine
   stable_hash: b6906ae7
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: c9f0f404
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: text
+  stable_hash: c9f0f404
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: c9f0f404
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: text
+  stable_hash: c9f0f404
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: c9f0f404
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: text
+  stable_hash: c9f0f404
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: c9f0f404
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: text
+  stable_hash: c9f0f404
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: b6906ae7
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: create_async_engine
+  stable_hash: b6906ae7
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: c9f0f404
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: text
+  stable_hash: c9f0f404
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: c9f0f404
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: text
+  stable_hash: c9f0f404
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
 - id: c9f0f404
   symbol_path:
@@ -11745,6 +11808,12 @@
   type: function_call
   value: str
   stable_hash: 6c8510dd
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
+- id: 656a59e5
+  symbol_path: []
+  type: function_call
+  value: set_secure_cookie
+  stable_hash: 656a59e5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
 - id: 760677d9
   symbol_path: []

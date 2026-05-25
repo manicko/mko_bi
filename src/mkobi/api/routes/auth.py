@@ -30,14 +30,12 @@ from mkobi.core.logging_config import get_logger
 from mkobi.core import redis_client
 from mkobi.core.security import (
     AsyncRateLimiter,
-    COOKIE_HTTPONLY,
-    COOKIE_SECURE,
-    COOKIE_SAMESITE,
     COOKIE_NAME,
     create_access_token,
     create_refresh_token,
     validate_refresh_token,
     delete_secure_cookie,
+    set_secure_cookie,
 )
 from mkobi.models.auth import (
     ChangePasswordRequest,
@@ -96,12 +94,10 @@ async def _handle_login(
     refresh_token = create_refresh_token(
         data={"sub": str(user.id), "email": user.email, "role": user.role}
     )
-    response.set_cookie(
+    set_secure_cookie(
+        response=response,
         key=COOKIE_NAME,
         value=refresh_token,
-        httponly=COOKIE_HTTPONLY,
-        secure=COOKIE_SECURE,
-        samesite=COOKIE_SAMESITE,
         max_age=get_config().jwt.refresh_token_expire_minutes * 60,
     )
 
@@ -305,7 +301,7 @@ async def refresh(
         )
 
     access_token = create_access_token(
-        data={"sub": str(user.id), "email": user.email, "role": user.role}
+        data={"user_id": str(user.id), "email": user.email, "role": user.role}
     )
 
     logger.info("Token refreshed successfully", extra={"user_id": user_id})

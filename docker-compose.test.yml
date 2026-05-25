@@ -12,9 +12,9 @@ services:
       ENV: test
       # Application role for runtime operations (limited privileges)
       DATABASE__USER: mkobi_app
-      DATABASE__PASSWORD: ${MKOBI_APP_PASSWORD:-1234}
+      DATABASE__PASSWORD: ${MKOBI_APP_PASSWORD}
       DATABASE__ADMIN_USER: postgres
-      DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-1234}
+      DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD}
       DATABASE__DBNAME: bidb_test
       DATABASE__TEST_DBNAME: bidb_test
       LOGGING__LEVEL: WARNING
@@ -28,5 +28,5 @@ services:
 
   db:
     environment:
-      POSTGRES_PASSWORD: ${DATABASE__PASSWORD:-1234}
-      MKOBI_APP_PASSWORD: ${MKOBI_APP_PASSWORD:-1234}
+      POSTGRES_PASSWORD: ${DATABASE__PASSWORD}
+      MKOBI_APP_PASSWORD: ${MKOBI_APP_PASSWORD}

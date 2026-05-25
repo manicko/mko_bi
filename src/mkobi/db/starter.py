@@ -202,6 +202,26 @@ class DatabaseStarter:
                 )
                 await conn.execute(text(f"DROP DATABASE IF EXISTS {db_name}"))
                 await conn.execute(text(f"CREATE DATABASE {db_name}"))
+
+                # Grant mkobi_app CONNECT on the new test database
+                await conn.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO mkobi_app"))
+
+            # Connect to the new DB to grant schema privileges
+            test_admin_url = base_url.replace("/postgres", f"/{db_name}")
+            test_admin_engine = create_async_engine(test_admin_url, isolation_level="AUTOCOMMIT")
+            try:
+                async with test_admin_engine.connect() as conn:
+                    # Grant schema privileges
+                    await conn.execute(text("GRANT USAGE, CREATE ON SCHEMA public TO mkobi_app"))
+                    # Grant table and sequence privileges on existing objects
+                    await conn.execute(text("GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO mkobi_app"))
+                    await conn.execute(text("GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO mkobi_app"))
+                    # Set default privileges for future objects
+                    await conn.execute(text("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO mkobi_app"))
+                    await conn.execute(text("ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE ON SEQUENCES TO mkobi_app"))
+            finally:
+                await test_admin_engine.dispose()
+
             await admin_engine.dispose()
         except Exception as e:
             logger.error("Failed to recreate test database: %s", e)

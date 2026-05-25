@@ -42,7 +42,6 @@ export function useAuth() {
     } catch {
       // Ignore errors - user may already be logged out server-side
     }
-    removeToken()
     logoutClient()
     setUser(null)
   }, [])

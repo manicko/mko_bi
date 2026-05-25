@@ -1,0 +1,64 @@
+id: TASK_021_VF004_remove_redundant_removeToken
+
+title: Remove redundant removeToken() call in useAuth.logout
+
+status: done
+
+priority: low
+
+depends_on: []
+
+phase: VALIDATED_FINDINGS_001
+wave: 1
+group: auth_bug_fixes
+
+description: >
+  The logout function in useAuth.ts calls removeToken() explicitly on line 45,
+  then calls logoutClient() on line 46, which internally also calls removeToken().
+  The explicit removeToken() call is redundant since logoutClient() already
+  handles token removal. removeToken() is idempotent so there's no functional bug,
+  but the double-call reduces code clarity.
+
+goals:
+  - Remove the explicit removeToken() call before logoutClient()
+  - Keep logoutClient() which handles token removal internally
+  - Improve code clarity
+
+files:
+  - path: frontend/src/features/auth/model/useAuth.ts
+    targets:
+      - type: hook
+        name: useAuth
+    semantic_anchors:
+      insert_after:
+        type: function_call
+        value: logoutClient
+      remove:
+        type: function_call
+        value: removeToken
+    changes:
+      - action: remove_code
+        description: >
+          Remove the explicit removeToken() call that precedes logoutClient().
+          The logoutClient() function already calls removeToken() internally.
+        code_hint: |
+          # Remove this line:
+          # removeToken()
+          # Keep only:
+          logoutClient()
+
+acceptance_criteria:
+  - Explicit removeToken() call removed from logout function
+  - logoutClient() still called and handles token removal
+  - No functional change (removeToken is idempotent)
+  - Frontend builds without errors
+
+tests_to_run:
+  - frontend/src/features/auth/model/__tests__/ (if any tests exist)
+  - Manual verification: logout flow works correctly
+
+risk_level: low
+
+notes: >
+  Zero functional risk. removeToken() is idempotent. The logoutClient() function
+  at authApi.ts:29-31 calls removeToken() internally. This is a one-line cleanup.

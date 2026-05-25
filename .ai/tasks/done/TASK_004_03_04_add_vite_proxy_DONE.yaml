@@ -1,0 +1,84 @@
+id: TASK_004_03_04_add_vite_proxy
+
+title: Configure Vite Dev Server to Proxy API Requests to Backend
+
+status: DONE
+
+priority: medium
+
+depends_on:
+  - TASK_003_03_03_add_frontend_dev_service
+
+phase: PLAN_03
+wave: 2
+
+description: >
+  Without a proxy, the Vite dev server on port 5173 can't reach the FastAPI backend
+  on port 8000 (different container, different port). Add server.proxy to vite.config.ts
+  so /api requests are forwarded to http://app:8000.
+
+finding_ref: PLAN_03_WAVE_2
+severity: medium
+
+goals:
+  - Add server.proxy config to vite.config.ts
+  - Frontend dev server proxies /api/* to the FastAPI container
+  - No CORS errors in browser dev tools when using Vite dev server
+  - API calls from the frontend work without absolute URLs
+
+files:
+  - path: frontend/vite.config.ts
+    targets:
+      - type: function_call
+        name: defineConfig
+    semantic_anchors:
+      insert_inside:
+        type: function_call
+        value: "defineConfig({"
+    changes:
+      - action: add_config
+        description: Add server configuration with proxy for /api
+        code_hint: |
+          server: {
+            host: '0.0.0.0',
+            port: 5173,
+            proxy: {
+              '/api': {
+                target: 'http://app:8000',
+                changeOrigin: true,
+              },
+            },
+          },
+
+acceptance_criteria:
+  - Frontend dev server proxies /api/* to the FastAPI container
+  - No CORS errors in browser dev tools when using Vite dev server
+  - API calls from the frontend work without absolute URLs
+
+docker_health_checks:
+  - name: Frontend container running
+    command: "docker compose ps frontend --format json"
+    expected: "frontend container shows 'running' status"
+  - name: Frontend dev server responds
+    command: "curl -sf http://localhost:5173"
+    expected: "Returns HTTP 200"
+  - name: API proxy works from frontend
+    command: "docker compose exec frontend wget -qO- http://localhost:5173/api/v1/health 2>/dev/null || curl -sf http://localhost:5173/api/v1/health"
+    expected: "Returns API response (proxied from backend container)"
+  - name: Backend still healthy
+    command: "curl -sf http://localhost:8000/health"
+    expected: "Returns HTTP 200"
+  - name: No container restarts
+    command: "docker compose ps --format '{{.Name}} {{.Status}}'"
+    expected: "No container shows 'restarting' or 'unhealthy' status"
+
+tests_to_run:
+  - "docker compose up -d"
+  - "curl -sf http://localhost:5173  # Vite dev server responds"
+  - "curl -sf http://localhost:5173/api/v1/health  # API proxied through Vite"
+
+risk_level: low
+
+rollout_notes: >
+  Depends on TASK_003_03_03 (frontend service must exist).
+  Only affects vite.config.ts (dev tooling). Production build is unaffected.

@@ -1,0 +1,102 @@
+id: TASK_GATE_01_wave1_complete
+
+title: GATE_01: Verify Docker Stack After PLAN_03 Wave 1 (Backend Hot Reload)
+
+status: DONE
+
+priority: critical
+
+depends_on:
+  - TASK_001_03_01_fix_dev_reload
+  - TASK_002_03_02_simplify_dev_env
+
+phase: PLAN_03
+wave: 1
+type: gate
+
+description: >
+  READ-ONLY verification checkpoint to confirm Docker stack health after
+  PLAN_03 Wave 1 tasks (backend hot reload fixes). This gate documents the
+  state of the Docker stack without making code changes.
+
+verification_steps:
+  - step: 1
+    command: "docker compose down -v && docker compose -f docker-compose.yml -f docker-compose.override.yml up -d"
+    description: Clean start with dev override
+    result: "PASS - All containers started"
+
+  - step: 2
+    command: "docker compose -f docker-compose.yml -f docker-compose.override.yml ps"
+    description: Verify all running
+    result: "PARTIAL - db, redis, app running; frontend failed (missing vite)"
+
+  - step: 3
+    command: "curl -sf http://localhost:8000/health"
+    description: Verify app health endpoint
+    result: "FAIL - App stuck during startup (see findings)"
+
+  - step: 4
+    command: "touch src/mkobi/main.py && sleep 5 && docker compose logs app --tail 30"
+    description: Verify hot reload
+    result: "N/A - App not fully started"
+
+  - step: 5
+    command: "docker compose -f docker-compose.yml -f docker-compose.override.yml logs --tail 50"
+    description: Scan all logs for errors
+    result: "FAIL - Test database permission errors detected"
+
+findings:
+  containers_started:
+    - name: db
+      status: "running (healthy)"
+      port: "5432"
+    - name: redis
+      status: "running (healthy)"
+      port: "6379"
+    - name: app
+      status: "running but stuck during startup"
+      port: "8000"
+    - name: frontend
+      status: "exited - vite not found"
+      port: "N/A"
+    - name: migrate
+      status: "completed successfully"
+
+  hot_reload:
+    status: "configured"
+    evidence: "Uvicorn started with --reload flag, StatReload process running"
+    logs: "INFO: Started reloader process [1] using StatReload"
+
+  database:
+    main_db: "initialized at revision bc892fa3b2ae"
+    test_db: "recreation blocked by permission issues"
+
+issues_found:
+  - severity: high
+    component: test database
+    description: "RECREATE_TEST_DB=true causes app to attempt test database migrations using mkobi_app role which lacks CREATE DATABASE privilege"
+    logs: "ERROR: permission denied for schema public at character 15"
+
+  - severity: medium
+    component: frontend
+    description: "vite command not found - node_modules not properly initialized"
+    logs: "sh: vite: not found"
+
+  - severity: low
+    component: mkobi_app role permissions
+    description: "mkobi_app role created correctly on main DB but lacks sufficient privileges for test database operations"
+
+root_cause: >
+  The mkobi_app PostgreSQL role lacks CREATE DATABASE privilege needed for
+  test database recreation. When RECREATE_TEST_DB=true, the app attempts to
+  run migrations on bidb_test using mkobi_app credentials, which fails.
+
+recommendation: >
+  Either: (1) Grant CREATE DATABASE to mkobi_app role, or (2) Set RECREATE_TEST_DB=false
+  in development environment since test database is not needed for normal development.
+
+gate_result: FAILED
+gate_passed: false
+
+created_at: 2026-05-24
+verified_by: implementor agent

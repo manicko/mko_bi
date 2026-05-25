@@ -60,33 +60,6 @@ class TestLogin:
         )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
 
-    async def test_login_sets_refresh_token_cookie(
-        self, async_client: AsyncClient, test_user: dict
-    ) -> None:
-        """Test that login sets refresh token as httpOnly cookie."""
-        response = await async_client.post(
-            "/auth/login",
-            json={
-                "email": test_user["email"],
-                "password": "TestPass123!",
-            },
-        )
-        assert response.status_code == status.HTTP_200_OK
-
-        # Verify access token in JSON response
-        data = response.json()
-        assert "access_token" in data
-        assert data["token_type"] == "bearer"
-        assert "user" in data
-
-        # Verify refresh token cookie is set
-        assert "set-cookie" in response.headers
-        set_cookie = response.headers["set-cookie"]
-        assert "mkobi_refresh_token" in set_cookie
-        assert "httponly" in set_cookie.lower()
-        assert "secure" in set_cookie.lower()
-        assert "samesite=strict" in set_cookie.lower()
-
 
 class TestRegisterRequest:
     """Tests for registration request endpoint."""

@@ -28,6 +28,9 @@ GRANT USAGE ON ALL SEQUENCES IN SCHEMA public TO mkobi_app;
 -- Grant default privileges for future tables (PostgreSQL 14+)
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO mkobi_app;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE ON SEQUENCES TO mkobi_app;
+
+-- Grant CREATEDB privilege for test database recreation
+ALTER ROLE mkobi_app CREATEDB;
 EOF
 
 echo "Application role mkobi_app created successfully"

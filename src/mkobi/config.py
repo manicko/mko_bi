@@ -144,6 +144,8 @@ class AppSettings(BaseModel):
 
     name: str = "mkobi"
     version: str = "1.0.0"
+    # Cookie security settings
+    cookie_secure: bool = True
 
 
 class UploadSettings(BaseModel):

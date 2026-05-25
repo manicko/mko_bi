@@ -26,14 +26,17 @@ RUN npm run build
 # -----------------------------------------------------------------------------
 FROM python:3.12-slim-bookworm AS base
 
+# Configure Debian mirror (configurable via --build-arg)
+ARG DEBIAN_MIRROR=deb.debian.org
+
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
-# Configure fast mirror (Yandex for CIS regions)
+# Configure Debian mirror
 RUN rm -f /etc/apt/sources.list.d/*.sources && \
-    echo "deb http://mirror.yandex.ru/debian bookworm main" > /etc/apt/sources.list && \
-    echo "deb http://mirror.yandex.ru/debian-security bookworm-security main" >> /etc/apt/sources.list && \
-    echo "deb http://mirror.yandex.ru/debian bookworm-updates main" >> /etc/apt/sources.list
+    echo "deb http://${DEBIAN_MIRROR}/debian bookworm main" > /etc/apt/sources.list && \
+    echo "deb http://${DEBIAN_MIRROR}/debian-security bookworm-security main" >> /etc/apt/sources.list && \
+    echo "deb http://${DEBIAN_MIRROR}/debian bookworm-updates main" >> /etc/apt/sources.list
 
 # Install system deps
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -71,10 +74,11 @@ COPY alembic.ini ./
 
 # Create data directories with proper permissions
 RUN mkdir -p /app/data/uploads /app/data/logs /app/data/tmp_uploads && \
-    chown -R app:app /app/data
+    chown -R app:app /app/data && \
+    chown -R app:app /app/src
 
-# Run as root in dev mode (needed for writable mounted volumes with egg-info)
-# This allows setuptools to create src/mkobi.egg-info
+# Run as app user in dev mode
+USER app
 
 EXPOSE 8000
 

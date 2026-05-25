@@ -8,6 +8,9 @@
 # =============================================================================
 
 services:
+  # Shared configuration can be referenced with <<: *app-common
+  # Note: Using explicit config instead of YAML anchors for clarity
+
   db:
     image: postgres:16
     environment:
@@ -21,8 +24,6 @@ services:
       - postgres_data:/var/lib/postgresql/data
       # Mount initialization scripts to create app role on first run
       - ./docker/init-scripts:/docker-entrypoint-initdb.d:ro
-    ports:
-      - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -32,6 +33,9 @@ services:
 
   # Migration service - runs alembic migrations before app starts
   # This ensures database schema is up-to-date before the application starts
+  # NOTE: Using postgres superuser for migrations is a common pattern.
+  # For improved security, consider creating a dedicated migration role
+  # with DDL privileges only (not superuser) in production environments.
   migrate:
     build:
       context: .
@@ -92,9 +96,6 @@ services:
       - "8000:8000"
     volumes:
       - app_data:/app/data
-      # Mount alembic for runtime migrations (read-only)
-      - ./alembic:/app/alembic:ro
-      - ./alembic.ini:/app/alembic.ini:ro
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -103,11 +104,9 @@ services:
       retries: 3
       start_period: 40s
 
-  # Optional: Redis for task queue (if using RQ workers)
+  # Redis for task queue (RQ workers)
   redis:
     image: redis:7-alpine
-    ports:
-      - "6379:6379"
     volumes:
       - redis_data:/data
     restart: unless-stopped
@@ -116,6 +115,42 @@ services:
       interval: 5s
       timeout: 3s
       retries: 3
+
+  # RQ worker for background task processing (file uploads, data aggregation)
+  rq-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: prod
+    command: ["uv", "run", "rq", "worker", "--url", "redis://redis:6379/0"]
+    depends_on:
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      ENV: ${ENV:-production}
+      DATABASE__HOST: db
+      DATABASE__PORT: 5432
+      DATABASE__USER: mkobi_app
+      DATABASE__PASSWORD: ${MKOBI_APP_PASSWORD:-secure_password_placeholder}
+      DATABASE__ADMIN_USER: postgres
+      DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD must be set for production}
+      DATABASE__DBNAME: bidb
+      DATABASE__TEST_DBNAME: bidb_test
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:?JWT__SECRET_KEY must be set for production}
+      JWT__ALGORITHM: HS256
+      UPLOAD__TEMP_DIR: /app/data/tmp_uploads
+      LOGGING__LOG_FILE: /app/data/logs/app.log
+      LOGGING__LEVEL: ${LOG_LEVEL:-INFO}
+      AUTO_MIGRATE: "false"
+      RECREATE_TEST_DB: "false"
+    volumes:
+      - app_data:/app/data
+      - ./alembic:/app/alembic:ro
+      - ./alembic.ini:/app/alembic.ini:ro
+    profiles:
+      - production
 
   # Optional: Nginx reverse proxy for production
   nginx:

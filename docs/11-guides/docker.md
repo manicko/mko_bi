@@ -24,7 +24,7 @@ This project uses a multi-stage Dockerfile with the following targets:
 - **dev** - Development environment with hot reload
 - **test** - Environment for running tests
 - **prod** - Production image with multiple workers (default)
-- **prod-slim** - Minimal production image
+- **frontend-builder** - Builds React SPA (intermediate stage)
 
 ## Prerequisites
 
@@ -48,11 +48,15 @@ DOCKER_TARGET=prod docker compose up -d
 
 ```bash
 # Start development environment with hot reload
-docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
+# Note: docker-compose.override.yml is auto-loaded by Docker Compose
+docker compose up -d
 
+# Frontend dev server runs at http://localhost:5173 (Vite hot reload)
+# Backend API runs at http://localhost:8000
 
 # View logs
-docker compose -f docker-compose.yml -f docker-compose.override.yml logs -f app
+docker compose logs -f app
+docker compose logs -f frontend
 ```
 
 ### Testing
@@ -95,21 +99,11 @@ docker compose -f docker-compose.yml -f docker-compose.test.yml down
 - Sets `ENV=test`
 - Default command runs pytest
 
-### Stage: prod-base
-- Extends base
-- Installs only production dependencies (`--no-dev`)
-- Copies source code and frontend build
-- Creates data directories
-
 ### Stage: prod (default target)
-- Extends prod-base
+- Extends base
+- Installs only production dependencies
+- Copies frontend build artifacts from frontend-builder stage
 - Runs with multiple workers (`--workers 4`)
-- Optimized for production deployment
-
-### Stage: prod-slim
-- Even smaller image using python:3.12-slim
-- Copies pre-installed venv from prod-base
-- Minimal runtime dependencies only
 
 ## Layer Caching Optimizations
 
@@ -259,6 +253,6 @@ MIT
 
 ## Cross-References
 
-- [Run Guide](../04-run/run-guide.md) - Complete application run instructions
-- [Deployment](../05-ops/deployment.md) - Production deployment strategies
-- [Task Queue Migration](../05-ops/task-queue-migration.md) - Background task processing setup
+- [Run Guide](../99-reference/run-guide.md) - Complete application run instructions
+- [Deployment](../10-deployment/deployment.md) - Production deployment strategies
+- [Task Queue Migration](./task-queue-migration.md) - Background task processing setup

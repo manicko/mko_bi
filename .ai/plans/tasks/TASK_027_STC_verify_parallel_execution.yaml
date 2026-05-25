@@ -1,0 +1,90 @@
+id: TASK_027_STC_verify_parallel_execution
+
+title: Verify dev and test environments run in parallel without conflicts
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_025_STC_rewrite_compose_test
+  - TASK_026_STC_cleanup_compose_yml
+  - TASK_028_STC_fix_conftest_env
+
+phase: STC
+wave: 3
+
+description: >
+  Verification task that confirms both dev and test environments can run
+  simultaneously on the same host without port conflicts, shared volumes,
+  or shared networks. This task requires TASK_025 (standalone test compose),
+  TASK_026 (cleaned production compose), and TASK_028 (conftest.py setdefault fix)
+  to be complete.
+
+goals:
+  - Dev environment starts normally (production + override)
+  - Test environment starts normally (standalone)
+  - Both environments run simultaneously with no conflicts
+  - All test services healthy: test-db, test-migrate, test-app
+  - Tests execute successfully inside test-app container
+  - Clean teardown of test environment does not affect dev environment
+
+files:
+  - path: docker-compose.test.yml
+    targets:
+      - type: file
+        name: docker-compose.test.yml
+    changes: []  # verification only, no file changes
+  - path: docker-compose.yml
+    targets:
+      - type: file
+        name: docker-compose.yml
+    changes: []  # verification only, no file changes
+
+acceptance_criteria:
+  - Dev environment starts: docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
+  - Test environment starts: docker compose -f docker-compose.test.yml up -d --build
+  - docker ps shows both dev and test containers running simultaneously
+  - No port conflicts (dev: 8000/5432/6379, test: 8001/5433/6380)
+  - docker network ls shows separate networks for dev and test
+  - docker volume ls shows separate volumes (postgres_data vs test_postgres_data)
+  - test-db healthcheck passes (service_healthy)
+  - test-migrate completes successfully (service_completed_successfully)
+  - Tests run: docker compose -f docker-compose.test.yml exec test-app uv run pytest tests/ -v
+  - Test environment tears down cleanly: docker compose -f docker-compose.test.yml down -v
+  - Dev environment continues running after test teardown
+
+tests_to_run:
+  # Start dev environment
+  - "docker compose -f docker-compose.yml -f docker-compose.override.yml down -v  # clean slate"
+  - "docker compose -f docker-compose.yml -f docker-compose.override.yml up -d  # start dev"
+  - "docker compose ps  # verify dev services running"
+  # Start test environment in parallel
+  - "docker compose -f docker-compose.test.yml down -v  # clean slate"
+  - "docker compose -f docker-compose.test.yml up -d --build  # start test"
+  - "docker compose -f docker-compose.test.yml ps  # verify test services running"
+  # Verify isolation
+  - "docker ps  # all dev + test containers visible"
+  - "docker network ls  # separate networks"
+  - "docker volume ls  # separate volumes"
+  # Run tests
+  - "docker compose -f docker-compose.test.yml exec test-app uv run pytest tests/ -v  # execute tests"
+  # Teardown test only, verify dev survives
+  - "docker compose -f docker-compose.test.yml down -v  # remove test env"
+  - "docker compose ps  # verify dev still running"
+  # Final cleanup
+  - "docker compose down -v  # remove dev env"
+
+risk_level: low
+
+rollout_notes: >
+  This is a pure verification task — no file changes. It validates the entire
+  phase deliverable: both environments running in parallel with zero shared state.
+  If any acceptance criterion fails, it indicates a problem in TASK_025 or
+  TASK_026 that must be fixed before the phase is considered complete.
+  
+  Pre-verification checklist:
+  1. Ensure all dev and test containers are stopped before starting
+  2. Use docker compose down -v to clear stale volumes if previous runs existed
+  3. The --build flag on test compose ensures fresh images with latest code changes
+  4. TASK_028 must be verified: conftest.py uses setdefault so Docker Compose env vars take precedence
