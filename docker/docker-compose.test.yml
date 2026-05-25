@@ -1,0 +1,124 @@
+# =============================================================================
+# Docker Compose Configuration for Testing (STANDALONE)
+# Usage: docker compose -f docker/docker-compose.test.yml up -d
+#        docker compose -f docker/docker-compose.test.yml exec test-app uv run pytest tests/ -v
+# =============================================================================
+
+services:
+  test-db:
+    image: postgres:16
+    container_name: test-db
+    environment:
+      POSTGRES_DB: bidb_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DATABASE__PASSWORD:-test_password}
+      MKOBI_APP_PASSWORD: ${MKOBI_APP_PASSWORD:-test_app_password}
+    volumes:
+      - test_postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - test_network
+
+  test-redis:
+    image: redis:7-alpine
+    container_name: test-redis
+    volumes:
+      - test_redis_data:/data
+    ports:
+      - "6380:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - test_network
+
+  test-migrate:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: test
+    container_name: test-migrate
+    command: ["alembic", "upgrade", "head"]
+    environment:
+      ENV: test
+      HOME: /tmp
+      UV_CACHE_DIR: /tmp/.cache/uv
+      DATABASE__HOST: test-db
+      DATABASE__PORT: 5432
+      DATABASE__USER: postgres
+      DATABASE__PASSWORD: ${DATABASE__PASSWORD:-test_password}
+      DATABASE__DBNAME: bidb_test
+      DATABASE__TEST_DBNAME: bidb_test
+      DATABASE__ADMIN_USER: postgres
+      DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-test_password}
+      REDIS__HOST: test-redis
+      REDIS__PORT: 6379
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-test_secret_key}
+      JWT__ALGORITHM: HS256
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin@example.com}
+    depends_on:
+      test-db:
+        condition: service_healthy
+    restart: "no"
+    networks:
+      - test_network
+
+  test-app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+      target: test
+    container_name: test-app
+    environment:
+      ENV: test
+      HOME: /tmp
+      UV_CACHE_DIR: /tmp/.cache/uv
+      DATABASE__HOST: test-db
+      DATABASE__PORT: 5432
+      DATABASE__USER: postgres
+      DATABASE__PASSWORD: ${DATABASE__PASSWORD:-test_password}
+      DATABASE__DBNAME: bidb_test
+      DATABASE__TEST_DBNAME: bidb_test
+      DATABASE__ADMIN_USER: postgres
+      DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-test_password}
+      REDIS__HOST: test-redis
+      REDIS__PORT: 6379
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-test_secret_key}
+      JWT__ALGORITHM: HS256
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin@example.com}
+      LOGGING__LEVEL: WARNING
+      AUTO_MIGRATE: "true"
+      RECREATE_TEST_DB: "true"
+    ports:
+      - "8001:8000"
+    depends_on:
+      test-migrate:
+        condition: service_completed_successfully
+      test-db:
+        condition: service_healthy
+    healthcheck:
+      disable: true
+    restart: unless-stopped
+    networks:
+      - test_network
+    command: ["tail", "-f", "/dev/null"]
+
+volumes:
+  test_postgres_data:
+  test_redis_data:
+
+networks:
+  test_network:
+    driver: bridge

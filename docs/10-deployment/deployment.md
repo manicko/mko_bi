@@ -64,10 +64,10 @@ This guide covers deployment options for the mkobi BI Dashboard system, from loc
    ```
 
 4. **Database:**
-   ```bash
-   docker compose up -d db
-   uv run alembic upgrade head
-   ```
+```bash
+docker compose -f docker/docker-compose.yml up -d db
+uv run alembic upgrade head
+```
 
 The React dev server runs on port 5173 (Vite) and proxies API requests to FastAPI on port 8000. Hot reload is enabled for both servers. CORS is configured to allow cross-origin requests between the dev servers.
 
@@ -150,7 +150,7 @@ server {
 
 To enable, start the nginx service from `docker-compose.yml`:
 ```bash
-docker compose --profile production up -d
+docker compose -f docker/docker-compose.yml --profile production up -d
 ```
 
 ---
@@ -161,12 +161,12 @@ The project uses a multi-stage Dockerfile supporting dev, test, and prod targets
 
 ### Quick Start
 
- ```bash
+```bash
 # Production (default target)
-docker compose up -d
+docker compose -f docker/docker-compose.yml up -d
 
 # Development with hot reload and frontend dev server
-docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml up -d
 ```
 
 **Note:** Development mode includes the frontend service running on port 5173 (Vite dev server with hot reload). Access the application at http://localhost:5173.
@@ -195,11 +195,11 @@ JWT__SECRET_KEY=<production-secret>
 - **Migration advisory lock** — In multi-instance deployments (K8s replicas, multiple Gunicorn workers), parallel migrations can corrupt the schema. The `_apply_migrations()` method acquires a PostgreSQL advisory lock (`pg_advisory_lock(42)`) before running migrations, ensuring only one instance runs migrations at a time. The lock is released after completion, even on failure.
 - **Migration job pattern** — For production Docker Compose deployments, a dedicated `migrate` service runs `alembic upgrade head` before the app service starts. The app service depends on the migration service completing successfully (`depends_on: migrate: condition: service_completed_successfully`). This separates migration concerns from application startup and allows `AUTO_MIGRATE=false` in the app config.
 - Manual migration:
-  ```bash
-  docker compose exec app uv run alembic upgrade head
-  # Check status:
-  docker compose exec app uv run alembic current
-  ```
+```bash
+docker compose -f docker/docker-compose.yml exec app uv run alembic upgrade head
+# Check status:
+docker compose -f docker/docker-compose.yml exec app uv run alembic current
+```
 
 ### Database Role (Least-Privilege)
 
@@ -232,19 +232,19 @@ The role is created via an initialization SQL script mounted to `/docker-entrypo
 
 ```bash
 # View logs
-docker compose logs -f app
+docker compose -f docker/docker-compose.yml logs -f app
 
 # Open shell
-docker compose exec app /bin/bash
+docker compose -f docker/docker-compose.yml exec app /bin/bash
 
 # Run tests
-docker compose -f docker-compose.yml -f docker-compose.test.yml exec app uv run pytest tests/ -v
+docker compose -f docker/docker-compose.test.yml exec test-app uv run pytest tests/ -v
 
 # Stop and remove everything (including volumes)
-docker compose down -v
+docker compose -f docker/docker-compose.yml down -v
 
 # Rebuild after code changes
-docker compose up -d --build
+docker compose -f docker/docker-compose.yml up -d --build
 ```
 
 ---

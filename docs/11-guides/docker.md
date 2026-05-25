@@ -38,10 +38,10 @@ This project uses a multi-stage Dockerfile with the following targets:
 
 ```bash
 # Build and start production environment
-docker compose up -d
+docker compose -f docker/docker-compose.yml up -d
 
 # Or with specific target
-DOCKER_TARGET=prod docker compose up -d
+DOCKER_TARGET=prod docker compose -f docker/docker-compose.yml up -d
 ```
 
 ### Development
@@ -49,27 +49,27 @@ DOCKER_TARGET=prod docker compose up -d
 ```bash
 # Start development environment with hot reload
 # Note: docker-compose.override.yml is auto-loaded by Docker Compose
-docker compose up -d
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml up -d
 
 # Frontend dev server runs at http://localhost:5173 (Vite hot reload)
 # Backend API runs at http://localhost:8000
 
 # View logs
-docker compose logs -f app
-docker compose logs -f frontend
+docker compose -f docker/docker-compose.yml logs -f app
+docker compose -f docker/docker-compose.yml logs -f frontend
 ```
 
 ### Testing
 
 ```bash
 # Start test environment
-docker compose -f docker-compose.yml -f docker-compose.test.yml up -d
+docker compose -f docker/docker-compose.test.yml up -d
 
 # Run tests
-docker compose -f docker-compose.yml -f docker-compose.test.yml exec app uv run pytest tests/ -v
+docker compose -f docker/docker-compose.test.yml exec test-app uv run pytest tests/ -v
 
 # Stop test environment
-docker compose -f docker-compose.yml -f docker-compose.test.yml down
+docker compose -f docker/docker-compose.test.yml down
 ```
 
 ## Multi-Stage Builds Explained
@@ -118,29 +118,31 @@ The Dockerfile is optimized for fast builds:
 
 ```bash
 # Build specific target
-docker build --target dev -t mkobi:dev .
-docker build --target prod -t mkobi:prod .
-docker build --target test -t mkobi:test .
+docker build -f docker/Dockerfile --target dev -t mkobi:dev .
+docker build -f docker/Dockerfile --target prod -t mkobi:prod .
+docker build -f docker/Dockerfile --target test -t mkobi:test .
 
 # Build with no cache (force rebuild)
-docker build --no-cache --target prod -t mkobi:prod .
+docker build -f docker/Dockerfile --no-cache --target prod -t mkobi:prod .
 
 # Build with build args
-docker build --build-arg UV_VERSION=v0.1.0 --target prod -t mkobi:prod .
+docker build -f docker/Dockerfile --build-arg UV_VERSION=v0.1.0 --target prod -t mkobi:prod .
 ```
 
 ## Environment Variables
 
-See `docker-compose.yml` for all environment variables.
+Environment variables are loaded from `.env` in the project root. For local development, `docker-compose.override.yml` provides sensible defaults.
 
 Key variables:
 - `ENV` - Environment (development/test/production)
 - `DATABASE__HOST` - Database host
-- `DATABASE__PASSWORD` - Database password
-- `JWT__SECRET_KEY` - JWT secret key
+- `DATABASE__PASSWORD` - Database password (defaults to `postgres` for development)
+- `JWT__SECRET_KEY` - JWT secret key (defaults to `dev-secret-key-for-local-development` for development)
 - `LOGGING__LEVEL` - Logging level (DEBUG/INFO/WARNING/ERROR)
 - `AUTO_MIGRATE` - Auto-run database migrations (true/false)
 - `RECREATE_TEST_DB` - Recreate test database on startup (true/false)
+
+**Security Note:** For production deployments, always set `DATABASE__PASSWORD` and `JWT__SECRET_KEY` to strong, unique values in your `.env` file.
 
 ## Volumes
 
@@ -158,25 +160,25 @@ Key variables:
 
 ```bash
 # View running containers
-docker compose ps
+docker compose -f docker/docker-compose.yml ps
 
 # View logs
-docker compose logs -f app
+docker compose -f docker/docker-compose.yml logs -f app
 
 # Execute command in running container
-docker compose exec app uv run pytest tests/
+docker compose -f docker/docker-compose.yml exec app uv run pytest tests/
 
 # Open shell in container
-docker compose exec app /bin/bash
+docker compose -f docker/docker-compose.yml exec app /bin/bash
 
 # Stop all services
-docker compose down
+docker compose -f docker/docker-compose.yml down
 
 # Stop and remove volumes
-docker compose down -v
+docker compose -f docker/docker-compose.yml down -v
 
 # Rebuild after changes
-docker compose up -d --build
+docker compose -f docker/docker-compose.yml up -d --build
 ```
 
 ## Troubleshooting
@@ -184,28 +186,28 @@ docker compose up -d --build
 ### Database connection issues
 ```bash
 # Check if database is ready
-docker compose exec db pg_isready -U postgres
+docker compose -f docker/docker-compose.yml exec db pg_isready -U postgres
 
 # View database logs
-docker compose logs db
+docker compose -f docker/docker-compose.yml logs db
 ```
 
 ### Migration issues
 ```bash
 # Run migrations manually
-docker compose exec app uv run alembic upgrade head
+docker compose -f docker/docker-compose.yml exec app uv run alembic upgrade head
 
 # Check migration status
-docker compose exec app uv run alembic current
+docker compose -f docker/docker-compose.yml exec app uv run alembic current
 ```
 
 ### Frontend not loading
 ```bash
 # Rebuild frontend
-docker compose exec app npm run build --prefix frontend
+docker compose -f docker/docker-compose.yml exec app npm run build --prefix frontend
 
 # Check nginx logs (if using)
-docker compose logs nginx
+docker compose -f docker/docker-compose.yml logs nginx
 ```
 
 ## Security Notes
@@ -226,15 +228,18 @@ docker compose logs nginx
 
 ```
 .
-├── Dockerfile                    # Multi-stage Dockerfile
-├── docker-compose.yml            # Production compose file
-├── docker-compose.override.yml   # Development overrides
-├── docker-compose.test.yml       # Test environment
-├── .dockerignore                 # Excludes files from build context
-├── nginx/
-│   └── nginx.conf                # Nginx configuration (optional)
+├── .dockerignore                   # Build context file (at root)
+├── docker/
+│   ├── docker-compose.yml            # Production compose file
+│   ├── docker-compose.override.yml   # Development overrides
+│   ├── docker-compose.test.yml       # Test environment
+│   ├── Dockerfile                  # Multi-stage Dockerfile
+│   ├── init-scripts/
+│   │   └── 01-create-app-role.sh     # DB initialization
+│   └── nginx/
+│       └── nginx.conf                # Nginx configuration (optional)
 └── frontend/
-    ├── dist/                     # Built frontend (generated)
+    ├── dist/                         # Built frontend (generated)
     └── ...
 ```
 

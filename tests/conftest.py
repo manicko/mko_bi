@@ -12,17 +12,18 @@ from sqlalchemy.pool import NullPool
 
 # Set required environment variables before ANY mkobi module imports
 # This must be at the very top of this file before other imports
-os.environ["ENV"] = "test"
-os.environ["DATABASE__HOST"] = "localhost"
-os.environ["DATABASE__PORT"] = "5432"
-os.environ["DATABASE__DBNAME"] = "bidb_test"
-os.environ["DATABASE__USER"] = "postgres"
-os.environ["DATABASE__PASSWORD"] = "1234"
-os.environ["DATABASE__TEST_DBNAME"] = "bidb_test"
-os.environ["JWT__SECRET_KEY"] = "test_secret_key_change_in_production"
-os.environ["REDIS__HOST"] = "localhost"
-os.environ["REDIS__PORT"] = "6379"
-os.environ["RECREATE_TEST_DB"] = "true"
+# Use setdefault to allow Docker Compose env vars to take precedence in containers
+os.environ.setdefault("ENV", "test")
+os.environ.setdefault("DATABASE__HOST", "localhost")
+os.environ.setdefault("DATABASE__PORT", "5432")
+os.environ.setdefault("DATABASE__DBNAME", "bidb_test")
+os.environ.setdefault("DATABASE__USER", "postgres")
+os.environ.setdefault("DATABASE__PASSWORD", "1234")
+os.environ.setdefault("DATABASE__TEST_DBNAME", "bidb_test")
+os.environ.setdefault("JWT__SECRET_KEY", "test_secret_key_change_in_production")
+os.environ.setdefault("REDIS__HOST", "localhost")
+os.environ.setdefault("REDIS__PORT", "6379")
+os.environ.setdefault("RECREATE_TEST_DB", "true")
 
 
 def pytest_load_initial_conftests(early_config, parser, args):
@@ -31,17 +32,18 @@ def pytest_load_initial_conftests(early_config, parser, args):
     This ensures environment variables are set before ANY test modules
     are imported during collection.
     """
-    os.environ["ENV"] = "test"
-    os.environ["DATABASE__HOST"] = "localhost"
-    os.environ["DATABASE__PORT"] = "5432"
-    os.environ["DATABASE__DBNAME"] = "bidb_test"
-    os.environ["DATABASE__USER"] = "postgres"
-    os.environ["DATABASE__PASSWORD"] = "1234"
-    os.environ["DATABASE__TEST_DBNAME"] = "bidb_test"
-    os.environ["JWT__SECRET_KEY"] = "test_secret_key_change_in_production"
-    os.environ["REDIS__HOST"] = "localhost"
-    os.environ["REDIS__PORT"] = "6379"
-    os.environ["RECREATE_TEST_DB"] = "true"
+    # Use setdefault to allow Docker Compose env vars to take precedence in containers
+    os.environ.setdefault("ENV", "test")
+    os.environ.setdefault("DATABASE__HOST", "localhost")
+    os.environ.setdefault("DATABASE__PORT", "5432")
+    os.environ.setdefault("DATABASE__DBNAME", "bidb_test")
+    os.environ.setdefault("DATABASE__USER", "postgres")
+    os.environ.setdefault("DATABASE__PASSWORD", "1234")
+    os.environ.setdefault("DATABASE__TEST_DBNAME", "bidb_test")
+    os.environ.setdefault("JWT__SECRET_KEY", "test_secret_key_change_in_production")
+    os.environ.setdefault("REDIS__HOST", "localhost")
+    os.environ.setdefault("REDIS__PORT", "6379")
+    os.environ.setdefault("RECREATE_TEST_DB", "true")
 
 # Import config module - this will create the singleton with test env vars
 from mkobi.config import clear_config_cache, get_config, Settings  # noqa: E402, F401

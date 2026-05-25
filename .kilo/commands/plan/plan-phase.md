@@ -30,7 +30,7 @@ Stop and wait for the response.
 Load {MAIN_CONTEXT} from:
 
 C:\py_dev\mkobi\docs\SPEC.md
-C:\py_dev\mkobi\docs\STRUCT.md
+C:\py_dev\mkobi\docs\*
 
 Summarize it and keep as {MAIN_CONTEXT} 
 

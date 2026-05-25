@@ -40,8 +40,8 @@ build/
 wheels/
 *.egg
 
-# Test files and coverage - EXCLUDE from all builds (use multi-stage for test)
-tests/
+# Test files and coverage - EXCLUDE from production builds (needed for test stage)
+# tests/  # NEEDED for Dockerfile test stage - see Dockerfile test target
 .pytest_cache/
 .coverage
 htmlcov/
@@ -75,12 +75,12 @@ frontend/package-lock.json
 .env.*.local
 
 # Docker files (prevent recursive copy and reduce context)
-Dockerfile
-docker-compose.yml
-docker-compose.override.yml
-docker-compose.test.yml
-.dockerignore
-docker-compose.*.yml
+docker/Dockerfile
+docker/docker-compose.yml
+docker/docker-compose.override.yml
+docker/docker-compose.test.yml
+docker/.dockerignore
+docker/docker-compose.*.yml
 
 # Database and migration files - INCLUDE alembic for runtime migrations
 # alembic/versions/ is needed for Alembic to detect migrations

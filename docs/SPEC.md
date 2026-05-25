@@ -152,6 +152,8 @@ Access is validated on every request via the `dashboard_access` table.
 - **Frontend silent refresh** — On app initialization, if no access token exists, the frontend attempts a silent refresh using the httpOnly cookie. This keeps users logged in across page refreshes without requiring re-authentication.
 - **Request queue for concurrent 401s** — The axios interceptor implements a request queue (`failedQueue`) with an `isRefreshing` flag. When multiple requests fail with 401 simultaneously, only one refresh call is made; all queued requests are retried after the refresh completes.
 - **ProtectedRoute loading state** — `ProtectedRoute` shows a loading spinner during silent refresh to prevent flash of login page for valid sessions with expired access tokens.
+- **Docker folder restructure** — All Docker configuration files were consolidated into a dedicated `docker/` folder at the project root. This includes `docker-compose.yml`, `docker-compose.override.yml`, `docker-compose.test.yml`, `Dockerfile`, `.dockerignore`, `nginx/nginx.conf`, and `init-scripts/`. The root directory now contains only application code and project metadata. All `docker compose` commands require the `-f docker/` prefix (e.g., `docker compose -f docker/docker-compose.yml up -d`). The `Dockerfile` COPY paths remain unchanged because Docker's `-f` flag only changes the Dockerfile location, not the build context (root). The `.dockerignore` file was moved to `docker/.dockerignore` but the build context remains the root, so it is still picked up automatically. The nginx volume mount in `docker-compose.yml` was updated from `./nginx/nginx.conf` to `./docker/nginx/nginx.conf`.
+- **Standalone test compose** — `docker-compose.test.yml` was rewritten as a fully standalone compose configuration (no overlay/merge with production compose). It defines four isolated services (`test-db`, `test-redis`, `test-migrate`, `test-app`) with separate volumes (`test_postgres_data`, `test_redis_data`), a separate network (`test_network`), and shifted host ports (5433, 6380, 8001). The `conftest.py` was updated to use `os.environ.setdefault()` so Docker Compose environment variables take precedence inside containers while preserving localhost defaults for native test execution. Dev and test environments can run simultaneously without conflicts.
 
 ---
 
@@ -165,9 +167,10 @@ Access is validated on every request via the `dashboard_access` table.
 | 2.5     | 2026-05-19 | Dashboard-filter binding API, dashboard access management endpoints, dashboard-scoped graph endpoints, file processing service, background data worker, processing log date filtering |
 | 2.6     | 2026-05-20 | Per-IP login rate limiting (email enumeration fix), migration advisory lock, dedicated DB role (least-privilege), migration job compose pattern, stale processing heartbeat, upload memory streaming, weak admin credential detection, config reload for testing, atomic UPSERT admin user, sanitized DB URL logging, LRU token cache |
 | 2.7     | 2026-05-23 | Cookie-based refresh token flow: httpOnly refresh cookies (7-day TTL), 15-min access tokens, POST /auth/logout endpoint, frontend silent refresh on mount, request queue for concurrent 401s, ProtectedRoute loading state during refresh |
+| 2.8     | 2026-05-25 | Docker folder restructure (all compose/Dockerfile/config into docker/ folder), standalone test compose (isolated test-db/test-redis/test-migrate/test-app with separate volumes/networks/ports), conftest.py setdefault for Docker Compose env var precedence, dev/test parallel execution support |
 
 ---
 
 **Author:** Senior Python Architect
-**Date:** 2026-05-23
-**Version:** 2.7
+**Date:** 2026-05-25
+**Version:** 2.8

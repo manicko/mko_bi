@@ -2,9 +2,9 @@
 # Docker Compose for mkobi BI Dashboard System
 # Production configuration with multi-stage Dockerfile support
 # Usage:
-#   Production:  docker compose up -d
-#   Development: docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
-#   Test:        docker compose -f docker-compose.yml -f docker-compose.test.yml up -d
+#   Production:  docker compose -f docker/docker-compose.yml up -d
+#   Development: docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml up -d
+#   Test:        docker compose -f docker/docker-compose.test.yml up -d
 # =============================================================================
 
 services:
@@ -16,14 +16,15 @@ services:
     environment:
       POSTGRES_DB: bidb
       POSTGRES_USER: postgres
-      # Production requires explicit database password (no default)
-      POSTGRES_PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD must be set for production}
+      # NOTE: For local development, this defaults to 'postgres'.
+      # For production, explicitly set DATABASE__PASSWORD in your .env file.
+      POSTGRES_PASSWORD: ${DATABASE__PASSWORD:-postgres}
       # Application role password (can be different from postgres password)
       MKOBI_APP_PASSWORD: ${MKOBI_APP_PASSWORD:-secure_password_placeholder}
     volumes:
       - postgres_data:/var/lib/postgresql/data
       # Mount initialization scripts to create app role on first run
-      - ./docker/init-scripts:/docker-entrypoint-initdb.d:ro
+      - ../docker/init-scripts:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -38,8 +39,8 @@ services:
   # with DDL privileges only (not superuser) in production environments.
   migrate:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
       target: prod
     command: ["alembic", "upgrade", "head"]
     environment:
@@ -47,11 +48,16 @@ services:
       DATABASE__HOST: db
       DATABASE__PORT: 5432
       DATABASE__USER: postgres
-      DATABASE__PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD must be set for production}
+      # NOTE: For local development, defaults to 'postgres'.
+      # For production, explicitly set DATABASE__PASSWORD and JWT__SECRET_KEY in your .env file.
+      DATABASE__PASSWORD: ${DATABASE__PASSWORD:-postgres}
       DATABASE__DBNAME: bidb
       DATABASE__TEST_DBNAME: bidb_test
-      JWT__SECRET_KEY: ${JWT__SECRET_KEY:?JWT__SECRET_KEY must be set for production}
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
       JWT__ALGORITHM: HS256
+      # Admin credentials for initial setup
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin@example.com}
     depends_on:
       db:
         condition: service_healthy
@@ -60,8 +66,8 @@ services:
 
   app:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
       target: ${DOCKER_TARGET:-prod}
       args:
         - UV_VERSION=latest
@@ -78,20 +84,21 @@ services:
       DATABASE__USER: mkobi_app
       DATABASE__PASSWORD: ${MKOBI_APP_PASSWORD:-secure_password_placeholder}
       DATABASE__ADMIN_USER: postgres
-      DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD must be set for production}
+      DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-postgres}
       DATABASE__DBNAME: bidb
       DATABASE__TEST_DBNAME: bidb_test
-      # SECURITY: JWT__SECRET_KEY MUST be set explicitly in production.
-      # Do NOT use a default or weak value here. Docker will fail to start
-      # this service if the variable is not defined in the environment.
-      JWT__SECRET_KEY: ${JWT__SECRET_KEY:?JWT__SECRET_KEY must be set for production}
+      # SECURITY: In production, change JWT__SECRET_KEY to a strong random value.
+      # For local development, defaults to 'dev-secret-key-for-local-development'.
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
       JWT__ALGORITHM: HS256
+      # Admin credentials
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin@example.com}
       UPLOAD__TEMP_DIR: /app/data/tmp_uploads
       LOGGING__LOG_FILE: /app/data/logs/app.log
       CORS_ORIGINS: '["http://localhost:3000", "http://localhost:5173"]'
       LOGGING__LEVEL: ${LOG_LEVEL:-INFO}
       AUTO_MIGRATE: "false"
-      RECREATE_TEST_DB: "false"
     ports:
       - "8000:8000"
     volumes:
@@ -119,8 +126,8 @@ services:
   # RQ worker for background task processing (file uploads, data aggregation)
   rq-worker:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
       target: prod
     command: ["uv", "run", "rq", "worker", "--url", "redis://redis:6379/0"]
     depends_on:
@@ -135,20 +142,23 @@ services:
       DATABASE__USER: mkobi_app
       DATABASE__PASSWORD: ${MKOBI_APP_PASSWORD:-secure_password_placeholder}
       DATABASE__ADMIN_USER: postgres
-      DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD must be set for production}
+      DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-postgres}
       DATABASE__DBNAME: bidb
       DATABASE__TEST_DBNAME: bidb_test
-      JWT__SECRET_KEY: ${JWT__SECRET_KEY:?JWT__SECRET_KEY must be set for production}
+      # SECURITY: In production, change JWT__SECRET_KEY to a strong random value.
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
       JWT__ALGORITHM: HS256
+      # Admin credentials
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin@example.com}
       UPLOAD__TEMP_DIR: /app/data/tmp_uploads
       LOGGING__LOG_FILE: /app/data/logs/app.log
       LOGGING__LEVEL: ${LOG_LEVEL:-INFO}
       AUTO_MIGRATE: "false"
-      RECREATE_TEST_DB: "false"
     volumes:
       - app_data:/app/data
-      - ./alembic:/app/alembic:ro
-      - ./alembic.ini:/app/alembic.ini:ro
+      - ../alembic:/app/alembic:ro
+      - ../alembic.ini:/app/alembic.ini:ro
     profiles:
       - production
 
@@ -161,8 +171,8 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./frontend/dist:/usr/share/nginx/html:ro
+      - ../docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ../frontend/dist:/usr/share/nginx/html:ro
     restart: unless-stopped
     profiles:
       - production

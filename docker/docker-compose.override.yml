@@ -1,14 +1,14 @@
 # =============================================================================
 # Docker Compose Override for Development
-# Usage: docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
+# Usage: docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml up -d
 # =============================================================================
 
 services:
   # Migration service - runs alembic migrations before app starts (same as production)
   migrate:
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: docker/Dockerfile
       target: dev
     command: ["alembic", "upgrade", "head"]
     environment:
@@ -16,8 +16,9 @@ services:
       DATABASE__HOST: db
       DATABASE__PORT: 5432
       DATABASE__DBNAME: bidb
-      DATABASE__TEST_DBNAME: bidb_test
+      DATABASE__PASSWORD: ${DATABASE__PASSWORD:-postgres}
       JWT__ALGORITHM: HS256
+      JWT__SECRET_KEY: dev-secret-key-for-local-development
     depends_on:
       db:
         condition: service_healthy
@@ -28,7 +29,7 @@ services:
     image: node:20-alpine
     working_dir: /app
     volumes:
-      - ./frontend:/app
+      - ../frontend:/app
       - frontend_node_modules:/app/node_modules
     ports:
       - "5173:5173"
@@ -39,6 +40,8 @@ services:
 
   app:
     build:
+      context: ..
+      dockerfile: docker/Dockerfile
       target: dev
     depends_on:
       migrate:
@@ -54,28 +57,40 @@ services:
       DATABASE__DBNAME: bidb
       DATABASE__TEST_DBNAME: bidb_test
       JWT__ALGORITHM: HS256
+      JWT__SECRET_KEY: dev-secret-key-for-local-development
       # Admin credentials (valid email format required)
       ADMIN_USERNAME: admin@example.com
       ADMIN_PASSWORD: admin@example.com
       LOGGING__LEVEL: DEBUG
       AUTO_MIGRATE: "false"
-      RECREATE_TEST_DB: "true"
     volumes:
       # Mount source code for hot reload (writable for egg-info generation)
-      - ./src:/app/src
-      - ./alembic:/app/alembic
-      - ./tests:/app/tests
-      - ./pyproject.toml:/app/pyproject.toml
-      - ./uv.lock:/app/uv.lock
+      - ../src:/app/src
+      - ../alembic:/app/alembic
+      - ../tests:/app/tests
+      - ../pyproject.toml:/app/pyproject.toml
+      - ../uv.lock:/app/uv.lock
     command: ["uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
     # Remove healthcheck in dev for faster startup
     healthcheck:
       disable: true
 
+  # Override rq-worker for development (remove production profile requirement)
+  rq-worker:
+    profiles: []
+    environment:
+      DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-postgres}
+      JWT__SECRET_KEY: dev-secret-key-for-local-development
+      ADMIN_USERNAME: admin@example.com
+      ADMIN_PASSWORD: admin@example.com
+
   db:
     # Expose port for local development tools
     ports:
       - "5432:5432"
+    environment:
+      # Override production postgres password with development default
+      POSTGRES_PASSWORD: ${DATABASE__PASSWORD:-postgres}
 
 volumes:
   frontend_node_modules:

@@ -31,7 +31,6 @@ Extract implementation decisions that downstream agents need — researcher and 
 [AGENTS.md](C:\py_dev\mkobi\AGENTS.md)
 [project rules](C:\py_dev\mkobi\.ai\context\**)
 [specification](C:\py_dev\mkobi\docs\SPEC.md)
-[structure](C:\py_dev\mkobi\docs\STRUCT.md)
 and summarize
 
 </context>

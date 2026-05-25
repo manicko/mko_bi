@@ -1,0 +1,192 @@
+id: TASK_025_STC_rewrite_compose_test
+
+title: Rewrite docker-compose.test.yml as fully standalone compose configuration
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+phase: STC
+wave: 1
+
+description: >
+  Completely rewrite docker-compose.test.yml from an overlay/override file
+  (merged on top of docker-compose.yml) into a fully standalone, independent
+  compose configuration. The file must define ALL services, volumes, and
+  networks from scratch — no merge, no overlay, no extends. Service names
+  prefixed with test-, separate volumes, separate network, shifted host ports.
+
+goals:
+  - docker-compose.test.yml is fully self-contained (no merge with docker-compose.yml)
+  - All four test services defined: test-db, test-redis, test-migrate, test-app
+  - Zero shared state: separate volumes (test_postgres_data, test_redis_data), separate network (test_network)
+  - Port mapping: test-app=8001→8000, test-db=5433→5432, test-redis=6380→6379
+  - test-migrate is a one-shot service (restart: "no") with health-gated depends_on
+  - test-app runs tail -f /dev/null with healthcheck disabled
+  - Run via: docker compose -f docker-compose.test.yml up -d
+
+files:
+  - path: docker-compose.test.yml
+    targets:
+      - type: file
+        name: docker-compose.test.yml
+    semantic_anchors:
+      replace: entire_file
+    changes:
+      - action: rewrite_file
+        description: >
+          Replace the entire file content. The current file is an overlay that
+          modifies services (app, db) defined in docker-compose.yml. The new file
+          must be completely self-contained with all four test services.
+        code_hint: |
+          # =============================================================================
+          # Docker Compose Configuration for Testing (STANDALONE)
+          # Usage: docker compose -f docker-compose.test.yml up -d
+          #        docker compose -f docker-compose.test.yml exec test-app uv run pytest tests/ -v
+          # =============================================================================
+          
+          services:
+            test-db:
+              image: postgres:16
+              container_name: test-db
+              environment:
+                POSTGRES_DB: bidb_test
+                POSTGRES_USER: postgres
+                POSTGRES_PASSWORD: ${DATABASE__PASSWORD:-test_password}
+                MKOBI_APP_PASSWORD: ${MKOBI_APP_PASSWORD:-test_app_password}
+              volumes:
+                - test_postgres_data:/var/lib/postgresql/data
+              ports:
+                - "5433:5432"
+              healthcheck:
+                test: ["CMD-SHELL", "pg_isready -U postgres"]
+                interval: 5s
+                timeout: 5s
+                retries: 5
+              restart: unless-stopped
+              networks:
+                - test_network
+
+            test-redis:
+              image: redis:7-alpine
+              container_name: test-redis
+              volumes:
+                - test_redis_data:/data
+              ports:
+                - "6380:6379"
+              healthcheck:
+                test: ["CMD", "redis-cli", "ping"]
+                interval: 5s
+                timeout: 3s
+                retries: 3
+              restart: unless-stopped
+              networks:
+                - test_network
+
+            test-migrate:
+              build:
+                context: .
+                dockerfile: Dockerfile
+                target: test
+              container_name: test-migrate
+              command: ["alembic", "upgrade", "head"]
+              environment:
+                ENV: test
+                DATABASE__HOST: test-db
+                DATABASE__PORT: 5432
+                DATABASE__USER: postgres
+                DATABASE__PASSWORD: ${DATABASE__PASSWORD:-test_password}
+                DATABASE__DBNAME: bidb_test
+                DATABASE__TEST_DBNAME: bidb_test
+                DATABASE__ADMIN_USER: postgres
+                DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-test_password}
+                REDIS__HOST: test-redis
+                REDIS__PORT: 6379
+                JWT__SECRET_KEY: ${JWT__SECRET_KEY:-test_secret_key}
+                JWT__ALGORITHM: HS256
+              depends_on:
+                test-db:
+                  condition: service_healthy
+              restart: "no"
+              networks:
+                - test_network
+
+            test-app:
+              build:
+                context: .
+                dockerfile: Dockerfile
+                target: test
+              container_name: test-app
+              environment:
+                ENV: test
+                DATABASE__HOST: test-db
+                DATABASE__PORT: 5432
+                DATABASE__USER: postgres
+                DATABASE__PASSWORD: ${DATABASE__PASSWORD:-test_password}
+                DATABASE__DBNAME: bidb_test
+                DATABASE__TEST_DBNAME: bidb_test
+                DATABASE__ADMIN_USER: postgres
+                DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-test_password}
+                REDIS__HOST: test-redis
+                REDIS__PORT: 6379
+                JWT__SECRET_KEY: ${JWT__SECRET_KEY:-test_secret_key}
+                JWT__ALGORITHM: HS256
+                LOGGING__LEVEL: WARNING
+                AUTO_MIGRATE: "true"
+                RECREATE_TEST_DB: "true"
+              ports:
+                - "8001:8000"
+              depends_on:
+                test-migrate:
+                  condition: service_completed_successfully
+                test-db:
+                  condition: service_healthy
+              healthcheck:
+                disable: true
+              restart: unless-stopped
+              networks:
+                - test_network
+              command: ["tail", "-f", "/dev/null"]
+
+          volumes:
+            test_postgres_data:
+            test_redis_data:
+
+          networks:
+            test_network:
+              driver: bridge
+
+acceptance_criteria:
+  - docker-compose.test.yml defines all 4 services: test-db, test-redis, test-migrate, test-app
+  - No references to services defined in docker-compose.yml (no app, db, redis, migrate)
+  - All service names prefixed with test-
+  - Separate volumes: test_postgres_data, test_redis_data
+  - Separate network: test_network with driver: bridge
+  - test-migrate has restart: "no" (one-shot)
+  - test-app has healthcheck disabled and command: tail -f /dev/null
+  - test-app DATABASE__USER is postgres (superuser, avoids RECREATE_TEST_DB privilege issues)
+  - test-migrate depends on test-db with condition: service_healthy
+  - test-app depends on test-migrate with condition: service_completed_successfully
+  - File has no version: key (obsolete in Compose v2)
+  - File is valid YAML
+
+tests_to_run:
+  - "docker compose -f docker-compose.test.yml config  # validate compose syntax"
+  - "docker compose -f docker-compose.test.yml up -d --build  # build and start"
+  - "docker compose -f docker-compose.test.yml ps  # verify all services running"
+  - "docker compose -f docker-compose.test.yml exec test-app uv run pytest tests/ -v  # run tests"
+  - "docker compose -f docker-compose.test.yml down -v  # clean teardown"
+
+risk_level: medium
+
+rollout_notes: >
+  This is the core task of the phase. The file is a complete rewrite — the old
+  overlay content is discarded entirely. The new file follows the standalone
+  compose pattern from RESEARCH_01.md. Key design decisions: postgres superuser
+  for test-db (avoids mkobi_app role creation complexity), dedicated test-migrate
+  service (same pattern as production migrate), test-redis included for completeness.
+  REDIS__HOST: test-redis and REDIS__PORT: 6379 set in both test-app and test-migrate
+  environments so conftest.py setdefault picks up the Docker DNS name when
+  running inside containers (TASK_028).

@@ -57,11 +57,24 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
+|   |   |   PLAN_01.md
+|   |   |   
 |   |   \---tasks
+|   |           order.yaml
+|   |           TASK_025_STC_rewrite_compose_test.yaml
+|   |           TASK_026_STC_cleanup_compose_yml.yaml
+|   |           TASK_027_STC_verify_parallel_execution.yaml
+|   |           TASK_028_STC_fix_conftest_env.yaml
+|   |           
 |   +---problems
 |   |   |   CONTEXT_01.md
 |   |   |   
 |   |   \---decisions
+|   |           DECISION_01.md
+|   |           
+|   +---researches
+|   |       RESEARCH_01.md
+|   |       
 |   +---structure
 |   |   |   map.md
 |   |   |   
@@ -75,34 +88,9 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
-|   |   |       TASK_001_03_01_fix_dev_reload_DONE.yaml
-|   |   |       TASK_002_03_02_simplify_dev_env_DONE.yaml
-|   |   |       TASK_003_03_03_add_frontend_dev_service_DONE.yaml
-|   |   |       TASK_004_03_04_add_vite_proxy_DONE.yaml
-|   |   |       TASK_005_03_05_remove_frontend_dist_mount_DONE.yaml
-|   |   |       TASK_006_03_06_fix_docker_guide_DONE.yaml
-|   |   |       TASK_007_03_07_fix_deployment_doc_DONE.yaml
-|   |   |       TASK_008_D01_fix_root_user_dev_DONE.yaml
-|   |   |       TASK_009_D04_add_rq_worker_DONE.yaml
-|   |   |       TASK_010_D11_remove_exposed_ports_DONE.yaml
-|   |   |       TASK_011_D12_fix_test_compose_passwords_DONE.yaml
-|   |   |       TASK_012_D13_make_mirror_configurable_DONE.yaml
-|   |   |       TASK_013_D10_add_nginx_api_comment_DONE.yaml
-|   |   |       TASK_014_D16_remove_redundant_mounts_DONE.yaml
-|   |   |       TASK_015_D14_document_env_tradeoff_DONE.yaml
-|   |   |       TASK_016_D15_document_superuser_migration_DONE.yaml
-|   |   |       TASK_018_VF001_fix_token_payload_key_DONE.yaml
-|   |   |       TASK_019_VF002_use_set_secure_cookie_in_login_DONE.yaml
-|   |   |       TASK_020_VF003_remove_duplicate_login_cookie_test_DONE.yaml
-|   |   |       TASK_021_VF004_remove_redundant_removeToken_DONE.yaml
-|   |   |       TASK_022_VF005_make_cookie_secure_configurable_DONE.yaml
-|   |   |       TASK_023_FIX_test_db_dev_DONE.yaml
-|   |   |       TASK_024_FIX_frontend_dev_DONE.yaml
-|   |   |       TASK_GATE_01_wave1_complete.yaml
-|   |   |       TASK_GATE_01_wave1_complete_DONE.yaml
-|   |   |       TASK_GATE_02_wave2_complete_DONE.yaml
-|   |   |       TASK_GATE_03_hardening_complete.yaml
-|   |   |       TASK_GATE_04_full_stack_DONE.yaml
+|   |   |       TASK_025_STC_rewrite_compose_test_DONE.yaml
+|   |   |       TASK_026_STC_cleanup_compose_yml_DONE.yaml
+|   |   |       TASK_027_STC_fix_conftest_env_DONE.yaml
 |   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
@@ -110,6 +98,10 @@ C:\PY_DEV\MKOBI
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
+|   |   |       TASK_028_STC_fix_override_yml.yaml
+|   |   |       TASK_029_STC_verify_parallel_execution.yaml
+|   |   |       TASK_030_STC_audit_docker_issues.yaml
+|   |   |       TASK_031_DOCKER_RESTRUCTURE_folder.yaml
 |   |   |       
 |   |   \---validation
 |   \---templates

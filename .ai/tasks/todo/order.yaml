@@ -1,0 +1,27 @@
+tasks:
+  - id: TASK_028_STC_fix_override_yml
+    wave: 2
+    depends_on:
+      - TASK_025_STC_rewrite_compose_test
+      - TASK_026_STC_cleanup_compose_yml
+
+  - id: TASK_029_STC_verify_parallel_execution
+    wave: 3
+    depends_on:
+      - TASK_025_STC_rewrite_compose_test
+      - TASK_026_STC_cleanup_compose_yml
+      - TASK_027_STC_fix_conftest_env
+      - TASK_028_STC_fix_override_yml
+
+  - id: TASK_030_STC_audit_docker_issues
+    wave: 3
+    depends_on:
+      - TASK_029_STC_verify_parallel_execution
+    condition: triggered_only
+    trigger: TASK_029 gate_result is FAILED
+
+  - id: TASK_031_DOCKER_RESTRUCTURE_folder
+    wave: 4
+    depends_on:
+      - TASK_029_STC_verify_parallel_execution
+    condition: post_stc_cleanup
