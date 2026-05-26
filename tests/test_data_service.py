@@ -182,22 +182,28 @@ class TestDataService:
     async def test_process_upload_file_too_large(self, data_service, mock_repos, mock_db):
         """Test upload rejects file exceeding size limit."""
         dashboard_id = uuid4()
-        # Create a file larger than the limit (101MB)
+        # Mock Path.stat().st_size to simulate large file without creating one
+        # The validation checks file_path.stat().st_size in validate_file
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            # Write in chunks to avoid memory issues
-            chunk = b"x" * (1024 * 1024)  # 1MB chunk
-            for _ in range(102):  # > 101MB
-                tmp.write(chunk)
+            tmp.write(b"x")  # Small content - will be mocked
             tmp_path = Path(tmp.name)
 
-        with pytest.raises(ValueError, match="exceeds maximum size"):
-            await data_service.process_upload(
-                file_path=tmp_path,
-                dashboard_id=dashboard_id,
-                filename="large.csv",
-                content_type="text/csv",
-                db=mock_db,
-            )
+        try:
+            with patch.object(
+                Path, "stat",
+                # Mock object with st_size set to 101MB (exceeds 100MB limit)
+                return_value=MagicMock(st_size=101 * 1024 * 1024),
+            ):
+                with pytest.raises(ValueError, match="exceeds maximum size"):
+                    await data_service.process_upload(
+                        file_path=tmp_path,
+                        dashboard_id=dashboard_id,
+                        filename="large.csv",
+                        content_type="text/csv",
+                        db=mock_db,
+                    )
+        finally:
+            tmp_path.unlink(missing_ok=True)
 
     async def test_process_upload_csv_gz(self, data_service, mock_repos, mock_db):
         """Test upload with gzip compressed CSV."""
@@ -257,6 +263,27 @@ class TestDataService:
         result = await data_service.get_aggregated_data(uuid4(), uuid4(), db=mock_db)
 
         assert result == []
+
+    async def test_get_aggregated_data_with_filters(self, data_service, mock_repos, mock_db):
+        """Test aggregated data filters are passed to repository."""
+        agg_repo, log_repo, graph_repo = mock_repos
+        dashboard_id = uuid4()
+        graph_id = uuid4()
+        test_filters = {"year": 2023, "category": "Electronics"}
+        mock_record = MagicMock()
+        mock_record.dims = {"category": "Electronics", "year": 2023}
+        mock_record.metrics = {"revenue": 100.0}
+        mock_record.dashboard_id = dashboard_id
+        agg_repo.get_by_graph_id.return_value = [mock_record]
+
+        result = await data_service.get_aggregated_data(
+            dashboard_id, graph_id, db=mock_db, filters=test_filters,
+        )
+
+        assert len(result) == 1
+        agg_repo.get_by_graph_id.assert_called_once_with(
+            graph_id, mock_db, dashboard_id=dashboard_id, filters=test_filters,
+        )
 
     # --- get_available_metrics tests ---
 

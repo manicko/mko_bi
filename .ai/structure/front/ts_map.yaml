@@ -545,8 +545,7 @@
     - '@mui/material'
     - react
     - ../../../shared/types/formSchemas
-    - ../api/authApi
-    - ../model/authToken
+    - ../model/useAuth
   components:
     - LoginForm
   hooks: []
@@ -964,34 +963,6 @@
   components: []
   hooks: []
   jsx_tags: []
-- path: C:/py_dev/mkobi/frontend/src/shared/components/Layout/Sidebar.tsx
-  module: C:.py_dev.mkobi.frontend.src.shared.components.Layout.Sidebar
-  layer: component
-  imports:
-    - '@mui/material'
-    - react-router-dom
-    - ../../../features/auth/model/useAuth
-  components:
-    - Sidebar
-  hooks: []
-  jsx_tags:
-    - |-
-      <Drawer
-            variant="permanent"
-            sx={{
-              width: DRAWER_WIDTH,
-              flexShrink: 0,
-              '& .MuiDrawer-paper': {
-                width: DRAWER_WIDTH,
-                boxSizing: 'border-box',
-              },
-            }}
-          >
-    - <List>
-    - <ListItem disablePadding>
-    - <ListItemButton onClick={() => navigate('/dashboards')}>
-    - <ListItem disablePadding>
-    - <ListItemButton onClick={() => navigate('/admin')}>
 - path: C:/py_dev/mkobi/frontend/src/shared/types/__tests__/enums.test.ts
   module: C:.py_dev.mkobi.frontend.src.shared.types.__tests__.enums.test
   layer: unknown

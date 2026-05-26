@@ -21,10 +21,12 @@ from mkobi.api.deps import (
     get_filter_repository,
     get_graph_repository,
     require_admin_role,
+    require_dashboard_read_access,
     require_viewer_role,
     get_dashboard_service,
 )
 from mkobi.models.access import AccessGrant
+from mkobi.models.user import UserRead
 from mkobi.models.dashboard import (
     DashboardAdmin,
     DashboardCreate,
@@ -660,24 +662,11 @@ async def unbind_filter_endpoint(
 )
 async def get_dashboard_filters_endpoint(
     dashboard_id: UUID,
-    current_user: CurrentUser,
+    current_user: UserRead = Depends(require_dashboard_read_access),
     db: AsyncSession = Depends(get_db_dependency),
     dashboard_filter_repo=Depends(get_dashboard_filter_repository),
 ) -> list[dict[str, Any]]:
     """Get all filters bound to a dashboard."""
-    # Check dashboard access
-    from mkobi.core.permissions import check_dashboard_access
-    has_access = await check_dashboard_access(
-        user_id=current_user.id,
-        dashboard_id=dashboard_id,
-        required_permission="view",
-        db=db,
-    )
-    if not has_access:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No access to this dashboard",
-        )
     logger.info("Getting filters for dashboard: dashboard_id=%s", dashboard_id)
     try:
         filter_ids = await dashboard_filter_repo.get_dashboard_filters(
@@ -872,7 +861,7 @@ async def create_dashboard_graph_endpoint(
 )
 async def get_dashboard_graphs_endpoint(
     dashboard_id: UUID,
-    current_user: CurrentUser,
+    current_user: UserRead = Depends(require_dashboard_read_access),
     db: AsyncSession = Depends(get_db_dependency),
     graph_repo=Depends(get_graph_repository),
 ) -> list[GraphRead]:
@@ -890,19 +879,6 @@ async def get_dashboard_graphs_endpoint(
         HTTPException 403: If user has no access to dashboard.
         HTTPException 500: On database error.
     """
-    # Check dashboard access
-    from mkobi.core.permissions import check_dashboard_access
-    has_access = await check_dashboard_access(
-        user_id=current_user.id,
-        dashboard_id=dashboard_id,
-        required_permission="view",
-        db=db,
-    )
-    if not has_access:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="No access to this dashboard",
-        )
     logger.info("Getting graphs for dashboard: dashboard_id=%s", dashboard_id)
 
     try:

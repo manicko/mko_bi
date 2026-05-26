@@ -130,6 +130,7 @@ class TransformationConfig(BaseModel):
 
     model_config = ConfigDict(
         from_attributes=True,
+        extra="forbid",
         json_schema_extra={
             "example": {
                 "filters": [{"column": "year", "operator": ">=", "value": 2020}],

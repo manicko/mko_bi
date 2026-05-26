@@ -146,22 +146,22 @@ async def upload_file_endpoint(
         upload_dir.mkdir(parents=True, exist_ok=True)
         temp_file_path = upload_dir / f"upload_{uuid4()}_{sanitized_filename}"
 
-        # Stream file in chunks to reduce memory pressure
-        total_bytes = 0
-        async with aiofiles.open(temp_file_path, "wb") as f:
-            while chunk := await file.read(CHUNK_SIZE):
-                await f.write(chunk)
-                total_bytes += len(chunk)
-
-        await file.close()
-
-        logger.info(
-            "File streamed to disk",
-            extra={"file_name": sanitized_filename, "size_bytes": total_bytes},
-        )
-
-        # Call service (validation is in service layer)
         try:
+            # Stream file in chunks to reduce memory pressure
+            total_bytes = 0
+            async with aiofiles.open(temp_file_path, "wb") as f:
+                while chunk := await file.read(CHUNK_SIZE):
+                    await f.write(chunk)
+                    total_bytes += len(chunk)
+
+            await file.close()
+
+            logger.info(
+                "File streamed to disk",
+                extra={"file_name": sanitized_filename, "size_bytes": total_bytes},
+            )
+
+            # Call service (validation is in service layer)
             result = await data_service.process_upload(
                 file_path=str(temp_file_path),
                 dashboard_id=dashboard_id,
@@ -171,31 +171,26 @@ async def upload_file_endpoint(
                 mode=mode,
                 db=db,
             )
-        except PermissionError as e:
-            logger.warning("Permission denied for upload: %s", e)
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=str(e),
-            ) from e
-        except ValueError as e:
-            _handle_value_error(e)
-        except Exception as e:
-            logger.error("Error during file processing: %s", e, exc_info=True)
-            raise
 
-        logger.info(
-            "File uploaded successfully",
-            extra={
-                "processing_log_id": str(result.task_id),
-                "file_name": file.filename,
-                "mode": mode,
-            },
-        )
+            logger.info(
+                "File uploaded successfully",
+                extra={
+                    "processing_log_id": str(result.task_id),
+                    "file_name": file.filename,
+                    "mode": mode,
+                },
+            )
 
-        return {
-            "message": result.message,
-            "processing_log_id": result.task_id,
-        }
+            return {
+                "message": result.message,
+                "processing_log_id": result.task_id,
+            }
+        finally:
+            # Clean up temp file if processing failed (file was not moved to final location)
+            # temp_file_path no longer exists if process_upload succeeded (file was moved)
+            if temp_file_path.exists():
+                logger.info("Cleaning up temp file after failed upload", extra={"path": str(temp_file_path)})
+                temp_file_path.unlink(missing_ok=True)
 
     except HTTPException:
         raise

@@ -187,6 +187,157 @@ class TestGraphRepository:
         assert graph.name == "test_graph"
         assert graph.type == GraphType.BAR
 
+    async def test_get_graph(self, async_db_session, test_user: dict) -> None:
+        """Test getting graph by ID."""
+        dashboard_repo = DashboardRepository()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="graph_get_dashboard",
+            created_by=test_user["id"],
+        )
+        await async_db_session.flush()
+
+        graph_repo = GraphRepository()
+        graph = await graph_repo.create(
+            db=async_db_session,
+            dashboard_id=dashboard.id,
+            name="test_get_graph",
+            type=GraphType.LINE,
+            config={},
+            dimensions=[],
+            metrics=[],
+        )
+        await async_db_session.flush()
+
+        retrieved = await graph_repo.get(graph.id, async_db_session)
+        assert retrieved is not None
+        assert retrieved.id == graph.id
+        assert retrieved.name == "test_get_graph"
+
+    async def test_update_graph(self, async_db_session, test_user: dict) -> None:
+        """Test updating a graph."""
+        dashboard_repo = DashboardRepository()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="graph_update_dashboard",
+            created_by=test_user["id"],
+        )
+        await async_db_session.flush()
+
+        graph_repo = GraphRepository()
+        graph = await graph_repo.create(
+            db=async_db_session,
+            dashboard_id=dashboard.id,
+            name="test_update_graph",
+            type=GraphType.BAR,
+            config={},
+            dimensions=[],
+            metrics=[],
+        )
+        await async_db_session.flush()
+
+        updated = await graph_repo.update(
+            graph.id, db=async_db_session, type=GraphType.LINE
+        )
+        await async_db_session.flush()
+
+        assert updated is not None
+        assert updated.type == GraphType.LINE
+
+    async def test_delete_graph(self, async_db_session, test_user: dict) -> None:
+        """Test deleting a graph."""
+        dashboard_repo = DashboardRepository()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="graph_delete_dashboard",
+            created_by=test_user["id"],
+        )
+        await async_db_session.flush()
+
+        graph_repo = GraphRepository()
+        graph = await graph_repo.create(
+            db=async_db_session,
+            dashboard_id=dashboard.id,
+            name="test_delete_graph",
+            type=GraphType.BAR,
+            config={},
+            dimensions=[],
+            metrics=[],
+        )
+        await async_db_session.flush()
+
+        result = await graph_repo.delete(graph.id, async_db_session)
+        await async_db_session.flush()
+
+        assert result is True
+        deleted = await graph_repo.get(graph.id, async_db_session)
+        assert deleted is None
+
+    async def test_get_by_dashboard_id(self, async_db_session, test_user: dict) -> None:
+        """Test getting all graphs for a dashboard."""
+        dashboard_repo = DashboardRepository()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="graph_by_dashboard",
+            created_by=test_user["id"],
+        )
+        await async_db_session.flush()
+
+        graph_repo = GraphRepository()
+        graph1 = await graph_repo.create(
+            db=async_db_session,
+            dashboard_id=dashboard.id,
+            name="graph1",
+            type=GraphType.BAR,
+            config={},
+            dimensions=[],
+            metrics=[],
+        )
+        graph2 = await graph_repo.create(
+            db=async_db_session,
+            dashboard_id=dashboard.id,
+            name="graph2",
+            type=GraphType.LINE,
+            config={},
+            dimensions=[],
+            metrics=[],
+        )
+        await async_db_session.flush()
+
+        graphs = await graph_repo.get_by_dashboard_id(dashboard.id, async_db_session)
+        assert len(graphs) == 2
+        graph_ids = {g.id for g in graphs}
+        assert graph1.id in graph_ids
+        assert graph2.id in graph_ids
+
+    async def test_get_by_name_and_dashboard(self, async_db_session, test_user: dict) -> None:
+        """Test getting graph by name and dashboard ID."""
+        dashboard_repo = DashboardRepository()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="graph_by_name_dashboard",
+            created_by=test_user["id"],
+        )
+        await async_db_session.flush()
+
+        graph_repo = GraphRepository()
+        graph = await graph_repo.create(
+            db=async_db_session,
+            dashboard_id=dashboard.id,
+            name="unique_graph_name",
+            type=GraphType.BAR,
+            config={},
+            dimensions=[],
+            metrics=[],
+        )
+        await async_db_session.flush()
+
+        retrieved = await graph_repo.get_by_name_and_dashboard(
+            "unique_graph_name", dashboard.id, async_db_session
+        )
+        assert retrieved is not None
+        assert retrieved.id == graph.id
+
 
 class TestFilterRepository:
     """Tests for FilterRepository CRUD operations."""
@@ -206,6 +357,75 @@ class TestFilterRepository:
         assert filter_obj.name == "test_filter"
         assert filter_obj.type == FilterType.SELECT
 
+    async def test_get_filter(self, async_db_session) -> None:
+        """Test getting filter by ID."""
+        filter_repo = FilterRepository()
+        filter_obj = await filter_repo.create(
+            db=async_db_session,
+            name="test_get_filter",
+            type=FilterType.SELECT,
+            config={"field": "month"},
+        )
+        await async_db_session.flush()
+
+        retrieved = await filter_repo.get(filter_obj.id, async_db_session)
+        assert retrieved is not None
+        assert retrieved.id == filter_obj.id
+        assert retrieved.name == "test_get_filter"
+
+    async def test_update_filter(self, async_db_session) -> None:
+        """Test updating a filter."""
+        filter_repo = FilterRepository()
+        filter_obj = await filter_repo.create(
+            db=async_db_session,
+            name="test_update_filter",
+            type=FilterType.SELECT,
+            config={"field": "year"},
+        )
+        await async_db_session.flush()
+
+        updated = await filter_repo.update(
+            filter_obj.id, db=async_db_session, type=FilterType.DATE
+        )
+        await async_db_session.flush()
+
+        assert updated is not None
+        assert updated.type == FilterType.DATE
+
+    async def test_delete_filter(self, async_db_session) -> None:
+        """Test deleting a filter."""
+        filter_repo = FilterRepository()
+        filter_obj = await filter_repo.create(
+            db=async_db_session,
+            name="test_delete_filter",
+            type=FilterType.SELECT,
+            config={"field": "year"},
+        )
+        await async_db_session.flush()
+
+        result = await filter_repo.delete(filter_obj.id, async_db_session)
+        await async_db_session.flush()
+
+        assert result is True
+        deleted = await filter_repo.get(filter_obj.id, async_db_session)
+        assert deleted is None
+
+    async def test_get_by_name(self, async_db_session) -> None:
+        """Test getting filter by name."""
+        filter_repo = FilterRepository()
+        filter_obj = await filter_repo.create(
+            db=async_db_session,
+            name="unique_filter_name",
+            type=FilterType.SELECT,
+            config={"field": "quarter"},
+        )
+        await async_db_session.flush()
+
+        retrieved = await filter_repo.get_by_name("unique_filter_name", async_db_session)
+        assert retrieved is not None
+        assert retrieved.id == filter_obj.id
+        assert retrieved.name == "unique_filter_name"
+
 
 class TestLayoutRepository:
     """Tests for LayoutRepository CRUD operations."""
@@ -222,6 +442,71 @@ class TestLayoutRepository:
 
         assert layout.id is not None
         assert layout.name == "test_layout"
+
+    async def test_get_layout(self, async_db_session) -> None:
+        """Test getting layout by ID."""
+        layout_repo = LayoutRepository()
+        layout = await layout_repo.create(
+            db=async_db_session,
+            name="test_get_layout",
+            definition={"grid": []},
+        )
+        await async_db_session.flush()
+
+        retrieved = await layout_repo.get(layout.id, async_db_session)
+        assert retrieved is not None
+        assert retrieved.id == layout.id
+        assert retrieved.name == "test_get_layout"
+
+    async def test_update_layout(self, async_db_session) -> None:
+        """Test updating a layout."""
+        layout_repo = LayoutRepository()
+        layout = await layout_repo.create(
+            db=async_db_session,
+            name="test_update_layout",
+            definition={"grid": []},
+        )
+        await async_db_session.flush()
+
+        updated = await layout_repo.update(
+            layout.id, db=async_db_session, name="updated_layout_name"
+        )
+        await async_db_session.flush()
+
+        assert updated is not None
+        assert updated.name == "updated_layout_name"
+
+    async def test_delete_layout(self, async_db_session) -> None:
+        """Test deleting a layout."""
+        layout_repo = LayoutRepository()
+        layout = await layout_repo.create(
+            db=async_db_session,
+            name="test_delete_layout",
+            definition={"grid": []},
+        )
+        await async_db_session.flush()
+
+        result = await layout_repo.delete(layout.id, async_db_session)
+        await async_db_session.flush()
+
+        assert result is True
+        deleted = await layout_repo.get(layout.id, async_db_session)
+        assert deleted is None
+
+    async def test_get_by_name(self, async_db_session) -> None:
+        """Test getting layout by name."""
+        layout_repo = LayoutRepository()
+        layout = await layout_repo.create(
+            db=async_db_session,
+            name="unique_layout_name",
+            definition={"grid": []},
+        )
+        await async_db_session.flush()
+
+        retrieved = await layout_repo.get_by_name("unique_layout_name", async_db_session)
+        assert retrieved is not None
+        assert retrieved.id == layout.id
+        assert retrieved.name == "unique_layout_name"
 
 
 class TestAccessRepository:
@@ -253,3 +538,135 @@ class TestAccessRepository:
             test_user["id"], async_db_session
         )
         assert any(d.id == dashboard.id for d in dashboards)
+
+    async def test_check_access(self, async_db_session, test_user: dict) -> None:
+        """Test checking user access level to dashboard."""
+        dashboard_repo = DashboardRepository()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="check_access_dashboard",
+            created_by=test_user["id"],
+        )
+        await async_db_session.flush()
+
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=test_user["id"],
+            dashboard_id=dashboard.id,
+            permission=DashboardPermission.EDIT,
+        )
+        await async_db_session.flush()
+
+        permission = await access_repo.check_access(
+            test_user["id"], dashboard.id, async_db_session
+        )
+        assert permission == DashboardPermission.EDIT
+
+    async def test_check_access_no_access(self, async_db_session, test_user: dict) -> None:
+        """Test checking access when user has no access to dashboard."""
+        dashboard_repo = DashboardRepository()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="no_access_dashboard",
+            created_by=test_user["id"],
+        )
+        await async_db_session.flush()
+
+        # Create another user without access
+        other_user_repo = UserRepository()
+        other_user = await other_user_repo.create(
+            db=async_db_session,
+            email="other_check@example.com",
+            password_hash="hashed_password",
+            role=UserRole.VIEWER,
+        )
+        await async_db_session.flush()
+
+        access_repo = AccessRepository()
+        permission = await access_repo.check_access(
+            other_user.id, dashboard.id, async_db_session
+        )
+        assert permission is None
+
+    async def test_revoke_access(self, async_db_session, test_user: dict) -> None:
+        """Test revoking user access to dashboard."""
+        dashboard_repo = DashboardRepository()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="revoke_access_dashboard",
+            created_by=test_user["id"],
+        )
+        await async_db_session.flush()
+
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=test_user["id"],
+            dashboard_id=dashboard.id,
+            permission=DashboardPermission.VIEW,
+        )
+        await async_db_session.flush()
+
+        # Verify access exists
+        permission_before = await access_repo.check_access(
+            test_user["id"], dashboard.id, async_db_session
+        )
+        assert permission_before == DashboardPermission.VIEW
+
+        # Revoke access
+        result = await access_repo.revoke_access(
+            test_user["id"], dashboard.id, async_db_session
+        )
+        await async_db_session.flush()
+
+        assert result is True
+
+        # Verify access was revoked
+        permission_after = await access_repo.check_access(
+            test_user["id"], dashboard.id, async_db_session
+        )
+        assert permission_after is None
+
+    async def test_revoke_access_not_found(self, async_db_session, test_user: dict) -> None:
+        """Test revoking access when no access record exists."""
+        dashboard_repo = DashboardRepository()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="revoke_not_found_dashboard",
+            created_by=test_user["id"],
+        )
+        await async_db_session.flush()
+
+        access_repo = AccessRepository()
+        result = await access_repo.revoke_access(
+            test_user["id"], dashboard.id, async_db_session
+        )
+
+        assert result is False
+
+    async def test_get_by_dashboard(self, async_db_session, test_user: dict) -> None:
+        """Test getting all access records for a dashboard."""
+        dashboard_repo = DashboardRepository()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="get_by_dashboard",
+            created_by=test_user["id"],
+        )
+        await async_db_session.flush()
+
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=test_user["id"],
+            dashboard_id=dashboard.id,
+            permission=DashboardPermission.VIEW,
+        )
+        await async_db_session.flush()
+
+        access_records = await access_repo.get_by_dashboard(
+            dashboard.id, async_db_session
+        )
+        assert len(access_records) == 1
+        assert access_records[0].user_id == test_user["id"]
+        assert access_records[0].dashboard_id == dashboard.id

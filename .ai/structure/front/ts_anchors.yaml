@@ -236,13 +236,6 @@
   type: component
   value: Header
   stable_hash: df29c216
-- id: 66f1a914
-  file: C:/py_dev/mkobi/frontend/src/shared/components/Layout/Sidebar.tsx
-  symbol_path:
-    - Sidebar
-  type: component
-  value: Sidebar
-  stable_hash: 66f1a914
 - id: f2935dc8
   file: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/BarChart.tsx
   symbol_path:

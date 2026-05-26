@@ -1,7 +1,6 @@
 """Security module for password hashing and JWT token handling."""
 
 import logging
-import os
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -11,30 +10,26 @@ import redis.asyncio as aioredis
 from fastapi import Response
 from jose import JWTError, jwt
 
-from mkobi.config import get_config, clear_config_cache
+from mkobi.config import get_config
 from uuid import UUID
 
 logger = logging.getLogger(__name__)
 
 
-def _get_config():
-    """Get config with lazy initialization if JWT secret is not set."""
+def _get_config() -> Any:
+    """Get config with validation that JWT secret is configured.
+
+    Returns the cached config singleton. Does not mutate the config.
+
+    Raises:
+        ValueError: If JWT__SECRET_KEY is not configured (production always has it set).
+    """
     config = get_config()
-    # If secret_key is None, try to reinitialize with env vars
     if config.jwt.secret_key is None:
-        # Check if JWT__SECRET_KEY env var is set directly
-        jwt_secret = os.environ.get("JWT__SECRET_KEY")
-        if jwt_secret:
-            # Force config reload to pick up the env var
-            clear_config_cache()
-            config = get_config()
-        else:
-            # For tests: set a default test secret key to allow tests to proceed
-            # This fallback ensures tests can run without manual env var setup
-            logging.getLogger(__name__).warning(
-                "JWT__SECRET_KEY not set, using test fallback secret"
-            )
-            config.jwt.secret_key = "test_fallback_secret_key_do_not_use_in_production"
+        raise ValueError(
+            "JWT__SECRET_KEY must be configured. "
+            "Set JWT__SECRET_KEY environment variable."
+        )
     return config
 
 

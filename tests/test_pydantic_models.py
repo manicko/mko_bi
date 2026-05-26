@@ -295,7 +295,7 @@ class TestDataModels:
         """Test validation of invalid chart type."""
         with pytest.raises(ValidationError):
             AggregatedData(
-                dashboard_id=1,
+                dashboard_id=uuid.uuid4(),
                 chart_type="invalid",
                 data=[],
             )

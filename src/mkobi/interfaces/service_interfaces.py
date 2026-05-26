@@ -419,6 +419,7 @@ class IDataService(abc.ABC):
         dashboard_id: UUID,
         graph_id: UUID,
         db: AsyncSession,
+        filters: dict[str, Any] | None = None,
     ) -> list[ProcessingResultData]:
         """Get aggregated data for graph."""
         pass

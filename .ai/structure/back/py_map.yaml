@@ -1551,12 +1551,11 @@
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
   - mkobi.models.access
+  - mkobi.models.user
   - mkobi.models.dashboard
   - mkobi.models.graph
   - mkobi.services.dashboard_service
   - mkobi.utils.exceptions
-  - mkobi.core.permissions
-  - mkobi.core.permissions
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py

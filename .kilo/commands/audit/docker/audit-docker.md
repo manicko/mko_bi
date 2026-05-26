@@ -100,6 +100,71 @@ Record:
 - Root cause analysis for each error (wrong password? missing role? mismatched config?)
 - Inter-service connectivity issues
 
+### 1.5 Verify frontend accessibility and rendering
+
+This step is mandatory when a `frontend` service exists.
+
+#### 1.5.1 Check frontend container status
+
+```powershell
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml ps frontend
+```
+
+If frontend container is `exited` or `restarting` — this is a `[RUNTIME-ERROR]`.
+
+#### 1.5.2 Check frontend container logs
+
+```powershell
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml logs frontend
+```
+
+Check for:
+- npm install errors (missing dependencies, network failures)
+- Vite startup failures
+- Build errors
+
+#### 1.5.3 Verify frontend responds
+
+```powershell
+# From host
+Invoke-WebRequest -Uri http://localhost:5173/ -UseBasicParsing
+```
+
+Must return HTTP 200 with HTML containing `<div id="root">`.
+
+#### 1.5.4 Check for JavaScript runtime errors
+
+1. Open `http://localhost:5173/` in a browser
+2. Open browser developer tools → Console
+3. Check for any red errors, especially:
+   - `is not a <Route> component` — invalid React Router children
+   - `useLocation() may be used only in the context of a <Router>` — hook used outside router
+   - `Cannot read properties of undefined` — missing data at runtime
+   - Failed network requests (404, 500 for API calls)
+
+Flag any console error that prevents the page from rendering as CRITICAL `[RUNTIME-ERROR]`.
+
+#### 1.5.5 Verify frontend-to-backend proxy
+
+```powershell
+# From inside the frontend container, backend should be reachable
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml exec frontend wget -qO- http://app:8000/health
+```
+
+Must return `{"status":"healthy"}`. If connection refused — proxy target is wrong or app container is not healthy.
+
+#### 1.5.6 Verify built frontend on backend port
+
+```powershell
+# The backend (port 8000) should also serve the built frontend
+Invoke-WebRequest -Uri http://localhost:8000/ -UseBasicParsing
+```
+
+Check:
+- Returns HTTP 200
+- HTML references a JS bundle that actually exists (no stale hash mismatch)
+- No ErrorBoundary fallback in the rendered page
+
 ---
 
 ## Step 2 — Dockerfile Analysis
@@ -236,6 +301,9 @@ Log: "password authentication failed for user \"mkobi_app\""
 - Database connection fails (wrong password, role missing, DB unreachable)
 - Authentication errors preventing app startup
 - Health endpoint unreachable
+- Frontend fails to render (blank page, ErrorBoundary fallback, JS runtime errors on load)
+- Frontend-to-backend proxy broken (API calls from browser fail)
+- Backend in restart loop (volume-triggered hot reload causing intermittent 503s)
 
 ### CRITICAL (from static analysis)
 - Container runs as root
@@ -267,11 +335,14 @@ Create file: `C:\py_dev\mkobi\.ai\audit\docker\audit_report_<number>.md` (next a
 
 ```
 Containers:
-- app:    [running | exited | restarting] — [brief status]
-- db:     [running | exited | restarting] — [brief status]
-- redis:  [running | exited | restarting] — [brief status]
+- app:     [running | exited | restarting] — [brief status]
+- db:      [running | exited | restarting] — [brief status]
+- redis:   [running | exited | restarting] — [brief status]
+- frontend [running | exited | restarting] — [brief status]
 
 Health endpoint: [reachable | unreachable] — [response or error]
+Frontend (5173): [reachable | unreachable] — [response or error]
+Frontend (8000): [reachable | unreachable] — [response or error]
 ```
 
 ### Findings Table
@@ -300,6 +371,23 @@ For each runtime error:
 - Root cause analysis
 - Config chain trace (how the bad value flows from compose → app → DB)
 - Exact fix needed
+
+### Frontend Rendering Errors (if any)
+
+For each frontend runtime error found in Step 1.5:
+
+- **Error message** — exact text from browser console
+- **Affected URL** — which page triggers it (e.g., `http://localhost:5173/login`)
+- **Root cause** — what code causes it (e.g., invalid React Router children, missing component wrapper)
+- **Fix needed** — specific code change
+
+Common patterns to check:
+| Error Pattern | Typical Cause | Fix |
+|--------------|---------------|-----|
+| `is not a <Route> component` | Non-`<Route>` child inside `<Routes>` | Move component inside `<Route element={}>` or use layout wrapper |
+| `useLocation() may be used only in the context of a <Router>` | Hook called outside Router | Ensure component is rendered inside `<BrowserRouter>` |
+| Blank page / "Something went wrong" | ErrorBoundary caught render error | Check console for the underlying error |
+| Stale JS bundle hash | `index.html` references old build artifact | Rebuild frontend or verify build is up to date |
 
 ### File-Level Recommendations
 

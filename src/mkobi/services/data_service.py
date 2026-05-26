@@ -155,18 +155,43 @@ class DataService(IDataService):
         dashboard_id: UUID,
         graph_id: UUID,
         db: AsyncSession,
+        filters: dict[str, Any] | None = None,
     ) -> list[ProcessingResultData]:
-        """Get aggregated data for graph."""
+        """Get aggregated data for graph.
+
+        Args:
+            dashboard_id: Dashboard identifier.
+            graph_id: Graph identifier.
+            db: Async database session.
+            filters: Optional filters for JSONB field dims.
+
+        Returns:
+            List of aggregated data for graph.
+        """
         return await self._get_aggregated_data_with_session(
-            dashboard_id, graph_id, db,
+            dashboard_id, graph_id, db, filters,
         )
 
     async def _get_aggregated_data_with_session(
-        self, dashboard_id: UUID, graph_id: UUID, db: AsyncSession,
+        self,
+        dashboard_id: UUID,
+        graph_id: UUID,
+        db: AsyncSession,
+        filters: dict[str, Any] | None = None,
     ) -> list[ProcessingResultData]:
-        """Get aggregated data for a graph within a dashboard."""
+        """Get aggregated data for a graph within a dashboard.
+
+        Args:
+            dashboard_id: Dashboard identifier.
+            graph_id: Graph identifier.
+            db: Async database session.
+            filters: Optional filters for JSONB field dims (key-value pairs).
+
+        Returns:
+            List of aggregated data records.
+        """
         records = await self.agg_repo.get_by_graph_id(
-            graph_id, db, dashboard_id=dashboard_id,
+            graph_id, db, dashboard_id=dashboard_id, filters=filters,
         )
         return [
             ProcessingResultData(

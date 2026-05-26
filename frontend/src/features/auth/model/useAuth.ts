@@ -27,6 +27,10 @@ export function useAuth() {
       const response = await apiLogin(email, password)
       setToken(response.access_token)
       setUser(response.user)
+    } catch (error) {
+      removeToken()
+      setUser(null)
+      throw error
     } finally {
       setIsLoading(false)
     }

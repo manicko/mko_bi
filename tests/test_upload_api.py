@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 from fastapi import status
 from httpx import AsyncClient
+from unittest.mock import patch
 
 from mkobi.core.security import hash_password, create_access_token
 from mkobi.db.models.dashboard import Dashboard
@@ -204,23 +205,26 @@ N,South,Product12,999999.99,249999.99,2023-01-14,999
         )
         await async_db_session.commit()
 
-        # Create a file larger than max_file_size (default 100MB)
-        # Using 101MB to exceed the limit
-        large_content = b"x" * (101 * 1024 * 1024)  # 101MB
+        # Mock config.max_file_size to be very small (1 byte)
+        # This simulates file size limit check without creating real large files
+        # The endpoint checks file.size > config.max_file_size before reading content
+        mock_config = type("MockConfig", (), {"max_file_size": 1, "upload": type("MockUpload", (), {"max_file_size_mb": 100})()})()
 
-        with tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False) as f:
-            f.write(large_content)
-            large_path = Path(f.name)
+        with patch("mkobi.api.routes.upload.get_config", return_value=mock_config):
+            with tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False) as f:
+                f.write(b"x")  # Small content, but file.size will exceed mock limit
+                small_path = Path(f.name)
 
-        try:
-            with open(large_path, "rb") as f:
-                response = await authenticated_client.post(
-                    f"/upload/{test_dashboard.id}",
-                    files={"file": ("large.csv", f, "text/csv")},
-                )
-            assert response.status_code == status.HTTP_413_CONTENT_TOO_LARGE
-        finally:
-            large_path.unlink(missing_ok=True)
+            try:
+                with open(small_path, "rb") as f:
+                    response = await authenticated_client.post(
+                        f"/upload/{test_dashboard.id}",
+                        files={"file": ("large.csv", f, "text/csv")},
+                    )
+            finally:
+                small_path.unlink(missing_ok=True)
+
+        assert response.status_code == status.HTTP_413_CONTENT_TOO_LARGE
 
     async def test_upload_no_permission(
         self,

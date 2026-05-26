@@ -170,6 +170,25 @@ Analyze:
 - coupling
 - architectural drift
 
+## Runtime Verification (when Docker is available)
+
+When Docker services can be started, the auditor MUST:
+
+1. **Start services** using the documented Docker commands from `docs/11-guides/docker.md`
+2. **Check all container logs** for errors, warnings, restart loops, or crashes
+3. **Verify frontend rendering** by fetching the frontend URL and confirming:
+   - The page returns HTTP 200
+   - No JavaScript runtime errors in the console (check the HTML/JS served)
+   - The React app mounts (look for markers that JS executed beyond the error boundary fallback)
+4. **Verify backend serving** by checking:
+   - All expected endpoints respond correctly
+   - No reload loops from volume mounts
+   - Health endpoints return healthy
+5. **Test critical user flows** end-to-end:
+   - Login page loads and renders a form
+   - Login API call succeeds with valid credentials
+   - API proxy from frontend to backend works
+
 # Output Requirements
 
 Produce:

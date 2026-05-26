@@ -24,16 +24,9 @@ C:\PY_DEV\MKOBI
 |   |   +---docker
 |   |   +---problems
 |   |   +---project
-|   |   |       audit_report_001.md
-|   |   |       audit_report_001_part1.md
-|   |   |       audit_report_003.md
-|   |   |       
 |   |   +---tests
-|   |   |       audit_report_001.md
-|   |   |       audit_report_002.md
-|   |   |       
 |   |   \---validated
-|   |           audit_validated_findings_001.md
+|   |           audit_report_001.md
 |   |           
 |   +---builders
 |   |   |   build.bat
@@ -82,58 +75,59 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
+|   |   |       TASK_001_v018_fix_test_docker_DONE.yaml
+|   |   |       TASK_002_verify_v018_fix_test_docker_DONE.yaml
+|   |   |       TASK_003_v003_pydantic_500_to_422_DONE.yaml
+|   |   |       TASK_004_verify_v003_pydantic_500_to_422_DONE.yaml
+|   |   |       TASK_005_v001_temp_file_cleanup_DONE.yaml
+|   |   |       TASK_006_verify_v001_temp_file_cleanup_DONE.yaml
+|   |   |       TASK_007_v005_inline_access_checks_DONE.yaml
+|   |   |       TASK_008_verify_v005_inline_access_checks_DONE.yaml
+|   |   |       TASK_009_v004_data_filters_pass_through_DONE.yaml
+|   |   |       TASK_010_verify_v004_data_filters_pass_through_DONE.yaml
+|   |   |       TASK_011_v006_loginform_auth_state_DONE.yaml
+|   |   |       TASK_012_verify_v006_loginform_auth_state_DONE.yaml
+|   |   |       TASK_013_v009_remove_sidebar_dead_code_DONE.yaml
+|   |   |       TASK_014_verify_v009_remove_sidebar_dead_code_DONE.yaml
+|   |   |       TASK_015_v008_raw_sql_fstrings_DONE.yaml
+|   |   |       TASK_016_verify_v008_raw_sql_fstrings_DONE.yaml
+|   |   |       TASK_017_v010_cors_wildcard_production_DONE.yaml
+|   |   |       TASK_018_verify_v010_cors_wildcard_production_DONE.yaml
+|   |   |       TASK_019_v011_get_config_singleton_mutation_DONE.yaml
+|   |   |       TASK_020_verify_v011_get_config_singleton_mutation_DONE.yaml
+|   |   |       TASK_021_v022_duplicate_storage_tests_DONE.yaml
+|   |   |       TASK_022_verify_v022_duplicate_storage_tests_DONE.yaml
+|   |   |       TASK_023_v019_jwt_user_id_assertions_DONE.yaml
+|   |   |       TASK_024_verify_v019_jwt_user_id_assertions_DONE.yaml
+|   |   |       TASK_025_v020_aggregated_data_test_DONE.yaml
+|   |   |       TASK_026_verify_v020_aggregated_data_test_DONE.yaml
+|   |   |       TASK_027_v023_clean_env_fixture_DONE.yaml
+|   |   |       TASK_028_verify_v023_clean_env_fixture_DONE.yaml
+|   |   |       TASK_029_v024_mock_large_files_DONE.yaml
+|   |   |       TASK_030_verify_v024_mock_large_files_DONE.yaml
+|   |   |       TASK_031_v025_test_deps_viewer_admin_DONE.yaml
+|   |   |       TASK_032_verify_v025_test_deps_viewer_admin_DONE.yaml
+|   |   |       TASK_033_v026_double_flush_DONE.yaml
+|   |   |       TASK_034_verify_v026_double_flush_DONE.yaml
+|   |   |       TASK_035_v021_graph_api_tests_DONE.yaml
+|   |   |       TASK_036_verify_v021_graph_api_tests_DONE.yaml
+|   |   |       TASK_037_v027_repository_crud_tests_DONE.yaml
+|   |   |       TASK_038_verify_v027_repository_crud_tests_DONE.yaml
+|   |   |       TASK_039_d001_spec_pagination_params_DONE.yaml
+|   |   |       TASK_040_verify_d001_spec_pagination_params_DONE.yaml
+|   |   |       TASK_041_d002_spec_upload_version_history_DONE.yaml
+|   |   |       TASK_042_verify_d002_spec_upload_version_history_DONE.yaml
+|   |   |       TASK_043_d003_temp_password_security_note_DONE.yaml
+|   |   |       TASK_044_verify_d003_temp_password_security_note_DONE.yaml
+|   |   |       TASK_045_v028_data_processing_tests_DONE.yaml
+|   |   |       TASK_046_verify_v028_data_processing_tests_DONE.yaml
+|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
-|   |   |       TASK_001_v018_fix_test_docker.yaml
-|   |   |       TASK_002_verify_v018_fix_test_docker.yaml
-|   |   |       TASK_003_v003_pydantic_500_to_422.yaml
-|   |   |       TASK_004_verify_v003_pydantic_500_to_422.yaml
-|   |   |       TASK_005_v001_temp_file_cleanup.yaml
-|   |   |       TASK_006_verify_v001_temp_file_cleanup.yaml
-|   |   |       TASK_007_v005_inline_access_checks.yaml
-|   |   |       TASK_008_verify_v005_inline_access_checks.yaml
-|   |   |       TASK_009_v004_data_filters_pass_through.yaml
-|   |   |       TASK_010_verify_v004_data_filters_pass_through.yaml
-|   |   |       TASK_011_v006_loginform_auth_state.yaml
-|   |   |       TASK_012_verify_v006_loginform_auth_state.yaml
-|   |   |       TASK_013_v009_remove_sidebar_dead_code.yaml
-|   |   |       TASK_014_verify_v009_remove_sidebar_dead_code.yaml
-|   |   |       TASK_015_v008_raw_sql_fstrings.yaml
-|   |   |       TASK_016_verify_v008_raw_sql_fstrings.yaml
-|   |   |       TASK_017_v010_cors_wildcard_production.yaml
-|   |   |       TASK_018_verify_v010_cors_wildcard_production.yaml
-|   |   |       TASK_019_v011_get_config_singleton_mutation.yaml
-|   |   |       TASK_020_verify_v011_get_config_singleton_mutation.yaml
-|   |   |       TASK_021_v022_duplicate_storage_tests.yaml
-|   |   |       TASK_022_verify_v022_duplicate_storage_tests.yaml
-|   |   |       TASK_023_v019_jwt_user_id_assertions.yaml
-|   |   |       TASK_024_verify_v019_jwt_user_id_assertions.yaml
-|   |   |       TASK_025_v020_aggregated_data_test.yaml
-|   |   |       TASK_026_verify_v020_aggregated_data_test.yaml
-|   |   |       TASK_027_v023_clean_env_fixture.yaml
-|   |   |       TASK_028_verify_v023_clean_env_fixture.yaml
-|   |   |       TASK_029_v024_mock_large_files.yaml
-|   |   |       TASK_030_verify_v024_mock_large_files.yaml
-|   |   |       TASK_031_v025_test_deps_viewer_admin.yaml
-|   |   |       TASK_032_verify_v025_test_deps_viewer_admin.yaml
-|   |   |       TASK_033_v026_double_flush.yaml
-|   |   |       TASK_034_verify_v026_double_flush.yaml
-|   |   |       TASK_035_v021_graph_api_tests.yaml
-|   |   |       TASK_036_verify_v021_graph_api_tests.yaml
-|   |   |       TASK_037_v027_repository_crud_tests.yaml
-|   |   |       TASK_038_verify_v027_repository_crud_tests.yaml
-|   |   |       TASK_039_d001_spec_pagination_params.yaml
-|   |   |       TASK_040_verify_d001_spec_pagination_params.yaml
-|   |   |       TASK_041_d002_spec_upload_version_history.yaml
-|   |   |       TASK_042_verify_d002_spec_upload_version_history.yaml
-|   |   |       TASK_043_d003_temp_password_security_note.yaml
-|   |   |       TASK_044_verify_d003_temp_password_security_note.yaml
-|   |   |       TASK_045_v028_data_processing_tests.yaml
-|   |   |       TASK_046_verify_v028_data_processing_tests.yaml
 |   |   |       
 |   |   \---validation
 |   \---templates
@@ -6745,20 +6739,33 @@ C:\PY_DEV\MKOBI
 |   |       |       install.json
 |   |       |       
 |   |       +---jwt
-|   |       |       algorithms.py
-|   |       |       api_jwk.py
-|   |       |       api_jws.py
-|   |       |       api_jwt.py
-|   |       |       exceptions.py
-|   |       |       help.py
-|   |       |       jwks_client.py
-|   |       |       jwk_set_cache.py
-|   |       |       py.typed
-|   |       |       types.py
-|   |       |       utils.py
-|   |       |       warnings.py
-|   |       |       __init__.py
-|   |       |       
+|   |       |   |   algorithms.py
+|   |       |   |   api_jwk.py
+|   |       |   |   api_jws.py
+|   |       |   |   api_jwt.py
+|   |       |   |   exceptions.py
+|   |       |   |   help.py
+|   |       |   |   jwks_client.py
+|   |       |   |   jwk_set_cache.py
+|   |       |   |   py.typed
+|   |       |   |   types.py
+|   |       |   |   utils.py
+|   |       |   |   warnings.py
+|   |       |   |   __init__.py
+|   |       |   |   
+|   |       |   \---__pycache__
+|   |       |           algorithms.cpython-314.pyc
+|   |       |           api_jwk.cpython-314.pyc
+|   |       |           api_jws.cpython-314.pyc
+|   |       |           api_jwt.cpython-314.pyc
+|   |       |           exceptions.cpython-314.pyc
+|   |       |           jwks_client.cpython-314.pyc
+|   |       |           jwk_set_cache.cpython-314.pyc
+|   |       |           types.cpython-314.pyc
+|   |       |           utils.cpython-314.pyc
+|   |       |           warnings.cpython-314.pyc
+|   |       |           __init__.cpython-314.pyc
+|   |       |           
 |   |       +---keyring
 |   |       |   |   backend.py
 |   |       |   |   backend_complete.bash
@@ -9867,43 +9874,74 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   __init__.py
 |   |       |   |   |   __init__.pyi
 |   |       |   |   |   
-|   |       |   |   \---tests
-|   |       |   |       |   test_arraypad.py
-|   |       |   |       |   test_arraysetops.py
-|   |       |   |       |   test_arrayterator.py
-|   |       |   |       |   test_array_utils.py
-|   |       |   |       |   test_format.py
-|   |       |   |       |   test_function_base.py
-|   |       |   |       |   test_histograms.py
-|   |       |   |       |   test_index_tricks.py
-|   |       |   |       |   test_io.py
-|   |       |   |       |   test_loadtxt.py
-|   |       |   |       |   test_mixins.py
-|   |       |   |       |   test_nanfunctions.py
-|   |       |   |       |   test_packbits.py
-|   |       |   |       |   test_polynomial.py
-|   |       |   |       |   test_recfunctions.py
-|   |       |   |       |   test_regression.py
-|   |       |   |       |   test_shape_base.py
-|   |       |   |       |   test_stride_tricks.py
-|   |       |   |       |   test_twodim_base.py
-|   |       |   |       |   test_type_check.py
-|   |       |   |       |   test_ufunclike.py
-|   |       |   |       |   test_utils.py
-|   |       |   |       |   test__datasource.py
-|   |       |   |       |   test__iotools.py
-|   |       |   |       |   test__version.py
-|   |       |   |       |   __init__.py
-|   |       |   |       |   
-|   |       |   |       \---data
-|   |       |   |               py2-np0-objarr.npy
-|   |       |   |               py2-objarr.npy
-|   |       |   |               py2-objarr.npz
-|   |       |   |               py3-objarr.npy
-|   |       |   |               py3-objarr.npz
-|   |       |   |               python3.npy
-|   |       |   |               win64python2.npy
-|   |       |   |               
+|   |       |   |   +---tests
+|   |       |   |   |   |   test_arraypad.py
+|   |       |   |   |   |   test_arraysetops.py
+|   |       |   |   |   |   test_arrayterator.py
+|   |       |   |   |   |   test_array_utils.py
+|   |       |   |   |   |   test_format.py
+|   |       |   |   |   |   test_function_base.py
+|   |       |   |   |   |   test_histograms.py
+|   |       |   |   |   |   test_index_tricks.py
+|   |       |   |   |   |   test_io.py
+|   |       |   |   |   |   test_loadtxt.py
+|   |       |   |   |   |   test_mixins.py
+|   |       |   |   |   |   test_nanfunctions.py
+|   |       |   |   |   |   test_packbits.py
+|   |       |   |   |   |   test_polynomial.py
+|   |       |   |   |   |   test_recfunctions.py
+|   |       |   |   |   |   test_regression.py
+|   |       |   |   |   |   test_shape_base.py
+|   |       |   |   |   |   test_stride_tricks.py
+|   |       |   |   |   |   test_twodim_base.py
+|   |       |   |   |   |   test_type_check.py
+|   |       |   |   |   |   test_ufunclike.py
+|   |       |   |   |   |   test_utils.py
+|   |       |   |   |   |   test__datasource.py
+|   |       |   |   |   |   test__iotools.py
+|   |       |   |   |   |   test__version.py
+|   |       |   |   |   |   __init__.py
+|   |       |   |   |   |   
+|   |       |   |   |   \---data
+|   |       |   |   |           py2-np0-objarr.npy
+|   |       |   |   |           py2-objarr.npy
+|   |       |   |   |           py2-objarr.npz
+|   |       |   |   |           py3-objarr.npy
+|   |       |   |   |           py3-objarr.npz
+|   |       |   |   |           python3.npy
+|   |       |   |   |           win64python2.npy
+|   |       |   |   |           
+|   |       |   |   \---__pycache__
+|   |       |   |           array_utils.cpython-314.pyc
+|   |       |   |           format.cpython-314.pyc
+|   |       |   |           introspect.cpython-314.pyc
+|   |       |   |           mixins.cpython-314.pyc
+|   |       |   |           npyio.cpython-314.pyc
+|   |       |   |           scimath.cpython-314.pyc
+|   |       |   |           stride_tricks.cpython-314.pyc
+|   |       |   |           _arraypad_impl.cpython-314.pyc
+|   |       |   |           _arraysetops_impl.cpython-314.pyc
+|   |       |   |           _arrayterator_impl.cpython-314.pyc
+|   |       |   |           _array_utils_impl.cpython-314.pyc
+|   |       |   |           _datasource.cpython-314.pyc
+|   |       |   |           _format_impl.cpython-314.pyc
+|   |       |   |           _function_base_impl.cpython-314.pyc
+|   |       |   |           _histograms_impl.cpython-314.pyc
+|   |       |   |           _index_tricks_impl.cpython-314.pyc
+|   |       |   |           _iotools.cpython-314.pyc
+|   |       |   |           _nanfunctions_impl.cpython-314.pyc
+|   |       |   |           _npyio_impl.cpython-314.pyc
+|   |       |   |           _polynomial_impl.cpython-314.pyc
+|   |       |   |           _scimath_impl.cpython-314.pyc
+|   |       |   |           _shape_base_impl.cpython-314.pyc
+|   |       |   |           _stride_tricks_impl.cpython-314.pyc
+|   |       |   |           _twodim_base_impl.cpython-314.pyc
+|   |       |   |           _type_check_impl.cpython-314.pyc
+|   |       |   |           _ufunclike_impl.cpython-314.pyc
+|   |       |   |           _utils_impl.cpython-314.pyc
+|   |       |   |           _version.cpython-314.pyc
+|   |       |   |           __init__.cpython-314.pyc
+|   |       |   |           
 |   |       |   +---linalg
 |   |       |   |   |   lapack_lite.cp314-win_amd64.lib
 |   |       |   |   |   lapack_lite.cp314-win_amd64.pyd
@@ -9916,11 +9954,15 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   __init__.py
 |   |       |   |   |   __init__.pyi
 |   |       |   |   |   
-|   |       |   |   \---tests
-|   |       |   |           test_deprecations.py
-|   |       |   |           test_linalg.py
-|   |       |   |           test_regression.py
-|   |       |   |           __init__.py
+|   |       |   |   +---tests
+|   |       |   |   |       test_deprecations.py
+|   |       |   |   |       test_linalg.py
+|   |       |   |   |       test_regression.py
+|   |       |   |   |       __init__.py
+|   |       |   |   |       
+|   |       |   |   \---__pycache__
+|   |       |   |           _linalg.cpython-314.pyc
+|   |       |   |           __init__.cpython-314.pyc
 |   |       |   |           
 |   |       |   +---ma
 |   |       |   |   |   API_CHANGES.txt
@@ -9954,15 +9996,19 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   __init__.py
 |   |       |   |   |   __init__.pyi
 |   |       |   |   |   
-|   |       |   |   \---tests
-|   |       |   |           test_defmatrix.py
-|   |       |   |           test_interaction.py
-|   |       |   |           test_masked_matrix.py
-|   |       |   |           test_matrix_linalg.py
-|   |       |   |           test_multiarray.py
-|   |       |   |           test_numeric.py
-|   |       |   |           test_regression.py
-|   |       |   |           __init__.py
+|   |       |   |   +---tests
+|   |       |   |   |       test_defmatrix.py
+|   |       |   |   |       test_interaction.py
+|   |       |   |   |       test_masked_matrix.py
+|   |       |   |   |       test_matrix_linalg.py
+|   |       |   |   |       test_multiarray.py
+|   |       |   |   |       test_numeric.py
+|   |       |   |   |       test_regression.py
+|   |       |   |   |       __init__.py
+|   |       |   |   |       
+|   |       |   |   \---__pycache__
+|   |       |   |           defmatrix.cpython-314.pyc
+|   |       |   |           __init__.cpython-314.pyc
 |   |       |   |           
 |   |       |   +---polynomial
 |   |       |   |   |   chebyshev.py
@@ -10410,115 +10456,143 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   \---pkgconfig
 |   |       |   |   |           numpy.pc
 |   |       |   |   |           
-|   |       |   |   \---tests
-|   |       |   |       |   test_abc.py
-|   |       |   |       |   test_api.py
-|   |       |   |       |   test_argparse.py
-|   |       |   |       |   test_arraymethod.py
-|   |       |   |       |   test_arrayobject.py
-|   |       |   |       |   test_arrayprint.py
-|   |       |   |       |   test_array_api_info.py
-|   |       |   |       |   test_array_coercion.py
-|   |       |   |       |   test_array_interface.py
-|   |       |   |       |   test_casting_floatingpoint_errors.py
-|   |       |   |       |   test_casting_unittests.py
-|   |       |   |       |   test_conversion_utils.py
-|   |       |   |       |   test_cpu_dispatcher.py
-|   |       |   |       |   test_cpu_features.py
-|   |       |   |       |   test_custom_dtypes.py
-|   |       |   |       |   test_cython.py
-|   |       |   |       |   test_datetime.py
-|   |       |   |       |   test_defchararray.py
-|   |       |   |       |   test_deprecations.py
-|   |       |   |       |   test_dlpack.py
-|   |       |   |       |   test_dtype.py
-|   |       |   |       |   test_einsum.py
-|   |       |   |       |   test_errstate.py
-|   |       |   |       |   test_extint128.py
-|   |       |   |       |   test_finfo.py
-|   |       |   |       |   test_function_base.py
-|   |       |   |       |   test_getlimits.py
-|   |       |   |       |   test_half.py
-|   |       |   |       |   test_hashtable.py
-|   |       |   |       |   test_indexerrors.py
-|   |       |   |       |   test_indexing.py
-|   |       |   |       |   test_item_selection.py
-|   |       |   |       |   test_limited_api.py
-|   |       |   |       |   test_longdouble.py
-|   |       |   |       |   test_memmap.py
-|   |       |   |       |   test_mem_overlap.py
-|   |       |   |       |   test_mem_policy.py
-|   |       |   |       |   test_multiarray.py
-|   |       |   |       |   test_multiprocessing.py
-|   |       |   |       |   test_multithreading.py
-|   |       |   |       |   test_nditer.py
-|   |       |   |       |   test_nep50_promotions.py
-|   |       |   |       |   test_numeric.py
-|   |       |   |       |   test_numerictypes.py
-|   |       |   |       |   test_overrides.py
-|   |       |   |       |   test_print.py
-|   |       |   |       |   test_protocols.py
-|   |       |   |       |   test_records.py
-|   |       |   |       |   test_regression.py
-|   |       |   |       |   test_scalarbuffer.py
-|   |       |   |       |   test_scalarinherit.py
-|   |       |   |       |   test_scalarmath.py
-|   |       |   |       |   test_scalarprint.py
-|   |       |   |       |   test_scalar_ctors.py
-|   |       |   |       |   test_scalar_methods.py
-|   |       |   |       |   test_shape_base.py
-|   |       |   |       |   test_simd.py
-|   |       |   |       |   test_simd_module.py
-|   |       |   |       |   test_stringdtype.py
-|   |       |   |       |   test_strings.py
-|   |       |   |       |   test_ufunc.py
-|   |       |   |       |   test_umath.py
-|   |       |   |       |   test_umath_accuracy.py
-|   |       |   |       |   test_umath_complex.py
-|   |       |   |       |   test_unicode.py
-|   |       |   |       |   test__exceptions.py
-|   |       |   |       |   _locales.py
-|   |       |   |       |   _natype.py
-|   |       |   |       |   
-|   |       |   |       +---data
-|   |       |   |       |       astype_copy.pkl
-|   |       |   |       |       generate_umath_validation_data.cpp
-|   |       |   |       |       recarray_from_file.fits
-|   |       |   |       |       umath-validation-set-arccos.csv
-|   |       |   |       |       umath-validation-set-arccosh.csv
-|   |       |   |       |       umath-validation-set-arcsin.csv
-|   |       |   |       |       umath-validation-set-arcsinh.csv
-|   |       |   |       |       umath-validation-set-arctan.csv
-|   |       |   |       |       umath-validation-set-arctanh.csv
-|   |       |   |       |       umath-validation-set-cbrt.csv
-|   |       |   |       |       umath-validation-set-cos.csv
-|   |       |   |       |       umath-validation-set-cosh.csv
-|   |       |   |       |       umath-validation-set-exp.csv
-|   |       |   |       |       umath-validation-set-exp2.csv
-|   |       |   |       |       umath-validation-set-expm1.csv
-|   |       |   |       |       umath-validation-set-log.csv
-|   |       |   |       |       umath-validation-set-log10.csv
-|   |       |   |       |       umath-validation-set-log1p.csv
-|   |       |   |       |       umath-validation-set-log2.csv
-|   |       |   |       |       umath-validation-set-README.txt
-|   |       |   |       |       umath-validation-set-sin.csv
-|   |       |   |       |       umath-validation-set-sinh.csv
-|   |       |   |       |       umath-validation-set-tan.csv
-|   |       |   |       |       umath-validation-set-tanh.csv
-|   |       |   |       |       
-|   |       |   |       \---examples
-|   |       |   |           +---cython
-|   |       |   |           |       checks.pyx
-|   |       |   |           |       meson.build
-|   |       |   |           |       setup.py
-|   |       |   |           |       
-|   |       |   |           \---limited_api
-|   |       |   |                   limited_api1.c
-|   |       |   |                   limited_api2.pyx
-|   |       |   |                   limited_api_latest.c
-|   |       |   |                   meson.build
-|   |       |   |                   setup.py
-|   |       |   |                   
+|   |       |   |   +---tests
+|   |       |   |   |   |   test_abc.py
+|   |       |   |   |   |   test_api.py
+|   |       |   |   |   |   test_argparse.py
+|   |       |   |   |   |   test_arraymethod.py
+|   |       |   |   |   |   test_arrayobject.py
+|   |       |   |   |   |   test_arrayprint.py
+|   |       |   |   |   |   test_array_api_info.py
+|   |       |   |   |   |   test_array_coercion.py
+|   |       |   |   |   |   test_array_interface.py
+|   |       |   |   |   |   test_casting_floatingpoint_errors.py
+|   |       |   |   |   |   test_casting_unittests.py
+|   |       |   |   |   |   test_conversion_utils.py
+|   |       |   |   |   |   test_cpu_dispatcher.py
+|   |       |   |   |   |   test_cpu_features.py
+|   |       |   |   |   |   test_custom_dtypes.py
+|   |       |   |   |   |   test_cython.py
+|   |       |   |   |   |   test_datetime.py
+|   |       |   |   |   |   test_defchararray.py
+|   |       |   |   |   |   test_deprecations.py
+|   |       |   |   |   |   test_dlpack.py
+|   |       |   |   |   |   test_dtype.py
+|   |       |   |   |   |   test_einsum.py
+|   |       |   |   |   |   test_errstate.py
+|   |       |   |   |   |   test_extint128.py
+|   |       |   |   |   |   test_finfo.py
+|   |       |   |   |   |   test_function_base.py
+|   |       |   |   |   |   test_getlimits.py
+|   |       |   |   |   |   test_half.py
+|   |       |   |   |   |   test_hashtable.py
+|   |       |   |   |   |   test_indexerrors.py
+|   |       |   |   |   |   test_indexing.py
+|   |       |   |   |   |   test_item_selection.py
+|   |       |   |   |   |   test_limited_api.py
+|   |       |   |   |   |   test_longdouble.py
+|   |       |   |   |   |   test_memmap.py
+|   |       |   |   |   |   test_mem_overlap.py
+|   |       |   |   |   |   test_mem_policy.py
+|   |       |   |   |   |   test_multiarray.py
+|   |       |   |   |   |   test_multiprocessing.py
+|   |       |   |   |   |   test_multithreading.py
+|   |       |   |   |   |   test_nditer.py
+|   |       |   |   |   |   test_nep50_promotions.py
+|   |       |   |   |   |   test_numeric.py
+|   |       |   |   |   |   test_numerictypes.py
+|   |       |   |   |   |   test_overrides.py
+|   |       |   |   |   |   test_print.py
+|   |       |   |   |   |   test_protocols.py
+|   |       |   |   |   |   test_records.py
+|   |       |   |   |   |   test_regression.py
+|   |       |   |   |   |   test_scalarbuffer.py
+|   |       |   |   |   |   test_scalarinherit.py
+|   |       |   |   |   |   test_scalarmath.py
+|   |       |   |   |   |   test_scalarprint.py
+|   |       |   |   |   |   test_scalar_ctors.py
+|   |       |   |   |   |   test_scalar_methods.py
+|   |       |   |   |   |   test_shape_base.py
+|   |       |   |   |   |   test_simd.py
+|   |       |   |   |   |   test_simd_module.py
+|   |       |   |   |   |   test_stringdtype.py
+|   |       |   |   |   |   test_strings.py
+|   |       |   |   |   |   test_ufunc.py
+|   |       |   |   |   |   test_umath.py
+|   |       |   |   |   |   test_umath_accuracy.py
+|   |       |   |   |   |   test_umath_complex.py
+|   |       |   |   |   |   test_unicode.py
+|   |       |   |   |   |   test__exceptions.py
+|   |       |   |   |   |   _locales.py
+|   |       |   |   |   |   _natype.py
+|   |       |   |   |   |   
+|   |       |   |   |   +---data
+|   |       |   |   |   |       astype_copy.pkl
+|   |       |   |   |   |       generate_umath_validation_data.cpp
+|   |       |   |   |   |       recarray_from_file.fits
+|   |       |   |   |   |       umath-validation-set-arccos.csv
+|   |       |   |   |   |       umath-validation-set-arccosh.csv
+|   |       |   |   |   |       umath-validation-set-arcsin.csv
+|   |       |   |   |   |       umath-validation-set-arcsinh.csv
+|   |       |   |   |   |       umath-validation-set-arctan.csv
+|   |       |   |   |   |       umath-validation-set-arctanh.csv
+|   |       |   |   |   |       umath-validation-set-cbrt.csv
+|   |       |   |   |   |       umath-validation-set-cos.csv
+|   |       |   |   |   |       umath-validation-set-cosh.csv
+|   |       |   |   |   |       umath-validation-set-exp.csv
+|   |       |   |   |   |       umath-validation-set-exp2.csv
+|   |       |   |   |   |       umath-validation-set-expm1.csv
+|   |       |   |   |   |       umath-validation-set-log.csv
+|   |       |   |   |   |       umath-validation-set-log10.csv
+|   |       |   |   |   |       umath-validation-set-log1p.csv
+|   |       |   |   |   |       umath-validation-set-log2.csv
+|   |       |   |   |   |       umath-validation-set-README.txt
+|   |       |   |   |   |       umath-validation-set-sin.csv
+|   |       |   |   |   |       umath-validation-set-sinh.csv
+|   |       |   |   |   |       umath-validation-set-tan.csv
+|   |       |   |   |   |       umath-validation-set-tanh.csv
+|   |       |   |   |   |       
+|   |       |   |   |   \---examples
+|   |       |   |   |       +---cython
+|   |       |   |   |       |       checks.pyx
+|   |       |   |   |       |       meson.build
+|   |       |   |   |       |       setup.py
+|   |       |   |   |       |       
+|   |       |   |   |       \---limited_api
+|   |       |   |   |               limited_api1.c
+|   |       |   |   |               limited_api2.pyx
+|   |       |   |   |               limited_api_latest.c
+|   |       |   |   |               meson.build
+|   |       |   |   |               setup.py
+|   |       |   |   |               
+|   |       |   |   \---__pycache__
+|   |       |   |           arrayprint.cpython-314.pyc
+|   |       |   |           einsumfunc.cpython-314.pyc
+|   |       |   |           fromnumeric.cpython-314.pyc
+|   |       |   |           function_base.cpython-314.pyc
+|   |       |   |           getlimits.cpython-314.pyc
+|   |       |   |           memmap.cpython-314.pyc
+|   |       |   |           multiarray.cpython-314.pyc
+|   |       |   |           numeric.cpython-314.pyc
+|   |       |   |           numerictypes.cpython-314.pyc
+|   |       |   |           overrides.cpython-314.pyc
+|   |       |   |           printoptions.cpython-314.pyc
+|   |       |   |           records.cpython-314.pyc
+|   |       |   |           shape_base.cpython-314.pyc
+|   |       |   |           umath.cpython-314.pyc
+|   |       |   |           _add_newdocs.cpython-314.pyc
+|   |       |   |           _add_newdocs_scalars.cpython-314.pyc
+|   |       |   |           _asarray.cpython-314.pyc
+|   |       |   |           _dtype.cpython-314.pyc
+|   |       |   |           _dtype_ctypes.cpython-314.pyc
+|   |       |   |           _exceptions.cpython-314.pyc
+|   |       |   |           _internal.cpython-314.pyc
+|   |       |   |           _methods.cpython-314.pyc
+|   |       |   |           _string_helpers.cpython-314.pyc
+|   |       |   |           _type_aliases.cpython-314.pyc
+|   |       |   |           _ufunc_config.cpython-314.pyc
+|   |       |   |           __init__.cpython-314.pyc
+|   |       |   |           
 |   |       |   +---_pyinstaller
 |   |       |   |   |   hook-numpy.py
 |   |       |   |   |   hook-numpy.pyi
@@ -10531,30 +10605,59 @@ C:\PY_DEV\MKOBI
 |   |       |   |           __init__.py
 |   |       |   |           
 |   |       |   +---_typing
-|   |       |   |       _add_docstring.py
-|   |       |   |       _array_like.py
-|   |       |   |       _char_codes.py
-|   |       |   |       _dtype_like.py
-|   |       |   |       _extended_precision.py
-|   |       |   |       _nbit.py
-|   |       |   |       _nbit_base.py
-|   |       |   |       _nbit_base.pyi
-|   |       |   |       _nested_sequence.py
-|   |       |   |       _scalars.py
-|   |       |   |       _shape.py
-|   |       |   |       _ufunc.py
-|   |       |   |       _ufunc.pyi
-|   |       |   |       __init__.py
-|   |       |   |       
-|   |       |   \---_utils
-|   |       |           _convertions.py
-|   |       |           _convertions.pyi
-|   |       |           _inspect.py
-|   |       |           _inspect.pyi
-|   |       |           _pep440.py
-|   |       |           _pep440.pyi
-|   |       |           __init__.py
-|   |       |           __init__.pyi
+|   |       |   |   |   _add_docstring.py
+|   |       |   |   |   _array_like.py
+|   |       |   |   |   _char_codes.py
+|   |       |   |   |   _dtype_like.py
+|   |       |   |   |   _extended_precision.py
+|   |       |   |   |   _nbit.py
+|   |       |   |   |   _nbit_base.py
+|   |       |   |   |   _nbit_base.pyi
+|   |       |   |   |   _nested_sequence.py
+|   |       |   |   |   _scalars.py
+|   |       |   |   |   _shape.py
+|   |       |   |   |   _ufunc.py
+|   |       |   |   |   _ufunc.pyi
+|   |       |   |   |   __init__.py
+|   |       |   |   |   
+|   |       |   |   \---__pycache__
+|   |       |   |           _array_like.cpython-314.pyc
+|   |       |   |           _char_codes.cpython-314.pyc
+|   |       |   |           _dtype_like.cpython-314.pyc
+|   |       |   |           _nbit.cpython-314.pyc
+|   |       |   |           _nbit_base.cpython-314.pyc
+|   |       |   |           _nested_sequence.cpython-314.pyc
+|   |       |   |           _scalars.cpython-314.pyc
+|   |       |   |           _shape.cpython-314.pyc
+|   |       |   |           _ufunc.cpython-314.pyc
+|   |       |   |           __init__.cpython-314.pyc
+|   |       |   |           
+|   |       |   +---_utils
+|   |       |   |   |   _convertions.py
+|   |       |   |   |   _convertions.pyi
+|   |       |   |   |   _inspect.py
+|   |       |   |   |   _inspect.pyi
+|   |       |   |   |   _pep440.py
+|   |       |   |   |   _pep440.pyi
+|   |       |   |   |   __init__.py
+|   |       |   |   |   __init__.pyi
+|   |       |   |   |   
+|   |       |   |   \---__pycache__
+|   |       |   |           _convertions.cpython-314.pyc
+|   |       |   |           _inspect.cpython-314.pyc
+|   |       |   |           __init__.cpython-314.pyc
+|   |       |   |           
+|   |       |   \---__pycache__
+|   |       |           dtypes.cpython-314.pyc
+|   |       |           exceptions.cpython-314.pyc
+|   |       |           version.cpython-314.pyc
+|   |       |           _array_api_info.cpython-314.pyc
+|   |       |           _distributor_init.cpython-314.pyc
+|   |       |           _expired_attrs_2_0.cpython-314.pyc
+|   |       |           _globals.cpython-314.pyc
+|   |       |           _pytesttester.cpython-314.pyc
+|   |       |           __config__.cpython-314.pyc
+|   |       |           __init__.cpython-314.pyc
 |   |       |           
 |   |       +---numpy-2.4.4.dist-info
 |   |       |   |   DELVEWHEEL
@@ -16225,15 +16328,24 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |           __init__.cpython-314.pyc
 |   |       |   |   |           
 |   |       |   |   +---sqlite
-|   |       |   |   |       aiosqlite.py
-|   |       |   |   |       base.py
-|   |       |   |   |       dml.py
-|   |       |   |   |       json.py
-|   |       |   |   |       provision.py
-|   |       |   |   |       pysqlcipher.py
-|   |       |   |   |       pysqlite.py
-|   |       |   |   |       __init__.py
-|   |       |   |   |       
+|   |       |   |   |   |   aiosqlite.py
+|   |       |   |   |   |   base.py
+|   |       |   |   |   |   dml.py
+|   |       |   |   |   |   json.py
+|   |       |   |   |   |   provision.py
+|   |       |   |   |   |   pysqlcipher.py
+|   |       |   |   |   |   pysqlite.py
+|   |       |   |   |   |   __init__.py
+|   |       |   |   |   |   
+|   |       |   |   |   \---__pycache__
+|   |       |   |   |           aiosqlite.cpython-314.pyc
+|   |       |   |   |           base.cpython-314.pyc
+|   |       |   |   |           dml.cpython-314.pyc
+|   |       |   |   |           json.cpython-314.pyc
+|   |       |   |   |           pysqlcipher.cpython-314.pyc
+|   |       |   |   |           pysqlite.cpython-314.pyc
+|   |       |   |   |           __init__.cpython-314.pyc
+|   |       |   |   |           
 |   |       |   |   \---__pycache__
 |   |       |   |           _typing.cpython-314.pyc
 |   |       |   |           __init__.cpython-314.pyc
@@ -18295,6 +18407,7 @@ C:\PY_DEV\MKOBI
 |           14f5e55e-f463-468f-8cf3-458ccb93cbad.csv
 |           154b77a2-c836-46d1-a303-fe3e76d50d53.csv
 |           154c8dc7-da8a-4e91-bb86-0e5cea358032.csv
+|           15a59a7a-24d1-4d24-bb6b-3d23adcad746.csv
 |           15d23962-6f42-4d76-b147-273edfc7514d.csv
 |           1650214d-c25a-4efa-a50b-86d041a6b374.csv
 |           165fe93e-9442-484c-afe5-d3ced8d1ffa7.csv
@@ -18356,6 +18469,7 @@ C:\PY_DEV\MKOBI
 |           21c2f66b-1f47-4268-b63d-7351ca2c1e23.csv
 |           21c8f173-97d4-48d3-a59a-4c5a0bbf1741.csv
 |           221a5dab-ff92-43cf-9652-ea826a48e11e.csv
+|           226648ac-e02d-486c-a7b2-9215a4e0f9c1.csv
 |           22d529de-dac2-4e69-bd60-acaf4f02b918.csv.gz
 |           234697f8-be1a-4aab-8f4d-6b0d8946fb98.csv
 |           237b57dd-1b97-496e-8a3b-7f67a087c279.csv
@@ -18377,6 +18491,7 @@ C:\PY_DEV\MKOBI
 |           265388b0-196e-4a41-a30e-03ee287c1139.csv.gz
 |           26aa1dd3-a3e9-4159-b35f-91880ae42c71.csv
 |           26c42da4-c32a-4ad4-accd-b589d305acd5.csv
+|           26f8aca3-6d84-4e45-8b28-21f1873aa523.csv.gz
 |           270abe37-4c92-42e6-98d5-5221c7f3df99.csv
 |           2712fba7-8525-4b5a-97f7-6194310310da.csv
 |           27631a62-55cf-4f6f-b027-263225d952d5.csv
@@ -18393,6 +18508,7 @@ C:\PY_DEV\MKOBI
 |           28e39bd7-b703-41fd-bea2-80a73d3a211b.csv
 |           29d00f2a-e00a-4c18-bbd0-d5c1da8160e8.csv
 |           29f6ca88-2598-41aa-bf2a-56f7ee4ab35b.csv
+|           2a123647-ed45-4335-80e6-623ad78ad077.csv.gz
 |           2a1af9e5-fb9f-41ed-9cb8-38c6377838ac.csv
 |           2a66abe6-5e06-47b8-9d79-a35ae089f175.csv
 |           2a6f5242-2ae7-4487-abd3-db92912d0271.csv
@@ -18407,6 +18523,7 @@ C:\PY_DEV\MKOBI
 |           2cbe2a04-e8c8-43ae-a788-e62e73c57ea4.csv
 |           2cc0206b-ed61-4bc1-84de-9ce223cf4abd.csv.gz
 |           2cec58e4-4e82-45cc-9d01-e077fa3c5927.csv
+|           2d02a56a-84a4-44dd-b766-e88288fa9049.csv.gz
 |           2d2121a1-ddc2-4bac-88d1-ecb1962ccb93.csv
 |           2d3b1cc7-ea20-4329-bbc0-ed387bcc531f.csv
 |           2d86209f-e3b2-4889-a1c9-ed48dfe3b8d4.csv
@@ -18425,6 +18542,7 @@ C:\PY_DEV\MKOBI
 |           2f10f903-fe08-4cb3-a535-ca5a8295ed5d.csv.gz
 |           2f2f3455-0c8d-4447-8c97-c20a119b9e70.csv
 |           2f4149d2-6478-491b-9d9f-813b435c4a6c.csv
+|           2f493e51-07f4-4c2a-95ab-75d869f9eb94.csv
 |           2fa47d7e-7ab5-4209-bb83-5018684ac4df.csv
 |           2fac2b52-f372-4ae4-b2c7-d7ba8549be46.csv
 |           305ff074-e995-4df1-bfaa-53e1491bdddc.csv
@@ -18521,6 +18639,7 @@ C:\PY_DEV\MKOBI
 |           42352cff-e1af-4b27-b2bc-213120e4ffec.csv
 |           42850709-c60d-4294-b826-7910299c0bd5.csv.gz
 |           432844c0-fc72-41b9-9aac-9e84a7d291bd.csv
+|           43685a5a-a29b-4ed5-bd8b-c8c296754ea7.csv
 |           43aa8d30-5102-4f7b-b1d0-a561e9c594e4.csv
 |           44330f7f-b8da-4311-ae84-93abc320c416.csv.gz
 |           444b992a-1403-4119-9db4-e6d8141cc39c.csv
@@ -18528,7 +18647,9 @@ C:\PY_DEV\MKOBI
 |           45196632-6e77-43a2-8af1-1749dd8103ab.csv
 |           457d0efe-6a6c-4add-8b45-a28113301fbe.csv
 |           45ad0ac8-5a40-4170-87e5-d424b47ac204.csv
+|           45b80cfa-5900-47e8-a148-0ca63b2fda65.csv.gz
 |           45f66a87-5fea-4cdf-935c-591c888fcf4a.csv
+|           4663ad0d-6752-46fe-b919-ce82421589b4.csv
 |           4697307a-40a7-48b6-830d-087b04c8ebfc.csv
 |           46cb1ace-b94c-46cb-9fca-c4db91892222.csv
 |           46de603c-3983-45fd-bb44-5c4fe90f3aa0.csv
@@ -18597,6 +18718,7 @@ C:\PY_DEV\MKOBI
 |           57585d45-8677-47e8-be13-b8dc02e6b577.csv
 |           5760f712-3e39-452b-be0c-0a3a5285b89e.csv
 |           5772c83d-30b9-48bf-aaa9-bf3105810376.csv
+|           57e6d462-aa71-45f9-8f67-814cef914dc1.csv
 |           58072e3f-75f3-4e2a-8711-ce83e676c96b.csv.gz
 |           580c5cfb-b166-4ff9-9b36-ab1a215bdc55.csv
 |           581d7a76-cb9d-4e87-818a-a8ab18524e1e.csv
@@ -18615,6 +18737,7 @@ C:\PY_DEV\MKOBI
 |           5b8ec148-2f16-4a9c-883a-c27f804a9aa4.csv
 |           5bb76089-97e4-4070-8d0d-2d5e9a7fdb82.csv
 |           5bf9f841-f79a-4ec3-8d54-a4f538dfd79a.csv
+|           5c1786f1-873b-44d0-b157-d6e91cbf7a1c.csv
 |           5c2160e2-9263-4362-95b5-adfd58064bc1.csv
 |           5c5c0fc7-291f-4bbe-a3fa-b0b99dea277c.csv
 |           5c690608-d243-4ae0-81bc-f6816e9ab853.csv
@@ -18622,6 +18745,7 @@ C:\PY_DEV\MKOBI
 |           5c8b4e97-fd61-4fa7-941a-0f48642a9318.csv
 |           5cb024ca-b626-48b3-bbef-3954093f9514.csv
 |           5cc81b93-2ebb-4f1c-977e-b29a82451288.csv
+|           5cc89db8-69df-4756-82e1-00e0eacdaad4.csv
 |           5cddaa30-bcb5-432d-aa35-2c79a17d580f.csv
 |           5d4055c9-8b3d-4810-bfc8-9e69f848d3c4.csv
 |           5d96819d-dc0f-4f49-8a3a-7bd0d1ad4470.csv
@@ -18660,6 +18784,7 @@ C:\PY_DEV\MKOBI
 |           679237fd-9f8a-46a7-b73b-9cdbd0ec972d.csv.gz
 |           67ab56f8-f0fa-4dd5-a6ce-e0ae2e00f026.csv
 |           67b025ba-7a84-44b3-99be-7fdfe161be32.csv
+|           67d7b92e-21de-40f5-9c3c-83ccfc5f942f.csv
 |           67f238db-b886-4d8d-8187-6382a75d1f1e.csv.gz
 |           67ff0733-34f4-431f-98e8-71c0c7306370.csv
 |           68107ea6-d6fa-4307-b34f-12c5f2286678.csv
@@ -18667,6 +18792,7 @@ C:\PY_DEV\MKOBI
 |           68e323ac-2a16-4408-bdac-e05d818c8bcd.csv
 |           68e86064-71ca-47aa-ac0a-ae44c9f39872.csv
 |           68fd8f6e-323d-4510-9655-aef9519a6412.csv.gz
+|           69611cd9-acdd-4925-816c-bf94a9f9a5c1.csv
 |           6982852a-6078-409b-b825-c5bb49673f3b.csv.gz
 |           69878553-421a-492b-81a9-01747dc1abe8.csv
 |           69a6048e-b835-446e-b8af-cbfee445a126.csv
@@ -18721,12 +18847,14 @@ C:\PY_DEV\MKOBI
 |           785a5ba8-a999-4ee0-a0e2-f4c3a4a41ae9.csv.gz
 |           78a8ad3b-f7c7-4afd-a668-505d52fa751b.csv.gz
 |           78d288f1-9c1a-4ac2-b529-b92078188026.csv
+|           790059b8-3222-4e01-b7e9-277ab63fee61.csv.gz
 |           79153ca1-8a42-4f4e-b54c-78289bfc92ec.csv
 |           79517536-b581-43ff-a4b7-f9e5fbbaac5c.csv
 |           79820610-1d17-4903-8209-37bb72afaf3b.csv
 |           79b72b4f-f778-4432-aaa8-ff28a995f4f7.csv
 |           79c41135-af8b-477a-8b74-606b57bafa8b.csv
 |           7a0a439a-730b-4a02-a6ab-888635547ca1.csv
+|           7a0ba1d6-6630-4c20-beea-3951471c7444.csv
 |           7a0bb4d0-f5db-452e-95c1-9276ab13d4df.csv
 |           7a241b57-05a7-4c72-8516-9977a0be1747.csv
 |           7a2a863f-2e16-4b61-8ecf-152c4b6fd723.csv.gz
@@ -18760,6 +18888,7 @@ C:\PY_DEV\MKOBI
 |           81ab9682-6fc5-4898-bd81-f0fd7ee022f2.csv.gz
 |           81d64a7e-93bb-4016-a19b-4bab7aea2708.csv
 |           820ffdb4-e347-4b6b-a4b4-3dae137614cc.csv
+|           823b3e6c-ad8d-4b20-a911-cc9015648819.csv
 |           828d7a9e-0449-4fca-ae96-f0753764c131.csv
 |           82acfebf-bc85-4286-8e76-aa151fb06cc8.csv
 |           830711f6-3954-49de-b179-d1d3867b4193.csv.gz
@@ -18768,6 +18897,7 @@ C:\PY_DEV\MKOBI
 |           833104d7-b73a-4eb5-ba64-22498379c5e1.csv.gz
 |           8369450c-c810-4a6d-a014-6c7592d15cd0.csv
 |           8382f5e1-5c85-479c-862f-b88c3c6d3af5.csv
+|           83fc9bc1-217e-48a6-9210-f4abde2a7dfb.csv
 |           84032230-e5c5-46ae-89f9-0dfa2d9603df.csv
 |           840de927-3071-4f5b-b0da-bba38826ab9b.csv
 |           8492267e-2417-4f57-8e80-2aab34164a11.csv
@@ -18790,6 +18920,7 @@ C:\PY_DEV\MKOBI
 |           86cc70f7-ffd7-4af9-9407-9b768e2827f7.csv
 |           86f0d577-8260-4bdc-b187-1f7da40176be.csv
 |           871cf6ce-8773-4fbc-b1cf-dcc8f94124af.csv
+|           874674c5-17eb-4e77-bed2-3d5d4aa9ee93.csv
 |           87729148-48f8-440b-998a-5cd83804725f.csv
 |           881264db-c0c6-4555-a39b-6a6a453aa0f2.csv
 |           88642dfa-6f91-4294-8276-19c24ff3c779.csv.gz
@@ -18856,6 +18987,7 @@ C:\PY_DEV\MKOBI
 |           960e2ba1-9a64-44ab-88da-9716be832cc2.csv
 |           9680f185-4459-4c6f-ba8f-6a4ed4ea3c31.csv
 |           96856066-7f3f-4b38-9389-63571d62a259.csv
+|           968b173b-ed8d-491b-82d7-1026e57fca0f.csv.gz
 |           96ea0d86-a2b6-411e-b195-8f7c5ec37851.csv
 |           96f5b65f-b296-449f-9622-957cb3a60b0c.csv
 |           973c955f-53c7-4bd8-b218-63a35c466f55.csv
@@ -18883,6 +19015,7 @@ C:\PY_DEV\MKOBI
 |           9d022b3d-b5ed-425b-92c8-abe31bf88c56.csv
 |           9d033ba0-dfdb-4cf9-bc57-48b7fbe4d835.csv
 |           9d3597b1-8fad-434d-ae31-828bb7dff7bf.csv
+|           9da7cb72-6168-4113-b790-c082ceaf40f4.csv
 |           9dbf82b9-0a33-4706-8cab-527b2b330e79.csv
 |           9ddf1655-4371-491e-9cd7-5e89c38f1f53.csv
 |           9e32ae10-f1e3-4749-8ce8-91d6b9f58414.csv
@@ -18912,6 +19045,7 @@ C:\PY_DEV\MKOBI
 |           a4b129c6-d4f2-4a6a-a4a0-a64e899fa41d.csv
 |           a4f0e8ef-3fec-4c1c-827a-91d6412a9b39.csv
 |           a4fbfe09-edfa-4fd2-bab1-816e1e6c8f46.csv
+|           a54eb9ca-e07b-44d7-bb19-88d6be08ae00.csv
 |           a574c476-23f3-470e-85e0-a1968ad4599d.csv
 |           a58c218c-9568-4f46-b8e3-21d29ed2de86.csv
 |           a5a3923f-6fbb-48f1-85ee-213c2f9fb882.csv
@@ -18942,6 +19076,7 @@ C:\PY_DEV\MKOBI
 |           a9aeadec-01db-43d9-9da7-30a6d4fe43fb.csv
 |           a9b7384b-9756-4915-835c-cdd6f0901017.csv
 |           aa13630d-516a-4d45-b9c8-0bcbfc1b1e5a.csv
+|           aa1d4376-42d0-4ac4-96d9-f424b40a3a20.csv.gz
 |           aa3a246d-3b88-4a11-a71c-826ef833dcd5.csv
 |           aa9b01f0-175c-4488-b3c7-9e0e046ef2af.csv
 |           aac1ad47-7c67-42f0-84f5-0c26c4fcd387.csv
@@ -18965,6 +19100,7 @@ C:\PY_DEV\MKOBI
 |           af7f2a1f-520d-4487-9206-d56ebce009c2.csv
 |           af920e19-7f9d-4402-b54d-ee0b3b9994ee.csv
 |           afb07ffd-5415-406e-9af6-5f6d67db3ec4.csv
+|           afea64e1-f82d-44d5-b120-6f22cc04886d.csv
 |           b09b680a-cc29-4fc2-ada0-073274b87827.csv
 |           b0d184ab-c785-4902-bfd5-a3759518b681.csv
 |           b1a80e00-0977-4057-9986-ca816e1abcbb.csv
@@ -19138,12 +19274,15 @@ C:\PY_DEV\MKOBI
 |           d49730a7-633e-42d5-a6c4-19f7e71cc652.csv
 |           d49ca168-6b5f-44f8-8ec0-9bf6cf7cc2cf.csv
 |           d4bf8b4d-fb7a-46e0-b346-31fd90c55862.csv.gz
+|           d4ef4ce7-94c4-412d-abcd-186de0a2bc25.csv.gz
+|           d54425fd-989d-4ab7-88dc-46cb3a4eb8cf.csv
 |           d5d2aaa0-f6fa-4921-9228-3e109cab4796.csv
 |           d6364fa5-4ac6-49ce-81a6-4e21965ed7a9.csv
 |           d65d410e-d752-497f-8a73-b004844430ab.csv
 |           d6736f06-8f22-4711-b858-1b62ddf1cf2b.csv.gz
 |           d6c2a41a-8d58-4e68-8f88-92324559809a.csv
 |           d6d0478c-e4cf-4c68-a18a-594540121254.csv.gz
+|           d6d9e814-a855-435a-9266-32f985f5cefa.csv
 |           d6efc9b3-4ce9-48df-840b-2b4fc914bd17.csv.gz
 |           d7077293-f2bd-4215-94fb-37fce814f6e0.csv
 |           d77c3059-6ed3-4bfc-93ec-0d02dcf5e774.csv.gz
@@ -19159,6 +19298,7 @@ C:\PY_DEV\MKOBI
 |           d9632198-df03-4900-958b-9e93f5b53ca9.csv
 |           d96c0582-5497-4e84-9a76-17b910aba256.csv
 |           d97cc8cb-2494-4a0d-8c80-bc093f944a34.csv.gz
+|           d9967816-79e8-4c82-b6c6-3b1ae735ea5a.csv.gz
 |           d9ba714b-d5f0-4f0d-9df6-08f7f27fc00c.csv.gz
 |           d9e005b2-34e8-4806-bab7-716719a0d636.csv
 |           d9f3a8b2-a12a-436d-8cea-ba1ea5395556.csv
@@ -19171,6 +19311,7 @@ C:\PY_DEV\MKOBI
 |           dc5922b7-dc26-48d3-b889-dc4943695d27.csv
 |           dc6e7b69-b50d-4b4e-a581-b8cf573368fd.csv.gz
 |           dcbe6e9a-96ab-46ff-8a1f-dc8fc0c4681d.csv
+|           dcc660f9-e158-4478-9180-bedf2a30c57f.csv
 |           dcd40322-43b2-4f3f-a34f-3a154c360687.csv
 |           dce4d3a2-bb9d-4723-9c77-97ecd6371ed2.csv
 |           dcf1804a-60c6-4aa7-b14f-ddff43fc5c1b.csv
@@ -19239,6 +19380,7 @@ C:\PY_DEV\MKOBI
 |           eadc80c5-5083-4ff8-884e-81a090668025.csv
 |           eb1d7194-f10f-4f72-9742-dad478887888.csv
 |           eb65a77d-f661-4e6c-931d-cdc77f9de2a5.csv
+|           eb7fc363-acb5-4f41-bb31-9685e71a5457.csv
 |           ebf4889f-f159-4717-9e11-d6a6098597f0.csv
 |           ec26c596-9d5f-457a-8b46-f7e3a734ef51.csv.gz
 |           ec668aaf-a5e4-437d-9786-03146cf79c28.csv
@@ -19258,6 +19400,8 @@ C:\PY_DEV\MKOBI
 |           ef196933-94c2-4aaa-b6ce-4640d45cbf4f.csv
 |           ef280f43-5bdd-4c89-a763-743e07ea9a82.csv
 |           ef2bc891-1bc5-426a-85fb-bd8f52c3866a.csv
+|           ef2e36c9-7b84-4834-add2-a2018bc746f8.csv
+|           ef39e937-c5ab-460b-988a-04e772984ab7.csv
 |           ef6b5f13-cc0a-4d6a-a262-f2e4a6ef6e05.csv
 |           f001c0a0-317b-4a5a-aca8-8ad4494c6912.csv
 |           f002f02d-31ce-4b3f-88e0-564650c236b4.csv
@@ -19271,6 +19415,7 @@ C:\PY_DEV\MKOBI
 |           f0eb9dde-487d-48a8-b872-99dece7b6e8d.csv
 |           f1ac94b2-de6c-4aa1-bca8-4e57caaa3385.csv
 |           f20b1353-ba02-4084-9ae0-a4d46a37bcf4.csv.gz
+|           f21df0f9-3075-4d31-8ee6-f06058152e4e.csv
 |           f260c27d-f58a-43ae-8ff1-69b3bfdf985d.csv
 |           f287cf2f-c31c-4661-afab-ff5e8b1574db.csv
 |           f2ab64bf-1b2d-4af6-aa0e-3b38bcd4f738.csv
@@ -19299,6 +19444,7 @@ C:\PY_DEV\MKOBI
 |           f7ed60eb-8ed0-4d1d-a8d8-2d772db5a820.csv
 |           f86cfe20-8f9c-4199-85bf-f5f3cb9533cf.csv
 |           f874df32-3a66-4ccf-be38-a8ab21f2f195.csv.gz
+|           f910824f-f33f-4672-83bf-534c665d023d.csv
 |           f937b46c-e30b-4c16-b9af-f563473321de.csv
 |           f93a0849-a1dc-4469-a4c1-f14f62dff977.csv
 |           f93d6ccb-a5bc-477c-8130-fe1b6b25b637.csv.gz
@@ -19307,6 +19453,8 @@ C:\PY_DEV\MKOBI
 |           f9b1abae-1519-4d94-b3d3-1729f50979b9.csv
 |           f9bd3257-1366-4c7a-8c29-d388c0e30c8f.csv
 |           f9d10fd3-96df-4b53-954c-0657653379b5.csv
+|           fa52f4a8-7fc0-4fbf-9ed5-9c11f9740204.csv
+|           fa5fe7c9-1ff4-4859-88b0-a17a3aadf54a.csv
 |           fa6fd01a-ab60-41c1-8e6c-9c08bde689b4.csv
 |           fae5f8c4-dd47-41d2-ab90-c85a15c3d931.csv
 |           fb0b9434-014a-454c-ac33-b4f5e8703396.csv
@@ -19546,7 +19694,7 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           index-D0FpUCQ4.js
+|   |           index-DRl1PhTO.js
 |   |           
 |   +---node_modules
 |   |   |   .package-lock.json
@@ -100319,7 +100467,6 @@ C:\PY_DEV\MKOBI
 |       |   |           AppLayout.tsx
 |       |   |           Header.tsx
 |       |   |           index.ts
-|       |   |           Sidebar.tsx
 |       |   |           
 |       |   +---hooks
 |       |   |       useConfirmDialog.ts
@@ -101766,7 +101913,10 @@ C:\PY_DEV\MKOBI
     |   test_auth_service.py
     |   test_config.py
     |   test_dashboards_api.py
+    |   test_data_csv_loader.py
     |   test_data_service.py
+    |   test_data_transformations.py
+    |   test_data_validator.py
     |   test_deps.py
     |   test_filters.py
     |   test_graphs.py
@@ -101789,10 +101939,14 @@ C:\PY_DEV\MKOBI
             test_auth_service.cpython-314-pytest-9.0.3.pyc
             test_config.cpython-314-pytest-9.0.3.pyc
             test_dashboards_api.cpython-314-pytest-9.0.3.pyc
+            test_data_csv_loader.cpython-314-pytest-9.0.3.pyc
             test_data_loader.cpython-314-pytest-9.0.3.pyc
             test_data_processing.cpython-314-pytest-9.0.3.pyc
             test_data_service.cpython-314-pytest-9.0.3.pyc
+            test_data_transformations.cpython-314-pytest-9.0.3.pyc
+            test_data_validator.cpython-314-pytest-9.0.3.pyc
             test_deps.cpython-314-pytest-9.0.3.pyc
+            test_deps.cpython-314.pyc
             test_filters.cpython-314-pytest-9.0.3.pyc
             test_graphs.cpython-314-pytest-9.0.3.pyc
             test_graph_service.cpython-314-pytest-9.0.3.pyc

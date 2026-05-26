@@ -130,27 +130,27 @@ class TestCreateAccessToken:
 
     def test_token_is_string(self):
         """Token should be a string."""
-        token = create_access_token({"user_id": 1})
+        token = create_access_token({"user_id": "1"})
         assert isinstance(token, str)
 
     def test_token_contains_dot(self):
         """JWT token should contain dots (format header.payload.signature)."""
-        token = create_access_token({"user_id": 1})
+        token = create_access_token({"user_id": "1"})
         parts = token.split(".")
         assert len(parts) == 3
 
     def test_token_with_user_data(self):
         """Token should contain the provided data."""
-        data = {"user_id": 123, "email": "test@example.com"}
+        data = {"user_id": "123", "email": "test@example.com"}
         token = create_access_token(data)
         decoded = decode_token(token)
         assert decoded is not None
-        assert decoded["user_id"] == 123
+        assert decoded["user_id"] == "123"
         assert decoded["email"] == "test@example.com"
 
     def test_token_with_custom_expiry(self):
         """Token with custom expiry time."""
-        data = {"user_id": 1}
+        data = {"user_id": "1"}
         expires_delta = timedelta(minutes=60)
         token = create_access_token(data, expires_delta=expires_delta)
         decoded = decode_token(token)
@@ -159,15 +159,15 @@ class TestCreateAccessToken:
 
     def test_token_has_exp_claim(self):
         """Token should contain expiration time (exp)."""
-        token = create_access_token({"user_id": 1})
+        token = create_access_token({"user_id": "1"})
         decoded = decode_token(token)
         assert decoded is not None
         assert "exp" in decoded
 
     def test_different_tokens_for_different_data(self):
         """Different data should produce different tokens."""
-        token1 = create_access_token({"user_id": 1})
-        token2 = create_access_token({"user_id": 2})
+        token1 = create_access_token({"user_id": "1"})
+        token2 = create_access_token({"user_id": "2"})
         assert token1 != token2
 
     def test_empty_data_token(self):
@@ -183,10 +183,10 @@ class TestDecodeToken:
 
     def test_valid_token_decoding(self):
         """Decode valid token."""
-        token = create_access_token({"user_id": 1, "email": "test@example.com"})
+        token = create_access_token({"user_id": "1", "email": "test@example.com"})
         decoded = decode_token(token)
         assert decoded is not None
-        assert decoded["user_id"] == 1
+        assert decoded["user_id"] == "1"
         assert decoded["email"] == "test@example.com"
 
     def test_invalid_token_returns_none(self):
@@ -207,7 +207,7 @@ class TestDecodeToken:
     def test_token_with_wrong_signature(self):
         """Token with wrong signature should return None."""
         # Create token with correct key
-        token = create_access_token({"user_id": 1})
+        token = create_access_token({"user_id": "1"})
         # Try to decode with different key (simulating an error)
         with patch("mkobi.core.security.get_config") as mock_get_config:
             mock_config = mock_get_config.return_value
@@ -220,14 +220,14 @@ class TestDecodeToken:
         """Expired token should return None."""
         # Create token with negative expiry time (already expired)
         expired_delta = timedelta(seconds=-1)
-        token = create_access_token({"user_id": 1}, expires_delta=expired_delta)
+        token = create_access_token({"user_id": "1"}, expires_delta=expired_delta)
         result = decode_token(token)
         assert result is None
 
     def test_token_without_exp_claim(self):
         """Token without exp claim (if created manually) should be decoded."""
         # Create token manually without exp
-        payload = {"user_id": 1}
+        payload = {"user_id": "1"}
         token = jwt.encode(
             payload,
             get_config().jwt.secret_key,
@@ -235,13 +235,13 @@ class TestDecodeToken:
         )
         decoded = decode_token(token)
         assert decoded is not None
-        assert decoded["user_id"] == 1
+        assert decoded["user_id"] == "1"
         assert "exp" not in decoded
 
     def test_token_with_additional_claims(self):
         """Token with additional fields."""
         data = {
-            "user_id": 1,
+            "user_id": "1",
             "email": "test@example.com",
             "role": "admin",
             "permissions": ["view", "edit"],
@@ -249,7 +249,7 @@ class TestDecodeToken:
         token = create_access_token(data)
         decoded = decode_token(token)
         assert decoded is not None
-        assert decoded["user_id"] == 1
+        assert decoded["user_id"] == "1"
         assert decoded["email"] == "test@example.com"
         assert decoded["role"] == "admin"
         assert decoded["permissions"] == ["view", "edit"]
@@ -260,11 +260,11 @@ class TestValidateRefreshToken:
 
     def test_valid_refresh_token(self):
         """Valid refresh token should return payload."""
-        data = {"user_id": 123, "email": "test@example.com", "role": "user"}
+        data = {"user_id": "123", "email": "test@example.com", "role": "user"}
         token = create_refresh_token(data)
         payload = validate_refresh_token(token)
         assert payload is not None
-        assert payload["user_id"] == 123
+        assert payload["user_id"] == "123"
         assert payload["email"] == "test@example.com"
         assert payload["role"] == "user"
 
@@ -288,7 +288,7 @@ class TestValidateRefreshToken:
         # Create expired token manually
         from datetime import datetime, UTC
         expired_payload = {
-            "user_id": 1,
+            "user_id": "1",
             "exp": datetime.now(UTC) - timedelta(seconds=1),  # Already expired
         }
         expired_token = jwt.encode(
@@ -301,7 +301,7 @@ class TestValidateRefreshToken:
 
     def test_refresh_token_with_wrong_signature_returns_none(self):
         """Refresh token with wrong signature should return None."""
-        token = create_refresh_token({"user_id": 1})
+        token = create_refresh_token({"user_id": "1"})
         with patch("mkobi.core.security.get_config") as mock_get_config:
             mock_config = mock_get_config.return_value
             mock_config.jwt.secret_key = "wrong_secret"
@@ -322,16 +322,16 @@ class TestIntegration:
 
     def test_full_token_create_and_decode_cycle(self):
         """Full cycle: create and decode token."""
-        user_data = {"user_id": 42, "email": "user42@example.com"}
+        user_data = {"user_id": "42", "email": "user42@example.com"}
         token = create_access_token(user_data)
         decoded = decode_token(token)
         assert decoded is not None
-        assert decoded["user_id"] == 42
+        assert decoded["user_id"] == "42"
         assert decoded["email"] == "user42@example.com"
 
     def test_token_expiration_from_config(self):
         """Verify that token expiration is taken from configuration."""
-        token = create_access_token({"user_id": 1})
+        token = create_access_token({"user_id": "1"})
         decoded = decode_token(token)
         assert decoded is not None
         assert "exp" in decoded
@@ -342,13 +342,13 @@ class TestIntegration:
 
     def test_multiple_users_different_tokens(self):
         """Different users should have different tokens."""
-        token1 = create_access_token({"user_id": 1})
-        token2 = create_access_token({"user_id": 2})
-        token3 = create_access_token({"user_id": 3})
+        token1 = create_access_token({"user_id": "1"})
+        token2 = create_access_token({"user_id": "2"})
+        token3 = create_access_token({"user_id": "3"})
         assert token1 != token2 != token3
-        assert decode_token(token1)["user_id"] == 1
-        assert decode_token(token2)["user_id"] == 2
-        assert decode_token(token3)["user_id"] == 3
+        assert decode_token(token1)["user_id"] == "1"
+        assert decode_token(token2)["user_id"] == "2"
+        assert decode_token(token3)["user_id"] == "3"
 
     def test_password_hash_uniqueness(self):
         """Hashes of the same password should be different (due to salt)."""
@@ -361,7 +361,7 @@ class TestIntegration:
 
     def test_token_with_user_id_only(self):
         """Token with only user_id."""
-        token = create_access_token({"user_id": 999})
+        token = create_access_token({"user_id": "999"})
         decoded = decode_token(token)
         assert decoded is not None
-        assert decoded["user_id"] == 999
+        assert decoded["user_id"] == "999"

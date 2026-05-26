@@ -344,6 +344,12 @@ Approve a pending registration request. Creates a new user account with a random
 - Sets the user's password to a cryptographically random temporary password
 - Updates the `registration_requests` record: status → `approved`, `reviewed_by` → admin user ID, `reviewed_at` → current timestamp
 
+> **Security Note:** The `temp_password` is returned in **plaintext JSON**. Ensure the following:
+> - HTTPS is enforced in production — never transmit temp passwords over plain HTTP.
+> - The temp password is **one-time use** — the user should be forced to change it on first login.
+> - **Never log** the `temp_password` in application logs or audit trails.
+> - The admin should communicate the temp password to the new user through a **secure out-of-band channel** (e.g., in person, encrypted messaging), not via the same email used for registration.
+
 ---
 
 ### 12. Reject Registration Request
@@ -395,31 +401,28 @@ Retrieve processing logs with filtering and pagination. Admin only.
 
 **Query parameters:**
 
-| Parameter      | Type    | Required | Description                                |
-| -------------- | ------- | -------- | ------------------------------------------ |
-| `status`       | string  | No       | Filter by status: `started`, `uploaded`, `processing`, `success`, `failed`, `completed` |
-| `dashboard_id` | UUID    | No       | Filter by dashboard                        |
-| `page`         | integer | No       | Page number (default: 1)                   |
-| `page_size`    | integer | No       | Items per page (default: 20)               |
+| Parameter      | Type      | Required | Description                                |
+| -------------- | --------- | -------- | ------------------------------------------ |
+| `status`       | string    | No       | Filter by status: `started`, `uploaded`, `processing`, `success`, `failed`, `completed` |
+| `dashboard_id` | UUID      | No       | Filter by dashboard                        |
+| `date_from`    | datetime  | No       | Filter logs with started_at >= this date    |
+| `date_to`      | datetime  | No       | Filter logs with started_at <= this date    |
+| `skip`         | integer   | No       | Number of records to skip (default: 0)     |
+| `limit`        | integer   | No       | Maximum records to return (default: 100)  |
 
 **Response** (`200 OK`):
 
 ```json
-{
-  "items": [
-    {
-      "id": "990e8400-e29b-41d4-a716-446655440004",
-      "dashboard_id": "550e8400-e29b-41d4-a716-446655440000",
-      "status": "success",
-      "message": "Processing completed successfully",
-      "started_at": "2026-05-18T12:00:00Z",
-      "finished_at": "2026-05-18T12:01:30Z"
-    }
-  ],
-  "total": 42,
-  "page": 1,
-  "page_size": 20
-}
+[
+  {
+    "id": "990e8400-e29b-41d4-a716-446655440004",
+    "dashboard_id": "550e8400-e29b-41d4-a716-446655440000",
+    "status": "success",
+    "message": "Processing completed successfully",
+    "started_at": "2026-05-18T12:00:00Z",
+    "finished_at": "2026-05-18T12:01:30Z"
+  }
+]
 ```
 
 ---

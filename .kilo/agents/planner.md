@@ -171,20 +171,37 @@ Each task should:
 
 # Verification Task Rules
 
-Every implementation task MUST be followed by a verification task.
+Verification strategy depends on task scope:
+
+## Simple tasks (single function, trivial change, low risk)
+
+Verification is **inline** — part of the implementation task itself. The implementor makes the change, runs tests, fixes if needed, and marks the task done. No separate verification task is created.
+
+Criteria for inline verification:
+- Change is confined to one function or a few lines
+- Risk level is `low` or `minimal`
+- Estimated effort is `trivial` or `small`
+- No multi-step coordination required
+
+The implementation task's `acceptance_criteria` and `tests_to_run` serve as the verification. The implementor executes them before marking the task complete.
+
+## Multi-stage tasks (cross-module, high risk, multi-step)
+
+A **separate verification task** is created at the end of the stage, after all implementation tasks in that stage are done.
 
 Verification task must:
-- depend on the implementation task it verifies
+- depend on all implementation tasks it verifies
 - define concrete pass/fail criteria (build, tests, smoke check)
-- reference the implementation task as `verifies: TASK_XXX_name`
-- on failure: return the implementation task to `status: rework`
-- on success: mark implementation task as `status: verified`
+- reference implementation tasks as `verifies: [TASK_XXX_name, TASK_YYY_name]`
+- on failure: return the relevant implementation task(s) to `status: rework`
+- on success: mark implementation task(s) as `status: verified`
 
 Pattern:
 ```
-TASK_001_implement_feature   → implementation
-TASK_002_verify_feature      → verification (depends_on: TASK_001)
-TASK_003_implement_next      → depends_on: TASK_002 (blocks on failure)
+TASK_001_implement_stage1_step1   → implementation (inline verify)
+TASK_002_implement_stage1_step2   → implementation (inline verify)
+TASK_003_verify_stage1            → verification (depends_on: TASK_001, TASK_002)
+TASK_004_implement_stage2_step1  → depends_on: TASK_003
 ```
 
 For code changes, verification task must include:
@@ -195,8 +212,6 @@ For code changes, verification task must include:
 For infrastructure changes (Docker, config, migrations):
 - verification task runs the actual service/command
 - failure returns the infrastructure task for rework
-
-Never chain a new implementation task without a verification task in between.
 
 # Dependency Graph Rules
 

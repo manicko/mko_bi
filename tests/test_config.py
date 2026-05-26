@@ -22,7 +22,23 @@ class TestSettingsBase:
     def clean_env(self):
         """Clean up environment variables after each test."""
         # Save current variables
-        env_backup: dict[str, str] = {}
+        env_backup: dict[str, str] = {
+            key: os.environ[key]
+            for key in os.environ
+            if key.startswith((
+                "DATABASE__",
+                "JWT__",
+                "UPLOAD__",
+                "REDIS__",
+                "LOGGING__",
+                "CORS_",
+                "APP_",
+                "ENV",
+                "DEBUG",
+                "HOST",
+                "PORT",
+            ))
+        }
         yield
         # Clean up test variables
         for key in list(os.environ.keys()):
@@ -161,8 +177,9 @@ class TestSettingsPriority(TestSettingsBase):
         secret_file = tmp_path / "secret"
         secret_file.write_text("secret-value")
 
-        # Set variables
+        # Set variables - remove JWT__SECRET_KEY env var so Docker secret takes effect
         monkeypatch.setenv("JWT__SECRET_KEY_FILE", str(secret_file))
+        monkeypatch.delenv("JWT__SECRET_KEY", raising=False)
 
         settings = Settings()
         # Docker secret should be loaded

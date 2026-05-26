@@ -16,7 +16,7 @@ from urllib.parse import urlparse, urlunparse
 from alembic import command
 from alembic.config import Config
 from asyncpg.exceptions import InvalidPasswordError
-from sqlalchemy import text
+from sqlalchemy import DDL, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from mkobi.config import get_config
@@ -216,6 +216,9 @@ class DatabaseStarter:
         # Drop and recreate test database
         try:
             async with admin_engine.connect() as conn:
+                # Get properly quoted database name from the connection's dialect
+                quoted_db_name = conn.dialect.identifier_preparer.quote(db_name)
+
                 # Terminate existing connections to the target database
                 await conn.execute(
                     text(
@@ -225,14 +228,27 @@ class DatabaseStarter:
                     ),
                     {"db_name": db_name},
                 )
-                await conn.execute(text(f"DROP DATABASE IF EXISTS {db_name}"))
-                await conn.execute(text(f"CREATE DATABASE {db_name}"))
+
+                # Use DDL constructs with properly quoted identifier (defense-in-depth)
+                await conn.execute(
+                    DDL("DROP DATABASE IF EXISTS %(name)s", context={"name": quoted_db_name})
+                )
+                await conn.execute(
+                    DDL("CREATE DATABASE %(name)s", context={"name": quoted_db_name})
+                )
 
                 # Grant mkobi_app CONNECT on the new test database
-                await conn.execute(text(f"GRANT CONNECT ON DATABASE {db_name} TO mkobi_app"))
+                await conn.execute(
+                    DDL("GRANT CONNECT ON DATABASE %(name)s TO mkobi_app", context={"name": quoted_db_name})
+                )
 
             # Connect to the new DB to grant schema privileges
-            test_admin_url = base_url.replace("/postgres", f"/{db_name}")
+            test_admin_url = urlunparse((
+                parsed_admin.scheme,
+                parsed_admin.netloc,
+                f"/{db_name}",
+                None, None, None
+            ))
             test_admin_engine = create_async_engine(test_admin_url, isolation_level="AUTOCOMMIT")
             try:
                 async with test_admin_engine.connect() as conn:

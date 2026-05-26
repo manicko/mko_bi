@@ -136,32 +136,26 @@ class TestRoleRequirements:
         assert response.status_code == status.HTTP_200_OK
 
     async def test_viewer_cannot_access_admin_endpoint(
-        self, async_client, async_db_session, test_user
+        self, async_client, async_db_session
     ) -> None:
-        """Test that viewer without admin role cannot access admin endpoints."""
-        # Use the test_user's admin token to create a dashboard
-        response = await async_client.post(
-            "/dashboards/",
-            json={"name": "Test Dashboard", "config": {"graph_types": ["bar"]}},
-            headers={"Authorization": f"Bearer {test_user['token']}"},
-        )
-        # Try to access admin-only functionality as viewer
+        """Test that viewer role cannot access admin endpoints."""
+        # Create a viewer user
         repo = UserRepository()
         viewer_user = await repo.create(
             db=async_db_session,
-            email="viewer_admin_test@example.com",
+            email="viewer_admin_blocked_test@example.com",
             password_hash=hash_password("ViewerPass123!"),
             role=UserRole.VIEWER,
         )
         await async_db_session.commit()
         token = create_access_token({"user_id": str(viewer_user.id), "email": viewer_user.email})
 
-        # Viewer should be able to access /auth/me but not admin-only endpoints
+        # Viewer should get 403 when accessing admin-only endpoint
         response = await async_client.get(
-            "/auth/me",
+            "/admin/users",
             headers={"Authorization": f"Bearer {token}"},
         )
-        assert response.status_code == status.HTTP_200_OK
+        assert response.status_code == status.HTTP_403_FORBIDDEN
 
 
 class TestDashboardAccessDependencies:

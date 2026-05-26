@@ -19,6 +19,7 @@ os.environ.setdefault("DATABASE__PORT", "5432")
 os.environ.setdefault("DATABASE__DBNAME", "bidb_test")
 os.environ.setdefault("DATABASE__USER", "postgres")
 os.environ.setdefault("DATABASE__PASSWORD", "1234")
+os.environ.setdefault("DATABASE__ADMIN_PASSWORD", "1234")
 os.environ.setdefault("DATABASE__TEST_DBNAME", "bidb_test")
 os.environ.setdefault("JWT__SECRET_KEY", "test_secret_key_change_in_production")
 os.environ.setdefault("REDIS__HOST", "localhost")
@@ -284,12 +285,17 @@ async def setup_test_database():
     This fixture has session scope to run once before all tests.
     """
     from mkobi.db.starter import DatabaseStarter, DatabaseStarterConfig
+    from mkobi.config import get_config, clear_config_cache
 
-    config = DatabaseStarterConfig(
-        test_database_url=os.environ.get("TEST_DATABASE_URL"),
+    clear_config_cache()
+    config = get_config()
+    starter_config = DatabaseStarterConfig(
+        main_database_url=config.DATABASE_URL,
+        test_database_url=config.test_database_url,
+        test_admin_database_url=config.test_admin_database_url,
         recreate_test_db=True,
     )
-    await DatabaseStarter(config).recreate_test_database()
+    await DatabaseStarter(starter_config).recreate_test_database()
     yield
     # Optional: cleanup after all tests
     # Could drop the test database here if needed

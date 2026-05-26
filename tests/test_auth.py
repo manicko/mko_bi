@@ -83,7 +83,6 @@ class TestRegisterRequest:
         if request:
             await repo.delete(request.id, async_db_session)
             await async_db_session.flush()
-            await async_db_session.flush()
 
     async def test_register_request_duplicate(
         self, async_client: AsyncClient, async_db_session

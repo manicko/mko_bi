@@ -128,7 +128,14 @@ def create_app() -> FastAPI:
             logger.error("CORS origins must be set in production environment")
             raise ValueError("CORS origins must be configured for production")
         if "*" in config.cors_origins:
-            logger.warning("CORS is configured to allow all origins (*) in production")
+            logger.error(
+                "CORS wildcard (*) in production is a security risk. "
+                "Remove '*' from CORS_ORIGINS and specify allowed origins explicitly."
+            )
+            raise ValueError(
+                "CORS wildcard (*) is not allowed in production. "
+                "Please configure specific CORS origins in CORS_ORIGINS environment variable."
+            )
 
     application = FastAPI(
         title=config.app_name,
@@ -160,6 +167,7 @@ def create_app() -> FastAPI:
     application.include_router(routes.auth.router, prefix="/api/v1")
     application.include_router(routes.users.router, prefix="/api/v1")
     application.include_router(routes.dashboards.router, prefix="/api/v1")
+    application.include_router(routes.graphs.router, prefix="/api/v1")
     application.include_router(routes.layouts.router, prefix="/api/v1")
     application.include_router(routes.upload.router, prefix="/api/v1")
     application.include_router(routes.data.router, prefix="/api/v1")
@@ -266,11 +274,11 @@ def create_app() -> FastAPI:
     ) -> JSONResponse:
         """Handler for Pydantic validation errors."""
         return JSONResponse(
-            status_code=500,
+            status_code=422,
             content={
-                "detail": "Pydantic validation error",
-                "errors": str(exc),
-                "status_code": 500,
+                "detail": "Validation error",
+                "errors": exc.errors(),
+                "status_code": 422,
             },
         )
 

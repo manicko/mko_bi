@@ -261,6 +261,18 @@ Authorization: Bearer <token>
 
 ---
 
+## Upload Endpoint Version History
+
+| Version | Date       | Change Description                              |
+| ------- | ---------- | ----------------------------------------------- |
+| 2.0     | 2026-04-24 | Initial upload endpoint: `POST /api/v1/upload/:dashboard_id` |
+| 2.1     | 2026-05-10 | Added multipart/form-data support, file validation |
+| 2.2     | 2026-05-16 | Integrated with processing pipeline, task tracking |
+| 2.3     | 2026-05-18 | Added `mode` query param (overwrite/append), processing_log_id in response |
+| 2.4     | 2026-05-19 | **UploadModal implementation** - modal dialog instead of page navigation, inline progress feedback, react-hot-toast notifications |
+
+---
+
 ## Processing Config Endpoints
 
 ### Get Processing Configuration

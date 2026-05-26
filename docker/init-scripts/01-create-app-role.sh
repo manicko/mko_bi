@@ -14,7 +14,7 @@ DROP ROLE IF EXISTS mkobi_app;
 CREATE ROLE mkobi_app WITH LOGIN PASSWORD '${MKOBI_APP_PASSWORD}';
 
 -- Grant connection to the database
-GRANT CONNECT ON DATABASE bidb TO mkobi_app;
+GRANT CONNECT ON DATABASE ${POSTGRES_DB} TO mkobi_app;
 
 -- Grant usage on public schema
 GRANT USAGE ON SCHEMA public TO mkobi_app;

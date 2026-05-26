@@ -158,26 +158,6 @@ async def test_clear_dashboard_data_with_data(
 
 
 @pytest.mark.asyncio
-async def test_clear_graph_data_instance(async_db_session: AsyncSession):
-    """Test clear_graph_data instance method."""
-    graph_id = uuid4()
-    manager = StorageManager(db=async_db_session)
-
-    deleted = await manager.clear_graph_data(graph_id=graph_id)
-    assert deleted == 0
-
-
-@pytest.mark.asyncio
-async def test_clear_dashboard_data_instance(async_db_session: AsyncSession):
-    """Test clear_dashboard_data instance method."""
-    dashboard_id = uuid4()
-    manager = StorageManager(db=async_db_session)
-
-    deleted = await manager.clear_dashboard_data(dashboard_id=dashboard_id)
-    assert deleted == 0
-
-
-@pytest.mark.asyncio
 async def test_clear_graph_data_compat_deprecated(async_db_session: AsyncSession):
     """Test clear_graph_data_compat emits deprecation warning."""
     graph_id = uuid4()

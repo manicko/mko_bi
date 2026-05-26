@@ -4,11 +4,11 @@ import { useNavigate, Link } from 'react-router-dom'
 import { Box, Button, TextField, Typography, Alert } from '@mui/material'
 import { useState, useEffect } from 'react'
 import { loginSchema, type LoginFormData } from '../../../shared/types/formSchemas'
-import { login as loginApi } from '../api/authApi'
-import { setToken } from '../model/authToken'
+import { useAuth } from '../model/useAuth'
 
 export function LoginForm() {
   const navigate = useNavigate()
+  const { login } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -34,8 +34,7 @@ export function LoginForm() {
     try {
       setError(null)
       setIsSubmitting(true)
-      const response = await loginApi(data.email, data.password)
-      setToken(response.access_token)
+      await login(data.email, data.password)
       navigate('/dashboards')
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Login failed'

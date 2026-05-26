@@ -174,18 +174,28 @@ Task requirements:
 
 ## Step 5.5 — Insert Verification Tasks
 
-After EVERY implementation task, insert a verification task.
+Verification strategy depends on task scope:
 
-Pattern:
+**Simple tasks** (single function, trivial/small effort, low/minimal risk):
+- Do NOT create a separate verification task.
+- Verification is inline — the implementor runs `tests_to_run` and checks `acceptance_criteria` as part of the implementation task itself.
+- The task is only marked complete after tests pass.
+
+**Multi-stage tasks** (cross-module, medium+ risk, multi-step):
+- Insert a single verification task at the END of the stage, after all implementation tasks in that stage.
+- The verification task depends on all implementation tasks in that stage.
+
+Pattern for multi-stage:
 ```
-TASK_001_implement_X
-TASK_002_verify_X          ← depends_on: TASK_001
-TASK_003_implement_Y       ← depends_on: TASK_002
+TASK_001_implement_stage1_step1   → implementation (inline verify)
+TASK_002_implement_stage1_step2   → implementation (inline verify)
+TASK_003_verify_stage1            → verification (depends_on: TASK_001, TASK_002)
+TASK_004_implement_stage2        → depends_on: TASK_003
 ```
 
 Verification task must:
 - have `type: verification`
-- reference the implementation task via `verifies: TASK_XXX_name`
+- reference implementation tasks via `verifies: [TASK_XXX_name, ...]`
 - define `verification_steps` (build, test, smoke_check)
 - define `pass_criteria`
 - define `failure_action: return TASK_XXX to rework`
@@ -193,9 +203,8 @@ Verification task must:
 - for code: run tests_to_run and confirm they pass
 
 Rules:
-- No implementation task may be followed directly by another implementation task
-- Verification tasks are mandatory, not optional
-- Numbering must stay sequential (implementation N, verification N+1)
+- Separate verification tasks are optional for simple tasks, mandatory for multi-stage work
+- Numbering must stay sequential
 
 ---
 

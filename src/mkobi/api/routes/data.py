@@ -92,9 +92,10 @@ async def get_aggregated_data_endpoint(
 
     try:
         # Parse filters from JSON string
+        parsed_filters: dict[str, Any] | None = None
         if filters:
             try:
-                json.loads(filters)
+                parsed_filters = json.loads(filters)
             except json.JSONDecodeError as e:
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -106,6 +107,7 @@ async def get_aggregated_data_endpoint(
             dashboard_id=dashboard_id,
             graph_id=graph_id,
             db=db,
+            filters=parsed_filters,
         )
 
         logger.info(

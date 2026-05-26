@@ -139,6 +139,11 @@ def _apply_filters(
         if not column or not operator:
             continue
 
+        # Skip if column doesn't exist in DataFrame
+        if column not in df.columns:
+            logger.warning("Column %s not found in DataFrame, skipping filter", column)
+            continue
+
         # Handle operator from FilterOperatorEnum or string
         op_value = operator.value if hasattr(operator, 'value') else operator
 
@@ -209,8 +214,16 @@ def _apply_dtypes(
     """
     cast_exprs = []
     for col, dtype_str in dtype_map.items():
+        # Skip if column doesn't exist
+        if col not in df.columns:
+            logger.warning("Column %s not found in DataFrame, skipping dtype cast", col)
+            continue
         try:
+            # Try case-insensitive lookup for Polars types (Int64, int64, INTEGER all work)
             dtype = getattr(pl, dtype_str.upper(), None)
+            if not dtype:
+                # Try capitalized form (e.g., "integer" -> "Integer")
+                dtype = getattr(pl, dtype_str.capitalize(), None)
             if dtype:
                 cast_exprs.append(pl.col(col).cast(dtype))
             else:
@@ -531,6 +544,13 @@ def _parse_formula(formula: str) -> pl.Expr:
         token = tokens[0]
         if _is_numeric_literal(token):
             return pl.lit(float(token))
+        # Validate that single token is a valid column name
+        _VALID_COLUMN_RE = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+        if not _VALID_COLUMN_RE.match(token):
+            raise ValueError(
+                f"Invalid operand {token!r} in formula. Operands must be column names matching "
+                f"[a-zA-Z_][a-zA-Z0-9_]* or numeric literals"
+            )
         return pl.col(token)
 
     # Validate token pattern: operand, op, operand, op, operand, ...

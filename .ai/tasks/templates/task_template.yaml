@@ -55,13 +55,17 @@ acceptance_criteria:
   - no transaction rollback issues
   - tests pass
 
-tests_to_run:
-  - tests/test_user_creation.py
+# For simple tasks (single function, trivial/small effort, low risk):
+# verification is INLINE — implementor runs tests_to_run and checks
+# acceptance_criteria before marking the task complete.
+# Do NOT create a separate verification task.
 
-risk_level: medium
+# For multi-stage tasks (cross-module, medium+ risk):
+# create a separate verification task at the end of the stage.
+# Use the verification task template below.
 
 ---
-# Verification task template (follows every implementation task)
+# Verification task template (only for multi-stage work)
 
 id: verify_task_template
 
@@ -74,7 +78,9 @@ status: pending
 depends_on:
   - task_XXX_implementation_task
 
-verifies: task_XXX_implementation_task
+verifies:
+  - task_XXX_implementation_task
+  - task_YYY_implementation_task
 
 verification_steps:
   - build: <command to build, e.g. "docker compose build">

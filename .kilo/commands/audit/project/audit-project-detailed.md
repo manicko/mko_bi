@@ -165,6 +165,73 @@ Verify files:
 
 ---
 
+# BLOCK 1.5 — Runtime Verification (Docker)
+
+> **Prerequisite:** Docker must be running. See `docs/11-guides/docker.md`.
+
+## 1.5.1 Start Services
+
+Start all services in development mode:
+
+```powershell
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml --env-file .env up -d
+```
+
+Wait for all containers to be healthy. Check with `docker compose ps`.
+
+## 1.5.2 Container Health Check
+
+For each running container (`app`, `frontend`, `db`, `redis`):
+
+1. **Check logs for errors/warnings** — `docker compose logs <service>`
+2. **Check for restart loops** — look for repeated shutdown/startup cycles (e.g., `StatReload detected changes` firing repeatedly)
+3. **Check for config errors** — missing env vars, volume mount issues
+
+Flag as CRITICAL:
+- Container crash loops
+- Backend restarting due to volume-triggered hot reload from mounted `tests/` or `__pycache__/`
+- Frontend failing to start
+
+## 1.5.3 Frontend Rendering Verification
+
+1. **Fetch frontend index** from both dev server (5173) and backend (8000):
+   - `GET http://localhost:5173/` — must return 200 with valid HTML
+   - `GET http://localhost:8000/` — must return 200 with valid HTML
+
+2. **Check for JavaScript runtime errors:**
+   - Load the page in a browser and check console for errors
+   - Common issues: invalid React Router usage (non-`<Route>` children inside `<Routes>`), missing imports, runtime type errors
+   - Verify the React app actually renders — not stuck on ErrorBoundary fallback ("Something went wrong")
+
+3. **Verify asset availability:**
+   - JS bundle referenced in index.html must be fetchable (hash must match actual file on disk)
+   - Check both the host-built `frontend/dist/` and the container's `/app/frontend/dist/` are consistent
+
+## 1.5.4 Cross-Service Connectivity
+
+1. **Frontend → Backend proxy:**
+   - From inside the frontend container, verify `http://app:8000/health` responds
+   - Verify API calls from the browser reach the backend (check backend logs for proxied requests)
+
+2. **Backend → Database:**
+   - Verify health check shows `{"status":"healthy","database":"connected"}`
+   - Run a test login API call and confirm it succeeds with valid credentials
+
+## 1.5.5 Critical User Flow Smoke Test
+
+Perform these checks and flag any failures as CRITICAL:
+
+| Flow | Check | Expected |
+|------|-------|----------|
+| Load `/login` (frontend dev) | Page renders, no console errors | Login form with email/password fields visible |
+| Load `/` (backend port 8000) | Index.html serves JS bundle | JS bundle hash matches actual file in `frontend/dist/assets/` |
+| Login API | `POST /api/v1/auth/login` with admin credentials | Returns 200 with `access_token` |
+| Frontend API proxy | Frontend makes `/api/v1/...` call through Vite proxy | Backend receives the request (check app logs) |
+
+Flag failures with evidence: error messages, HTTP status codes, container log excerpts.
+
+---
+
 # BLOCK 2 — Backend API Layer (FastAPI)
 
 ## 2.1 Auth Endpoints
@@ -1051,6 +1118,23 @@ Table (based on `docs/SPEC.md` and all `docs/**/*.md`):
 | Registration approval flow | PASS/FAIL | ... |
 | Task queue (in-memory MVP) | PASS/FAIL | ... |
 | Test database isolation | PASS/FAIL | ... |
+
+---
+
+## 3.5 Runtime Findings
+
+Separate section for issues found only through runtime observation (BLOCK 1.5):
+
+| Severity | Type | Flow | Problem | Evidence | Recommendation |
+|----------|------|------|---------|----------|----------------|
+| CRITICAL | [RUNTIME] | Frontend rendering | App crashes on load | Console: TrailingSlashRedirect is not a `<Route>` component | Move component inside `<Route element={}>` |
+| CRITICAL | [RUNTIME] | Login page | Page shows "Something went wrong" | ErrorBoundary caught render error | Fix root cause of render crash |
+| MEDIUM | [RUNTIME] | Backend startup | Reload loop from volume mounts | Logs: repeated `StatReload detected changes` | Exclude `tests/` or `__pycache__/` from mount |
+
+Flag as CRITICAL any runtime finding that prevents the user from using the application:
+- Frontend fails to render (blank page, error boundary fallback)
+- Backend in restart loop (intermittent 503s)
+- API proxy broken (frontend cannot reach backend)
 
 ---
 

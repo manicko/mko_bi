@@ -15,6 +15,7 @@ services:
       MKOBI_APP_PASSWORD: ${MKOBI_APP_PASSWORD:-test_app_password}
     volumes:
       - test_postgres_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d:ro
     ports:
       - "5433:5432"
     healthcheck:
