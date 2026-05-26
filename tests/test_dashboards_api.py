@@ -195,21 +195,12 @@ class TestUpdateDashboard:
         self, authenticated_client: AsyncClient, async_db_session, test_user: dict
     ) -> None:
         """Test updating dashboard as admin (success)."""
+        # Admin can update any dashboard without explicit access grant
         repo = DashboardRepository()
-        access_repo = AccessRepository()
         dashboard = await repo.create(
             db=async_db_session,
             name="update-test-dashboard",
             created_by=test_user["id"],
-        )
-        await async_db_session.flush()
-
-        # Grant access
-        await access_repo.grant_access(
-            db=async_db_session,
-            user_id=test_user["id"],
-            dashboard_id=dashboard.id,
-            permission=DashboardPermission.EDIT,
         )
         await async_db_session.flush()
 
@@ -265,21 +256,12 @@ class TestDeleteDashboard:
         self, authenticated_client: AsyncClient, async_db_session, test_user: dict
     ) -> None:
         """Test deleting dashboard as admin (success)."""
+        # Admin can delete any dashboard without explicit access grant
         repo = DashboardRepository()
-        access_repo = AccessRepository()
         dashboard = await repo.create(
             db=async_db_session,
             name="delete-test-dashboard",
             created_by=test_user["id"],
-        )
-        await async_db_session.flush()
-
-        # Grant access
-        await access_repo.grant_access(
-            db=async_db_session,
-            user_id=test_user["id"],
-            dashboard_id=dashboard.id,
-            permission=DashboardPermission.EDIT,
         )
         await async_db_session.flush()
 

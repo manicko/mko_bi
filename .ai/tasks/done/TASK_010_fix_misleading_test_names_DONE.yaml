@@ -1,0 +1,91 @@
+id: TASK_010_fix_misleading_test_names
+
+title: Fix misleading test names in dashboards_api and deps tests
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_001_fix_trailing_slash_redirect
+
+type: implementation
+
+description: >
+  Fix misleading test names in test_dashboards_api.py and test_deps.py.
+  In test_dashboards_api.py: test_update_dashboard_admin and
+  test_delete_dashboard_admin grant EDIT permission but the endpoints
+  require admin role — the grant is irrelevant. In test_deps.py:
+  test_write_access_with_edit_permission tests that write is DENIED but
+  the name implies success.
+
+goals:
+  - Remove irrelevant grant_access calls from admin dashboard tests
+  - Rename test_write_access_with_edit_permission to clarify denial
+  - Add comments explaining admin bypass behavior
+
+files:
+  - path: tests/test_dashboards_api.py
+    targets:
+      - type: class
+        name: TestUpdateDashboard
+      - type: method
+        name: test_update_dashboard_admin
+      - type: class
+        name: TestDeleteDashboard
+      - type: method
+        name: test_delete_dashboard_admin
+    semantic_anchors:
+      find:
+        - type: function_call
+          value: grant_access
+        - context: test_update_dashboard_admin and test_delete_dashboard_admin
+
+  - path: tests/test_deps.py
+    targets:
+      - type: class
+        name: TestDashboardAccessDependencies
+      - type: method
+        name: test_write_access_with_edit_permission
+    semantic_anchors:
+      find:
+        - type: function
+          value: test_write_access_with_edit_permission
+
+changes:
+  - action: update_code
+    description: Remove grant_access calls from admin tests and add admin bypass comments
+    target: tests/test_dashboards_api.py
+    code_hint: |
+      # Remove grant_access with EDIT permission from test_update_dashboard_admin
+      # Remove grant_access with EDIT permission from test_delete_dashboard_admin
+      # Add comment: "Admin can update/delete any dashboard without explicit access grant"
+
+  - action: update_code
+    description: Rename test to clarify that write access is denied
+    target: tests/test_deps.py
+    code_hint: |
+      # Before:
+      async def test_write_access_with_edit_permission(...):
+
+      # After:
+      async def test_write_access_denied_for_editor_with_edit_permission(...):
+
+acceptance_criteria:
+  - test_update_dashboard_admin no longer has irrelevant grant_access call
+  - test_delete_dashboard_admin no longer has irrelevant grant_access call
+  - test_write_access_with_edit_permission is renamed to indicate denial
+  - All modified tests still pass
+
+risks:
+  - None: purely cosmetic/documentation changes
+
+tests_to_run:
+  - command: uv run pytest tests/test_dashboards_api.py -v
+    purpose: Verify dashboard API tests pass
+  - command: uv run pytest tests/test_deps.py -v
+    purpose: Verify deps tests pass
+
+estimated_effort: small
+
+risk_level: minimal

@@ -1,0 +1,55 @@
+id: TASK_008_delete_harmful_test_load_csv_wrapper
+
+title: Delete harmful test_load_csv_wrapper duplicate test
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_001_fix_trailing_slash_redirect
+
+type: implementation
+
+description: >
+  Delete test_load_csv_wrapper from TestLoadCSVAsync class in
+  test_data_csv_loader.py. The test claims to test async behavior but
+  actually tests synchronous CSVLoader.load_csv() — duplicating
+  test_load_csv_basic with different wording. It provides no value.
+
+goals:
+  - Remove the duplicate test_load_csv_wrapper test method
+  - Reduce test suite noise and confusion
+
+files:
+  - path: tests/test_data_csv_loader.py
+    targets:
+      - type: class
+        name: TestLoadCSVAsync
+      - type: method
+        name: test_load_csv_wrapper
+    semantic_anchors:
+      find:
+        - type: function
+          value: test_load_csv_wrapper
+
+changes:
+  - action: remove_code
+    description: Delete the test_load_csv_wrapper method from TestLoadCSVAsync class
+    target: tests/test_data_csv_loader.py
+
+acceptance_criteria:
+  - test_load_csv_wrapper no longer exists in test_data_csv_loader.py
+  - TestLoadCSVAsync class still has other valid tests
+  - All remaining tests in the file pass
+
+risks:
+  - None: removing a harmful/duplicate test cannot break anything
+
+tests_to_run:
+  - command: uv run pytest tests/test_data_csv_loader.py -v
+    purpose: Verify all remaining CSV loader tests pass
+
+estimated_effort: trivial
+
+risk_level: minimal

@@ -1,0 +1,65 @@
+id: TASK_004_fix_test_upload_too_large
+
+title: Fix test_upload_too_large accuracy in test_upload_api.py
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_001_fix_trailing_slash_redirect
+
+type: implementation
+
+description: >
+  Fix the test_upload_too_large test which may pass for the wrong reason.
+  The mock sets max_file_size=1 and sends a 1-byte file, but the check is
+  file.size > config.max_file_size (1 > 1 = False). Use max_file_size=0 to
+  ensure the size check path is actually exercised.
+
+goals:
+  - Ensure test_upload_too_large actually tests the file size validation path
+  - Fix mock to use max_file_size=0 so 1-byte file triggers the check
+  - Verify test still passes after fix
+
+files:
+  - path: tests/test_upload_api.py
+    targets:
+      - type: class
+        name: TestUploadCSV
+      - type: method
+        name: test_upload_too_large
+    semantic_anchors:
+      find:
+        - type: function_call
+          value: max_file_size
+        - context: mock config setup
+
+changes:
+  - action: update_code
+    description: Change max_file_size mock value from 1 to 0 to ensure size check triggers
+    target: tests/test_upload_api.py
+    code_hint: |
+      # Before:
+      max_file_size=1
+
+      # After:
+      max_file_size=0
+
+acceptance_criteria:
+  - test_upload_too_large passes with the corrected mock
+  - The 413 response is triggered by the file size validation path, not another code path
+  - All other upload tests still pass
+
+risks:
+  - Low: If the endpoint uses a different comparison (>= instead of >), may need further adjustment
+
+tests_to_run:
+  - command: uv run pytest tests/test_upload_api.py::TestUploadCSV::test_upload_too_large -v
+    purpose: Verify the specific test passes
+  - command: uv run pytest tests/test_upload_api.py -v
+    purpose: Verify all upload tests pass
+
+estimated_effort: trivial
+
+risk_level: low

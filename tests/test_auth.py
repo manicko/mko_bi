@@ -1,9 +1,10 @@
 """Tests for authentication API endpoints."""
 
+import pytest
 from fastapi import status
 from httpx import AsyncClient
 
-from mkobi.core.security import create_refresh_token
+from mkobi.core.security import AsyncRateLimiter, create_refresh_token
 from mkobi.db.repositories.registration_request_repo import (
     RegistrationRequestRepository,
 )
@@ -214,3 +215,134 @@ class TestRefreshToken:
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         data = response.json()
         assert "User not found" in data["detail"]
+
+
+class TestRateLimiting:
+    """Tests for login rate limiting using strict_redis fixture."""
+
+    @pytest.mark.asyncio
+    async def test_rate_limiter_allows_under_limit(self, strict_redis) -> None:
+        """Verify rate limiter allows requests under the limit."""
+        limiter = AsyncRateLimiter(strict_redis)
+
+        # Clear any previous state
+        strict_redis.clear()
+
+        # Make requests up to limit (5 attempts), all should succeed
+        for i in range(5):
+            result = await limiter.check_rate_limit("login:test_ip", max_attempts=5, ttl=300)
+            assert result is True, f"Attempt {i + 1} should be allowed"
+
+    @pytest.mark.asyncio
+    async def test_rate_limiter_blocks_over_limit(self, strict_redis) -> None:
+        """Verify rate limiter blocks requests exceeding the limit."""
+        limiter = AsyncRateLimiter(strict_redis)
+
+        # Clear any previous state
+        strict_redis.clear()
+
+        # Make 5 allowed requests (at the limit)
+        for i in range(5):
+            result = await limiter.check_rate_limit("login:test_ip", max_attempts=5, ttl=300)
+            assert result is True, f"Attempt {i + 1} should be allowed"
+
+        # 6th request should be blocked
+        result = await limiter.check_rate_limit("login:test_ip", max_attempts=5, ttl=300)
+        assert result is False, "Request over limit should be blocked"
+
+    @pytest.mark.asyncio
+    async def test_rate_limiter_fail_open_on_redis_error(self, monkeypatch) -> None:
+        """Verify rate limiter allows requests when Redis is unavailable (fail-open)."""
+        class FailingRedisClient:
+            """Redis client that raises exceptions on all operations."""
+
+            def __init__(self):
+                self._data = {}
+
+            async def get(self, key):
+                raise ConnectionError("Redis connection failed")
+
+            def pipeline(self):
+                return self
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, exc_type, exc, tb):
+                return False
+
+            async def incr(self, key):
+                raise ConnectionError("Redis connection failed")
+
+            async def expire(self, key, ttl):
+                raise ConnectionError("Redis connection failed")
+
+            async def execute(self):
+                raise ConnectionError("Redis connection failed")
+
+        failing_redis = FailingRedisClient()
+        limiter = AsyncRateLimiter(failing_redis, fail_closed=False)
+
+        # With fail-open behavior (default), requests should still succeed despite Redis failure
+        result = await limiter.check_rate_limit("login:test_ip", max_attempts=5, ttl=300)
+        assert result is True, "Fail-open should allow requests when Redis is unavailable"
+
+    @pytest.mark.asyncio
+    async def test_rate_limiter_fail_closed_on_redis_error(self) -> None:
+        """Verify rate limiter blocks requests when Redis is unavailable (fail-closed)."""
+        class FailingRedisClient:
+            """Redis client that raises exceptions on all operations."""
+
+            def __init__(self):
+                self._data = {}
+
+            async def get(self, key):
+                raise ConnectionError("Redis connection failed")
+
+            def pipeline(self):
+                return self
+
+            async def __aenter__(self):
+                return self
+
+            async def __aexit__(self, exc_type, exc, tb):
+                return False
+
+            async def incr(self, key):
+                raise ConnectionError("Redis connection failed")
+
+            async def expire(self, key, ttl):
+                raise ConnectionError("Redis connection failed")
+
+            async def execute(self):
+                raise ConnectionError("Redis connection failed")
+
+        failing_redis = FailingRedisClient()
+        limiter = AsyncRateLimiter(failing_redis, fail_closed=True)
+
+        # With fail-closed behavior, requests should be blocked when Redis is unavailable
+        result = await limiter.check_rate_limit("login:test_ip", max_attempts=5, ttl=300)
+        assert result is False, "Fail-closed should block requests when Redis is unavailable"
+
+    @pytest.mark.asyncio
+    async def test_rate_limiter_different_ips_independent(
+        self, strict_redis
+    ) -> None:
+        """Verify rate limit is tracked independently per IP."""
+        limiter = AsyncRateLimiter(strict_redis)
+
+        # Clear any previous state
+        strict_redis.clear()
+
+        # Make 5 requests from IP1
+        for i in range(5):
+            result = await limiter.check_rate_limit("login:ip1", max_attempts=5, ttl=300)
+            assert result is True, f"IP1 attempt {i + 1} should be allowed"
+
+        # IP1 should be blocked
+        result = await limiter.check_rate_limit("login:ip1", max_attempts=5, ttl=300)
+        assert result is False, "IP1 should be rate limited"
+
+        # IP2 should still be allowed (independent counter)
+        result = await limiter.check_rate_limit("login:ip2", max_attempts=5, ttl=300)
+        assert result is True, "IP2 should be allowed (different rate limit key)"

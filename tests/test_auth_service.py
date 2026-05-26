@@ -4,7 +4,7 @@ from uuid import uuid4
 
 import pytest
 
-from mkobi.core.security import hash_password, verify_password
+from mkobi.core.security import hash_password
 from mkobi.models.enums import RegistrationStatus, UserRole
 from mkobi.models.user import UserRead
 from mkobi.services.auth_service import AuthService
@@ -110,23 +110,51 @@ class TestAuthService:
             )
 
     async def test_register_user_empty_password(self, auth_service, mock_user_repo, mock_db):
-        """Test registration handles empty password."""
+        """Test registration with empty password allows authentication.
+
+        Empty passwords are technically allowed (no explicit validation), so this test
+        verifies that a user registered with an empty password can authenticate with it.
+        """
+        empty_password = ""
+        # Register user with empty password
         mock_user_repo.create.return_value = MagicMock(
             id=uuid4(),
             email="empty@example.com",
             role="viewer",
-            password_hash=hash_password(""),
+            password_hash=hash_password(empty_password),
         )
 
         result = await auth_service.register_user(
             email="empty@example.com",
-            password="",
+            password=empty_password,
             db=mock_db,
             role="viewer",
         )
 
         assert isinstance(result, UserRead)
-        assert verify_password("", result.password_hash) if hasattr(result, 'password_hash') else True
+        assert result.email == "empty@example.com"
+
+        # Verify login succeeds with the same empty password
+        # Setup the mock to return a user with the empty password hash
+        mock_login_user = MagicMock()
+        mock_login_user.password_hash = hash_password(empty_password)
+        mock_login_user.id = result.id
+        mock_login_user.email = "empty@example.com"
+        mock_login_user.role = UserRole.VIEWER
+        mock_user_repo.get_by_email_with_hash.return_value = mock_login_user
+
+        from datetime import datetime
+        mock_login_user.created_at = datetime.now()
+
+        login_result = await auth_service.login_user(
+            email="empty@example.com",
+            password=empty_password,
+            db=mock_db,
+        )
+
+        assert login_result is not None
+        assert "access_token" in login_result
+        assert login_result["user"].email == "empty@example.com"
 
     # --- login_user tests ---
 

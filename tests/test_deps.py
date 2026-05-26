@@ -231,10 +231,10 @@ class TestDashboardAccessDependencies:
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
-    async def test_write_access_with_edit_permission(
+    async def test_write_access_denied_for_editor_with_edit_permission(
         self, async_client, async_db_session, test_user
     ) -> None:
-        """Test that user with edit permission can write to dashboard."""
+        """Test that editor with edit permission gets 403 for write (admin role required)."""
         # Create dashboard
         dashboard_repo = DashboardRepository()
         dashboard = await dashboard_repo.create(
@@ -263,9 +263,9 @@ class TestDashboardAccessDependencies:
         await async_db_session.commit()
         token = create_access_token({"user_id": str(editor_user.id), "email": editor_user.email})
 
-        # DELETE endpoint is admin-only, but update requires admin too per the route
-        # The key test is that editor can access dashboard (test via read)
-        # For write, the route requires require_admin_role, so editor gets 403
+        # PUT endpoint requires admin role, so editor with edit permission gets 403.
+        # This verifies that edit permission on dashboard does not grant write access
+        # to endpoints that require global ADMIN role.
         response = await async_client.put(
             f"/dashboards/{dashboard.id}",
             json={"description": "Updated description"},

@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from '../shared/components/ProtectedRoute'
 import { RoleBasedAccess } from '../shared/components/RoleBasedAccess'
 import { AppLayout } from '../shared/components/Layout'
@@ -12,18 +12,9 @@ import { AdminPanel } from '../features/admin/ui/AdminPanel'
 import { UserProfile } from '../features/users/ui/UserProfile'
 import { ChangePasswordPage } from '../features/users/ui/ChangePasswordPage'
 
-function TrailingSlashRedirect() {
-  const { pathname } = useLocation()
-  if (pathname !== '/' && pathname.endsWith('/')) {
-    return <Navigate to={pathname.slice(0, -1)} replace />
-  }
-  return null
-}
-
 export function AppRoutes() {
   return (
     <Routes>
-      <TrailingSlashRedirect />
       <Route path="/login" element={<LoginForm />} />
       <Route path="/register" element={<RegisterForm />} />
       <Route element={<AppLayout />}>

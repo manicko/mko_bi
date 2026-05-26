@@ -788,3 +788,146 @@ class TestDataServiceIntegration:
             db=async_db_session,
         )
         assert result == []
+
+
+# ========== Registration Approval Flow Integration Tests ==========
+
+@pytest.mark.asyncio
+class TestRegistrationApprovalFlow:
+    """Integration tests for registration approval flow via admin API."""
+
+    @pytest.fixture
+    async def registration_request_repo(self):
+        """Create registration request repository."""
+        from mkobi.db.repositories.registration_request_repo import RegistrationRequestRepository
+        return RegistrationRequestRepository()
+
+    async def test_approve_registration_creates_user_with_temp_password(
+        self,
+        async_client,
+        auth_headers,
+        async_db_session,
+        registration_request_repo,
+    ):
+        """Verify approving registration creates user with temp password."""
+        unique_email = f"approve_{uuid4().hex[:8]}@example.com"
+
+        # Create registration request via public endpoint
+        create_response = await async_client.post(
+            "/auth/register-request",
+            json={"email": unique_email},
+        )
+        assert create_response.status_code == 201
+
+        # Get the request from DB to get its ID
+        requests = await registration_request_repo.get_all(async_db_session)
+        req = next((r for r in requests if r.email == unique_email), None)
+        assert req is not None, "Registration request should be created"
+
+        # Approve via admin endpoint
+        approve_response = await async_client.post(
+            f"/admin/registration-requests/{req.id}/approve",
+            headers=auth_headers,
+        )
+        assert approve_response.status_code == 200
+
+        # Verify response contains temp_password
+        data = approve_response.json()
+        assert "temp_password" in data
+        assert "user_id" in data
+        assert data["message"] == "Registration request approved"
+
+        # Verify user exists in DB
+        user = await UserRepository().get_by_email(unique_email, db=async_db_session)
+        assert user is not None, "User should be created after approval"
+
+        # Verify user has viewer role (default for approved registrations)
+        assert user.role == UserRole.VIEWER
+
+        # Verify temp password is long enough (security requirement)
+        assert len(data["temp_password"]) >= 16
+
+    async def test_reject_registration_does_not_create_user(
+        self,
+        async_client,
+        auth_headers,
+        async_db_session,
+        registration_request_repo,
+    ):
+        """Verify rejecting registration does not create a user."""
+        unique_email = f"reject_{uuid4().hex[:8]}@example.com"
+
+        # Create registration request via public endpoint
+        create_response = await async_client.post(
+            "/auth/register-request",
+            json={"email": unique_email},
+        )
+        assert create_response.status_code == 201
+
+        # Get the request from DB to get its ID
+        requests = await registration_request_repo.get_all(async_db_session)
+        req = next((r for r in requests if r.email == unique_email), None)
+        assert req is not None, "Registration request should be created"
+
+        # Reject via admin endpoint
+        reject_response = await async_client.post(
+            f"/admin/registration-requests/{req.id}/reject",
+            headers=auth_headers,
+        )
+        assert reject_response.status_code == 200
+
+        # Verify response
+        data = reject_response.json()
+        assert data["message"] == "Registration request rejected"
+
+        # Verify user does NOT exist in DB
+        user = await UserRepository().get_by_email(unique_email, db=async_db_session)
+        assert user is None, "User should NOT be created after rejection"
+
+    async def test_approved_user_can_login_with_temp_password(
+        self,
+        async_client,
+        auth_headers,
+        async_db_session,
+        registration_request_repo,
+    ):
+        """Verify user can login with temp password after approval."""
+        unique_email = f"logintemp_{uuid4().hex[:8]}@example.com"
+
+        # Create registration request via public endpoint
+        create_response = await async_client.post(
+            "/auth/register-request",
+            json={"email": unique_email},
+        )
+        assert create_response.status_code == 201
+
+        # Get the request from DB to get its ID
+        requests = await registration_request_repo.get_all(async_db_session)
+        req = next((r for r in requests if r.email == unique_email), None)
+        assert req is not None, "Registration request should be created"
+
+        # Approve via admin endpoint
+        approve_response = await async_client.post(
+            f"/admin/registration-requests/{req.id}/approve",
+            headers=auth_headers,
+        )
+        assert approve_response.status_code == 200
+
+        temp_password = approve_response.json()["temp_password"]
+
+        # Login with the temp password
+        login_response = await async_client.post(
+            "/auth/login",
+            json={
+                "email": unique_email,
+                "password": temp_password,
+            },
+        )
+        assert login_response.status_code == 200
+
+        # Verify successful login returns tokens
+        login_data = login_response.json()
+        assert "access_token" in login_data
+        assert login_data["token_type"] == "bearer"
+        assert "user" in login_data
+        assert login_data["user"]["email"] == unique_email

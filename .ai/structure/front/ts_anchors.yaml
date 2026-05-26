@@ -5,13 +5,6 @@
   type: component
   value: App
   stable_hash: 4141f45a
-- id: 5f263323
-  file: C:/py_dev/mkobi/frontend/src/app/routes.tsx
-  symbol_path:
-    - TrailingSlashRedirect
-  type: component
-  value: TrailingSlashRedirect
-  stable_hash: 5f263323
 - id: 7077cf72
   file: C:/py_dev/mkobi/frontend/src/app/routes.tsx
   symbol_path:
@@ -222,6 +215,13 @@
   type: component
   value: UserProfile
   stable_hash: ace8f0fa
+- id: 5cf687c2
+  file: C:/py_dev/mkobi/frontend/src/shared/components/Layout/AppLayout.tsx
+  symbol_path:
+    - TrailingSlashRedirect
+  type: component
+  value: TrailingSlashRedirect
+  stable_hash: 5cf687c2
 - id: a750a420
   file: C:/py_dev/mkobi/frontend/src/shared/components/Layout/AppLayout.tsx
   symbol_path:

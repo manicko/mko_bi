@@ -1,0 +1,46 @@
+id: TASK_013_verify_stage2_and_stage3
+
+title: Verify — All test quality and coverage improvements
+
+type: verification
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_005_add_rate_limiting_tests
+  - TASK_006_add_registration_approval_tests
+  - TASK_007_add_temp_file_cleanup_tests
+  - TASK_011_add_processing_lifecycle_test
+  - TASK_012_add_weak_credential_tests
+
+verifies:
+  - TASK_004_fix_test_upload_too_large
+  - TASK_005_add_rate_limiting_tests
+  - TASK_006_add_registration_approval_tests
+  - TASK_007_add_temp_file_cleanup_tests
+  - TASK_008_delete_harmful_test_load_csv_wrapper
+  - TASK_009_rewrite_empty_password_test
+  - TASK_010_fix_misleading_test_names
+  - TASK_011_add_processing_lifecycle_test
+  - TASK_012_add_weak_credential_tests
+
+verification_steps:
+  - build: docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml up -d
+  - test: uv run pytest tests/ -v --tb=short
+  - lint: uv run ruff check tests/
+  - type_check: uv run mypy tests/ --ignore-missing-imports
+  - frontend_build: cd frontend && npm run build
+  - frontend_test: cd frontend && npm run test
+
+pass_criteria:
+  - All pytest tests pass (no failures, no regressions)
+  - Ruff lint passes on all test files
+  - Frontend build succeeds
+  - Frontend tests pass
+  - No new mypy errors introduced
+
+failure_action: return the failing implementation task(s) to rework
+
+rollback_task: null

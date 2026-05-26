@@ -493,21 +493,3 @@ class TestCSVLoaderAggregate:
         )
         assert "value_min" in result.columns
         assert "value_max" in result.columns
-
-
-class TestLoadCSVAsync:
-    """Tests for async load_csv wrapper function."""
-
-    def test_load_csv_wrapper(self):
-        """Test async load_csv wrapper creates CSVLoader instance."""
-        # We test the function signature and basic behavior
-        # Full async testing would require event loop
-        csv_content = b"name,age\nAlice,30\n"
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            tmp.write(csv_content)
-            tmp_path = Path(tmp.name)
-
-        # Synchronously check the loader behavior matches
-        loader = CSVLoader()
-        result = loader.load_csv(tmp_path)
-        assert result.shape[0] == 1

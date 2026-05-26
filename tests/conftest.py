@@ -136,6 +136,10 @@ class MockRedis:
     async def close(self):
         pass
 
+    def clear(self):
+        """Clear all stored data for test isolation."""
+        self._data = {}
+
 
 class MockPipeline:
     """Mock pipeline that supports async with."""
@@ -161,6 +165,20 @@ class MockPipeline:
         pass
 
 
+# Store original AuthService.__init__ before any patches are applied
+# This will be used by strict_redis to restore real rate limiting behavior
+_original_auth_init = None
+
+
+def _get_original_auth_init():
+    """Get the original AuthService.__init__ method."""
+    global _original_auth_init
+    if _original_auth_init is None:
+        import mkobi.services.auth_service as auth_service_module
+        _original_auth_init = auth_service_module.AuthService.__init__
+    return _original_auth_init
+
+
 @pytest.fixture(autouse=True)
 def _auto_mock_redis(monkeypatch):
     """Auto-mock Redis client for all tests to avoid requiring a real Redis server.
@@ -171,6 +189,9 @@ def _auto_mock_redis(monkeypatch):
     tests don't break. Tests that need real rate limiting behavior should
     use the strict_redis fixture.
     """
+    # Ensure we capture the original __init__ before patching
+    _ = _get_original_auth_init()
+
     mock_redis_client = MockRedis()
 
     import mkobi.core.redis_client as redis_client_module
@@ -185,7 +206,6 @@ def _auto_mock_redis(monkeypatch):
     monkeypatch.setattr(redis_client_module, "get_redis_client", mock_get_redis_client)
 
     # Patch the rate limiter instances in data_service
-    from mkobi.core.security import AsyncRateLimiter
     import mkobi.services.data_service as data_service_module
 
     data_service_module._upload_rate_limiter = AsyncRateLimiter(mock_redis_client)
@@ -193,7 +213,7 @@ def _auto_mock_redis(monkeypatch):
     # Patch auth service rate limiter to always allow (backward compatibility)
     import mkobi.services.auth_service as auth_service_module
 
-    original_init = auth_service_module.AuthService.__init__
+    original_init = _get_original_auth_init()
 
     def patched_init(self, *args, **kwargs):
         original_init(self, *args, **kwargs)
@@ -213,8 +233,6 @@ def mock_redis(monkeypatch):
     Opt-in fixture - only use when rate limiting should be explicitly
     bypassed. Applies a patched AuthService that always allows login attempts.
     """
-    from mkobi.core.security import AsyncRateLimiter
-
     mock_redis_client = MockRedis()
 
     # Patch get_async_redis_client to return mock
@@ -256,8 +274,6 @@ def strict_redis(monkeypatch):
     — the AsyncRateLimiter will actually count attempts and block excess
     requests.
     """
-    from mkobi.core.security import AsyncRateLimiter
-
     mock_redis_client = MockRedis()
 
     # Patch get_async_redis_client to return mock
@@ -273,7 +289,14 @@ def strict_redis(monkeypatch):
 
     data_service_module._upload_rate_limiter = AsyncRateLimiter(mock_redis_client)
 
-    # Auth service uses real rate limiting behavior - do NOT patch check_rate_limit
+    # Restore real rate limiting behavior by patching AuthService.__init__
+    # to use the original implementation (not the always-True patched version)
+    import mkobi.services.auth_service as auth_service_module
+
+    original_init = _get_original_auth_init()
+    monkeypatch.setattr(auth_service_module.AuthService, "__init__", original_init)
+
+    yield mock_redis_client
 
 
 @pytest.fixture(scope="session")

@@ -1,0 +1,56 @@
+id: TASK_003_update_page_title
+
+title: Update page title in frontend/index.html
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+type: implementation
+
+description: >
+  Replace the Vite default placeholder title "frontend" with
+  "mkobi BI Dashboard" in the HTML entry point.
+
+goals:
+  - Update browser tab title to show application name
+  - Improve UX professionalism
+
+files:
+  - path: frontend/index.html
+    targets:
+      - type: html_tag
+        name: title
+    semantic_anchors:
+      find:
+        - type: html_tag
+          value: <title>frontend</title>
+
+changes:
+  - action: update_code
+    description: Replace placeholder title with application name
+    target: frontend/index.html
+    code_hint: |
+      <!-- Before: -->
+      <title>frontend</title>
+
+      <!-- After: -->
+      <title>mkobi BI Dashboard</title>
+
+acceptance_criteria:
+  - Browser tab shows "mkobi BI Dashboard" when viewing the app
+  - No functional changes to application behavior
+
+risks:
+  - None: pure content change
+
+tests_to_run:
+  - command: npm run build
+    workdir: frontend
+    purpose: Verify build succeeds with updated title
+
+estimated_effort: trivial
+
+risk_level: minimal

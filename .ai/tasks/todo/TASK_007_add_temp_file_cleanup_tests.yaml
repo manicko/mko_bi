@@ -1,0 +1,83 @@
+id: TASK_007_add_temp_file_cleanup_tests
+
+title: Add temp file cleanup verification tests for upload processing
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_004_fix_test_upload_too_large
+  - TASK_008_delete_harmful_test
+  - TASK_009_rewrite_empty_password_test
+  - TASK_010_fix_misleading_test_names
+
+type: implementation
+
+description: >
+  Add tests that verify temp files are cleaned up from upload_temp_dir after
+  upload processing completes. The production code has cleanup_task_files() in
+  file_cleanup.py, but no test asserts it's called. Per SPEC.md, temp files
+  must be deleted after processing.
+
+goals:
+  - Add test that uploads a file and verifies temp file is deleted after processing
+  - Verify cleanup_task_files is called during/after processing
+  - Test both successful processing and error scenarios
+
+files:
+  - path: tests/test_upload_api.py
+    targets:
+      - type: class
+        name: TestTempFileCleanup
+    semantic_anchors:
+      insert_after:
+        - type: class
+          value: TestUploadCSV
+
+changes:
+  - action: add_code
+    description: Add TestTempFileCleanup class verifying temp file deletion after upload processing
+    target: tests/test_upload_api.py
+    code_hint: |
+      class TestTempFileCleanup:
+          @pytest.mark.asyncio
+          async def test_temp_file_deleted_after_successful_upload(
+              self, async_client, auth_headers, tmp_path
+          ):
+              """Verify temp file is removed from upload_temp_dir after processing."""
+              # Create a test CSV file
+              # Upload via POST /upload/{dashboard_id}
+              # Wait for processing to complete
+              # Assert file no longer exists in upload_temp_dir
+              ...
+
+          @pytest.mark.asyncio
+          async def test_cleanup_task_files_called_during_processing(
+              self, async_client, auth_headers, mocker
+          ):
+          """Verify cleanup_task_files is invoked after processing."""
+              # Patch file_cleanup.cleanup_task_files
+              # Upload a file
+              # Assert cleanup_task_files was called
+          ...
+
+acceptance_criteria:
+  - TestTempFileCleanup class exists with at least 2 test methods
+  - All new tests pass
+  - Tests verify files are removed from disk after processing
+  - Tests verify cleanup_task_files is called
+
+risks:
+  - Medium: Processing is async (background task); test may need to wait/poll
+  - Low: upload_temp_dir path must be correctly referenced from config
+
+tests_to_run:
+  - command: uv run pytest tests/test_upload_api.py::TestTempFileCleanup -v
+    purpose: Verify new temp file cleanup tests pass
+  - command: uv run pytest tests/test_upload_api.py -v
+    purpose: Verify all upload tests pass
+
+estimated_effort: medium
+
+risk_level: medium
