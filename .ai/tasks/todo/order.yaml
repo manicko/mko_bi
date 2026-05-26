@@ -1,0 +1,200 @@
+# Execution Order — Docker & Runtime Environment Audit Findings
+# Generated: 2026-05-25
+# Source: .ai/audit/validated/audit_validated_findings_001.md
+#
+# Rollout Phases:
+#   Phase 0: Unblock Application (blocking — app cannot start)
+#   Phase 1: Security Critical (immediate, after Phase 0)
+#   Phase 2: Infrastructure Hardening (next sprint)
+#   Phase 3: Operational Improvement (when convenient)
+
+tasks:
+
+  # ── Phase 0: Unblock Application ──────────────────────────────────
+  - id: TASK_001_finding_003b_retry_db_connection
+    phase: 0
+    depends_on: []
+
+  - id: TASK_002_verify_finding_003b_retry_db_connection
+    phase: 0
+    depends_on:
+      - TASK_001_finding_003b_retry_db_connection
+
+  # ── Phase 1: Security Critical ────────────────────────────────────
+  - id: TASK_003_finding_001_jwt_secret_enforcement
+    phase: 1
+    depends_on:
+      - TASK_002_verify_finding_003b_retry_db_connection
+
+  - id: TASK_004_verify_finding_001_jwt_secret_enforcement
+    phase: 1
+    depends_on:
+      - TASK_003_finding_001_jwt_secret_enforcement
+
+  - id: TASK_005_finding_002_db_password_enforcement
+    phase: 1
+    depends_on:
+      - TASK_004_verify_finding_001_jwt_secret_enforcement
+
+  - id: TASK_006_verify_finding_002_db_password_enforcement
+    phase: 1
+    depends_on:
+      - TASK_005_finding_002_db_password_enforcement
+
+  - id: TASK_007_finding_003_admin_creds_enforcement
+    phase: 1
+    depends_on:
+      - TASK_006_verify_finding_002_db_password_enforcement
+
+  - id: TASK_008_verify_finding_003_admin_creds_enforcement
+    phase: 1
+    depends_on:
+      - TASK_007_finding_003_admin_creds_enforcement
+
+  - id: TASK_009_finding_005_swagger_redoc_conditional
+    phase: 1
+    depends_on:
+      - TASK_008_verify_finding_003_admin_creds_enforcement
+
+  - id: TASK_010_verify_finding_005_swagger_redoc_conditional
+    phase: 1
+    depends_on:
+      - TASK_009_finding_005_swagger_redoc_conditional
+
+  - id: TASK_011_finding_010_app_password_enforcement
+    phase: 1
+    depends_on:
+      - TASK_010_verify_finding_005_swagger_redoc_conditional
+
+  - id: TASK_012_verify_finding_010_app_password_enforcement
+    phase: 1
+    depends_on:
+      - TASK_011_finding_010_app_password_enforcement
+
+  # ── Phase 2: Infrastructure Hardening ─────────────────────────────
+  - id: TASK_013_finding_006_dockerfile_healthcheck
+    phase: 2
+    depends_on:
+      - TASK_012_verify_finding_010_app_password_enforcement
+
+  - id: TASK_014_verify_finding_006_dockerfile_healthcheck
+    phase: 2
+    depends_on:
+      - TASK_013_finding_006_dockerfile_healthcheck
+
+  - id: TASK_015_finding_007_dev_deps_removal
+    phase: 2
+    depends_on:
+      - TASK_014_verify_finding_006_dockerfile_healthcheck
+
+  - id: TASK_016_verify_finding_007_dev_deps_removal
+    phase: 2
+    depends_on:
+      - TASK_015_finding_007_dev_deps_removal
+
+  - id: TASK_017_finding_008_uv_version_pin
+    phase: 2
+    depends_on:
+      - TASK_016_verify_finding_007_dev_deps_removal
+
+  - id: TASK_018_verify_finding_008_uv_version_pin
+    phase: 2
+    depends_on:
+      - TASK_017_finding_008_uv_version_pin
+
+  - id: TASK_019_finding_009_cors_origins_templating
+    phase: 2
+    depends_on:
+      - TASK_018_verify_finding_008_uv_version_pin
+
+  - id: TASK_020_verify_finding_009_cors_origins_templating
+    phase: 2
+    depends_on:
+      - TASK_019_finding_009_cors_origins_templating
+
+  - id: TASK_021_finding_013_nginx_ssl_fix
+    phase: 2
+    depends_on:
+      - TASK_020_verify_finding_009_cors_origins_templating
+
+  - id: TASK_022_verify_finding_013_nginx_ssl_fix
+    phase: 2
+    depends_on:
+      - TASK_021_finding_013_nginx_ssl_fix
+
+  - id: TASK_023_finding_014_nginx_security_headers
+    phase: 2
+    depends_on:
+      - TASK_022_verify_finding_013_nginx_ssl_fix
+
+  - id: TASK_024_verify_finding_014_nginx_security_headers
+    phase: 2
+    depends_on:
+      - TASK_023_finding_014_nginx_security_headers
+
+  # ── Phase 3: Operational Improvement ───────────────────────────────
+  - id: TASK_025_finding_004_auto_migrate_true
+    phase: 3
+    depends_on:
+      - TASK_024_verify_finding_014_nginx_security_headers
+
+  - id: TASK_026_verify_finding_004_auto_migrate_true
+    phase: 3
+    depends_on:
+      - TASK_025_finding_004_auto_migrate_true
+
+  - id: TASK_027_finding_011_test_compose_race
+    phase: 3
+    depends_on:
+      - TASK_026_verify_finding_004_auto_migrate_true
+
+  - id: TASK_028_verify_finding_011_test_compose_race
+    phase: 3
+    depends_on:
+      - TASK_027_finding_011_test_compose_race
+
+  - id: TASK_029_finding_012_dev_override_templating
+    phase: 3
+    depends_on:
+      - TASK_028_verify_finding_011_test_compose_race
+
+  - id: TASK_030_verify_finding_012_dev_override_templating
+    phase: 3
+    depends_on:
+      - TASK_029_finding_012_dev_override_templating
+
+  - id: TASK_031_finding_015_nginx_service_organization
+    phase: 3
+    depends_on:
+      - TASK_030_verify_finding_012_dev_override_templating
+
+  - id: TASK_032_verify_finding_015_nginx_service_organization
+    phase: 3
+    depends_on:
+      - TASK_031_finding_015_nginx_service_organization
+
+  - id: TASK_033_finding_016_import_path_docs
+    phase: 3
+    depends_on:
+      - TASK_032_verify_finding_015_nginx_service_organization
+
+  - id: TASK_034_verify_finding_016_import_path_docs
+    phase: 3
+    depends_on:
+      - TASK_033_finding_016_import_path_docs
+
+# ── Dependency Graph Summary ──────────────────────────────────────────
+#
+# Phase 0: TASK_001 → TASK_002
+# Phase 1: TASK_002 → TASK_003 → TASK_004 → TASK_005 → TASK_006 → TASK_007 → TASK_008
+#          → TASK_009 → TASK_010 → TASK_011 → TASK_012
+# Phase 2: TASK_012 → TASK_013 → TASK_014 → TASK_015 → TASK_016 → TASK_017 → TASK_018
+#          → TASK_019 → TASK_020 → TASK_021 → TASK_022 → TASK_023 → TASK_024
+# Phase 3: TASK_024 → TASK_025 → TASK_026 → TASK_027 → TASK_028 → TASK_029 → TASK_030
+#          → TASK_031 → TASK_032 → TASK_033 → TASK_034
+#
+# All tasks are sequential within each phase. No parallel execution groups
+# because each implementation task must be verified before the next begins.
+#
+# Total: 34 tasks (17 implementation + 17 verification)
+# Circular dependencies: NONE

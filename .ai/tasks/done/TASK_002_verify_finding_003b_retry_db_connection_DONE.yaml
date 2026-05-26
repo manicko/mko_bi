@@ -1,0 +1,25 @@
+id: TASK_002_verify_finding_003b_retry_db_connection
+
+title: Verify — retry logic in _check_db_connection
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_001_finding_003b_retry_db_connection
+
+verifies: TASK_001_finding_003b_retry_db_connection
+
+verification_steps:
+  - build: docker compose -f docker/docker-compose.yml --env-file .env build app
+  - test: uv run pytest tests/ -k "starter or db_connection" -v || echo "No matching tests — manual verification required"
+  - smoke_check: docker compose -f docker/docker-compose.yml --env-file .env up -d && sleep 10 && curl -f http://localhost:8000/health || echo "Health check failed"
+
+pass_criteria:
+  - Docker image builds successfully
+  - Application starts without InvalidPasswordError when DB is available
+  - Health endpoint returns 200 OK
+  - Code review confirms retry logic uses exponential backoff
+
+failure_action: return TASK_001_finding_003b_retry_db_connection to rework

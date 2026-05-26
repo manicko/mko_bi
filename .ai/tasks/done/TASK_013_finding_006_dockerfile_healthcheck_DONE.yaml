@@ -1,0 +1,52 @@
+id: TASK_013_finding_006_dockerfile_healthcheck
+
+title: Add HEALTHCHECK instruction to Dockerfile prod stage
+
+type: implementation
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_012_verify_finding_010_app_password_enforcement
+
+description: >
+  The Dockerfile has no HEALTHCHECK instruction in any stage. Health checks are only configured
+  at the compose level. If the image is run without compose (Kubernetes, ECS, manual docker run),
+  no health check exists. Add HEALTHCHECK to the prod stage.
+
+goals:
+  - Add HEALTHCHECK instruction to prod stage of Dockerfile
+  - Use curl to check /health endpoint
+  - Interval: 30s, timeout: 5s, retries: 3
+
+files:
+  - path: docker/Dockerfile
+    targets:
+      - type: dockerfile_stage
+        name: prod
+    semantic_anchors:
+      insert_before:
+        type: dockerfile_instruction
+        value: CMD
+    changes:
+      - action: add_code
+        description: Add HEALTHCHECK instruction before CMD in prod stage
+        code_hint: |
+          HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+            CMD curl -f http://localhost:8000/health || exit 1
+
+acceptance_criteria:
+  - HEALTHCHECK instruction present in prod stage
+  - curl is available in prod image (already installed via base stage)
+  - Docker image builds successfully
+
+tests_to_run:
+  - docker compose -f docker/docker-compose.yml --env-file .env build app
+
+risk_level: low
+
+rollout_notes: >
+  Requires curl in prod image (already present via base stage). Compose-level health check
+  can be kept or removed (Dockerfile HEALTHCHECK takes precedence).

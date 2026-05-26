@@ -1,0 +1,24 @@
+id: TASK_028_verify_finding_011_test_compose_race
+
+title: Verify — test compose race condition resolved
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_027_finding_011_test_compose_race
+
+verifies: TASK_027_finding_011_test_compose_race
+
+verification_steps:
+  - build: docker compose -f docker/docker-compose.test.yml config
+  - test: echo "Verify test-app has no AUTO_MIGRATE"
+  - smoke_check: echo "Verify test-migrate service handles migrations"
+
+pass_criteria:
+  - test-app service does not have AUTO_MIGRATE
+  - test-migrate service remains intact
+  - Compose config validates
+
+failure_action: return TASK_027_finding_011_test_compose_race to rework

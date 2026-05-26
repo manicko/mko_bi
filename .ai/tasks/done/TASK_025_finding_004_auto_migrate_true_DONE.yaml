@@ -1,0 +1,55 @@
+id: TASK_025_finding_004_auto_migrate_true
+
+title: Set AUTO_MIGRATE=true in docker-compose.yml app service
+
+type: implementation
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_024_verify_finding_014_nginx_security_headers
+
+description: >
+  docker-compose.yml sets AUTO_MIGRATE=false for the app service, relying on a separate
+  migrate service. This creates unnecessary complexity: two migration mechanisms, potential
+  for silent failure if migrate service fails. The advisory lock in DatabaseStarter already
+  prevents race conditions. Setting AUTO_MIGRATE=true simplifies deployment while
+  maintaining safety.
+
+goals:
+  - Set AUTO_MIGRATE=true in app service environment
+  - Advisory lock in DatabaseStarter prevents concurrent migration race conditions
+  - Simplify deployment to single migration mechanism
+
+files:
+  - path: docker/docker-compose.yml
+    targets:
+      - type: compose_service
+        name: app
+    semantic_anchors:
+      within_block:
+        type: compose_key
+        value: environment
+    changes:
+      - action: replace_value
+        description: Change AUTO_MIGRATE from false to true
+        old_value: AUTO_MIGRATE: "false"
+        new_value: AUTO_MIGRATE: "true"
+
+acceptance_criteria:
+  - AUTO_MIGRATE=true in app service
+  - Application starts and applies migrations via advisory lock
+  - Migrate service can be kept as no-op (succeeds immediately if migrations already applied)
+
+tests_to_run:
+  - docker compose -f docker/docker-compose.yml --env-file .env config
+  - docker compose -f docker/docker-compose.yml --env-file .env up -d && sleep 15 && curl -f http://localhost:8000/health
+
+risk_level: low
+
+rollout_notes: >
+  Low risk: advisory lock already exists in codebase. Should be tested in staging to verify
+  the advisory lock works correctly with concurrent startup. The separate migrate service
+  can be kept — it will simply succeed immediately if migrations are already applied.

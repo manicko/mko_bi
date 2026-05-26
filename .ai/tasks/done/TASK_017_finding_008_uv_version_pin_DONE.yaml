@@ -1,0 +1,53 @@
+id: TASK_017_finding_008_uv_version_pin
+
+title: Pin uv version in Dockerfile using ARG UV_VERSION
+
+type: implementation
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_016_verify_finding_007_dev_deps_removal
+
+description: >
+  docker/Dockerfile installs uv via unpinned curl pipe to shell (curl | sh). The version is
+  not pinned, so builds are not reproducible. Pin uv version using ARG UV_VERSION.
+
+goals:
+  - Add ARG UV_VERSION to Dockerfile
+  - Use pinned version in uv installer URL
+  - Ensure reproducible builds
+
+files:
+  - path: docker/Dockerfile
+    targets:
+      - type: dockerfile_stage
+        name: base
+    semantic_anchors:
+      insert_before:
+        type: function_call
+        value: curl -LsSf https://astral.sh/uv/install.sh
+    changes:
+      - action: add_code
+        description: Add ARG UV_VERSION before uv installation
+        code_hint: |
+          ARG UV_VERSION=0.7.12
+      - action: modify_code
+        description: Use pinned version in installer URL
+        code_hint: |
+          RUN curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh
+
+acceptance_criteria:
+  - ARG UV_VERSION defined in Dockerfile
+  - Installer URL uses ${UV_VERSION} variable
+  - Image builds successfully with pinned version
+
+tests_to_run:
+  - docker compose -f docker/docker-compose.yml --env-file .env build app
+
+risk_level: low
+
+rollout_notes: >
+  Low risk: only affects build-time tooling. Verify pinned version is compatible with uv.lock format.

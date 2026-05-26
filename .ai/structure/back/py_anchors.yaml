@@ -2532,12 +2532,25 @@
   value: DatabaseStarterConfig
   stable_hash: f0f494a2
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: 9065a0d7
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: range
+  stable_hash: 9065a0d7
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
 - id: c9f0f404
   symbol_path:
   - DatabaseStarter
   type: function_call
   value: text
   stable_hash: c9f0f404
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: 1d1f75d4
+  symbol_path:
+  - DatabaseStarter
+  type: return_statement
+  stable_hash: 1d1f75d4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
 - id: c76c607f
   symbol_path:

@@ -23,6 +23,7 @@ RUN npm run build
 
 # -----------------------------------------------------------------------------
 # Stage: base - Stable Python 3.12 on Debian Bookworm (FAST mirrors)
+# Includes build tools for dev/test stages
 # -----------------------------------------------------------------------------
 FROM python:3.12-slim-bookworm AS base
 
@@ -38,15 +39,49 @@ RUN rm -f /etc/apt/sources.list.d/*.sources && \
     echo "deb http://${DEBIAN_MIRROR}/debian-security bookworm-security main" >> /etc/apt/sources.list && \
     echo "deb http://${DEBIAN_MIRROR}/debian bookworm-updates main" >> /etc/apt/sources.list
 
-# Install system deps
+# Install system deps (build-essential and libpq-dev for compilation)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv via official installer
-RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+# Install uv via official installer (pinned version for reproducibility)
+ARG UV_VERSION=0.11.16
+RUN curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh
+ENV PATH="/root/.local/bin:${PATH}"
+
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup --system app && adduser --system --group app
+
+# -----------------------------------------------------------------------------
+# Stage: prod-base - Minimal runtime base for production
+# Contains only runtime dependencies (no build tools)
+# -----------------------------------------------------------------------------
+FROM python:3.12-slim-bookworm AS prod-base
+
+ARG DEBIAN_MIRROR=deb.debian.org
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+# Configure Debian mirror
+RUN rm -f /etc/apt/sources.list.d/*.sources && \
+    echo "deb http://${DEBIAN_MIRROR}/debian bookworm main" > /etc/apt/sources.list && \
+    echo "deb http://${DEBIAN_MIRROR}/debian-security bookworm-security main" >> /etc/apt/sources.list && \
+    echo "deb http://${DEBIAN_MIRROR}/debian bookworm-updates main" >> /etc/apt/sources.list
+
+# Install only runtime dependencies (libpq5 for PostgreSQL, curl for healthcheck)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv via official installer (pinned version for reproducibility)
+ARG UV_VERSION=0.11.16
+RUN curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh
 ENV PATH="/root/.local/bin:${PATH}"
 
 WORKDIR /app
@@ -112,7 +147,7 @@ CMD ["pytest", "tests/", "-v"]
 # -----------------------------------------------------------------------------
 # Stage: prod - Production (DEFAULT target - faster rebuilds)
 # -----------------------------------------------------------------------------
-FROM base AS prod
+FROM prod-base AS prod
 
 COPY pyproject.toml uv.lock README.md ./
 COPY src/ ./src/
@@ -134,5 +169,8 @@ RUN mkdir -p /app/data/uploads /app/data/logs /app/data/tmp_uploads && \
 USER app
 
 EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
 
 CMD ["uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "4"]

@@ -135,8 +135,8 @@ def create_app() -> FastAPI:
         description="BI Dashboard System API",
         version="1.0.0",
         debug=config.debug,
-        docs_url="/docs",
-        redoc_url="/redoc",
+        docs_url=None if config.environment == EnvironmentEnum.PRODUCTION else "/docs",
+        redoc_url=None if config.environment == EnvironmentEnum.PRODUCTION else "/redoc",
         lifespan=lifespan,
     )
 

@@ -1,0 +1,61 @@
+id: TASK_015_finding_007_dev_deps_removal
+
+title: Remove build-essential and libpq-dev from prod image
+
+type: implementation
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_014_verify_finding_006_dockerfile_healthcheck
+
+description: >
+  docker/Dockerfile installs build-essential and libpq-dev in the base stage, which is
+  inherited by prod. These are compile-time dependencies. The prod stage only needs libpq5
+  (runtime shared library). Restructure to keep build deps out of prod.
+
+goals:
+  - Remove build-essential and libpq-dev from prod image
+  - Keep libpq5 and curl in prod image
+  - Reduce prod image size and attack surface
+
+files:
+  - path: docker/Dockerfile
+    targets:
+      - type: dockerfile_stage
+        name: base
+      - type: dockerfile_stage
+        name: prod
+    semantic_anchors:
+      modify_within:
+        type: dockerfile_instruction
+        value: RUN apt-get install
+    changes:
+      - action: restructure
+        description: >
+          Option A: Move build-essential and libpq-dev to a dedicated builder stage,
+          create a clean prod-base with only libpq5 and curl.
+          Option B: Add a prod-base stage between base and prod that installs only runtime deps.
+        code_hint: |
+          # In prod stage, replace inherited base with minimal runtime deps:
+          RUN apt-get update && apt-get install -y --no-install-recommends \
+              libpq5 curl \
+              && rm -rf /var/lib/apt/lists/*
+
+acceptance_criteria:
+  - Prod image does not contain build-essential or libpq-dev
+  - Prod image contains libpq5 and curl
+  - Application starts and connects to PostgreSQL successfully
+  - Image size reduced
+
+tests_to_run:
+  - docker compose -f docker/docker-compose.yml --env-file .env build app
+  - docker compose -f docker/docker-compose.yml --env-file .env up -d && curl -f http://localhost:8000/health
+
+risk_level: medium
+
+rollout_notes: >
+  Requires Dockerfile restructuring. Must verify all prod dependencies work with libpq5 only.
+  Test rebuilt image thoroughly before production deployment.

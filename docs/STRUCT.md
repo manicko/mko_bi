@@ -28,6 +28,8 @@ C:\PY_DEV\MKOBI
 |   |   +---project
 |   |   +---tests
 |   |   \---validated
+|   |           audit_validated_findings_001.md
+|   |           
 |   +---builders
 |   |   |   build.bat
 |   |   |   
@@ -75,12 +77,51 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
+|   |   |       TASK_001_finding_003b_retry_db_connection_DONE.yaml
+|   |   |       TASK_002_verify_finding_003b_retry_db_connection_DONE.yaml
+|   |   |       TASK_003_finding_001_jwt_secret_enforcement_DONE.yaml
+|   |   |       TASK_004_verify_finding_001_jwt_secret_enforcement_DONE.yaml
+|   |   |       TASK_005_finding_002_db_password_enforcement_DONE.yaml
+|   |   |       TASK_006_verify_finding_002_db_password_enforcement_DONE.yaml
+|   |   |       TASK_007_finding_003_admin_creds_enforcement_DONE.yaml
+|   |   |       TASK_008_verify_finding_003_admin_creds_enforcement_DONE.yaml
+|   |   |       TASK_009_finding_005_swagger_redoc_conditional_DONE.yaml
+|   |   |       TASK_010_verify_finding_005_swagger_redoc_conditional_DONE.yaml
+|   |   |       TASK_011_finding_010_app_password_enforcement_DONE.yaml
+|   |   |       TASK_012_verify_finding_010_app_password_enforcement_DONE.yaml
+|   |   |       TASK_013_finding_006_dockerfile_healthcheck_DONE.yaml
+|   |   |       TASK_014_verify_finding_006_dockerfile_healthcheck_DONE.yaml
+|   |   |       TASK_015_finding_007_dev_deps_removal_DONE.yaml
+|   |   |       TASK_016_verify_finding_007_dev_deps_removal_DONE.yaml
+|   |   |       TASK_017_finding_008_uv_version_pin_DONE.yaml
+|   |   |       TASK_018_verify_finding_008_uv_version_pin_DONE.yaml
+|   |   |       TASK_019_finding_009_cors_origins_templating_DONE.yaml
+|   |   |       TASK_020_verify_finding_009_cors_origins_templating_DONE.yaml
+|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
+|   |   |       order.yaml
+|   |   |       TASK_021_finding_013_nginx_ssl_fix.yaml
+|   |   |       TASK_022_verify_finding_013_nginx_ssl_fix.yaml
+|   |   |       TASK_023_finding_014_nginx_security_headers.yaml
+|   |   |       TASK_024_verify_finding_014_nginx_security_headers.yaml
+|   |   |       TASK_025_finding_004_auto_migrate_true.yaml
+|   |   |       TASK_026_verify_finding_004_auto_migrate_true.yaml
+|   |   |       TASK_027_finding_011_test_compose_race.yaml
+|   |   |       TASK_028_verify_finding_011_test_compose_race.yaml
+|   |   |       TASK_029_finding_012_dev_override_templating.yaml
+|   |   |       TASK_030_verify_finding_012_dev_override_templating.yaml
+|   |   |       TASK_031_finding_015_nginx_service_organization.yaml
+|   |   |       TASK_032_verify_finding_015_nginx_service_organization.yaml
+|   |   |       TASK_033_finding_016_import_path_docs.yaml
+|   |   |       TASK_034_verify_finding_016_import_path_docs.yaml
+|   |   |       
 |   |   \---validation
+|   |           tasks_validated_findings_001.md
+|   |           
 |   \---templates
 |           decision.md
 |           ui-brand.md
@@ -4134,6 +4175,7 @@ C:\PY_DEV\MKOBI
 |           12958775000513637759
 |           13393548723153612342
 |           13721529446913284213
+|           1376855041015071554
 |           13949329209897281892
 |           13979636886595267432
 |           14448297638087247601
@@ -19371,6 +19413,7 @@ C:\PY_DEV\MKOBI
 |           upload_fe483881-0415-4616-ba62-ce6529f66e80_test.txt
 |           
 +---docker
+|   |   .env
 |   |   docker-compose.override.yml
 |   |   docker-compose.test.yml
 |   |   docker-compose.yml

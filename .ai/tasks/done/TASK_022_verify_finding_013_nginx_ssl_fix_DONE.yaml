@@ -1,0 +1,30 @@
+id: TASK_022_verify_finding_013_nginx_ssl_fix
+
+title: Verify — nginx port 443 mapping removed
+
+type: verification
+
+status: done
+
+depends_on:
+  - TASK_021_finding_013_nginx_ssl_fix
+
+verifies: TASK_021_finding_013_nginx_ssl_fix
+
+verification_steps:
+  - build: docker compose -f docker/docker-compose.yml --env-file .env config
+  - test: echo "Verify nginx service ports"
+  - smoke_check: echo "Only port 80 mapped for nginx"
+
+pass_criteria:
+  - docker-compose.yml nginx service only maps port 80
+  - No "443:443" in nginx service definition
+  - Compose config validates
+
+verification_result:
+  - nginx service has only "80:80" port mapping (line 173 in yaml)
+  - No "443:443" present in nginx service
+  - docker compose config validated successfully
+  - All pass_criteria satisfied
+
+failure_action: return TASK_021_finding_013_nginx_ssl_fix to rework

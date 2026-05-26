@@ -18,7 +18,7 @@ services:
       DATABASE__DBNAME: bidb
       DATABASE__PASSWORD: ${DATABASE__PASSWORD:-postgres}
       JWT__ALGORITHM: HS256
-      JWT__SECRET_KEY: dev-secret-key-for-local-development
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
     depends_on:
       db:
         condition: service_healthy
@@ -57,10 +57,10 @@ services:
       DATABASE__DBNAME: bidb
       DATABASE__TEST_DBNAME: bidb_test
       JWT__ALGORITHM: HS256
-      JWT__SECRET_KEY: dev-secret-key-for-local-development
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
       # Admin credentials (valid email format required)
-      ADMIN_USERNAME: admin@example.com
-      ADMIN_PASSWORD: admin@example.com
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin@example.com}
       LOGGING__LEVEL: DEBUG
       AUTO_MIGRATE: "false"
     volumes:
@@ -80,9 +80,9 @@ services:
     profiles: []
     environment:
       DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-postgres}
-      JWT__SECRET_KEY: dev-secret-key-for-local-development
-      ADMIN_USERNAME: admin@example.com
-      ADMIN_PASSWORD: admin@example.com
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin@example.com}
 
   db:
     # Expose port for local development tools

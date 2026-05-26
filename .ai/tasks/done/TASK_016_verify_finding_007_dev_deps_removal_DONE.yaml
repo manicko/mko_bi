@@ -1,0 +1,25 @@
+id: TASK_016_verify_finding_007_dev_deps_removal
+
+title: Verify — dev dependencies removed from prod image
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_015_finding_007_dev_deps_removal
+
+verifies: TASK_015_finding_007_dev_deps_removal
+
+verification_steps:
+  - build: docker compose -f docker/docker-compose.yml --env-file .env build app
+  - test: docker compose -f docker/docker-compose.yml --env-file .env up -d && sleep 10 && curl -f http://localhost:8000/health
+  - smoke_check: echo "Verify no build-essential in image: docker run <image> dpkg -l | grep build-essential should be empty"
+
+pass_criteria:
+  - Image builds successfully
+  - Application starts and health check passes
+  - build-essential not present in prod image
+  - libpq5 present in prod image
+
+failure_action: return TASK_015_finding_007_dev_deps_removal to rework

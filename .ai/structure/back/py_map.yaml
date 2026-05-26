@@ -311,6 +311,7 @@
   - urllib.parse
   - alembic
   - alembic.config
+  - asyncpg.exceptions
   - sqlalchemy
   - sqlalchemy.engine
   - sqlalchemy.ext.asyncio

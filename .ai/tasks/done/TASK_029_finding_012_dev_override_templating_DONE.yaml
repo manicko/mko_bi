@@ -1,0 +1,63 @@
+id: TASK_029_finding_012_dev_override_templating
+
+title: Template JWT__SECRET_KEY and admin credentials in docker-compose.override.yml
+
+type: implementation
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_028_verify_finding_011_test_compose_race
+
+description: >
+  docker-compose.override.yml hardcodes JWT__SECRET_KEY, ADMIN_USERNAME, and ADMIN_PASSWORD
+  instead of using template variables. This means the override always overrides any .env value.
+  Use ${VAR:-default} patterns for consistency with base compose, allowing .env override.
+
+goals:
+  - Use template patterns for JWT__SECRET_KEY in override
+  - Use template patterns for admin credentials in override
+  - Allow .env to override dev defaults
+
+files:
+  - path: docker/docker-compose.override.yml
+    targets:
+      - type: env_var_reference
+        name: JWT__SECRET_KEY
+      - type: env_var_reference
+        name: ADMIN_USERNAME
+      - type: env_var_reference
+        name: ADMIN_PASSWORD
+    semantic_anchors:
+      env_var_pattern: JWT__SECRET_KEY: dev-secret-key-for-local-development
+      env_var_pattern: ADMIN_USERNAME: admin@example.com
+      env_var_pattern: ADMIN_PASSWORD: admin@example.com
+    changes:
+      - action: replace_value
+        description: Template JWT__SECRET_KEY with default
+        old_value: JWT__SECRET_KEY: dev-secret-key-for-local-development
+        new_value: JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
+      - action: replace_value
+        description: Template admin username with default
+        old_value: ADMIN_USERNAME: admin@example.com
+        new_value: ADMIN_USERNAME: ${ADMIN_USERNAME:-admin@example.com}
+      - action: replace_value
+        description: Template admin password with default
+        old_value: ADMIN_PASSWORD: admin@example.com
+        new_value: ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin@example.com}
+
+acceptance_criteria:
+  - All three values use ${VAR:-default} pattern in override
+  - .env can now override dev defaults
+  - Compose config validates
+
+tests_to_run:
+  - docker compose -f docker/docker-compose.yml --env-file .env -f docker/docker-compose.override.yml config
+
+risk_level: low
+
+rollout_notes: >
+  Zero risk: only affects development environment. Improves consistency and allows
+  .env override in development.

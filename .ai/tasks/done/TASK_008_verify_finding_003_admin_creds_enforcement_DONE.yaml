@@ -1,0 +1,24 @@
+id: TASK_008_verify_finding_003_admin_creds_enforcement
+
+title: Verify — admin credentials enforcement and config.py validation
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_007_finding_003_admin_creds_enforcement
+
+verifies: TASK_007_finding_003_admin_creds_enforcement
+
+verification_steps:
+   - build: ADMIN_USERNAME=testuser ADMIN_PASSWORD=testpass JWT__SECRET_KEY=test DATABASE__PASSWORD=test docker compose -f docker/docker-compose.yml --env-file .env config
+   - test: uv run pytest tests/ -k "admin or credential or config" -v || echo "No matching tests"
+   - smoke_check: echo "Verify compose fails without admin credentials"
+
+pass_criteria:
+  - Config succeeds with admin credentials provided
+  - Config fails without admin credentials
+  - Config.py rejects admin@example.com in production mode
+
+failure_action: return TASK_007_finding_003_admin_creds_enforcement to rework

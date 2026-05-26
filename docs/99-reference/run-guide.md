@@ -123,7 +123,7 @@ uv run alembic upgrade head
 ### Quick Start (Development)
 
 ```bash
-uv run uvicorn mkobi.main:app --reload
+uv run uvicorn src.mkobi.main:app --reload
 ```
 
 The application will be available at: http://127.0.0.1:8000

@@ -1,0 +1,25 @@
+id: TASK_026_verify_finding_004_auto_migrate_true
+
+title: Verify — AUTO_MIGRATE=true in app service
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_025_finding_004_auto_migrate_true
+
+verifies: TASK_025_finding_004_auto_migrate_true
+
+verification_steps:
+  - build: docker compose -f docker/docker-compose.yml --env-file .env build app
+  - test: docker compose -f docker/docker-compose.yml --env-file .env up -d && sleep 15 && curl -f http://localhost:8000/health
+  - smoke_check: echo "Verify AUTO_MIGRATE=true in app service environment"
+
+pass_criteria:
+  - Config validates
+  - Application starts successfully
+  - Migrations are applied via advisory lock
+  - Health check passes
+
+failure_action: return TASK_025_finding_004_auto_migrate_true to rework

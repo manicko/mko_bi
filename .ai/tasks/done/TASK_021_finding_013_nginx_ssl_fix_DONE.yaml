@@ -1,0 +1,51 @@
+id: TASK_021_finding_013_nginx_ssl_fix
+
+title: Remove misleading port 443 mapping from docker-compose.yml (no SSL in nginx.conf)
+
+type: implementation
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_020_verify_finding_009_cors_origins_templating
+
+description: >
+  docker-compose.yml maps port 443 (- "443:443") but nginx.conf has no SSL server block —
+  only a listen 80 server block. Port 443 is mapped but nothing listens there with TLS.
+  This is misleading and causes connections to fail or hang. Remove the 443 port mapping.
+
+goals:
+  - Remove port 443 mapping from nginx service in docker-compose.yml
+  - Clarify that SSL must be added intentionally with proper certificate management
+
+files:
+  - path: docker/docker-compose.yml
+    targets:
+      - type: compose_service
+        name: nginx
+    semantic_anchors:
+      within_block:
+        type: compose_key
+        value: ports
+    changes:
+      - action: remove_code
+        description: Remove the "443:443" port mapping from nginx service
+        code_hint: |
+          # Remove: - "443:443"
+          # Keep:   - "80:80"
+
+acceptance_criteria:
+  - Port 443 mapping removed from nginx service
+  - Port 80 mapping retained
+  - Compose config validates successfully
+
+tests_to_run:
+  - docker compose -f docker/docker-compose.yml --env-file .env config
+
+risk_level: low
+
+rollout_notes: >
+  Zero risk: removes misleading configuration. SSL should be added later with proper
+  certificate management (Let's Encrypt, etc.), not as a partial configuration.

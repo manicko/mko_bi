@@ -1,0 +1,48 @@
+id: TASK_033_finding_016_import_path_docs
+
+title: Update documentation to reflect src/ layout import path
+
+type: implementation
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_032_verify_finding_015_nginx_service_organization
+
+description: >
+  docker-compose.override.yml uses src.mkobi.main:app while documentation examples show
+  mkobi.main:app. The src/ layout requires src.mkobi.main:app when PYTHONPATH includes /app.
+  Both prod and dev use the same path, which is correct. No code change needed — update
+  documentation to reflect the actual src/ layout import path.
+
+goals:
+  - Update any documentation that shows mkobi.main:app to use src.mkobi.main:app
+  - Ensure docs match the actual src/ layout used in the codebase
+
+files:
+  - path: docs/
+    targets:
+      - type: documentation
+        name: deployment documentation
+    semantic_anchors:
+      text_pattern: mkobi.main:app
+    changes:
+      - action: replace_value
+        description: Update import path in documentation to match src/ layout
+        old_value: mkobi.main:app
+        new_value: src.mkobi.main:app
+
+acceptance_criteria:
+  - Documentation uses src.mkobi.main:app consistently
+  - No code changes needed — documentation-only fix
+
+tests_to_run:
+  - echo "Documentation-only change — verify updated files"
+
+risk_level: low
+
+rollout_notes: >
+  Documentation-only change. No functional impact. The code itself is consistent
+  between dev and prod.

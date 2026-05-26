@@ -52,7 +52,7 @@ This guide covers deployment options for the mkobi BI Dashboard system, from loc
 2. **Backend:**
    ```bash
    uv sync
-   uv run uvicorn mkobi.main:app --reload --port 8000
+   uv run uvicorn src.mkobi.main:app --reload --port 8000
    ```
 
 3. **Frontend (separate terminal):**

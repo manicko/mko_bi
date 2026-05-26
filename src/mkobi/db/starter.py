@@ -15,6 +15,7 @@ from urllib.parse import urlparse, urlunparse
 
 from alembic import command
 from alembic.config import Config
+from asyncpg.exceptions import InvalidPasswordError
 from sqlalchemy import text
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
@@ -71,18 +72,42 @@ class DatabaseStarter:
         self._config = config or DatabaseStarterConfig()
         self._main_engine: AsyncEngine | None = None
 
-    async def _check_db_connection(self) -> None:
-        """Check database connectivity with timeout."""
+    async def _check_db_connection(self, max_retries: int = 5) -> None:
+        """Check database connectivity with timeout and retry."""
         assert self._main_engine is not None
-        try:
-            async with asyncio.timeout(DB_CONNECT_TIMEOUT):
-                async with self._main_engine.connect() as conn:
-                    await conn.execute(text("SELECT 1"))
-        except TimeoutError:
-            raise DatabaseNotFoundError("Database connection timed out") from None
-        except Exception as e:
-            logger.error("Main database not accessible: %s", e)
-            raise DatabaseNotFoundError(f"Main database not accessible: {e}") from e
+        for attempt in range(max_retries):
+            try:
+                async with asyncio.timeout(DB_CONNECT_TIMEOUT):
+                    async with self._main_engine.connect() as conn:
+                        await conn.execute(text("SELECT 1"))
+                return
+            except TimeoutError:
+                if attempt < max_retries - 1:
+                    delay = 2 ** attempt
+                    logger.warning(
+                        "DB connection attempt %d/%d timed out. Retrying in %ds...",
+                        attempt + 1, max_retries, delay,
+                    )
+                    await asyncio.sleep(delay)
+                else:
+                    raise DatabaseNotFoundError(
+                        "Database connection timed out"
+                    ) from None
+            except (InvalidPasswordError, OSError) as e:
+                if attempt < max_retries - 1:
+                    delay = 2 ** attempt
+                    logger.warning(
+                        "DB connection attempt %d/%d failed: %s. Retrying in %ds...",
+                        attempt + 1, max_retries, e, delay,
+                    )
+                    await asyncio.sleep(delay)
+                else:
+                    raise
+            except Exception as e:
+                logger.error("Main database not accessible: %s", e)
+                raise DatabaseNotFoundError(
+                    f"Main database not accessible: {e}"
+                ) from e
 
     async def _get_alembic_revision(self) -> str | None:
         """Get current alembic revision from database.

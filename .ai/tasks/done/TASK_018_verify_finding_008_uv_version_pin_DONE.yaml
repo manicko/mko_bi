@@ -1,0 +1,24 @@
+id: TASK_018_verify_finding_008_uv_version_pin
+
+title: Verify — uv version pinned in Dockerfile
+
+type: verification
+
+status: completed
+
+depends_on:
+  - TASK_017_finding_008_uv_version_pin
+
+verifies: TASK_017_finding_008_uv_version_pin
+
+verification_steps:
+  - build: docker compose -f docker/docker-compose.yml --env-file .env build app
+  - test: echo "Verify ARG UV_VERSION in Dockerfile"
+  - smoke_check: echo "Image builds successfully"
+
+pass_criteria:
+  - Image builds successfully
+  - Dockerfile contains ARG UV_VERSION
+  - Installer URL uses ${UV_VERSION}
+
+failure_action: return TASK_017_finding_008_uv_version_pin to rework

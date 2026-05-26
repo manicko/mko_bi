@@ -99,7 +99,6 @@ services:
       ADMIN_USERNAME: ${ADMIN_USERNAME:-admin@example.com}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin@example.com}
       LOGGING__LEVEL: WARNING
-      AUTO_MIGRATE: "true"
       RECREATE_TEST_DB: "true"
     ports:
       - "8001:8000"

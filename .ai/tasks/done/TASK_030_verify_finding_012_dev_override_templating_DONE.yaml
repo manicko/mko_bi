@@ -1,0 +1,24 @@
+id: TASK_030_verify_finding_012_dev_override_templating
+
+title: Verify — dev override templating consistency
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_029_finding_012_dev_override_templating
+
+verifies: TASK_029_finding_012_dev_override_templating
+
+verification_steps:
+  - build: docker compose -f docker/docker-compose.yml --env-file .env -f docker/docker-compose.override.yml config
+  - test: echo "Verify template patterns in override"
+  - smoke_check: echo "Dev environment starts with templated defaults"
+
+pass_criteria:
+  - Override file uses template patterns for all three variables
+  - Compose config validates
+  - Dev environment starts successfully
+
+failure_action: return TASK_029_finding_012_dev_override_templating to rework

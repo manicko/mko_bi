@@ -35,7 +35,7 @@ Make sure your application is running:
 docker-compose up -d
 
 # Or directly
-uv run uvicorn mkobi.main:app --host 0.0.0.0 --port 8000 --reload
+uv run uvicorn src.mkobi.main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ### 2. Open Swagger UI

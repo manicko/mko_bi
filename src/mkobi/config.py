@@ -14,8 +14,8 @@ from mkobi.models.enums import EnvironmentEnum, FileExtensionEnum, MimeTypeEnum
 
 logger = logging.getLogger(__name__)
 
-WEAK_USERNAMES = {"admin", "administrator", "root", "test", "user"}
-WEAK_PASSWORDS = {"password", "123456", "admin", "secret", "test"}
+WEAK_USERNAMES = {"admin", "administrator", "root", "test", "user", "admin@example.com"}
+WEAK_PASSWORDS = {"password", "123456", "admin", "secret", "test", "admin@example.com"}
 
 
 def _set_nested_value(data: dict[str, Any], key: str, value: Any) -> None:

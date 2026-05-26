@@ -38,10 +38,10 @@ This project uses a multi-stage Dockerfile with the following targets:
 
 ```bash
 # Build and start production environment
-docker compose -f docker/docker-compose.yml up -d
+docker compose -f docker/docker-compose.yml --env-file .env up -d
 
 # Or with specific target
-DOCKER_TARGET=prod docker compose -f docker/docker-compose.yml up -d
+DOCKER_TARGET=prod docker compose -f docker/docker-compose.yml --env-file .env up -d
 ```
 
 ### Development
@@ -49,14 +49,14 @@ DOCKER_TARGET=prod docker compose -f docker/docker-compose.yml up -d
 ```bash
 # Start development environment with hot reload
 # Note: docker-compose.override.yml is auto-loaded by Docker Compose
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml up -d
+docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml --env-file .env up -d
 
 # Frontend dev server runs at http://localhost:5173 (Vite hot reload)
 # Backend API runs at http://localhost:8000
 
 # View logs
-docker compose -f docker/docker-compose.yml logs -f app
-docker compose -f docker/docker-compose.yml logs -f frontend
+docker compose -f docker/docker-compose.yml --env-file .env logs -f app
+docker compose -f docker/docker-compose.yml --env-file .env logs -f frontend
 ```
 
 ### Testing
@@ -131,18 +131,27 @@ docker build -f docker/Dockerfile --build-arg UV_VERSION=v0.1.0 --target prod -t
 
 ## Environment Variables
 
-Environment variables are loaded from `.env` in the project root. For local development, `docker-compose.override.yml` provides sensible defaults.
+Environment variables are loaded from `.env` in the project root. All Docker Compose commands require `--env-file .env` flag to load them, because `docker-compose.yml` uses `${VAR:?error}` enforcement patterns that prevent startup without explicit values.
+
+**Required variables in `.env`:**
+- `DATABASE__PASSWORD` — PostgreSQL superuser password
+- `MKOBI_APP_PASSWORD` — Application database role password
+- `JWT__SECRET_KEY` — JWT signing secret
+- `ADMIN_USERNAME` — Initial admin username
+- `ADMIN_PASSWORD` — Initial admin password
+
+For local development, `docker-compose.override.yml` provides sensible defaults for non-sensitive variables.
 
 Key variables:
-- `ENV` - Environment (development/test/production)
-- `DATABASE__HOST` - Database host
-- `DATABASE__PASSWORD` - Database password (defaults to `postgres` for development)
-- `JWT__SECRET_KEY` - JWT secret key (defaults to `dev-secret-key-for-local-development` for development)
-- `LOGGING__LEVEL` - Logging level (DEBUG/INFO/WARNING/ERROR)
-- `AUTO_MIGRATE` - Auto-run database migrations (true/false)
-- `RECREATE_TEST_DB` - Recreate test database on startup (true/false)
+- `ENV` — Environment (development/test/production)
+- `DATABASE__HOST` — Database host
+- `DATABASE__PASSWORD` — Database password
+- `JWT__SECRET_KEY` — JWT secret key
+- `LOGGING__LEVEL` — Logging level (DEBUG/INFO/WARNING/ERROR)
+- `AUTO_MIGRATE` — Auto-run database migrations (true/false)
+- `RECREATE_TEST_DB` — Recreate test database on startup (true/false)
 
-**Security Note:** For production deployments, always set `DATABASE__PASSWORD` and `JWT__SECRET_KEY` to strong, unique values in your `.env` file.
+**Security Note:** For production deployments, always set `DATABASE__PASSWORD`, `MKOBI_APP_PASSWORD`, and `JWT__SECRET_KEY` to strong, unique values. The compose file uses `${VAR:?error}` enforcement — services will fail to start without these variables explicitly set.
 
 ## Volumes
 
@@ -160,25 +169,25 @@ Key variables:
 
 ```bash
 # View running containers
-docker compose -f docker/docker-compose.yml ps
+docker compose -f docker/docker-compose.yml --env-file .env ps
 
 # View logs
-docker compose -f docker/docker-compose.yml logs -f app
+docker compose -f docker/docker-compose.yml --env-file .env logs -f app
 
 # Execute command in running container
-docker compose -f docker/docker-compose.yml exec app uv run pytest tests/
+docker compose -f docker/docker-compose.yml --env-file .env exec app uv run pytest tests/
 
 # Open shell in container
-docker compose -f docker/docker-compose.yml exec app /bin/bash
+docker compose -f docker/docker-compose.yml --env-file .env exec app /bin/bash
 
 # Stop all services
-docker compose -f docker/docker-compose.yml down
+docker compose -f docker/docker-compose.yml --env-file .env down
 
 # Stop and remove volumes
-docker compose -f docker/docker-compose.yml down -v
+docker compose -f docker/docker-compose.yml --env-file .env down -v
 
 # Rebuild after changes
-docker compose -f docker/docker-compose.yml up -d --build
+docker compose -f docker/docker-compose.yml --env-file .env up -d --build
 ```
 
 ## Troubleshooting
@@ -186,29 +195,34 @@ docker compose -f docker/docker-compose.yml up -d --build
 ### Database connection issues
 ```bash
 # Check if database is ready
-docker compose -f docker/docker-compose.yml exec db pg_isready -U postgres
+docker compose -f docker/docker-compose.yml --env-file .env exec db pg_isready -U postgres
 
 # View database logs
-docker compose -f docker/docker-compose.yml logs db
+docker compose -f docker/docker-compose.yml --env-file .env logs db
 ```
 
 ### Migration issues
 ```bash
 # Run migrations manually
-docker compose -f docker/docker-compose.yml exec app uv run alembic upgrade head
+docker compose -f docker/docker-compose.yml --env-file .env exec app uv run alembic upgrade head
 
 # Check migration status
-docker compose -f docker/docker-compose.yml exec app uv run alembic current
+docker compose -f docker/docker-compose.yml --env-file .env exec app uv run alembic current
 ```
 
 ### Frontend not loading
 ```bash
 # Rebuild frontend
-docker compose -f docker/docker-compose.yml exec app npm run build --prefix frontend
+docker compose -f docker/docker-compose.yml --env-file .env exec app npm run build --prefix frontend
 
 # Check nginx logs (if using)
-docker compose -f docker/docker-compose.yml logs nginx
+docker compose -f docker/docker-compose.yml --env-file .env logs nginx
 ```
+
+### "required variable X is missing a value" error
+This means Docker Compose cannot find your `.env` file. Ensure you:
+1. Have a `.env` file in the project root (copy from `.env.example`)
+2. Pass `--env-file .env` flag with every `docker compose -f docker/docker-compose.yml` command
 
 ## Security Notes
 
@@ -226,6 +240,23 @@ docker compose -f docker/docker-compose.yml logs nginx
 
 ## File Structure
 
+```
+.
+├── .dockerignore                   # Build context file (at root)
+├── .env                            # Environment variables (gitignored, required for --env-file)
+├── .env.example                    # Template for .env
+├── docker/
+│   ├── docker-compose.yml            # Production compose file
+│   ├── docker-compose.override.yml   # Development overrides
+│   ├── docker-compose.test.yml       # Test environment
+│   ├── Dockerfile                  # Multi-stage Dockerfile
+│   ├── init-scripts/
+│   │   └── 01-create-app-role.sh     # DB initialization
+│   └── nginx/
+│       └── nginx.conf                # Nginx configuration (optional)
+└── frontend/
+    ├── dist/                         # Built frontend (generated)
+    ...
 ```
 .
 ├── .dockerignore                   # Build context file (at root)

@@ -1,0 +1,23 @@
+id: TASK_034_verify_finding_016_import_path_docs
+
+title: Verify — documentation updated for src/ layout import path
+
+type: verification
+
+status: verified
+
+depends_on:
+  - TASK_033_finding_016_import_path_docs
+
+verifies: TASK_033_finding_016_import_path_docs
+
+verification_steps:
+  - build: echo "Documentation-only change — no build needed"
+  - test: echo "Verify docs use src.mkobi.main:app"
+  - smoke_check: echo "No code changes — documentation-only"
+
+pass_criteria:
+  - Documentation references src.mkobi.main:app consistently
+  - No functional code changes made
+
+failure_action: return TASK_033_finding_016_import_path_docs to rework
