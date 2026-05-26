@@ -1,0 +1,23 @@
+id: TASK_028_verify_v023_clean_env_fixture
+
+title: "Verify V-023: clean_env fixture restores env vars"
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_027_v023_clean_env_fixture
+
+verifies: TASK_027_v023_clean_env_fixture
+
+verification_steps:
+  - build: "ruff check tests/test_config.py"
+  - test: "pytest tests/test_config.py -x --tb=short"
+  - smoke_check: "python -c \"import pytest; print('pytest OK')\""
+
+pass_criteria:
+  - Config tests pass
+  - env_backup populated before yield
+
+failure_action: return TASK_027_v023_clean_env_fixture to rework

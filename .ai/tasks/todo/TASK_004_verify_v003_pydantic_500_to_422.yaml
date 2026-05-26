@@ -1,0 +1,24 @@
+id: TASK_004_verify_v003_pydantic_500_to_422
+
+title: "Verify V-003: Pydantic ValidationError returns 422"
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_003_v003_pydantic_500_to_422
+
+verifies: TASK_003_v003_pydantic_500_to_422
+
+verification_steps:
+  - build: "ruff check src/mkobi/app.py"
+  - test: "pytest tests/ -x --tb=short"
+  - smoke_check: "python -c \"from mkobi.app import create_app; print('app loads OK')\""
+
+pass_criteria:
+  - ruff check passes
+  - All existing tests pass
+  - App module loads without import errors
+
+failure_action: return TASK_003_v003_pydantic_500_to_422 to rework

@@ -1,0 +1,59 @@
+id: TASK_019_v011_get_config_singleton_mutation
+
+title: "V-014: Replace _get_config() singleton mutation with clean pattern"
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_018_verify_v010_cors_wildcard_production
+
+description: >
+  _get_config() in src/mkobi/core/security.py mutates the config singleton when
+  JWT__SECRET_KEY is not set: config.jwt.secret_key = "test_fallback_secret_key_...".
+  This causes potential cross-test contamination if tests run in different order.
+  Not a production issue (production always has JWT__SECRET_KEY set).
+
+goals:
+  - Replace direct singleton mutation with clear_config_cache() + get_config(reload=True)
+  - OR return a separate config instance for tests
+  - Ensure no cross-test contamination
+
+files:
+  - path: src/mkobi/core/security.py
+    targets:
+      - type: function
+        name: _get_config
+    semantic_anchors:
+      insert_after:
+        type: function_definition
+        value: "_get_config"
+      context: "Replace the fallback mutation block"
+
+changes:
+  - action: modify_code
+    description: >
+      In _get_config(), instead of mutating config.jwt.secret_key directly,
+      use a clean approach: either call clear_config_cache() and return
+      get_config(reload=True) with env override, or raise ValueError if
+      JWT__SECRET_KEY is not configured (since production always has it set).
+    anchor: "_get_config function body, fallback mutation block"
+
+acceptance_criteria:
+  - No direct mutation of config singleton
+  - Tests that need custom JWT config can do so without side effects
+  - Production behavior unchanged (secret key always configured)
+  - Existing tests pass
+
+tests_to_run:
+  - pytest tests/test_security.py tests/test_config.py -x --tb=short
+
+risk_level: low (test infrastructure fix, no production impact)
+
+source_findings:
+  - V-014
+  - R1-F010
+  - R3-MEDIUM-security
+
+estimated_effort: small

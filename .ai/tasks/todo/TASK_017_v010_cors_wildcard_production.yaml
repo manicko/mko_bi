@@ -1,0 +1,59 @@
+id: TASK_017_v010_cors_wildcard_production
+
+title: "V-010: Change CORS wildcard in production from warning to error"
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_016_verify_v008_raw_sql_fstrings
+
+description: >
+  src/mkobi/app.py: when "*" is in cors_origins in production, only a warning
+  is logged. The application starts with permissive CORS. This is risky because
+  a misconfigured production environment allows all origins without rejecting
+  startup.
+
+goals:
+  - Change logger.warning to logger.error for wildcard in production
+  - Raise ValueError to prevent startup with wildcard CORS in production
+  - OR add explicit opt-in flag for wildcard (e.g., ALLOW_WILDCARD_CORS=true)
+
+files:
+  - path: src/mkobi/app.py
+    targets:
+      - type: function
+        name: create_app
+    semantic_anchors:
+      insert_after:
+        type: function_call
+        value: "validate_cors_origins"
+      context: "CORS validation block at module level in create_app"
+
+changes:
+  - action: modify_code
+    description: >
+      In the CORS validation block within create_app(), change the wildcard
+      detection from logger.warning to logger.error and raise ValueError
+      unless an explicit opt-in environment variable is set.
+    anchor: "CORS wildcard validation in create_app function"
+
+acceptance_criteria:
+  - Application fails to start with wildcard CORS in production
+  - Clear error message guides developer to fix CORS configuration
+  - Development mode behavior unchanged (wildcard allowed with warning)
+  - ruff + mypy pass
+
+tests_to_run:
+  - ruff check src/mkobi/app.py
+  - pytest tests/ -x --tb=short
+
+risk_level: low (failure is intentional — prevents misconfiguration)
+
+source_findings:
+  - V-010
+  - R3-MEDIUM-cors
+  - R3-app-cors
+
+estimated_effort: small

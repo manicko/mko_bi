@@ -1,878 +1,1172 @@
-# Validated Audit Findings — Docker & Runtime Environment
+# Validated Audit Findings — mkobi BI Dashboard
 
-**Date:** 2026-05-25
-**Source Reports:** audit_report_001.md, audit_report_002.md
-**Scope:** Dockerfile, docker-compose files, nginx config, init scripts, .dockerignore, application config
-**Validator:** System Integrity Validation Agent
+**Date:** 2026-05-26
+**Validator:** OWL (Kilo Agent)
+**Input reports:**
+- `audit/project/audit_report_001.md` (362 lines, 10 findings)
+- `audit/project/audit_report_001_part1.md` (45 lines, summary only)
+- `audit/project/audit_report_003.md` (326 lines, 12 findings)
+- `audit/tests/audit_report_001.md` (321 lines, 22 findings)
+- `audit/tests/audit_report_002.md` (255 lines, 15 findings + infrastructure)
+
+**Validation method:** Source code verification + structural analysis + cross-report deduplication
 
 ---
 
-## Validation Summary
+## Executive Summary
 
-| Metric | Count |
+| Metric | Value |
 |--------|-------|
-| Total findings in source reports | 19 |
-| Validated (confirmed) | 14 |
-| Rejected (invalid/stale/speculative) | 4 |
-| Merged (duplicates across reports) | 2 unique findings merged |
-| Severity escalations confirmed | 3 (HIGH→CRITICAL) |
-| New findings from runtime analysis | 1 |
+| Total raw findings across all reports | ~59 |
+| After deduplication | 28 unique findings |
+| **Mandatory fixes** (security, data loss, correctness) | 5 |
+| **Advisory recommendations** (best practices, improvements) | 18 |
+| **Doc updates needed** | 3 |
+| **Rejected findings** | 4 |
+| **Merged into other findings** | ~27 |
 
 ---
 
-## Architecture Consistency Notes
+## Cross-Report Deduplication Map
 
-The audit scope is purely **infrastructure/deployment** — Docker, Compose, Nginx. No application-layer architecture changes are proposed. All validated findings are confined to the `docker/` directory and `src/mkobi/app.py` (one finding). The findings do not cross architectural boundaries (API → Service → Repository) and do not require dependency graph changes.
+Source report IDs are referenced as: `R1` = audit_report_001.md, `R3` = audit_report_003.md, `T1` = tests/audit_report_001.md, `T2` = tests/audit_report_002.md. `P1` = audit_report_001_part1.md (summary only, no unique IDs).
 
-**Rollout safety:** All validated findings are independent configuration changes. No circular dependencies detected. Changes can be applied in any order, with one exception: the `AUTO_MIGRATE` finding (FINDING-004) should be applied together with verification that the advisory lock mechanism works correctly.
+| Validated ID | Original IDs | Merged |
+|---|---|---|
+| V-001 | R1-F005, R3-HIGH-upload, R3-FileRec-upload | Temp file cleanup gap — 3 reports, same issue |
+| V-002 | R1-F002, R3-FileRec-processing_logs | Admin logs skip/limit vs page/page_size |
+| V-003 | R1-F001 | LoginForm bypasses useAuth hook |
+| V-004 | R1-F003 | Raw SQL f-strings in db/starter.py |
+| V-005 | R1-F004, R3-7Sidebar | Sidebar dead code |
+| V-006 | R3-HIGH-dashboards | Inline access checks in route handlers |
+| V-007 | R3-MEDIUM-pydantic, R3-app-pydantic | Pydantic ValidationError returns 500 |
+| V-008 | R3-MEDIUM-cors, R3-app-cors | CORS wildcard in production only warns |
+| V-009 | R3-MEDIUM-processing_status | ProcessingStatus SUCCESS/COMPLETED |
+| V-010 | R1-F006 | dashboard_service.get_dashboard type annotation |
+| V-011 | R1-F007, Merged into broader consistency | dashboard_service.create_dashboard commit pattern |
+| V-012 | R1-F008, R3-DOC-admin-registration | Registration request status filter missing |
+| V-013 | R1-F009, R3-data-filters | Data filters silently ignored |
+| V-014 | R1-F010, R3-MEDIUM-security | _get_config() singleton mutation |
+| V-015 | R3-LOW-process_file_endpoint | Hardcoded overwrite mode in process endpoint |
+| V-016 | R3-LOW-jsonb_upsert | JSONB UPSERT index compatibility |
+| V-017 | R3-LOW-di_inconsistency | Inconsistent DI pattern in route handlers |
+| V-018 | T2-FINDING0, R3-CRITICAL-docker | Test Docker: mkobi_app role missing |
+| V-019 | T1-Finding1, T2-F10 | JWT user_id type coercion in test_security |
+| V-020 | T1-Finding2, T2-F9 | AggregatedData chart_type test wrong reason |
+| V-021 | T1-Finding3, T1-F11, T2-F11 | Graph API coverage critically thin |
+| V-022 | T1-Finding4, T1-F12, T2-F6 | Duplicate storage_manager tests |
+| V-023 | T1-Finding5 | clean_env fixture backup bug |
+| V-024 | T1-Finding6, T2-F4 | Tests creating large real files |
+| V-025 | T1-Finding7, T2-F7 | test_deps viewer/admin misleading |
+| V-026 | T1-Finding8, T2-F3 | test_auth double flush |
+| V-027 | T1-F16/17 | Repository CRUD coverage gaps |
+| V-028 | T1-F19, T2-F13 | Data processing zero test coverage |
 
 ---
 
-## CRITICAL Findings
+## Part 1 — Mandatory Fixes
 
-### FINDING-001: Default JWT Secret Key in Docker Compose
+These findings must be addressed. They affect correctness, data integrity, operational reliability, or test suite viability.
 
-- **ID:** FINDING-001
-- **Title:** Default JWT__SECRET_KEY hardcoded in docker-compose.yml
-- **Severity:** CRITICAL
-- **Source:** audit_report_001.md (HIGH), audit_report_002.md (CRITICAL)
-- **Status:** VALIDATED — CONFIRMED
+---
+
+### V-001: Temp file cleanup gap on upload failure
+
+| Field | Value |
+|---|---|
+| **ID** | V-001 |
+| **Severity** | HIGH |
+| **Type** | [SPEC-DEVIATION] |
+| **Classification** | **MANDATORY** |
+| **Original IDs** | R1-F005, R3-HIGH-upload |
+| **Status** | CONFIRMED — deviates from spec requirement "temporary files after processing **must be removed**" |
 
 **Description:**
-`docker-compose.yml` lines 56, 92, 149 use `${JWT__SECRET_KEY:-dev-secret-key-for-local-development}`. If the environment variable is not set externally, all environments (including production) sign JWT tokens with a publicly known secret. No `${VAR:?error}` enforcement exists.
+The upload endpoint (`src/mkobi/api/routes/upload.py`, lines ~140-198) streams the uploaded file to a temporary file on disk. If `data_service.process_upload()` raises an exception after the temp file is written, no cleanup occurs. The file remains on disk indefinitely.
 
 **Impact:**
-- Complete authentication bypass in production if `.env` is not configured
-- Attackers can forge valid JWT tokens using the known default secret
-- Affects all services: app, migrate, rq-worker
+- Disk space leak on failed uploads. With a 100MB file limit, repeated failed uploads could exhaust disk space.
+- The spec explicitly states temp files must be removed after processing — this is a spec deviation.
 
-**Root Cause:**
-Missing enforcement pattern for production-critical secrets in the base compose file.
+**Affected modules:**
+- `src/mkobi/api/routes/upload.py` — `_upload_file_endpoint()`
+- `src/mkobi/services/file_processing.py` — `validate_file()`, `find_task_file()`
 
-**Affected Modules/Symbols:**
-- `docker/docker-compose.yml` — lines 56, 92, 149
-- `docker/docker-compose.override.yml` — line 60 (also hardcoded, not templated)
+**Affected symbols:**
+- `upload.py:_upload_file_endpoint`
+- `data_service:process_upload`
 
-**Recommendation:**
-Change to `${JWT__SECRET_KEY:?JWT__SECRET_KEY is required}` in the base compose file. In the override file, use `${JWT__SECRET_KEY:-dev-secret-key-for-local-development}` to allow `.env` override.
+**Root cause:**
+No `try/finally` block around the temp file lifecycle. The error handlers at lines 200-215 do not clean up `temp_file_path`.
 
-**Rollout Considerations:**
-- Must be coordinated with deployment process — ensure `.env` or CI/CD pipeline provides the secret
-- Zero-downtime: can be applied before next deployment
-- Rollback: revert to previous compose file
+**Fix target:** Code change (production code, not docs).
 
-**Validation Notes:**
-Confirmed by direct source inspection. The finding is technically correct and operationally critical. Severity escalation from HIGH to CRITICAL is justified — this is a direct security vulnerability.
+**Recommended fix:**
+Wrap the processing block in `try/finally`. In the `finally` block, check if `temp_file_path.exists()` and unlink it. Skip cleanup only if processing succeeded and the file was moved to its final location.
+
+**Semantic anchor stability:** HIGH — `_upload_file_endpoint` is a named FastAPI route handler. The `temp_file_path` variable and `data_service.process_upload()` call are stable insertion points.
+
+**Validation notes:** Source code confirmed. The finding is valid and the fix is well-scoped. This is a correctness/operational issue that directly impacts production reliability.
+
+**Dependency notes:** No dependencies on other findings. Can be fixed independently.
+
+**Effort:** Small (~15 lines of code)
 
 ---
 
-### FINDING-002: Default Database Password in Docker Compose
+### V-002: Test Docker environment — mkobi_app role missing (173 tests broken)
 
-- **ID:** FINDING-002
-- **Title:** Default DATABASE__PASSWORD hardcoded in docker-compose.yml
-- **Severity:** CRITICAL
-- **Source:** audit_report_001.md (HIGH), audit_report_002.md (CRITICAL)
-- **Status:** VALIDATED — CONFIRMED
+| Field | Value |
+|---|---|
+| **ID** | V-0018 |
+| **Severity** | CRITICAL |
+| **Type** | [SPEC-DEVIATION] |
+| **Classification** | **MANDATORY** |
+| **Original IDs** | T2-FINDING0, R3-CRITICAL-docker |
+| **Status** | CONFIRMED — 173 of 386 tests fail in Docker |
 
 **Description:**
-`docker-compose.yml` lines 21, 53, 85 use `${DATABASE__PASSWORD:-postgres}`. If not overridden, production uses a well-known database password.
+`docker/docker-compose.test.yml` does not mount the `init-scripts/` volume for the `test-db` service. The `1-create-app-role.sh` script never runs, so the `mkobi_app` database role does not exist. `DatabaseStarter.recreate_test_database()` (starter.py:232) attempts `GRANT CONNECT ON DATABASE bidb_test TO mkobi_app`, which fails because the role does not exist.
 
 **Impact:**
-- Database compromise if exposed to network
-- Affects both the postgres superuser and application-level access
+- 173 of 386 tests (44.8%) fail with `role "mkobi_app" does not exist`.
+- Every test using `sync_db_session`, `sync_client`, `authenticated_client`, or `test_user` fixtures is broken.
+- The test suite gives false confidence — infrastructure tests, integration tests, and API tests are all dead code in Docker.
 
-**Root Cause:**
-Missing enforcement pattern for database credentials.
+**Affected modules:**
+- `docker/docker-compose.test.yml`
+- `src/mkobi/db/starter.py` — `recreate_test_database()`
+- All 15 integration/API test files
 
-**Affected Modules/Symbols:**
-- `docker/docker-compose.yml` — lines 21, 53, 85
+**Affected symbols:**
+- `test-db` service in docker-compose.test.yml
+- `starter.py:recreate_test_database`
+- 173 test functions across 15 files
 
-**Recommendation:**
-Change to `${DATABASE__PASSWORD:?DATABASE__PASSWORD is required}`.
+**Root cause:**
+Missing volume mount `- ./docker/init-scripts:/docker-entrypoint-initdb.d:ro` on `test-db` service.
 
-**Rollout Considerations:**
-- Must ensure production deployment pipeline provides the password
-- No application code changes needed
+**Fix target:** Infrastructure/config change (docker-compose.test.yml).
 
-**Validation Notes:**
-Confirmed by direct source inspection. Severity escalation to CRITICAL is justified.
+**Recommended fix:**
+Add the init-scripts volume mount to the `test-db` service. This is the lowest-risk option and mirrors the production compose configuration.
+
+**Semantic anchor stability:** HIGH — `test-db` service definition in docker-compose is a stable target.
+
+**Validation notes:** Confirmed by live test execution. This is the single highest-impact fix — it immediately unblocks 173 tests.
+
+**Dependency notes:** Fix this FIRST before addressing any other test-related findings. All integration test analysis is blocked until this is resolved.
+
+**Effort:** Trivial (~2 lines in docker-compose.test.yml)
 
 ---
 
-### FINDING-003: Default Admin Credentials in Docker Compose
+### V-003: Pydantic ValidationError returns HTTP 500 instead of 422
 
-- **ID:** FINDING-003
-- **Title:** Default admin credentials in docker-compose.yml
-- **Severity:** CRITICAL
-- **Source:** audit_report_001.md (HIGH), audit_report_002.md (CRITICAL)
-- **Status:** VALIDATED — CONFIRMED
+| Field | Value |
+|---|---|
+| **ID** | V-007 |
+| **Severity** | MEDIUM |
+| **Type** | [BEST-PRACTICE] |
+| **Classification** | **MANDATORY** |
+| **Original IDs** | R3-MEDIUM-pydantic, R3-app-pydantic |
+| **Status** | CONFIRMED — verified in source |
 
 **Description:**
-`docker-compose.yml` lines 59, 95-96, 152-153 use `${ADMIN_USERNAME:-admin@example.com}` and `${ADMIN_PASSWORD:-admin@example.com}`. While `config.py` validates against weak credentials in production (via `validate_admin_credentials`), the compose file provides these as defaults, creating a false sense of safety.
+`src/mkobi/app.py` has a `pydantic_validation_exception_handler` that catches `pydantic.ValidationError` and returns HTTP 500. The adjacent `RequestValidationError` handler correctly returns 422. These two handlers should be consistent — both represent client input validation failures.
 
 **Impact:**
-- Production starts with known admin credentials if not overridden
-- The app-level validation in `config.py` (lines 17-18, `WEAK_USERNAMES`/`WEAK_PASSWORDS`) blocks `admin`/`admin` but NOT `admin@example.com`/`admin@example.com` — the default values bypass the weak credential check
+- Clients see "Internal Server Error" for validation problems, masking the real issue.
+- Masking validation failures as 500s makes debugging harder for API consumers.
+- Could trigger false alarms in monitoring/alerting systems.
 
-**Root Cause:**
-Default admin credentials exist in compose, and the app-level validation does not catch the specific default values.
+**Affected modules:**
+- `src/mkobi/app.py` — `pydantic_validation_exception_handler`
 
-**Affected Modules/Symbols:**
-- `docker/docker-compose.yml` — lines 59, 95-96, 152-153
-- `docker/docker-compose.override.yml` — lines 62-63 (hardcoded, not templated)
-- `src/mkobi/config.py` — `WEAK_USERNAMES`, `WEAK_PASSWORDS`, `validate_admin_credentials`
+**Affected symbols:**
+- `app.py:pydantic_validation_exception_handler`
 
-**Recommendation:**
-Remove default admin credentials from compose files. Use `${ADMIN_USERNAME:?ADMIN_USERNAME is required}` pattern. Additionally, extend `validate_admin_credentials` in `config.py` to reject `admin@example.com` as a username in production.
+**Root cause:**
+The handler was likely copied from a generic 500 handler and the status code was never corrected.
 
-**Rollout Considerations:**
-- Must ensure production deployment provides admin credentials via secrets
-- The `config.py` validation enhancement is a separate small change that should be bundled
+**Fix target:** Code change.
 
-**Validation Notes:**
-Confirmed by direct source inspection. Severity escalation to CRITICAL is justified. The interaction between compose defaults and incomplete app-level validation creates a real security gap.
+**Recommended fix:**
+Change status code from 500 to 422. Format errors consistently with the `RequestValidationError` handler.
+
+**Semantic anchor stability:** HIGH — `pydantic_validation_exception_handler` is a named exception handler with a unique signature. Stable insertion point.
+
+**Validation notes:** Source confirmed. The fix is a one-line change (status code). Risk is minimal — this changes error visibility semantics but doesn't affect business logic.
+
+**Dependency notes:** Independent. No prerequisites.
+
+**Effort:** Trivial (1 line)
 
 ---
 
-### FINDING-003B: mkobi_app Role Not Created or Password Out of Sync — Application Cannot Start
+### V-004: Data filters silently ignored in /data/aggregated endpoint
 
-- **ID:** FINDING-003B
-- **Title:** mkobi_app database role missing or password mismatch — app fails to connect to PostgreSQL
-- **Severity:** CRITICAL
-- **Source:** Runtime log analysis (new finding, not in original audit reports)
-- **Status:** VALIDATED — CONFIRMED by runtime evidence
+| Field | Value |
+|---|---|
+| **ID** | V-013 |
+| **Severity** | MEDIUM |
+| **Type** | [BEST-PRACTICE] |
+| **Classification** | **MANDATORY** |
+| **Original IDs** | R1-F009, R3-data-filters |
+| **Status** | CONFIRMED — filters parsed but discarded |
 
 **Description:**
-The application fails to start with `password authentication failed for user "mkobi_app"`. The error chain is:
-
-1. `docker-compose.yml` configures the app with `DATABASE__USER: mkobi_app` and `DATABASE__PASSWORD: ${MKOBI_APP_PASSWORD:-secure_password_placeholder}`
-2. The `mkobi_app` role is created by `docker/init-scripts/01-create-app-role.sh` which runs only on **first-time** PostgreSQL initialization (empty volume)
-3. If the `postgres_data` volume already exists (e.g., after `docker compose down` without `-v`, or after a restart), the init script does NOT run
-4. The role `mkobi_app` either does not exist in the database, or exists with a different password from a previous run
-5. The application has no retry/wait logic — it attempts one connection and crashes
-
-**Observed error:**
-```
-asyncpg.exceptions.InvalidPasswordError: password authentication failed for user "mkobi_app"
-→ DatabaseNotFoundError: Main database not accessible
-→ Application startup failed. Exiting.
-```
+`src/mkobi/api/routes/data.py` accepts a `filters` query parameter (JSON string), validates it with `json.loads()`, but the parsed result is never passed to `data_service.get_aggregated_data()`. The service call only passes `dashboard_id`, `graph_id`, and `db`. Filters are silently discarded.
 
 **Impact:**
-- Application cannot start — complete service outage
-- Occurs in any scenario where the PostgreSQL volume persists but the role is missing or has a wrong password
-- Common scenarios: volume recreated, password changed, first deployment to a new environment, Docker volume cleanup
-- No self-healing mechanism — requires manual intervention (drop volume, recreate role, or fix password)
+- Clients believing they are filtering data receive unfiltered results. This is a data correctness issue.
+- The filters parameter is advertised in the API but has no effect.
 
-**Root Cause:**
-The init script pattern (`/docker-entrypoint-initdb.d/`) is inherently fragile:
-- Scripts run only on first container initialization with an empty volume
-- No mechanism to update the role password when `MKOBI_APP_PASSWORD` changes
-- No idempotency on subsequent starts — the app assumes the role exists with the correct password
-- The app has no connection retry or role-creation fallback
+**Affected modules:**
+- `src/mkobi/api/routes/data.py` — `get_aggregated_data_endpoint()`
+- `src/mkobi/services/data_service.py` — `get_aggregated_data()`
 
-**Affected Modules/Symbols:**
-- `docker/docker-compose.yml` — lines 84-85 (DATABASE__USER/DATABASE__PASSWORD for app)
-- `docker/docker-compose.yml` — lines 16-23 (db service: POSTGRES_PASSWORD, MKOBI_APP_PASSWORD)
-- `docker/init-scripts/01-create-app-role.sh` — entire file (role creation logic)
-- `src/mkobi/db/starter.py` — `_check_db_connection()` (no retry, no role creation)
-- `src/mkobi/config.py` — `DatabaseSettings` (user defaults to `mkobi_app`)
+**Affected symbols:**
+- `data.py:get_aggregated_data_endpoint`
+- `data_service.py:get_aggregated_data`
 
-**Recommendation:**
+**Root cause:**
+The parsed filters variable is created but not forwarded to the service layer. Likely an incomplete implementation.
 
-The fix should address both the immediate startup failure and the long-term reliability:
+**Fix target:** Code change.
 
-**Short-term (immediate):** Add retry logic with exponential backoff to `_check_db_connection()` in `starter.py`. The app should retry 5-10 times with increasing delays before giving up. This handles the race condition where the app starts before the migrate service has completed.
+**Recommended fix:**
+Pass the parsed filters to `data_service.get_aggregated_data()` and implement filtering logic in the service layer (either at DB query level or in Polars).
 
-**Medium-term (robust):** Replace the init script pattern with an application-level role management approach:
-- On startup, the app (using admin credentials) should check if `mkobi_app` role exists and create/update it with the correct password
-- This is idempotent and works regardless of volume state
-- The init script can be kept as a fallback but should not be the sole mechanism
+**Semantic anchor stability:** HIGH — `get_aggregated_data_endpoint` is a named route handler. The service call is a stable insertion point.
 
-**Long-term (best):** Use a proper database migration tool for role management (e.g., a dedicated migration script that runs before Alembic, or integrate role setup into the Alembic migration pipeline).
+**Validation notes:** Source confirmed. This is a functional bug — the feature is documented but incomplete.
 
-**Rollout Considerations:**
-- Short-term fix (retry logic) is low-risk and can be deployed immediately
-- Medium-term fix requires the app to have admin credentials at startup (already available via `DATABASE__ADMIN_USER`/`DATABASE__ADMIN_PASSWORD`)
-- Must ensure the retry logic doesn't mask real connection issues (log each retry attempt)
-- The init script should NOT be removed until the application-level role management is in place and tested
+**Dependency notes:** Depends on defining the filter contract between route and service. Should be implemented atomically.
 
-**Validation Notes:**
-Confirmed by runtime log analysis. The error `password authentication failed for user "mkobi_app"` is a direct consequence of the fragile init script pattern. This is a **blocking issue** — the application cannot start in the current configuration. The finding is CRITICAL because it represents a complete service outage that requires manual intervention to resolve.
+**Effort:** Medium (route parameter passing + service layer filtering logic)
 
 ---
 
-## HIGH Findings
+### V-005: Inline access checks violate Clean Architecture
 
-### FINDING-004: AUTO_MIGRATE=false Creates Fragile Migration Pattern
-
-- **ID:** FINDING-004
-- **Title:** AUTO_MIGRATE=false in production creates fragile two-step migration process
-- **Severity:** HIGH
-- **Source:** audit_report_001.md (HIGH), audit_report_002.md (HIGH)
-- **Status:** VALIDATED — CONFIRMED (with nuance)
+| Field | Value |
+|---|---|
+| **ID** | V-006 |
+| **Severity** | HIGH |
+| **Type** | [SPEC-DEVIATION] |
+| **Classification** | **MANDATORY** |
+| **Original IDs** | R3-HIGH-dashboards |
+| **Status** | CONFIRMED — verified in source |
 
 **Description:**
-`docker-compose.yml` line 101 sets `AUTO_MIGRATE: "false"` for the app service. The deployment documentation (`docs/10-deployment/deployment.md` line 194) states `AUTO_MIGRATE=true` as the default. While line 196 of the same doc describes the separate migrate service pattern as valid, the current implementation creates unnecessary complexity.
+`src/mkobi/api/routes/dashboards.py` lines 661-697 (`get_dashboard_filters_endpoint`) and 872-917 (`get_dashboard_graphs_endpoint`) perform dashboard access checks inline by importing `check_dashboard_access` inside the endpoint function body. The same check is duplicated (10 lines each time). Meanwhile, `deps.py` already provides `require_dashboard_read_access` dependency that performs the same check.
 
 **Impact:**
-- If the migrate service fails silently, the app starts without migrations — no safety net
-- Two migration mechanisms (migrate service + AUTO_MIGRATE) create double responsibility
-- Operational complexity: operators must monitor both the migrate service exit code AND the app's migration state
-- The advisory lock mechanism (already implemented in `DatabaseStarter`) makes the separate migrate service redundant for single-instance deployments
+- Violates Clean Architecture (business logic in route handler instead of DI layer).
+- Duplicated access check logic — maintenance risk (change must be made in 3+ places).
+- Backend uses local imports instead of module-level imports (unconventional).
 
-**Root Cause:**
-The separate migrate service pattern was adopted without considering that `AUTO_MIGRATE=true` with advisory lock provides the same safety with simpler operations.
+**Affected modules:**
+- `src/mkobi/api/routes/dashboards.py` — `get_dashboard_filters_endpoint()`, `get_dashboard_graphs_endpoint()`
+- `src/mkobi/api/deps.py` — `require_dashboard_read_access` (already exists, should be used)
 
-**Affected Modules/Symbols:**
-- `docker/docker-compose.yml` — lines 101, 157
-- `src/mkobi/db/starter.py` — `DatabaseStarter` class (already has advisory lock)
+**Affected symbols:**
+- `dashboards.py:get_dashboard_filters_endpoint`
+- `dashboards.py:get_dashboard_graphs_endpoint`
+- `deps.py:require_dashboard_read_access`
 
-**Recommendation:**
-Set `AUTO_MIGRATE: "true"` in the app service. The advisory lock in `DatabaseStarter` prevents race conditions. This simplifies the deployment to a single migration mechanism while maintaining safety. The separate migrate service can be kept as a no-op or removed.
+**Root cause:**
+These two endpoints were likely created before the `require_dashboard_read_access` dependency was finalized, or the developer was unaware of its existence.
 
-**Rollout Considerations:**
-- Low risk: the advisory lock already exists in the codebase
-- Should be tested in staging to verify the advisory lock works correctly with concurrent startup
-- The migrate service can be kept (it will simply succeed immediately if migrations are already applied)
+**Fix target:** Code change.
 
-**Validation Notes:**
-The audit reports state the spec "requires" AUTO_MIGRATE=true. The actual documentation (deployment.md) describes both patterns as valid. However, from a **maintainability and operational simplicity** perspective, `AUTO_MIGRATE=true` with advisory lock is strictly better: fewer moving parts, no silent failure mode, same safety guarantees. The finding is validated not because the spec mandates it, but because it is the architecturally superior approach.
+**Recommended fix:**
+Replace inline access checks with `Depends(require_dashboard_read_access)` dependency (same pattern used by other endpoints in the same file). Remove inline imports. Move imports to module level.
+
+**Semantic anchor stability:** MEDIUM — The two endpoint functions are named and stable, but `dashboards.py` is 918 lines (over-sized). Consider extracting dashboard sub-endpoints to separate route files during this refactor.
+
+**Validation notes:** Source confirmed. The `require_dashboard_read_access` dependency already exists in deps.py with the correct logic. The fix is a straightforward replacement.
+
+**Dependency notes:** Independent.
+
+**Effort:** Small (~20 lines changed across 2 endpoints)
 
 ---
 
-### FINDING-005: Swagger UI and ReDoc Always Enabled
+## Part 2 — Advisory Recommended
 
-- **ID:** FINDING-005
-- **Title:** Swagger UI (/docs) and ReDoc (/redoc) always enabled, even in production
-- **Severity:** HIGH
-- **Source:** audit_report_002.md (HIGH) — new finding not in report 001
-- **Status:** VALIDATED — CONFIRMED
-
-**Description:**
-`src/mkobi/app.py` lines 138-139 set `docs_url="/docs"` and `redoc_url="/redoc"` unconditionally in the `create_app()` function. These endpoints expose the full API schema, endpoint structure, parameter details, and data models to anyone who can reach the server.
-
-**Impact:**
-- Information disclosure: attackers can map the entire API surface
-- Exposes internal data model names, field types, and validation rules
-- No authentication required on docs endpoints
-
-**Root Cause:**
-No environment-based conditional for documentation endpoints.
-
-**Affected Modules/Symbols:**
-- `src/mkobi/app.py` — `create_app()` function, lines 133-141
-
-**Recommendation:**
-Conditionally disable in production:
-```python
-docs_url=None if config.environment == EnvironmentEnum.PRODUCTION else "/docs",
-redoc_url=None if config.environment == EnvironmentEnum.PRODUCTION else "/redoc",
-```
-
-**Rollout Considerations:**
-- Isolated change in `create_app()` — no dependencies
-- `EnvironmentEnum.PRODUCTION` already exists in `src/mkobi/models/enums.py`
-- Zero risk: only affects documentation endpoint availability
-
-**Validation Notes:**
-Confirmed by direct source inspection. This is a clear security issue with a simple, safe fix. The `EnvironmentEnum` is already imported and used in the same function (line 126), so the fix is minimal and idiomatic.
+These findings represent recommended improvements that are not blocking but add long-term value.
 
 ---
 
-### FINDING-006: No HEALTHCHECK Instruction in Dockerfile
+### V-006: LoginForm bypasses useAuth hook — split auth state
 
-- **ID:** FINDING-006
-- **Title:** No HEALTHCHECK instruction in Dockerfile
-- **Severity:** HIGH (escalated from MEDIUM)
-- **Source:** audit_report_001.md (MEDIUM), audit_report_002.md (HIGH)
-- **Status:** VALIDATED — CONFIRMED
+| Field | Value |
+|---|---|
+| **ID** | V-003 |
+| **Severity** | MEDIUM |
+| **Type** | [SPEC-DEVIATION] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | R1-F001 |
 
 **Description:**
-The Dockerfile has no `HEALTHCHECK` instruction in any stage. Health checks are only configured at the compose level (`docker-compose.yml` lines 107-112). If the image is run without compose (Kubernetes, ECS, manual `docker run`), no health check exists.
+`LoginForm.tsx` calls `setToken(response.access_token)` and `navigate('/dashboards')` directly, bypassing the `useAuth().login()` method. The hook's internal user state is not updated after login.
 
 **Impact:**
-- Image is not self-contained for non-compose orchestrators
-- Kubernetes/ECS deployments cannot determine container health
-- Limits deployment portability
+- Header component may briefly show no user data after login.
+- Components depending on `useAuth().user` have stale null until next re-render triggers `getProfile()`.
+- ProtectedRoute works correctly because it reads from `getToken()`, not from hook state.
 
-**Root Cause:**
-Health check was only added at the compose level, not in the Dockerfile itself.
+**Affected modules:**
+- `frontend/src/features/auth/ui/LoginForm.tsx`
+- `frontend/src/features/auth/model/useAuth.ts`
 
-**Affected Modules/Symbols:**
-- `docker/Dockerfile` — prod stage (line 138)
+**Root cause:**
+LoginForm manages token storage locally instead of delegating to the auth hook.
 
-**Recommendation:**
-Add to the prod stage:
-```
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 CMD curl -f http://localhost:8000/health || exit 1
-```
-Note: requires `curl` in the prod image (already installed in base stage).
+**Fix target:** Code change.
 
-**Rollout Considerations:**
-- Requires `curl` in prod image (already present via base stage)
-- No application changes needed
-- Compose-level health check can be removed or kept (Dockerfile HEALTHCHECK takes precedence)
+**Recommended fix:**
+Refactor LoginForm to call `useAuth().login(credentials)` for consistent state management. The hook should handle token storage, profile fetch, and navigation.
 
-**Validation Notes:**
-Confirmed by direct source inspection. Severity escalation to HIGH is justified — this limits deployment portability and is a standard Dockerfile best practice.
+**Semantic anchor stability:** HIGH — `LoginForm` component and `useAuth` hook are named exports. Stable targets.
+
+**Dependency notes:** Low risk. The app currently works despite the split state (ProtectedRoute uses token directly).
+
+**Effort:** Small
 
 ---
 
-## MEDIUM Findings
+### V-007: Admin logs pagination uses skip/limit instead of page/page_size
 
-### FINDING-007: Dev Dependencies in Production Image
-
-- **ID:** FINDING-007
-- **Title:** build-essential and libpq-dev installed in base stage, inherited by prod
-- **Severity:** MEDIUM
-- **Source:** audit_report_001.md (MEDIUM), audit_report_002.md (MEDIUM)
-- **Status:** VALIDATED — CONFIRMED
+| Field | Value |
+|---|---|
+| **ID** | V-002 |
+| **Severity** | MEDIUM |
+| **Type** | [SPEC-DEVIATION] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | R1-F002, R3-FileRec-processing_logs |
 
 **Description:**
-`docker/Dockerfile` lines 42-46 install `build-essential` and `libpq-dev` in the `base` stage, which is inherited by `prod`. These are compile-time dependencies. The prod stage only needs `libpq5` (runtime shared library).
+Admin logs endpoint uses `skip/limit` query params instead of `page/page_size` as specified. `ProcessingLogFilter` model also uses `skip/limit`.
 
 **Impact:**
-- Increased prod image size (~100-200MB)
-- Increased attack surface (compilers, headers)
-- Slower image pulls and deployments
+- API interface diverges from spec. Functionally equivalent but different parameter names.
+- Minor breaking change for any client already using the old parameter names.
 
-**Root Cause:**
-System dependencies are installed in the shared `base` stage rather than being split between build-time and runtime needs.
+**Affected modules:**
+- `src/mkobi/api/routes/processing_logs.py`
+- `src/mkobi/models/processing_logs.py` — `ProcessingLogFilter`
 
-**Affected Modules/Symbols:**
-- `docker/Dockerfile` — base stage (lines 42-46), prod stage (line 115)
+**Fix target:** DECISION REQUIRED — Either align code with spec (page/page_size) or update spec to reflect current design (skip/limit). Given that skip/limit is a more standard API pattern, **recommendation: update spec**.
 
-**Recommendation:**
-Split system deps: keep `build-essential`/`libpq-dev` only in `base` for dev/test. Create a `prod-base` stage (or modify `prod`) that starts from a clean python:3.12-slim-bookworm and installs only `libpq5` and `curl`.
+**Semantic anchor stability:** HIGH
 
-**Rollout Considerations:**
-- Requires Dockerfile restructuring — moderate complexity
-- Must verify all prod dependencies work with `libpq5` only (they should — SQLAlchemy/asyncpg only need the runtime library)
-- Test the rebuilt image thoroughly before production deployment
-
-**Validation Notes:**
-Confirmed by direct source inspection. This is a well-known Docker best practice. The fix is straightforward but requires careful testing.
+**Effort:** Small (if aligning code) or trivial (if updating spec)
 
 ---
 
-### FINDING-008: uv Installed via Unpinned curl | sh
+### V-008: Raw SQL f-strings in db/starter.py
 
-- **ID:** FINDING-008
-- **Title:** uv installed via unpinned curl pipe to shell
-- **Severity:** MEDIUM
-- **Source:** audit_report_001.md (LOW), audit_report_002.md (MEDIUM)
-- **Status:** VALIDATED — CONFIRMED
+| Field | Value |
+|---|---|
+| **ID** | V-004 |
+| **Severity** | MEDIUM |
+| **Type** | [BEST-PRACTICE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | R1-F003 |
 
 **Description:**
-`docker/Dockerfile` line 49: `curl -LsSf https://astral.sh/uv/install.sh | sh`. The version is not pinned, so builds are not reproducible. Piping curl to sh is a security anti-pattern.
+Database names are interpolated via f-strings in raw SQL. Mitigated by regex validation (`^[a-zA-Z0-9_]+$`), but f-string SQL is an anti-pattern.
 
 **Impact:**
-- Non-reproducible builds: different uv versions may be installed at different times
-- Security risk: the installer script is executed without verification
-- Potential for supply chain attacks
+- Low risk due to validation. Defense-in-depth is adequate.
 
-**Root Cause:**
-No version pinning and no checksum verification for the uv installer.
+**Affected modules:**
+- `src/mkobi/db/starter.py`
 
-**Affected Modules/Symbols:**
-- `docker/Dockerfile` — line 49
+**Root cause:**
+Convenience choice. SQLAlchemy DDL constructs are verbose for database creation/drop.
 
-**Recommendation:**
-Pin uv version and use checksum verification:
-```dockerfile
-ARG UV_VERSION=0.7.12
-RUN curl -LsSf https://astral.sh/uv/${UV_VERSION}/install.sh | sh
-```
-Or use `pip install uv==${UV_VERSION}` in a prior step.
+**Fix target:** Code change (low priority).
 
-**Rollout Considerations:**
-- Low risk: only affects build-time tooling
-- Should verify the pinned version is compatible with the current `uv.lock` format
+**Recommended fix:**
+Use SQLAlchemy DDL constructs. Keep regex validation as defense-in-depth.
 
-**Validation Notes:**
-Confirmed by direct source inspection. Severity escalation from LOW to MEDIUM is justified — non-reproducible builds are a real operational concern.
+**Semantic anchor stability:** HIGH — `DatabaseStarter` class methods are stable.
+
+**Effort:** Small
 
 ---
 
-### FINDING-009: CORS_ORIGINS Hardcoded in Production Compose
+### V-009: Sidebar.tsx is dead code
 
-- **ID:** FINDING-009
-- **Title:** CORS_ORIGINS hardcoded to localhost in production compose
-- **Severity:** MEDIUM (escalated from LOW)
-- **Source:** audit_report_001.md (LOW), audit_report_002.md (MEDIUM)
-- **Status:** VALIDATED — CONFIRMED
+| Field | Value |
+|---|---|
+| **ID** | V-005 |
+| **Severity** | LOW |
+| **Type** | [BEST-PRACTICE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | R1-F004, R3-7Sidebar |
 
 **Description:**
-`docker-compose.yml` line 99: `CORS_ORIGINS: '["http://localhost:3000", "http://localhost:5173"]'`. This is hardcoded, not templated. If deployed to production without overriding, the API rejects all cross-origin requests from real frontends.
+`Sidebar.tsx` is defined, exported from barrel files, but never rendered in `AppLayout.tsx`. Spec confirms sidebar was replaced with top navigation (Header component).
 
 **Impact:**
-- Production deployment will have broken CORS unless explicitly overridden
-- No deployment-time enforcement
+- Dead code, slight bundle size increase, potential developer confusion.
 
-**Root Cause:**
-CORS_ORIGINS was hardcoded for development convenience without a template variable.
+**Affected modules:**
+- `frontend/src/shared/components/Layout/Sidebar.tsx`
+- `frontend/src/shared/components/Layout/index.ts` (barrel export)
+- `frontend/src/shared/components/index.ts` (barrel export)
 
-**Affected Modules/Symbols:**
-- `docker/docker-compose.yml` — line 99
+**Fix target:** Code deletion.
 
-**Recommendation:**
-Use `${CORS_ORIGINS:?CORS_ORIGINS is required}` for production, or at minimum `${CORS_ORIGINS:["http://localhost:3000"]}`.
+**Recommended fix:**
+Remove `Sidebar.tsx` and clean up barrel exports.
 
-**Rollout Considerations:**
-- Must ensure production deployment provides CORS_ORIGINS
-- The app already validates CORS in `app.py` lines 126-131 (raises ValueError if not set in production), which provides a safety net
+**Semantic anchor stability:** HIGH — named file and named exports.
 
-**Validation Notes:**
-Confirmed by direct source inspection. Severity escalation to MEDIUM is justified — this will break production deployments.
+**Effort:** Trivial
 
 ---
 
-### FINDING-010: MKOBI_APP_PASSWORD Placeholder Not Enforced
+### V-010: CORS wildcard `*` allowed in production with only a warning
 
-- **ID:** FINDING-010
-- **Title:** MKOBI_APP_PASSWORD defaults to placeholder value
-- **Severity:** MEDIUM (escalated from LOW)
-- **Source:** audit_report_001.md (LOW), audit_report_002.md (MEDIUM)
-- **Status:** VALIDATED — CONFIRMED
+| Field | Value |
+|---|---|
+| **ID** | V-008 |
+| **Severity** | MEDIUM |
+| **Type** | [BEST-PRACTICE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | R3-MEDIUM-cors, R3-app-cors |
 
 **Description:**
-`docker-compose.yml` lines 23-24: `MKOBI_APP_PASSWORD: ${MKOBI_APP_PASSWORD:-secure_password_placeholder}`. The placeholder name suggests it should be changed, but nothing enforces this.
+`src/mkobi/app.py` line ~130: when `"*"` is in `cors_origins` in production, only a warning is logged. The application starts with permissive CORS.
 
 **Impact:**
-- Production may run with a known placeholder password for the application database role
+- If misconfigured, the application allows all origins in production without rejecting startup.
+- The current behavior is intentional but the warning-only approach is risky.
 
-**Root Cause:**
-Missing enforcement pattern for the application database password.
+**Affected modules:**
+- `src/mkobi/app.py` — CORS validation
 
-**Affected Modules/Symbols:**
-- `docker/docker-compose.yml` — lines 23-24
+**Fix target:** Code change.
 
-**Recommendation:**
-Use `${MKOBI_APP_PASSWORD:?MKOBI_APP_PASSWORD is required}`.
+**Recommended fix:**
+Change `logger.warning` to `logger.error` and raise `ValueError` for `"*"` in production. Alternatively, keep as warning but add a startup check that requires explicit opt-in for wildcard.
 
-**Rollout Considerations:**
-- Must ensure production deployment provides this value
-- No application changes needed
+**Semantic anchor stability:** HIGH — CORS validation block is at module level in `create_app`.
 
-**Validation Notes:**
-Confirmed by direct source inspection.
+**Effort:** Small
 
 ---
 
-### FINDING-011: Test Compose Race Condition — Dual Migration Mechanism
+### V-011: _get_config() mutates config singleton with test fallback
 
-- **ID:** FINDING-011
-- **Title:** Both test-migrate service and AUTO_MIGRATE=true in test-app
-- **Severity:** MEDIUM
-- **Source:** audit_report_001.md (MEDIUM), audit_report_002.md (MEDIUM)
-- **Status:** VALIDATED — CONFIRMED
+| Field | Value |
+|---|---|
+| **ID** | V-014 |
+| **Severity** | MEDIUM |
+| **Type** | [BEST-PRACTICE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | R1-F010, R3-MEDIUM-security |
 
 **Description:**
-`docker-compose.test.yml` has both a `test-migrate` service (line 45-75) that runs `alembic upgrade head` AND `test-app` with `AUTO_MIGRATE: "true"` (line 102). This creates a potential race condition and wastes time.
+`_get_config()` in `src/mkobi/core/security.py` mutates the config singleton when `JWT__SECRET_KEY` is not set: `config.jwt.secret_key = "test_fallback_secret_key_do_not_use_in_production"`.
 
 **Impact:**
-- Potential race condition if test-app starts before test-migrate completes (though `depends_on` mitigates this)
-- Wasted CI time running migrations twice
-- Confusing: which mechanism is the "real" migration path?
+- Test config singleton mutation. Potential cross-test contamination if tests run in different order.
+- Not a production issue (production always has JWT__SECRET_KEY set).
 
-**Root Cause:**
-Redundant migration mechanisms in the test compose file.
+**Affected modules:**
+- `src/mkobi/core/security.py` — `_get_config()`
 
-**Affected Modules/Symbols:**
-- `docker/docker-compose.test.yml` — lines 45-75 (test-migrate), line 102 (AUTO_MIGRATE)
+**Fix target:** Code change.
 
-**Recommendation:**
-Remove `AUTO_MIGRATE: "true"` from `test-app` since `test-migrate` already handles it. The `depends_on: test-migrate: condition: service_completed_successfully` ensures migrations run first.
+**Recommended fix:**
+Use `clear_config_cache()` + `get_config(reload=True)` instead of direct mutation. Or return a separate config instance for tests.
 
-**Rollout Considerations:**
-- Low risk: only affects test environment
-- May slightly speed up test container startup
+**Semantic anchor stability:** HIGH — `_get_config` is a named private function.
 
-**Validation Notes:**
-Confirmed by direct source inspection.
+**Effort:** Small
 
 ---
 
-### FINDING-012: Hardcoded Values in Dev Override
+### V-012: ProcessingStatus has both SUCCESS and COMPLETED values
 
-- **ID:** FINDING-012
-- **Title:** Hardcoded JWT__SECRET_KEY and admin credentials in dev override
-- **Severity:** MEDIUM
-- **Source:** audit_report_001.md (MEDIUM), audit_report_002.md (MEDIUM)
-- **Status:** VALIDATED — CONFIRMED (with nuance)
+| Field | Value |
+|---|---|
+| **ID** | V-009 |
+| **Severity** | MEDIUM |
+| **Type** | [BEST-PRACTICE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | R3-MEDIUM-processing_status |
 
 **Description:**
-`docker-compose.override.yml` line 60 hardcodes `JWT__SECRET_KEY: dev-secret-key-for-local-development` (not templated), always overriding any `.env` value. Lines 62-63 hardcode admin credentials.
+`ProcessingStatus` enum has both `SUCCESS` and `COMPLETED` values. They appear to be used interchangeably.
 
 **Impact:**
-- Dev override always overrides `.env` values — cannot use a different dev secret via `.env`
-- Inconsistency: base compose uses `${VAR:-default}`, override uses hardcoded values
+- Potential confusion in status tracking. May cause filtering bugs if different parts of code use different status values for the same state.
 
-**Root Cause:**
-Inconsistent templating approach between base compose and override.
+**Affected modules:**
+- `src/mkobi/models/enums.py` — `ProcessingStatus`
+- Various services and workers that reference these statuses
 
-**Affected Modules/Symbols:**
-- `docker/docker-compose.override.yml` — lines 60, 62-63
+**Fix target:** Code change + verification sweep.
 
-**Recommendation:**
-Use `${JWT__SECRET_KEY:-dev-secret-key-for-local-development}` and `${ADMIN_USERNAME:-admin@example.com}` patterns for consistency.
+**Recommended fix:**
+Audit all usages. Consolidate to a single value if semantically identical. If they represent distinct states, document the distinction clearly.
 
-**Rollout Considerations:**
-- Zero risk: only affects development environment
-- Improves consistency and allows `.env` override in development
+**Semantic anchor stability:** MEDIUM — enum changes require updating all references.
 
-**Validation Notes:**
-Confirmed by direct source inspection. Severity is MEDIUM (not HIGH/CRITICAL) because this is development-only and the hardcoded values are acceptable defaults for local dev.
+**Effort:** Small to Medium (depends on number of references)
 
 ---
 
-### FINDING-013: Nginx SSL Mismatch
+### V-013: Registration endpoint missing status filter — overlapping with R1-F008
 
-- **ID:** FINDING-013
-- **Title:** Nginx listens on port 80 only, no HTTPS despite compose mapping port 443
-- **Severity:** MEDIUM
-- **Source:** audit_report_001.md (LOW), audit_report_002.md (MEDIUM)
-- **Status:** VALIDATED — CONFIRMED
+| Field | Value |
+|---|---|
+| **ID** | V-012 |
+| **Severity** | LOW |
+| **Type** | [BEST-PRACTICE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | R1-F008, R3-DOC-admin-registration |
 
 **Description:**
-`docker-compose.yml` maps port 443 (line 172: `- "443:443"`) but `nginx.conf` has no SSL server block — only a `listen 80` server block (line 14). Port 443 is mapped but nothing listens there with TLS.
+`get_registration_requests_admin_endpoint` doesn't support status filtering despite spec saying "with status filter". Returns ALL requests regardless of status.
 
 **Impact:**
-- Port 443 mapping is misleading — connections will fail or hang
-- No TLS termination capability despite the infrastructure being partially set up
+- Admins cannot filter registration requests by status via API.
+- Low severity because the frontend can filter client-side for small datasets.
 
-**Root Cause:**
-Incomplete nginx SSL configuration — port mapping was added without the corresponding server block.
+**Affected modules:**
+- `src/mkobi/api/routes/admin.py` — `get_registration_requests_admin_endpoint()`
 
-**Affected Modules/Symbols:**
-- `docker/nginx/nginx.conf` — line 14
-- `docker/docker-compose.yml` — line 172
+**Fix target:** Code change.
 
-**Recommendation:**
-Either:
-1. Add SSL server block to nginx.conf (requires SSL certificates), OR
-2. Remove the 443 port mapping from docker-compose.yml
+**Semantic anchor stability:** HIGH
 
-Option 2 is preferred for now — SSL should be added intentionally with proper certificate management, not as a partial configuration.
-
-**Rollout Considerations:**
-- If removing 443 mapping: zero risk, immediate improvement in clarity
-- If adding SSL: requires certificate management strategy (Let's Encrypt, self-signed, etc.)
-
-**Validation Notes:**
-Confirmed by direct source inspection. Severity escalation to MEDIUM is justified — the misleading port mapping could cause operational confusion.
+**Effort:** Small
 
 ---
 
-### FINDING-014: Missing Security Headers in Nginx
+### V-014: Hardcoded overwrite mode in process_file_endpoint
 
-- **ID:** FINDING-014
-- **Title:** No security headers in nginx configuration
-- **Severity:** MEDIUM (LOW in report 002, escalated)
-- **Source:** audit_report_002.md (LOW)
-- **Status:** VALIDATED — CONFIRMED
+| Field | Value |
+|---|---|
+| **ID** | V-015 |
+| **Severity** | LOW |
+| **Type** | [SPEC-DEVIATION] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | R3-LOW-process_file_endpoint |
 
 **Description:**
-`docker/nginx/nginx.conf` lacks security headers: `X-Content-Type-Options`, `X-Frame-Options`, `Strict-Transport-Security`, `Content-Security-Policy`.
+`process_file_endpoint` hardcodes `mode="overwrite"` when enqueueing, ignoring the original upload mode.
 
 **Impact:**
-- Missing defense-in-depth against XSS, clickjacking, MIME-type sniffing
-- The app sets some headers via FastAPI middleware, but nginx should also set them for static files
+- Uploads intended as "append" will be processed as "overwrite". Data loss risk.
 
-**Root Cause:**
-Basic nginx configuration without security hardening.
+**Affected modules:**
+- `src/mkobi/api/routes/upload.py` — `process_file_endpoint()`
 
-**Affected Modules/Symbols:**
-- `docker/nginx/nginx.conf` — server block (lines 13-39)
+**Fix target:** Code change.
 
-**Recommendation:**
-Add security headers to the server block:
-```nginx
-add_header X-Content-Type-Options "nosniff" always;
-add_header X-Frame-Options "SAMEORIGIN" always;
-add_header X-XSS-Protection "1; mode=block" always;
-add_header Referrer-Policy "strict-origin-when-cross-origin" always;
-```
+**Semantic anchor stability:** HIGH
 
-**Rollout Considerations:**
-- Low risk: additive change, no breaking effects
-- Should verify headers don't conflict with any frontend requirements
-
-**Validation Notes:**
-Confirmed by direct source inspection. Severity escalated from LOW to MEDIUM because these are standard security headers that should be present by default.
+**Effort:** Small
 
 ---
 
-## LOW Findings
+### V-015: JSONB UPSERT index compatibility
 
-### FINDING-015: Nginx Service in Base Compose File
-
-- **ID:** FINDING-015
-- **Title:** Nginx service uses profiles but is defined in base compose
-- **Severity:** LOW
-- **Source:** audit_report_001.md (LOW), audit_report_002.md (LOW)
-- **Status:** VALIDATED — CONFIRMED
+| Field | Value |
+|---|---|
+| **ID** | V-016 |
+| **Severity** | LOW |
+| **Type** | [BEST-PRACTICE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | R3-LOW-jsonb_upsert |
 
 **Description:**
-`docker/docker-compose.yml` lines 165-178 define the nginx service with `profiles: [production]`. The service is always parsed but only activated with `--profile production`. The nginx.conf mounts `../frontend/dist` which is only available after a frontend build.
+`_bulk_upsert` uses `on_conflict_do_update` with `index_elements=[dashboard_id, graph_id, dims]` where `dims` is JSONB. PostgreSQL requires expression indexes for JSONB in unique constraints.
 
 **Impact:**
-- Minor: base compose file contains production-only services
-- nginx.conf references frontend build output that may not exist
+- May fail at runtime if migration creates a standard B-tree index instead of expression index on `(dims::text)`.
 
-**Root Cause:**
-Structural organization choice — nginx is in the base file behind a profile.
+**Affected modules:**
+- `src/mkobi/data/storage/manager.py` — `_bulk_upsert()`
+- Alembic migrations for aggregated_data table
 
-**Affected Modules/Symbols:**
-- `docker/docker-compose.yml` — lines 165-178
+**Fix target:** Verification required — check if migration already creates expression index.
 
-**Recommendation:**
-Consider moving nginx to a separate `docker-compose.prod.yml` for cleaner separation. At minimum, add a comment documenting that nginx requires a prior frontend build.
+**Semantic anchor stability:** MEDIUM — migration files change over time.
 
-**Rollout Considerations:**
-- Low priority: current approach works, just not ideal organizationally
-- Moving to a separate file would require updating deployment scripts
-
-**Validation Notes:**
-Confirmed by direct source inspection. This is a minor structural issue, not a functional problem.
+**Effort:** Small (verification + potential migration fix)
 
 ---
 
-### FINDING-016: Dev Command Import Path Inconsistency
+### V-016: Inconsistent DI pattern in route handlers
 
-- **ID:** FINDING-016
-- **Title:** Dev command uses src.mkobi.main:app instead of mkobi.main:app
-- **Severity:** LOW
-- **Source:** audit_report_001.md (LOW), audit_report_002.md (LOW)
-- **Status:** VALIDATED — CONFIRMED (with nuance)
+| Field | Value |
+|---|---|
+| **ID** | V-017 |
+| **Severity** | LOW |
+| **Type** | [BEST-PRACTICE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | R3-LOW-di_inconsistency |
 
 **Description:**
-`docker-compose.override.yml` line 73 uses `src.mkobi.main:app` while the spec shows `mkobi.main:app`. The prod stage in Dockerfile also uses `src.mkobi.main:app` (line 138), so this is actually consistent with prod.
+Some files instantiate `UserRepository()` and other repositories directly inside route handlers instead of using FastAPI `Depends` injection.
 
 **Impact:**
-- Minimal: the import path works correctly due to PYTHONPATH and directory structure
-- Minor inconsistency with documentation examples
+- Inconsistent pattern. Harder to mock in tests. Breaks DI convention.
 
-**Root Cause:**
-The `src/` layout requires `src.mkobi.main:app` when PYTHONPATH includes `/app` (the working directory). The documentation examples assume a different layout.
+**Affected modules:**
+- Multiple route files (`src/mkobi/api/routes/`)
 
-**Affected Modules/Symbols:**
-- `docker/docker-compose.override.yml` — line 73
-- `docker/Dockerfile` — line 138 (prod, same pattern)
+**Fix target:** Code change (gradual migration).
 
-**Recommendation:**
-No code change needed. Update documentation to reflect the actual `src/` layout import path. Both prod and dev use the same path, which is correct.
+**Semantic anchor stability:** MEDIUM — spread across multiple files.
 
-**Rollout Considerations:**
-- Documentation-only change
-- No functional impact
+**Effort:** Small per file,Medium overall
 
-**Validation Notes:**
-Confirmed by direct source inspection. The audit report's concern about inconsistency is partially valid (docs don't match code) but the code itself is consistent between dev and prod. This is a documentation fix, not a code fix.
+---
+
+### V-017: dashboard_service.create_dashboard transaction pattern inconsistency
+
+| Field | Value |
+|---|---|
+| **ID** | V-011 |
+| **Severity** | LOW |
+| **Type** | [BEST-PRACTICE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | R1-F007 |
+
+**Description:**
+`create_dashboard` in `dashboard_service.py` has explicit rollback in exception handler but no explicit commit in success path. Other services let callers manage transactions.
+
+**Impact:**
+- Currently safe since only called from route handlers. Could break atomicity if called within a larger transaction.
+
+**Affected modules:**
+- `src/mkobi/services/dashboard_service.py`
+
+**Fix target:** Code change — standardize transaction convention.
+
+**Semantic anchor stability:** HIGH
+
+**Effort:** Small
+
+---
+
+### V-018: dashboard_service.get_dashboard type annotation
+
+| Field | Value |
+|---|---|
+| **ID** | V-010 |
+| **Severity** | LOW |
+| **Type** | [DOC-UPDATE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | R1-F006 |
+
+**Description:**
+`get_dashboard` checks `if user_role == UserRole.ADMIN` but parameter is typed as `str | None`. Works due to `StrEnum` string comparison, but type annotation could be tighter.
+
+**Impact:**
+- No runtime issue. Type annotation improvement only.
+
+**Affected modules:**
+- `src/mkobi/services/dashboard_service.py`
+
+**Fix target:** Code change.
+
+**Semantic anchor stability:** HIGH
+
+**Effort:** Trivial
+
+---
+
+### V-019: JWT user_id type coercion causes test assertion failures
+
+| Field | Value |
+|---|---|
+| **ID** | V-019 |
+| **Severity** | HIGH (test suite) |
+| **Type** | [TEST-REWRITE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | T1-Finding1, T2-F10 |
+
+**Description:**
+Multiple tests in `test_security.py` create tokens with `user_id` as int (e.g., `{"user_id": 123}`) and assert `payload["user_id"] == 123` (int). JWT encodes values as JSON, so 123 becomes string "123" on decode. The assertions will FAIL.
+
+**Counter-analysis:** Upon source code verification in `test_security.py`, the `test_valid_refresh_token` test creates the token with int 123 and asserts int 123. Since `create_refresh_token` uses `jwt.encode()` (from python-jose) which serializes to JSON, the decoded value will be `"123"` (string), NOT `123` (int). The assertion `payload["user_id"] == 123` WILL FAIL.
+
+However, `test_auth_service.py` (42 tests, all passing) correctly handles this. The issue is isolated to `test_security.py`.
+
+**Impact:**
+- 4 tests in `test_security.py` WILL FAIL when run against real JWT implementation.
+- These tests currently pass due to mocked behavior or haven't been run end-to-end.
+
+**Affected modules:**
+- `tests/test_security.py` — `test_valid_refresh_token`, 3x `TestIntegration`
+
+**Fix target:** Test code change.
+
+**Recommended fix:**
+Change assertions to compare with string values: `payload["user_id"] == "123"`.
+
+**Semantic anchor stability:** HIGH — test function names are stable.
+
+**Dependency notes:** Depends on V-018 (Docker fix) to verify these tests actually pass in integration environment.
+
+**Effort:** Trivial (4 assertion lines)
+
+---
+
+### V-020: AggregatedData chart_type validation test passes for wrong reason
+
+| Field | Value |
+|---|---|
+| **ID** | V-020 |
+| **Severity** | HIGH (test quality) |
+| **Type** | [TEST-REWRITE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | T1-Finding2, T2-F9 |
+
+**Description:**
+`test_aggregated_data_invalid_chart_type` uses `dashboard_id=1` (int), which causes `ValidationError` BEFORE `chart_type` is checked. The test passes but doesn't actually test chart_type validation.
+
+**Impact:**
+- Test gives false confidence. The chart_type validation is never exercised.
+
+**Affected modules:**
+- `tests/test_pydantic_models.py` — `test_aggregated_data_invalid_chart_type`
+
+**Fix target:** Test code change.
+
+**Recommended fix:**
+Use `dashboard_id=uuid.uuid4()` (valid UUID) so the ValidationError is raised by chart_type, not by dashboard_id type mismatch.
+
+**Effort:** Trivial
+
+---
+
+### V-021: Graph API test coverage critically thin
+
+| Field | Value |
+|---|---|
+| **ID** | V-021 |
+| **Severity** | HIGH (coverage gap) |
+| **Type** | [BEST-PRACTICE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | T1-Finding3, T1-F11, T2-F11 |
+
+**Description:**
+`test_graphs.py` has only 2 tests: `test_create_graph_admin_required` and `test_get_graphs_for_dashboard`. Missing: create success (as editor), read single graph, update, delete, access control for each role.
+
+**Impact:**
+- Graph CRUD endpoints are under-tested. Compare with `test_filters.py` and `test_layouts.py` which have 8-10 tests each.
+
+**Affected modules:**
+- `tests/test_graphs.py`
+
+**Fix target:** Add test cases.
+
+**Recommended fix:**
+Add 6+ tests covering: create success (editor), create forbidden (viewer), read single, read not found, update, delete, access denied.
+
+**Semantic anchor stability:** HIGH
+
+**Dependency notes:** Blocked by V-018 (Docker fix).
+
+**Effort:** Medium
+
+---
+
+### V-022: Duplicate tests in test_storage_manager.py
+
+| Field | Value |
+|---|---|
+| **ID** | V-022 |
+| **Severity** | MEDIUM |
+| **Type** | [TEST-DELETE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | T1-Finding4, T1-F12, T2-F6 |
+
+**Description:**
+- `test_clear_graph_data_instance` is identical to `test_clear_graph_data` (both clear from empty table, assert 0).
+- `test_clear_dashboard_data_instance` is identical to `test_clear_dashboard_data`.
+
+**Impact:**
+- Noise in test output. Wastes CI time. No additional coverage.
+
+**Affected modules:**
+- `tests/test_storage_manager.py`
+
+**Fix target:** Delete duplicate test functions.
+
+**Effort:** Trivial
+
+---
+
+### V-023: clean_env fixture backup not populated
+
+| Field | Value |
+|---|---|
+| **ID** | V-023 |
+| **Severity** | MEDIUM |
+| **Type** | [TEST-UPDATE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | T1-Finding5 |
+
+**Description:**
+`clean_env` fixture initializes `env_backup = {}` but never populates it with pre-yield env values. The cleanup loop checks `if key in env_backup` which is always false, so it always `pop`s rather than restoring.
+
+**Impact:**
+- Test env vars are deleted rather than restored. May cause issues if tests depend on pre-existing env vars.
+
+**Affected modules:**
+- `tests/test_config.py`
+
+**Fix target:** Test code change.
+
+**Recommended fix:**
+Populate `env_backup` before yield: `env_backup = {key: os.environ[key] for key in os.environ if key.startswith(...)}`
+
+**Effort:** Small
+
+---
+
+### V-024: Tests creating large real files for size validation
+
+| Field | Value |
+|---|---|
+| **ID** | V-024 |
+| **Severity** | MEDIUM |
+| **Type** | [TEST-REWRITE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | T1-Finding6, T2-F4 |
+
+**Description:**
+- `test_upload_too_large` creates 101MB real file (`b"x" * (101 * 1024 * 1024)`) — allocates in RAM + writes to disk.
+- `test_process_upload_file_too_large` creates 102MB real file similarly.
+
+**Impact:**
+- Slow I/O. Memory-intensive. Wasteful since the file content is never read (mocked validation).
+
+**Affected modules:**
+- `tests/test_upload_api.py`
+- `tests/test_data_service.py`
+
+**Fix target:** Test code change.
+
+**Recommended fix:**
+Use `unittest.mock.patch` to mock `Path.stat().st_size` or the file size validation function instead of writing real files.
+
+**Effort:** Small
+
+---
+
+### V-025: test_deps viewer/admin misleading test name
+
+| Field | Value |
+|---|---|
+| **ID** | V-025 |
+| **Severity** | MEDIUM |
+| **Type** | [TEST-REWRITE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | T1-Finding7, T2-F7 |
+
+**Description:**
+`test_viewer_cannot_access_admin_endpoint` docstring says "cannot access admin endpoints" but the actual test accesses `/auth/me` (a viewer-level endpoint) and asserts 200 OK. No 403 assertion exists.
+
+**Impact:**
+- Misleading test name. Gives false impression that admin endpoint access control is tested.
+
+**Affected modules:**
+- `tests/test_deps.py`
+
+**Fix target:** Test code change.
+
+**Recommended fix:**
+Rewrite to test actual admin endpoint (e.g., `GET /admin/users`) with viewer token, asserting 403. Or rename test to reflect what it actually tests.
+
+**Effort:** Small
+
+---
+
+### V-026: test_auth double flush() in cleanup
+
+| Field | Value |
+|---|---|
+| **ID** | V-026 |
+| **Severity** | MEDIUM |
+| **Type** | [TEST-UPDATE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | T1-Finding8, T2-F3 |
+
+**Description:**
+`test_register_request_success` has `await async_db_session.flush()` called twice consecutively (copy-paste bug).
+
+**Impact:**
+- No functional issue (second flush is a no-op). Code smell only.
+
+**Affected modules:**
+- `tests/test_auth.py`
+
+**Fix target:** Test code cleanup.
+
+**Effort:** Trivial
+
+---
+
+### V-027: Repository CRUD coverage gaps
+
+| Field | Value |
+|---|---|
+| **ID** | V-027 |
+| **Severity** | HIGH (coverage gap) |
+| **Type** | [BEST-PRACTICE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | T1-F16, T1-F17 |
+
+**Description:**
+`test_repositories.py` only tests `create` for Graph, Filter, Layout repos. Missing: `get`, `update`, `delete`, `get_by_name`, `get_by_dashboard`. AccessRepository only tests `grant_access` + `get_user_dashboards`. Missing: `check_access`, `revoke_access`, `update_permission`.
+
+**Impact:**
+- Repository layer is under-tested. The data layer is the foundation of the application.
+
+**Affected modules:**
+- `tests/test_repositories.py`
+
+**Fix target:** Add test cases.
+
+**Dependency notes:** Blocked by V-018 (Docker fix).
+
+**Effort:** Medium
+
+---
+
+### V-028: Data processing (Polars) zero test coverage
+
+| Field | Value |
+|---|---|
+| **ID** | V-028 |
+| **Severity** | CRITICAL (coverage gap) |
+| **Type** | [BEST-PRACTICE] |
+| **Classification** | **ADVISORY** |
+| **Original IDs** | T1-F19, T2-F13 |
+
+**Description:**
+The entire `src/mkobi/data/` package (CSVLoader, DataValidator, transformations.py, DataPipeline, JSONB normalization — 1,658+ lines) has zero test coverage. This is the core data processing pipeline.
+
+**Impact:**
+- Highest-risk area without tests. Any bug in data processing silently corrupts dashboard data.
+- YoY calculations, share calculations, custom metrics formula parser, JSONB normalization — none are unit tested.
+
+**Affected modules:**
+- `src/mkobi/data/loaders/loader.py`
+- `src/mkobi/data/loaders/validator.py`
+- `src/mkobi/data/processing/transformations.py`
+- `src/mkobi/data/processing/registry.py`
+
+**Fix target:** Add comprehensive unit tests (30+ tests).
+
+**Dependency notes:**
+- Independent of V-018 (these are pure unit tests with no DB dependency).
+- Should be prioritized after V-018 fix due to criticality.
+
+**Effort:** Large (30+ tests, estimated 2-3 days of work)
+
+---
+
+## Part 3 — Doc Updates Needed
+
+---
+
+### D-001: Admin logs pagination parameter naming
+
+| Field | Value |
+|---|---|
+| **Type** | [DOC-UPDATE] |
+| **Source finding** | V-002 (R1-F002) |
+| **File** | `docs/SPEC.md` |
+| **Decision** | Update spec to reflect `skip/limit` instead of `page/page_size` |
+
+**Description:**
+The spec describes `page/page_size` pagination for admin logs, but the implementation uses `skip/limit`. Since skip/limit is a more standard pattern and the team has already committed to it, update the spec rather than the code.
+
+---
+
+### D-002: SPEC.md upload endpoint version history
+
+| Field | Value |
+|---|---|
+| **Type** | [DOC-UPDATE] |
+| **Source finding** | R3-MEDIUM-doc-upload |
+| **File** | `docs/SPEC.md` |
+
+**Description:**
+Spec describes `POST /upload/:dashboard_id/process?task_id=` — upload is implemented as `UploadModal` per spec v2.4. Minor doc inconsistency in endpoint version history.
+
+---
+
+### D-003: Temp password security note in SPEC.md
+
+| Field | Value |
+|---|---|
+| **Type** | [DOC-UPDATE] |
+| **Source finding** | R3-LOW-doc-admin-temp-password |
+| **File** | `docs/SPEC.md` |
+
+**Description:**
+Registration approval returns `temp_password` in plaintext JSON response. Spec requires `secrets.token_urlsafe(16)` returned to admin but has no documentation about secure transmission. Add security note in SPEC.md.
 
 ---
 
 ## Rejected Findings
 
-### REJECTED-001: Missing prod-slim Build Target
+These findings were evaluated and rejected for the reasons stated.
 
-- **Source:** audit_report_001.md (MEDIUM), audit_report_002.md (HIGH)
-- **Reason:** The audit reports claim "the spec defines a prod-slim target." However, the actual deployment documentation (`docs/10-deployment/deployment.md` lines 176-181) lists only 4 targets: `base`, `dev`, `test`, `prod`. There is no `prod-slim` target in the specification. The finding references a non-existent requirement.
-- **Decision:** REJECTED — no spec requirement exists. If a prod-slim target is desired, it should be proposed as a new feature, not treated as a missing implementation.
-
----
-
-### REJECTED-002: Prod CMD Should Use `uv run uvicorn` Per Spec
-
-- **Source:** audit_report_001.md (MEDIUM), audit_report_002.md (mentioned in recommendations)
-- **Reason:** The audit claims the spec requires `uv run uvicorn mkobi.main:app` for the prod Dockerfile CMD. The actual documentation (`docs/10-deployment/deployment.md` line 55) shows `uv run uvicorn mkobi.main:app` for **local development**, not for Docker production. The Dockerfile prod stage uses `uv sync --frozen --no-dev` which installs into a virtual environment, and the PATH includes `/app/.venv/bin`. Using `uvicorn` directly is the correct approach for a Docker container — `uv run` would add unnecessary overhead and require uv to remain installed in the production image. The current approach follows Docker best practices.
-- **Decision:** REJECTED — the spec does not require `uv run` for Docker prod, and using it would be worse for production (larger image, unnecessary dependency).
+| ID | Original ID | Title | Rejection Reason |
+|---|---|---|---|
+| REJ-001 | R3-MEDIUM-sync_polars | CSV loader uses sync Polars with `asyncio.to_thread` — could impact concurrent operations | **REJECTED — Low ROI.** The `asyncio.to_thread` pattern is a well-documented approach for CPU-bound sync libraries in async apps. The thread pool concern is theoretical for a single-instance BI dashboard. Replacing with a dedicated thread pool adds complexity without measurable benefit at current scale. Revisit if concurrent processing becomes a bottleneck. |
+| REJ-002 | R3-LOW-data_filters_in_memory | Data filters applied in Python/Polars rather than at DB level | **REJECTED — Intentional design tradeoff.** Loading data into Polars and applying filters is architecturally intentional — it allows complex filtering that would be difficult to express in SQL JSONB operators. The dataset sizes (up to 100MB files, aggregated to much smaller) make in-memory filtering acceptable. Revisit if performance data shows this is a bottleneck. |
+| REJ-003 | R3-MEDIUM-auth-change-password-response | `change_password` returns `dict[str, Any]` instead of Pydantic model | **REJECTED — Low priority inconsistency.** While inconsistent with other endpoints, this is a low-traffic endpoint used once per password change. The response format is documented and functional. Fix during next auth module refactor rather than as a standalone task. |
+| REJ-004 | R3-LOW-grant-idempotency | `grant_dashboard_access_endpoint` returns 200 without idempotency check | **REJECTED — No evidence of harm.** The database unique constraint on `(dashboard_id, user_id, permission)` would prevent duplicates at the DB level. A 409 check is cosmetic rather than functionally necessary. The current behavior (200 on repeat grant) is idempotent in effect. |
 
 ---
 
-### REJECTED-003: .dockerignore Needs Changes
+## Dependency & Rollout Safety Analysis
 
-- **Source:** audit_report_001.md, audit_report_002.md
-- **Reason:** Both audit reports explicitly state: "No problems identified. Well-structured, excludes .env, .git, caches, and IDE files." and "No changes needed."
-- **Decision:** REJECTED — no finding to validate. Included here for completeness to show all audit sections were reviewed.
-
----
-
-### REJECTED-004: Init Script Needs Changes
-
-- **Source:** audit_report_001.md, audit_report_002.md
-- **Reason:** Both audit reports explicitly state: "No problems identified. Properly implements least-privilege role creation with DROP IF EXISTS for idempotency." and "No changes needed."
-- **Decision:** REJECTED — no finding to validate. Included here for completeness.
-
----
-
-## Dependency Validation
-
-### Dependency Graph
+### Rollout Order
 
 ```
-FINDING-001 (JWT secret) ──┐
-FINDING-002 (DB password) ──┤
-FINDING-003 (Admin creds) ──┤── Independent, no inter-dependencies
-FINDING-010 (App password) ─┤
-FINDING-009 (CORS) ─────────┘
+Phase 1: Infrastructure (unblocks everything else)
+  ├── V-018: Fix test Docker (mkobi_app role)          [CRITICAL, blocks 173 tests]
+  └── V-028: Add data processing unit tests            [Independent, no DB needed]
 
-FINDING-003B (mkobi_app role) ── CRITICAL: Must be fixed first, blocks all other fixes
-  └─ Depends on: FINDING-002 (DB password) and FINDING-010 (App password) for correct credentials
-  └─ Blocks: Everything — app cannot start until this is resolved
+Phase 2: Mandatory production fixes
+  ├── V-003: Pydantic 500→422 (1 line, low risk)       [Independent]
+  ├── V-001: Temp file cleanup (production reliability) [Independent]
+  ├── V-005: Inline access checks refactor              [Depends on understanding existing deps.py patterns]
+  └── V-004: Data filters pass-through (correctness)    [Depends on filter contract definition]
 
-FINDING-004 (AUTO_MIGRATE) ── Independent, but verify advisory lock first
+Phase 3: Advisory production fixes
+  ├── V-006: LoginForm auth state refactor              [Independent]
+  ├── V-009: Remove Sidebar dead code                   [Independent]
+  ├── V-008: Raw SQL f-strings → DDL                    [Independent]
+  ├── V-010: CORS wildcard handling                     [Independent]
+  └── V-011: _get_config singleton mutation             [Independent]
 
-FINDING-005 (Swagger/ReDoc) ── Independent, isolated to app.py
+Phase 4: Test suite cleanup (after V-018 fix)
+  ├── V-022: Delete duplicate storage_manager tests    [Independent]
+  ├── V-019: Fix JWT user_id assertions                 [Independent]
+  ├── V-020: Fix AggregatedData test                    [Independent]
+  ├── V-023: Fix clean_env fixture                      [Independent]
+  ├── V-024: Mock large file creation                   [Independent]
+  ├── V-025: Rewrite test_deps viewer/admin             [Independent]
+  └── V-026: Remove double flush                       [Independent]
 
-FINDING-006 (HEALTHCHECK) ── Independent, Dockerfile-only
+Phase 5: Test coverage expansion
+  ├── V-021: Graph API tests                           [After V-018]
+  └── V-027: Repository CRUD tests                     [After V-018]
 
-FINDING-007 (Dev deps) ── Independent, Dockerfile restructuring
-
-FINDING-008 (uv pin) ── Independent, Dockerfile-only
-
-FINDING-011 (Test race) ── Independent, test-compose-only
-
-FINDING-012 (Dev override) ── Independent, dev-compose-only
-
-FINDING-013 (Nginx SSL) ── Independent, nginx-only
-
-FINDING-014 (Security headers) ── Independent, nginx-only
-
-FINDING-015 (Nginx profile) ── Independent, compose structure
-
-FINDING-016 (Import path) ── Documentation-only, no code dependency
+Phase 6: Doc updates
+  ├── D-001: Update spec for skip/limit                 [After decision on V-002]
+  ├── D-002: Update spec upload version history         [Independent]
+  └── D-003: Add temp password security note            [Independent]
 ```
 
-### Circular Dependencies
-**None detected.** All findings are independent configuration changes.
+### Parallel Execution Safety
 
-### Safe Parallel Execution
-- FINDING-003B (mkobi_app role) MUST be fixed first — app cannot start without it
-- All CRITICAL findings (001-003, 010) can be applied in a single compose file edit
-- FINDING-005 (Swagger) is isolated to `app.py` — can be done independently
-- FINDING-006, 007, 008 are Dockerfile changes — can be bundled together
-- FINDING-013, 014 are nginx changes — can be bundled together
-- FINDING-011 is test-only — can be done independently
+**Safe to parallelize:**
+- Phase 2 items are independent (different files, different concerns).
+- Phase 4 items are independent test file changes.
+- Phase 6 doc updates are independent.
 
----
-
-## Rollout Safety Analysis
-
-### Recommended Rollout Order
-
-**Phase 0 — Unblock Application (immediate, blocking):**
-0. FINDING-003B: Fix mkobi_app role — add retry logic + application-level role management
-   - Without this fix, the application cannot start at all
-   - Short-term: add retry with backoff to `_check_db_connection()`
-   - Medium-term: add role creation/update to `DatabaseStarter.startup()`
-
-**Phase 1 — Security Critical (immediate, after Phase 0):**
-1. FINDING-001: JWT__SECRET_KEY enforcement
-2. FINDING-002: DATABASE__PASSWORD enforcement
-3. FINDING-003: Admin credentials enforcement (+ config.py validation enhancement)
-4. FINDING-010: MKOBI_APP_PASSWORD enforcement
-5. FINDING-005: Swagger/ReDoc conditional disable
-
-**Phase 2 — Infrastructure Hardening (next sprint):**
-6. FINDING-006: Dockerfile HEALTHCHECK
-7. FINDING-007: Dev deps removal from prod
-8. FINDING-008: uv version pin
-9. FINDING-009: CORS_ORIGINS templating
-10. FINDING-013: Nginx SSL fix
-11. FINDING-014: Nginx security headers
-
-**Phase 3 — Operational Improvement (when convenient):**
-12. FINDING-004: AUTO_MIGRATE=true (verify advisory lock first)
-13. FINDING-011: Test compose race condition
-14. FINDING-012: Dev override templating
-15. FINDING-015: Nginx service organization
-16. FINDING-016: Documentation update
+**Must be sequential:**
+- V-018 must complete before any Phase 4/5 work (Docker test fix unblocks integration test verification).
+- V-004 (data filters) should be done after defining the filter contract to avoid rework.
 
 ### Rollback Feasibility
-All changes are configuration-only (compose files, Dockerfile, nginx.conf, app.py). Each can be rolled back independently by reverting the specific file. No database migrations or schema changes are required.
+
+All recommended changes are:
+- **Atomic:** Each fix targets a single concern.
+- **Reversible:** Each can be reverted independently.
+- **Low blast radius:** Changes are scoped to specific files/functions.
+
+**Exception:** V-005 (inline access checks) touches security logic. Ensure full test coverage before merging.
+
+### Circular Dependencies Detected
+
+None. The dependency graph is a clean DAG.
 
 ---
 
-## Semantic Targeting Stability
+## Semantic Targeting Stability Analysis
 
-### Anchor Stability Assessment
+### High Stability (safe for automated task generation)
 
-| Finding | Anchor Type | Stability | Notes |
-|---------|------------|-----------|-------|
-| FINDING-001 | env var reference in compose | HIGH | Variable name `JWT__SECRET_KEY` is stable |
-| FINDING-002 | env var reference in compose | HIGH | Variable name `DATABASE__PASSWORD` is stable |
-| FINDING-003 | env var reference in compose | HIGH | Variable names `ADMIN_USERNAME`/`ADMIN_PASSWORD` are stable |
-| FINDING-003B | method in `DatabaseStarter` | HIGH | `_check_db_connection()` and `startup()` are stable anchors |
-| FINDING-004 | env var in compose | HIGH | Variable name `AUTO_MIGRATE` is stable |
-| FINDING-005 | function parameter in `create_app()` | HIGH | `docs_url`/`redoc_url` params are stable FastAPI API |
-| FINDING-006 | Dockerfile stage boundary | HIGH | `prod` stage is a stable anchor |
-| FINDING-007 | Dockerfile RUN instruction | MEDIUM | Line-based; may shift if base stage changes |
-| FINDING-008 | Dockerfile RUN instruction | MEDIUM | Line-based; may shift if base stage changes |
-| FINDING-009 | env var in compose | HIGH | Variable name `CORS_ORIGINS` is stable |
-| FINDING-010 | env var in compose | HIGH | Variable name `MKOBI_APP_PASSWORD` is stable |
-| FINDING-011 | env var in test compose | HIGH | Variable name `AUTO_MIGRATE` is stable |
-| FINDING-012 | env var in override | HIGH | Variable names are stable |
-| FINDING-013 | nginx server block | HIGH | Server block is a stable structural anchor |
-| FINDING-014 | nginx server block | HIGH | Server block is a stable structural anchor |
-| FINDING-015 | compose service definition | HIGH | Service name `nginx` is stable |
-| FINDING-016 | compose command value | HIGH | Command string is stable |
+| Finding | Anchor Type | Stability |
+|---|---|---|
+| V-001 | Named function (`_upload_file_endpoint`) + variable (`temp_file_path`) | HIGH |
+| V-003 | Named exception handler (`pydantic_validation_exception_handler`) | HIGH |
+| V-009 | Named file (`Sidebar.tsx`) + barrel exports | HIGH |
+| V-018 | Service definition in docker-compose | HIGH |
+| V-022 | Named test functions | HIGH |
+| V-019-V-021 | Named test functions | HIGH |
 
-**No fragile anchors detected.** All findings target stable semantic anchors (environment variable names, function parameters, service names, stage names). No line-based assumptions are required for execution.
+### Medium Stability (manual review recommended before execution)
 
----
+| Finding | Anchor Type | Risk |
+|---|---|---|
+| V-005 | Functions in oversized file (918 lines) | File refactoring may shift line numbers |
+| V-004 | Route handler + service method | Need to define filter contract first |
+| V-012 | `ProcessingStatus` enum | Enum change cascades to all references |
+| V-013 | Named endpoint function | Low-medium, route handler is stable |
 
-## Execution Applicability
+### Low Stability (avoid line-based targeting)
 
-### Pre-Execution Checklist
-
-Before executing any finding fix:
-1. [ ] Verify Docker services are running (`docker compose -f docker/docker-compose.yml ps`)
-2. [ ] Create a backup of current compose files and Dockerfile
-3. [ ] For FINDING-003B: check if `mkobi_app` role exists in PostgreSQL (`psql -U postgres -c "\du mkobi_app"`)
-4. [ ] For Phase 1: ensure production `.env` or CI/CD secrets are configured BEFORE applying enforcement
-5. [ ] For FINDING-004: verify advisory lock mechanism in `DatabaseStarter` works correctly
-6. [ ] For FINDING-007: test rebuilt prod image before deployment
-
-### Post-Execution Verification
-
-After applying fixes:
-1. [ ] `docker compose -f docker/docker-compose.yml config` — validate compose file syntax
-2. [ ] `docker compose -f docker/docker-compose.yml up -d` — verify services start
-3. [ ] `curl http://localhost:8000/health` — verify health check works
-4. [ ] For FINDING-003B: verify app can connect to database (check logs for `DatabaseNotFoundError`)
-5. [ ] For FINDING-005: verify `/docs` returns 404 in production mode
-6. [ ] For FINDING-001/002/003: verify services fail to start without required env vars
+None identified. All recommendations use symbol/function-based targeting.
 
 ---
 
-## Positive Findings (Preserved from Audit)
+## Execution Applicability Assessment
 
-The following positive findings from the audit reports are confirmed and should be maintained:
+### Pre-conditions for execution
 
-1. Multi-stage build with clear separation
-2. Non-root user in all runtime stages
-3. No `.env` copied into image
-4. No hardcoded secrets in Dockerfile
-5. `uv.lock` copied for reproducible installs
-6. Docker secrets support via `SecretsFileSource`
-7. Least-privilege DB role concept via init script (NOTE: implementation has fragility issues — see FINDING-003B. The init script pattern only runs on first volume creation, causing role to be missing on subsequent starts. The concept is correct but needs application-level role management as a reliable mechanism.)
-8. Health check endpoint implemented in app
-9. Stale temp file cleanup via `DatabaseStarter`
-10. CORS validation in app code
-11. Admin credential validation in config
-12. Separate migration service pattern
-13. Redis persistence via named volume
-14. PostgreSQL 16 pinned version
-15. Redis 7-alpine pinned version
-16. Standalone test compose with isolated services
+1. **Docker test fix (V-018) must be verified** before trusting any integration test results.
+2. **Data processing tests (V-028)** should be written against the current data package — no preconditions.
+3. **Filter contract (V-004)** requires a design decision on filter schema before implementation.
+
+### Risk of findings becoming stale
+
+- **Low risk:** All findings target named symbols (functions, classes, files) rather than line numbers.
+- **Medium risk:** V-005 (dashboards.py) is 918 lines. If the file is split during refactoring, the anchor context changes but the fixing logic remains correct.
+
+### Architecture drift detection
+
+No drift detected. All findings are current as of the source code verification performed during this validation.
 
 ---
 
-## Document Metadata
+## Summary Statistics
 
-- **Created:** 2026-05-25
-- **Source Audits:** audit_report_001.md, audit_report_002.md
-- **Validation Method:** Direct source code inspection against all findings
-- **Next Review:** After all Phase 1 findings are applied
+| Category | Count |
+|----------|-------|
+| **Total unique validated findings** | 31 (28 original + 3 doc updates) |
+| **Mandatory fixes** | 5 |
+| **Advisory recommendations** | 18 (production) + 7 (test) + 3 (doc) |
+| **Rejected findings** | 4 |
+| **Merged from raw findings** | ~59 → 31 |
+| **Estimated total effort** | ~3-4 days (V-028 data processing tests is the largest item) |
+
+---
+
+*End of Validated Audit Findings Document*
+*Generated: 2026-05-26*
+*Validator: OWL (Kilo Agent)*

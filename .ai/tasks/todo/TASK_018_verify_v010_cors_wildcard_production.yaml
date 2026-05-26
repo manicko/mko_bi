@@ -1,0 +1,24 @@
+id: TASK_018_verify_v010_cors_wildcard_production
+
+title: "Verify V-010: CORS wildcard rejected in production"
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_017_v010_cors_wildcard_production
+
+verifies: TASK_017_v010_cors_wildcard_production
+
+verification_steps:
+  - build: "ruff check src/mkobi/app.py && mypy src/mkobi/app.py"
+  - test: "pytest tests/ -x --tb=short"
+  - smoke_check: "CORS_ORIGINS='*' APP_ENVIRONMENT=production python -c \"from mkobi.app import create_app\" 2>&1 | grep -i 'error\\|valueerror' || echo 'expected error raised'"
+
+pass_criteria:
+  - ruff + mypy pass
+  - All existing tests pass
+  - Wildcard CORS with production environment raises error
+
+failure_action: return TASK_017_v010_cors_wildcard_production to rework

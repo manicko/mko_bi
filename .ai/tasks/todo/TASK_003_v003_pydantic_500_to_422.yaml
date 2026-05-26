@@ -1,0 +1,57 @@
+id: TASK_003_v003_pydantic_500_to_422
+
+title: "V-003: Fix Pydantic ValidationError handler returning HTTP 500 → 422"
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_002_verify_v018_fix_test_docker
+
+description: >
+  src/mkobi/app.py has a pydantic_validation_exception_handler that catches
+  pydantic.ValidationError and returns HTTP 500. The adjacent RequestValidationError
+  handler correctly returns 422. Both represent client input validation failures
+  and should return consistent status codes.
+
+goals:
+  - Change pydantic_validation_exception_handler status code from 500 to 422
+  - Format errors consistently with RequestValidationError handler
+
+files:
+  - path: src/mkobi/app.py
+    targets:
+      - type: function
+        name: pydantic_validation_exception_handler
+    semantic_anchors:
+      insert_after:
+        type: function_definition
+        value: pydantic_validation_exception_handler
+      context: "exception handler decorator @app.exception_handler(pydantic.ValidationError)"
+
+changes:
+  - action: modify_code
+    description: >
+      Change status_code parameter in pydantic_validation_exception_handler
+      from status.HTTP_500_INTERNAL_SERVER_ERROR to status.HTTP_422_UNPROCESSABLE_ENTITY.
+      Align error response format with the adjacent RequestValidationError handler.
+    anchor: "pydantic_validation_exception_handler function body"
+
+acceptance_criteria:
+  - Pydantic ValidationError returns HTTP 422
+  - RequestValidationError returns HTTP 422 (unchanged)
+  - Error response format is consistent between both handlers
+  - All existing tests pass
+
+tests_to_run:
+  - pytest tests/ -x --tb=short
+
+risk_level: minimal (1-line status code change, no business logic impact)
+
+source_findings:
+  - V-003
+  - R3-MEDIUM-pydantic
+  - R3-app-pydantic
+
+estimated_effort: trivial (1 line)

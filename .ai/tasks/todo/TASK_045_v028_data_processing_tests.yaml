@@ -1,0 +1,75 @@
+id: TASK_045_v028_data_processing_tests
+
+title: "V-028: Add comprehensive data processing unit test coverage (Polars pipeline)"
+
+status: pending
+
+priority: critical
+
+depends_on:
+  - TASK_044_verify_d003_temp_password_security_note
+
+description: >
+  The entire src/mkobi/data/ package (CSVLoader, DataValidator, transformations.py,
+  DataPipeline, JSONB normalization — 1,658+ lines) has zero test coverage. This is
+  the core data processing pipeline. YoY calculations, share calculations, custom
+  metrics formula parser, JSONB normalization — none are unit tested. This is the
+  highest-risk area without tests.
+
+goals:
+  - Add 30+ unit tests for the data processing pipeline
+  - Test CSVLoader (file detection, type inference, lazy loading)
+  - Test DataValidator (schema, data quality, duplicates)
+  - Test transformations (filtering, aggregations, YoY, share, custom metrics)
+  - All tests must run without database (pure unit tests)
+
+files:
+  - path: tests/test_data_csv_loader.py
+    targets:
+      - type: new_file
+        context: "CSVLoader unit tests"
+    semantic_anchors: []
+
+  - path: tests/test_data_validator.py
+    targets:
+      - type: new_file
+        context: "DataValidator unit tests"
+    semantic_anchors: []
+
+  - path: tests/test_data_transformations.py
+    targets:
+      - type: new_file
+        context: "Transformation function unit tests"
+    semantic_anchors: []
+
+changes:
+  - action: add_code
+    description: >
+      Create three test files covering the data package:
+      1. test_data_csv_loader.py — test CSVLoader.load_csv() with various file types,
+         test _apply_type_transformations(), test _validate_required_columns()
+      2. test_data_validator.py — test DataValidator.validate() for schema errors,
+         data quality issues, duplicate detection
+      3. test_data_transformations.py — test apply_transformations(),
+         calculate_aggregations(), _calculate_yoy(), _calculate_share(),
+         formula parser (_parse_formula, _validate_formula_tokens)
+    anchor: "New test files in tests/ directory"
+
+acceptance_criteria:
+  - 30+ new tests covering the data package
+  - All tests pass (pytest tests/test_data_*.py -v)
+  - Tests run without database (pure Polars operations)
+  - No data/ import without tests remaining
+  - mypy + ruff pass on new test files
+
+tests_to_run:
+  - pytest tests/test_data_csv_loader.py tests/test_data_validator.py tests/test_data_transformations.py -x --tb=short -v
+
+risk_level: large (30+ new tests, complex data pipeline logic)
+
+source_findings:
+  - V-028
+  - T1-F19
+  - T2-F13
+
+estimated_effort: large (30+ tests, estimated 2-3 days of work)

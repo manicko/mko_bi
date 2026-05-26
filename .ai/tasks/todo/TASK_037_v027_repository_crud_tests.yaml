@@ -1,0 +1,59 @@
+id: TASK_037_v027_repository_crud_tests
+
+title: "V-027: Add repository CRUD test coverage"
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_036_verify_v021_graph_api_tests
+
+description: >
+  test_repositories.py only tests create for Graph, Filter, Layout repos.
+  Missing: get, update, delete, get_by_name, get_by_dashboard. AccessRepository
+  only tests grant_access + get_user_dashboards. Missing: check_access,
+  revoke_access, update_permission. Repository layer is under-tested — it is
+  the data foundation of the application.
+
+goals:
+  - Add tests for get, update, delete for Graph, Filter, Layout repositories
+  - Add tests for check_access, revoke_access, update_permission in AccessRepository
+  - Add get_by_name, get_by_dashboard query tests
+
+files:
+  - path: tests/test_repositories.py
+    targets:
+      - type: test_class
+        context: "Add test methods for each repository"
+    semantic_anchors:
+      insert_after:
+        type: test_class
+        context: "Append new test methods after existing repository test classes"
+
+changes:
+  - action: add_code
+    description: >
+      Add test methods for:
+      1. GraphRepository: get, update, delete
+      2. FilterRepository: get, update, delete, get_by_dashboard
+      3. LayoutRepository: get, update, delete, get_by_dashboard
+      4. AccessRepository: check_access, revoke_access, update_permission
+    anchor: "End of test_repositories.py, after existing test classes"
+
+acceptance_criteria:
+  - All CRUD operations tested for each repository
+  - AccessRepository fully tested
+  - Tests pass with clean database state
+
+tests_to_run:
+  - pytest tests/test_repositories.py -x --tb=short -v
+
+risk_level: medium (new test code, depends on V-018 Docker fix)
+
+source_findings:
+  - V-027
+  - T1-F16
+  - T1-F17
+
+estimated_effort: medium

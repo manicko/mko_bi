@@ -1,0 +1,51 @@
+id: TASK_041_d002_spec_upload_version_history
+
+title: "D-002: Update SPEC.md upload endpoint version history"
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_040_verify_d001_spec_pagination_params
+
+description: >
+  SPEC.md describes POST /upload/:dashboard_id/process?task_id= — upload is
+  implemented as UploadModal per spec v2.4. Minor doc inconsistency in endpoint
+  version history needs updating.
+
+goals:
+  - Update upload endpoint version history in SPEC.md
+  - Ensure version history reflects current implementation (UploadModal)
+
+files:
+  - path: docs/SPEC.md
+    targets:
+      - type: section
+        context: "Upload endpoint version history"
+    semantic_anchors:
+      insert_after:
+        type: heading
+        value: "upload"
+      context: "Find the upload endpoint version history section"
+
+changes:
+  - action: modify_text
+    description: >
+      Update the upload endpoint version history to reflect the current
+      UploadModal-based implementation as of spec v2.4.
+    anchor: "SPEC.md upload endpoint version history"
+
+acceptance_criteria:
+  - Version history accurately reflects UploadModal implementation
+  - No version inconsistencies in upload section
+
+tests_to_run:
+  - echo "Doc change only — verify manually"
+
+risk_level: trivial (documentation update)
+
+source_findings:
+  - D-002
+
+estimated_effort: trivial

@@ -13,6 +13,7 @@ C:\PY_DEV\MKOBI
 |   package.json
 |   pyproject.toml
 |   README.md
+|   test_write_permission.md
 |   uv.lock
 |   
 +---.ai
@@ -21,12 +22,16 @@ C:\PY_DEV\MKOBI
 |   +---audit
 |   |   +---db
 |   |   +---docker
+|   |   +---problems
+|   |   +---project
+|   |   |       audit_report_001.md
+|   |   |       audit_report_001_part1.md
+|   |   |       audit_report_003.md
+|   |   |       
+|   |   +---tests
 |   |   |       audit_report_001.md
 |   |   |       audit_report_002.md
 |   |   |       
-|   |   +---problems
-|   |   +---project
-|   |   +---tests
 |   |   \---validated
 |   |           audit_validated_findings_001.md
 |   |           
@@ -77,51 +82,60 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
-|   |   |       TASK_001_finding_003b_retry_db_connection_DONE.yaml
-|   |   |       TASK_002_verify_finding_003b_retry_db_connection_DONE.yaml
-|   |   |       TASK_003_finding_001_jwt_secret_enforcement_DONE.yaml
-|   |   |       TASK_004_verify_finding_001_jwt_secret_enforcement_DONE.yaml
-|   |   |       TASK_005_finding_002_db_password_enforcement_DONE.yaml
-|   |   |       TASK_006_verify_finding_002_db_password_enforcement_DONE.yaml
-|   |   |       TASK_007_finding_003_admin_creds_enforcement_DONE.yaml
-|   |   |       TASK_008_verify_finding_003_admin_creds_enforcement_DONE.yaml
-|   |   |       TASK_009_finding_005_swagger_redoc_conditional_DONE.yaml
-|   |   |       TASK_010_verify_finding_005_swagger_redoc_conditional_DONE.yaml
-|   |   |       TASK_011_finding_010_app_password_enforcement_DONE.yaml
-|   |   |       TASK_012_verify_finding_010_app_password_enforcement_DONE.yaml
-|   |   |       TASK_013_finding_006_dockerfile_healthcheck_DONE.yaml
-|   |   |       TASK_014_verify_finding_006_dockerfile_healthcheck_DONE.yaml
-|   |   |       TASK_015_finding_007_dev_deps_removal_DONE.yaml
-|   |   |       TASK_016_verify_finding_007_dev_deps_removal_DONE.yaml
-|   |   |       TASK_017_finding_008_uv_version_pin_DONE.yaml
-|   |   |       TASK_018_verify_finding_008_uv_version_pin_DONE.yaml
-|   |   |       TASK_019_finding_009_cors_origins_templating_DONE.yaml
-|   |   |       TASK_020_verify_finding_009_cors_origins_templating_DONE.yaml
-|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
-|   |   |       TASK_021_finding_013_nginx_ssl_fix.yaml
-|   |   |       TASK_022_verify_finding_013_nginx_ssl_fix.yaml
-|   |   |       TASK_023_finding_014_nginx_security_headers.yaml
-|   |   |       TASK_024_verify_finding_014_nginx_security_headers.yaml
-|   |   |       TASK_025_finding_004_auto_migrate_true.yaml
-|   |   |       TASK_026_verify_finding_004_auto_migrate_true.yaml
-|   |   |       TASK_027_finding_011_test_compose_race.yaml
-|   |   |       TASK_028_verify_finding_011_test_compose_race.yaml
-|   |   |       TASK_029_finding_012_dev_override_templating.yaml
-|   |   |       TASK_030_verify_finding_012_dev_override_templating.yaml
-|   |   |       TASK_031_finding_015_nginx_service_organization.yaml
-|   |   |       TASK_032_verify_finding_015_nginx_service_organization.yaml
-|   |   |       TASK_033_finding_016_import_path_docs.yaml
-|   |   |       TASK_034_verify_finding_016_import_path_docs.yaml
+|   |   |       TASK_001_v018_fix_test_docker.yaml
+|   |   |       TASK_002_verify_v018_fix_test_docker.yaml
+|   |   |       TASK_003_v003_pydantic_500_to_422.yaml
+|   |   |       TASK_004_verify_v003_pydantic_500_to_422.yaml
+|   |   |       TASK_005_v001_temp_file_cleanup.yaml
+|   |   |       TASK_006_verify_v001_temp_file_cleanup.yaml
+|   |   |       TASK_007_v005_inline_access_checks.yaml
+|   |   |       TASK_008_verify_v005_inline_access_checks.yaml
+|   |   |       TASK_009_v004_data_filters_pass_through.yaml
+|   |   |       TASK_010_verify_v004_data_filters_pass_through.yaml
+|   |   |       TASK_011_v006_loginform_auth_state.yaml
+|   |   |       TASK_012_verify_v006_loginform_auth_state.yaml
+|   |   |       TASK_013_v009_remove_sidebar_dead_code.yaml
+|   |   |       TASK_014_verify_v009_remove_sidebar_dead_code.yaml
+|   |   |       TASK_015_v008_raw_sql_fstrings.yaml
+|   |   |       TASK_016_verify_v008_raw_sql_fstrings.yaml
+|   |   |       TASK_017_v010_cors_wildcard_production.yaml
+|   |   |       TASK_018_verify_v010_cors_wildcard_production.yaml
+|   |   |       TASK_019_v011_get_config_singleton_mutation.yaml
+|   |   |       TASK_020_verify_v011_get_config_singleton_mutation.yaml
+|   |   |       TASK_021_v022_duplicate_storage_tests.yaml
+|   |   |       TASK_022_verify_v022_duplicate_storage_tests.yaml
+|   |   |       TASK_023_v019_jwt_user_id_assertions.yaml
+|   |   |       TASK_024_verify_v019_jwt_user_id_assertions.yaml
+|   |   |       TASK_025_v020_aggregated_data_test.yaml
+|   |   |       TASK_026_verify_v020_aggregated_data_test.yaml
+|   |   |       TASK_027_v023_clean_env_fixture.yaml
+|   |   |       TASK_028_verify_v023_clean_env_fixture.yaml
+|   |   |       TASK_029_v024_mock_large_files.yaml
+|   |   |       TASK_030_verify_v024_mock_large_files.yaml
+|   |   |       TASK_031_v025_test_deps_viewer_admin.yaml
+|   |   |       TASK_032_verify_v025_test_deps_viewer_admin.yaml
+|   |   |       TASK_033_v026_double_flush.yaml
+|   |   |       TASK_034_verify_v026_double_flush.yaml
+|   |   |       TASK_035_v021_graph_api_tests.yaml
+|   |   |       TASK_036_verify_v021_graph_api_tests.yaml
+|   |   |       TASK_037_v027_repository_crud_tests.yaml
+|   |   |       TASK_038_verify_v027_repository_crud_tests.yaml
+|   |   |       TASK_039_d001_spec_pagination_params.yaml
+|   |   |       TASK_040_verify_d001_spec_pagination_params.yaml
+|   |   |       TASK_041_d002_spec_upload_version_history.yaml
+|   |   |       TASK_042_verify_d002_spec_upload_version_history.yaml
+|   |   |       TASK_043_d003_temp_password_security_note.yaml
+|   |   |       TASK_044_verify_d003_temp_password_security_note.yaml
+|   |   |       TASK_045_v028_data_processing_tests.yaml
+|   |   |       TASK_046_verify_v028_data_processing_tests.yaml
 |   |   |       
 |   |   \---validation
-|   |           tasks_validated_findings_001.md
-|   |           
 |   \---templates
 |           decision.md
 |           ui-brand.md
@@ -18208,11 +18222,13 @@ C:\PY_DEV\MKOBI
 |           02220192-dcfc-4e6d-b349-7101d6388fa9.csv
 |           0236b20c-3319-4575-8941-2d2995c0efe5.csv
 |           024657e6-d30b-46cb-b8f8-5adbd813c2cf.csv.gz
+|           024a014f-1914-4cae-bd0f-506265bf8d8d.csv
 |           02627a32-bd89-437d-9a02-b9a5b3f3b902.csv
 |           026aeacd-53d7-4c73-9dd6-74af4b52e8dc.csv
 |           0286e444-95fd-400d-a288-33f8ae218321.csv
 |           033502d1-5abb-43d7-aa3b-a954ce54c831.csv
 |           04cdf1b3-9688-44c6-b925-d418119156fe.csv
+|           053822f7-e6f2-48f6-b7f5-cfbf40fd8edd.csv
 |           05438e06-ce40-4b0c-939f-9fd5c6ff3521.csv
 |           05653899-a4bd-496f-a3b8-712c85111102.csv.gz
 |           056f44ae-b03b-4001-8090-f8935dd847ac.csv
@@ -18305,6 +18321,7 @@ C:\PY_DEV\MKOBI
 |           198e58a4-b5b4-4f3b-a56c-b08a49e93dfd.csv
 |           19c271cb-24b9-4317-a785-b429a82b41f5.csv.gz
 |           19fd26d5-33de-4adf-8d20-b31b0de7660f.csv
+|           19fdcd7e-8954-417b-91dc-00b0932efbff.csv
 |           1a076bc8-27ee-4668-8292-708811e2cb96.csv
 |           1a1cf8a5-0a42-43de-ac4a-ae04d01c1875.csv
 |           1a1eabbe-49c6-4df0-b02f-c91387f26da6.csv.gz
@@ -18318,6 +18335,7 @@ C:\PY_DEV\MKOBI
 |           1c63cf73-a4b6-4b8e-b475-27fbab6cb5fd.csv
 |           1d692b9b-0d51-4d57-94ee-706956ab3dda.csv
 |           1d6d0987-1a29-46fd-a5fd-7f12336a27a0.csv
+|           1da7254c-9a6f-4d58-a107-debdb8c73c09.csv
 |           1e2b3004-55db-46be-b24d-4508dee536f3.csv.gz
 |           1e560a84-c12d-4aab-b920-3d2013bc0279.csv
 |           1ecdcc19-7abd-4e5f-a37e-36a50351944f.csv.gz
@@ -18356,6 +18374,7 @@ C:\PY_DEV\MKOBI
 |           26158209-4eaa-45c6-b721-548e339fbbfa.csv
 |           26281418-0189-4814-9b83-c0823f57cf34.csv
 |           2650a3ad-b7eb-4030-a55c-5843a706f6aa.csv
+|           265388b0-196e-4a41-a30e-03ee287c1139.csv.gz
 |           26aa1dd3-a3e9-4159-b35f-91880ae42c71.csv
 |           26c42da4-c32a-4ad4-accd-b589d305acd5.csv
 |           270abe37-4c92-42e6-98d5-5221c7f3df99.csv
@@ -18398,6 +18417,7 @@ C:\PY_DEV\MKOBI
 |           2e51c516-5d9c-4bb8-a35f-32a31f9ad682.csv
 |           2e5324fb-fa47-4fec-867c-3faaebe3b4f2.csv
 |           2e58b490-c2b8-454c-9516-e47aab730284.csv.gz
+|           2e8fab6c-c3cc-40a9-b38b-2b31bae9874b.csv
 |           2ea8b5d7-f616-4a76-a607-265679c3797f.csv
 |           2eb5d349-754c-49eb-860d-f9e1755e0532.csv
 |           2ed76f69-73e8-45ee-bc53-46cb74f4a13f.csv
@@ -18410,6 +18430,7 @@ C:\PY_DEV\MKOBI
 |           305ff074-e995-4df1-bfaa-53e1491bdddc.csv
 |           30cb6621-078d-4ebc-a97a-1fbaf8307117.csv.gz
 |           31152a84-a77d-4720-a093-263b5d8e5242.csv
+|           31a9f1d7-4e20-4911-9c60-ee4f141d4316.csv
 |           31b7e0c7-fdf8-4d25-a608-4df68520a594.csv
 |           31ccd8c2-2b50-4698-8812-2285c6e471f6.csv.gz
 |           31d871d8-4866-4fca-9fd1-0cb24173bbad.csv
@@ -18616,6 +18637,7 @@ C:\PY_DEV\MKOBI
 |           6136b209-242e-48bb-9f0b-d779da81dd38.csv
 |           62280e5d-e80d-4ef8-b380-666203afba37.csv
 |           625b87f2-90c2-49ba-b02b-0daa9bd3bc1f.csv
+|           62dcd844-f0f7-447b-b764-e49ddf046c8b.csv
 |           62e2c474-44dd-43a1-92e5-57baf48c73a9.csv.gz
 |           634dc168-e30b-4778-8481-3d1f914101f8.csv
 |           6397c912-fe5c-4567-b125-2bd1a846a4b9.csv
@@ -18638,6 +18660,7 @@ C:\PY_DEV\MKOBI
 |           679237fd-9f8a-46a7-b73b-9cdbd0ec972d.csv.gz
 |           67ab56f8-f0fa-4dd5-a6ce-e0ae2e00f026.csv
 |           67b025ba-7a84-44b3-99be-7fdfe161be32.csv
+|           67f238db-b886-4d8d-8187-6382a75d1f1e.csv.gz
 |           67ff0733-34f4-431f-98e8-71c0c7306370.csv
 |           68107ea6-d6fa-4307-b34f-12c5f2286678.csv
 |           6835ea55-dae4-4cac-87e9-daa6136eacaa.csv
@@ -18689,10 +18712,13 @@ C:\PY_DEV\MKOBI
 |           75f873c7-16fe-4751-a6c9-ee1291269bbf.csv
 |           765e6663-3807-47f0-824b-3a6fc8bb6309.csv.gz
 |           765fbfad-e34f-4c4a-8be5-1fcbd75f2fd5.csv
+|           76dbf681-cebf-4b15-9059-095e2b153483.csv.gz
 |           76ec16db-79c7-4609-96f6-68a880b983f9.csv
+|           77ab646a-bc2b-47c2-be3a-e8cbed2d85c9.csv.gz
 |           77c20626-4043-4a4c-a7a1-bdfc0c1b95e5.csv
 |           77cdf25f-9a65-4d3d-9e55-8580b2e375c7.csv
 |           782a719d-68c3-436a-8bdd-ddfb6ec0591a.csv.gz
+|           785a5ba8-a999-4ee0-a0e2-f4c3a4a41ae9.csv.gz
 |           78a8ad3b-f7c7-4afd-a668-505d52fa751b.csv.gz
 |           78d288f1-9c1a-4ac2-b529-b92078188026.csv
 |           79153ca1-8a42-4f4e-b54c-78289bfc92ec.csv
@@ -18777,6 +18803,7 @@ C:\PY_DEV\MKOBI
 |           89a1b631-f436-4d35-a631-6fb7bfda8075.csv.gz
 |           89dcb7dc-5393-4009-8151-c0575afa4da1.csv.gz
 |           89f7e7bf-4d72-488d-98c7-90300a791389.csv.gz
+|           8a4bb7bd-5c17-45cc-bdad-a3208397b82c.csv
 |           8a6332b2-5696-417f-a3b2-3b6b0ad3393a.csv
 |           8a67fde2-43dd-4c9e-b4cd-e29768463df6.csv
 |           8a734281-629b-48a5-b4f2-46f51821b814.csv
@@ -18887,6 +18914,7 @@ C:\PY_DEV\MKOBI
 |           a4fbfe09-edfa-4fd2-bab1-816e1e6c8f46.csv
 |           a574c476-23f3-470e-85e0-a1968ad4599d.csv
 |           a58c218c-9568-4f46-b8e3-21d29ed2de86.csv
+|           a5a3923f-6fbb-48f1-85ee-213c2f9fb882.csv
 |           a5ad56fa-d24b-49cc-a212-4a4af196d0d4.csv
 |           a5b81dbc-bc86-4689-86c3-5061f5ad432d.csv
 |           a5db67d5-5a3c-477e-a450-3f1442f96296.csv
@@ -18919,6 +18947,7 @@ C:\PY_DEV\MKOBI
 |           aac1ad47-7c67-42f0-84f5-0c26c4fcd387.csv
 |           ab0d8cdd-8c9d-4910-b627-2ca9529d2e56.csv
 |           ab2640e4-1fdd-4a06-bae4-214d4e423920.csv
+|           ab33cd79-e29b-4bda-8a94-d14633f45593.csv
 |           ab3fc9f5-18b8-47d1-b43c-5170c3584d54.csv
 |           abbc75c6-19e8-4de3-b9d0-7b1d5c5e287c.csv
 |           abc6bc38-8fca-4720-a3fd-89a38e477209.csv
@@ -18987,6 +19016,7 @@ C:\PY_DEV\MKOBI
 |           bd871452-27c3-4c17-96ee-70704ec7aa6f.csv
 |           bda29c7e-aca4-46b2-b451-721e207014e7.csv.gz
 |           bdca690d-a4cc-4154-ac4c-a2f1fb981410.csv.gz
+|           be5414cb-7eb5-4278-a767-625de3bb3ce2.csv
 |           be82db06-362d-4d56-afef-caf566725c86.csv
 |           be912ab8-f50d-4ad1-b1cc-1ca5fdd5034f.csv.gz
 |           bebf1dba-d1f4-4480-99c1-f753f4fa7c1b.csv
@@ -19082,6 +19112,7 @@ C:\PY_DEV\MKOBI
 |           cfe0acdf-31a0-41fc-ad5b-54ab25392440.csv
 |           cffe401f-ac18-4969-a4b6-8e6e3c5d5b13.csv
 |           d01f978e-0f57-4e35-8916-2e079af2a93e.csv
+|           d06fac5e-014c-452b-b7f5-3bbaa90327ef.csv.gz
 |           d0972751-32c3-4de3-b3da-95b780edd8bd.csv
 |           d0c4d364-ede2-4193-b549-9ba6cef19da2.csv
 |           d11d2e87-9d50-4c84-9dc1-e7099b56fb85.csv
@@ -19122,6 +19153,7 @@ C:\PY_DEV\MKOBI
 |           d82e6ee4-c691-45c5-b650-642de4960165.csv
 |           d84a7191-a069-46ea-91ee-69c78c1e3aa5.csv
 |           d900250d-f1bc-405d-9eed-ddabf6ad2a1f.csv
+|           d9148acd-872c-4768-af67-b6e82c9ae963.csv
 |           d91d6d0d-1f53-4ae7-a9a1-a59aced848c6.csv
 |           d9553677-261c-44d4-880e-e8a4d127ed66.csv.gz
 |           d9632198-df03-4900-958b-9e93f5b53ca9.csv
@@ -19170,6 +19202,7 @@ C:\PY_DEV\MKOBI
 |           e13c465d-331b-4786-b724-181f6e1c4c42.csv
 |           e1c83a7f-c605-4279-9022-18018583e3d4.csv.gz
 |           e21e0313-e3f2-4dea-b605-800092f31c82.csv
+|           e2ae53e3-86da-4280-a2cf-409782335c7d.csv
 |           e335c350-7a60-4f4f-9d57-5c9ae5b51960.csv
 |           e34b821a-e5e8-431d-8e28-f05081c264f6.csv
 |           e36d6b6c-dc2d-40e6-9e97-f0bcc26e6a32.csv
@@ -19178,6 +19211,7 @@ C:\PY_DEV\MKOBI
 |           e3b5933a-5a58-4522-bce7-55dec34f4e8e.csv
 |           e3d6bbe2-68a2-4e75-b2ed-c5ce88ac5b49.csv
 |           e4416b13-880c-4b6a-979b-0c86a503d669.csv
+|           e45d7dc5-4066-477a-9488-0392331b6017.csv
 |           e4a7ed79-a357-4ee3-8cb8-407b1cf5e8a4.csv
 |           e52bffa5-fc08-401b-878c-d4084e037cd3.csv.gz
 |           e54a7dc1-55d1-495e-8797-6e05b3fa2dd4.csv
@@ -19197,6 +19231,7 @@ C:\PY_DEV\MKOBI
 |           e8eecc3f-ff7d-4665-a341-206146c5f72e.csv.gz
 |           e90ec835-e613-46b7-a525-2360967912cc.csv
 |           e95486e9-be20-492e-aeb8-08b7fb4c18a3.csv
+|           e96607e0-5e1e-4227-b26c-95883f6e552d.csv
 |           e992c5fe-61c7-4cf2-832d-cc87152628dc.csv
 |           ea56b449-ee91-420a-9168-c491f997fb8c.csv
 |           eaaa7d9e-0893-4176-a4ee-1beb40c65261.csv.gz
@@ -19220,6 +19255,7 @@ C:\PY_DEV\MKOBI
 |           edf61201-cdf6-4ad4-9c6c-b74d74a6c497.csv
 |           ee41ac3c-2879-4f0d-bb29-d465ba9ecae0.csv
 |           eee3d0d8-c0a1-4c93-8174-005ce20b4bf4.csv
+|           ef196933-94c2-4aaa-b6ce-4640d45cbf4f.csv
 |           ef280f43-5bdd-4c89-a763-743e07ea9a82.csv
 |           ef2bc891-1bc5-426a-85fb-bd8f52c3866a.csv
 |           ef6b5f13-cc0a-4d6a-a262-f2e4a6ef6e05.csv
@@ -19229,7 +19265,9 @@ C:\PY_DEV\MKOBI
 |           f0764f1c-0eda-4c08-9b39-36c1cd11276f.csv.gz
 |           f09a3213-1875-4524-af51-03c5c4eaf111.csv
 |           f0ba026d-2563-4ee4-9c4b-05447bb350a6.csv
+|           f0baee21-cb28-432b-b164-5c2cd8a06e26.csv
 |           f0c43127-780f-41de-afda-5926d14d150d.csv
+|           f0c86578-4895-4b33-b780-256c09d8b97d.csv
 |           f0eb9dde-487d-48a8-b872-99dece7b6e8d.csv
 |           f1ac94b2-de6c-4aa1-bca8-4e57caaa3385.csv
 |           f20b1353-ba02-4084-9ae0-a4d46a37bcf4.csv.gz

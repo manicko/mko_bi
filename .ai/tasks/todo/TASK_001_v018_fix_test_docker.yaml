@@ -1,0 +1,61 @@
+id: TASK_001_v018_fix_test_docker
+
+title: "V-018: Fix test Docker — add mkobi_app role via init-scripts volume mount"
+
+status: pending
+
+priority: critical
+
+depends_on: []
+
+description: >
+  docker/docker-compose.test.yml does not mount the init-scripts/ volume for the
+  test-db service. The 1-create-app-role.sh script never runs, so the mkobi_app
+  database role does not exist. DatabaseStarter.recreate_test_database() attempts
+  GRANT CONNECT ON DATABASE bidb_test TO mkobi_app, which fails because the role
+  does not exist. 173 of 386 tests fail in Docker as a result.
+
+goals:
+  - Add init-scripts volume mount to test-db service
+  - Verify mkobi_app role is created on container startup
+  - Confirm 173 previously-failing tests now pass
+
+files:
+  - path: docker/docker-compose.test.yml
+    targets:
+      - type: service_definition
+        name: test-db
+    semantic_anchors:
+      insert_after:
+        type: service_property
+        value: environment
+      context: "Add volumes section alongside existing environment/build keys"
+
+changes:
+  - action: add_yaml_key
+    description: >
+      Add volumes mount to test-db service:
+        volumes:
+          - ./docker/init-scripts:/docker-entrypoint-initdb.d:ro
+    anchor: "test-db service definition"
+
+acceptance_criteria:
+  - docker compose -f docker/docker-compose.test.yml up --build starts without errors
+  - mkobi_app role exists in PostgreSQL after container startup
+  - pytest tests/ -x passes with no "role does not exist" errors
+
+tests_to_run:
+  - docker compose -f docker/docker-compose.test.yml run test pytest tests/ -x --tb=short
+
+risk_level: low
+
+source_findings:
+  - V-018
+  - T2-FINDING0
+  - R3-CRITICAL-docker
+
+estimated_effort: trivial (~2 lines)
+
+related_tasks:
+  - TASK_003_v003_pydantic_500_to_422
+  - TASK_005_v001_temp_file_cleanup

@@ -1,0 +1,64 @@
+id: TASK_007_v005_inline_access_checks
+
+title: "V-005: Replace inline access checks with require_dashboard_read_access dependency"
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_006_verify_v001_temp_file_cleanup
+
+description: >
+  src/mkobi/api/routes/dashboards.py lines 661-697 (get_dashboard_filters_endpoint)
+  and 872-917 (get_dashboard_graphs_endpoint) perform dashboard access checks inline
+  by importing check_dashboard_access inside the endpoint function body. The same
+  check is duplicated (10 lines each time). deps.py already provides
+  require_dashboard_read_access dependency that performs the same check.
+
+goals:
+  - Replace inline access checks with Depends(require_dashboard_read_access)
+  - Remove inline imports of check_dashboard_access
+  - Move imports to module level
+  - Follow same pattern used by other endpoints in the same file
+
+files:
+  - path: src/mkobi/api/routes/dashboards.py
+    targets:
+      - type: function
+        name: get_dashboard_filters_endpoint
+      - type: function
+        name: get_dashboard_graphs_endpoint
+    semantic_anchors:
+      insert_after:
+        type: function_definition
+        value: "def get_dashboard_filters_endpoint"
+      insert_after:
+        type: function_definition
+        value: "def get_dashboard_graphs_endpoint"
+      context: "Replace inline check_dashboard_access() call with Depends(require_dashboard_read_access) parameter"
+
+changes:
+  - action: modify_code
+    description: >
+      In both endpoint functions, replace the inline access check block with
+      require_dashboard_read_access as a FastAPI dependency parameter.
+      Remove the local import of check_dashboard_access.
+    anchor: "get_dashboard_filters_endpoint and get_dashboard_graphs_endpoint function bodies"
+
+acceptance_criteria:
+  - Both endpoints use Depends(require_dashboard_read_access)
+  - No inline check_dashboard_access calls remain
+  - All dashboard tests pass
+  - Access control behavior unchanged (verified by existing tests)
+
+tests_to_run:
+  - pytest tests/test_dashboards.py -x --tb=short
+
+risk_level: medium (touches security logic — ensure full test coverage)
+
+source_findings:
+  - V-005
+  - R3-HIGH-dashboards
+
+estimated_effort: small (~20 lines changed across 2 endpoints)

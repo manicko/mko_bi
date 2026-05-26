@@ -1,0 +1,64 @@
+id: TASK_013_v009_remove_sidebar_dead_code
+
+title: "V-005: Remove Sidebar.tsx dead code and clean up barrel exports"
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_012_verify_v006_loginform_auth_state
+
+description: >
+  frontend/src/shared/components/Layout/Sidebar.tsx is defined, exported from barrel
+  files, but never rendered in AppLayout.tsx. Spec confirms sidebar was replaced
+  with top navigation (Header component). Dead code adds slight bundle size and
+  developer confusion.
+
+goals:
+  - Remove Sidebar.tsx file
+  - Remove Sidebar exports from barrel files
+  - Verify no remaining references to Sidebar
+
+files:
+  - path: frontend/src/shared/components/Layout/Sidebar.tsx
+    targets:
+      - type: file_deletion
+        name: Sidebar.tsx
+    semantic_anchors:
+      file_exists: true
+
+  - path: frontend/src/shared/components/Layout/index.ts
+    targets:
+      - type: export_statement
+        context: "Remove Sidebar-related exports"
+    semantic_anchors:
+      insert_after:
+        type: export_statement
+        value: "Sidebar"
+
+changes:
+  - action: delete_file
+    description: >
+      Delete Sidebar.tsx. Remove any export statements referencing Sidebar
+      from Layout/index.ts and shared/components/index.ts.
+    anchor: "Sidebar.tsx file and all barrel exports referencing it"
+
+acceptance_criteria:
+  - Sidebar.tsx no longer exists
+  - No TypeScript compilation errors from missing imports
+  - Frontend builds successfully
+  - No references to Sidebar remain in codebase
+
+tests_to_run:
+  - cd frontend && npm run build
+  - grep -r "Sidebar" frontend/src/ || echo "No Sidebar references found"
+
+risk_level: trivial (dead code removal)
+
+source_findings:
+  - V-009
+  - R1-F004
+  - R3-7Sidebar
+
+estimated_effort: trivial

@@ -1,0 +1,58 @@
+id: TASK_021_v022_duplicate_storage_tests
+
+title: "V-022: Delete duplicate storage_manager tests"
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_020_verify_v011_get_config_singleton_mutation
+
+description: >
+  test_clear_graph_data_instance is identical to test_clear_graph_data (both
+  clear from empty table, assert 0). test_clear_dashboard_data_instance is
+  identical to test_clear_dashboard_data. These duplicate tests add noise to
+  test output, waste CI time, and provide no additional coverage.
+
+goals:
+  - Remove test_clear_graph_data_instance (duplicate of test_clear_graph_data)
+  - Remove test_clear_dashboard_data_instance (duplicate of test_clear_dashboard_data)
+
+files:
+  - path: tests/test_storage_manager.py
+    targets:
+      - type: test_function
+        name: test_clear_graph_data_instance
+      - type: test_function
+        name: test_clear_dashboard_data_instance
+    semantic_anchors:
+      insert_after:
+        type: function_definition
+        value: "test_clear_graph_data_instance"
+      context: "Delete the duplicate function definition"
+
+changes:
+  - action: delete_code
+    description: >
+      Delete test_clear_graph_data_instance and test_clear_dashboard_data_instance
+      function definitions from test_storage_manager.py.
+    anchor: "Duplicate test function definitions"
+
+acceptance_criteria:
+  - Both duplicate tests removed
+  - Original tests (test_clear_graph_data, test_clear_dashboard_data) still exist
+  - pytest tests/test_storage_manager.py -x passes
+
+tests_to_run:
+  - pytest tests/test_storage_manager.py -x --tb=short
+
+risk_level: trivial (test deletion only)
+
+source_findings:
+  - V-022
+  - T1-Finding4
+  - T1-F12
+  - T2-F6
+
+estimated_effort: trivial

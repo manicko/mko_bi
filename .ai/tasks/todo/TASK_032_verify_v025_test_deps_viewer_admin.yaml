@@ -1,0 +1,24 @@
+id: TASK_032_verify_v025_test_deps_viewer_admin
+
+title: "Verify V-025: Admin endpoint access control properly tested"
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_031_v025_test_deps_viewer_admin
+
+verifies: TASK_031_v025_test_deps_viewer_admin
+
+verification_steps:
+  - build: "ruff check tests/test_deps.py"
+  - test: "pytest tests/test_deps.py -x --tb=short -k 'admin or viewer'"
+  - smoke_check: "python -c \"from tests.test_deps import *; print('import OK')\""
+
+pass_criteria:
+  - Test passes
+  - Test name matches behavior
+  - Admin endpoint access control verified (403 for unauthorized)
+
+failure_action: return TASK_031_v025_test_deps_viewer_admin to rework

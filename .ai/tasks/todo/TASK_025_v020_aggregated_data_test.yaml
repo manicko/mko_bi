@@ -1,0 +1,57 @@
+id: TASK_025_v020_aggregated_data_test
+
+title: "V-020: Fix AggregatedData chart_type test to use valid dashboard_id"
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_024_verify_v019_jwt_user_id_assertions
+
+description: >
+  test_aggregated_data_invalid_chart_type uses dashboard_id=1 (int), which
+  causes ValidationError BEFORE chart_type is checked. The test passes but
+  doesn't actually test chart_type validation. Use dashboard_id=uuid.uuid4()
+  (valid UUID) so the ValidationError is raised by chart_type, not by
+  dashboard_id type mismatch.
+
+goals:
+  - Fix test to use valid UUID for dashboard_id
+  - Verify test actually exercises chart_type validation
+
+files:
+  - path: tests/test_pydantic_models.py
+    targets:
+      - type: test_function
+        name: test_aggregated_data_invalid_chart_type
+    semantic_anchors:
+      insert_after:
+        type: function_definition
+        value: "test_aggregated_data_invalid_chart_type"
+      context: "Replace dashboard_id=1 with dashboard_id=uuid.uuid4()"
+
+changes:
+  - action: modify_code
+    description: >
+      Change dashboard_id=1 to dashboard_id=uuid.uuid4() so the ValidationError
+      is raised by the invalid chart_type value, not by the invalid dashboard_id
+      type. Ensure uuid import exists at top of file.
+    anchor: "test_aggregated_data_invalid_chart_type function body"
+
+acceptance_criteria:
+  - Test still passes
+  - ValidationError is raised for chart_type field (not dashboard_id)
+  - Test actually validates chart_type constraint
+
+tests_to_run:
+  - pytest tests/test_pydantic_models.py -x --tb=short -k 'chart_type or aggregated_data'
+
+risk_level: trivial (test fix only)
+
+source_findings:
+  - V-020
+  - T1-Finding2
+  - T2-F9
+
+estimated_effort: trivial

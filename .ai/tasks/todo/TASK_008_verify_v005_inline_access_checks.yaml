@@ -1,0 +1,24 @@
+id: TASK_008_verify_v005_inline_access_checks
+
+title: "Verify V-005: Inline access checks replaced with DI dependency"
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_007_v005_inline_access_checks
+
+verifies: TASK_007_v005_inline_access_checks
+
+verification_steps:
+  - build: "ruff check src/mkobi/api/routes/dashboards.py"
+  - test: "pytest tests/ -x --tb=short -k 'dashboard'"
+  - smoke_check: "python -c \"from mkobi.api.deps import require_dashboard_read_access; print('import OK')\""
+
+pass_criteria:
+  - ruff check passes (no unused imports)
+  - All dashboard-related tests pass
+  - require_dashboard_read_access importable
+
+failure_action: return TASK_007_v005_inline_access_checks to rework

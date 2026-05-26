@@ -1,0 +1,51 @@
+id: TASK_033_v026_double_flush
+
+title: "V-026: Remove duplicate flush() call in test_auth"
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_032_verify_v025_test_deps_viewer_admin
+
+description: >
+  test_register_request_success in tests/test_auth.py has await async_db_session.flush()
+  called twice consecutively (copy-paste bug). No functional issue (second flush
+  is a no-op), but code smell.
+
+goals:
+  - Remove the duplicate flush() call
+
+files:
+  - path: tests/test_auth.py
+    targets:
+      - type: test_function
+        name: test_register_request_success
+    semantic_anchors:
+      insert_after:
+        type: function_call
+        value: "async_db_session.flush()"
+      context: "Remove the second consecutive flush() call"
+
+changes:
+  - action: delete_code
+    description: >
+      Remove the duplicate await async_db_session.flush() call.
+    anchor: "Second async_db_session.flush() call"
+
+acceptance_criteria:
+  - Single flush() call remains
+  - test_register_request_success passes
+
+tests_to_run:
+  - pytest tests/test_auth.py -x --tb=short -k 'register_request'
+
+risk_level: trivial (dead code removal)
+
+source_findings:
+  - V-026
+  - T1-Finding8
+  - T2-F3
+
+estimated_effort: trivial
