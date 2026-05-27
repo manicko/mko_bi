@@ -1,0 +1,151 @@
+# Source plan: C:\py_dev\mkobi\.ai\plans\PLAN_01.md — T02
+# Task reference: .kilo/commands/plan/plan-phase.md
+
+id: TASK_002_T02
+
+title: Create audit-final-report.md template
+
+status: pending
+
+priority: high
+
+wave: 1
+
+depends_on:
+  - TASK_001_T01
+
+risk: low
+
+effort: small
+
+type: implementation
+
+description: >
+  Create the final report template used by the orchestrator to merge all 9 phase
+  findings into one deliverable.
+
+plan_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+
+plan_section: T02 — Create audit-final-report.md Template
+
+objective: >
+  Create `.kilo/commands/audit/templates/audit-final-report.md` — the structured format
+  the orchestrator uses to combine all validated phase findings into the final audit report
+  at `.ai/audit/final-report.md`.
+
+affected_files:
+  - path: .kilo/commands/audit/templates/audit-final-report.md
+    action: create
+    description: "Final merged report template with 6 sections"
+
+semantic_targets:
+  - type: file
+    name: audit-final-report.md
+    anchor: create_new_file
+
+# ── FULL CONTENT FROM PLAN ──
+
+template_purpose: >
+  This template defines the structured format for the final merged audit report.
+  The orchestrator uses this to combine all validated phase findings into one deliverable.
+
+report_structure: |
+  # Audit Report — mkobi BI Dashboard
+
+  **Generated:** {date}
+  **Phases Completed:** 9/9
+  **Validated Findings:** {N} total
+
+  ---
+
+  ## 1. Executive Summary
+
+  - **Overall Quality Score:** {1-10}
+  - **Critical Findings:** {count}
+  - **Production Readiness:** {READY | PARTIALLY_READY | NOT_READY}
+
+  Brief paragraph summarizing system quality, main risks, readiness level.
+
+  ---
+
+  ## 2. Architecture Summary
+
+  ### Backend (Clean Architecture)
+  Strengths, weaknesses, maintainability assessment.
+
+  ### Frontend (Feature-Sliced Design)
+  Strengths, weaknesses, maintainability assessment.
+
+  ---
+
+  ## 3. Findings by Phase
+
+  ### Phase 1: Backend Architecture
+  [Findings from audit-backend/findings.md]
+
+  ### Phase 2: Frontend Architecture
+  [Findings from audit-frontend/findings.md]
+
+  ... (all 9 phases)
+
+  ---
+
+  ## 4. Findings by Severity
+
+  ### CRITICAL (must fix immediately)
+  [All CRITICAL findings across all phases]
+
+  ### HIGH (fix before production)
+  [All HIGH findings across all phases]
+
+  ### MEDIUM (technical debt)
+  [All MEDIUM findings across all phases]
+
+  ### LOW (nice to have)
+  [All LOW findings across all phases]
+
+  ---
+
+  ## 5. Cross-Cutting Concerns (from Phase 9: Integration)
+
+  [Integration-specific findings: API contract, auth flow, data flow, DB alignment, type alignment, Docker wiring]
+
+  ---
+
+  ## 6. Fix Priority
+
+  Numbered list: 1. CRITICAL, 2. HIGH, 3. MEDIUM, 4. LOW
+
+merge_strategy: >
+  Orchestrator pulls from per-phase findings files at `.ai/audit/{phase-name}/findings.md`
+  using the audit-findings.md template format. Phase 9 runs after all 8 silo findings
+  are validated. All 9 sets are merged using this report template into `.ai/audit/final-report.md`.
+
+report_sections:
+  - section: "1. Executive Summary"
+    content: "Overall Quality Score (1-10), Critical Findings count, Production Readiness level, brief summary paragraph"
+  - section: "2. Architecture Summary"
+    content: "Backend (Clean Architecture) and Frontend (FSD) strengths/weaknesses assessment"
+  - section: "3. Findings by Phase"
+    content: "Findings from all 9 phases, referencing per-phase findings files"
+  - section: "4. Findings by Severity"
+    content: "CRITICAL, HIGH, MEDIUM, LOW grouped findings across all phases"
+  - section: "5. Cross-Cutting Concerns"
+    content: "Phase 9 Integration findings: API contract, auth flow, data flow, DB alignment, type alignment, Docker wiring"
+  - section: "6. Fix Priority"
+    content: "Numbered list: 1. CRITICAL, 2. HIGH, 3. MEDIUM, 4. LOW"
+
+acceptance_criteria:
+  - File exists at `.kilo/commands/audit/templates/audit-final-report.md`
+  - Template has all 6 sections (Executive Summary, Architecture Summary, Findings by Phase, Findings by Severity, Cross-Cutting, Fix Priority)
+  - Includes scoring area (1-10 per section) and readiness assessment (READY | PARTIALLY_READY | NOT_READY)
+  - Merge strategy documented (orchestrator pulls from per-phase findings files)
+  - References per-phase findings files at `.ai/audit/{phase-name}/findings.md` as source
+
+validation:
+  - File exists at correct path
+  - Contains all 6 sections
+  - References per-phase findings files as source
+  - Includes scoring and readiness assessment
+
+tests_to_run: []

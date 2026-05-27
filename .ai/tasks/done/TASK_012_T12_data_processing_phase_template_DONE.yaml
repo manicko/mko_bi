@@ -1,0 +1,105 @@
+# Source plan: C:\py_dev\mkobi\.ai\plans\PLAN_01.md — T12
+# Task reference: .kilo/commands/plan/plan-phase.md
+
+id: TASK_012_T12
+
+title: Create 07-audit-data-processing.md phase template
+
+status: pending
+
+priority: medium
+
+wave: 2
+
+depends_on:
+  - TASK_005_T05
+
+risk: low
+
+effort: medium
+
+type: implementation
+
+description: >
+  Create the data processing audit phase template. Extract content from
+  audit-project-detailed.md blocks 4, 5, 9 (data processing sections).
+
+plan_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+
+plan_section: T12 — Create 07-audit-data-processing.md Phase Template
+
+objective: >
+  Create `.kilo/commands/audit/phases/07-audit-data-processing.md` with data
+  processing-specific file paths and condensed checklist covering Polars pipeline,
+  loaders, transformations, aggregations, formula parser, storage, task queue,
+  background worker, resource cleanup. Findings prefixed with `DP-`.
+
+affected_files:
+  - path: .kilo/commands/audit/phases/07-audit-data-processing.md
+    action: create
+    description: "Data processing audit phase template"
+
+semantic_targets:
+  - type: file
+    name: 07-audit-data-processing.md
+    anchor: create_new_file
+
+# ── FULL CONTENT FROM PLAN ──
+
+finding_prefix: DP
+
+source_file: .kilo/commands/audit/project/audit-project-detailed.md
+
+source_blocks:
+  - "BLOCK 4 — Data Processing (Polars)"
+  - "BLOCK 5 — PostgreSQL Layer (storage-specific aspects)"
+  - "BLOCK 9 — Task Queue & Background Processing"
+
+phase_frontmatter: |
+  ---
+  name: audit-data-processing
+  description: Data processing audit covering Polars pipeline, loaders, transformations, aggregations, formula parser, storage, task queue, background worker, resource cleanup
+  agent: audit-executor
+  alwaysApply: false
+  ---
+
+body_structure:
+  base_layer_context: "Same as all phases (auto-included by orchestrator)"
+
+  phase_specific_file_paths:
+    paths:
+      - src/mkobi/data/loaders/loader.py
+      - src/mkobi/data/loaders/validator.py
+      - src/mkobi/data/processing/transformations.py
+      - src/mkobi/data/processing/registry.py
+      - src/mkobi/data/storage/manager.py
+      - src/mkobi/core/task_queue.py
+      - src/mkobi/workers/data_worker.py
+      - src/mkobi/services/file_processing.py
+
+  checklist:
+    - "[ ] Polars only: no `import pandas`, all transformations via Polars"
+    - "[ ] Loaders: CSV/CSV.gz support, schema validation, error handling for corrupted files"
+    - "[ ] Transformations: group_by, YoY (absolute/percent), shares, custom metrics"
+    - "[ ] Formula parser: supports `+`, `-`, `*`, `/`, clear errors for invalid formulas"
+    - "[ ] Storage: JSONB write, dims key sorted recursively, UPSERT determinism"
+    - "[ ] Pipeline: upload → parse → transform → aggregate → save → cleanup"
+    - "[ ] Resource cleanup: `platformdirs`, `finally` blocks, success + failure cleanup"
+    - "[ ] Transaction handling: atomic processing, rollback on failure"
+    - "[ ] Task queue: `asyncio.Queue`, lifecycle tracking (`STARTED` → `PROCESSING` → `SUCCESS`/`FAILED`)"
+    - "[ ] Background worker: full pipeline in worker, processing log updates at each stage"
+
+acceptance_criteria:
+  - File exists at `.kilo/commands/audit/phases/07-audit-data-processing.md`
+  - Content extracted from blocks 4, 5, 9
+  - Covers full data pipeline from upload to storage
+  - Covers task queue and background worker
+  - Uses `DP-` finding ID prefix
+  - References audit-findings.md template for report format
+
+validation:
+  - File exists at correct path
+  - Source blocks 4, 5, 9
+  - Pipeline stages checklist complete
+
+tests_to_run: []

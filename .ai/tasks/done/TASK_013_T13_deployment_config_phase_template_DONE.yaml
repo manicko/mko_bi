@@ -1,0 +1,103 @@
+# Source plan: C:\py_dev\mkobi\.ai\plans\PLAN_01.md — T13
+# Task reference: .kilo/commands/plan/plan-phase.md
+
+id: TASK_013_T13
+
+title: Create 08-audit-deployment-config.md phase template
+
+status: pending
+
+priority: medium
+
+wave: 2
+
+depends_on:
+  - TASK_005_T05
+
+risk: low
+
+effort: medium
+
+type: implementation
+
+description: >
+  Create the deployment and config audit phase template. Extract content from
+  audit-project-detailed.md blocks 10, 11 (performance, stability, config, deployment).
+
+plan_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+
+plan_section: T13 — Create 08-audit-deployment-config.md Phase Template
+
+objective: >
+  Create `.kilo/commands/audit/phases/08-audit-deployment-config.md` with config
+  and deployment-specific file paths and condensed checklist covering config
+  management, startup lifecycle, deployment options, performance, stability,
+  no-overengineering check. Findings prefixed with `DC-`.
+
+affected_files:
+  - path: .kilo/commands/audit/phases/08-audit-deployment-config.md
+    action: create
+    description: "Deployment and configuration audit phase template"
+
+semantic_targets:
+  - type: file
+    name: 08-audit-deployment-config.md
+    anchor: create_new_file
+
+# ── FULL CONTENT FROM PLAN ──
+
+finding_prefix: DC
+
+source_file: .kilo/commands/audit/project/audit-project-detailed.md
+
+source_blocks:
+  - "BLOCK 10 — Performance & Stability"
+  - "BLOCK 11 — Configuration & Deployment"
+  - "BLOCK 12 — No Overengineering Check (condensed into checklist intro)"
+
+phase_frontmatter: |
+  ---
+  name: audit-deployment-config
+  description: Deployment and configuration audit covering config management, startup lifecycle, deployment options, performance, stability, no-overengineering check
+  agent: audit-executor
+  alwaysApply: false
+  ---
+
+body_structure:
+  base_layer_context: "Same as all phases (auto-included by orchestrator)"
+
+  phase_specific_file_paths:
+    paths:
+      - src/mkobi/config.py
+      - src/mkobi/settings/app.yaml
+      - src/mkobi/db/starter.py
+      - src/mkobi/app.py
+      - docker/Dockerfile
+      - docker/docker-compose.yml
+      - docker/docker-compose.override.yml
+      - .env
+      - .env.example
+
+  checklist:
+    - "[ ] Config: Pydantic-settings, priority chain (env > Docker secrets > .env > app.yaml > defaults)"
+    - "[ ] Docker secrets: `_FILE` suffix support, `.env` for dev only"
+    - "[ ] Startup lifecycle: DB check → schema check → migrations → admin user creation → stale file cleanup → ready"
+    - "[ ] Production credential enforcement: refuses to start with default `admin`/`admin`"
+    - "[ ] Deployment options: dev (React dev + FastAPI), prod (static files via FastAPI or Nginx)"
+    - "[ ] Performance: JSONB GIN index, connection pooling, N+1 checks, rate limiting"
+    - "[ ] Stability: error isolation, timeout handling, CORS"
+    - "[ ] No overengineering: no Redux/Zustand, no unnecessary abstractions, TanStack Query sufficient"
+
+acceptance_criteria:
+  - File exists at `.kilo/commands/audit/phases/08-audit-deployment-config.md`
+  - Content extracted from blocks 10, 11 (plus 12 as condensed note)
+  - Covers config, startup, deployment, performance, stability
+  - Uses `DC-` finding ID prefix
+  - References audit-findings.md template for report format
+
+validation:
+  - File exists at correct path
+  - Source blocks 10, 11
+  - Config and deployment checklist complete
+
+tests_to_run: []

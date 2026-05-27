@@ -10,6 +10,13 @@ depends_on:
   - task_003
   - task_007
 
+# ── Plan/Audit report source (REQUIRED when task originates from a plan or audit) ──
+# source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_XX.md
+# source_section: TX — Task Title
+# source_file: .kilo/commands/audit/...           # if extracting from existing file
+# source_blocks:                                  # if extracting specific blocks
+#   - "BLOCK N — Block Name"
+
 description: >
   Add audit logging after successful user creation.
 
@@ -17,6 +24,13 @@ goals:
   - create audit log record
   - avoid affecting transaction flow
   - preserve backward compatibility
+
+# ── Extra context from plan (verbatim, do not summarize) ──
+# Include full checklists, YAML frontmatter, file paths, agent instructions,
+# runtime steps, anti-patterns — everything from the plan's XML <details> block.
+# extra_context:
+#  
+
 
 files:
   - path: app/services/user_service.py

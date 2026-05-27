@@ -1,0 +1,67 @@
+id: TASK_015_T15
+
+title: Create .ai/audit/{phase-name} directories for audit findings output
+
+status: pending
+
+priority: high
+
+wave: 1
+
+depends_on: []
+
+risk: low
+
+effort: trivial
+
+type: implementation
+
+description: >
+  Create the directory structure where each phase executor writes its findings.
+  9 directories under `.ai/audit/` — one per audit phase. Executor agents write
+  to `.ai/audit/{phase-name}/findings.md` during pipeline execution. These directories
+  must exist BEFORE the orchestrator starts the pipeline.
+
+plan_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+
+objective: >
+  Create 9 directories under `.ai/audit/`. The orchestrator and executor agents
+  reference these paths. Without them, the pipeline fails on first execution.
+
+affected_directories:
+  - path: .ai/audit/audit-backend/
+    findings_file: .ai/audit/audit-backend/findings.md
+  - path: .ai/audit/audit-frontend/
+    findings_file: .ai/audit/audit-frontend/findings.md
+  - path: .ai/audit/audit-database/
+    findings_file: .ai/audit/audit-database/findings.md
+  - path: .ai/audit/audit-security/
+    findings_file: .ai/audit/audit-security/findings.md
+  - path: .ai/audit/audit-docker/
+    findings_file: .ai/audit/audit-docker/findings.md
+  - path: .ai/audit/audit-tests/
+    findings_file: .ai/audit/audit-tests/findings.md
+  - path: .ai/audit/audit-data-processing/
+    findings_file: .ai/audit/audit-data-processing/findings.md
+  - path: .ai/audit/audit-deployment-config/
+    findings_file: .ai/audit/audit-deployment-config/findings.md
+  - path: .ai/audit/audit-integration/
+    findings_file: .ai/audit/audit-integration/findings.md
+
+semantic_targets:
+  - type: directory
+    name: .ai/audit/
+    anchor: create_9_subdirectories
+
+directory_naming_convention: >
+  Directory names must match exactly what the orchestrator and executor reference:
+  `audit-backend`, `audit-frontend`, `audit-database`, `audit-security`, `audit-docker`,
+  `audit-tests`, `audit-data-processing`, `audit-deployment-config`, `audit-integration`.
+
+acceptance_criteria:
+  - All 9 directories exist under `.ai/audit/`
+  - All directories are empty (no stale files)
+  - Directory names match the `{phase-name}` pattern used by orchestrator and executor
+  - Paths match references in `.kilo/agents/audit-orchestrator.md` and `.kilo/agents/audit-executor.md`
+
+tests_to_run: []

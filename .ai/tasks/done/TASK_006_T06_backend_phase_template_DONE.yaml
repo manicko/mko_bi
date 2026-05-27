@@ -1,0 +1,121 @@
+# Source plan: C:\py_dev\mkobi\.ai\plans\PLAN_01.md — T06
+# Task reference: .kilo/commands/plan/plan-phase.md
+
+id: TASK_006_T06
+
+title: Create 01-audit-backend.md phase template
+
+status: pending
+
+priority: medium
+
+wave: 2
+
+depends_on:
+  - TASK_005_T05
+
+risk: low
+
+effort: medium
+
+type: implementation
+
+description: >
+  Create the backend architecture audit phase template. Extract content from
+  audit-project-detailed.md blocks 1-3, 7 (backend-only sections).
+
+plan_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+
+plan_section: T06 — Create 01-audit-backend.md Phase Template
+
+objective: >
+  Create `.kilo/commands/audit/phases/01-audit-backend.md` with backend-specific
+  file paths and condensed checklist covering Clean Architecture, API layer,
+  access control, code quality (typing, Pydantic, StrEnum, async, logging).
+  Findings prefixed with `BE-`.
+
+affected_files:
+  - path: .kilo/commands/audit/phases/01-audit-backend.md
+    action: create
+    description: "Backend architecture audit phase template"
+
+semantic_targets:
+  - type: file
+    name: 01-audit-backend.md
+    anchor: create_new_file
+
+# ── FULL CONTENT FROM PLAN ──
+
+finding_prefix: BE
+
+source_file: .kilo/commands/audit/project/audit-project-detailed.md
+
+source_blocks:
+  - "BLOCK 1 — Project Structure & Architecture (1.1 Backend Structure only)"
+  - "BLOCK 2 — Backend API Layer (2.1 Auth, 2.2 Dashboard, 2.3 Data & Upload, 2.4 Admin, 2.5 Health, 2.6 Other)"
+  - "BLOCK 3 — Access Control & Security (3.1-3.8, scoped to backend)"
+  - "BLOCK 7 — Code Quality Backend (7.1 Typing, 7.2 Pydantic, 7.3 StrEnum, 7.4 Readability, 7.5 Logging Language, 7.6 Error Handling, 7.7 Async, 7.8 Logging)"
+
+phase_frontmatter: |
+  ---
+  name: audit-backend
+  description: Backend architecture audit covering Clean Architecture compliance, API layer correctness, access control, code quality (typing, Pydantic, StrEnum, async, logging)
+  agent: audit-executor
+  alwaysApply: false
+  ---
+
+body_structure:
+  base_layer_context:
+    description: "Auto-included by orchestrator"
+    items:
+      - "Project: mkobi BI Dashboard (FastAPI + React + PostgreSQL)"
+      - "Structure: `.ai/structure/map.md`"
+      - "Commands: `.ai/context/commands.md`"
+      - "SPEC: `docs/SPEC.md`"
+
+  phase_specific_file_paths:
+    description: "Orchestrator provides these, executor reads them"
+    paths:
+      - src/mkobi/api/routes/*.py
+      - src/mkobi/services/*.py
+      - src/mkobi/db/repositories/*.py
+      - src/mkobi/db/models/*.py
+      - src/mkobi/models/*.py
+      - src/mkobi/models/enums.py
+      - src/mkobi/core/*.py
+      - src/mkobi/data/loaders/*.py
+      - src/mkobi/data/processing/*.py
+      - src/mkobi/data/storage/*.py
+      - src/mkobi/config.py
+      - src/mkobi/interfaces/*.py
+      - src/mkobi/workers/*.py
+
+  checklist:
+    - "[ ] Backend Clean Architecture: layer separation, no business logic in routes, DI via `deps.py`"
+    - "[ ] API endpoints: all routes correct, Pydantic models, HTTPException errors, no `print()`"
+    - "[ ] Auth: JWT (algorithm set, expiration, bcrypt, rate limiting)"
+    - "[ ] Dashboard access: `dashboard_access`, admin bypass, 403/404 dual-signal"
+    - "[ ] Upload: MIME validation, size limit, temp file cleanup, path traversal protection"
+    - "[ ] Admin: role enforcement, registration flow, no sensitive data leakage"
+    - "[ ] Health: `/health`, `/health/detailed`, `/` all functional"
+    - "[ ] Processing pipeline: Polars only (no pandas), full recalc, cleanup"
+    - "[ ] StrEnum: all used, no string literals for role/status/type checks"
+    - "[ ] Code quality: type hints, Pydantic models, async correctness, no `print()`, English comments/logs"
+    - "[ ] SQL safety: parameterized queries, no raw f-string SQL"
+    - "[ ] Temp file cleanup: `platformdirs`, `finally` blocks"
+
+acceptance_criteria:
+  - File exists at `.kilo/commands/audit/phases/01-audit-backend.md`
+  - Content extracted from source blocks 1, 2, 3, 7 only (no frontend/code quality frontend sections)
+  - Contains phase-specific file paths for all backend layers
+  - Contains condensed checklist covering all backend concerns
+  - Uses `BE-` finding ID prefix
+  - References audit-findings.md template for report format
+
+validation:
+  - File exists at correct path
+  - Extracted ONLY from blocks 1-3, 7 (not frontend blocks)
+  - Contains backend-specific file paths
+  - Condensed checklist present
+
+tests_to_run: []

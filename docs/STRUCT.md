@@ -26,6 +26,8 @@ C:\PY_DEV\MKOBI
 |   |   +---project
 |   |   +---tests
 |   |   \---validated
+|   |           BUG-001-002-003-runtime-errors.md
+|   |           
 |   +---builders
 |   |   |   build.bat
 |   |   |   
@@ -58,14 +60,8 @@ C:\PY_DEV\MKOBI
 |   |   |   
 |   |   \---tasks
 |   +---problems
-|   |   |   CONTEXT_1.md
-|   |   |   
 |   |   \---decisions
-|   |           DECISION_01.md
-|   |           
 |   +---researches
-|   |       RESEARCH_01.md
-|   |       
 |   +---structure
 |   |   |   map.md
 |   |   |   
@@ -79,28 +75,37 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
-|   |   |       TASK_001_M01_mount_client_errors_router_DONE.yaml
-|   |   |       TASK_002_M02_add_cookie_secure_override_DONE.yaml
-|   |   |       TASK_003_M03_fix_root_route_redirect_DONE.yaml
-|   |   |       TASK_004_M04_fix_protected_route_and_query_guard_DONE.yaml
-|   |   |       TASK_005_M05_add_jwt_payload_types_DONE.yaml
-|   |   |       TASK_006_verify_mandatory_fixes_DONE.yaml
-|   |   |       TASK_007_A01_fix_eslint_errors_DONE.yaml
-|   |   |       TASK_008_A03_fix_mypy_any_returns_DONE.yaml
-|   |   |       TASK_009_A05_verify_token_key_consistency_DONE.yaml
-|   |   |       TASK_010_A02_fix_n_plus_1_dashboard_queries_DONE.yaml
-|   |   |       TASK_011_A04_improve_spa_path_check_DONE.yaml
-|   |   |       TASK_012_A06_split_large_files_DONE.yaml
-|   |   |       TASK_013_A07_frontend_code_splitting_DONE.yaml
-|   |   |       TASK_014_D01_doc_cookie_secure_dev_DONE.yaml
-|   |   |       TASK_015_D02_doc_port_8000_access_DONE.yaml
-|   |   |       TASK_016_D03_doc_frontend_enums_in_backend_DONE.yaml
+|   |   |       TASK_001_T01_audit_findings_template_DONE.yaml
+|   |   |       TASK_002_T02_audit_final_report_template_DONE.yaml
+|   |   |       TASK_003_T03_audit_executor_agent_DONE.yaml
+|   |   |       TASK_004_T04_audit_orchestrator_agent_DONE.yaml
+|   |   |       TASK_005_T05_integration_phase_template_DONE.yaml
+|   |   |       TASK_006_T06_backend_phase_template_DONE.yaml
+|   |   |       TASK_007_T07_frontend_phase_template_DONE.yaml
+|   |   |       TASK_008_T08_database_phase_template_DONE.yaml
+|   |   |       TASK_009_T09_security_phase_template_DONE.yaml
+|   |   |       TASK_010_T10_docker_phase_template_DONE.yaml
+|   |   |       TASK_011_T11_tests_phase_template_DONE.yaml
+|   |   |       TASK_012_T12_data_processing_phase_template_DONE.yaml
+|   |   |       TASK_013_T13_deployment_config_phase_template_DONE.yaml
+|   |   |       TASK_014_T14_verify_all_files_DONE.yaml
 |   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
+|   |   |       order.yaml
+|   |   |       TASK_015_T15_create_audit_directories.yaml
+|   |   |       TASK_016_T16_relocate_templates_and_fix_paths.yaml
+|   |   |       TASK_017_T17_verify_template_relocation.yaml
+|   |   |       TASK_018_fix_registration_requests_datagrid_getactions.yaml
+|   |   |       TASK_019_fix_root_route_auth_redirect.yaml
+|   |   |       TASK_020_fix_login_form_auth_redirect.yaml
+|   |   |       TASK_021_fix_dashboard_layout_field_mapping.yaml
+|   |   |       TASK_022_add_description_maxlength_validation.yaml
+|   |   |       TASK_023_verify_all_bug_fixes.yaml
+|   |   |       
 |   |   \---validation
 |   \---templates
 |           decision.md
@@ -127,7 +132,8 @@ C:\PY_DEV\MKOBI
 |   |   package.json
 |   |   
 |   +---agents
-|   |       auditor copy.md
+|   |       audit-executor.md
+|   |       audit-orchestrator.md
 |   |       auditor.md
 |   |       implementor.md
 |   |       planner.md
@@ -143,9 +149,24 @@ C:\PY_DEV\MKOBI
 |   |   |   +---docker
 |   |   |   |       audit-docker.md
 |   |   |   |       
+|   |   |   +---phases
+|   |   |   |       01-audit-backend.md
+|   |   |   |       02-audit-frontend.md
+|   |   |   |       03-audit-database.md
+|   |   |   |       04-audit-security.md
+|   |   |   |       05-audit-docker.md
+|   |   |   |       06-audit-tests.md
+|   |   |   |       07-audit-data-processing.md
+|   |   |   |       08-audit-deployment-config.md
+|   |   |   |       09-audit-integration.md
+|   |   |   |       
 |   |   |   +---project
 |   |   |   |       audit-project-detailed.md
 |   |   |   |       audit-project-general.md
+|   |   |   |       
+|   |   |   +---templates
+|   |   |   |       audit-final-report.md
+|   |   |   |       audit-findings.md
 |   |   |   |       
 |   |   |   \---tests
 |   |   |           audit-bad-tests.md

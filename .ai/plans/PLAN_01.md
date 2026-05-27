@@ -317,7 +317,7 @@
     **Acceptance criteria:**
     - Agent file exists with correct YAML frontmatter
     - Permissions scoped to read + grep + glob + edit *.md only
-    - Bash permissions match validator (ruff, mypy, pytest, docker compose)
+    - Bash permissions scoped to audit execution needs
     - Instructions reference the findings template
     - No domain specialization — generic and parameterized
     - Reference to existing `auditor.md` for audit philosophy baseline
@@ -391,7 +391,7 @@
        a. Read `.ai/structure/map.md` for directory structure.
        b. Read `.ai/context/commands.md` for verification commands.
        c. Read `docs/SPEC.md` for project purpose and tech stack.
-       d. `docker compose -f docker/docker-compose.yml ps` for Docker service paths.
+       d. Read `docs/README_DOCKER.md` for Docker service paths.
        e. Build the **Base Layer** context package (same for all phases).
 
        **Phase B — Pipeline Execution (per phase):**
@@ -578,7 +578,7 @@
     Source: Extract and adapt from `.kilo/commands/audit/project/audit-project-detailed.md`
 
     **Extract blocks:**
-    - BLOCK 1 — Project Structure & Architecture (1.1 Backend Structure, 1.3 Processing Pipeline)
+    - BLOCK 1 — Project Structure & Architecture (1.1 Backend Structure only)
     - BLOCK 2 — Backend API Layer (2.1 Auth, 2.2 Dashboard, 2.3 Data & Upload, 2.4 Admin, 2.5 Health, 2.6 Other)
     - BLOCK 3 — Access Control & Security (3.1-3.8, scoped to backend)
     - BLOCK 7 — Code Quality Backend (7.1 Typing, 7.2 Pydantic, 7.3 StrEnum, 7.4 Readability, 7.5 Logging Language, 7.6 Error Handling, 7.7 Async, 7.8 Logging)
@@ -658,7 +658,7 @@
 <task id="T07" wave="2" depends_on="T05" files_modified="true" autonomous="true">
   <action>
     Create the frontend architecture audit phase template.
-    Extract content from: audit-project-detailed.md blocks 4, 6, 8.
+    Extract content from: audit-project-detailed.md blocks 1.2, 6, 8.
   </action>
   <frontmatter>
     wave: 2
@@ -703,9 +703,8 @@
        - `frontend/src/shared/api/*.ts`
        - `frontend/src/shared/components/*.tsx`
        - `frontend/src/shared/types/*.ts`
-       - `frontend/src/shared/config/*.ts`
 
-    3. **Checklist:**
+     3. **Checklist:**
        - [ ] FSD compliance: `app/`, `features/`, `shared/` structure correct
        - [ ] Feature structure: `ui/`, `api/`, `model/`, `types/` per feature
        - [ ] Routes: all paths from spec implemented, correct access control per route
@@ -778,7 +777,7 @@
        - `src/mkobi/db/models/*.py`
        - `src/mkobi/db/repositories/*.py`
        - `src/mkobi/db/starter.py`
-       - `docker-compose.yml`
+       - `docker/docker-compose.yml`
        - `.env`, `.env.example`
 
     3. **Checklist (adapted from audit-db-structure.md):**
@@ -934,11 +933,11 @@
     1. **Base Layer Context** (same as all phases)
 
     2. **Phase-Specific File Paths:**
-       - `Dockerfile`
-       - `docker-compose.yml`
-       - `docker-compose.override.yml`
-       - `docker-compose.test.yml`
-       - `.dockerignore`
+       - `docker/Dockerfile`
+       - `docker/docker-compose.yml`
+       - `docker/docker-compose.override.yml`
+       - `docker/docker-compose.test.yml`
+       - `docker/.dockerignore`
        - `.env`
 
     3. **Checklist (adapted from audit-docker.md):**
@@ -991,7 +990,7 @@
     files_modified:
       - .kilo/commands/audit/phases/06-audit-tests.md
     autonomous: true
-  </frontfrontmatter>
+  </frontmatter>
   <details>
     Create file: `.kilo/commands/audit/phases/06-audit-tests.md`
 
@@ -1108,7 +1107,7 @@
        - `src/mkobi/data/storage/manager.py`
        - `src/mkobi/core/task_queue.py`
        - `src/mkobi/workers/data_worker.py`
-       - `src/mkobi/services/processing.py` (or equivalent)
+       - `src/mkobi/services/file_processing.py`
 
     3. **Checklist:**
        - [ ] Polars only: no `import pandas`, all transformations via Polars
@@ -1184,14 +1183,13 @@
 
     2. **Phase-Specific File Paths:**
        - `src/mkobi/config.py`
-       - `src/mkobi/settings/*.py`
+       - `src/mkobi/settings/app.yaml`
        - `src/mkobi/db/starter.py`
        - `src/mkobi/app.py`
-       - `Dockerfile`
-       - `docker-compose.yml`
-       - `docker-compose.override.yml`
+       - `docker/Dockerfile`
+       - `docker/docker-compose.yml`
+       - `docker/docker-compose.override.yml`
        - `.env`, `.env.example`
-       - `app.yaml`
 
     3. **Checklist:**
        - [ ] Config: Pydantic-settings, priority chain (env > Docker secrets > .env > app.yaml > defaults)
@@ -1251,7 +1249,7 @@
     | # | File | Finding Prefix | Source |
     |---|------|---------------|--------|
     | 1 | `01-audit-backend.md` | `BE-` | blocks 1,2,3,7 |
-    | 2 | `02-audit-frontend.md` | `FE-` | blocks 4,6,8 |
+    | 2 | `02-audit-frontend.md` | `FE-` | blocks 1.2,6,8 |
     | 3 | `03-audit-database.md` | `DB-` | audit-db-structure.md |
     | 4 | `04-audit-security.md` | `SEC-` | blocks 3,7.3,8.1 |
     | 5 | `05-audit-docker.md` | `DKR-` | audit-docker.md |

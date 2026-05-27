@@ -1,0 +1,102 @@
+# Source plan: C:\py_dev\mkobi\.ai\plans\PLAN_01.md — T10
+# Task reference: .kilo/commands/plan/plan-phase.md
+
+id: TASK_010_T10
+
+title: Create 05-audit-docker.md phase template
+
+status: pending
+
+priority: medium
+
+wave: 2
+
+depends_on:
+  - TASK_005_T05
+
+risk: low
+
+effort: medium
+
+type: implementation
+
+description: >
+  Create the Docker and runtime audit phase template. Extract content from audit-docker.md.
+
+plan_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+
+plan_section: T10 — Create 05-audit-docker.md Phase Template
+
+objective: >
+  Create `.kilo/commands/audit/phases/05-audit-docker.md` with Docker-specific
+  file paths and condensed checklist covering Dockerfile, docker-compose, container
+  health, security, persistence, production readiness, runtime verification.
+  Findings prefixed with `DKR-`.
+
+affected_files:
+  - path: .kilo/commands/audit/phases/05-audit-docker.md
+    action: create
+    description: "Docker and runtime audit phase template"
+
+semantic_targets:
+  - type: file
+    name: 05-audit-docker.md
+    anchor: create_new_file
+
+# ── FULL CONTENT FROM PLAN ──
+
+finding_prefix: DKR
+
+source_file: .kilo/commands/audit/docker/audit-docker.md
+
+phase_frontmatter: |
+  ---
+  name: audit-docker
+  description: Docker and runtime environment audit covering Dockerfile, docker-compose, container health, security, persistence, production readiness, runtime verification
+  agent: audit-executor
+  alwaysApply: false
+  ---
+
+body_structure:
+  base_layer_context: "Same as all phases (auto-included by orchestrator)"
+
+  phase_specific_file_paths:
+    paths:
+      - docker/Dockerfile
+      - docker/docker-compose.yml
+      - docker/docker-compose.override.yml
+      - docker/docker-compose.test.yml
+      - docker/.dockerignore
+      - .env
+
+  checklist:
+    - "[ ] Dockerfile: multi-stage (base/dev/test/prod/prod-slim), pinned base images, no secrets baked, non-root user"
+    - "[ ] uv.lock: pinned dependencies, no floating versions"
+    - "[ ] Docker compose: service separation (app/db/redis), volumes, restart policies, networking"
+    - "[ ] Environment variables: correct names, production enforcement (`${VAR:?...}`), no hardcoded secrets"
+    - "[ ] Health checks: db (`pg_isready`), app (HTTP `/health`), configured intervals/retries"
+    - "[ ] Persistence: `postgres_data`, `app_data` volumes, stale temp file cleanup on startup"
+    - "[ ] Security: non-root container, `.env` not in image, no secrets baked"
+    - "[ ] Production readiness: structured logging, debug disabled, CORS configured, `AUTO_MIGRATE`"
+    - "[ ] Frontend service: correct startup, responds on port 5173, proxy to backend works"
+
+  runtime_verification_steps:
+    - "`docker compose up -d` → check all containers running/healthy"
+    - "Check logs for ERROR/FATAL per service"
+    - "Test inter-service connectivity (app→db, frontend→app)"
+    - "Verify health endpoint responds"
+
+acceptance_criteria:
+  - File exists at `.kilo/commands/audit/phases/05-audit-docker.md`
+  - Content extracted from audit-docker.md
+  - Condensed checklist covering Dockerfile, compose, health, security, runtime verification
+  - Includes runtime verification steps
+  - Uses `DKR-` finding ID prefix
+  - References audit-findings.md template for report format
+
+validation:
+  - File exists at correct path
+  - Source is audit-docker.md
+  - Runtime verification steps included
+
+tests_to_run: []

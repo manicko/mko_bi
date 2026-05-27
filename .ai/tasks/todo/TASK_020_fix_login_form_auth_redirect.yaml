@@ -1,0 +1,86 @@
+---
+id: TASK_020
+task_id: TASK_020_fix_login_form_auth_redirect
+
+title: "BUG-003b: Redirect authenticated users away from /login to /dashboards"
+
+status: pending
+
+priority: medium
+
+wave: 4
+
+depends_on: []
+
+risk: low
+
+effort: trivial
+
+type: implementation
+
+validated_finding: BUG-003b
+
+validated_finding_file: C:\py_dev\mkobi\.ai\audit\validated\BUG-001-002-003-runtime-errors.md
+
+description: >
+  Authenticated users navigating directly to `/login` see the login form instead of being
+  redirected to `/dashboards`. This is a minor UX issue. Fix by adding an auth check at the
+  top of the LoginForm component that redirects to `/dashboards` when accessToken is present.
+
+objective: >
+  Add an early-return redirect in LoginForm that sends authenticated users to `/dashboards`
+  so they never see the login form when already logged in.
+
+affected_files:
+  - path: frontend/src/features/auth/ui/LoginForm.tsx
+    action: modify
+    description: "Add auth state check at top of LoginForm to redirect authenticated users"
+
+semantic_targets:
+  - type: component
+    name: LoginForm
+    file: frontend/src/features/auth/ui/LoginForm.tsx
+
+  - type: hook_call
+    name: useAuth
+    file: frontend/src/features/auth/ui/LoginForm.tsx
+    anchor: existing useAuth() call that already exists in LoginForm
+
+changes:
+  - action: add_early_return
+    description: >
+      At the top of the LoginForm component function, after extracting `accessToken` from `useAuth()`,
+      add a conditional redirect. Must be placed after `useAuth()` call but before the return JSX.
+      This check works regardless of `isLoading` — if accessToken is present, we know user is authenticated.
+      If isLoading is true, accessToken is null, so we let the form render (which is fine since
+      the form will handle the loading state of the submit button).
+    target:
+      type: component
+      name: LoginForm
+    insert_after:
+      type: destructuring
+      value: useAuth() return value
+    new_code: |
+      if (accessToken) {
+        return <Navigate to="/dashboards" replace />
+      }
+
+  - action: ensure_import
+    description: >
+      Ensure `Navigate` is imported from `react-router-dom`. It may already be imported.
+      If not, add it to the existing imports.
+    target:
+      file: frontend/src/features/auth/ui/LoginForm.tsx
+
+acceptance_criteria:
+  - Authenticated user navigating to `/login` is immediately redirected to `/dashboards`
+  - Unauthenticated user still sees the login form normally
+  - No visual flicker or flash of the login form for authenticated users
+  - Uses existing `useAuth()` hook (no new hooks needed)
+  - `Navigate` component imported from react-router-dom
+  - Frontend builds without TypeScript errors
+
+tests_to_run:
+  - "cd frontend && npx tsc --noEmit"
+
+---

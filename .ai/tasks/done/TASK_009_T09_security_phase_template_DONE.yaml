@@ -1,0 +1,108 @@
+# Source plan: C:\py_dev\mkobi\.ai\plans\PLAN_01.md — T09
+# Task reference: .kilo/commands/plan/plan-phase.md
+
+id: TASK_009_T09
+
+title: Create 04-audit-security.md phase template
+
+status: pending
+
+priority: medium
+
+wave: 2
+
+depends_on:
+  - TASK_005_T05
+
+risk: low
+
+effort: medium
+
+type: implementation
+
+description: >
+  Create the security audit phase template. Extract content from
+  audit-project-detailed.md blocks 3, 7.3, 8.1 (security-related sections).
+
+plan_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+
+plan_section: T09 — Create 04-audit-security.md Phase Template
+
+objective: >
+  Create `.kilo/commands/audit/phases/04-audit-security.md` with security-specific
+  file paths and condensed checklist covering JWT, access control, upload safety,
+  SQL safety, secrets, rate limiting, StrEnum enforcement. Findings prefixed
+  with `SEC-`.
+
+affected_files:
+  - path: .kilo/commands/audit/phases/04-audit-security.md
+    action: create
+    description: "Security audit phase template"
+
+semantic_targets:
+  - type: file
+    name: 04-audit-security.md
+    anchor: create_new_file
+
+# ── FULL CONTENT FROM PLAN ──
+
+finding_prefix: SEC
+
+source_file: .kilo/commands/audit/project/audit-project-detailed.md
+
+source_blocks:
+  - "BLOCK 3 — Access Control & Security (3.1-3.7)"
+  - "BLOCK 7.3 — Enum Usage (StrEnum)"
+  - "BLOCK 8.1 — Frontend Security aspects (from Frontend Code Quality)"
+
+phase_frontmatter: |
+  ---
+  name: audit-security
+  description: Security audit covering authentication, access control, JWT, password security, upload safety, SQL safety, secrets/config, rate limiting, email domain blocklist, StrEnum enforcement
+  agent: audit-executor
+  alwaysApply: false
+  ---
+
+body_structure:
+  base_layer_context: "Same as all phases (auto-included by orchestrator)"
+
+  phase_specific_file_paths:
+    paths:
+      - src/mkobi/core/security.py
+      - src/mkobi/core/permissions.py
+      - src/mkobi/api/routes/auth.py
+      - src/mkobi/api/routes/upload.py
+      - src/mkobi/api/deps.py
+      - src/mkobi/config.py
+      - src/mkobi/models/enums.py
+      - frontend/src/shared/api/axiosInstance.ts
+      - frontend/src/shared/components/ProtectedRoute.tsx
+      - frontend/src/shared/components/RoleBasedAccess.tsx
+
+  checklist:
+    - "[ ] JWT: algorithm explicitly set, expiration, invalid/missing token handling, secret in env"
+    - "[ ] Passwords: bcrypt (not md5/SHA/plaintext), `secrets.token_urlsafe(16)` for temp passwords, no password logging"
+    - "[ ] Dashboard access: checked on every request, admin bypass, 403/404 dual-signal"
+    - "[ ] Roles: `UserRole` StrEnum used (not string literals)"
+    - "[ ] Permissions: `DashboardPermission` StrEnum used"
+    - "[ ] Upload: MIME-type, extension, encoding, size, path traversal, temp cleanup, rate limiting"
+    - "[ ] SQL: parameterized queries, no f-string SQL"
+    - "[ ] Secrets: no hardcoded, env-based, Docker secrets `_FILE` support, production enforcement"
+    - "[ ] Rate limiting: Redis sliding window, fail-open/closed, protected endpoints"
+    - "[ ] Email domain blocklist: backend Pydantic + frontend Zod validation"
+    - "[ ] StrEnum: all 17 classes present, no string literal comparisons"
+    - "[ ] Frontend security: JWT not in localStorage, ProtectedRoute, RoleBasedAccess"
+
+acceptance_criteria:
+  - File exists at `.kilo/commands/audit/phases/04-audit-security.md`
+  - Content covers all security dimensions (JWT, access, upload, secrets, SQL, rate limiting, StrEnum)
+  - Contains security-specific file paths
+  - Uses `SEC-` finding ID prefix
+  - References audit-findings.md template for report format
+
+validation:
+  - File exists at correct path
+  - Covers all security areas from source blocks
+  - Security-specific file paths included
+
+tests_to_run: []
