@@ -313,6 +313,42 @@ class TestCORSOrigins(TestSettingsBase):
         assert "https://example.com" not in settings.cors_origins
 
 
+class TestWeakCredentialDetection(TestSettingsBase):
+    """Tests for weak admin credential detection."""
+
+    @pytest.mark.parametrize("weak_username", [
+        "admin", "administrator", "root", "test", "user", "admin@example.com"
+    ])
+    def test_weak_username_rejected(self, monkeypatch, weak_username):
+        """Verify known-weak usernames are rejected in production."""
+        monkeypatch.setenv("ENV", "production")
+        monkeypatch.setenv("ADMIN_USERNAME", weak_username)
+        monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
+        with pytest.raises(ValueError, match="too common"):
+            Settings()
+
+    @pytest.mark.parametrize("weak_password", [
+        "password", "123456", "admin", "secret", "test", "admin@example.com"
+    ])
+    def test_weak_password_rejected(self, monkeypatch, weak_password):
+        """Verify known-weak passwords are rejected in production."""
+        monkeypatch.setenv("ENV", "production")
+        monkeypatch.setenv("ADMIN_USERNAME", "secure_admin")
+        monkeypatch.setenv("ADMIN_PASSWORD", weak_password)
+        with pytest.raises(ValueError, match="too common"):
+            Settings()
+
+    def test_strong_credentials_accepted(self, monkeypatch):
+        """Verify strong credentials pass validation in production."""
+        monkeypatch.setenv("ENV", "production")
+        monkeypatch.setenv("ADMIN_USERNAME", "secure_admin")
+        monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
+        # Should not raise
+        settings = Settings()
+        assert settings.admin_username == "secure_admin"
+        assert settings.admin_password == "StrongP@ss1"
+
+
 class TestGetConfigReload:
     """Tests for get_config() reload mechanism."""
 

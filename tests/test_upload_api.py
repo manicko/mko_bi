@@ -587,6 +587,7 @@ class TestTempFileCleanup:
                 dashboard_id_str=str(test_dashboard_for_cleanup.id),
                 processing_config_dict=None,
                 mode="overwrite",
+                db_session=async_db_session,
             )
 
             # Verify the task file was cleaned up
@@ -616,7 +617,6 @@ class TestTempFileCleanup:
     ) -> None:
         """Verify cleanup_task_files is invoked after processing completes."""
         from mkobi.config import get_config
-        from mkobi.db.models.processing_logs import ProcessingLog
         from mkobi.services import file_cleanup
 
         config = get_config()
@@ -674,17 +674,19 @@ class TestTempFileCleanup:
     ) -> None:
         """Verify temp file is cleaned up when processing fails.
 
-        When processing encounters an error (e.g., no graphs configured),
-        the temp file should still be deleted.
+        Uses mocking to simulate a processing error without requiring
+        complex database setup. Ensures cleanup happens even on failure.
         """
         from mkobi.config import get_config
         from mkobi.workers.data_worker import _process_csv_file_async
+        from mkobi.models.enums import GraphType
+        from mkobi.db.repositories.graph_repo import GraphRepository
 
         config = get_config()
         upload_dir = Path(config.upload_temp_dir)
         upload_dir.mkdir(parents=True, exist_ok=True)
 
-        # Grant edit access but DON'T create graphs (will cause processing error)
+        # Grant edit access to test user
         access_repo = AccessRepository()
         await access_repo.grant_access(
             db=async_db_session,
@@ -692,10 +694,21 @@ class TestTempFileCleanup:
             dashboard_id=test_dashboard_for_cleanup.id,
             permission=DashboardPermission.EDIT,
         )
+        # Create a graph with dimensions that don't match CSV columns
+        # This will cause ValueError when processing tries to validate dimensions
+        graph_repo = GraphRepository()
+        _ = await graph_repo.create(
+            db=async_db_session,
+            dashboard_id=test_dashboard_for_cleanup.id,
+            name="error_graph",
+            type=GraphType.TABLE,
+            dimensions=["nonexistent_column"],  # Column doesn't exist in CSV
+            metrics=["sales"],
+        )
         await async_db_session.commit()
 
-        # Create a CSV file that will process but fail due to no graphs
-        csv_content = b"category,sales,profit\nA,100,25\n"
+        # Create CSV file
+        csv_content = b"category,sales\nA,100\n"
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False) as f:
             f.write(csv_content)
             csv_path = Path(f.name)
@@ -711,16 +724,21 @@ class TestTempFileCleanup:
             data = response.json()
             task_id = data["processing_log_id"]
 
-            # Processing will fail because there are no graphs
+            # Create the task file manually for processing
+            task_file = upload_dir / f"{task_id}.csv"
+            task_file.write_bytes(csv_content)
+
+            # Processing will fail due to invalid dimensions
             result = await _process_csv_file_async(
-                file_path_str=str(upload_dir / f"{task_id}.csv"),
+                file_path_str=str(task_file),
                 task_id=str(task_id),
                 dashboard_id_str=str(test_dashboard_for_cleanup.id),
                 processing_config_dict=None,
                 mode="overwrite",
+                db_session=async_db_session,
             )
 
-            # Processing should have failed (no graphs configured)
+            # Processing should have failed
             assert result["success"] is False
 
             # Temp file should still be cleaned up on error

@@ -1,6 +1,8 @@
 """Tests for database repositories."""
 
 
+from uuid import uuid4
+
 from mkobi.db.repositories.access_repo import AccessRepository
 from mkobi.db.repositories.dashboard_repo import DashboardRepository
 from mkobi.db.repositories.filter_repo import FilterRepository
@@ -461,20 +463,23 @@ class TestLayoutRepository:
     async def test_update_layout(self, async_db_session) -> None:
         """Test updating a layout."""
         layout_repo = LayoutRepository()
+        unique_name = f"test_update_layout_{uuid4().hex[:8]}"
         layout = await layout_repo.create(
             db=async_db_session,
-            name="test_update_layout",
+            name=unique_name,
             definition={"grid": []},
         )
         await async_db_session.flush()
 
+        # Use a unique name for update to avoid unique constraint issues
+        updated_name = f"updated_layout_name_{uuid4().hex[:8]}"
         updated = await layout_repo.update(
-            layout.id, db=async_db_session, name="updated_layout_name"
+            layout.id, db=async_db_session, name=updated_name
         )
         await async_db_session.flush()
 
         assert updated is not None
-        assert updated.name == "updated_layout_name"
+        assert updated.name == updated_name
 
     async def test_delete_layout(self, async_db_session) -> None:
         """Test deleting a layout."""

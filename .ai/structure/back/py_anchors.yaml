@@ -6831,12 +6831,6 @@
   value: exception_type
   stable_hash: b8c184c8
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\validators.py
-- id: 7da8af41
-  symbol_path: []
-  type: function_call
-  value: get_session
-  stable_hash: 7da8af41
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: 71bdc9d8
   symbol_path: []
   type: function_call
@@ -6848,6 +6842,12 @@
   type: function_call
   value: UUID
   stable_hash: 4670ab99
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 7da8af41
+  symbol_path: []
+  type: function_call
+  value: get_session
+  stable_hash: 7da8af41
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: 3c75103c
   symbol_path: []
@@ -6948,6 +6948,47 @@
   type: return_statement
   stable_hash: 2f6f6eb3
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 51619eda
+  symbol_path: []
+  type: function_call
+  value: select
+  stable_hash: 51619eda
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 2f6f6eb3
+  symbol_path: []
+  type: return_statement
+  stable_hash: 2f6f6eb3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 4806d5f0
+  symbol_path: []
+  type: function_call
+  value: ValueError
+  stable_hash: 4806d5f0
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 588a8f2b
+  symbol_path: []
+  type: function_call
+  value: list
+  stable_hash: 588a8f2b
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: c22d8585
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: c22d8585
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: d6516cac
+  symbol_path: []
+  type: function_call
+  value: StorageManager
+  stable_hash: d6516cac
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: cfde3df1
+  symbol_path: []
+  type: function_call
+  value: len
+  stable_hash: cfde3df1
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: 7da8af41
   symbol_path: []
   type: function_call
@@ -6995,16 +7036,16 @@
   value: len
   stable_hash: cfde3df1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
-- id: 2f6f6eb3
-  symbol_path: []
-  type: return_statement
-  stable_hash: 2f6f6eb3
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: 5a3d52ad
   symbol_path: []
   type: function_call
   value: _process_csv_file_async
   stable_hash: 5a3d52ad
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 2f6f6eb3
+  symbol_path: []
+  type: return_statement
+  stable_hash: 2f6f6eb3
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: 4994656f
   symbol_path:
