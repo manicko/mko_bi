@@ -64,7 +64,7 @@ After all 8 silo phases complete:
 1. Collect all validated findings files.
 2. Delegate Phase 9 (Integration) with ALL silo findings as context.
 3. Trigger validator on integration findings.
-4. Merge all 9 sets of validated findings using `audit-final-report.md` template.
+4. Merge all 9 sets of validated findings using `.ai/audit/templates/audit-final-report.md` template.
 5. Write final report to `.ai/audit/final-report.md`.
 
 ## Context Package Format

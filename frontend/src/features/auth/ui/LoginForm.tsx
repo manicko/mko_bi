@@ -1,6 +1,6 @@
 import { useForm, useWatch } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate, Navigate, Link } from 'react-router-dom'
 import { Box, Button, TextField, Typography, Alert } from '@mui/material'
 import { useState, useEffect } from 'react'
 import { loginSchema, type LoginFormData } from '../../../shared/types/formSchemas'
@@ -8,7 +8,7 @@ import { useAuth } from '../model/useAuth'
 
 export function LoginForm() {
   const navigate = useNavigate()
-  const { login } = useAuth()
+  const { login, accessToken } = useAuth()
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -43,6 +43,13 @@ export function LoginForm() {
     } finally {
       setIsSubmitting(false)
     }
+  }
+
+  // Redirect authenticated users away from login page
+  // Check after hooks to comply with React rules of hooks
+  // If accessToken exists, user is authenticated
+  if (accessToken) {
+    return <Navigate to="/dashboards" replace />
   }
 
   return (

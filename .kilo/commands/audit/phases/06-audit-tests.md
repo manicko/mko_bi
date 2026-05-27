@@ -108,4 +108,4 @@ alwaysApply: false
 
 Create file: `.ai/audit/tests/audit_report_<number>.md` (next available number)
 
-See `.kilo/commands/audit/templates/audit-findings.md` for full template.
+See `.ai/audit/templates/audit-findings.md` for full template.

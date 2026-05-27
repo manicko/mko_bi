@@ -63,31 +63,31 @@ alwaysApply: false
 ## 3. Findings by Phase
 
 ### Phase 1: Backend Architecture
-[Findings from `.ai/audit/backend-architecture/findings.md`]
+[Findings from `.ai/audit/audit-backend/findings.md`]
 
 ### Phase 2: Frontend Architecture
-[Findings from `.ai/audit/frontend-architecture/findings.md`]
+[Findings from `.ai/audit/audit-frontend/findings.md`]
 
 ### Phase 3: Security
-[Findings from `.ai/audit/security/findings.md`]
+[Findings from `.ai/audit/audit-security/findings.md`]
 
 ### Phase 4: Data Processing
-[Findings from `.ai/audit/data-processing/findings.md`]
+[Findings from `.ai/audit/audit-data-processing/findings.md`]
 
-### Phase 5: API Endpoints
-[Findings from `.ai/audit/api-endpoints/findings.md`]
+### Phase 5: Database
+[Findings from `.ai/audit/audit-database/findings.md`]
 
-### Phase 6: Database
-[Findings from `.ai/audit/database/findings.md`]
+### Phase 6: Deployment & Configuration
+[Findings from `.ai/audit/audit-deployment-config/findings.md`]
 
-### Phase 7: Configuration
-[Findings from `.ai/audit/configuration/findings.md`]
+### Phase 7: Testing
+[Findings from `.ai/audit/audit-tests/findings.md`]
 
-### Phase 8: Testing
-[Findings from `.ai/audit/testing/findings.md`]
+### Phase 8: Docker
+[Findings from `.ai/audit/audit-docker/findings.md`]
 
 ### Phase 9: Integration
-[Findings from `.ai/audit/integration/findings.md`]
+[Findings from `.ai/audit/audit-integration/findings.md`]
 
 ---
 
@@ -155,15 +155,15 @@ alwaysApply: false
 The orchestrator combines findings from all validated phase audits into this final report.
 
 **Source Files:**
-- `.ai/audit/backend-architecture/findings.md`
-- `.ai/audit/frontend-architecture/findings.md`
-- `.ai/audit/security/findings.md`
-- `.ai/audit/data-processing/findings.md`
-- `.ai/audit/api-endpoints/findings.md`
-- `.ai/audit/database/findings.md`
-- `.ai/audit/configuration/findings.md`
-- `.ai/audit/testing/findings.md`
-- `.ai/audit/integration/findings.md`
+- `.ai/audit/audit-backend/findings.md`
+- `.ai/audit/audit-frontend/findings.md`
+- `.ai/audit/audit-security/findings.md`
+- `.ai/audit/audit-data-processing/findings.md`
+- `.ai/audit/audit-database/findings.md`
+- `.ai/audit/audit-deployment-config/findings.md`
+- `.ai/audit/audit-tests/findings.md`
+- `.ai/audit/audit-docker/findings.md`
+- `.ai/audit/audit-integration/findings.md`
 
 **Process:**
 1. All 9 phase audits must be validated before final report generation

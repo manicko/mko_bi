@@ -4,7 +4,7 @@ task_id: TASK_021_fix_dashboard_layout_field_mapping
 
 title: "BUG-001: Fix dashboard creation layout field — map layout name to layout_id before sending to backend"
 
-status: pending
+status: completed
 
 priority: high
 

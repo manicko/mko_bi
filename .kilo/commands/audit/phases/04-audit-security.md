@@ -287,4 +287,4 @@ Verify frontend security implementation:
 
 ---
 
-**Report Format:** See `.kilo/commands/audit/templates/audit-findings.md` for full template.
+**Report Format:** See `.ai/audit/templates/audit-findings.md` for full template.

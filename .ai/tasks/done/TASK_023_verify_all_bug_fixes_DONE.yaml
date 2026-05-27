@@ -4,7 +4,7 @@ task_id: TASK_023_verify_all_bug_fixes
 
 title: "Verify — all 5 bug fix tasks (BUG-001, BUG-002, BUG-003, BUG-003b, A-001)"
 
-status: pending
+status: completed
 
 priority: high
 

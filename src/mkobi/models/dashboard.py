@@ -2,7 +2,7 @@ import re
 from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from uuid import UUID
 
 from mkobi.models.enums import GraphType
@@ -51,7 +51,7 @@ class DashboardCreate(BaseModel):
     """Model for creating new dashboard."""
 
     name: str
-    description: str | None = None
+    description: str | None = Field(None, max_length=200)
     config: DashboardConfig = DashboardConfig(graph_types=[GraphType.BAR])
     layout_id: UUID | None = None
 
@@ -130,7 +130,7 @@ class DashboardUpdate(BaseModel):
     """Model for updating dashboard."""
 
     name: str | None = None
-    description: str | None = None
+    description: str | None = Field(None, max_length=200)
     config: DashboardConfig | None = None
     layout_id: UUID | None = None
 

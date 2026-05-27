@@ -66,7 +66,7 @@ When invoked, follow this 4-step process:
    - Use StrEnum severity levels: CRITICAL, HIGH, MEDIUM, LOW
    - Use `websearch` to verify current best practices when the template asks for external validation
 
-4. **Write structured findings** to `.ai/audit/{phase-name}/findings.md` using the `audit-findings.md` template. Ensure:
+4. **Write structured findings** to `.ai/audit/{phase-name}/findings.md` using the `.ai/audit/templates/audit-findings.md` template. Ensure:
    - All findings use the structured format with mandatory fields
    - Severity levels are correctly applied
    - Evidence is specific and traceable
@@ -77,7 +77,7 @@ When invoked, follow this 4-step process:
 - Do NOT modify production code.
 - Do NOT make implementation changes.
 - Analysis only — produce findings, not fixes.
-- Use structured findings format (from audit-findings.md template).
+- Use structured findings format (from `.ai/audit/templates/audit-findings.md` template).
 - Classify each finding as mandatory or advisory.
 - Use StrEnum severity levels: CRITICAL, HIGH, MEDIUM, LOW.
 

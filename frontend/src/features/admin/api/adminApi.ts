@@ -45,6 +45,13 @@ export async function rejectRequest(requestId: string): Promise<void> {
   await axiosInstance.post(`/admin/registration-requests/${requestId}/reject`)
 }
 
+// Layout name to UUID mapping - must match seeded layout records in DB
+const LAYOUT_NAME_TO_ID: Record<string, string> = {
+  'single-column': '00000000-0000-0000-0000-000000000001',
+  'two-columns': '00000000-0000-0000-0000-000000000002',
+  'grid': '00000000-0000-0000-0000-000000000003',
+}
+
 // Dashboard Management API
 export async function getDashboardsAdmin(): Promise<DashboardAdmin[]> {
     const response = await axiosInstance.get<DashboardAdmin[]>('/dashboards/')
@@ -55,6 +62,9 @@ export async function createDashboard(data: CreateDashboardRequest): Promise<Das
   const payload: Record<string, unknown> = { name: data.name }
   if (data.description) {
     payload.description = data.description
+  }
+  if (data.layout) {
+    payload.layout_id = LAYOUT_NAME_TO_ID[data.layout]
   }
   // config is optional - will use backend default if not provided
   const response = await axiosInstance.post<DashboardAdmin>('/dashboards', payload)

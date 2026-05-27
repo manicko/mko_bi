@@ -7,6 +7,7 @@ import { AppLayout } from '../shared/components/Layout'
 import { NotFound } from '../shared/components/NotFound'
 import { ErrorBoundary } from '../shared/components/ErrorBoundary'
 import { CircularProgress, Box } from '@mui/material'
+import { useAuth } from '../features/auth/model/useAuth'
 
 // Lazy-loaded route components
 const LoginForm = lazy(() =>
@@ -39,6 +40,20 @@ function LoadingFallback() {
       <CircularProgress />
     </Box>
   )
+}
+
+function RootRedirect() {
+  const { accessToken, isLoading } = useAuth()
+
+  if (isLoading) {
+    return (
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <CircularProgress />
+      </Box>
+    )
+  }
+
+  return <Navigate to={accessToken ? '/dashboards' : '/login'} replace />
 }
 
 export function AppRoutes() {
@@ -114,7 +129,7 @@ export function AppRoutes() {
               </Suspense>
             }
           />
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          <Route path="/" element={<RootRedirect />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Route>

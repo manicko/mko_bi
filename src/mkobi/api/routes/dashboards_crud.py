@@ -119,6 +119,7 @@ async def create_dashboard_endpoint(
             config=dashboard_data.config.model_dump(),
             owner_id=current_user.id,
             description=dashboard_data.description,
+            layout_id=dashboard_data.layout_id,
             db=db,
         )
         await db.commit()

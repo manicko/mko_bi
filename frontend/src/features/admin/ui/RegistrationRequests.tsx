@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { DataGrid, GridActionsCellItem } from '@mui/x-data-grid'
+import { useState, useMemo, useCallback } from 'react'
+import { DataGrid, GridActionsCellItem, type GridRenderCellParams } from '@mui/x-data-grid'
 import type { GridColDef } from '@mui/x-data-grid'
 import { Box, Chip, Typography } from '@mui/material'
 import { Check as ApproveIcon, Close as RejectIcon } from '@mui/icons-material'
@@ -8,22 +8,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog'
 import { toast } from 'react-hot-toast'
 import type { RegistrationRequestItem } from '../../../shared/types/api.types'
-
-const columns: GridColDef[] = [
-  { field: 'email', headerName: 'Email', width: 250 },
-  {
-    field: 'status',
-    headerName: 'Status',
-    width: 130,
-    renderCell: (params) => {
-      const status = params.value as string
-      const color = status === 'approved' ? 'success' : status === 'rejected' ? 'error' : 'warning'
-      return <Chip label={status} color={color} size="small" />
-    },
-  },
-  { field: 'created_at', headerName: 'Created', width: 180 },
-  { field: 'actions', headerName: 'Actions', type: 'actions', width: 150 },
-]
 
 export function RegistrationRequests() {
   const [selectedRequest, setSelectedRequest] = useState<RegistrationRequestItem | null>(null)
@@ -62,37 +46,66 @@ export function RegistrationRequests() {
     },
   })
 
+  const handleApprove = useCallback((row: RegistrationRequestItem) => {
+    setSelectedRequest(row)
+    setActionType('approve')
+    setConfirmDialogOpen(true)
+  }, [])
+
+  const handleReject = useCallback((row: RegistrationRequestItem) => {
+    setSelectedRequest(row)
+    setActionType('reject')
+    setConfirmDialogOpen(true)
+  }, [])
+
+  const columns: GridColDef[] = useMemo(
+    () => [
+      { field: 'email', headerName: 'Email', width: 250 },
+      {
+        field: 'status',
+        headerName: 'Status',
+        width: 130,
+        renderCell: (params) => {
+          const status = params.value as string
+          const color = status === 'approved' ? 'success' : status === 'rejected' ? 'error' : 'warning'
+          return <Chip label={status} color={color} size="small" />
+        },
+      },
+      { field: 'created_at', headerName: 'Created', width: 180 },
+      {
+        field: 'actions',
+        headerName: 'Actions',
+        width: 150,
+        sortable: false,
+        filterable: false,
+        renderCell: ({ row }: GridRenderCellParams<RegistrationRequestItem>) => (
+          <>
+            {row.status === 'pending' && (
+              <>
+                <GridActionsCellItem
+                  icon={<ApproveIcon />}
+                  label="Approve"
+                  onClick={() => handleApprove(row)}
+                />
+                <GridActionsCellItem
+                  icon={<RejectIcon />}
+                  label="Reject"
+                  onClick={() => handleReject(row)}
+                />
+              </>
+            )}
+          </>
+        ),
+      },
+    ],
+    [handleApprove, handleReject],
+  )
+
   const rows = requests.map((req) => ({
     id: req.id,
     email: req.email,
     status: req.status,
     created_at: new Date(req.created_at).toLocaleString(),
-    actions: (
-      <>
-        {req.status === 'pending' && (
-          <>
-            <GridActionsCellItem
-              icon={<ApproveIcon />}
-              label="Approve"
-              onClick={() => {
-                setSelectedRequest(req)
-                setActionType('approve')
-                setConfirmDialogOpen(true)
-              }}
-            />
-            <GridActionsCellItem
-              icon={<RejectIcon />}
-              label="Reject"
-              onClick={() => {
-                setSelectedRequest(req)
-                setActionType('reject')
-                setConfirmDialogOpen(true)
-              }}
-            />
-          </>
-        )}
-      </>
-    ),
   }))
 
   function NoRegistrationRequestsOverlay() {

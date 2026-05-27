@@ -56,6 +56,7 @@ class DashboardService(IDashboardService):
         owner_id: UUID,
         db: AsyncSession,
         description: str | None = None,
+        layout_id: UUID | None = None,
     ) -> DashboardRead:
         """Create new dashboard.
 
@@ -65,6 +66,7 @@ class DashboardService(IDashboardService):
             owner_id: Owner user identifier.
             db: Async database session.
             description: Optional dashboard description.
+            layout_id: Optional layout identifier.
 
         Returns:
             DashboardRead: Created dashboard model.
@@ -84,6 +86,7 @@ class DashboardService(IDashboardService):
                 config=config_obj.model_dump(),
                 created_by=owner_id,
                 description=description,
+                layout_id=layout_id,
             )
 
             if dashboard_obj is None:

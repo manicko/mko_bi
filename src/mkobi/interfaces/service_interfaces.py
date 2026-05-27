@@ -142,6 +142,7 @@ class IDashboardService(abc.ABC):
         owner_id: UUID,
         db: AsyncSession,
         description: str | None = None,
+        layout_id: UUID | None = None,
     ) -> DashboardRead:
         """Create new dashboard."""
         pass
