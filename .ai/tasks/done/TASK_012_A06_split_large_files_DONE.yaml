@@ -1,0 +1,69 @@
+id: TASK_012_A06_split_large_files
+
+title: Split large source files (dashboards.py, transformations.py)
+
+status: pending
+
+priority: low
+
+type: implementation
+
+finding_id: FINDING-A06
+source: audit_validated_findings_001.md
+
+depends_on:
+  - TASK_006_verify_mandatory_fixes
+
+description: >
+  dashboards.py is 894 lines with many endpoints. transformations.py is 626 lines
+  with multiple responsibilities. Both reduce navigability and maintainability.
+
+goals:
+  - Split dashboards.py into logical route modules
+  - Split transformations.py by responsibility
+  - Preserve all existing imports and functionality
+  - No behavioral changes
+
+files:
+  - path: src/mkobi/api/routes/dashboards.py
+    targets:
+      - type: module
+        context: Entire file to be split
+    semantic_anchors: []
+    changes:
+      - action: split_file
+        description: >
+          Split into logical modules: dashboards_crud.py, dashboards_layout.py,
+          dashboards_export.py (or similar grouping based on endpoint responsibilities).
+          Update __init__.py exports accordingly.
+
+  - path: src/mkobi/data/processing/transformations.py
+    targets:
+      - type: module
+        context: Entire file to be split
+    semantic_anchors: []
+    changes:
+      - action: split_file
+        description: >
+          Split by transformation type or responsibility: numeric_transforms.py,
+          categorical_transforms.py, aggregate_transforms.py (or similar).
+          Update imports accordingly.
+
+acceptance_criteria:
+  - All existing routes/functionality preserved
+  - No import errors
+  - All tests pass
+  - Each new file is focused on single responsibility
+
+tests_to_run:
+  - pytest tests/ -v
+  - docker compose build
+
+risk: medium
+effort: medium
+rollback: Revert file split, restore original files
+
+notes: >
+  Refactoring for maintainability. Should be done incrementally.
+  Watch for circular dependencies when splitting.
+  Merged from AUDIT-LOW-02 and AUDIT-LOW-03.

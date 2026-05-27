@@ -10,6 +10,7 @@ from typing import cast
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from mkobi.core.logging_config import get_logger
 from mkobi.db.models import access as access_model, dashboard as dashboard_model
@@ -38,9 +39,9 @@ class DashboardRepository(IDashboardRepository):
         """
         try:
             result = await db.execute(
-                select(dashboard_model.Dashboard).where(
-                    dashboard_model.Dashboard.id == id
-                )
+                select(dashboard_model.Dashboard)
+                .where(dashboard_model.Dashboard.id == id)
+                .options(selectinload(dashboard_model.Dashboard.layout))
             )
             dashboard = result.scalar_one_or_none()
             if dashboard:
@@ -70,7 +71,11 @@ class DashboardRepository(IDashboardRepository):
         try:
             if is_admin:
                 # Admin bypass: return all dashboards without access check
-                result = await db.execute(select(dashboard_model.Dashboard))
+                result = await db.execute(
+                    select(dashboard_model.Dashboard).options(
+                        selectinload(dashboard_model.Dashboard.layout)
+                    )
+                )
                 dashboards = list(result.scalars().all())
                 logger.info(
                     "All dashboards retrieved for admin user",
@@ -82,6 +87,7 @@ class DashboardRepository(IDashboardRepository):
                 select(dashboard_model.Dashboard)
                 .join(access_model.DashboardAccess)
                 .where(access_model.DashboardAccess.user_id == user_id)
+                .options(selectinload(dashboard_model.Dashboard.layout))
             )
             dashboards = list(result.scalars().all())
             logger.info(
@@ -209,7 +215,11 @@ class DashboardRepository(IDashboardRepository):
             List of all dashboards.
         """
         try:
-            result = await db.execute(select(dashboard_model.Dashboard))
+            result = await db.execute(
+                select(dashboard_model.Dashboard).options(
+                    selectinload(dashboard_model.Dashboard.layout)
+                )
+            )
             dashboards = list(result.scalars().all())
             logger.info(
                 "Dashboards list retrieved",
@@ -236,9 +246,9 @@ class DashboardRepository(IDashboardRepository):
         """
         try:
             result = await db.execute(
-                select(dashboard_model.Dashboard).where(
-                    dashboard_model.Dashboard.name == name
-                )
+                select(dashboard_model.Dashboard)
+                .where(dashboard_model.Dashboard.name == name)
+                .options(selectinload(dashboard_model.Dashboard.layout))
             )
             dashboard = result.scalar_one_or_none()
             if dashboard:

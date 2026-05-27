@@ -5,6 +5,13 @@
   type: component
   value: App
   stable_hash: 4141f45a
+- id: 33a8eb8c
+  file: C:/py_dev/mkobi/frontend/src/app/routes.tsx
+  symbol_path:
+    - LoadingFallback
+  type: component
+  value: LoadingFallback
+  stable_hash: 33a8eb8c
 - id: 7077cf72
   file: C:/py_dev/mkobi/frontend/src/app/routes.tsx
   symbol_path:

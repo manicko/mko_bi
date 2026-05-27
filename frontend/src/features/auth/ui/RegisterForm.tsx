@@ -51,7 +51,7 @@ export function RegisterForm() {
   }
 
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{ maxWidth: 400, mx: 'auto', mt: 4, p: 3 }}>
+    <Box component="form" onSubmit={(e) => void handleSubmit(onSubmit)(e)} noValidate sx={{ maxWidth: 400, mx: 'auto', mt: 4, p: 3 }}>
       <Typography variant="h4" component="h1" gutterBottom>
         Register
       </Typography>

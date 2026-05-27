@@ -59,6 +59,10 @@ docker compose -f docker/docker-compose.yml --env-file .env logs -f app
 docker compose -f docker/docker-compose.yml --env-file .env logs -f frontend
 ```
 
+> **Note on Cookie Security:** The `AppSettings.cookie_secure` setting defaults to `true`, which requires HTTPS for cookies to be sent. Since the development environment runs over HTTP, `docker-compose.override.yml` sets `APP__COOKIE_SECURE=false` to allow authentication cookies to work correctly. Do not use `true` in production — the default value is secure.
+
+> **Note on Port 8000 Access in Development:** Port 8000 serves the backend API and the production React build. The production frontend build uses secure cookies and memory-only token storage, which cannot authenticate over HTTP. **The intended development entry point is http://localhost:5173**, which runs the Vite development server with hot reload. The frontend dev server proxies `/api` requests to the backend at port 8000, enabling proper authentication flow in development.
+
 ### Testing
 
 ```bash
@@ -150,6 +154,7 @@ Key variables:
 - `LOGGING__LEVEL` — Logging level (DEBUG/INFO/WARNING/ERROR)
 - `AUTO_MIGRATE` — Auto-run database migrations (true/false)
 - `RECREATE_TEST_DB` — Recreate test database on startup (true/false)
+- `APP__COOKIE_SECURE` — Cookie Secure attribute (true/false). Defaults to `true`. Set to `false` in development when using HTTP, as browsers will not send cookies with the Secure flag over unencrypted connections.
 
 **Security Note:** For production deployments, always set `DATABASE__PASSWORD`, `MKOBI_APP_PASSWORD`, and `JWT__SECRET_KEY` to strong, unique values. The compose file uses `${VAR:?error}` enforcement — services will fail to start without these variables explicitly set.
 

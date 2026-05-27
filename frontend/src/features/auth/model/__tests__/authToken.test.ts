@@ -5,6 +5,7 @@ import {
   removeToken,
   isTokenExpired,
   getTokenWithExpirationCheck,
+  parseJWTPayload,
 } from '../authToken'
 
 // In test environment (DEV), USE_MEMORY_STORAGE is false, so sessionStorage is used.
@@ -49,6 +50,56 @@ describe('authToken', () => {
     })
   })
 
+  describe('parseJWTPayload', () => {
+    it('successfully parses valid JWT with exp', () => {
+      const futureExp = Math.floor(Date.now() / 1000) + 3600
+      const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+      const payload = btoa(JSON.stringify({ sub: 'user-123', exp: futureExp }))
+      const token = `${header}.${payload}.signature`
+
+      const result = parseJWTPayload(token)
+      expect(result.sub).toBe('user-123')
+      expect(result.exp).toBe(futureExp)
+    })
+
+    it('successfully parses JWT with user_id instead of sub (access token format)', () => {
+      const futureExp = Math.floor(Date.now() / 1000) + 3600
+      const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+      const payload = btoa(JSON.stringify({ user_id: 'user-456', email: 'test@example.com', exp: futureExp }))
+      const token = `${header}.${payload}.signature`
+
+      const result = parseJWTPayload(token)
+      expect(result.user_id).toBe('user-456')
+      expect(result.exp).toBe(futureExp)
+    })
+
+    it('returns JWTPayload with optional fields', () => {
+      const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+      const payload = btoa(JSON.stringify({ user_id: 'user-789', role: 'viewer' }))
+      const token = `${header}.${payload}.signature`
+
+      const result = parseJWTPayload(token)
+      expect(result.user_id).toBe('user-789')
+      expect(result.role).toBe('viewer')
+      expect(result.exp).toBeUndefined()
+    })
+
+    it('throws explicit error for malformed token (missing parts)', () => {
+      expect(() => parseJWTPayload('invalid-token')).toThrow()
+    })
+
+    it('throws explicit error for empty string', () => {
+      expect(() => parseJWTPayload('')).toThrow()
+    })
+
+    it('throws explicit error for token with invalid payload JSON', () => {
+      const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+      const token = `${header}..signature`
+
+      expect(() => parseJWTPayload(token)).toThrow()
+    })
+  })
+
   describe('isTokenExpired', () => {
     it('returns false for token without exp claim', () => {
       const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
@@ -60,7 +111,7 @@ describe('authToken', () => {
 
     it('returns false for token with future expiration', () => {
       const futureExp = Math.floor(Date.now() / 1000) + 3600
-      const header = btoa(JSON.stringify({ alg: 'H256', typ: 'JWT' }))
+      const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
       const payload = btoa(JSON.stringify({ sub: '123', exp: futureExp }))
       const token = `${header}.${payload}.signature`
 
@@ -69,7 +120,7 @@ describe('authToken', () => {
 
     it('returns true for token with past expiration', () => {
       const pastExp = Math.floor(Date.now() / 1000) - 3600
-      const header = btoa(JSON.stringify({ alg: 'H256', typ: 'JWT' }))
+      const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
       const payload = btoa(JSON.stringify({ sub: '123', exp: pastExp }))
       const token = `${header}.${payload}.signature`
 
@@ -92,7 +143,7 @@ describe('authToken', () => {
 
     it('returns token when it is not expired', () => {
       const futureExp = Math.floor(Date.now() / 1000) + 3600
-      const header = btoa(JSON.stringify({ alg: 'H256', typ: 'JWT' }))
+      const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
       const payload = btoa(JSON.stringify({ sub: '123', exp: futureExp }))
       const token = `${header}.${payload}.signature`
 
@@ -102,7 +153,7 @@ describe('authToken', () => {
 
     it('returns null and removes token when it is expired', () => {
       const pastExp = Math.floor(Date.now() / 1000) - 3600
-      const header = btoa(JSON.stringify({ alg: 'H256', typ: 'JWT' }))
+      const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
       const payload = btoa(JSON.stringify({ sub: '123', exp: pastExp }))
       const token = `${header}.${payload}.signature`
 

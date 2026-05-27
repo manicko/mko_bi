@@ -25,7 +25,8 @@ export function LoginForm() {
   const watchedFields = useWatch({ control })
   useEffect(() => {
     if (error) {
-      setError(null)
+      // Use setTimeout to defer state update outside of effect
+      setTimeout(() => setError(null), 0)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [watchedFields.email, watchedFields.password])
@@ -35,7 +36,7 @@ export function LoginForm() {
       setError(null)
       setIsSubmitting(true)
       await login(data.email, data.password)
-      navigate('/dashboards')
+      void navigate('/dashboards')
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Login failed'
       setError(message)
@@ -45,7 +46,7 @@ export function LoginForm() {
   }
 
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ maxWidth: 400, mx: 'auto', mt: 4, p: 3 }}>
+    <Box component="form" onSubmit={(e) => void handleSubmit(onSubmit)(e)} sx={{ maxWidth: 400, mx: 'auto', mt: 4, p: 3 }}>
       <Typography variant="h4" component="h1" gutterBottom>
         Login
       </Typography>

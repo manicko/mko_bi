@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import axiosInstance from '../../../shared/api/axiosInstance'
+import { getToken } from '../../../features/auth/model/authToken'
 import type {
   DashboardSummary,
   DashboardDetail,
@@ -35,17 +36,20 @@ export const dashboardApi = {
 }
 
 export function useMyDashboards() {
+  const accessToken = getToken()
   return useQuery({
     queryKey: ['dashboards', 'my'],
     queryFn: () => dashboardApi.getMyDashboards(),
+    enabled: !!accessToken,
   })
 }
 
 export function useDashboard(id: string) {
+  const accessToken = getToken()
   return useQuery({
     queryKey: ['dashboards', id],
     queryFn: () => dashboardApi.getDashboard(id),
-    enabled: !!id,
+    enabled: !!id && !!accessToken,
   })
 }
 
@@ -53,11 +57,12 @@ export function useAggregatedData(
   dashboardId: string,
   filters?: Record<string, string | string[] | number | number[]>
 ) {
+  const accessToken = getToken()
   return useQuery({
     queryKey: ['aggregatedData', dashboardId, filters],
     queryFn: () =>
       dashboardApi.getAggregatedData({ dashboard_id: dashboardId, filters }),
-    enabled: !!dashboardId,
+    enabled: !!dashboardId && !!accessToken,
   })
 }
 

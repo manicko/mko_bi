@@ -1,0 +1,154 @@
+"""Dashboard graph routes.
+
+This module provides endpoints for managing graphs within a dashboard.
+Create operations require admin role. Read operations use dashboard access control.
+"""
+
+import logging
+from typing import cast
+from uuid import UUID
+
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from mkobi.api.deps import (
+    CurrentUser,
+    get_db_dependency,
+    get_graph_repository,
+    require_admin_role,
+    require_dashboard_read_access,
+)
+from mkobi.models.graph import GraphCreate, GraphRead
+from mkobi.models.user import UserRead
+
+logger = logging.getLogger(__name__)
+
+# No prefix - this router is mounted under /dashboards
+router = APIRouter(tags=["dashboards"])
+
+
+@router.post(
+    "/{dashboard_id}/graphs",
+    response_model=GraphRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a new graph for a dashboard",
+    description="Creates a new graph for a specific dashboard. Requires admin role.",
+    dependencies=[Depends(require_admin_role)],
+)
+async def create_dashboard_graph_endpoint(
+    dashboard_id: UUID,
+    graph: GraphCreate,
+    current_user: CurrentUser,
+    db: AsyncSession = Depends(get_db_dependency),
+    graph_repo=Depends(get_graph_repository),
+) -> GraphRead:
+    """Create a new graph for a dashboard.
+
+    Args:
+        dashboard_id: Dashboard ID.
+        graph: Model with graph data.
+        current_user: Current authenticated user.
+        db: Database session.
+
+    Returns:
+        GraphRead: Model of the created graph.
+
+    Raises:
+        HTTPException 404: If dashboard not found.
+        HTTPException 422: If data validation failed.
+        HTTPException 500: On database error.
+    """
+    logger.info(
+        "Creating graph for dashboard: name=%s, dashboard_id=%s, user_id=%s",
+        graph.name,
+        dashboard_id,
+        current_user.id,
+    )
+
+    try:
+        result = await graph_repo.create(
+            db=db,
+            name=graph.name,
+            type=graph.type,
+            dashboard_id=dashboard_id,
+            config=graph.config,
+            dimensions=graph.dimensions,
+            metrics=graph.metrics,
+        )
+        await db.commit()
+        return cast(GraphRead, GraphRead.model_validate(result))
+    except ValueError as e:
+        logger.warning("Validation error creating graph: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=str(e),
+        ) from e
+    except HTTPException:
+        raise
+    except IntegrityError:
+        await db.rollback()
+        logger.error(
+            "Integrity error creating graph name=%s dashboard_id=%s",
+            graph.name,
+            dashboard_id,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Conflict: graph creation failed",
+        ) from None
+    except Exception:
+        await db.rollback()
+        logger.error(
+            "Error creating graph name=%s dashboard_id=%s",
+            graph.name,
+            dashboard_id,
+            exc_info=True,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Internal server error",
+        ) from None
+
+
+@router.get(
+    "/{dashboard_id}/graphs",
+    response_model=list[GraphRead],
+    status_code=status.HTTP_200_OK,
+    summary="List graphs for a dashboard",
+    description="Returns a list of all graphs for a specific dashboard.",
+)
+async def get_dashboard_graphs_endpoint(
+    dashboard_id: UUID,
+    current_user: UserRead = Depends(require_dashboard_read_access),
+    db: AsyncSession = Depends(get_db_dependency),
+    graph_repo=Depends(get_graph_repository),
+) -> list[GraphRead]:
+    """Get all graphs for a dashboard.
+
+    Args:
+        dashboard_id: Dashboard ID.
+        current_user: Current authenticated user.
+        db: Database session.
+
+    Returns:
+        list[GraphRead]: List of graph models.
+
+    Raises:
+        HTTPException 403: If user has no access to dashboard.
+        HTTPException 500: On database error.
+    """
+    logger.info("Getting graphs for dashboard: dashboard_id=%s", dashboard_id)
+
+    try:
+        graphs = await graph_repo.get_by_dashboard_id(
+            dashboard_id=dashboard_id, db=db
+        )
+        return [GraphRead.model_validate(g) for g in graphs]
+    except Exception as e:
+        logger.error("Error getting graphs for dashboard %s: %s", dashboard_id, e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error getting graphs",
+        ) from e

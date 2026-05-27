@@ -65,7 +65,7 @@ async def get_users_admin_endpoint(
 async def update_user_role_admin_endpoint(
     user_id: UUID,
     user_data: UserUpdateRequest,
-    user_service=Depends(get_user_service),
+    user_service: IUserService = Depends(get_user_service),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> UserRead:
     """Update user role (admin endpoint)."""

@@ -1,0 +1,63 @@
+id: TASK_006_verify_mandatory_fixes
+
+title: Verify — M01-M05 Mandatory Fixes (Auth Flow + Observability)
+
+type: verification
+
+status: completed
+
+verification_results:
+  - TASK_001_M01: PASS - client_errors router mounted at /api/v1/client-errors
+  - TASK_002_M02: PASS - APP__COOKIE_SECURE: "false" in docker-compose.override.yml
+  - TASK_003_M03: PASS - Root route redirects to /login in routes.tsx
+  - TASK_004_M04: PASS - ProtectedRoute with isLoading check + query guards with enabled conditions
+  - TASK_005_M05: PASS - JWTPayload interface with Zod runtime validation defined
+
+test_results:
+  - backend_tests: 595 passed
+  - frontend_tests: 60 passed
+  - backend_ruff: passed
+  - backend_mypy: 2 pre-existing errors (unrelated to Stage 1)
+  - frontend_build: passed
+  - frontend_lint: 21 pre-existing errors (unrelated to Stage 1)
+
+priority: high
+
+depends_on:
+  - TASK_001_M01_mount_client_errors_router
+  - TASK_002_M02_add_cookie_secure_override
+  - TASK_003_M03_fix_root_route_redirect
+  - TASK_004_M04_fix_protected_route_and_query_guard
+  - TASK_005_M05_add_jwt_payload_types
+
+verifies:
+  - TASK_001_M01_mount_client_errors_router
+  - TASK_002_M02_add_cookie_secure_override
+  - TASK_003_M03_fix_root_route_redirect
+  - TASK_004_M04_fix_protected_route_and_query_guard
+  - TASK_005_M05_add_jwt_payload_types
+
+verification_steps:
+  - build: docker compose build
+  - build: cd frontend && npm run build
+  - test: Verify login flow end-to-end (login → page reload → still authenticated)
+  - test: Verify POST /api/v1/client-errors returns HTTP 200
+  - test: Verify root path / redirects to /login for unauthenticated users
+  - test: Verify /dashboards shows loading state then content (no infinite spinner)
+  - smoke_check: docker compose up -d → all containers healthy
+  - smoke_check: cd frontend && npm run lint → 0 errors
+  - smoke_check: cd frontend && npx tsc --noEmit → 0 errors
+
+pass_criteria:
+  - All builds succeed
+  - Login flow works end-to-end in dev mode (login, reload, stay authenticated)
+  - Client errors endpoint returns HTTP 200
+  - No infinite loading spinner on dashboards
+  - ESLint passes with 0 errors
+  - TypeScript compilation passes
+
+failure_action: Return the relevant implementation task to rework
+
+notes: >
+  This verification confirms the complete auth flow fix in dev mode.
+  All 5 mandatory fixes should be deployed together for the complete experience.

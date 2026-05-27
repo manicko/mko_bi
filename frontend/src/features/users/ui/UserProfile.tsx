@@ -17,8 +17,6 @@ export function UserProfile() {
     queryFn: getProfile,
   })
 
-  const isAdmin = profile?.role === 'admin'
-
   const handleDeleteClick = () => {
     setDeleteDialogOpen(true)
   }
@@ -33,10 +31,10 @@ export function UserProfile() {
       setDeleteError(null)
       await deleteAccount()
       toast.success('Account deleted successfully')
-      logout()
-      navigate('/login')
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to delete account'
+      await logout()
+      void navigate('/login')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to delete account'
       setDeleteError(message)
       toast.error(message)
     } finally {
@@ -59,6 +57,8 @@ export function UserProfile() {
       </Box>
     )
   }
+
+  const isAdmin = profile?.role === 'admin'
 
   return (
     <Box sx={{ p: 3, maxWidth: 600 }}>
@@ -96,7 +96,7 @@ export function UserProfile() {
       <Box sx={{ mt: 4 }}>
         <Button
           variant="outlined"
-          onClick={() => navigate('/profile/change-password')}
+          onClick={() => void navigate('/profile/change-password')}
         >
           Change Password
         </Button>
@@ -131,7 +131,7 @@ export function UserProfile() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleDeleteCancel}>Cancel</Button>
-          <Button onClick={handleDeleteConfirm} color="error" autoFocus>
+          <Button onClick={() => void handleDeleteConfirm()} color="error" autoFocus>
             Delete
           </Button>
         </DialogActions>

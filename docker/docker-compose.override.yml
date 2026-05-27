@@ -48,6 +48,7 @@ services:
         condition: service_completed_successfully
     environment:
       ENV: development
+      APP__COOKIE_SECURE: "false"
       DATABASE__HOST: db
       DATABASE__PORT: 5432
       DATABASE__USER: mkobi_app

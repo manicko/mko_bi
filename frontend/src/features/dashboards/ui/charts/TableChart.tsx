@@ -8,6 +8,18 @@ interface TableChartProps {
   title?: string
 }
 
+function getDisplayValue(value: unknown): string {
+  if (value === null || value === undefined) {
+    return ''
+  }
+  if (typeof value === 'object') {
+    return JSON.stringify(value)
+  }
+  // At this point value is string | number | boolean | bigint | symbol
+  // eslint-disable-next-line @typescript-eslint/no-base-to-string
+  return String(value)
+}
+
 export function TableChart({ data, title }: TableChartProps) {
   const displayColumns = data.columns || Object.keys(data.rows[0] || {})
 
@@ -33,7 +45,7 @@ export function TableChart({ data, title }: TableChartProps) {
             <tr key={idx}>
               {displayColumns.map((col) => (
                 <td key={col} style={{ border: '1px solid #ddd', padding: '8px' }}>
-                  {String(row[col] ?? '')}
+                  {getDisplayValue(row[col])}
                 </td>
               ))}
             </tr>

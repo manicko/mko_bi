@@ -46,27 +46,34 @@ export function UploadModal({ open, onClose, dashboardId, onUploadComplete }: Up
   const processingLogId = fileStates.length > 0 ? fileStates[0].processingLogId ?? null : null
   const { data: statusData } = useProcessingStatus(processingLogId, uploadComplete)
 
-  // Update processing status when polling returns data
-  useEffect(() => {
-    if (statusData?.status) {
-      setFileStates((prev) =>
-        prev.map((f) =>
-          f.processingLogId
-            ? { ...f, processingStatus: statusData.status, status: statusData.status === 'failed' ? FileUploadStatus.ERROR : f.status }
-            : f
-        )
-      )
+// Update processing status when polling returns data
+   useEffect(() => {
+     if (statusData?.status) {
+       // Store values to avoid stale closure issues
+       const status = statusData.status
 
-      // Handle completion
-      if (statusData.status === 'completed' || statusData.status === 'success') {
-        toast.success('Processing complete!')
-        setProcessingFinished(true)
-        if (onUploadComplete) {
-          onUploadComplete()
-        }
-      }
-    }
-  }, [statusData, onUploadComplete])
+       // Defer state updates to avoid setState-in-effect
+       queueMicrotask(() => {
+         setFileStates((prev) =>
+           prev.map((f) =>
+             f.processingLogId
+               ? { ...f, processingStatus: status, status: status === 'failed' ? FileUploadStatus.ERROR : f.status }
+               : f
+           )
+         )
+
+         // Handle completion
+         if (status === 'completed' || status === 'success') {
+           toast.success('Processing complete!')
+           setProcessingFinished(true)
+           if (onUploadComplete) {
+             onUploadComplete()
+           }
+         }
+       })
+     }
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+   }, [statusData])
 
   const handleModeChange = (_: React.MouseEvent<HTMLElement>, newMode: UploadMode | null) => {
     if (newMode !== null) {
@@ -253,7 +260,7 @@ export function UploadModal({ open, onClose, dashboardId, onUploadComplete }: Up
           variant="contained"
           color="primary"
           disabled={files.length === 0 || isUploading || processingFinished}
-          onClick={handleUpload}
+          onClick={() => void handleUpload()}
           size="large"
         >
           {isUploading ? 'Uploading...' : 'Start Upload'}

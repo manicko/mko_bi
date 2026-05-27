@@ -20,13 +20,13 @@ export function ChangePasswordPage() {
     resolver: zodResolver(changePasswordSchema),
   })
 
-  const onSubmit = async (data: ChangePasswordFormData) => {
+  const onFormSubmit = async (data: ChangePasswordFormData) => {
     try {
       setError(null)
       setIsSubmitting(true)
       await changePassword(data)
       toast.success('Password changed successfully')
-      navigate('/profile')
+      void navigate('/profile')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to change password'
       setError(message)
@@ -37,7 +37,7 @@ export function ChangePasswordPage() {
   }
 
   const handleCancel = () => {
-    navigate('/profile')
+    void navigate('/profile')
   }
 
   return (
@@ -52,7 +52,7 @@ export function ChangePasswordPage() {
         </Alert>
       )}
 
-      <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+      <Box component="form" onSubmit={(e) => void handleSubmit(onFormSubmit)(e)}>
         <TextField
           label="Current Password"
           type="password"

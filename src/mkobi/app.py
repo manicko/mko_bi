@@ -171,6 +171,7 @@ def create_app() -> FastAPI:
     application.include_router(routes.layouts.router, prefix="/api/v1")
     application.include_router(routes.upload.router, prefix="/api/v1")
     application.include_router(routes.data.router, prefix="/api/v1")
+    application.include_router(routes.client_errors.router, prefix="/api/v1")
     application.include_router(routes.filters.router, prefix="/api/v1/filters")
     application.include_router(routes.processing_configs.router, prefix="/api/v1")
     application.include_router(routes.processing_logs.router, prefix="/api/v1")
@@ -304,6 +305,10 @@ def _setup_static_files(application: FastAPI) -> None:
     if static_dir.exists() and index_path.exists():
         logger.info("Mounting static files from %s", static_dir)
 
+        # Set of API prefixes for robust path checking
+        # Paths in StaticFiles context come without leading slash
+        API_PREFIXES = frozenset({"api/"})
+
         # Custom StaticFiles that falls back to index.html for non-existent files
         class SPAStaticFiles(BaseStaticFiles):
             """StaticFiles subclass that serves index.html for non-existent paths.
@@ -324,10 +329,11 @@ def _setup_static_files(application: FastAPI) -> None:
                 Returns:
                     Response for the requested path or index.html for SPA routes.
                 """
-                # Don't intercept API routes - let FastAPI handle them
-                # The path comes without leading slash in StaticFiles context
-                # API paths are "api/*" when they reach here
-                if not path.startswith("api/"):
+                # Check if path starts with any API prefix to avoid intercepting API routes
+                # Note: paths in StaticFiles context come without leading slash
+                is_api_route = any(path.startswith(prefix) for prefix in API_PREFIXES)
+
+                if not is_api_route:
                     try:
                         return await super().get_response(path, scope)
                     except HTTPException as exc:

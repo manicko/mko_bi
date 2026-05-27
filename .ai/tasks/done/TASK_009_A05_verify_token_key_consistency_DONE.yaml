@@ -1,0 +1,114 @@
+id: TASK_009_A05_verify_token_key_consistency
+
+title: Verify JWT token key consistency between auth.py and deps.py
+
+status: completed
+
+priority: medium
+
+type: investigation
+
+finding_id: FINDING-A05
+
+source: audit_validated_findings_001.md
+
+depends_on:
+  - TASK_006_verify_mandatory_fixes
+
+description: >
+  The audit reports that the access token from login uses {"sub": str(user.id), ...}
+  but get_current_user_dependency reads "user_id" from the decoded token. If true,
+  this would cause every authenticated request to fail. However, since the system
+  reportedly works in some scenarios, this may be a false positive. Investigation needed.
+
+goals:
+  - Inspect auth.py token creation to confirm which key is used for user ID
+  - Inspect deps.py get_current_user_dependency to confirm which key it reads
+  - Determine if there is an actual mismatch
+  - Fix mismatch if found, or confirm consistency and close
+
+files:
+  - path: src/mkobi/api/routes/auth.py
+    targets:
+      - type: function
+        context: Login/token creation endpoint
+        semantic_anchors: []
+
+  - path: src/mkobi/api/deps.py
+    targets:
+      - type: function
+        name: get_current_user_dependency
+        semantic_anchors: []
+
+changes:
+  - action: investigate
+    description: >
+      Compare the token payload key used in auth.py (token creation) with the
+      key read in deps.py (token consumption). If mismatch found, standardize
+      on one key name (recommend "sub" per JWT standard).
+
+investigation_results:
+  - summary: Token key consistency investigation completed. Found DESIGN distinction, not a bug.
+
+  - access_tokens_use_user_id:
+      description: Access tokens consistently use "user_id" key
+      created_in:
+        - auth_service.login_user() - line 198-202 with {"user_id": ...}
+        - auth_service.create_access_token() - line 236 with {"user_id": ...}
+        - auth_service.refresh_token() - line 253-257 with {"user_id": ...}
+        - /api/v1/auth/refresh endpoint - line 303-304 with {"user_id": ...}
+      consumed_in:
+        - deps.py:get_current_user_dependency() - line 429 reads "user_id"
+        - permissions.py:_get_current_user_with_session() - line 310 reads "user_id"
+      consistency: CONSISTENT - access tokens use "user_id" end-to-end
+
+  - refresh_tokens_use_sub:
+      description: Refresh tokens use "sub" key (JWT standard)
+      created_in:
+        - /api/v1/auth/login endpoint - line 95 with {"sub": ...}
+      consumed_in:
+        - /api/v1/auth/refresh endpoint - line 285 reads "sub"
+      consistency: CONSISTENT - refresh tokens use "sub" end-to-end
+
+  - frontend_token_parsing:
+      description: Frontend JWTPayload interface accepts both keys
+      location: frontend/src/features/auth/model/authToken.ts
+      schema: z.object({ sub: z.string().optional(), user_id: z.string().optional(), ... })
+      consistency: CONSISTENT - frontend accepts both for flexibility
+
+  - bug_found:
+      location: auth_service.py line 296
+      issue: Logging code read "user_id" from refresh token payload, but refresh tokens use "sub"
+      fix: Changed result.get("user_id") to result.get("sub") with comment explaining JWT standard
+
+acceptance_criteria:
+  - Token key consistency is confirmed or fixed
+  - If fixed: authenticated requests continue to work
+  - Investigation documented with findings
+
+tests_to_run:
+  - Login and make authenticated API request to verify token flow
+  - If fix applied: docker compose build && docker compose up -d
+
+test_results:
+  - backend_tests: 595 passed
+  - frontend_tests: 60 passed
+  - backend_ruff: passed
+  - backend_mypy: passed
+
+files_modified:
+  - src/mkobi/services/auth_service.py (line 296-297: fixed logging to read "sub" instead of "user_id" for refresh tokens)
+
+risk: medium
+
+effort: small
+
+rollback: Revert any token key changes if a fix was applied
+
+notes: >
+  This was an investigation task. The audit finding was partially incorrect - it confused
+  access tokens with refresh tokens. The design intentionally uses:
+  - "user_id" for access tokens (validated by deps.py and permissions.py)
+  - "sub" for refresh tokens (JWT standard, validated in /auth/refresh endpoint)
+  
+  A minor bug was found and fixed in auth_service.validate_refresh_token() logging.

@@ -39,31 +39,38 @@
   module: C:.py_dev.mkobi.frontend.src.app.routes
   layer: unknown
   imports:
+    - react
+    - react
     - react-router-dom
     - ../shared/components/ProtectedRoute
     - ../shared/components/RoleBasedAccess
     - ../shared/components/Layout
     - ../shared/components/NotFound
     - ../shared/components/ErrorBoundary
-    - ../features/auth/ui/LoginForm
-    - ../features/auth/ui/RegisterForm
-    - ../features/dashboards/ui/DashboardList
-    - ../features/dashboards/ui/DashboardView
-    - ../features/admin/ui/AdminPanel
-    - ../features/users/ui/UserProfile
-    - ../features/users/ui/ChangePasswordPage
+    - '@mui/material'
   components:
+    - LoadingFallback
     - AppRoutes
   hooks: []
   jsx_tags:
+    - >-
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems:
+      'center', minHeight: '50vh' }}>
     - <Routes>
+    - <Suspense fallback={<LoadingFallback />}>
+    - <Suspense fallback={<LoadingFallback />}>
     - <Route element={<AppLayout />}>
     - <Route element={<ErrorBoundary />}>
+    - <Suspense fallback={<LoadingFallback />}>
     - <ProtectedRoute>
+    - <Suspense fallback={<LoadingFallback />}>
     - <ProtectedRoute>
+    - <Suspense fallback={<LoadingFallback />}>
     - <ProtectedRoute>
     - <RoleBasedAccess roles={['admin']}>
+    - <Suspense fallback={<LoadingFallback />}>
     - <ProtectedRoute>
+    - <Suspense fallback={<LoadingFallback />}>
     - <ProtectedRoute>
 - path: C:/py_dev/mkobi/frontend/src/test/setup.ts
   module: C:.py_dev.mkobi.frontend.src.test.setup
@@ -518,7 +525,8 @@
 - path: C:/py_dev/mkobi/frontend/src/features/auth/model/authToken.ts
   module: C:.py_dev.mkobi.frontend.src.features.auth.model.authToken
   layer: unknown
-  imports: []
+  imports:
+    - zod
   components: []
   hooks: []
   jsx_tags: []
@@ -550,8 +558,8 @@
   hooks: []
   jsx_tags:
     - >-
-      <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ maxWidth:
-      400, mx: 'auto', mt: 4, p: 3 }}>
+      <Box component="form" onSubmit={(e) => void handleSubmit(onSubmit)(e)}
+      sx={{ maxWidth: 400, mx: 'auto', mt: 4, p: 3 }}>
     - <Typography variant="h4" component="h1" gutterBottom>
     - '<Alert severity="error" sx={{ mb: 2 }}>'
     - >-
@@ -579,8 +587,8 @@
     - '<Typography sx={{ textAlign: ''center'' }}>'
     - <Link to="/login">
     - >-
-      <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate sx={{
-      maxWidth: 400, mx: 'auto', mt: 4, p: 3 }}>
+      <Box component="form" onSubmit={(e) => void handleSubmit(onSubmit)(e)}
+      noValidate sx={{ maxWidth: 400, mx: 'auto', mt: 4, p: 3 }}>
     - <Typography variant="h4" component="h1" gutterBottom>
     - '<Alert severity="error" sx={{ mb: 2 }}>'
     - |-
@@ -594,6 +602,7 @@
   imports:
     - '@tanstack/react-query'
     - ../../../shared/api/axiosInstance
+    - ../../../features/auth/model/authToken
     - ../../../shared/types/api.types
   components: []
   hooks:
@@ -794,7 +803,7 @@
                 variant="contained"
                 color="primary"
                 disabled={files.length === 0 || isUploading || processingFinished}
-                onClick={handleUpload}
+                onClick={() => void handleUpload()}
                 size="large"
               >
 - path: C:/py_dev/mkobi/frontend/src/features/users/api/userApi.ts
@@ -825,7 +834,9 @@
     - '<Box sx={{ p: 3, maxWidth: 400, mx: ''auto'' }}>'
     - <Typography variant="h4" component="h1" gutterBottom>
     - '<Alert severity="error" sx={{ mb: 2 }}>'
-    - <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+    - >-
+      <Box component="form" onSubmit={(e) => void
+      handleSubmit(onFormSubmit)(e)}>
     - '<Box sx={{ display: ''flex'', gap: 2, mt: 3 }}>'
     - |-
       <Button
@@ -879,7 +890,7 @@
     - |-
       <Button
                 variant="outlined"
-                onClick={() => navigate('/profile/change-password')}
+                onClick={() => void navigate('/profile/change-password')}
               >
     - '<Box sx={{ mt: 4 }}>'
     - '<Alert severity="error" sx={{ mb: 2 }}>'
@@ -899,7 +910,9 @@
     - <DialogContentText>
     - <DialogActions>
     - <Button onClick={handleDeleteCancel}>
-    - <Button onClick={handleDeleteConfirm} color="error" autoFocus>
+    - >-
+      <Button onClick={() => void handleDeleteConfirm()} color="error"
+      autoFocus>
 - path: C:/py_dev/mkobi/frontend/src/shared/components/Layout/AppLayout.tsx
   module: C:.py_dev.mkobi.frontend.src.shared.components.Layout.AppLayout
   layer: component

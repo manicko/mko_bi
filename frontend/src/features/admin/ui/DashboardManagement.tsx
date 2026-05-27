@@ -42,7 +42,7 @@ export function DashboardManagement() {
   const createMutation = useMutation({
     mutationFn: createDashboard,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboards'] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'dashboards'] })
       setCreateDialogOpen(false)
       setFormData({ name: '', description: '', layout: '' })
       setError(null)
@@ -56,7 +56,7 @@ export function DashboardManagement() {
     mutationFn: ({ id, data }: { id: string; data: { name?: string; description?: string } }) =>
       updateDashboard(id, data),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboards'] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'dashboards'] })
       setEditDialogOpen(false)
       toast.success('Dashboard updated successfully')
     },
@@ -68,7 +68,7 @@ export function DashboardManagement() {
   const deleteMutation = useMutation({
     mutationFn: deleteDashboard,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'dashboards'] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'dashboards'] })
       toast.success('Dashboard deleted successfully')
     },
     onError: () => {

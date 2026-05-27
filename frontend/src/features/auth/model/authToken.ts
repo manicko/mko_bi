@@ -1,3 +1,51 @@
+import { z } from 'zod'
+
+// JWT payload schema for runtime validation
+// Access tokens contain user_id; refresh tokens contain sub
+// exp is optional to handle tokens without expiration claim
+const JWTPayloadSchema = z.object({
+  sub: z.string().optional(),
+  exp: z.number().optional(),
+  user_id: z.string().optional(),
+  role: z.string().optional(),
+})
+
+// JWT payload interface matching backend token structure
+// Using string types for role to match Zod validation at runtime
+export interface JWTPayload {
+  sub?: string
+  exp?: number
+  user_id?: string
+  role?: string
+}
+
+/**
+ * Parse and validate JWT payload with runtime type checking.
+ * Throws explicit error for malformed tokens instead of returning undefined.
+ */
+export function parseJWTPayload(token: string): JWTPayload {
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) {
+      throw new Error('Invalid JWT structure: token must have 3 parts')
+    }
+
+    const payloadJson = atob(parts[1])
+    // Unknown type for JSON.parse result, validated by Zod schema below
+    const rawPayload: unknown = JSON.parse(payloadJson)
+    const result = JWTPayloadSchema.safeParse(rawPayload)
+
+    if (!result.success) {
+      throw new Error(`Invalid JWT payload: ${result.error.message}`)
+    }
+
+    return result.data
+  } catch (error) {
+    // Re-throw with cause to preserve the original error context
+    throw new Error('Failed to parse JWT payload', { cause: error })
+  }
+}
+
 // Token storage with memory-first approach for security
 //
 // Production behavior (USE_MEMORY_STORAGE = true):
@@ -53,9 +101,9 @@ export function removeToken(): void {
 // Token expiration check (if JWT has expiration)
 export function isTokenExpired(token: string): boolean {
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
+    const payload = parseJWTPayload(token)
     if (!payload.exp) return false
-    
+
     const expirationTime = payload.exp * 1000 // Convert to milliseconds
     return Date.now() >= expirationTime
   } catch {
@@ -67,11 +115,11 @@ export function isTokenExpired(token: string): boolean {
 export function getTokenWithExpirationCheck(): string | null {
   const token = getToken()
   if (!token) return null
-  
+
   if (isTokenExpired(token)) {
     removeToken()
     return null
   }
-  
+
   return token
 }

@@ -13,6 +13,39 @@ export default defineConfig({
       },
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id: string): string | undefined {
+          // React core
+          if (id.includes('node_modules/react') && !id.includes('react-router-dom')) {
+            return 'react'
+          }
+          if (id.includes('node_modules/react-router-dom')) {
+            return 'react'
+          }
+          // MUI UI library
+          if (id.includes('node_modules/@mui') || id.includes('node_modules/@emotion')) {
+            return 'mui'
+          }
+          // Data fetching and forms
+          if (
+            id.includes('node_modules/@tanstack') ||
+            id.includes('node_modules/react-hook-form') ||
+            id.includes('node_modules/axios') ||
+            id.includes('node_modules/zod')
+          ) {
+            return 'vendor'
+          }
+          // Plotly for charts
+          if (id.includes('node_modules/plotly.js') || id.includes('node_modules/react-plotly.js')) {
+            return 'plotly'
+          }
+          return undefined
+        },
+      },
+    },
+  },
   test: {
     globals: true,
     environment: 'jsdom',

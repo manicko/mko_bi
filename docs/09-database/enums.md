@@ -45,8 +45,8 @@ All fixed values in the system are defined as `StrEnum` classes in `src/mkobi/mo
 | 13 | `OrientationEnum`        | `v`, `h`                                        | —                     | Graph config (JSONB)     |
 | 14 | `BarmodeEnum`            | `group`, `stack`                                | —                     | Graph config (JSONB)     |
 | 15 | `YoyModeEnum`            | `absolute`, `percent`                           | —                     | Graph config (JSONB)     |
-| 16 | `ButtonVariant`          | `primary`, `secondary`, `success`, `danger`, `warning`, `info`, `light`, `dark` | — | Frontend-only |
-| 17 | `ComponentSize`          | `sm`, `md`, `lg`                                | —                     | Frontend-only            |
+| 16 | `ButtonVariant`          | `primary`, `secondary`, `success`, `danger`, `warning`, `info`, `light`, `dark` | — | Layout config validation (JSONB) |
+| 17 | `ComponentSize`          | `sm`, `md`, `lg`                                | —                     | Layout config validation (JSONB)            |
 
 ---
 
@@ -342,7 +342,7 @@ class YoyModeEnum(StrEnum):
 
 ### 16. `ButtonVariant`
 
-Defines button style variants (frontend-oriented).
+Defines button style variants for UI components.
 
 ```python
 class ButtonVariant(StrEnum):
@@ -356,13 +356,13 @@ class ButtonVariant(StrEnum):
     DARK = "dark"
 ```
 
-**Not a PostgreSQL ENUM** — defined in backend for OpenAPI type sharing, used in frontend only.
+**Not a PostgreSQL ENUM** — defined in backend for server-side validation of layout configurations stored in `layouts.definition` JSONB. This represents a frontend concept leaking into the backend for validation purposes. The values are validated when layouts are created/updated to ensure only valid button variants are stored. Used in frontend for button styling.
 
 ---
 
 ### 17. `ComponentSize`
 
-Defines component sizes (frontend-oriented).
+Defines component size variants for UI elements.
 
 ```python
 class ComponentSize(StrEnum):
@@ -371,7 +371,7 @@ class ComponentSize(StrEnum):
     LARGE = "lg"
 ```
 
-**Not a PostgreSQL ENUM** — defined in backend for OpenAPI type sharing, used in frontend only.
+**Not a PostgreSQL ENUM** — defined in backend for server-side validation of layout configurations stored in `layouts.definition` JSONB. This represents a frontend concept leaking into the backend for validation purposes. The values are validated when layouts are created/updated to ensure only valid sizes are stored. Used in frontend for component sizing.
 
 ---
 

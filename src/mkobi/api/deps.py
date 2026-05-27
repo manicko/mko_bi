@@ -13,7 +13,7 @@ Typical usage scenarios:
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Annotated, Any
+from typing import TYPE_CHECKING, Annotated, Any, cast
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
@@ -448,7 +448,7 @@ async def get_current_user_dependency(
             )
 
         logger.info("User authenticated: user_id=%s", user_id)
-        return UserRead.model_validate(user)
+        return cast(UserRead, UserRead.model_validate(user))
     except ExpiredSignatureError as e:
         logger.warning("Token expired")
         raise HTTPException(

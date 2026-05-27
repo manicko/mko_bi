@@ -293,7 +293,9 @@ class AuthService(IAuthService):
         if result is None:
             logger.warning("Invalid refresh token")
             return None
-        logger.info("Refresh token validated", extra={"user_id": result.get("user_id")})
+        # Refresh tokens use "sub" for user ID (JWT standard)
+        user_id = result.get("sub")
+        logger.info("Refresh token validated", extra={"user_id": user_id})
         return dict(result)
 
     async def get_user_by_id(

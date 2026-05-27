@@ -115,6 +115,7 @@ Access is validated on every request via the `dashboard_access` table.
 - **JSONB key normalization** — `dims` keys are sorted recursively before writes to ensure deterministic UPSERT conflict detection.
 - **Full recalculation on upload** — Every upload triggers a complete rebuild of all aggregates for the dashboard.
 - **StrEnum for all constants** — All fixed values (roles, statuses, types) use `StrEnum` in `src/mkobi/models/enums.py`.
+- **Frontend enum presence (ButtonVariant, ComponentSize)** — These UI concept enums are defined in the backend to support server-side validation of dashboard layout configurations stored in the `layouts.definition` JSONB column. This represents a minor architectural trade-off where frontend concepts leak into the backend for validation purposes only, rather than being treated as shared types across layers.
 - **Fail-open rate limiter** — When Redis is unavailable, requests are allowed through by default (configurable to fail-closed).
 - **Production credential enforcement** — Application refuses to start in production with default credentials.
 - **Background task queue** — In-memory `TaskQueue` (MVP) with a documented migration path to Redis/RQ.
@@ -169,7 +170,7 @@ Access is validated on every request via the `dashboard_access` table.
 | 2.6     | 2026-05-20 | Per-IP login rate limiting (email enumeration fix), migration advisory lock, dedicated DB role (least-privilege), migration job compose pattern, stale processing heartbeat, upload memory streaming, weak admin credential detection, config reload for testing, atomic UPSERT admin user, sanitized DB URL logging, LRU token cache |
 | 2.7     | 2026-05-23 | Cookie-based refresh token flow: httpOnly refresh cookies (7-day TTL), 15-min access tokens, POST /auth/logout endpoint, frontend silent refresh on mount, request queue for concurrent 401s, ProtectedRoute loading state during refresh |
 | 2.8     | 2026-05-25 | Docker folder restructure (all compose/Dockerfile/config into docker/ folder), standalone test compose (isolated test-db/test-redis/test-migrate/test-app with separate volumes/networks/ports), conftest.py setdefault for Docker Compose env var precedence, dev/test parallel execution support |
-| 2.9     | 2026-05-26 | Doc updates: admin logs pagination changed from page/page_size to skip/limit (D-001), added temp_password security note for registration approval (D-003) |
+| 2.9     | 2026-05-26 | Doc updates: admin logs pagination changed from page/page_size to skip/limit (D-001), added temp_password security note for registration approval (D-003), documented frontend enum presence rationale (D-004) |
 
 ---
 

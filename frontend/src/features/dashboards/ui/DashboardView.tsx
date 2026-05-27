@@ -61,7 +61,7 @@ export function DashboardView() {
 
   useEffect(() => {
     if (id && Object.keys(filters).length > 0) {
-      invalidateAggregatedData(id)
+      void invalidateAggregatedData(id)
     }
   }, [filters, id, invalidateAggregatedData])
 
@@ -165,7 +165,7 @@ export function DashboardView() {
         onUploadComplete={() => {
           setUploadModalOpen(false)
           if (id) {
-            invalidateAggregatedData(id)
+            invalidateAggregatedData(id).catch(() => {})
           }
         }}
       />

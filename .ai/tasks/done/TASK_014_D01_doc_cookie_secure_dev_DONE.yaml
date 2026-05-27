@@ -1,0 +1,57 @@
+id: TASK_014_D01_doc_cookie_secure_dev
+
+title: Document cookie_secure behavior in development mode
+
+status: done
+
+priority: medium
+
+type: doc-update
+
+finding_id: FINDING-D01
+source: audit_validated_findings_001.md
+
+depends_on:
+  - TASK_006_verify_mandatory_fixes
+
+description: >
+  The development documentation should explicitly state that cookie auth
+  requires either HTTPS or APP__COOKIE_SECURE=false in the dev override.
+  Currently, docker-compose.override.yml does not set APP__COOKIE_SECURE,
+  causing auth to silently fail over HTTP.
+
+goals:
+  - Document that cookie_secure=True is the default
+  - Explain the need for APP__COOKIE_SECURE=false in HTTP dev mode
+  - Add note to Docker development docs
+
+files:
+  - path: docs/README_DOCKER.md
+    targets:
+      - type: section
+        context: Development environment / authentication section
+    semantic_anchors:
+      insert_after:
+        type: heading
+        context: Development setup or Authentication section
+    changes:
+      - action: add_section
+        description: >
+          Add a note explaining that AppSettings.cookie_secure defaults to True
+          and must be set to APP__COOKIE_SECURE=false in docker-compose.override.yml
+          when developing over HTTP. Reference the override.yml file.
+
+acceptance_criteria:
+  - README_DOCKER.md documents cookie_secure behavior
+  - New developers can understand and configure dev auth correctly
+
+tests_to_run:
+  - Review the documentation for clarity
+
+risk: none
+effort: trivial
+rollback: Remove the added documentation section
+
+notes: >
+  Doc-only change. No code modifications.
+  Merged with PROB-05 context.

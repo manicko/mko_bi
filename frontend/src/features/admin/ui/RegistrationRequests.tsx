@@ -41,7 +41,7 @@ export function RegistrationRequests() {
   const approveMutation = useMutation({
     mutationFn: approveRequest,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'registration-requests'] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'registration-requests'] })
       setConfirmDialogOpen(false)
       toast.success('Request approved successfully')
     },
@@ -53,7 +53,7 @@ export function RegistrationRequests() {
   const rejectMutation = useMutation({
     mutationFn: rejectRequest,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin', 'registration-requests'] })
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'registration-requests'] })
       setConfirmDialogOpen(false)
       toast.success('Request rejected successfully')
     },
