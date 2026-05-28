@@ -1,11 +1,11 @@
----
-name: audit-security
+﻿---
+name: 04-security
 description: Security audit covering authentication, access control, JWT, password security, upload safety, SQL safety, secrets/config, rate limiting, email domain blocklist, StrEnum enforcement
 agent: audit-executor
 alwaysApply: false
 ---
 
-# Phase 4 Audit — Security
+# Phase 04 Audit â€” Security
 
 **Executor:** audit-executor
 **Status:** {pending|in-progress|complete}
@@ -196,8 +196,8 @@ All constants must be StrEnum, NOT dict or list. All 17 classes required:
 |-------|--------|----------|
 | All 17 StrEnum classes present | | |
 | No string literal comparisons for role/status/type checks | | |
-| Bad: `if user.role == "admin":` — NOT present | | |
-| Good: `if user.role == UserRole.ADMIN:` — used | | |
+| Bad: `if user.role == "admin":` â€” NOT present | | |
+| Good: `if user.role == UserRole.ADMIN:` â€” used | | |
 
 ---
 
@@ -207,7 +207,7 @@ Verify frontend security implementation:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| JWT stored in memory (production) or sessionStorage (development) — NOT localStorage | | |
+| JWT stored in memory (production) or sessionStorage (development) â€” NOT localStorage | | |
 | Axios interceptors add token to requests | | |
 | ProtectedRoute component works correctly | | |
 | RoleBasedAccess component works correctly | | |

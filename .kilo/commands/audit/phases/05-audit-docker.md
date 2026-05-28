@@ -1,11 +1,11 @@
----
-name: audit-docker
+﻿---
+name: 05-docker
 description: Docker and runtime environment audit covering Dockerfile, docker-compose, container health, security, persistence, production readiness, runtime verification
 agent: audit-executor
 alwaysApply: false
 ---
 
-# Phase 5 Audit — Docker and Runtime Environment
+# Phase 05 Audit â€” Docker and Runtime Environment
 
 **Executor:** audit-executor
 **Status:** {pending|in-progress|complete}
@@ -73,14 +73,14 @@ alwaysApply: false
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| ENV — environment name (development/test/production) | | |
-| DATABASE__HOST, DATABASE__PORT, DATABASE__PASSWORD — DB connection | | |
-| MKOBI_APP_PASSWORD — application DB role password | | |
-| JWT__SECRET_KEY — JWT signing key (required in production) | | |
-| CORS_ORIGINS — explicit allowed origins | | |
-| AUTO_MIGRATE=true — runs Alembic migrations on startup | | |
-| RECREATE_TEST_DB=true — recreates test database (test env only) | | |
-| RATE_LIMITER_FAIL_CLOSED — rate limiter failure mode | | |
+| ENV â€” environment name (development/test/production) | | |
+| DATABASE__HOST, DATABASE__PORT, DATABASE__PASSWORD â€” DB connection | | |
+| MKOBI_APP_PASSWORD â€” application DB role password | | |
+| JWT__SECRET_KEY â€” JWT signing key (required in production) | | |
+| CORS_ORIGINS â€” explicit allowed origins | | |
+| AUTO_MIGRATE=true â€” runs Alembic migrations on startup | | |
+| RECREATE_TEST_DB=true â€” recreates test database (test env only) | | |
+| RATE_LIMITER_FAIL_CLOSED â€” rate limiter failure mode | | |
 | Production credentials enforced via `${VAR:?...}` syntax | | |
 | No hardcoded secrets in compose files | | |
 
@@ -134,7 +134,7 @@ alwaysApply: false
 
 ## Runtime Verification Steps
 
-### Step 1 — Start Docker and Check Runtime Status
+### Step 1 â€” Start Docker and Check Runtime Status
 
 **This step is mandatory. Do not skip.**
 
@@ -152,7 +152,7 @@ Wait 30 seconds for services to initialize.
 docker compose -f docker/docker-compose.yml ps
 ```
 
-Verify all containers are in `running` or `healthy` state. If any container is `exited`, `restarting`, or `unhealthy` — this is a `[RUNTIME-ERROR]`.
+Verify all containers are in `running` or `healthy` state. If any container is `exited`, `restarting`, or `unhealthy` â€” this is a `[RUNTIME-ERROR]`.
 
 #### 1.3 Check logs for ALL services
 
@@ -189,7 +189,7 @@ curl http://localhost:8000/health
 
 If app is not reachable, check: is port 8000 mapped? Did the app crash?
 
-### Step 2 — Verify Frontend
+### Step 2 â€” Verify Frontend
 
 #### 2.1 Check frontend container status
 
@@ -197,7 +197,7 @@ If app is not reachable, check: is port 8000 mapped? Did the app crash?
 docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml ps frontend
 ```
 
-If frontend container is `exited` or `restarting` — this is a `[RUNTIME-ERROR]`.
+If frontend container is `exited` or `restarting` â€” this is a `[RUNTIME-ERROR]`.
 
 #### 2.2 Check frontend container logs
 

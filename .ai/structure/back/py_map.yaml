@@ -1315,6 +1315,7 @@
   - sqlalchemy
   - sqlalchemy.exc
   - sqlalchemy.ext.asyncio
+  - sqlalchemy.orm
   - mkobi.db.models
   - mkobi.db.models.processing_logs
   - mkobi.interfaces.repository_interfaces

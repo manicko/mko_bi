@@ -1,11 +1,11 @@
----
-name: audit-backend
+﻿---
+name: 01-backend
 description: Backend architecture audit covering Clean Architecture compliance, API layer correctness, access control, code quality (typing, Pydantic, StrEnum, async, logging)
 agent: audit-executor
 alwaysApply: false
 ---
 
-# Phase 1 Audit — Backend Architecture
+# Phase 01 Audit â€” Backend Architecture
 
 **Executor:** audit-executor
 **Status:** {pending|in-progress|complete}

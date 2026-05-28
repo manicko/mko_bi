@@ -3003,6 +3003,13 @@
   value: ConfigDict
   stable_hash: 181438e0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
+- id: c6d922bc
+  symbol_path:
+  - DashboardCreate
+  type: function_call
+  value: Field
+  stable_hash: c6d922bc
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
 - id: 3fe7cd60
   symbol_path:
   - DashboardCreate
@@ -3078,6 +3085,13 @@
   type: function_call
   value: ConfigDict
   stable_hash: 05a6a42a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
+- id: '97322305'
+  symbol_path:
+  - DashboardUpdate
+  type: function_call
+  value: Field
+  stable_hash: '97322305'
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
 - id: ba61d81a
   symbol_path:
@@ -9828,6 +9842,13 @@
   value: select
   stable_hash: '64315011'
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\processing_log_repo.py
+- id: 5f84036d
+  symbol_path:
+  - ProcessingLogRepository
+  type: function_call
+  value: selectinload
+  stable_hash: 5f84036d
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\processing_log_repo.py
 - id: 8f8b630a
   symbol_path:
   - ProcessingLogRepository
@@ -9855,6 +9876,20 @@
   value: select
   stable_hash: '64315011'
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\processing_log_repo.py
+- id: 5f84036d
+  symbol_path:
+  - ProcessingLogRepository
+  type: function_call
+  value: selectinload
+  stable_hash: 5f84036d
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\processing_log_repo.py
+- id: 5a1ef1ac
+  symbol_path:
+  - ProcessingLogRepository
+  type: function_call
+  value: time
+  stable_hash: 5a1ef1ac
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\processing_log_repo.py
 - id: 8f8b630a
   symbol_path:
   - ProcessingLogRepository
@@ -9881,6 +9916,13 @@
   type: function_call
   value: select
   stable_hash: '64315011'
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\processing_log_repo.py
+- id: 5f84036d
+  symbol_path:
+  - ProcessingLogRepository
+  type: function_call
+  value: selectinload
+  stable_hash: 5f84036d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\processing_log_repo.py
 - id: 531dd9e7
   symbol_path:
@@ -9907,6 +9949,13 @@
   type: function_call
   value: select
   stable_hash: '64315011'
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\processing_log_repo.py
+- id: 5f84036d
+  symbol_path:
+  - ProcessingLogRepository
+  type: function_call
+  value: selectinload
+  stable_hash: 5f84036d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\processing_log_repo.py
 - id: 531dd9e7
   symbol_path:

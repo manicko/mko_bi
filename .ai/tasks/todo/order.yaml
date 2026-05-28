@@ -1,127 +1,44 @@
-plan: Runtime Bug Fixes — BUG-001, BUG-002, BUG-003, BUG-003b, A-001
+# Execution Order — BUG-004 Log Viewer Empty Table Fix
+# Generated from validated audit finding: BUG-004-log-viewer-empty-table.md
+#
+# Dependency graph:
+#   Stage 1 (parallel): TASK_001, TASK_002, TASK_003, TASK_004
+#   Stage 2:            TASK_005 (depends on TASK_003)
+#   Stage 3:            TASK_006 (depends on all — verification)
 
-plan_reference: C:\py_dev\mkobi\.ai\audit\validated\BUG-001-002-003-runtime-errors.md
-
-generated: 2026-05-27
-
-total_tasks: 6
-
-total_files_created: 5
-
-modified_files: 4
-
-new_yaml_files: 6
-
-dependency_graph: |
-  TASK_018 (BUG-002 — RegistrationRequests DataGrid fix)
-   │
-  TASK_019 (BUG-003 — Root route auth redirect)
-   │
-  TASK_020 (BUG-003b — LoginForm auth redirect)
-   │  All 5 implementation tasks are INDEPENDENT — parallel Wave 4
-  TASK_021 (BUG-001 — Dashboard layout mapping fix)
-   │
-  TASK_022 (A-001 — Description max_length)
-   │
-   └─────────────────────────────────────────────────┐
-                                                        │
-  TASK_023 (Verify all bug fixes) ◄───────────────────┘
-    depends_on: TASK_018, TASK_019, TASK_020, TASK_021, TASK_022
-
-execution_order:
-  - order: 18
-    task_id: TASK_018_fix_registration_requests_datagrid_getactions
-    task_file: TASK_018_fix_registration_requests_datagrid_getactions.yaml
-    wave: 4
+tasks:
+  - id: TASK_001_fix_date_format_processing_logs
     depends_on: []
-    parallel_group: wave4
-    plan_section: BUG-002 — Fix RegistrationRequests DataGrid getActions crash
-    notes: "Single file fix — replace type:'actions' with renderCell pattern"
+    stage: 1
+    description: Fix date format mismatch — backend accepts date-only strings for date_from/date_to
 
-  - order: 19
-    task_id: TASK_019_fix_root_route_auth_redirect
-    task_file: TASK_019_fix_root_route_auth_redirect.yaml
-    wave: 4
+  - id: TASK_002_align_query_param_status_filter
     depends_on: []
-    parallel_group: wave4
-    plan_section: BUG-003 — Fix root route / auth-aware redirect
-    notes: "Replace unconditional Navigate with RootRedirect using useAuth()"
+    stage: 1
+    description: Align frontend query param status → status_filter to match backend
 
-  - order: 20
-    task_id: TASK_020_fix_login_form_auth_redirect
-    task_file: TASK_020_fix_login_form_auth_redirect.yaml
-    wave: 4
+  - id: TASK_003_add_error_handling_log_viewer
     depends_on: []
-    parallel_group: wave4
-    plan_section: BUG-003b — Redirect authenticated users from /login
-    notes: "Trivial — add early-return redirect at top of LoginForm"
+    stage: 1
+    description: Add error handling to LogViewer useQuery with user-facing Alert
 
-  - order: 21
-    task_id: TASK_021_fix_dashboard_layout_field_mapping
-    task_file: TASK_021_fix_dashboard_layout_field_mapping.yaml
-    wave: 4
+  - id: TASK_004_add_dashboard_name_to_log_response
     depends_on: []
-    parallel_group: wave4
-    plan_section: BUG-001 — Fix dashboard layout field mapping (layout → layout_id)
-    notes: "Cross-module — frontend API mapping + backend model verification"
+    stage: 1
+    description: Add dashboard_name field to ProcessingLogRead and populate from relationship
 
-  - order: 22
-    task_id: TASK_022_add_description_maxlength_validation
-    task_file: TASK_022_add_description_maxlength_validation.yaml
-    wave: 4
-    depends_on: []
-    parallel_group: wave4
-    plan_section: A-001 — Add max_length=200 to description field on backend
-    notes: "Trivial — add Field(max_length=200) to two Pydantic model fields"
-
-  - order: 23
-    task_id: TASK_023_verify_all_bug_fixes
-    task_file: TASK_023_verify_all_bug_fixes.yaml
-    wave: 5
+  - id: TASK_005_handle_nullable_started_at
     depends_on:
-      - TASK_018_fix_registration_requests_datagrid_getactions
-      - TASK_019_fix_root_route_auth_redirect
-      - TASK_020_fix_login_form_auth_redirect
-      - TASK_021_fix_dashboard_layout_field_mapping
-      - TASK_022_add_description_maxlength_validation
-    parallel_group: none
-    plan_section: Verification — All 5 bug fixes
-    notes: "Final quality gate — build, type-check, lint, test"
+      - TASK_003_add_error_handling_log_viewer
+    stage: 2
+    description: Add null check for started_at before calling new Date()
 
-parallel_execution_groups:
-  wave4:
-    tasks:
-      - TASK_018_fix_registration_requests_datagrid_getactions
-      - TASK_019_fix_root_route_auth_redirect
-      - TASK_020_fix_login_form_auth_redirect
-      - TASK_021_fix_dashboard_layout_field_mapping
-      - TASK_022_add_description_maxlength_validation
-    max_parallel: 5
-    notes: "All Wave 4 tasks are independent and can execute in parallel. TASK_021 touches both frontend and backend but does not depend on other tasks."
-
-risk_summary:
-  total_risk: low
-  production_code_changes: true
-  rollback_strategy: "Revert specific files per failing task. Each task is independently rollbackable."
-
-affected_file_inventory:
-  frontend:
-    - frontend/src/features/admin/ui/RegistrationRequests.tsx
-    - frontend/src/app/routes.tsx
-    - frontend/src/features/auth/ui/LoginForm.tsx
-    - frontend/src/features/admin/api/adminApi.ts
-  backend:
-    - src/mkobi/models/dashboard.py
-
-finding_id_registry:
-  BUG-001: Dashboard layout field not persisted (layout vs layout_id mismatch)
-  BUG-002: RegistrationRequests DataGrid getActions missing
-  BUG-003: Root route unconditionally redirects to /login
-  BUG-003b: Authenticated users not redirected from /login
-  BUG-003c: Race condition (resolved by BUG-003 fix)
-  A-001: description max_length not enforced on backend
-
-severity_summary:
-  high: 3
-  medium: 2
-  low: 1
+  - id: TASK_006_verify_bug_004_log_viewer
+    depends_on:
+      - TASK_001_fix_date_format_processing_logs
+      - TASK_002_align_query_param_status_filter
+      - TASK_003_add_error_handling_log_viewer
+      - TASK_004_add_dashboard_name_to_log_response
+      - TASK_005_handle_nullable_started_at
+    stage: 3
+    description: End-to-end verification of all BUG-004 fixes

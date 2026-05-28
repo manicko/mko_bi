@@ -1,0 +1,79 @@
+id: TASK_006_verify_bug_004_log_viewer
+
+title: Verify — BUG-004 Log Viewer empty table fix
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_fix_date_format_processing_logs
+  - TASK_002_align_query_param_status_filter
+  - TASK_003_add_error_handling_log_viewer
+  - TASK_004_add_dashboard_name_to_log_response
+  - TASK_005_handle_nullable_started_at
+
+type: implementation
+
+verifies:
+  - TASK_001_fix_date_format_processing_logs
+  - TASK_002_align_query_param_status_filter
+  - TASK_003_add_error_handling_log_viewer
+  - TASK_004_add_dashboard_name_to_log_response
+  - TASK_005_handle_nullable_started_at
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\BUG-004-log-viewer-empty-table.md
+source_section: Summary of Factors, Mandatory Fixes, Advisory Recommendations
+
+description: >
+  End-to-end verification that the Log Viewer tab at /admin → Log Viewer
+  correctly displays processing log rows, handles errors, and supports all
+  filter types without silent failures.
+
+verification_steps:
+  - step: build_backend
+    command: cd C:\py_dev\mkobi && ruff check src/mkobi/api/routes/processing_logs.py src/mkobi/models/processing_logs.py src/mkobi/db/repositories/processing_log_repo.py
+    expected: zero lint errors
+
+  - step: typecheck_backend
+    command: cd C:\py_dev\mkobi && mypy src/mkobi/api/routes/processing_logs.py src/mkobi/models/processing_logs.py src/mkobi/db/repositories/processing_log_repo.py
+    expected: zero type errors
+
+  - step: build_frontend
+    command: cd C:\py_dev\mkobi\frontend && npx tsc --noEmit
+    expected: zero TypeScript errors
+
+  - step: smoke_test_api
+    command: >
+      Start the backend and frontend. Navigate to /admin → Log Viewer.
+      Verify: (1) initial load shows log rows without 422 error,
+      (2) applying date filters does not produce 422,
+      (3) status filter actually filters results,
+      (4) error states are displayed when API fails,
+      (5) dashboard_name shows actual names not "N/A",
+      (6) null started_at shows empty string not "Invalid Date".
+
+pass_criteria:
+  - ruff passes on all modified backend files
+  - mypy passes on all modified backend files
+  - tsc --noEmit passes on frontend
+  - Log Viewer displays rows on initial load
+  - Date filters work without 422 errors
+  - Status filter works and actually filters
+  - Error messages shown on API failure
+  - Dashboard names resolved correctly
+
+failure_action: |
+  Return the failing implementation task(s) to rework status.
+  If date format fix fails → TASK_001.
+  If status filter alignment fails → TASK_002.
+  If error handling fails → TASK_003.
+  If dashboard_name fails → TASK_004.
+  If nullable started_at fails → TASK_005.
+
+affected_modules:
+  - src/mkobi/api/routes/processing_logs.py
+  - src/mkobi/models/processing_logs.py
+  - src/mkobi/db/repositories/processing_log_repo.py
+  - frontend/src/shared/types/api.types.ts
+  - frontend/src/features/admin/ui/LogViewer.tsx

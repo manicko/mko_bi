@@ -48,14 +48,19 @@
     - ../shared/components/NotFound
     - ../shared/components/ErrorBoundary
     - '@mui/material'
+    - ../features/auth/model/useAuth
   components:
     - LoadingFallback
+    - RootRedirect
     - AppRoutes
   hooks: []
   jsx_tags:
     - >-
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems:
       'center', minHeight: '50vh' }}>
+    - >-
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems:
+      'center', minHeight: '100vh' }}>
     - <Routes>
     - <Suspense fallback={<LoadingFallback />}>
     - <Suspense fallback={<LoadingFallback />}>
@@ -462,14 +467,15 @@
     - <InputLabel>
     - |-
       <Select
-                    value={filters.status || ''}
-                    label="Status"
-                    onChange={(e) => setFilters({ ...filters, status: e.target.value || undefined })}
+                    value={filters.status_filter || ''}
+                    label="Status Filter"
+                    onChange={(e) => setFilters({ ...filters, status_filter: e.target.value || undefined })}
                   >
     - <MenuItem value="">
     - <MenuItem key={status} value={status}>
     - <Button variant="contained" onClick={handleApplyFilters}>
     - <Button onClick={handleClearFilters}>
+    - '<Alert severity="error" sx={{ mb: 2 }}>'
 - path: C:/py_dev/mkobi/frontend/src/features/admin/ui/RegistrationRequests.tsx
   module: C:.py_dev.mkobi.frontend.src.features.admin.ui.RegistrationRequests
   layer: unknown

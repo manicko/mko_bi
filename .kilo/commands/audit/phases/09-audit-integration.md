@@ -1,11 +1,11 @@
----
-name: audit-integration
+﻿---
+name: 09-integration
 description: Cross-cutting integration audit covering API contract consistency, auth flow end-to-end, data flow end-to-end, database-backend alignment, frontend-backend type alignment, Docker service wiring
 agent: audit-executor
 alwaysApply: false
 ---
 
-# Phase 9 Audit — Integration
+# Phase 09 Audit â€” Integration
 
 **Executor:** audit-executor
 **Status:** {pending|in-progress|complete}
@@ -53,7 +53,7 @@ Verify JWT authentication flow works correctly across frontend and backend.
 
 ### 3. Data Flow End-to-End
 
-Verify complete data flow: Upload → Process → Store → Retrieve → Render.
+Verify complete data flow: Upload â†’ Process â†’ Store â†’ Retrieve â†’ Render.
 
 | Check | Status | Evidence |
 |-------|--------|----------|
@@ -72,7 +72,7 @@ Verify complete data flow: Upload → Process → Store → Retrieve → Render.
 
 ---
 
-### 4. Database ↔ Backend Alignment
+### 4. Database â†” Backend Alignment
 
 Verify SQLAlchemy models match Alembic migration schema.
 
@@ -86,7 +86,7 @@ Verify SQLAlchemy models match Alembic migration schema.
 
 ---
 
-### 5. Frontend ↔ Backend Type Alignment
+### 5. Frontend â†” Backend Type Alignment
 
 Verify TypeScript types match Pydantic response models.
 

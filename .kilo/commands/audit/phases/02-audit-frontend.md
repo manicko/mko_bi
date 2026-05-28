@@ -1,11 +1,11 @@
----
-name: audit-frontend
+﻿---
+name: 02-frontend
 description: Frontend architecture audit covering Feature-Sliced Design compliance, React SPA correctness, type safety, API integration, code quality
 agent: audit-executor
 alwaysApply: false
 ---
 
-# Phase 2 Audit — Frontend Architecture
+# Phase 02 Audit â€” Frontend Architecture
 
 **Executor:** audit-executor
 **Status:** {pending|in-progress|complete}
@@ -58,15 +58,15 @@ Verify all routes implemented with correct access control:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| `/login` → LoginForm (Public) | | |
-| `/register` → RegisterForm (Public) | | |
-| `/dashboards` → DashboardList (Authenticated) | | |
-| `/dashboard/:id` → DashboardView (Authenticated) | | |
-| `/dashboard/:id/upload` → UploadPage (Admin, Editor) | | |
-| `/admin` → AdminPanel (Admin only) | | |
-| `/profile` → UserProfile (Authenticated) | | |
-| `/profile/change-password` → ChangePasswordPage (Authenticated) | | |
-| `*` → NotFound (Public) | | |
+| `/login` â†’ LoginForm (Public) | | |
+| `/register` â†’ RegisterForm (Public) | | |
+| `/dashboards` â†’ DashboardList (Authenticated) | | |
+| `/dashboard/:id` â†’ DashboardView (Authenticated) | | |
+| `/dashboard/:id/upload` â†’ UploadPage (Admin, Editor) | | |
+| `/admin` â†’ AdminPanel (Admin only) | | |
+| `/profile` â†’ UserProfile (Authenticated) | | |
+| `/profile/change-password` â†’ ChangePasswordPage (Authenticated) | | |
+| `*` â†’ NotFound (Public) | | |
 | ProtectedRoute works correctly | | |
 | RoleBasedAccess works correctly | | |
 
@@ -157,7 +157,7 @@ Verify JWT storage and access control:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| JWT stored in memory (production) or sessionStorage (development) — NOT localStorage | | |
+| JWT stored in memory (production) or sessionStorage (development) â€” NOT localStorage | | |
 | Axios interceptors add token correctly | | |
 | ProtectedRoute component works | | |
 | RoleBasedAccess component works | | |

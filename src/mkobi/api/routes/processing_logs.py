@@ -4,7 +4,7 @@ Provides endpoints for viewing data processing logs.
 Complies with SPEC.md section 14.4 and task 011_processing_logs.md.
 """
 
-from datetime import datetime
+from datetime import date
 from uuid import UUID
 from typing import cast
 
@@ -39,11 +39,11 @@ async def get_logs_endpoint(
         None,
         description="Filter by status (STARTED, UPLOADED, PROCESSING, SUCCESS, FAILED)",
     ),
-    date_from: datetime | None = Query(
+    date_from: date | None = Query(
         None,
         description="Filter by start date (started_at)",
     ),
-    date_to: datetime | None = Query(
+    date_to: date | None = Query(
         None,
         description="Filter by end date (started_at)",
     ),

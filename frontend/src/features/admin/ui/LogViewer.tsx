@@ -10,6 +10,7 @@ import {
   Button,
   Chip,
   Stack,
+  Alert,
 } from '@mui/material'
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider'
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
@@ -44,7 +45,7 @@ export function LogViewer() {
   const [filters, setFilters] = useState<LogFilters>({})
   const [appliedFilters, setAppliedFilters] = useState<LogFilters>({})
 
-  const { data: logs = [], isLoading } = useQuery({
+  const { data: logs = [], isLoading, error, isError } = useQuery({
     queryKey: ['admin', 'logs', appliedFilters],
     queryFn: () => getLogs(appliedFilters),
   })
@@ -63,7 +64,7 @@ export function LogViewer() {
     dashboard_name: log.dashboard_name || 'N/A',
     status: log.status,
     message: log.message || '',
-    started_at: new Date(log.started_at).toLocaleString(),
+    started_at: log.started_at ? new Date(log.started_at).toLocaleString() : '',
     finished_at: log.finished_at ? new Date(log.finished_at).toLocaleString() : '',
   }))
 
@@ -84,11 +85,11 @@ export function LogViewer() {
           </FormControl>
 
           <FormControl size="small" sx={{ minWidth: 150 }}>
-            <InputLabel>Status</InputLabel>
+            <InputLabel>Status Filter</InputLabel>
             <Select
-              value={filters.status || ''}
-              label="Status"
-              onChange={(e) => setFilters({ ...filters, status: e.target.value || undefined })}
+              value={filters.status_filter || ''}
+              label="Status Filter"
+              onChange={(e) => setFilters({ ...filters, status_filter: e.target.value || undefined })}
             >
               <MenuItem value="">All</MenuItem>
               {statusOptions.map((status) => (
@@ -117,6 +118,12 @@ export function LogViewer() {
           <Button onClick={handleClearFilters}>Clear</Button>
         </Stack>
       </LocalizationProvider>
+
+      {isError && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          Failed to load logs: {error instanceof Error ? error.message : 'Unknown error'}
+        </Alert>
+      )}
 
       <DataGrid
         rows={rows}

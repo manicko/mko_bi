@@ -248,16 +248,16 @@ export interface ChangePasswordRequest {
 export interface ProcessingLog {
   id: string
   dashboard_id: string | null
-  dashboard_name?: string
+  dashboard_name?: string | null
   status: ProcessingStatus
   message?: string
-  started_at: string
+  started_at: string | null
   finished_at?: string
 }
 
 export interface LogFilters {
   dashboard_id?: string
-  status?: string
+  status_filter?: string
   date_from?: string
   date_to?: string
 }

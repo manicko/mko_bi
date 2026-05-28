@@ -1,11 +1,11 @@
----
-name: audit-deployment-config
+﻿---
+name: 08-deployment-config
 description: Deployment and configuration audit covering config management, startup lifecycle, deployment options, performance, stability, no-overengineering check
 agent: audit-executor
 alwaysApply: false
 ---
 
-# Phase 8 Audit — Deployment & Configuration
+# Phase 08 Audit â€” Deployment & Configuration
 
 **Executor:** audit-executor
 **Status:** {pending|in-progress|complete}

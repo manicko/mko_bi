@@ -1,0 +1,59 @@
+id: TASK_005_handle_nullable_started_at
+
+title: Handle nullable started_at in LogViewer row mapping
+
+status: completed
+
+priority: low
+
+depends_on:
+  - TASK_003_add_error_handling_log_viewer
+
+type: implementation
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\BUG-004-log-viewer-empty-table.md
+source_section: Factor 4 — started_at can be null in the database, causing new Date(null) in frontend
+
+description: >
+  The `started_at` column in the database is nullable (`nullable=True`). When it is null,
+  the frontend calls `new Date(null)` which produces "Invalid Date". Fix: add a null check
+  before calling `new Date(log.started_at)` in the row mapping.
+
+goals:
+  - Add null check for `log.started_at` before calling `new Date()`
+  - Display empty string or a placeholder like "—" when `started_at` is null
+  - Keep the existing null check for `finished_at` as-is
+
+files:
+  - path: frontend/src/features/admin/ui/LogViewer.tsx
+    targets:
+      - type: component
+        name: LogViewer
+    semantic_anchors:
+      insert_after:
+        type: row_mapping
+        value: "const rows = logs.map((log) => ({"
+    changes:
+      - action: modify_code
+        description: >
+          Change the `started_at` row mapping from:
+          ```typescript
+          started_at: new Date(log.started_at).toLocaleString(),
+          ```
+          to:
+          ```typescript
+          started_at: log.started_at ? new Date(log.started_at).toLocaleString() : '',
+          ```
+
+acceptance_criteria:
+  - When `started_at` is null, the Started column shows empty string instead of "Invalid Date"
+  - When `started_at` has a value, it displays normally
+  - No TypeScript compilation errors
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+risk: minimal
+effort: trivial
+affected_modules:
+  - frontend/src/features/admin/ui/LogViewer.tsx

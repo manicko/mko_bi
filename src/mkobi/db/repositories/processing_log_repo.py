@@ -5,13 +5,14 @@ Implements IProcessingLogRepository interface.
 """
 
 import logging
-from datetime import datetime, UTC
+from datetime import datetime, UTC, time
 from uuid import UUID
 from typing import cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from mkobi.db.models import processing_logs as processing_log_model
 from mkobi.db.models.processing_logs import ProcessingLog
@@ -126,7 +127,10 @@ class ProcessingLogRepository(IProcessingLogRepository):
             List of processing logs for dashboard as Pydantic models.
         """
         try:
-            query = select(processing_log_model.ProcessingLog)
+            query = (
+                select(processing_log_model.ProcessingLog)
+                .options(selectinload(processing_log_model.ProcessingLog.dashboard))
+            )
             if dashboard_id is not None:
                 query = query.where(
                     processing_log_model.ProcessingLog.dashboard_id == dashboard_id
@@ -143,7 +147,12 @@ class ProcessingLogRepository(IProcessingLogRepository):
                 dashboard_id,
                 len(logs),
             )
-            return [ProcessingLogRead.model_validate(log) for log in logs]
+            result_logs: list[ProcessingLogRead] = []
+            for log in logs:
+                log_read = ProcessingLogRead.model_validate(log)
+                log_read.dashboard_name = log.dashboard.name if log.dashboard else None
+                result_logs.append(log_read)
+            return result_logs
         except SQLAlchemyError as e:
             logger.error("Error getting logs dashboard_id=%s: %s", dashboard_id, e)
             raise
@@ -162,7 +171,10 @@ class ProcessingLogRepository(IProcessingLogRepository):
             List of processing logs as Pydantic models.
         """
         try:
-            query = select(processing_log_model.ProcessingLog)
+            query = (
+                select(processing_log_model.ProcessingLog)
+                .options(selectinload(processing_log_model.ProcessingLog.dashboard))
+            )
 
             if filters.dashboard_id is not None:
                 query = query.where(
@@ -181,8 +193,10 @@ class ProcessingLogRepository(IProcessingLogRepository):
                 )
 
             if filters.date_to is not None:
+                # Convert date to end of day for inclusive filtering
+                end_of_day = datetime.combine(filters.date_to, time(23, 59, 59, 999999))
                 query = query.where(
-                    processing_log_model.ProcessingLog.started_at <= filters.date_to
+                    processing_log_model.ProcessingLog.started_at <= end_of_day
                 )
 
             query = query.order_by(processing_log_model.ProcessingLog.started_at.desc())
@@ -199,7 +213,12 @@ class ProcessingLogRepository(IProcessingLogRepository):
                 "Filtered logs retrieved, count: %s",
                 len(logs),
             )
-            return [ProcessingLogRead.model_validate(log) for log in logs]
+            result_logs: list[ProcessingLogRead] = []
+            for log in logs:
+                log_read = ProcessingLogRead.model_validate(log)
+                log_read.dashboard_name = log.dashboard.name if log.dashboard else None
+                result_logs.append(log_read)
+            return result_logs
         except SQLAlchemyError as e:
             logger.error("Error getting filtered logs: %s", e)
             raise
@@ -220,6 +239,7 @@ class ProcessingLogRepository(IProcessingLogRepository):
         try:
             result = await db.execute(
                 select(processing_log_model.ProcessingLog)
+                .options(selectinload(processing_log_model.ProcessingLog.dashboard))
                 .where(processing_log_model.ProcessingLog.dashboard_id == dashboard_id)
                 .order_by(processing_log_model.ProcessingLog.started_at.desc())
                 .limit(1)
@@ -231,7 +251,9 @@ class ProcessingLogRepository(IProcessingLogRepository):
                     dashboard_id,
                     log.id,
                 )
-                return cast(ProcessingLogRead | None, ProcessingLogRead.model_validate(log))
+                log_read: ProcessingLogRead = ProcessingLogRead.model_validate(log)
+                log_read.dashboard_name = log.dashboard.name if log.dashboard else None
+                return cast(ProcessingLogRead | None, log_read)
             else:
                 logger.info("No logs found for dashboard_id=%s", dashboard_id)
                 return None
@@ -258,14 +280,16 @@ class ProcessingLogRepository(IProcessingLogRepository):
         """
         try:
             result = await db.execute(
-                select(processing_log_model.ProcessingLog).where(
-                    processing_log_model.ProcessingLog.id == log_id
-                )
+                select(processing_log_model.ProcessingLog)
+                .options(selectinload(processing_log_model.ProcessingLog.dashboard))
+                .where(processing_log_model.ProcessingLog.id == log_id)
             )
             log = result.scalar_one_or_none()
             if log:
                 logger.info("Log retrieved: id=%s", log_id)
-                return cast(ProcessingLogRead | None, ProcessingLogRead.model_validate(log))
+                log_read: ProcessingLogRead = ProcessingLogRead.model_validate(log)
+                log_read.dashboard_name = log.dashboard.name if log.dashboard else None
+                return cast(ProcessingLogRead | None, log_read)
             else:
                 logger.info("Log not found: id=%s", log_id)
                 return None

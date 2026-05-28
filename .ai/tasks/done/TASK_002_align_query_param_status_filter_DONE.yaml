@@ -1,0 +1,71 @@
+id: TASK_002_align_query_param_status_filter
+
+title: Align frontend query param name — status → status_filter
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+type: implementation
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\BUG-004-log-viewer-empty-table.md
+source_section: Factor 6 — Query param status vs status_filter name mismatch
+
+description: >
+  The backend route expects the status query parameter as `status_filter`, but the frontend
+  `LogFilters` interface sends it as `status`. FastAPI silently ignores the unknown `status` parameter,
+  so the status filter never works. Fix: rename the `status` field to `status_filter` in the
+  frontend `LogFilters` interface and in the `getLogs` API function parameter mapping.
+
+goals:
+  - Rename `status` to `status_filter` in `LogFilters` interface
+  - Ensure the `getLogs` function passes `status_filter` as the query parameter name
+  - Keep the `LogViewer` component filter UI working (the Select value should map to `status_filter`)
+
+files:
+  - path: frontend/src/shared/types/api.types.ts
+    targets:
+      - type: interface
+        name: LogFilters
+    semantic_anchors:
+      insert_after:
+        type: field_definition
+        value: "dashboard_id?: string"
+    changes:
+      - action: rename_field
+        description: >
+          Rename `status?: string` to `status_filter?: string` in the `LogFilters` interface.
+
+  - path: frontend/src/features/admin/ui/LogViewer.tsx
+    targets:
+      - type: component
+        name: LogViewer
+    semantic_anchors:
+      insert_after:
+        type: state_definition
+        value: "const [appliedFilters, setAppliedFilters] = useState<LogFilters>({})"
+    changes:
+      - action: update_field_reference
+        description: >
+          Update all references from `filters.status` to `filters.status_filter` in the component:
+          - The Select value binding: `value={filters.status_filter || ''}`
+          - The onChange handler: `setFilters({ ...filters, status_filter: e.target.value || undefined })`
+          - The clear filters handler already sets both to undefined via `setFilters({})`
+          - Update status Select label "Status Filter" for clarity
+
+acceptance_criteria:
+  - The status filter query parameter is sent as `status_filter` to the backend
+  - FastAPI correctly receives and applies the status filter
+  - No TypeScript compilation errors
+  - The Status dropdown in LogViewer still works correctly
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+risk: low
+effort: trivial
+affected_modules:
+  - frontend/src/shared/types/api.types.ts
+  - frontend/src/features/admin/ui/LogViewer.tsx

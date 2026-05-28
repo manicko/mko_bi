@@ -1,11 +1,11 @@
----
-name: audit-tests
+﻿---
+name: 06-tests
 description: Test quality audit covering coverage gaps, anti-patterns (overmocking, contract mismatch, tautological tests), pytest standards, test database isolation, missing critical path coverage
 agent: audit-executor
 alwaysApply: false
 ---
 
-# Phase 6 Audit — Test Quality
+# Phase 06 Audit â€” Test Quality
 
 **Executor:** audit-executor
 **Status:** {pending|in-progress|complete}

@@ -1,11 +1,11 @@
----
-name: audit-database
+﻿---
+name: 03-database
 description: Database architecture audit covering schema compliance, indexes, migrations, JSONB usage, test isolation, async compatibility, scalability risks
 agent: audit-executor
 alwaysApply: false
 ---
 
-# Phase 3 Audit — Database Architecture
+# Phase 03 Audit â€” Database Architecture
 
 **Executor:** audit-executor
 **Status:** {pending|in-progress|complete}
@@ -169,7 +169,7 @@ Verify bidb_test separate, SAVEPOINT rollback, NullPool.
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| Test DB is physically separate (bidb_test ≠ bidb) | | |
+| Test DB is physically separate (bidb_test â‰  bidb) | | |
 | Separate DSN (TEST_DATABASE_URL) | | |
 | Test engine uses NullPool (no connection pooling issues) | | |
 | Each test runs in SAVEPOINT, rolled back after completion | | |

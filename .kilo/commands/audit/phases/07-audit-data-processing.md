@@ -1,11 +1,11 @@
----
-name: audit-data-processing
+﻿---
+name: 07-data-processing
 description: Data processing audit covering Polars pipeline, loaders, transformations, aggregations, formula parser, storage, task queue, background worker, resource cleanup
 agent: audit-executor
 alwaysApply: false
 ---
 
-# Phase 7 Audit — Data Processing
+# Phase 07 Audit â€” Data Processing
 
 **Executor:** audit-executor
 **Status:** {pending|in-progress|complete}
@@ -75,7 +75,7 @@ Verify `src/mkobi/data/processing/transformations.py`:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| Parsing (CSV → Polars DataFrame) | | |
+| Parsing (CSV â†’ Polars DataFrame) | | |
 | Transformations (per dashboard config) | | |
 | Aggregations (grouping, metrics) | | |
 | Full recalculation on each upload (not incremental) | | |
@@ -118,16 +118,16 @@ Verify `src/mkobi/core/task_queue.py`:
 | `default_queue` singleton | | |
 | `enqueue_job()` compatibility wrapper | | |
 | `get_task_queue()` returns singleton | | |
-| Task lifecycle: `STARTED` → `PROCESSING` → `SUCCESS`/`FAILED` | | |
+| Task lifecycle: `STARTED` â†’ `PROCESSING` â†’ `SUCCESS`/`FAILED` | | |
 | Status/result/error tracking in memory dicts | | |
 
 Verify `src/mkobi/workers/data_worker.py`:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| `process_csv_background()` — async entry point | | |
-| `process_csv_background_sync()` — sync wrapper for RQ compatibility | | |
-| Full pipeline: parse → transform → aggregate → save → cleanup | | |
+| `process_csv_background()` â€” async entry point | | |
+| `process_csv_background_sync()` â€” sync wrapper for RQ compatibility | | |
+| Full pipeline: parse â†’ transform â†’ aggregate â†’ save â†’ cleanup | | |
 | Processing log updates at each stage | | |
 
 Verify migration path in `docs/03-processing/task-queue.py`:

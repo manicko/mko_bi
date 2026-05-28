@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
@@ -10,8 +10,8 @@ class ProcessingLogFilter(BaseModel):
 
     dashboard_id: UUID | None = None
     status: ProcessingStatus | None = None
-    date_from: datetime | None = None
-    date_to: datetime | None = None
+    date_from: date | None = None
+    date_to: date | None = None
     skip: int = 0
     limit: int = 100
 
@@ -21,8 +21,8 @@ class ProcessingLogFilter(BaseModel):
             "example": {
                 "dashboard_id": "550e8400-e29b-41d4-a716-446655440000",
                 "status": "failed",
-                "date_from": "2026-04-01T00:00:00+03:00",
-                "date_to": "2026-04-30T23:59:59+03:00",
+                "date_from": "2026-04-01",
+                "date_to": "2026-04-30",
                 "skip": 0,
                 "limit": 100,
             }
@@ -74,6 +74,7 @@ class ProcessingLogRead(BaseModel):
 
     id: UUID
     dashboard_id: UUID | None = None
+    dashboard_name: str | None = None
     status: ProcessingStatus
     message: str | None = None
     started_at: datetime | None = None
@@ -85,6 +86,7 @@ class ProcessingLogRead(BaseModel):
             "example": {
                 "id": "550e8400-e29b-41d4-a716-446655440000",
                 "dashboard_id": "550e8400-e29b-41d4-a716-446655440001",
+                "dashboard_name": "Sales Dashboard",
                 "status": "success",
                 "message": "Processing completed successfully",
                 "started_at": "2026-04-24T16:02:46+03:00",

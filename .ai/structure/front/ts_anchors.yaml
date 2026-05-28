@@ -12,6 +12,13 @@
   type: component
   value: LoadingFallback
   stable_hash: 33a8eb8c
+- id: db6976ee
+  file: C:/py_dev/mkobi/frontend/src/app/routes.tsx
+  symbol_path:
+    - RootRedirect
+  type: component
+  value: RootRedirect
+  stable_hash: db6976ee
 - id: 7077cf72
   file: C:/py_dev/mkobi/frontend/src/app/routes.tsx
   symbol_path:
