@@ -12,102 +12,89 @@ allowed-tools:
 ---
 
 <objective>
-Execute the full 9-phase multi-agent audit pipeline.
+Execute the full multi-agent audit pipeline.
 
-The orchestrator coordinates:
-- Phase 1-8: Backend, Frontend, Database, Security, Docker, Tests, Data Processing, Deployment/Config
-- Phase 9: Integration (cross-cutting, runs after all silo phases)
-
-For each phase: prepare context -> spawn executor -> spawn validator -> retry if needed -> clean rejected findings.
+Before loop prepare general context ->
+In a loop  spawn executor of each phase -> retry if needed 
+after loop -> spawn validator -> clean rejected findings.
 
 Final step: merge all validated findings into `.ai/audit/final-report.md`.
 </objective>
 
 <process>
-
 ## 1. Gather Base Layer Context (once)
-
-Read and summarize:
+---------------
+Read and summarize `{BASE_CONTEXT}`:
 - `.ai/structure/map.md` -- directory structure
 - `.ai/context/commands.md` -- verification commands
-- `docs/SPEC.md` -- project purpose and tech stack
-- `docs/README_DOCKER.md` -- Docker service paths
+- `C:\py_dev\mkobi\AGENTS.md`
+Get folder structure of documentation:
+- C:\py_dev\mkobi\docs
 
-Store as `{BASE_CONTEXT}`.
+**Do NOT read production code or documentation files.**
+------------
+{REPORT_TEMPLATE_PATH} : C:\py_dev\mkobi\.ai\audit\templates\audit-findings.md
 
-## 2. Execute Silo Phases 1-8 (in order)
+**Do NOT read**
 
-For each phase from 1 to 8:
+List file_paths as {TASK_FILES}:
+`C:\py_dev\mkobi\.kilo\commands\audit\phases` as 
 
-### 2.1 Read Phase Template
-Read `.kilo/commands/audit/phases/NN-audit-X.md` to get domain-specific file paths and checklist.
+**Do NOT read just list files**
 
-### 2.2 Prepare Phase-Specific Context
-Extract file paths from the template. Do NOT read file contents -- sub-agents read their own files.
+## 2. Loop through audit + validate phase 
 
-### 2.3 Spawn Executor Subagent
+### 2.1 Prepare phase 
+For each file from {TASK_FILES} get:
+ - file path as {TASK_PATH}
+ - {PHASE_NUMBER} and {PHASE_NAME} from file name as {PHASE_NUMBER}-audit-{PHASE_NAME}.md
+- {OUTPUT_PATH} as `C:\py_dev\mkobi\.ai\audit\audit\{PHASE_NUMBER}-{PHASE_NAME}\findings.md
+
+### 2.2  Launch executor 
+
+For each {PHASE_NUMBER} != 99 launch executor
 
 ```
 Task(
-  prompt="First, read .kilo/agents/audit-executor.md for your role and instructions.\n\n"
-        + "Execute audit phase using template: .kilo/commands/audit/phases/NN-audit-X.md\n"
+  prompt="First, read .kilo/agents/audit-executor.md for your role and instructions {TASK_PATH}.\n\n"
+        + "Execute audit phase using template: {REPORT_TEMPLATE_PATH} \n"
         + "Base Layer context: {BASE_CONTEXT}\n"
-        + "Phase-Specific file paths: [paths from phase template]\n"
-        + "Write findings to: .ai/audit/{phase-name}/findings.md",
-  subagent_type="general",
-  description="Execute audit phase NN -- {Phase Name}"
+        + "Write findings to: {OUTPUT_PATH}",
+  subagent_type="Audit-executor",
+  description="Execute audit phase {PHASE_NUMBER} - {PHASE_NAME}"
 )
 ```
 
-**Wait for executor to complete before proceeding to step 2.4.**
+### 2.3 Check file exist at {OUTPUT_PATH} and not empty.
+Relaunch agent if task not done.
 
-### 2.4 Spawn Validator Subagent
+### 2.3 Validate findings 
 
+Wait for executor to complete before proceeding 
 ```
 Task(
-  prompt="First, read .kilo/agents/validator.md for your role and instructions.\n\n"
-        + "Validate audit findings at: .ai/audit/{phase-name}/findings.md\n"
-        + "Check: all mandatory fields present, severity levels valid, classifications correct.",
-  subagent_type="general",
-  description="Validate {phase-name} findings"
+  prompt="First, read `.kilo/agents/validator.md` for your role and instructions `.kilo/commands/audit/phases/99-audit-validate.md` for your task \n\n"
+        + "Validate audit findings phase `{PHASE_NUMBER}-{PHASE_NAME}` at path: {OUTPUT_PATH}\n"
+         + "Base Layer context: {BASE_CONTEXT}\n",
+  subagent_type="Validator",
+  description="Validate audit findings phase `{PHASE_NUMBER}-{PHASE_NAME}`"
 )
 ```
 
-### 2.5 Handle Validation Result
 
-**If validation passes:** proceed to next phase.
+As of Phase {PHASE_NUMBER}+1 could launch executor in parallel 
+with Phase {PHASE_NUMBER} validation to reduce total latency.
+IMPORTANT: Switch to consecutive if network errors or task not done problems.
 
-**If validation rejects findings:**
-- Retry once: spawn executor again with adjusted scope based on validator feedback.
-- If retry also fails: escalate to user with structured failure report.
-- Clean rejected findings from the findings file.
+### 2.3 Check file exist at and not empty.
+`.ai/audit/99-validation/{PHASE_NUMBER}-{PHASE_NAME}-validated.md`
+Relaunch agent if task not done.
 
-### 2.6 Parallel Execution Overlap
+## 3. Merge Final Report
 
-Begin Phase N+1 executor in parallel with Phase N validation to reduce total latency.
+Use `.kilo/commands/audit/templates/audit-final-report.md` for merge strategy.
 
-## 3. Execute Phase 9 -- Integration (after all silos complete)
-
-Collect all 8 validated findings files as context. Spawn executor with:
-
-```
-Task(
-  prompt="First, read .kilo/agents/audit-executor.md for your role and instructions.\n\n"
-        + "Execute integration audit using template: .kilo/commands/audit/phases/09-audit-integration.md\n"
-        + "All silo findings as context: [paths to 8 validated findings files]\n"
-        + "Write findings to: .ai/audit/09-integration/findings.md",
-  subagent_type="general",
-  description="Execute audit phase 09 -- Integration"
-)
-```
-
-Spawn validator on integration findings.
-
-## 4. Merge Final Report
-
-Read `.kilo/commands/audit/templates/audit-final-report.md` for merge strategy.
-
-Merge all 9 validated findings files into `.ai/audit/final-report.md`.
+Merge all validated findings `.ai/audit/99-validation/**` into `.ai/audit/final-report.md`.
 
 </process>
 
@@ -116,7 +103,7 @@ Merge all 9 validated findings files into `.ai/audit/final-report.md`.
 ```
 AUDIT COMPLETE
 
-Phases completed: 9/9
+Phases completed: {N}/{N}
 Validated findings: {N} total
 Final report: .ai/audit/final-report.md
 

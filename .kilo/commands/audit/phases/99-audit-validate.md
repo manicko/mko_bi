@@ -1,5 +1,5 @@
 ---
-name: validate-audit-findings
+name: audit-validate
 description: Validate audit findings, dependency safety, rollout consistency, semantic target stability, and execution applicability without modifying source code
 agent: validator
 alwaysApply: false
@@ -33,9 +33,10 @@ Separate validated findings into:
 # Workflow
 
 ## Step 1 — Load Audit Findings
+IMPORTANT provided by user or orchestrator:
+ - {FINDINGS_PATH}, {PHASE_NUMBER}, {PHASE_NAME} 
+- IF not provided list all findings in `.ai\audit\**`use {PHASE_NUMBER} = next free number in output path and {PHASE_NAME} = TOTAL
 
-Study:
-- `C:\py_dev\mkobi\.ai\audit\**`
 
 Extract:
 - findings
@@ -48,8 +49,7 @@ Extract:
 
 ## Step 2 — Load Structural & Semantic Context
 
-Study:
-- `C:\py_dev\mkobi\.ai\structure\**`
+PROVIDED BY ORCHESTRATOR 
 
 Including:
 - dependency maps
@@ -66,6 +66,7 @@ Analyze:
 - integration points
 - coupling hotspots
 
+IF NOT PROVIDED, STUDY :`.ai/structure/**`
 ---
 
 ## Step 3 — Validate Findings
@@ -193,7 +194,8 @@ Reject execution if:
 ---
 ## Step 7 — Build Validated Findings Document
 
-New file: `C:\py_dev\mkobi\.ai\audit\validated\audit_validated_findings_<number>.md` with the report (next free number) 
+New file: `.ai/audit/99-validation/{PHASE_NUMBER}-{PHASE_NAME}-validated.md`
+IMPORTANT: if {PHASE_NUMBER}-{PHASE_NAME}-validated.md already exists use next fre {PHASE_NUMBER} to write new file
 
 Create a normalized validated findings document that becomes the single source of truth for downstream planning and task generation.
 

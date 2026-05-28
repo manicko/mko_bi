@@ -11,7 +11,7 @@ alwaysApply: false
 **Status:** {pending|in-progress|complete}
 **Validated:** {yes|no}
 
-**IMPORTANT:** Base layer context is auto-included by orchestrator:
+**IMPORTANT:** Base layer context is auto-included by orchestrator  (SKIP if you already have it):
 - Project: mkobi BI Dashboard (FastAPI + React + PostgreSQL)
 - Structure: `.ai/structure/map.md`
 - Commands: `.ai/context/commands.md`
