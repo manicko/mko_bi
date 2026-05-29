@@ -24,16 +24,22 @@ Read `.ai/context/commands.md` for verification commands.
 Read `AGENTS.md` for project guidelines.
 List documentation structure from `docs/` folder.
 
-**Do NOT read production code, documentation content, or phase task files.**
+**Do NOT read production code, documentation content.**
 
 Set variables:
 - `{BASE_CONTEXT}` = summary of the above files
 - `{REPORT_TEMPLATE_PATH}` = `.ai/audit/templates/audit-findings.md`
 - `{TASK_FILES}` = list of files in `.kilo/commands/audit/phases/`
+- {AUDIT-EXECUTOR} - model from `C:\py_dev\mkobi\.ai\models\lookup_table.md`
+- {VALIDATOR} -  model from `C:\py_dev\mkobi\.ai\models\lookup_table.md`
 
-## 2. Execute Phase Loop
+## 2. Execute Phase Loop 
 
-For each phase file in `{TASK_FILES}` (sorted by phase number):
+For each phase file in `{TASK_FILES}` (sorted by phase number) follow steps 2.1-2.6:
+
+IMPORTANT: do not read task files or findings templates just pass file paths to agent to read them 
+
+<phase_loop>
 
 ### 2.1 Extract Phase Metadata
 - `{TASK_PATH}` = full path to phase file
@@ -46,11 +52,17 @@ Task(
   prompt="Read .kilo/agents/audit-executor.md for your role.\n"
        + "Read and execute phase task: {TASK_PATH}\n"
        + "Report template: {REPORT_TEMPLATE_PATH}\n"
-       + "Write findings to: {OUTPUT_PATH}",
-  subagent_type="audit-executor",
+       + "Write findings to: {OUTPUT_PATH}\n"
+       + "Base context: {BASE_CONTEXT}\n"
+       + "problems_only = TRUE\n",
+
+  agent="audit-executor",
+  mode = "subagent",
+  model = "{AUDIT-EXECUTOR}",
   description="Execute audit phase {PHASE_NUMBER} - {PHASE_NAME}"
 )
 ```
+
 
 ### 2.3 Verify Executor Output
 Check that `{OUTPUT_PATH}` exists and is not empty.
@@ -62,9 +74,14 @@ Task(
   prompt="Read .kilo/agents/validator.md for your role.\n"
        + "Read validation task: .kilo/commands/audit/phases/99-audit-validate.md\n"
        + "Validate findings at: {OUTPUT_PATH}\n"
-       + "Base context: {BASE_CONTEXT}",
-  subagent_type="validator",
-  description="Validate phase {PHASE_NUMBER} - {PHASE_NAME}"
+       + "Write validation report to: {PHASE_NUMBER}-{PHASE_NAME}-validated-findings.md\n"
+       + "Base context: {BASE_CONTEXT}\n"
+       + "problems_only = TRUE\n",
+
+  agent = "validator",
+  mode = "subagent",
+  model = "{VALIDATOR}",
+  description="Validate phase {PHASE_NUMBER} - {PHASE_NAME}",
 )
 ```
 
@@ -77,6 +94,8 @@ After Phase N completes executor and validator, Phase N+1 executor may start in 
 This reduces total pipeline latency.
 
 If network errors or task completion problems occur: switch to consecutive execution.
+
+</phase_loop>
 
 ## 3. Merge Final Report
 
@@ -92,7 +111,7 @@ AUDIT COMPLETE
 
 Phases completed: {N}/{N}
 Validated findings: {N} total
-Final report: .ai/audit/final-report.md
+Final report: .ai/audit/validated/final-report.md
 
 By severity:
 - CRITICAL: {n}
