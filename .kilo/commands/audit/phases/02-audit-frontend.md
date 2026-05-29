@@ -1,235 +1,140 @@
 ﻿---
 name: 02-frontend
-description: Frontend architecture audit covering Feature-Sliced Design compliance, React SPA correctness, type safety, API integration, code quality
+description: Frontend architecture audit covering component isolation, state management, type safety, security boundaries, and runtime behavior
 agent: audit-executor
 alwaysApply: false
 ---
 
-# Phase 02 Audit â€” Frontend Architecture
+# Phase 02 Audit — Frontend Architecture
 
 **Executor:** audit-executor
 **Status:** {pending|in-progress|complete}
 **Validated:** {yes|no}
 
-**IMPORTANT:** Base layer context is auto-included by orchestrator  (SKIP if you already have it):
-- Project: mkobi BI Dashboard (FastAPI + React + PostgreSQL)
-- Structure: `.ai/structure/map.md`
-- Commands: `.ai/context/commands.md`
-- SPEC: `docs/SPEC.md`
+---
+
+## Discovery Stage
+
+Before performing audit checks, discover the project's architectural reality:
+
+1. **Architecture Discovery**
+   - Identify the primary architectural pattern (Feature-Sliced Design, modular, component-based)
+   - Map layer boundaries: presentation → business logic → data access
+   - Identify feature modules and their responsibilities
+   - Locate trust boundaries (auth zones, admin-only areas)
+
+2. **Component Structure Discovery**
+   - UI layer: presentation components
+   - State layer: data fetching and local state management
+   - API layer: external communication
+   - Shared/utilities: reusable code
+
+3. **Critical Flows Discovery**
+   - Authentication flow (token acquisition, storage, refresh)
+   - Data loading and rendering flow
+   - User interaction → state → API → render cycle
+   - Error handling and user feedback paths
+
+4. **Runtime Model**
+   - Client-side routing structure
+   - State management approach
+   - Async operation handling
+   - Memory/resource lifecycle
 
 ---
 
 ## Audit Dimensions
 
-### 1. Frontend Structure (FSD)
+### 1. Component Architecture Invariants
 
-Verify Feature-Sliced Design compliance:
+Verify clean component boundaries and separation of concerns:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| `app/` layer: providers.tsx (QueryClient, Router, Theme), routes.tsx (all routes) | | |
-| `features/` layer: auth/, dashboards/, upload/, users/, admin/ | | |
-| `shared/` layer: api/, components/, types/ | | |
-| Feature structure: **ui/** (React components, UI logic only) | | |
-| Feature structure: **api/** (API calls, axios, TanStack Query) | | |
-| Feature structure: **model/** (State, hooks like useAuth, useDashboards) | | |
-| Feature structure: **types/** (TypeScript types) | | |
-| No business logic in components | | |
-| No duplicated API calls | | |
-| No hardcoded URLs (use axiosInstance) | | |
-| No mixed responsibilities between layers | | |
-
-**Files to Audit:**
-- `frontend/src/app/*.tsx`
-- `frontend/src/features/auth/**/*`
-- `frontend/src/features/dashboards/**/*`
-- `frontend/src/features/upload/**/*`
-- `frontend/src/features/users/**/*`
-- `frontend/src/features/admin/**/*`
-- `frontend/src/shared/api/*.ts`
-- `frontend/src/shared/components/*.tsx`
-- `frontend/src/shared/types/*.ts`
+| UI components contain rendering logic only | | |
+| Business logic is extracted from components | | |
+| State management is centralized or colocated with features | | |
+| No duplicated API calls or data fetching patterns | | |
+| No hardcoded URLs or endpoints in components | | |
+| Layer boundaries preserved (no cross-layer leakage) | | |
 
 ---
 
-### 2. Frontend Routes
+### 2. State Consistency
 
-Verify all routes implemented with correct access control:
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| `/login` â†’ LoginForm (Public) | | |
-| `/register` â†’ RegisterForm (Public) | | |
-| `/dashboards` â†’ DashboardList (Authenticated) | | |
-| `/dashboard/:id` â†’ DashboardView (Authenticated) | | |
-| `/dashboard/:id/upload` â†’ UploadPage (Admin, Editor) | | |
-| `/admin` â†’ AdminPanel (Admin only) | | |
-| `/profile` â†’ UserProfile (Authenticated) | | |
-| `/profile/change-password` â†’ ChangePasswordPage (Authenticated) | | |
-| `*` â†’ NotFound (Public) | | |
-| ProtectedRoute works correctly | | |
-| RoleBasedAccess works correctly | | |
-
----
-
-### 3. Type Safety
-
-Verify TypeScript strict mode and Zod schemas:
+Verify predictable state management:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| TypeScript strict mode used (NO `any`) | | |
-| Types for API responses (AuthResponse, DashboardSummary, etc.) | | |
-| Types for components (props interfaces) | | |
-| Zod schemas for forms (React Hook Form) | | |
-| `tsc --noEmit` passes without errors | | |
-
----
-
-### 4. API Integration
-
-Verify axiosInstance, JWT interceptors, and TanStack Query:
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| axiosInstance used (NOT direct axios) | | |
-| base URL `/api/v1` configured | | |
-| JWT added via request interceptor | | |
-| Token expiration checked before attaching | | |
-| Response interceptor handles 401 (removes token, toast notification, redirect to `/login`) | | |
-| TanStack Query for server state | | |
-| Polling for long operations (processing status) | | |
-| react-hot-toast for notifications | | |
-
----
-
-### 5. UI Components
-
-Verify all pages from spec implemented:
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| Login Page: fields email/password, email validation, login button, registration link, error display | | |
-| Registration Page: email field (Zod validation), domain blocklist check, success message | | |
-| Dashboard List Page: list of dashboards, cards with name/description/link | | |
-| Dashboard View Page: title, Filters Panel (dynamic), Charts Grid (Plotly.js React), upload button (editor+ only) | | |
-| Upload Page: mode toggle (Overwrite/Append), dropzone (react-dropzone), progress bar | | |
-| Admin Panel: User Management, Registration Requests, Dashboard Management, Log Viewer | | |
-| User Profile Page: email (read-only), role (read-only), display_name, Delete Account button (non-admin), Change Password link | | |
-
----
-
-### 6. Chart Rendering
-
-Verify Plotly.js React charts config-driven:
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| BarChart (Plotly.js React) | | |
-| LineChart (Plotly.js React) | | |
-| PieChart (Plotly.js React) | | |
-| TableChart | | |
-| PlotlyChart wrapper | | |
-| Supported types: bar, line, pie, table | | |
-| Config-driven rendering (from `graph.config` JSONB) | | |
-| Invalid config handling | | |
-| Missing data handling | | |
-
----
-
-### 7. State Management
-
-Verify TanStack Query and React Hook Form + Zod:
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| TanStack Query for server state (NOT Redux/Zustand) | | |
-| React Hook Form for forms | | |
-| Zod for form validation | | |
-| Local state via `useState`/`useReducer` where appropriate | | |
+| Server state managed through query library (TanStack Query or equivalent) | | |
+| Form state managed through form library with validation | | |
+| Local state changes are predictable and traceable | | |
 | No excessive global state | | |
+| State updates trigger re-renders correctly | | |
+| No stale closures or race conditions in state access | | |
 
 ---
 
-### 8. Frontend Security
+### 3. Rendering Correctness
 
-Verify JWT storage and access control:
+Verify UI reliability and performance:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| JWT stored in memory (production) or sessionStorage (development) â€” NOT localStorage | | |
-| Axios interceptors add token correctly | | |
-| ProtectedRoute component works | | |
-| RoleBasedAccess component works | | |
-| Email validation (Zod regex + blacklist domains) | | |
-| UI-level role checks are for UX only (backend enforces authorization) | | |
+| Chart rendering handles missing/null data gracefully | | |
+| Config-driven rendering (data shapes define UI) | | |
+| Invalid configurations produce safe fallback UI | | |
+| No rendering crashes from malformed data | | |
+| Loading states for async operations | | |
+| Error states for failed operations | | |
 
 ---
 
-## Findings
+### 4. Client Security Boundaries
 
-### FE-{NN}: {Title}
+Verify frontend security properties:
 
-| Field | Value |
-|-------|-------|
-| **ID** | FE-{NN} |
-| **Severity** | {severity} |
-| **Type** | {type} |
-| **Affected Modules** | {modules} |
-| **Classification** | {mandatory|advisory} |
-
-**Description:** {description}
-
-**Evidence:** {evidence}
-
-**Recommendation:** {recommendation}
+| Check | Status | Evidence |
+|-------|--------|----------|
+| Tokens stored securely (memory or httpOnly, not localStorage) | | |
+| HTTP interceptors attach credentials to requests | | |
+| Protected routes block unauthorized access | | |
+| Role-based UI elements are UX-only (backend enforces) | | |
+| Input validation on client matches backend requirements | | |
+| No sensitive data logged to browser console | | |
 
 ---
 
-## Summary
+### 5. Type Safety & Validation
 
-| Severity | Count |
-|----------|-------|
-| CRITICAL | 0 |
-| HIGH | 0 |
-| MEDIUM | 0 |
-| LOW | 0 |
+Verify frontend type correctness:
 
-## Mandatory Fixes
-
-{List all findings classified as mandatory}
-
-## Advisory Recommendations
-
-{List all findings classified as advisory}
-
-## Doc Updates Needed
-
-{List all findings classified as DOC-UPDATE type}
+| Check | Status | Evidence |
+|-------|--------|----------|
+| TypeScript strict mode enabled (no `any`) | | |
+| Types defined for all API responses | | |
+| Types defined for component props | | |
+| Form schemas validate input correctly | | |
+| No type mismatches between API and frontend | | |
 
 ---
 
-## Template Field Reference
+### 6. Accessibility
 
-### Mandatory Fields Per Finding
+Verify inclusive UI design:
 
-| Field | Type | Values/Format |
-|-------|------|---------------|
-| `id` | string | Unique identifier with `FE-` prefix (e.g., `FE-001`, `FE-002`) |
-| `title` | string | Human-readable one-line summary |
-| `type` | enum | `SPEC-DEVIATION`, `BEST-PRACTICE`, `DOC-UPDATE`, `RUNTIME-ERROR` |
-| `severity` | enum | `CRITICAL`, `HIGH`, `MEDIUM`, `LOW` |
-| `description` | string | Detailed problem description with context |
-| `evidence` | string | File paths, line references, log excerpts, code snippets |
-| `affected_modules` | list | Affected module paths (e.g., `frontend/src/features/auth/`) |
-| `recommendation` | string | Concrete fix direction: what to change and why |
-| `classification` | enum | `mandatory` (security, data loss, correctness) or `advisory` (improvement, refactoring) |
-
-### Classification Guide
-
-- **mandatory**: Security vulnerabilities, data loss risks, correctness issues, spec deviations requiring immediate fix
-- **advisory**: Code quality improvements, refactoring suggestions, best practice enhancements
+| Check | Status | Evidence |
+|-------|--------|----------|
+| Interactive elements have proper ARIA attributes | | |
+| Keyboard navigation supported | | |
+| Color contrast meets WCAG standards | | |
+| Form fields have associated labels | | |
+| Error messages accessible to screen readers | | |
 
 ---
 
-**Report Format:** See `.ai/audit/templates/audit-findings.md` for full template.
+## Report Output
+
+Write findings to: `.ai/audit/02-frontend/findings.md` using template `.ai/audit/templates/audit-findings.md`.
+
+Use prefix `FE-` for finding IDs.

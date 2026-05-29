@@ -1,209 +1,120 @@
 ﻿---
 name: 07-data-processing
-description: Data processing audit covering Polars pipeline, loaders, transformations, aggregations, formula parser, storage, task queue, background worker, resource cleanup
+description: Data processing audit covering pipeline correctness, resource management, and data integrity
 agent: audit-executor
 alwaysApply: false
 ---
 
-# Phase 07 Audit â€” Data Processing
+# Phase 07 Audit — Data Processing Pipeline
 
 **Executor:** audit-executor
 **Status:** {pending|in-progress|complete}
 **Validated:** {yes|no}
 
-**IMPORTANT:** Base layer context is auto-included by orchestrator  (SKIP if you already have it):
-- Project: mkobi BI Dashboard (FastAPI + React + PostgreSQL)
-- Structure: `.ai/structure/map.md`
-- Commands: `.ai/context/commands.md`
-- SPEC: `docs/SPEC.md`
+---
+
+## Discovery Stage
+
+Before performing audit checks, discover the project's data processing architecture:
+
+1. **Pipeline Discovery**
+   - Identify data ingestion entry points (file upload, API, message queues)
+   - Map processing stages (parse → transform → aggregate → store)
+   - Discover configuration-driven vs hardcoded processing
+   - Locate batch vs streaming processing patterns
+
+2. **Resource Discovery**
+   - Identify temporary file storage locations
+   - Map resource cleanup mechanisms
+   - Discover memory management approach
+   - Find transaction boundaries in processing
+
+3. **Data Flow Discovery**
+   - Identify source data formats and validation
+   - Map transformation rules and business logic
+   - Discover aggregation patterns and output formats
+   - Find error handling and recovery points
+
+4. **Background Processing Discovery**
+   - Identify task queue implementation
+   - Map task lifecycle and status tracking
+   - Discover worker isolation and scaling
+   - Find task failure and retry handling
 
 ---
 
-## Phase-Specific File Paths
+## Audit Dimensions
 
-- `src/mkobi/data/loaders/loader.py`
-- `src/mkobi/data/loaders/validator.py`
-- `src/mkobi/data/processing/transformations.py`
-- `src/mkobi/data/processing/registry.py`
-- `src/mkobi/data/storage/manager.py`
-- `src/mkobi/core/task_queue.py`
-- `src/mkobi/workers/data_worker.py`
-- `src/mkobi/services/file_processing.py`
+### 1. Pipeline Correctness
 
----
-
-## Audit Checklist
-
-### 7.1 Data Loaders
-
-Verify `src/mkobi/data/loaders/loader.py`:
+Verify data flows correctly through the pipeline:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| Polars used (`import polars as pl`) | | |
-| pandas NOT used (`import pandas as pd` forbidden) | | |
-| CSV reading (`read_csv`) | | |
-| CSV.gz reading (gzip decompression) | | |
-| Schema validation (`validator.py`) | | |
-| Error handling (corrupted CSV, invalid schema, missing columns, empty files) | | |
+| Input validation at pipeline entry | | |
+| Data parsed into structured format | | |
+| Transformations match configuration | | |
+| Aggregations produce deterministic results | | |
+| Output stored atomically | | |
+| Pipeline fails fast on invalid data | | |
 
 ---
 
-### 7.2 Transformations
+### 2. Resource Management
 
-Verify `src/mkobi/data/processing/transformations.py`:
-
-#### Aggregations
+Verify resources are cleaned up:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| GroupBy (Polars `group_by`) | | |
-| YoY with modes: `absolute`, `percent` | | |
-| Shares (ratio computations) | | |
-| Custom metrics (configurable via formula parser) | | |
-
-#### Formula Parser
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| Supports: `revenue - cost`, `profit / revenue * 100` | | |
-| Operators: `+`, `-`, `*`, `/` | | |
-| Limitations documented (no parentheses, no numeric literals, no special chars in column names) | | |
-| Invalid formulas produce clear errors with position and nature | | |
-
-#### Pipeline Correctness
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| Parsing (CSV â†’ Polars DataFrame) | | |
-| Transformations (per dashboard config) | | |
-| Aggregations (grouping, metrics) | | |
-| Full recalculation on each upload (not incremental) | | |
+| Temporary files cleaned up on success | | |
+| Temporary files cleaned up on failure | | |
+| Memory usage bounded for large inputs | | |
+| Database connections properly managed | | |
+| No resource leaks in async context | | |
 
 ---
 
-### 7.3 Storage
+### 3. Atomicity & Consistency
 
-Verify `src/mkobi/data/storage/manager.py`:
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| Save to PostgreSQL (`aggregated_data` table) | | |
-| JSONB usage for `dims` and `metrics` | | |
-| Correct serialization | | |
-| DB transaction handling (atomic processing, rollback on failure) | | |
-| `dims` keys sorted recursively before writes (UPSERT determinism) | | |
-| Unique index on `(dashboard_id, graph_id, dims::text)` for conflict detection | | |
-
----
-
-### 7.4 Resource Handling
+Verify data integrity during processing:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| Temp files cleanup via `platformdirs` (success and failure) | | |
-| DB transaction handling (commit/rollback) | | |
-| Memory-efficient processing (Polars lazy evaluation where applicable) | | |
-| Errors handled and logged | | |
+| Processing runs in database transaction | | |
+| Changes rolled back on failure | | |
+| Partial results never visible on error | | |
+| UPSERT operations are idempotent | | |
 
 ---
 
-### 7.5 Task Queue & Background Processing
+### 4. Configuration-Driven Processing
 
-Verify `src/mkobi/core/task_queue.py`:
+Verify flexibility and maintainability:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| `TaskQueue` class with `asyncio.Queue` | | |
-| `default_queue` singleton | | |
-| `enqueue_job()` compatibility wrapper | | |
-| `get_task_queue()` returns singleton | | |
-| Task lifecycle: `STARTED` â†’ `PROCESSING` â†’ `SUCCESS`/`FAILED` | | |
-| Status/result/error tracking in memory dicts | | |
+| Processing rules configurable | | |
+| Invalid configurations handled gracefully | | |
+| Formula/metric definitions validated | | |
+| Processing params not hardcoded | | |
 
-Verify `src/mkobi/workers/data_worker.py`:
+---
+
+### 5. Background Task Safety
+
+Verify async/background processing is robust:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| `process_csv_background()` â€” async entry point | | |
-| `process_csv_background_sync()` â€” sync wrapper for RQ compatibility | | |
-| Full pipeline: parse â†’ transform â†’ aggregate â†’ save â†’ cleanup | | |
-| Processing log updates at each stage | | |
-
-Verify migration path in `docs/03-processing/task-queue.py`:
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| `process_csv_background_sync` prepared for RQ | | |
-| Dual-mode operation support (`USE_REDIS_QUEUE` env var) | | |
-| Rollback plan documented | | |
+| Task state transitions complete (STARTED → PROCESSING → SUCCESS/FAILED) | | |
+| Task status/results retrievable | | |
+| Long-running tasks don't block event loop | | |
+| Task failures logged with context | | |
 
 ---
 
-## Findings
+## Report Output
 
-### DP-{NN}: {Title}
+Write findings to: `.ai/audit/07-data-processing/findings.md` using template `.ai/audit/templates/audit-findings.md`.
 
-| Field | Value |
-|-------|-------|
-| **ID** | DP-{NN} |
-| **Severity** | {severity} |
-| **Type** | {type} |
-| **Affected Modules** | {modules} |
-| **Classification** | {mandatory|advisory} |
-
-**Description:** {description}
-
-**Evidence:** {evidence}
-
-**Recommendation:** {recommendation}
-
----
-
-## Summary
-
-| Severity | Count |
-|----------|-------|
-| CRITICAL | 0 |
-| HIGH | 0 |
-| MEDIUM | 0 |
-| LOW | 0 |
-
-## Mandatory Fixes
-
-{List all findings classified as mandatory}
-
-## Advisory Recommendations
-
-{List all findings classified as advisory}
-
-## Doc Updates Needed
-
-{List all findings classified as DOC-UPDATE type}
-
----
-
-## Template Field Reference
-
-### Mandatory Fields Per Finding
-
-| Field | Type | Values/Format |
-|-------|------|---------------|
-| `id` | string | Unique identifier with `DP-` prefix (e.g., `DP-001`, `DP-002`) |
-| `title` | string | Human-readable one-line summary |
-| `type` | enum | `SPEC-DEVIATION`, `BEST-PRACTICE`, `DOC-UPDATE`, `RUNTIME-ERROR` |
-| `severity` | enum | `CRITICAL`, `HIGH`, `MEDIUM`, `LOW` |
-| `description` | string | Detailed problem description with context |
-| `evidence` | string | File paths, line references, log excerpts, code snippets |
-| `affected_modules` | list | Affected module paths |
-| `recommendation` | string | Concrete fix direction: what to change and why |
-| `classification` | enum | `mandatory` (security, data loss, correctness) or `advisory` (improvement, refactoring) |
-
-### Classification Guide
-
-- **mandatory**: Security vulnerabilities, data loss risks, correctness issues, spec deviations requiring immediate fix
-- **advisory**: Code quality improvements, refactoring suggestions, best practice enhancements
-
----
-
-**Report Format:** See `.ai/audit/templates/audit-findings.md` for full template.
+Use prefix `DP-` for finding IDs.

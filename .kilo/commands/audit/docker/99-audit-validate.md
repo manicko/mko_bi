@@ -1,6 +1,6 @@
 ---
 name: audit-validate
-description: Validate audit findings for safety, consistency, and applicability without code changes
+description: Validate audit findings, dependency safety, rollout consistency, semantic target stability, and execution applicability without modifying source code
 agent: validator
 alwaysApply: false
 ---
@@ -9,14 +9,12 @@ alwaysApply: false
 
 ## Objective
 
-Validate audit findings for architectural safety and consistency:
-
+Validate audit findings:
 - `[SPEC-DEVIATION]` — verify the deviation is real and determine whether code or docs should change
 - `[BEST-PRACTICE]` — verify feasibility and ROI; reject if overengineered
 - `[DOC-UPDATE]` — verify the proposed doc change is accurate
 
 Separate validated findings into:
-
 - **Mandatory fixes** — security, data loss, correctness issues
 - **Advisory recommendations** — improvements worth doing but not blocking
 
@@ -32,20 +30,13 @@ Separate validated findings into:
 
 ---
 
-## Discovery Stage
+# Workflow
 
-Before validating findings, understand the project context:
+## Step 1 — Load Audit Findings
+IMPORTANT provided by user or orchestrator:
+ - {FINDINGS_PATH}, {PHASE_NUMBER}, {PHASE_NAME} 
+- IF not provided list all findings in `.ai\audit\**`use {PHASE_NUMBER} = next free number in output path and {PHASE_NAME} = TOTAL
 
-1. Load all validated findings from previous audit phases
-2. Identify dependency relationships between findings
-3. Assess architectural stability of affected modules
-4. Verify findings remain applicable to current codebase state
-
----
-
-## Workflow
-
-### Step 1 — Load Audit Findings
 
 Extract:
 - findings
@@ -56,7 +47,17 @@ Extract:
 
 ---
 
-### Step 2 — Analyze Cross-Finding Dependencies
+## Step 2 — Load Structural & Semantic Context
+
+PROVIDED BY ORCHESTRATOR 
+
+Including:
+- dependency maps
+- semantic anchors
+- symbol graphs
+- module relationships
+- execution order files
+- existing tasks
 
 Analyze:
 - architectural boundaries
@@ -65,27 +66,31 @@ Analyze:
 - integration points
 - coupling hotspots
 
+IF NOT PROVIDED, STUDY :`.ai/structure/**`
 ---
 
-### Step 3 — Validate Findings
+## Step 3 — Validate Findings
 
 Validate:
-- relevance to current architecture
+- relevance
 - technical correctness
+- implementation status
 - architectural consistency
 - operational value
+- maintenance impact
 - current applicability
+- whether the fix target is correct (code vs docs)
 
 Mark findings as invalid if:
 - already implemented
-- stale due to architecture changes
-- duplicate of other findings
+- stale
+- duplicate
 - low ROI
 - architecture-breaking
 - operationally unsafe
 - overly complex
 - conflicting with current direction
-- the code choice is better than proposed (reclassify as DOC-UPDATE)
+- the code choice is actually better than the doc (flip to DOC-UPDATE)
 
 For `[SPEC-DEVIATION]` findings:
 - Determine: should code change or docs change?
@@ -94,7 +99,7 @@ For `[SPEC-DEVIATION]` findings:
 
 For `[BEST-PRACTICE]` findings:
 - Verify the recommendation is not overengineered
-- Verify ROI is positive for project scale
+- Verify ROI is positive for project size
 - Reject if it adds complexity without clear maintenance benefit
 
 For `[DOC-UPDATE]` findings:
@@ -108,19 +113,25 @@ Merge:
 
 ---
 
-### Step 4 — Assess Rollout Safety
+## Step 4 — Validate Dependency & Rollout Safety
 
 Validate:
 - dependency graph correctness
 - rollout sequencing
 - task isolation
-- semantic targeting stability
+- dependency integrity
+- topological ordering
+- migration safety
+- rollback feasibility
+- safe parallel execution
 
 Detect:
 - circular dependencies
 - hidden dependency chains
+- overlapping tasks
 - unsafe rollout ordering
-- fragile insertion points
+- semantic collisions
+- broad coupled changes
 
 Reject rollout plans that:
 - introduce excessive coupling
@@ -130,9 +141,61 @@ Reject rollout plans that:
 
 ---
 
-### Step 5 — Build Validated Findings Document
+## Step 5 — Validate Semantic Targeting Stability
+
+Validate:
+- semantic anchor existence
+- anchor uniqueness
+- symbol stability
+- insertion point safety
+- target survivability
+- semantic applicability
+
+Reject:
+- line-based assumptions
+- unstable anchors
+- ambiguous targets
+- fragile insertion zones
+
+Prefer anchors:
+- function calls
+- decorators
+- route definitions
+- lifecycle hooks
+- validation boundaries
+- transaction boundaries
+- return statements
+
+---
+
+## Step 6 — Validate Execution Applicability
+
+Validate:
+- task applicability after previous tasks
+- dependency drift
+- semantic drift
+- target validity
+- execution ordering consistency
+- rollout synchronization
+
+Detect:
+- stale tasks
+- invalidated assumptions
+- dependency desynchronization
+- conflicting modifications
+- architecture drift
+
+Reject execution if:
+- semantic targets became unstable
+- dependency graph changed unsafely
+- rollout order became invalid
+- task assumptions no longer hold
+
+---
+## Step 7 — Build Validated Findings Document
 
 New file: `.ai/audit/99-validation/{PHASE_NUMBER}-{PHASE_NAME}-validated.md`
+IMPORTANT: if {PHASE_NUMBER}-{PHASE_NAME}-validated.md already exists use next fre {PHASE_NUMBER} to write new file
 
 Create a normalized validated findings document that becomes the single source of truth for downstream planning and task generation.
 
@@ -141,6 +204,7 @@ The document must:
 - preserve domain grouping
 - preserve severity levels
 - preserve architectural context
+- preserve dependency context
 - preserve affected modules and symbols
 
 The document must exclude:
@@ -159,13 +223,38 @@ For every validated finding include:
 - impact
 - root cause
 - affected modules
+- affected symbols
 - dependency notes
 - rollout considerations
+- validation notes
 - classification: **mandatory** or **advisory**
+
+Separate sections in the output:
+1. **Mandatory fixes** — must be addressed (security, data loss, correctness)
+2. **Advisory recommendations** — recommended improvements (best practices, doc updates)
+3. **Doc updates needed** — documents that should be revised to reflect code reality
+
+Merge:
+- duplicated findings
+- overlapping root causes
+- semantically equivalent recommendations
+
+Normalize:
+- terminology
+- severity levels
+- architectural naming
+- dependency references
+- module references
+
+The validated findings document becomes:
+- canonical planning input
+- source of truth for rollout planning
+- source of truth for semantic task generation
 
 ---
 
 # Expected Output
+
 
 Result must include:
 - validated findings
@@ -173,10 +262,15 @@ Result must include:
 - merged findings
 - dependency validation results
 - rollout safety analysis
+- semantic stability analysis
+- execution applicability analysis
 - architectural consistency warnings
+- unsafe execution warnings
 
 Result must NOT include:
 - code changes
 - implementation code
 - architecture redesign
 - speculative refactors
+
+

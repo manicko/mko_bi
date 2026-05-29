@@ -1,290 +1,154 @@
 ﻿---
 name: 04-security
-description: Security audit covering authentication, access control, JWT, password security, upload safety, SQL safety, secrets/config, rate limiting, email domain blocklist, StrEnum enforcement
+description: Security audit covering authentication, authorization, credential handling, input validation, and trust boundaries
 agent: audit-executor
 alwaysApply: false
 ---
 
-# Phase 04 Audit â€” Security
+# Phase 04 Audit — Security
 
 **Executor:** audit-executor
 **Status:** {pending|in-progress|complete}
 **Validated:** {yes|no}
 
-**IMPORTANT:** Base layer context is auto-included by orchestrator  (SKIP if you already have it):
-- Project: mkobi BI Dashboard (FastAPI + React + PostgreSQL)
-- Structure: `.ai/structure/map.md`
-- Commands: `.ai/context/commands.md`
-- SPEC: `docs/SPEC.md`
+---
+
+## Discovery Stage
+
+Before performing audit checks, discover the project's security architecture:
+
+1. **Trust Boundary Discovery**
+   - Identify entry points (HTTP endpoints, file upload, message queues)
+   - Map authentication mechanism(s)
+   - Discover authorization model (RBAC, ABAC, or custom)
+   - Locate sensitive data storage and transmission paths
+
+2. **Credential Discovery**
+   - Identify secret storage mechanism
+   - Map credential injection paths (env vars, secret files, config)
+   - Discover password/session/token handling
+   - Find encryption/cryptography usage
+
+3. **Input Validation Discovery**
+   - Identify validation entry points
+   - Map validation to trust boundaries
+   - Discover sanitization patterns
+   - Find file upload processing flows
+
+4. **Runtime Security Model**
+   - Rate limiting and abuse prevention
+   - Error handling for security events
+   - Audit logging for security-relevant actions
+   - Security headers and CORS configuration
 
 ---
 
 ## Audit Dimensions
 
-### 1. Access Control
+### 1. Authentication Invariants
 
-Verify `src/mkobi/core/permissions.py`:
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| `dashboard_access` checked on every dashboard-related request | | |
-| Editor/viewer/admin restrictions enforced | | |
-| Direct object access vulnerabilities prevented | | |
-| Admin bypass: admins have full access without explicit `dashboard_access` entries | | |
-| 403/404 dual-signal: 404 for not-found, 403 for exists-but-no-access | | |
-
-### 2. User Roles (StrEnum)
-
-Verify `UserRole` StrEnum usage:
-
-```python
-class UserRole(StrEnum):
-    ADMIN = "admin"
-    EDITOR = "editor"
-    VIEWER = "viewer"
-```
+Verify identity verification is robust:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| UserRole StrEnum used (NOT string literals) | | |
-| All role checks use enum values | | |
+| Authentication required on protected endpoints | | |
+| Token validation at every trust boundary | | |
+| Token expiration enforced | | |
+| Invalid/missing tokens return 401 Unauthorized | | |
+| Credentials never stored in plaintext | | |
+| Credential comparison uses constant-time algorithm | | |
+| Authentication state managed securely | | |
 
-### 3. Dashboard Permissions (StrEnum)
+---
 
-Verify `DashboardPermission` StrEnum:
+### 2. Authorization Invariants
 
-```python
-class DashboardPermission(StrEnum):
-    VIEW = "view"
-    EDIT = "edit"
-    ADMIN = "admin"
-```
+Verify access control is correctly enforced:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| DashboardPermission StrEnum used | | |
-| Permission checks use enum values | | |
+| Authorization checked on every protected resource | | |
+| Role-based restrictions enforced | | |
+| Direct object access prevented (no IDOR) | | |
+| Admin privileges follow least-privilege principle | | |
+| Existence vs access distinction (404 vs 403) | | |
+| Authorization decisions centralized | | |
 
 ---
 
-### 4. JWT Security
+### 3. Credential & Secret Management
 
-Verify `src/mkobi/core/security.py`:
+Verify secrets are handled securely:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| Token expiration validation | | |
-| Invalid token handling (401 Unauthorized) | | |
-| Missing token handling (401 Unauthorized) | | |
-| Secret key stored in env (JWT__SECRET_KEY) | | |
-| Algorithm explicitly set (NOT default) | | |
-| Payload contains: user_id, email, role | | |
-
-**Files to Audit:**
-- `src/mkobi/core/security.py`
-- `src/mkobi/api/deps.py`
+| No hardcoded secrets in source code | | |
+| Secrets derived from environment variables | | |
+| Secret injection supports file-based secrets (e.g., _FILE suffix) | | |
+| Production refuses defaults or test credentials | | |
+| JWT signing key is cryptographically strong | | |
+| Algorithm explicitly configured (not default) | | |
 
 ---
 
-### 5. Password Security
+### 4. Input Validation & Sanitization
 
-Verify password handling:
+Verify boundary defenses:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| bcrypt used (NOT md5, SHA, plaintext) | | |
-| Password hash stored in DB (NOT plaintext) | | |
-| No password logging | | |
-| Minimum 8 characters password (frontend Zod schema) | | |
-| Temp password generated via `secrets.token_urlsafe(16)` on registration approval | | |
-
-**Files to Audit:**
-- `src/mkobi/api/routes/auth.py`
-- `src/mkobi/api/routes/admin.py`
+| All external input validated before processing | | |
+| File uploads validated (MIME type, size, path traversal) | | |
+| SQL injection prevented (parameterized queries) | | |
+| Invalid input produces clear error messages | | |
+| Error messages don't leak sensitive information | | |
+| Validation happens at trust boundary | | |
 
 ---
 
-### 6. Upload Security
+### 5. Rate Limiting & Abuse Prevention
 
-Verify `src/mkobi/api/routes/upload.py`:
+Verify resource protection:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| Path traversal protection (`../../file.csv`) | | |
-| Unsafe filenames handling (secure filename) | | |
-| Oversized files handling (limit via config) | | |
-| MIME-type validation (client + server side) | | |
-| UTF-8 encoding validation | | |
-| Temp file cleanup (platformdirs, both success and failure) | | |
-| Rate limiting on upload | | |
+| Rate limiting on authentication endpoints | | |
+| Rate limiting on write operations (upload) | | |
+| Throttling configurable by environment | | |
+| Fail-closed in production, fail-open in development | | |
+| Rate limit bypass not exploitable | | |
 
 ---
 
-### 7. SQL Safety
+### 6. Password Security Invariants
 
-Verify repositories (`src/mkobi/db/repositories/`):
+Verify password handling is secure:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| No raw unsafe SQL | | |
-| Parameterized queries (SQLAlchemy ORM/Core) | | |
-| No SQL formation via f-strings or string concatenation | | |
-| ORM used for all operations | | |
+| Passwords hashed with secure algorithm (bcrypt, scrypt, argon2) | | |
+| Password hashes never logged | | |
+| Minimum password length enforced | | |
+| Temporary passwords are cryptographically random | | |
+| Password change requires current password verification | | |
 
 ---
 
-### 8. Secrets & Configuration
+### 7. Security Header & CORS
 
-Verify `src/mkobi/config.py`:
+Verify transport security:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| No hardcoded secrets | | |
-| Env-based configuration (pydantic-settings) | | |
-| Docker secrets support (_FILE suffix) | | |
-| Nested env vars (DATABASE__HOST, DATABASE__PORT, JWT__SECRET_KEY) | | |
-| .env file for development only | | |
-| app.yaml for non-sensitive settings only | | |
-| Production credential enforcement (refuses to start with default admin/admin) | | |
-| CORS origins validated at startup in production mode | | |
+| CORS origins explicitly configured (no wildcards) | | |
+| CORS validated at startup in production | | |
+| Security headers on responses (CSP, X-Frame-Options, etc.) | | |
+| HTTPS enforced or enforced by infrastructure | | |
 
 ---
 
-### 9. Rate Limiting
+## Report Output
 
-Verify rate limiting implementation:
+Write findings to: `.ai/audit/04-security/findings.md` using template `.ai/audit/templates/audit-findings.md`.
 
-| Check | Status | Evidence |
-|-------|--------|----------|
-| Redis-based sliding window algorithm | | |
-| Fail-open (default) vs fail-closed (production) via RATE_LIMITER_FAIL_CLOSED | | |
-| Protected endpoints: login (5/5min), register-request (3/hour), upload (configured) | | |
-| Health tracking when Redis unavailable | | |
-
-**Files to Audit:**
-- `src/mkobi/core/rate_limiter.py`
-- `src/mkobi/api/routes/auth.py`
-- `src/mkobi/api/routes/upload.py`
-
----
-
-### 10. Email Domain Blocklist
-
-Verify email domain validation:
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| Configurable domain blocklist in app.yaml | | |
-| Validated on backend via Pydantic (security boundary) | | |
-| Validated on frontend via Zod (UX convenience) | | |
-
-**Files to Audit:**
-- `src/mkobi/models/auth.py`
-- `frontend/src/features/auth/model/useAuth.ts`
-
----
-
-### 11. StrEnum Enforcement
-
-Verify `src/mkobi/models/enums.py`:
-
-All constants must be StrEnum, NOT dict or list. All 17 classes required:
-
-`UserRole`, `DashboardPermission`, `GraphType`, `FilterType`, `RegistrationStatus`, `UploadMode`, `ProcessingStatus`, `EnvironmentEnum`, `MimeTypeEnum`, `FileExtensionEnum`, `AggregationFunctionEnum`, `FilterOperatorEnum`, `OrientationEnum`, `BarmodeEnum`, `YoyModeEnum`, `ButtonVariant`, `ComponentSize`
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| All 17 StrEnum classes present | | |
-| No string literal comparisons for role/status/type checks | | |
-| Bad: `if user.role == "admin":` â€” NOT present | | |
-| Good: `if user.role == UserRole.ADMIN:` â€” used | | |
-
----
-
-### 12. Frontend Security
-
-Verify frontend security implementation:
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| JWT stored in memory (production) or sessionStorage (development) â€” NOT localStorage | | |
-| Axios interceptors add token to requests | | |
-| ProtectedRoute component works correctly | | |
-| RoleBasedAccess component works correctly | | |
-| Email validation (Zod regex + blacklist domains) | | |
-| UI-level role checks are for UX only (backend enforces authorization) | | |
-
-**Files to Audit:**
-- `frontend/src/shared/api/axiosInstance.ts`
-- `frontend/src/shared/components/ProtectedRoute.tsx`
-- `frontend/src/shared/components/RoleBasedAccess.tsx`
-
----
-
-## Findings
-
-### SEC-{NN}: {Title}
-
-| Field | Value |
-|-------|-------|
-| **ID** | SEC-{NN} |
-| **Severity** | {severity} |
-| **Type** | {type} |
-| **Affected Modules** | {modules} |
-| **Classification** | {mandatory|advisory} |
-
-**Description:** {description}
-
-**Evidence:** {evidence}
-
-**Recommendation:** {recommendation}
-
----
-
-## Summary
-
-| Severity | Count |
-|----------|-------|
-| CRITICAL | 0 |
-| HIGH | 0 |
-| MEDIUM | 0 |
-| LOW | 0 |
-
-## Mandatory Fixes
-
-{List all findings classified as mandatory}
-
-## Advisory Recommendations
-
-{List all findings classified as advisory}
-
-## Doc Updates Needed
-
-{List all findings classified as DOC-UPDATE type}
-
----
-
-## Template Field Reference
-
-### Mandatory Fields Per Finding
-
-| Field | Type | Values/Format |
-|-------|------|---------------|
-| `id` | string | Unique identifier with `SEC-` prefix (e.g., `SEC-001`, `SEC-002`) |
-| `title` | string | Human-readable one-line summary |
-| `type` | enum | `SPEC-DEVIATION`, `BEST-PRACTICE`, `DOC-UPDATE`, `RUNTIME-ERROR` |
-| `severity` | enum | `CRITICAL`, `HIGH`, `MEDIUM`, `LOW` |
-| `description` | string | Detailed problem description with context |
-| `evidence` | string | File paths, line references, log excerpts, code snippets |
-| `affected_modules` | list | Affected module paths (e.g., `src/mkobi/core/`, `frontend/src/shared/`) |
-| `recommendation` | string | Concrete fix direction: what to change and why |
-| `classification` | enum | `mandatory` (security, data loss, correctness) or `advisory` (improvement, refactoring) |
-
-### Classification Guide
-
-- **mandatory**: Security vulnerabilities, access control violations, data loss risks, correctness issues requiring immediate fix
-- **advisory**: Best practice enhancements, security hardening suggestions
-
----
-
-**Report Format:** See `.ai/audit/templates/audit-findings.md` for full template.
+Use prefix `SEC-` for finding IDs.

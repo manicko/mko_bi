@@ -1,111 +1,110 @@
 ﻿---
 name: 06-tests
-description: Test quality audit covering coverage gaps, anti-patterns (overmocking, contract mismatch, tautological tests), pytest standards, test database isolation, missing critical path coverage
+description: Test quality audit covering coverage gaps, anti-patterns, and test isolation
 agent: audit-executor
 alwaysApply: false
 ---
 
-# Phase 06 Audit â€” Test Quality
+# Phase 06 Audit — Test Quality
 
 **Executor:** audit-executor
 **Status:** {pending|in-progress|complete}
 **Validated:** {yes|no}
 
-**IMPORTANT:** Base layer context is auto-included by orchestrator  (SKIP if you already have it):
-- Project: mkobi BI Dashboard (FastAPI + React + PostgreSQL)
-- Structure: `.ai/structure/map.md`
-- Commands: `.ai/context/commands.md`
-- SPEC: `docs/SPEC.md`
+---
+
+## Discovery Stage
+
+Before performing audit checks, discover the project's testing architecture:
+
+1. **Test Framework Discovery**
+   - Identify test runner (pytest, jest, etc.)
+   - Map test organization (unit, integration, e2e)
+   - Discover test database setup and isolation strategy
+   - Find fixture patterns and shared test utilities
+
+2. **Coverage Discovery**
+   - Identify critical user flows
+   - Map business logic test coverage
+   - Discover authentication/authorization test patterns
+   - Find data processing test coverage
+
+3. **Test Patterns Discovery**
+   - Identify common test anti-patterns in the codebase
+   - Map mocking strategies
+   - Discover assertion patterns
+   - Find async/sync test handling
+
+4. **Quality Discovery**
+   - Identify tautological tests
+   - Map coverage gaps in critical paths
+   - Discover test brittleness indicators
+   - Find test performance characteristics
 
 ---
 
-## Phase-Specific File Paths
+## Audit Dimensions
 
-- `tests/**/*.py`
-- `tests/conftest.py`
-- `docs/06-backend/testing.md`
+### 1. Test Anti-Patterns
 
----
-
-## Checklist
-
-### Anti-patterns to Flag
+Flag problematic testing patterns:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| Architecture mismatch: sync in async tests, deprecated methods, `pandas` instead of `polars` | | |
-| Overmocking: mock replaces all logic, assertions on mock values not real results | | |
-| Tautological: `assert True`, no assert, trivial checks | | |
-| Wrong abstraction: testing private methods, SQL internals, call order | | |
-| Fragile: depends on execution order, shared mutable state, no `pytest.mark.asyncio` | | |
+| Tests don't mock entire dependency tree | | |
+| Assertions verify actual outcomes, not mock calls | | |
+| No tautological tests (`assert True`, no assert) | | |
+| Tests focus on behavior, not implementation details | | |
+| No shared mutable state between tests | | |
+| Tests don't depend on execution order | | |
+| Async tests properly marked and configured | | |
 
-### Coverage Areas
+---
+
+### 2. Critical Path Coverage
+
+Verify essential flows are tested:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| Auth: login (`TokenWithUser`), refresh, roles, admin bypass, 403/404 dual-signal | | |
-| API: all endpoints (success + error cases) | | |
-| Processing: CSV loading (Polars), transformations, aggregations, formula parser, JSONB normalization | | |
-| Repositories: CRUD, JSONB queries, UPSERT | | |
-| Config: loading, production enforcement | | |
-| Task queue: enqueue, status tracking, background worker | | |
-| Pydantic models: all request/response models, validators, StrEnum | | |
+| Authentication flow has success and failure tests | | |
+| Authorization boundaries tested for different roles | | |
+| File upload and processing flows tested | | |
+| Data transformation and aggregation tested | | |
+| Error handling paths tested | | |
+| Input validation rejection cases tested | | |
+| External service integration tested (or safely skipped) | | |
 
-### Infrastructure
+---
+
+### 3. Test Isolation
+
+Verify tests don't interfere with each other:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| pytest standards: `pytest.mark.asyncio`, fixtures in conftest, no `unittest.TestCase` | | |
-| Test database: separate `bidb_test`, SAVEPOINT rollback, NullPool | | |
-| Fixture structure matches `docs/06-backend/testing.md` | | |
+| Each test runs in isolated transaction | | |
+| Test database separate from dev/prod | | |
+| Fixtures properly scoped (function/module/session) | | |
+| No test data leakage between runs | | |
+| Cleanup occurs even on test failure | | |
 
 ---
 
-## Findings
+### 4. Type Safety in Tests
 
-### TST-{NN}: {Title}
+Verify test code follows type discipline:
 
-| Field | Value |
-|-------|-------|
-| **ID** | TST-{NN} |
-| **Severity** | {severity} |
-| **Type** | {type} |
-| **Affected Modules** | {modules} |
-| **Classification** | {mandatory|advisory} |
-
-**Description:** {description}
-
-**Evidence:** {evidence}
-
-**Recommendation:** {recommendation}
+| Check | Status | Evidence |
+|-------|--------|----------|
+| Test configuration properly typed | | |
+| No `any` types in test assertions | | |
+| Response types match API contracts | | |
 
 ---
 
-## Summary
+## Report Output
 
-| Severity | Count |
-|----------|-------|
-| CRITICAL | 0 |
-| HIGH | 0 |
-| MEDIUM | 0 |
-| LOW | 0 |
+Write findings to: `.ai/audit/06-tests/findings.md` using template `.ai/audit/templates/audit-findings.md`.
 
-## Mandatory Fixes
-
-{List all findings classified as mandatory}
-
-## Advisory Recommendations
-
-{List all findings classified as advisory}
-
-## Doc Updates Needed
-
-{List all findings classified as DOC-UPDATE type}
-
----
-
-## Report Format
-
-Create file: `.ai/audit/tests/audit_report_<number>.md` (next available number)
-
-See `.ai/audit/templates/audit-findings.md` for full template.
+Use prefix `TST-` for finding IDs.

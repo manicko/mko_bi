@@ -1,306 +1,136 @@
 ﻿---
 name: 05-docker
-description: Docker and runtime environment audit covering Dockerfile, docker-compose, container health, security, persistence, production readiness, runtime verification
+description: Infrastructure audit covering reproducibility, secrets management, isolation, resilience, and deployment safety
 agent: audit-executor
 alwaysApply: false
 ---
 
-# Phase 05 Audit â€” Docker and Runtime Environment
+# Phase 05 Audit — Infrastructure & Runtime Environment
 
 **Executor:** audit-executor
 **Status:** {pending|in-progress|complete}
 **Validated:** {yes|no}
 
-**IMPORTANT:** Base layer context is auto-included by orchestrator  (SKIP if you already have it):
-- Project: mkobi BI Dashboard (FastAPI + React + PostgreSQL)
-- Structure: `.ai/structure/map.md`
-- Commands: `.ai/context/commands.md`
-- SPEC: `docs/SPEC.md`
+---
+
+## Discovery Stage
+
+Before performing audit checks, discover the project's infrastructure architecture:
+
+1. **Container Discovery**
+   - Identify container definition files and their purposes
+   - Map service separation and responsibilities
+   - Discover volume/mount configurations
+   - Locate health check configurations
+
+2. **Build Discovery**
+   - Identify multi-stage build strategy
+   - Map dependency management approach
+   - Discover artifact optimizations (slim vs full images)
+   - Find build caching strategies
+
+3. **Secrets Discovery**
+   - Identify secret injection mechanisms
+   - Map configuration priority (env > secrets > files > defaults)
+   - Discover secrets never baked into images
+   - Find production vs development configuration differences
+
+4. **Runtime Discovery**
+   - Identify restart policies and failure handling
+   - Map service dependencies and startup order
+   - Discover resource limits and constraints
+   - Find backup/restore procedures
 
 ---
 
-## Phase-Specific File Paths
+## Audit Dimensions
 
-- `docker/Dockerfile`
-- `docker/docker-compose.yml`
-- `docker/docker-compose.override.yml`
-- `docker/docker-compose.test.yml`
-- `docker/.dockerignore`
-- `.env`
+### 1. Reproducibility
+
+Verify builds and deployments are deterministic:
+
+| Check | Status | Evidence |
+|-------|--------|----------|
+| Base images use pinned versions (no `latest`) | | |
+| Dependencies pinned to specific versions | | |
+| Build produces reproducible artifacts | | |
+| Configuration files version-controlled | | |
+| No manual steps required for deployment | | |
 
 ---
 
-## Checklist
+### 2. Secrets Management
 
-### 1. Dockerfile Analysis
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| Multi-stage build: base, dev, test, prod, prod-slim targets | | |
-| Pinned base image versions (no `latest` tags) | | |
-| No unnecessary system packages in production stages | | |
-| Dev dependencies excluded from prod and prod-slim stages | | |
-| Container does NOT run as root (non-root user configured) | | |
-| Secrets NOT baked into image (no hardcoded credentials) | | |
-| `.env` file NOT copied into image | | |
-| No hardcoded credentials in any stage | | |
-| `uv.lock` copied for reproducible installs | | |
-| Correct startup command | | |
-| Healthcheck configured: `HEALTHCHECK --interval=30s --timeout=5s --retries=3` | | |
-| `uv` used as package manager (not pip directly) | | |
-| Predictable working directory (`/app`) | | |
-| `PYTHONUNBUFFERED=1` for log visibility | | |
-
-### 2. Dependencies
+Verify sensitive data isolation:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| uv.lock: pinned dependencies, no floating versions | | |
+| Secrets injected via environment/files, not hardcoded | | |
+| No secrets baked into container images | | |
+| Secret injection supports multiple sources (.env, _FILE, etc.) | | |
+| Production credentials enforced at startup | | |
+| Development credentials not used in production | | |
 
-### 3. Docker Compose Analysis
+---
 
-| Check | Status | Evidence |
-|-------|--------|----------|
-| Service separation: app (FastAPI), db (PostgreSQL 16+), redis (Redis 7) | | |
-| Optional services: rq-worker (background processing), nginx (reverse proxy, production profile) | | |
-| Volumes configured: postgres_data, app_data, redis_data | | |
-| Restart policies: `restart: unless-stopped` for all services | | |
-| Networking: internal communication via Docker network | | |
-| No unnecessary exposed ports | | |
-| Services reference each other by service name | | |
+### 3. Isolation
 
-### 4. Environment Variables
+Verify environment and service isolation:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| ENV â€” environment name (development/test/production) | | |
-| DATABASE__HOST, DATABASE__PORT, DATABASE__PASSWORD â€” DB connection | | |
-| MKOBI_APP_PASSWORD â€” application DB role password | | |
-| JWT__SECRET_KEY â€” JWT signing key (required in production) | | |
-| CORS_ORIGINS â€” explicit allowed origins | | |
-| AUTO_MIGRATE=true â€” runs Alembic migrations on startup | | |
-| RECREATE_TEST_DB=true â€” recreates test database (test env only) | | |
-| RATE_LIMITER_FAIL_CLOSED â€” rate limiter failure mode | | |
-| Production credentials enforced via `${VAR:?...}` syntax | | |
-| No hardcoded secrets in compose files | | |
+| Development environment isolated from production | | |
+| Test environment uses separate database | | |
+| Service-to-service communication via defined network | | |
+| No unnecessary port exposure | | |
+| File system isolation (volumes for data only) | | |
 
-### 5. Health Checks
+---
 
-| Check | Status | Evidence |
-|-------|--------|----------|
-| db healthcheck: uses `pg_isready` | | |
-| app healthcheck: HTTP `/health` endpoint | | |
-| Configured intervals and retries for health checks | | |
+### 4. Resilience
 
-### 6. Persistence
+Verify failure handling and recovery:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| `postgres_data` volume for database persistence | | |
-| `app_data` volume for uploads, logs, temp files | | |
-| `redis_data` volume for task queue persistence | | |
-| Temp file cleanup on startup (DatabaseStarter removes orphaned files) | | |
-| Temp files cleanup after processing (both success and failure) | | |
+| Health checks verify service liveness | | |
+| Health check intervals appropriate | | |
+| Services restart on failure | | |
+| Graceful shutdown implemented | | |
+| Resource cleanup on startup (stale files) | | |
+| Error handling prevents cascade failures | | |
 
-### 7. Security
+---
+
+### 5. Container Security
+
+Verify container isolation and user privileges:
 
 | Check | Status | Evidence |
 |-------|--------|----------|
-| Non-root user in container | | |
-| `.env` file not in image | | |
-| No secrets baked into image | | |
+| Containers run as non-root user | | |
+| No unnecessary system packages in production images | | |
+| Multi-stage builds separate build from runtime | | |
+| Development dependencies excluded from production | | |
+
+---
+
+### 6. Deployment Safety
+
+Verify production readiness:
+
+| Check | Status | Evidence |
+|-------|--------|----------|
 | Debug mode disabled in production | | |
-| CORS origins explicitly configured (no wildcards) | | |
-
-### 8. Production Readiness
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| Structured JSON logging | | |
-| Debug disabled (`LOGGING__LEVEL=WARNING`) | | |
-| Environment-based configuration | | |
-| Auto-migrate enabled for automatic schema migrations | | |
-
-### 9. Frontend Service
-
-| Check | Status | Evidence |
-|-------|--------|----------|
-| Frontend service starts correctly | | |
-| Responds on port 5173 | | |
-| Proxy to backend works | | |
-| Built frontend served on backend port (8000) | | |
+| Logging level appropriate for production | | |
+| Production refuses insecure defaults | | |
+| Migration strategy defined and tested | | |
+| Rollback procedure documented | | |
 
 ---
 
-## Runtime Verification Steps
+## Report Output
 
-### Step 1 â€” Start Docker and Check Runtime Status
+Write findings to: `.ai/audit/05-infrastructure/findings.md` using template `.ai/audit/templates/audit-findings.md`.
 
-**This step is mandatory. Do not skip.**
-
-#### 1.1 Start services
-
-```powershell
-docker compose -f docker/docker-compose.yml up -d
-```
-
-Wait 30 seconds for services to initialize.
-
-#### 1.2 Check container status
-
-```powershell
-docker compose -f docker/docker-compose.yml ps
-```
-
-Verify all containers are in `running` or `healthy` state. If any container is `exited`, `restarting`, or `unhealthy` â€” this is a `[RUNTIME-ERROR]`.
-
-#### 1.3 Check logs for ALL services
-
-For **each** service (app, db, redis), run:
-
-```powershell
-docker compose -f docker/docker-compose.yml logs <service>
-```
-
-Check for:
-- ERROR or FATAL level messages
-- Database connection failures
-- Missing credentials or misconfigured passwords
-- Import errors, missing modules, startup failures
-- Health check failures
-- Permission errors
-
-#### 1.4 Test inter-service connectivity
-
-```powershell
-# Check if app reaches database
-docker compose -f docker/docker-compose.yml logs app | Select-String -Pattern "database|db|postgresql|password|connection"
-
-# Check if database is ready
-docker compose -f docker/docker-compose.yml logs db | Select-String -Pattern "ready|accepting|listening"
-```
-
-#### 1.5 Verify health endpoints
-
-```powershell
-# App health
-curl http://localhost:8000/health
-```
-
-If app is not reachable, check: is port 8000 mapped? Did the app crash?
-
-### Step 2 â€” Verify Frontend
-
-#### 2.1 Check frontend container status
-
-```powershell
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml ps frontend
-```
-
-If frontend container is `exited` or `restarting` â€” this is a `[RUNTIME-ERROR]`.
-
-#### 2.2 Check frontend container logs
-
-```powershell
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml logs frontend
-```
-
-#### 2.3 Verify frontend responds
-
-```powershell
-# From host
-Invoke-WebRequest -Uri http://localhost:5173/ -UseBasicParsing
-```
-
-Must return HTTP 200 with HTML containing `<div id="root">`.
-
-#### 2.4 Verify frontend-to-backend proxy
-
-```powershell
-# From inside the frontend container
-docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml exec frontend wget -qO- http://app:8000/health
-```
-
-Must return `{"status":"healthy"}`.
-
-#### 2.5 Verify built frontend on backend port
-
-```powershell
-# The backend (port 8000) should also serve the built frontend
-Invoke-WebRequest -Uri http://localhost:8000/ -UseBasicParsing
-```
-
-Check:
-- Returns HTTP 200
-- HTML references a JS bundle that exists
-- No ErrorBoundary fallback in the rendered page
-
----
-
-## Findings
-
-### DKR-{NN}: {Title}
-
-| Field | Value |
-|-------|-------|
-| **ID** | DKR-{NN} |
-| **Severity** | {severity} |
-| **Type** | {type} |
-| **Affected Modules** | {modules} |
-| **Classification** | {mandatory\|advisory} |
-
-**Description:** {description}
-
-**Evidence:** {evidence}
-
-**Recommendation:** {recommendation}
-
----
-
-## Summary
-
-| Severity | Count |
-|----------|-------|
-| CRITICAL | 0 |
-| HIGH | 0 |
-| MEDIUM | 0 |
-| LOW | 0 |
-
-## Mandatory Fixes
-
-{List all findings classified as mandatory}
-
-## Advisory Recommendations
-
-{List all findings classified as advisory}
-
-## Doc Updates Needed
-
-{List all findings classified as DOC-UPDATE type}
-
----
-
-## Template Field Reference
-
-### Mandatory Fields Per Finding
-
-| Field | Type | Values/Format |
-|-------|------|---------------|
-| `id` | string | Unique identifier with `DKR-` prefix (e.g., `DKR-001`, `DKR-002`) |
-| `title` | string | Human-readable one-line summary |
-| `type` | enum | `SPEC-DEVIATION`, `BEST-PRACTICE`, `DOC-UPDATE`, `RUNTIME-ERROR` |
-| `severity` | enum | `CRITICAL`, `HIGH`, `MEDIUM`, `LOW` |
-| `description` | string | Detailed problem description with context |
-| `evidence` | string | File paths, line references, log excerpts, code snippets |
-| `affected_modules` | list | Affected module paths (e.g., `docker/`, `.env`) |
-| `recommendation` | string | Concrete fix direction: what to change and why |
-| `classification` | enum | `mandatory` (security, data loss, correctness) or `advisory` (improvement, refactoring) |
-
-### Classification Guide
-
-- **mandatory**: Security vulnerabilities, data loss risks, correctness issues, spec deviations requiring immediate fix
-- **advisory**: Code quality improvements, refactoring suggestions, best practice enhancements
-
----
-
-**Report Format:** See `.ai/audit/templates/audit-findings.md` for full template.
+Use prefix `INF-` for finding IDs.
