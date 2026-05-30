@@ -4,7 +4,7 @@ Provides endpoints for viewing data processing logs.
 Complies with SPEC.md section 14.4 and task 011_processing_logs.md.
 """
 
-from datetime import date
+from datetime import datetime
 from uuid import UUID
 from typing import cast
 
@@ -17,11 +17,15 @@ from mkobi.api.deps import (
     get_processing_log_service,
     require_admin_role,
 )
+from mkobi.core.logging_config import get_logger
 from mkobi.models.enums import ProcessingStatus
 from mkobi.models.processing_logs import ProcessingLogFilter, ProcessingLogRead
+from mkobi.models.user import UserRead
 from mkobi.services.processing_log_service import ProcessingLogService
 
 router = APIRouter(prefix="/admin/logs", tags=["admin", "processing_logs"], redirect_slashes=False)
+
+logger = get_logger(__name__)
 
 
 @router.get(
@@ -39,11 +43,11 @@ async def get_logs_endpoint(
         None,
         description="Filter by status (STARTED, UPLOADED, PROCESSING, SUCCESS, FAILED)",
     ),
-    date_from: date | None = Query(
+    date_from: datetime | None = Query(
         None,
         description="Filter by start date (started_at)",
     ),
-    date_to: date | None = Query(
+    date_to: datetime | None = Query(
         None,
         description="Filter by end date (started_at)",
     ),
@@ -58,7 +62,7 @@ async def get_logs_endpoint(
         le=1000,
         description="Maximum number of records (max. 1000)",
     ),
-    _current_user=Depends(require_admin_role),
+    _current_user: UserRead = Depends(require_admin_role),
     db: AsyncSession = Depends(get_db_dependency),
     log_service: ProcessingLogService = Depends(get_processing_log_service),
 ) -> list[ProcessingLogRead]:
@@ -82,9 +86,10 @@ async def get_logs_endpoint(
         )
         return logs
     except Exception as e:
+        logger.error("Error getting log list: %s", e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error getting log list: {str(e)}",
+            detail="Error getting log list",
         ) from e
 
 
@@ -96,7 +101,7 @@ async def get_logs_endpoint(
 )
 async def get_log_endpoint(
     log_id: UUID,
-    _current_user=Depends(require_admin_role),
+    _current_user: UserRead = Depends(require_admin_role),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> ProcessingLogRead:
     """Get processing log by ID.
@@ -115,7 +120,8 @@ async def get_log_endpoint(
     except HTTPException:
         raise
     except Exception as e:
+        logger.error("Error getting log id=%s: %s", log_id, e, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error getting log: {str(e)}",
+            detail="Error getting log",
         ) from e

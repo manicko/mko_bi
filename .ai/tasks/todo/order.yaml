@@ -1,0 +1,128 @@
+---
+# Execution Order — mkobi BI Dashboard Refactoring Plan
+# Generated from validated audit findings (2026-05-29)
+# Total tasks: 15 (12 implementation + 1 verification + 2 advisory follow-ups)
+
+stages:
+  - name: "Stage 1 — Security Fixes (mandatory, parallel)"
+    description: >
+      Both SEC-001 and SEC-003 are independent backend security fixes.
+      They touch different modules and can be executed in parallel.
+    tasks:
+      - id: TASK_001_sec001_password_validation
+        depends_on: []
+      - id: TASK_002_sec003_mime_validation
+        depends_on: []
+
+  - name: "Stage 2 — Architecture Boundary Fix (mandatory)"
+    description: >
+      FE-001 breaks the circular import between shared/api/ and features/auth/.
+      Must be done after Stage 1 to have a stable auth module before restructuring.
+    tasks:
+      - id: TASK_003_fe001_circular_import
+        depends_on:
+          - TASK_001_sec001_password_validation
+          - TASK_002_sec003_mime_validation
+
+  - name: "Stage 3 — Integration Alignment (mandatory, multi-stage)"
+    description: >
+      Backend response shapes first (INT-006, INT-007 in parallel), then
+      frontend types (INT-003). A verification task runs at the end of the stage.
+    tasks:
+      - id: TASK_004_int006_aggregated_data_response
+        depends_on:
+          - TASK_003_fe001_circular_import
+      - id: TASK_005_int007_access_grant_field
+        depends_on:
+          - TASK_003_fe001_circular_import
+      - id: TASK_006_int003_dashboard_config
+        depends_on:
+          - TASK_004_int006_aggregated_data_response
+          - TASK_005_int007_access_grant_field
+      - id: TASK_015_verify_stage3_integration_alignment
+        depends_on:
+          - TASK_004_int006_aggregated_data_response
+          - TASK_005_int007_access_grant_field
+          - TASK_006_int003_dashboard_config
+
+  - name: "Stage 4 — Error Handling Cleanup (mandatory)"
+    description: >
+      BE-016 sanitizes error messages across multiple route modules.
+      Can be done independently after Stage 2.
+    tasks:
+      - id: TASK_007_be016_error_message_sanitization
+        depends_on:
+          - TASK_003_fe001_circular_import
+
+  - name: "Stage 5 — Runtime Bug Fix (mandatory)"
+    description: >
+      BUG-004 fixes the Log Viewer empty table. Backend dashboard_name fix (TASK_009)
+      depends on frontend date fix (TASK_008) since they both touch the log viewer flow.
+    tasks:
+      - id: TASK_008_bug004_log_viewer_date_format
+        depends_on:
+          - TASK_003_fe001_circular_import
+      - id: TASK_009_bug004_log_viewer_dashboard_name
+        depends_on:
+          - TASK_008_bug004_log_viewer_date_format
+
+  - name: "Stage 6 — Data Processing Fix (mandatory)"
+    description: >
+      DP-002 adds logging to temp file cleanup. Independent after Stage 2.
+    tasks:
+      - id: TASK_010_dp002_temp_file_cleanup_logging
+        depends_on:
+          - TASK_003_fe001_circular_import
+
+  - name: "Stage 7 — Test Quality Fixes (mandatory)"
+    description: >
+      TST-005 and TST-003-MERGED are test-only changes. Can be done in parallel
+      after Stage 2. Test changes should be verified by running the test suite.
+    tasks:
+      - id: TASK_011_tst005_mock_antipattern
+        depends_on:
+          - TASK_003_fe001_circular_import
+      - id: TASK_012_tst003_ambiguous_status_codes
+        depends_on:
+          - TASK_003_fe001_circular_import
+
+  - name: "Stage 8 — Advisory Frontend Fixes (advisory)"
+    description: >
+      FE-002 (stale closure) and FE-004 (ARIA attributes) are low-risk advisory fixes.
+      Can be done independently after Stage 2.
+    tasks:
+      - id: TASK_013_fe002_stale_closure
+        depends_on:
+          - TASK_003_fe001_circular_import
+      - id: TASK_014_fe004_aria_attributes
+        depends_on:
+          - TASK_003_fe001_circular_import
+
+# ── Dependency Graph Summary ──
+# TASK_001 ─┐
+#            ├─→ TASK_003 ─┬─→ TASK_004 ─┐
+# TASK_002 ─┘              ├─→ TASK_005 ─┼─→ TASK_006 ─→ TASK_015
+#                          ├─→ TASK_007
+#                          ├─→ TASK_008 ─→ TASK_009
+#                          ├─→ TASK_010
+#                          ├─→ TASK_011
+#                          ├─→ TASK_012
+#                          ├─→ TASK_013
+#                          └─→ TASK_014
+
+# ── Parallel Execution Groups ──
+#
+# Group 1 (Stage 1): TASK_001, TASK_002 (independent, parallel)
+# Group 2 (Stage 2): TASK_003 (depends on Group 1)
+# Group 3 (Stage 3): TASK_004, TASK_005 (independent, parallel, depends on Group 2)
+#                     TASK_006 (depends on Group 3)
+#                     TASK_015 (depends on TASK_004, TASK_005, TASK_006)
+# Group 4 (Stages 4-8): TASK_007, TASK_008, TASK_010, TASK_011, TASK_012, TASK_013, TASK_014
+#                       (all depend on Group 2, can run in parallel after Group 2 completes)
+#                       TASK_009 depends on TASK_008
+
+# ── Rollout Sequence ──
+# 1. Stage 1: Security fixes (SEC-001, SEC-003)
+# 2. Stage 2: Architecture fix (FE-001)
+# 3. Stage 3: Integration alignment (INT-006, INT-007, INT-003) + verify
+# 4. Stages 4-8: All remaining fixes (can run in parallel after Stage 2)

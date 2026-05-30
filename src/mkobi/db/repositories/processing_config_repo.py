@@ -5,7 +5,7 @@ All methods use contextual session management and handle errors.
 """
 
 import logging
-from typing import cast
+from typing import Any, cast
 from uuid import UUID
 
 from sqlalchemy import select
@@ -61,7 +61,7 @@ class ProcessingConfigRepository(IProcessingConfigRepository):
             )
             raise
     async def create(
-        self, db: AsyncSession, **kwargs
+        self, db: AsyncSession, **kwargs: Any
     ) -> processing_config_model.ProcessingConfig | None:
         """Create new processing config.
 
@@ -85,7 +85,7 @@ class ProcessingConfigRepository(IProcessingConfigRepository):
             logger.error("Error creating processing config: %s", e)
             raise
     async def update(
-        self, id: UUID, db: AsyncSession, **kwargs
+        self, id: UUID, db: AsyncSession, **kwargs: Any
     ) -> processing_config_model.ProcessingConfig | None:
         """Update processing config.
 

@@ -22,6 +22,7 @@ from mkobi.core.security import (
 )
 from mkobi.interfaces.repository_interfaces import IRegistrationRequestRepository, IUserRepository
 from mkobi.interfaces.service_interfaces import IAuthService
+from mkobi.utils.validators import validate_password_or_raise
 from mkobi.models.enums import RegistrationStatus, UserRole
 from mkobi.models.user import UserRead
 
@@ -132,10 +133,12 @@ class AuthService(IAuthService):
 
         Raises:
             ValueError: If email is invalid, role is invalid,
+                password does not meet strength requirements,
                 or user already exists.
         """
         self._validate_role(role)
         self._validate_email_format(email)
+        validate_password_or_raise(password)
         logger.info("Starting user registration", extra={"email": email, "role": role})
 
         await self._check_email_uniqueness(email, db)

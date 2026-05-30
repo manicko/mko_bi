@@ -90,14 +90,13 @@ async def create_layout_endpoint(
         ) from e
     except Exception as e:
         logger.error(
-            "Error creating layout name=%s: %s",
+            "Error creating layout name=%s",
             layout.name,
-            e,
             exc_info=True,
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error creating layout: {str(e)}",
+            detail="Error creating layout",
         ) from e
 
 
@@ -133,10 +132,10 @@ async def get_layouts_endpoint(
         logger.info("Retrieved layouts: %s", len(layouts))
         return layouts
     except Exception as e:
-        logger.error("Error getting layout list: %s", e, exc_info=True)
+        logger.error("Error getting layout list", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error getting layout list: {str(e)}",
+            detail="Error getting layout list",
         ) from e
 
 
@@ -182,10 +181,10 @@ async def get_layout_endpoint(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Error getting layout id=%s: %s", layout_id, e, exc_info=True)
+        logger.error("Error getting layout id=%s", layout_id, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error getting layout: {str(e)}",
+            detail="Error getting layout",
         ) from e
 
 
@@ -263,10 +262,10 @@ async def update_layout_endpoint(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Error updating layout id=%s: %s", layout_id, e, exc_info=True)
+        logger.error("Error updating layout id=%s", layout_id, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error updating layout: {str(e)}",
+            detail="Error updating layout",
         ) from e
 
 
@@ -326,8 +325,8 @@ async def delete_layout_endpoint(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("Error deleting layout id=%s: %s", layout_id, e, exc_info=True)
+        logger.error("Error deleting layout id=%s", layout_id, exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error deleting layout: {str(e)}",
+            detail="Error deleting layout",
         ) from e

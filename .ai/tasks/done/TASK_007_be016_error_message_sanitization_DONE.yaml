@@ -1,0 +1,91 @@
+---
+id: TASK_007_be016_error_message_sanitization
+title: BE-016 — Sanitize error messages in route handlers to prevent internal detail leaks
+status: pending
+priority: high
+type: implementation
+depends_on:
+  - TASK_003_fe001_circular_import
+
+source_reference: .ai/audit/99-validation/01-backend-validated.md
+source_section: BE-016 — Error Handling Does Not Leak Internal Details
+
+description: >
+  Several route modules leak internal exception details in error responses
+  through `detail=f"...: {str(e)}"` patterns in generic exception handlers.
+  Replace all interpolated exception strings with generic user-facing messages
+  and log the full exception server-side via logger.error(). This is a
+  cross-cutting cleanup across multiple route modules.
+
+goals:
+  - Replace all `f"...{e}"` and `f"...{str(e)}"` in `detail=` parameters with generic messages
+  - Add proper server-side logging via logger.error() for each replaced message
+  - Preserve correct HTTP status codes (400, 404, 500, etc.)
+  - Ensure no internal implementation details leak to API clients
+
+files:
+  - path: src/mkobi/api/routes/upload.py
+    targets:
+      - type: function
+        name: upload_file_endpoint
+    semantic_anchors:
+      insert_before:
+        type: return_statement
+    changes:
+      - action: modify_code
+        description: >
+          Replace `detail=f"Error during file upload: {e}"` with
+          `detail="Error during file upload"` and add
+          `logger.error("Upload error: %s", exc_info=True)` before the response.
+
+  - path: src/mkobi/api/routes/layouts.py
+    targets:
+      - type: module
+    semantic_anchors:
+      insert_after:
+        type: file_header
+    changes:
+      - action: modify_code
+        description: >
+          Replace all `detail=f"...: {str(e)}"` patterns (lines 100, 139, 188,
+          269, 332) with generic messages. Add logger.error() for each.
+
+  - path: src/mkobi/api/routes/processing_logs.py
+    targets:
+      - type: module
+    semantic_anchors:
+      insert_after:
+        type: file_header
+    changes:
+      - action: modify_code
+        description: >
+          Replace `detail=f"...: {str(e)}"` patterns (lines 87, 120) with
+          generic messages. Add server-side logging.
+
+  - path: src/mkobi/api/routes/dashboards_crud.py
+    targets:
+      - type: module
+    semantic_anchors:
+      insert_after:
+        type: file_header
+    changes:
+      - action: modify_code
+        description: >
+          Replace `detail=f"...: {str(e)}"` pattern (line 198) with a generic
+          message. Add server-side logging.
+
+risks:
+  - Low risk: only affects error path responses, not success paths
+  - Must ensure generic messages are still helpful for API consumers
+  - Each route module can be fixed independently
+
+acceptance_criteria:
+  - No `str(e)` or `{e}` interpolation in any `detail=` parameter across route modules
+  - All error responses return generic messages (no internal details)
+  - Server-side logs capture full exception details with traceback
+  - Existing error-handling tests pass
+
+tests_to_run:
+  - pytest tests/ -k "error" -v
+  - pytest tests/ -k "upload" -v
+  - pytest tests/ -v

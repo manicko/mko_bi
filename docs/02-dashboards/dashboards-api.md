@@ -706,7 +706,7 @@ Admins can grant, list, and revoke user access to a dashboard through dedicated 
 {
   "user_id": "550e8400-e29b-41d4-a716-446655440000",
   "dashboard_id": "660e8400-e29b-41d4-a716-446655440001",
-  "permission_level": "view"
+  "permission": "view"
 }
 ```
 
@@ -757,7 +757,18 @@ Admins can grant, list, and revoke user access to a dashboard through dedicated 
 
 ```json
 {
-  "message": "Access revoked successfully"
+  "id": "660e8400-e29b-41d4-a716-446655440001",
+  "name": "Two Column Grid",
+  "definition": {
+    "grid": [{"x": 0, "y": 0, "w": 6, "h": 4}],
+    "graphs": ["g1", "g2"],
+    "filters": ["year"],
+    "bindings": [
+      {"filter": "year", "graphs": ["g1", "g2"]}
+    ]
+  },
+  "created_at": "2026-04-24T16:02:46+03:00",
+  "updated_at": "2026-04-24T16:02:46+03:00"
 }
 ```
 

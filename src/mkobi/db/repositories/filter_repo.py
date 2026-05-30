@@ -6,7 +6,7 @@ All methods use contextual session management and handle errors.
 
 import logging
 from uuid import UUID
-from typing import cast
+from typing import Any, cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -78,7 +78,7 @@ class FilterRepository(IFilterRepository):
         except SQLAlchemyError as e:
             logger.error("Error getting filter name=%s: %s", name, e)
             raise
-    async def create(self, db: AsyncSession, **kwargs) -> filter_model.Filter | None:
+    async def create(self, db: AsyncSession, **kwargs: Any) -> filter_model.Filter | None:
         """Create new filter.
 
         Args:
@@ -101,7 +101,7 @@ class FilterRepository(IFilterRepository):
             logger.error("Error creating filter: %s", e)
             raise
     async def update(
-        self, id: UUID, db: AsyncSession, **kwargs
+        self, id: UUID, db: AsyncSession, **kwargs: Any
     ) -> filter_model.Filter | None:
         """Update filter data.
 

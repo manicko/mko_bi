@@ -15,6 +15,8 @@ from mkobi.interfaces.repository_interfaces import IGraphRepository
 from mkobi.interfaces.service_interfaces import IGraphService
 from mkobi.models.graph import GraphCreate, GraphRead, GraphUpdate
 from mkobi.models.enums import GraphType
+from mkobi.db.models import graphs as graph_model
+
 
 logger = logging.getLogger(__name__)
 
@@ -37,7 +39,9 @@ class GraphService(IGraphService):
             "GraphService initialized with injected repository"
         )
 
-    async def _to_read_model(self, graph_obj) -> GraphRead:
+    async def _to_read_model(
+        self, graph_obj: graph_model.Graph,
+    ) -> GraphRead:
         """Convert DB object to Pydantic model.
 
         Args:

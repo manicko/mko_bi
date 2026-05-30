@@ -64,7 +64,7 @@ async def grant_dashboard_access_endpoint(
         "Granting access: dashboard_id=%s, user_id=%s, permission=%s",
         dashboard_id,
         access_grant.user_id,
-        access_grant.permission_level,
+        access_grant.permission,
     )
 
     try:
@@ -83,7 +83,7 @@ async def grant_dashboard_access_endpoint(
         result = await dashboard_service.grant_access(
             dashboard_id=dashboard_id,
             user_id=access_grant.user_id,
-            permission=access_grant.permission_level,
+            permission=access_grant.permission,
             db=db,
         )
 
@@ -92,13 +92,13 @@ async def grant_dashboard_access_endpoint(
                 "Access granted: dashboard_id=%s, user_id=%s, permission=%s",
                 dashboard_id,
                 access_grant.user_id,
-                access_grant.permission_level,
+                access_grant.permission,
             )
             return {
                 "message": "Access granted",
                 "dashboard_id": str(dashboard_id),
                 "user_id": str(access_grant.user_id),
-                "permission": access_grant.permission_level,
+                "permission": access_grant.permission,
             }
         else:
             raise HTTPException(

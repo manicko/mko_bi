@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> Any:
     """Application lifecycle manager.
     
     Handles startup and shutdown events with proper error handling.
@@ -319,7 +319,7 @@ def _setup_static_files(application: FastAPI) -> None:
             Note: API routes (/api/*) should not trigger SPA fallback - they return 404.
             """
 
-            async def get_response(self, path: str, scope: dict[str, Any]):
+            async def get_response(self, path: str, scope: dict[str, Any]) -> Any:
                 """Override to serve index.html for non-existent files.
 
                 Args:

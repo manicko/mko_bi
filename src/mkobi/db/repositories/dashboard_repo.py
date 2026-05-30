@@ -5,7 +5,7 @@ All methods use contextual session management and handle errors.
 """
 
 from uuid import UUID
-from typing import cast
+from typing import Any, cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -103,7 +103,7 @@ class DashboardRepository(IDashboardRepository):
             raise
 
     async def create(
-        self, db: AsyncSession, **kwargs
+        self, db: AsyncSession, **kwargs: Any
     ) -> dashboard_model.Dashboard | None:
         """Create new dashboard.
 
@@ -132,7 +132,7 @@ class DashboardRepository(IDashboardRepository):
             raise
 
     async def update(
-        self, id: UUID, db: AsyncSession, **kwargs
+        self, id: UUID, db: AsyncSession, **kwargs: Any
     ) -> dashboard_model.Dashboard | None:
         """Update dashboard data.
 

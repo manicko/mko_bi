@@ -75,6 +75,10 @@ export function FileDropzone({ onFilesSelected, onFileRemove, selectedFiles, max
     <Box>
       <Paper
         {...getRootProps()}
+        role="button"
+        aria-label="Drop files here or click to upload"
+        tabIndex={0}
+        aria-describedby="dropzone-instructions"
         sx={{
           p: 3,
           border: '2px dashed',
@@ -89,14 +93,22 @@ export function FileDropzone({ onFilesSelected, onFileRemove, selectedFiles, max
           },
         }}
       >
-        <input {...getInputProps()} />
+        <input {...getInputProps()} aria-label="File upload input" />
         <Typography variant="h6" color="textSecondary">
           {isDragActive ? 'Drop files here...' : 'Drag & drop files here, or click to select'}
         </Typography>
-        <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+        <Typography id="dropzone-instructions" variant="body2" color="textSecondary" sx={{ mt: 1 }}>
           Only .csv and .csv.gz files are allowed
         </Typography>
       </Paper>
+
+      <Typography
+        component="span"
+        sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}
+        aria-live="polite"
+      >
+        {isDragActive ? 'Drop zone active, ready to receive files' : ''}
+      </Typography>
 
       {selectedFiles.length > 0 && (
         <List sx={{ mt: 2 }}>
@@ -110,7 +122,11 @@ export function FileDropzone({ onFilesSelected, onFileRemove, selectedFiles, max
                 mb: 1,
               }}
               secondaryAction={
-                <IconButton edge="end" onClick={() => onFileRemove(file.name)}>
+                <IconButton
+                  edge="end"
+                  onClick={() => onFileRemove(file.name)}
+                  aria-label={`Remove file ${file.name}`}
+                >
                   <DeleteIcon />
                 </IconButton>
               }

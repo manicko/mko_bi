@@ -33,6 +33,8 @@ __all__ = [
     "ChartConfig",
     "FilterState",
     "ProcessingResultData",
+    "GraphDataResponse",
+    "AggregatedDataResponse",
 ]
 
 
@@ -407,6 +409,66 @@ class FilterState(BaseModel):
                     "category": ["Electronics"],
                     "region": ["North", "South"],
                 }
+            }
+        },
+    )
+
+
+# ==================== Aggregated Data Response Types ====================
+
+
+class GraphDataResponse(BaseModel):
+    """Model for individual graph data response.
+
+    Contains the graph metadata (id, type, name) and Plotly.js data.
+    """
+
+    graph_id: str
+    type: GraphType
+    name: str
+    data: list[dict[str, int | float | str]]
+    layout: ChartLayoutConfig | None = None
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "graph_id": "550e8400-e29b-41d4-a716-446655440000",
+                "type": "bar",
+                "name": "Sales by Category",
+                "data": [
+                    {"category": "A", "revenue": 1000},
+                    {"category": "B", "revenue": 2000},
+                ],
+                "layout": {"title": "Sales Chart"},
+            }
+        },
+    )
+
+
+class AggregatedDataResponse(BaseModel):
+    """Model for aggregated data response.
+
+    Wrapper for graph data with configuration.
+    """
+
+    graphs: list[GraphDataResponse]
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "graphs": [
+                    {
+                        "graph_id": "550e8400-e29b-41d4-a716-446655440000",
+                        "type": "bar",
+                        "name": "Sales by Category",
+                        "data": [
+                            {"category": "A", "revenue": 1000},
+                            {"category": "B", "revenue": 2000},
+                        ],
+                    }
+                ]
             }
         },
     )

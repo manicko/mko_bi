@@ -68,51 +68,34 @@ export interface UploadResponse {
 }
 
 export interface DashboardConfig {
-  layout: LayoutConfig
-  graphs: GraphConfig[]
-  filters: FilterConfigItem[]
-  bindings: FilterBinding[]
+  graph_types: GraphType[]
+  filters?: DashboardFilterConfig[]
+  aggregations?: DashboardAggregationConfig[]
+  charts?: DashboardChartConfig[]
+  title?: string
+  description?: string
 }
 
-export interface FilterConfigItem {
+export interface DashboardFilterConfig {
   field: string
   type: string
   multi?: boolean
   source?: string
+  options?: Array<{ label: string; value: string }>
+  default?: string | string[] | number
 }
 
-export interface LayoutConfig {
-  grid: GridItem[]
-  charts: ChartConfig[]
+export interface DashboardAggregationConfig {
+  type: string
+  field: string
 }
 
-export interface GridItem {
-  graph_id: string
-  x: number
-  y: number
-  w: number
-  h: number
-}
-
-export interface ChartConfig {
-  id: string
+export interface DashboardChartConfig {
   type: GraphType
-  title: string
-  config: Record<string, unknown>
-}
-
-export interface GraphConfig {
-  id: string
-  name: string
-  type: GraphType
-  config: Record<string, unknown>
-  dimensions: string[]
-  metrics: string[]
-}
-
-export interface FilterBinding {
-  filter: string
-  graphs: string[]
+  x?: string
+  y?: string
+  title?: string
+  config?: Record<string, unknown>
 }
 
 export interface FilterDetail {

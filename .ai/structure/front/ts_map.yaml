@@ -456,21 +456,11 @@
     - '<Stack direction="row" spacing={2} sx={{ mb: 3, alignItems: ''center'' }}>'
     - '<FormControl size="small" sx={{ minWidth: 200 }}>'
     - <InputLabel>
-    - |-
-      <Select
-                    value={filters.dashboard_id || ''}
-                    label="Dashboard"
-                    onChange={(e) => setFilters({ ...filters, dashboard_id: e.target.value || undefined })}
-                  >
+    - "<Select\r\n              value={filters.dashboard_id || ''}\r\n              label=\"Dashboard\"\r\n              onChange={(e) => setFilters({ ...filters, dashboard_id: e.target.value || undefined })}\r\n            >"
     - <MenuItem value="">
     - '<FormControl size="small" sx={{ minWidth: 150 }}>'
     - <InputLabel>
-    - |-
-      <Select
-                    value={filters.status_filter || ''}
-                    label="Status Filter"
-                    onChange={(e) => setFilters({ ...filters, status_filter: e.target.value || undefined })}
-                  >
+    - "<Select\r\n              value={filters.status_filter || ''}\r\n              label=\"Status Filter\"\r\n              onChange={(e) => setFilters({ ...filters, status_filter: e.target.value || undefined })}\r\n            >"
     - <MenuItem value="">
     - <MenuItem key={status} value={status}>
     - <Button variant="contained" onClick={handleApplyFilters}>
@@ -709,7 +699,7 @@
       <Grid
                 size={{
                   xs: 12,
-                  md: dashboard.config.filters?.length > 0 ? 9 : 12,
+                  md: dashboard.config.filters && dashboard.config.filters.length > 0 ? 9 : 12,
                 }}
               >
     - '<Stack sx={{ alignItems: ''center'', p: 4 }}>'
@@ -747,12 +737,15 @@
   hooks: []
   jsx_tags:
     - <Box>
-    - "<Paper\r\n        {...getRootProps()}\r\n        sx={{\r\n          p: 3,\r\n          border: '2px dashed',\r\n          borderColor: isDragActive ? 'primary.main' : 'grey.300',\r\n          backgroundColor: isDragActive ? 'action.hover' : 'background.paper',\r\n          cursor: 'pointer',\r\n          textAlign: 'center',\r\n          transition: 'all 0.2s ease-in-out',\r\n          '&:hover': {\r\n            borderColor: 'primary.main',\r\n            backgroundColor: 'action.hover',\r\n          },\r\n        }}\r\n      >"
+    - "<Paper\r\n        {...getRootProps()}\r\n        role=\"button\"\r\n        aria-label=\"Drop files here or click to upload\"\r\n        tabIndex={0}\r\n        aria-describedby=\"dropzone-instructions\"\r\n        sx={{\r\n          p: 3,\r\n          border: '2px dashed',\r\n          borderColor: isDragActive ? 'primary.main' : 'grey.300',\r\n          backgroundColor: isDragActive ? 'action.hover' : 'background.paper',\r\n          cursor: 'pointer',\r\n          textAlign: 'center',\r\n          transition: 'all 0.2s ease-in-out',\r\n          '&:hover': {\r\n            borderColor: 'primary.main',\r\n            backgroundColor: 'action.hover',\r\n          },\r\n        }}\r\n      >"
     - <Typography variant="h6" color="textSecondary">
-    - '<Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>'
+    - >-
+      <Typography id="dropzone-instructions" variant="body2"
+      color="textSecondary" sx={{ mt: 1 }}>
+    - "<Typography\r\n        component=\"span\"\r\n        sx={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}\r\n        aria-live=\"polite\"\r\n      >"
     - '<List sx={{ mt: 2 }}>'
-    - "<ListItem\r\n              key={file.name}\r\n              sx={{\r\n                border: '1px solid',\r\n                borderColor: 'grey.300',\r\n                borderRadius: 1,\r\n                mb: 1,\r\n              }}\r\n              secondaryAction={\r\n                <IconButton edge=\"end\" onClick={() => onFileRemove(file.name)}>\r\n                  <DeleteIcon />\r\n                </IconButton>\r\n              }\r\n            >"
-    - <IconButton edge="end" onClick={() => onFileRemove(file.name)}>
+    - "<ListItem\r\n              key={file.name}\r\n              sx={{\r\n                border: '1px solid',\r\n                borderColor: 'grey.300',\r\n                borderRadius: 1,\r\n                mb: 1,\r\n              }}\r\n              secondaryAction={\r\n                <IconButton\r\n                  edge=\"end\"\r\n                  onClick={() => onFileRemove(file.name)}\r\n                  aria-label={`Remove file ${file.name}`}\r\n                >\r\n                  <DeleteIcon />\r\n                </IconButton>\r\n              }\r\n            >"
+    - "<IconButton\r\n                  edge=\"end\"\r\n                  onClick={() => onFileRemove(file.name)}\r\n                  aria-label={`Remove file ${file.name}`}\r\n                >"
     - <ListItemIcon>
 - path: C:/py_dev/mkobi/frontend/src/features/upload/ui/UploadModal.tsx
   module: C:.py_dev.mkobi.frontend.src.features.upload.ui.UploadModal
@@ -779,6 +772,7 @@
                   value={mode}
                   exclusive
                   onChange={handleModeChange}
+                  aria-label="Upload mode selection"
                   sx={{ mb: 2 }}
                 >
     - <ToggleButton value={UploadMode.OVERWRITE}>

@@ -1,0 +1,73 @@
+---
+id: TASK_008_bug004_log_viewer_date_format
+title: BUG-004a — Fix Log Viewer date format mismatch (422 error)
+status: pending
+priority: high
+type: implementation
+depends_on:
+  - TASK_003_fe001_circular_import
+
+source_reference: .ai/audit/validated/BUG-004-log-viewer-empty-table.md
+source_section: Factor 1 — date_from/date_to sent as YYYY-MM-DD strings, backend expects datetime
+
+description: >
+  The LogViewer component sends date_from/date_to as date-only strings
+  ("YYYY-MM-DD") but the backend expects full datetime strings (ISO 8601).
+  This causes a 422 Unprocessable Entity error when date filters are applied.
+  Fix the date serialization in the frontend to send full ISO datetime strings.
+  Also fix the query parameter name mismatch (status vs status_filter), add
+  error handling in the component, and handle nullable started_at.
+
+goals:
+  - Fix date_from/date_to serialization to send full ISO datetime strings
+  - Align query parameter name (status → status_filter)
+  - Add error state handling in LogViewer useQuery
+  - Handle nullable started_at in datetime rendering
+
+files:
+  - path: frontend/src/features/admin/ui/LogViewer.tsx
+    targets:
+      - type: component
+        name: LogViewer
+    semantic_anchors:
+      insert_after:
+        type: component_definition
+        value: LogViewer
+    changes:
+      - action: modify_code
+        description: >
+          Replace `date.toISOString().split('T')[0]` with `date.toISOString()`
+          for both date_from and date_to onChange handlers. Destructure
+          `error` and `isError` from useQuery and display an error message
+          when the API call fails. Add null check for started_at before
+          calling `new Date(log.started_at)`.
+
+  - path: frontend/src/features/admin/api/adminApi.ts
+    targets:
+      - type: function
+        name: getLogs
+    semantic_anchors:
+      insert_after:
+        type: function_definition
+        value: getLogs
+    changes:
+      - action: modify_code
+        description: >
+          In the getLogs function, map the `status` field to `status_filter`
+          before sending query parameters to align with the backend's
+          expected parameter name.
+
+risks:
+  - Low risk: date format change is backward-compatible (ISO 8601 is a superset)
+  - Error handling is additive (no existing behavior changes)
+  - Must verify date filtering works end-to-end after the fix
+
+acceptance_criteria:
+  - Date filters no longer cause 422 errors
+  - Status filter is correctly sent as status_filter parameter
+  - Error messages are displayed when API calls fail
+  - Null started_at renders as empty string instead of "Invalid Date"
+
+tests_to_run:
+  - cd frontend && npm run build
+  - cd frontend && npm run lint

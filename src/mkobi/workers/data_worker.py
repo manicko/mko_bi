@@ -263,7 +263,11 @@ async def _process_csv_file_async(
             try:
                 await asyncio.to_thread(file_path.unlink)
             except Exception:
-                pass
+                logger.warning(
+                    "Failed to clean up temp file: %s",
+                    file_path,
+                    exc_info=True,
+                )
 
         return {
             "success": False,

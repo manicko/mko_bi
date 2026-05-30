@@ -1,7 +1,7 @@
 import axios, { AxiosError } from 'axios'
 import { toast } from 'react-hot-toast'
 import { getTokenWithExpirationCheck, removeToken, setToken } from '../../features/auth/model/authToken'
-import { refreshToken } from '../../features/auth/api/authApi'
+import { getRefreshHandler } from './refreshHandler'
 
 export const axiosInstance = axios.create({
   baseURL: '/api/v1',
@@ -80,7 +80,12 @@ axiosInstance.interceptors.response.use(
       isRefreshing = true
 
       try {
-        const newToken = await refreshToken()
+        // Use registered refresh handler instead of direct import
+        const handler = getRefreshHandler()
+        if (!handler) {
+          throw new Error('Refresh handler not registered')
+        }
+        const newToken = await handler()
         setToken(newToken.access_token)
         processQueue(null, newToken.access_token)
         originalConfig.headers.Authorization = `Bearer ${newToken.access_token}`

@@ -1,0 +1,71 @@
+---
+id: TASK_012_tst003_ambiguous_status_codes
+title: TST-003-MERGED — Fix ambiguous status code assertions in upload tests
+status: pending
+priority: medium
+type: implementation
+depends_on:
+  - TASK_003_fe001_circular_import
+
+source_reference: .ai/audit/99-validation/06-tests-validated.md
+source_section: TST-003-MERGED — Malformed data handling test ambiguity
+
+description: >
+  Two upload tests accept ambiguous status code ranges [201, 400, 422] without
+  asserting expected behavior. Define clear expected behavior for each test
+  scenario: if the endpoint should reject, assert the specific error code;
+  if it should accept, assert success. Each test should have exactly one
+  expected outcome.
+
+goals:
+  - Define clear expected behavior for malformed CSV upload test
+  - Define clear expected behavior for invalid data types upload test
+  - Replace ambiguous `status_code in [201, 400, 422]` with specific assertions
+  - Split cleanup test into a separate unit test if appropriate
+
+files:
+  - path: tests/test_upload_api.py
+    targets:
+      - type: test_function
+        name: test_upload_malformed_csv_wrong_delimiter
+    semantic_anchors:
+      insert_before:
+        type: assert_statement
+        value: status_code in
+    changes:
+      - action: modify_code
+        description: >
+          Replace `assert response.status_code in [201, 400, 422]` with a
+          specific expected status code based on the actual behavior:
+          if the endpoint correctly rejects malformed CSV, assert 400;
+          if it processes anyway, assert 201 and verify the result.
+          Add a comment explaining the expected behavior.
+
+  - path: tests/test_upload_api.py
+    targets:
+      - type: test_function
+        name: test_upload_invalid_data_types
+    semantic_anchors:
+      insert_before:
+        type: assert_statement
+        value: status_code in
+    changes:
+      - action: modify_code
+        description: >
+          Replace ambiguous status code assertion with specific expected
+          outcome. If invalid data types should cause a processing failure,
+          assert the error response; if they should be coerced, assert
+          success and verify the coerced values.
+
+risks:
+  - Low risk: test-only changes
+  - Must understand the expected behavior to assert correctly
+  - May require coordination with SEC-003 (MIME validation) if validation behavior changes
+
+acceptance_criteria:
+  - Each test has exactly one expected status code
+  - Tests are deterministic (no ambiguous pass conditions)
+  - All upload tests pass
+
+tests_to_run:
+  - pytest tests/test_upload_api.py -v

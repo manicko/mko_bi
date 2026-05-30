@@ -4,6 +4,7 @@ from uuid import UUID
 
 from mkobi.models.enums import UserRole
 from mkobi.models.user import UserRead
+from mkobi.utils.validators import validate_password_or_raise
 
 
 class LoginRequest(BaseModel):
@@ -109,6 +110,13 @@ class RegisterRequest(BaseModel):
             }
         },
     )
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_field(cls, v: str) -> str:
+        """Validate password meets strength requirements."""
+        validate_password_or_raise(v)
+        return v
 
 
 class Token(BaseModel):

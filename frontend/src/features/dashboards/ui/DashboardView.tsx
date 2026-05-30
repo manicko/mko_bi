@@ -120,7 +120,7 @@ export function DashboardView() {
         <Grid
           size={{
             xs: 12,
-            md: dashboard.config.filters?.length > 0 ? 9 : 12,
+            md: dashboard.config.filters && dashboard.config.filters.length > 0 ? 9 : 12,
           }}
         >
           {dataLoading && (

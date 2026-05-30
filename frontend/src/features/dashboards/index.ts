@@ -6,7 +6,6 @@ export { dashboardApi, useMyDashboards, useDashboard, useAggregatedData } from '
 export type {
   DashboardDetail,
   DashboardConfig,
-  GraphConfig,
   FilterDetail,
   AggregatedDataResponse,
   GraphDataWithConfig,

@@ -1,4 +1,4 @@
-from datetime import datetime, date
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
@@ -10,8 +10,8 @@ class ProcessingLogFilter(BaseModel):
 
     dashboard_id: UUID | None = None
     status: ProcessingStatus | None = None
-    date_from: date | None = None
-    date_to: date | None = None
+    date_from: datetime | None = None
+    date_to: datetime | None = None
     skip: int = 0
     limit: int = 100
 

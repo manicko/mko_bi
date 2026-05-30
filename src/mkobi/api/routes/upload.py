@@ -67,13 +67,13 @@ async def upload_file_endpoint(
     )
 
     def _handle_value_error(e: ValueError) -> NoReturn:
-        """Handle ValueError by mapping to appropriate HTTPException with logging."""
-        logger.warning("Validation error during upload: %s", e)
+        """Handle ValueError by mapping to appropriate HTTPException with generic messages."""
+        logger.warning("Validation error during upload", exc_info=True)
         error_msg = str(e).lower()
         if "mime" in error_msg or "invalid mime" in error_msg:
             raise HTTPException(
                 status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                detail=str(e),
+                detail="Invalid file type",
             ) from e
         elif (
             "format" in error_msg
@@ -82,22 +82,22 @@ async def upload_file_endpoint(
         ):
             raise HTTPException(
                 status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
-                detail=str(e),
+                detail="Invalid file format",
             ) from e
         elif "size" in error_msg or "exceeds" in error_msg or "max" in error_msg:
             raise HTTPException(
                 status_code=status.HTTP_413_CONTENT_TOO_LARGE,
-                detail=str(e),
+                detail="File size exceeds limit",
             ) from e
         elif "limit" in error_msg or "rate limit" in error_msg:
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail=str(e),
+                detail="Rate limit exceeded",
             ) from e
         else:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-                detail=str(e),
+                detail="Validation error",
             ) from e
 
     try:
@@ -203,10 +203,10 @@ async def upload_file_endpoint(
             detail=str(e),
         ) from e
     except Exception as e:
-        logger.error("Error during file upload: %s", e)
+        logger.error("Error during file upload", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error during file upload: {e}",
+            detail="Error during file upload",
         ) from e
 
 
@@ -252,19 +252,19 @@ async def process_file_endpoint(
         return result
 
     except ValueError as e:
-        logger.warning("Error starting processing: %s", e)
+        logger.warning("Error starting processing", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail=str(e),
+            detail="Invalid processing request",
         ) from e
     except PermissionError as e:
-        logger.warning("Permission denied for processing: %s", e)
+        logger.warning("Permission denied for processing", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(e),
+            detail="Access denied",
         ) from e
     except Exception as e:
-        logger.error("Error starting processing: %s", e)
+        logger.error("Error starting processing", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error starting processing",
@@ -308,19 +308,19 @@ async def get_status_endpoint(
         return result
 
     except ValueError as e:
-        logger.warning("Task not found: %s", e)
+        logger.warning("Task not found", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
+            detail="Task not found",
         ) from e
     except PermissionError as e:
-        logger.warning("Permission denied for status check: %s", e)
+        logger.warning("Permission denied for status check", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(e),
+            detail="Access denied",
         ) from e
     except Exception as e:
-        logger.error("Error getting status: %s", e)
+        logger.error("Error getting status", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error getting status",
@@ -364,19 +364,19 @@ async def get_result_endpoint(
         return result
 
     except ValueError as e:
-        logger.warning("Error getting result: %s", e)
+        logger.warning("Error getting result", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(e),
+            detail="Result not found",
         ) from e
     except PermissionError as e:
-        logger.warning("Permission denied for result: %s", e)
+        logger.warning("Permission denied for result", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail=str(e),
+            detail="Access denied",
         ) from e
     except Exception as e:
-        logger.error("Error getting result: %s", e)
+        logger.error("Error getting result", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error getting result",

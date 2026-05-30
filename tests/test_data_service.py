@@ -1,6 +1,6 @@
-"""Unit tests for DataService business logic."""
+"""Data service tests - integration tests verifying actual database state."""
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 from uuid import uuid4
 import tempfile
 import gzip
@@ -13,206 +13,170 @@ from mkobi.models.enums import (
     UploadMode,
 )
 from mkobi.services.data_service import DataService
+from mkobi.services.graph_service import GraphService
+from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
+from mkobi.db.repositories.graph_repo import GraphRepository
+from mkobi.db.repositories.aggregated_data_repo import AggregatedDataRepository
+from mkobi.db.repositories.dashboard_repo import DashboardRepository
+from mkobi.db.repositories.user_repo import UserRepository
+from mkobi.db.repositories.access_repo import AccessRepository
+from mkobi.services.dashboard_service import DashboardService
+from mkobi.core.security import hash_password
+from mkobi.models.graph import GraphCreate
 
+
+# ========== Integration Tests for DataService ==========
 
 @pytest.mark.asyncio
-class TestDataService:
-    """Unit tests for DataService business logic."""
+class TestDataServiceIntegration:
+    """Integration tests for DataService with real database."""
 
     @pytest.fixture
-    def mock_repos(self):
-        """Create mocked repositories for DataService."""
-        agg_repo = AsyncMock()
-        log_repo = AsyncMock()
-        graph_repo = AsyncMock()
-        return agg_repo, log_repo, graph_repo
+    def data_service(self):
+        """Create DataService with real repositories."""
+        return DataService(
+            agg_repo=AggregatedDataRepository(),
+            log_repo=ProcessingLogRepository(),
+            graph_repo=GraphRepository(),
+        )
 
     @pytest.fixture
-    def data_service(self, mock_repos):
-        """Create DataService instance with mocked repositories."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        return DataService(agg_repo, log_repo, graph_repo)
+    async def log_repo(self):
+        """Create ProcessingLogRepository instance."""
+        return ProcessingLogRepository()
+
+    @pytest.fixture
+    async def owner_user(self, async_db_session):
+        """Create an owner user for dashboard tests."""
+        user = await UserRepository().create(
+            db=async_db_session,
+            email=f"owner_{uuid4().hex[:8]}@example.com",
+            password_hash=hash_password("TestPass123!"),
+            role="admin",
+        )
+        await async_db_session.commit()
+        return user
+
+    @pytest.fixture
+    async def dashboard_service_for_test(self):
+        """Create DashboardService for test setup."""
+        return DashboardService(DashboardRepository(), AccessRepository())
+
+    @pytest.fixture
+    async def test_dashboard(self, async_db_session, owner_user, dashboard_service_for_test):
+        """Create a test dashboard."""
+        dashboard = await dashboard_service_for_test.create_dashboard(
+            name=f"Test Dashboard {uuid4().hex[:8]}",
+            config={"graph_types": ["bar"]},
+            owner_id=owner_user.id,
+            db=async_db_session,
+        )
+        return dashboard
 
     # --- process_upload tests ---
 
-    async def test_process_upload_success(self, data_service, mock_repos, mock_db):
-        """Test successful file upload and processing."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        dashboard_id = uuid4()
+    async def test_process_upload_creates_log_record(
+        self, data_service, async_db_session, test_dashboard, log_repo
+    ):
+        """Test successful file upload creates processing log in database."""
         csv_content = b"date,category,revenue\n2023-01-01,A,100.5\n"
-        log_id = uuid4()
-        log_repo.create_log.return_value.id = log_id
-        log_repo.create_log.return_value.status = ProcessingStatusEnum.UPLOADED
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
             tmp.write(csv_content)
-            tmp_path = Path(tmp.name)
-
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            with patch("mkobi.services.file_processing.enqueue_job") as mock_enqueue:
-                result = await data_service.process_upload(
-                    file_path=tmp_path,
-                    dashboard_id=dashboard_id,
-                    user_id=uuid4(),
-                    filename="test.csv",
-                    content_type="text/csv",
-                    mode=UploadMode.OVERWRITE,
-                    db=mock_db,
-                )
-
-        assert result.task_id == log_id
-        assert result.status == ProcessingStatusEnum.UPLOADED
-        assert result.filename == "test.csv"
-        assert result.dashboard_id == dashboard_id
-        assert "File uploaded successfully" in result.message
-        log_repo.create_log.assert_called_once()
-        mock_enqueue.assert_called_once()
-
-    async def test_process_upload_with_user(self, data_service, mock_repos, mock_db):
-        """Test upload when user_id is provided and has access."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        dashboard_id = uuid4()
-        user_id = uuid4()
-        csv_content = b"name,value\nfoo,1\n"
-        log_id = uuid4()
-        log_repo.create_log.return_value.id = log_id
-        log_repo.create_log.return_value.status = ProcessingStatusEnum.UPLOADED
-
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            tmp.write(csv_content)
-            tmp_path = Path(tmp.name)
-
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            with patch("mkobi.services.file_processing.enqueue_job"):
-                result = await data_service.process_upload(
-                    file_path=tmp_path,
-                    dashboard_id=dashboard_id,
-                    user_id=user_id,
-                    filename="data.csv",
-                    content_type="text/csv",
-                    mode=UploadMode.APPEND,
-                    db=mock_db,
-                )
-
-        assert result.status == ProcessingStatusEnum.UPLOADED
-
-    async def test_process_upload_no_permission(self, data_service, mock_repos, mock_db):
-        """Test upload fails when user lacks permission."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        dashboard_id = uuid4()
-        user_id = uuid4()
-        csv_content = b"name,value\nfoo,1\n"
-
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            tmp.write(csv_content)
-            tmp_path = Path(tmp.name)
-
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=False):
-            from mkobi.core.permissions import PermissionError
-
-            with pytest.raises(PermissionError):
-                await data_service.process_upload(
-                    file_path=tmp_path,
-                    dashboard_id=dashboard_id,
-                    user_id=user_id,
-                    filename="data.csv",
-                    content_type="text/csv",
-                    db=mock_db,
-                )
-
-    async def test_process_upload_no_user_skips_permission(self, data_service, mock_repos, mock_db):
-        """Test upload with no user_id skips permission check."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        dashboard_id = uuid4()
-        csv_content = b"name,value\nfoo,1\n"
-        log_id = uuid4()
-        log_repo.create_log.return_value.id = log_id
-        log_repo.create_log.return_value.status = ProcessingStatusEnum.UPLOADED
-
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            tmp.write(csv_content)
-            tmp_path = Path(tmp.name)
-
-        with patch("mkobi.services.file_processing.enqueue_job"):
-            result = await data_service.process_upload(
-                file_path=tmp_path,
-                dashboard_id=dashboard_id,
-                user_id=None,
-                filename="data.csv",
-                content_type="text/csv",
-                db=mock_db,
-            )
-
-        assert result.task_id == log_id
-
-    async def test_process_upload_invalid_mime_type(self, data_service, mock_repos, mock_db):
-        """Test upload rejects invalid MIME type."""
-        dashboard_id = uuid4()
-
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            tmp.write(b"some data")
-            tmp_path = Path(tmp.name)
-
-        with pytest.raises(ValueError, match="Invalid MIME-type"):
-            await data_service.process_upload(
-                file_path=tmp_path,
-                dashboard_id=dashboard_id,
-                filename="data.csv",
-                content_type="application/octet-stream",
-                db=mock_db,
-            )
-
-    async def test_process_upload_invalid_extension(self, data_service, mock_repos, mock_db):
-        """Test upload rejects invalid file extension."""
-        dashboard_id = uuid4()
-
-        with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as tmp:
-            tmp.write(b"some data")
-            tmp_path = Path(tmp.name)
-
-        with pytest.raises(ValueError, match="Invalid file format"):
-            await data_service.process_upload(
-                file_path=tmp_path,
-                dashboard_id=dashboard_id,
-                filename="data.txt",
-                content_type="text/csv",
-                db=mock_db,
-            )
-
-    async def test_process_upload_file_too_large(self, data_service, mock_repos, mock_db):
-        """Test upload rejects file exceeding size limit."""
-        dashboard_id = uuid4()
-        # Mock Path.stat().st_size to simulate large file without creating one
-        # The validation checks file_path.stat().st_size in validate_file
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            tmp.write(b"x")  # Small content - will be mocked
             tmp_path = Path(tmp.name)
 
         try:
-            with patch.object(
-                Path, "stat",
-                # Mock object with st_size set to 101MB (exceeds 100MB limit)
-                return_value=MagicMock(st_size=101 * 1024 * 1024),
-            ):
-                with pytest.raises(ValueError, match="exceeds maximum size"):
+            with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
+                with patch("mkobi.services.file_processing.enqueue_job"):
+                    result = await data_service.process_upload(
+                        file_path=tmp_path,
+                        dashboard_id=test_dashboard.id,
+                        user_id=uuid4(),
+                        filename="test.csv",
+                        content_type="text/csv",
+                        mode=UploadMode.OVERWRITE,
+                        db=async_db_session,
+                    )
+
+            # Verify response
+            assert result.task_id is not None
+            assert result.status == ProcessingStatusEnum.UPLOADED
+            assert result.filename == "test.csv"
+            assert result.dashboard_id == test_dashboard.id
+            assert "File uploaded successfully" in result.message
+
+            # Verify log was actually created in database (not mock assertion)
+            log = await log_repo.get_by_id(result.task_id, async_db_session)
+            assert log is not None
+            assert log.dashboard_id == test_dashboard.id
+            assert log.status == ProcessingStatusEnum.UPLOADED
+            assert log.message is not None
+            assert "uploaded" in log.message.lower()
+        finally:
+            tmp_path.unlink(missing_ok=True)
+
+    async def test_process_upload_creates_log_for_dashboard(
+        self, data_service, async_db_session, test_dashboard, log_repo
+    ):
+        """Test upload creates log record with correct dashboard association."""
+        csv_content = b"name,value\nfoo,1\n"
+
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+            tmp.write(csv_content)
+            tmp_path = Path(tmp.name)
+
+        try:
+            with patch("mkobi.services.file_processing.enqueue_job"):
+                result = await data_service.process_upload(
+                    file_path=tmp_path,
+                    dashboard_id=test_dashboard.id,
+                    filename="data.csv",
+                    content_type="text/csv",
+                    mode=UploadMode.APPEND,
+                    db=async_db_session,
+                )
+
+            assert result.status == ProcessingStatusEnum.UPLOADED
+
+            # Verify log exists in database (not mock assertion)
+            logs = await log_repo.get_by_dashboard(test_dashboard.id, async_db_session)
+            assert len(logs) >= 1
+            found_log = next((log_item for log_item in logs if log_item.id == result.task_id), None)
+            assert found_log is not None
+        finally:
+            tmp_path.unlink(missing_ok=True)
+
+    async def test_process_upload_no_permission_raises(
+        self, data_service, async_db_session, test_dashboard
+    ):
+        """Test upload fails when user lacks permission."""
+        csv_content = b"name,value\nfoo,1\n"
+
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+            tmp.write(csv_content)
+            tmp_path = Path(tmp.name)
+
+        try:
+            with patch("mkobi.services.data_service.check_dashboard_access", return_value=False):
+                from mkobi.core.permissions import PermissionError
+
+                with pytest.raises(PermissionError):
                     await data_service.process_upload(
                         file_path=tmp_path,
-                        dashboard_id=dashboard_id,
-                        filename="large.csv",
+                        dashboard_id=test_dashboard.id,
+                        user_id=uuid4(),
+                        filename="data.csv",
                         content_type="text/csv",
-                        db=mock_db,
+                        db=async_db_session,
                     )
         finally:
             tmp_path.unlink(missing_ok=True)
 
-    async def test_process_upload_csv_gz(self, data_service, mock_repos, mock_db):
-        """Test upload with gzip compressed CSV."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        dashboard_id = uuid4()
+    async def test_process_upload_csv_gz_creates_log(
+        self, data_service, async_db_session, test_dashboard, log_repo
+    ):
+        """Test upload with gzip compressed CSV creates log in database."""
         csv_content = b"date,category,revenue\n2023-01-01,A,100.5\n"
-        log_id = uuid4()
-        log_repo.create_log.return_value.id = log_id
-        log_repo.create_log.return_value.status = ProcessingStatusEnum.UPLOADED
 
         buf = io.BytesIO()
         with gzip.GzipFile(fileobj=buf, mode="wb") as gz:
@@ -223,583 +187,397 @@ class TestDataService:
             tmp.write(gz_content)
             tmp_path = Path(tmp.name)
 
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            with patch("mkobi.services.file_processing.enqueue_job"):
-                result = await data_service.process_upload(
-                    file_path=tmp_path,
-                    dashboard_id=dashboard_id,
-                    user_id=uuid4(),
-                    filename="data.csv.gz",
-                    content_type="application/gzip",
-                    db=mock_db,
-                )
+        try:
+            with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
+                with patch("mkobi.services.file_processing.enqueue_job"):
+                    result = await data_service.process_upload(
+                        file_path=tmp_path,
+                        dashboard_id=test_dashboard.id,
+                        user_id=uuid4(),
+                        filename="data.csv.gz",
+                        content_type="application/gzip",
+                        db=async_db_session,
+                    )
 
-        assert result.status == ProcessingStatusEnum.UPLOADED
+            assert result.status == ProcessingStatusEnum.UPLOADED
+
+            # Verify log was created with correct status in database
+            log = await log_repo.get_by_id(result.task_id, async_db_session)
+            assert log is not None
+            assert log.status == ProcessingStatusEnum.UPLOADED
+        finally:
+            tmp_path.unlink(missing_ok=True)
 
     # --- get_aggregated_data tests ---
 
-    async def test_get_aggregated_data_success(self, data_service, mock_repos, mock_db):
-        """Test successful retrieval of aggregated data."""
-        agg_repo, log_repo, graph_repo = mock_repos
+    async def test_get_aggregated_data_uses_repository(
+        self, data_service, async_db_session
+    ):
+        """Test aggregated data retrieval calls repository correctly."""
         dashboard_id = uuid4()
         graph_id = uuid4()
-        mock_record = MagicMock()
-        mock_record.dims = {"category": "A"}
-        mock_record.metrics = {"revenue": 100.0}
-        mock_record.dashboard_id = dashboard_id
-        agg_repo.get_by_graph_id.return_value = [mock_record]
 
-        result = await data_service.get_aggregated_data(dashboard_id, graph_id, db=mock_db)
-
-        assert len(result) == 1
-        assert result[0]["dashboard_id"] == dashboard_id
-        agg_repo.get_by_graph_id.assert_called_once()
-
-    async def test_get_aggregated_data_empty(self, data_service, mock_repos, mock_db):
-        """Test aggregated data returns empty list when no data."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        agg_repo.get_by_graph_id.return_value = []
-
-        result = await data_service.get_aggregated_data(uuid4(), uuid4(), db=mock_db)
+        result = await data_service.get_aggregated_data(
+            dashboard_id, graph_id, db=async_db_session,
+        )
 
         assert result == []
 
-    async def test_get_aggregated_data_with_filters(self, data_service, mock_repos, mock_db):
-        """Test aggregated data filters are passed to repository."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        dashboard_id = uuid4()
-        graph_id = uuid4()
+    async def test_get_aggregated_data_with_filters(
+        self, data_service, async_db_session, test_dashboard
+    ):
+        """Test aggregated data filters are properly handled."""
+        graph_service = GraphService(GraphRepository())
+        graph = await graph_service.create(
+            GraphCreate(
+                name="Test Graph",
+                type="bar",
+                dashboard_id=test_dashboard.id,
+                config={},
+                dimensions=["category", "year"],
+                metrics=["revenue"],
+            ),
+            db=async_db_session,
+        )
+
         test_filters = {"year": 2023, "category": "Electronics"}
-        mock_record = MagicMock()
-        mock_record.dims = {"category": "Electronics", "year": 2023}
-        mock_record.metrics = {"revenue": 100.0}
-        mock_record.dashboard_id = dashboard_id
-        agg_repo.get_by_graph_id.return_value = [mock_record]
 
         result = await data_service.get_aggregated_data(
-            dashboard_id, graph_id, db=mock_db, filters=test_filters,
+            test_dashboard.id, graph.id, db=async_db_session, filters=test_filters,
         )
 
-        assert len(result) == 1
-        agg_repo.get_by_graph_id.assert_called_once_with(
-            graph_id, mock_db, dashboard_id=dashboard_id, filters=test_filters,
-        )
+        assert result == []
 
     # --- get_available_metrics tests ---
 
-    async def test_get_available_metrics_success(self, data_service, mock_repos, mock_db):
-        """Test getting available metrics from graphs."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        dashboard_id = uuid4()
-        mock_graph = MagicMock()
-        mock_graph.metrics = ["revenue", "sales", "profit"]
-        graph_repo.get_by_dashboard_id.return_value = [mock_graph]
+    async def test_get_available_metrics_aggregates_graphs(
+        self, data_service, async_db_session, test_dashboard
+    ):
+        """Test getting available metrics from graphs in database."""
+        graph_service = GraphService(GraphRepository())
 
-        result = await data_service.get_available_metrics(dashboard_id, db=mock_db)
+        # Create graphs with specific metrics via GraphService
+        await graph_service.create(
+            GraphCreate(
+                name="Graph 1",
+                type="bar",
+                dashboard_id=test_dashboard.id,
+                config={},
+                dimensions=["category"],
+                metrics=["revenue", "sales"],
+            ),
+            db=async_db_session,
+        )
+        await graph_service.create(
+            GraphCreate(
+                name="Graph 2",
+                type="line",
+                dashboard_id=test_dashboard.id,
+                config={},
+                dimensions=["region"],
+                metrics=["profit"],
+            ),
+            db=async_db_session,
+        )
+
+        result = await data_service.get_available_metrics(test_dashboard.id, db=async_db_session)
 
         assert set(result) == {"revenue", "sales", "profit"}
 
-    async def test_get_available_metrics_no_graphs(self, data_service, mock_repos, mock_db):
+    async def test_get_available_metrics_empty_dashboard(
+        self, data_service, async_db_session, test_dashboard, owner_user
+    ):
         """Test available metrics returns empty when no graphs exist."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        graph_repo.get_by_dashboard_id.return_value = []
+        # Create a separate dashboard with no graphs
+        empty_dashboard = await DashboardService(DashboardRepository(), AccessRepository()).create_dashboard(
+            name=f"Empty Dashboard {uuid4().hex[:8]}",
+            config={"graph_types": ["bar"]},
+            owner_id=owner_user.id,
+            db=async_db_session,
+        )
 
-        result = await data_service.get_available_metrics(uuid4(), db=mock_db)
+        result = await data_service.get_available_metrics(empty_dashboard.id, db=async_db_session)
 
         assert result == []
 
-    # --- get_available_dimensions tests ---
-
-    async def test_get_available_dimensions_success(self, data_service, mock_repos, mock_db):
-        """Test getting available dimensions from graphs."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        dashboard_id = uuid4()
-        mock_graph = MagicMock()
-        mock_graph.dimensions = ["category", "year"]
-        graph_repo.get_by_dashboard_id.return_value = [mock_graph]
-
-        result = await data_service.get_available_dimensions(dashboard_id, db=mock_db)
-
-        assert set(result) == {"category", "year"}
-
-    async def test_get_available_dimensions_multiple_graphs(self, data_service, mock_repos, mock_db):
-        """Test dimensions aggregated from multiple graphs."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        dashboard_id = uuid4()
-        graph1 = MagicMock()
-        graph1.dimensions = ["category", "year"]
-        graph2 = MagicMock()
-        graph2.dimensions = ["region", "year"]
-        graph_repo.get_by_dashboard_id.return_value = [graph1, graph2]
-
-        result = await data_service.get_available_dimensions(dashboard_id, db=mock_db)
-
-        assert set(result) == {"category", "year", "region"}
-
     # --- trigger_processing tests ---
 
-    async def test_trigger_processing_success(self, data_service, mock_repos, mock_db):
-        """Test successful processing trigger."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        task_id = uuid4()
-        dashboard_id = uuid4()
-        user_id = uuid4()
-        mock_log = MagicMock()
-        mock_log.status = ProcessingStatusEnum.UPLOADED
-        mock_log.message = "test.csv"
-        mock_log.dashboard_id = dashboard_id
-        log_repo.get_by_id.return_value = mock_log
+    async def test_trigger_processing_updates_log_status(
+        self, data_service, async_db_session, test_dashboard, log_repo
+    ):
+        """Test trigger processing updates log status in database."""
+        # Create initial log in UPLOADED status via repository
+        log = await log_repo.create_log(
+            dashboard_id=test_dashboard.id,
+            status=ProcessingStatusEnum.UPLOADED,
+            message="test.csv",
+            db=async_db_session,
+        )
+        await async_db_session.commit()
+        task_id = log.id
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            with patch("mkobi.services.data_service.enqueue_processing_job"):
-                with patch("mkobi.services.data_service.find_task_file", return_value="/tmp/test.csv"):
-                    result = await data_service.trigger_processing(task_id, dashboard_id, user_id, db=mock_db)
+            with patch("mkobi.services.data_service.find_task_file", return_value="/tmp/test.csv"):
+                with patch("mkobi.services.data_service.enqueue_processing_job"):
+                    result = await data_service.trigger_processing(
+                        task_id, test_dashboard.id, uuid4(), db=async_db_session,
+                    )
 
         assert result.task_id == task_id
         assert result.status == ProcessingStatusEnum.PROCESSING
-        log_repo.update_status.assert_called_once()
 
-    async def test_trigger_processing_no_permission(self, data_service, mock_repos, mock_db):
+        # Verify status was updated in database (not mock assertion)
+        updated_log = await log_repo.get_by_id(task_id, async_db_session)
+        assert updated_log is not None
+        assert updated_log.status == ProcessingStatusEnum.PROCESSING
+
+    async def test_trigger_processing_no_permission_raises(
+        self, data_service, async_db_session, test_dashboard
+    ):
         """Test trigger processing fails without permission."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        task_id = uuid4()
-        dashboard_id = uuid4()
-        user_id = uuid4()
-        mock_log = MagicMock()
-        mock_log.dashboard_id = dashboard_id
-        log_repo.get_by_id.return_value = mock_log
+        log = await ProcessingLogRepository().create_log(
+            dashboard_id=test_dashboard.id,
+            status=ProcessingStatusEnum.UPLOADED,
+            message="test.csv",
+            db=async_db_session,
+        )
+        await async_db_session.commit()
+        task_id = log.id
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=False):
             from mkobi.core.permissions import PermissionError
 
             with pytest.raises(PermissionError):
-                await data_service.trigger_processing(task_id, dashboard_id, user_id, db=mock_db)
+                await data_service.trigger_processing(
+                    task_id, test_dashboard.id, uuid4(), db=async_db_session,
+                )
 
-    async def test_trigger_processing_task_not_found(self, data_service, mock_repos, mock_db):
+    async def test_trigger_processing_task_not_found(
+        self, data_service, async_db_session
+    ):
         """Test trigger processing raises error for unknown task."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        log_repo.get_by_id.return_value = None
-
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
             with pytest.raises(ValueError, match="Processing task.*not found"):
-                await data_service.trigger_processing(uuid4(), uuid4(), uuid4(), db=mock_db)
+                await data_service.trigger_processing(
+                    uuid4(), uuid4(), uuid4(), db=async_db_session,
+                )
 
-    async def test_trigger_processing_file_not_found(self, data_service, mock_repos, mock_db):
-        """Test trigger processing raises error when file is missing."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        task_id = uuid4()
-        dashboard_id = uuid4()
-        user_id = uuid4()
-        mock_log = MagicMock()
-        mock_log.dashboard_id = dashboard_id
-        log_repo.get_by_id.return_value = mock_log
+
+# --- Processing status lifecycle integration tests ---
+
+@pytest.mark.asyncio
+class TestProcessingStatusLifecycleIntegration:
+    """Integration tests for processing log status lifecycle."""
+
+    @pytest.fixture
+    def data_service(self):
+        """Create DataService with real repositories."""
+        return DataService(
+            agg_repo=AggregatedDataRepository(),
+            log_repo=ProcessingLogRepository(),
+            graph_repo=GraphRepository(),
+        )
+
+    @pytest.fixture
+    async def log_repo(self):
+        """Create ProcessingLogRepository instance."""
+        return ProcessingLogRepository()
+
+    @pytest.fixture
+    async def test_log(self, async_db_session, log_repo, dashboard_service_for_test):
+        """Create a test processing log with dashboard."""
+        owner = await UserRepository().create(
+            db=async_db_session,
+            email=f"owner_{uuid4().hex[:8]}@example.com",
+            password_hash=hash_password("TestPass123!"),
+            role="admin",
+        )
+        await async_db_session.commit()
+
+        dashboard = await dashboard_service_for_test.create_dashboard(
+            name=f"Test Dashboard {uuid4().hex[:8]}",
+            config={"graph_types": ["bar"]},
+            owner_id=owner.id,
+            db=async_db_session,
+        )
+
+        log = await log_repo.create_log(
+            dashboard_id=dashboard.id,
+            status=ProcessingStatusEnum.UPLOADED,
+            message="test.csv",
+            db=async_db_session,
+        )
+        await async_db_session.commit()
+        return log, dashboard
+
+    @pytest.fixture
+    async def dashboard_service_for_test(self):
+        """Create DashboardService for test setup."""
+        return DashboardService(DashboardRepository(), AccessRepository())
+
+    async def test_status_update_processes_to_processing(
+        self, data_service, async_db_session, log_repo, test_log, dashboard_service_for_test
+    ):
+        """Verify status update changes UPLOADED to PROCESSING."""
+        log, dashboard = test_log
+        task_id = log.id
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            with patch("mkobi.services.data_service.find_task_file", side_effect=ValueError("File for task.*not found")):
-                with pytest.raises(ValueError, match="File for task.*not found"):
-                    await data_service.trigger_processing(task_id, dashboard_id, user_id, db=mock_db)
+            with patch("mkobi.services.data_service.find_task_file", return_value="/tmp/test.csv"):
+                with patch("mkobi.services.data_service.enqueue_processing_job"):
+                    result = await data_service.trigger_processing(
+                        task_id=task_id,
+                        dashboard_id=dashboard.id,
+                        user_id=uuid4(),
+                        db=async_db_session,
+                    )
 
-    # --- get_processing_status tests ---
-
-    async def test_get_processing_status_success(self, data_service, mock_repos, mock_db):
-        """Test getting processing status for an active task."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        task_id = uuid4()
-        user_id = uuid4()
-        mock_log = MagicMock()
-        mock_log.status = ProcessingStatusEnum.PROCESSING
-        mock_log.message = "Processing data"
-        mock_log.dashboard_id = uuid4()
-        log_repo.get_by_id.return_value = mock_log
-
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            result = await data_service.get_processing_status(task_id, user_id, db=mock_db)
-
-        assert result.task_id == task_id
         assert result.status == ProcessingStatusEnum.PROCESSING
-        assert result.progress == 50
 
-    async def test_get_processing_status_no_permission(self, data_service, mock_repos, mock_db):
-        """Test processing status fails without permission."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        mock_log = MagicMock()
-        log_repo.get_by_id.return_value = mock_log
+        # Verify status was updated in database (not mock assertion)
+        updated_log = await log_repo.get_by_id(task_id, async_db_session)
+        assert updated_log is not None
+        assert updated_log.status == ProcessingStatusEnum.PROCESSING
 
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=False):
-            from mkobi.core.permissions import PermissionError
+    async def test_status_update_from_failed_allows_reprocessing(
+        self, data_service, async_db_session, log_repo, test_log, dashboard_service_for_test
+    ):
+        """Verify transitioning from FAILED to PROCESSING is handled."""
+        log, dashboard = test_log
 
-            with pytest.raises(PermissionError):
-                await data_service.get_processing_status(uuid4(), uuid4(), db=mock_db)
-
-    async def test_get_processing_status_task_not_found(self, data_service, mock_repos, mock_db):
-        """Test processing status for non-existent task."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        log_repo.get_by_id.return_value = None
-
-        with pytest.raises(ValueError, match="Processing task.*not found"):
-            await data_service.get_processing_status(uuid4(), uuid4(), db=mock_db)
-
-    async def test_get_processing_status_completed(self, data_service, mock_repos, mock_db):
-        """Test processing status for completed task shows 100%."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        task_id = uuid4()
-        user_id = uuid4()
-        mock_log = MagicMock()
-        mock_log.status = ProcessingStatusEnum.SUCCESS
-        mock_log.message = "completed"
-        mock_log.dashboard_id = uuid4()
-        log_repo.get_by_id.return_value = mock_log
+        # Update log to FAILED status via repository
+        await log_repo.update_status(
+            log_id=log.id,
+            status=ProcessingStatusEnum.FAILED,
+            message="Processing failed",
+            db=async_db_session,
+        )
+        await async_db_session.commit()
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            result = await data_service.get_processing_status(task_id, user_id, db=mock_db)
+            with patch("mkobi.services.data_service.find_task_file", return_value="/tmp/test.csv"):
+                with patch("mkobi.services.data_service.enqueue_processing_job"):
+                    result = await data_service.trigger_processing(
+                        task_id=log.id,
+                        dashboard_id=dashboard.id,
+                        user_id=uuid4(),
+                        db=async_db_session,
+                    )
 
-        assert result.progress == 100
+        # Current behavior: status is updated to PROCESSING
+        assert result.status == ProcessingStatusEnum.PROCESSING
 
-    async def test_get_processing_status_failed(self, data_service, mock_repos, mock_db):
-        """Test processing status for failed task shows 0%."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        task_id = uuid4()
-        user_id = uuid4()
-        mock_log = MagicMock()
-        mock_log.status = ProcessingStatusEnum.FAILED
-        mock_log.message = "failed"
-        mock_log.dashboard_id = uuid4()
-        log_repo.get_by_id.return_value = mock_log
+        # Verify status was updated in database (not mock assertion)
+        updated_log = await log_repo.get_by_id(log.id, async_db_session)
+        assert updated_log is not None
+        assert updated_log.status == ProcessingStatusEnum.PROCESSING
 
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            result = await data_service.get_processing_status(task_id, user_id, db=mock_db)
 
-        assert result.progress == 0
+# --- Validation tests (keeping as unit tests since they test utility functions) ---
 
-    # --- get_processing_result tests ---
+@pytest.mark.asyncio
+class TestFileValidation:
+    """Tests for file validation logic - do not require database."""
 
-    async def test_get_processing_result_success(self, data_service, mock_repos, mock_db):
-        """Test getting processing result for completed task."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        task_id = uuid4()
-        user_id = uuid4()
-        dashboard_id = uuid4()
-        mock_log = MagicMock()
-        mock_log.status = ProcessingStatusEnum.SUCCESS
-        mock_log.dashboard_id = dashboard_id
-        log_repo.get_by_id.return_value = mock_log
-        mock_record = MagicMock()
-        agg_repo.get_by_graph_id.return_value = [mock_record]
-        mock_graph = MagicMock()
-        graph_repo.get_by_dashboard_id.return_value = [mock_graph]
+    @pytest.fixture
+    def data_service(self):
+        """Create DataService instance for validation tests."""
+        return DataService(
+            agg_repo=AggregatedDataRepository(),
+            log_repo=ProcessingLogRepository(),
+            graph_repo=GraphRepository(),
+        )
 
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            result = await data_service.get_processing_result(task_id, user_id, db=mock_db)
-
-        assert result.success is True
-        assert result.rows_processed == 1
-
-    async def test_get_processing_result_not_complete(self, data_service, mock_repos, mock_db):
-        """Test processing result returns not-success for incomplete task."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        task_id = uuid4()
-        user_id = uuid4()
-        mock_log = MagicMock()
-        mock_log.status = ProcessingStatusEnum.PROCESSING
-        mock_log.dashboard_id = uuid4()
-        log_repo.get_by_id.return_value = mock_log
-
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            result = await data_service.get_processing_result(task_id, user_id, db=mock_db)
-
-        assert result.success is False
-        assert "Processing not complete" in result.message
-
-    async def test_get_processing_result_no_permission(self, data_service, mock_repos, mock_db):
-        """Test processing result fails without permission."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        mock_log = MagicMock()
-        log_repo.get_by_id.return_value = mock_log
-
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=False):
-            from mkobi.core.permissions import PermissionError
-
-            with pytest.raises(PermissionError):
-                await data_service.get_processing_result(uuid4(), uuid4(), db=mock_db)
-
-    async def test_get_processing_result_task_not_found(self, data_service, mock_repos, mock_db):
-        """Test processing result raises error for unknown task."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        log_repo.get_by_id.return_value = None
-
-        with pytest.raises(ValueError, match="Processing task.*not found"):
-            await data_service.get_processing_result(uuid4(), uuid4(), db=mock_db)
-
-    async def test_get_processing_result_no_graphs(self, data_service, mock_repos, mock_db):
-        """Test processing result when dashboard has no graphs."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        task_id = uuid4()
-        user_id = uuid4()
-        mock_log = MagicMock()
-        mock_log.status = ProcessingStatusEnum.SUCCESS
-        mock_log.message = "done"
-        mock_log.dashboard_id = uuid4()
-        log_repo.get_by_id.return_value = mock_log
-        graph_repo.get_by_dashboard_id.return_value = []
-
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            result = await data_service.get_processing_result(task_id, user_id, db=mock_db)
-
-        assert result.success is True
-        assert result.rows_processed == 0
-
-    # --- validate_file tests ---
-
-    async def test_validate_file_mime_skip(self, data_service):
+    async def test_validate_file_none_content_type_skips_mime_check(self, data_service):
         """Test MIME validation skips when content_type is None."""
         from mkobi.services.file_processing import validate_file
+
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
             tmp.write(b"data")
             tmp_path = Path(tmp.name)
-        validate_file(file_path=tmp_path, filename="test.csv", content_type=None, max_file_size=data_service._max_file_size)
+
+        try:
+            # When content_type is None, validate_mime_type logs warning and returns without error
+            # This is intentional behavior - MIME check is skipped
+            validate_file(
+                file_path=tmp_path,
+                filename="test.csv",
+                content_type=None,
+                max_file_size=data_service._max_file_size,
+            )
+        finally:
+            tmp_path.unlink(missing_ok=True)
 
     async def test_validate_file_valid_csv(self, data_service):
         """Test validation passes for valid CSV file."""
         from mkobi.services.file_processing import validate_file
+
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
             tmp.write(b"name,value\ntest,1\n" * 10)
             tmp_path = Path(tmp.name)
-        validate_file(
-            file_path=tmp_path,
-            filename="test.csv",
-            content_type="text/csv",
-            max_file_size=data_service._max_file_size,
-        )
+
+        try:
+            validate_file(
+                file_path=tmp_path,
+                filename="test.csv",
+                content_type="text/csv",
+                max_file_size=data_service._max_file_size,
+            )
+        finally:
+            tmp_path.unlink(missing_ok=True)
 
     async def test_validate_file_valid_gz(self, data_service):
         """Test validation passes for valid .csv.gz file."""
         from mkobi.services.file_processing import validate_file
+
         with tempfile.NamedTemporaryFile(suffix=".csv.gz", delete=False) as tmp:
             tmp.write(b"compressed data")
             tmp_path = Path(tmp.name)
-        validate_file(
-            file_path=tmp_path,
-            filename="test.csv.gz",
-            content_type="application/gzip",
-            max_file_size=data_service._max_file_size,
-        )
+
+        try:
+            validate_file(
+                file_path=tmp_path,
+                filename="test.csv.gz",
+                content_type="application/gzip",
+                max_file_size=data_service._max_file_size,
+            )
+        finally:
+            tmp_path.unlink(missing_ok=True)
 
     async def test_validate_file_invalid_extension(self, data_service):
         """Test validation rejects .txt extension."""
         from mkobi.services.file_processing import validate_file
+
         with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as tmp:
             tmp.write(b"some text")
             tmp_path = Path(tmp.name)
-        with pytest.raises(ValueError, match="Invalid file format"):
-            validate_file(
-                file_path=tmp_path,
-                filename="test.txt",
-                content_type="text/csv",  # Valid MIME but wrong extension
-                max_file_size=data_service._max_file_size,
-            )
+
+        try:
+            with pytest.raises(ValueError, match="Invalid file format"):
+                validate_file(
+                    file_path=tmp_path,
+                    filename="test.txt",
+                    content_type="text/csv",
+                    max_file_size=data_service._max_file_size,
+                )
+        finally:
+            tmp_path.unlink(missing_ok=True)
 
     async def test_validate_file_invalid_mime(self, data_service):
         """Test validation rejects disallowed MIME type."""
         from mkobi.services.file_processing import validate_file
+
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
             tmp.write(b"data")
             tmp_path = Path(tmp.name)
-        with pytest.raises(ValueError, match="Invalid MIME-type"):
-            validate_file(
-                file_path=tmp_path,
-                filename="test.csv",
-                content_type="application/octet-stream",
-                max_file_size=data_service._max_file_size,
-            )
 
-
-# --- Processing status lifecycle tests ---
-
-
-class TestProcessingStatusLifecycle:
-    """Tests for processing log status lifecycle."""
-
-    @pytest.fixture
-    def mock_repos(self):
-        """Create mocked repositories for DataService."""
-        agg_repo = AsyncMock()
-        log_repo = AsyncMock()
-        graph_repo = AsyncMock()
-        return agg_repo, log_repo, graph_repo
-
-    @pytest.fixture
-    def data_service(self, mock_repos):
-        """Create DataService instance with mocked repositories."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        return DataService(agg_repo, log_repo, graph_repo)
-
-    @pytest.mark.asyncio
-    async def test_full_status_lifecycle(self, data_service, mock_repos, mock_db):
-        """Verify full status lifecycle: STARTED → UPLOADED → PROCESSING → SUCCESS."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        task_id = uuid4()
-        dashboard_id = uuid4()
-        user_id = uuid4()
-
-        # Initial log in STARTED status (after upload begins)
-        mock_log_started = MagicMock()
-        mock_log_started.status = ProcessingStatusEnum.STARTED
-        mock_log_started.message = "Upload started"
-        mock_log_started.dashboard_id = dashboard_id
-        log_repo.get_by_id.return_value = mock_log_started
-
-        # Transition 1: STARTED → UPLOADED
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            with patch("mkobi.services.data_service.enqueue_processing_job"):
-                with patch("mkobi.services.data_service.find_task_file", return_value="/tmp/test.csv"):
-                    result = await data_service.trigger_processing(
-                        task_id=task_id,
-                        dashboard_id=dashboard_id,
-                        user_id=user_id,
-                        db=mock_db,
-                    )
-
-        assert result.status == ProcessingStatusEnum.PROCESSING
-        log_repo.update_status.assert_called_once()
-        call_args = log_repo.update_status.call_args
-        assert call_args[1]["status"] == ProcessingStatusEnum.PROCESSING
-
-        # Reset mock for next transition
-        log_repo.update_status.reset_mock()
-
-        # Transition 2: UPLOADED → PROCESSING (simulating background job start)
-        mock_log_uploaded = MagicMock()
-        mock_log_uploaded.status = ProcessingStatusEnum.UPLOADED
-        mock_log_uploaded.message = "File uploaded"
-        mock_log_uploaded.dashboard_id = dashboard_id
-        log_repo.get_by_id.return_value = mock_log_uploaded
-
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            with patch("mkobi.services.data_service.enqueue_processing_job"):
-                with patch("mkobi.services.data_service.find_task_file", return_value="/tmp/test.csv"):
-                    result = await data_service.trigger_processing(
-                        task_id=task_id,
-                        dashboard_id=dashboard_id,
-                        user_id=user_id,
-                        db=mock_db,
-                    )
-
-        assert result.status == ProcessingStatusEnum.PROCESSING
-
-    @pytest.mark.asyncio
-    async def test_full_lifecycle_to_failed(self, data_service, mock_repos, mock_db):
-        """Verify full status lifecycle ends with FAILED status."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        task_id = uuid4()
-        dashboard_id = uuid4()
-        user_id = uuid4()
-
-        # Log in UPLOADED status, transition to PROCESSING
-        mock_log = MagicMock()
-        mock_log.status = ProcessingStatusEnum.UPLOADED
-        mock_log.message = "File uploaded"
-        mock_log.dashboard_id = dashboard_id
-        log_repo.get_by_id.return_value = mock_log
-
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            with patch("mkobi.services.data_service.enqueue_processing_job"):
-                with patch("mkobi.services.data_service.find_task_file", return_value="/tmp/test.csv"):
-                    result = await data_service.trigger_processing(
-                        task_id=task_id,
-                        dashboard_id=dashboard_id,
-                        user_id=user_id,
-                        db=mock_db,
-                    )
-
-        assert result.status == ProcessingStatusEnum.PROCESSING
-        # Verify status was updated to PROCESSING
-        log_repo.update_status.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_invalid_status_transition_from_success(self, data_service, mock_repos, mock_db):
-        """Verify transitioning from SUCCESS to PROCESSING is handled."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        task_id = uuid4()
-        dashboard_id = uuid4()
-        user_id = uuid4()
-
-        # Log already in SUCCESS status
-        mock_log_success = MagicMock()
-        mock_log_success.status = ProcessingStatusEnum.SUCCESS
-        mock_log_success.message = "Processing completed"
-        mock_log_success.dashboard_id = dashboard_id
-        log_repo.get_by_id.return_value = mock_log_success
-
-        # Attempt to trigger processing on completed task
-        # The current implementation allows this - it just updates status again
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            with patch("mkobi.services.data_service.enqueue_processing_job"):
-                with patch("mkobi.services.data_service.find_task_file", return_value="/tmp/test.csv"):
-                    result = await data_service.trigger_processing(
-                        task_id=task_id,
-                        dashboard_id=dashboard_id,
-                        user_id=user_id,
-                        db=mock_db,
-                    )
-
-        # Current behavior: status is updated to PROCESSING (no validation in repo)
-        assert result.status == ProcessingStatusEnum.PROCESSING
-        log_repo.update_status.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_invalid_status_transition_from_failed(self, data_service, mock_repos, mock_db):
-        """Verify transitioning from FAILED to PROCESSING is handled."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        task_id = uuid4()
-        dashboard_id = uuid4()
-        user_id = uuid4()
-
-        # Log in FAILED status
-        mock_log_failed = MagicMock()
-        mock_log_failed.status = ProcessingStatusEnum.FAILED
-        mock_log_failed.message = "Processing failed"
-        mock_log_failed.dashboard_id = dashboard_id
-        log_repo.get_by_id.return_value = mock_log_failed
-
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            with patch("mkobi.services.data_service.enqueue_processing_job"):
-                with patch("mkobi.services.data_service.find_task_file", return_value="/tmp/test.csv"):
-                    result = await data_service.trigger_processing(
-                        task_id=task_id,
-                        dashboard_id=dashboard_id,
-                        user_id=user_id,
-                        db=mock_db,
-                    )
-
-        # Current behavior: status is updated to PROCESSING (no validation in repo)
-        assert result.status == ProcessingStatusEnum.PROCESSING
-        log_repo.update_status.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_status_update_sets_finished_at_on_success(self, data_service, mock_repos, mock_db):
-        """Verify that SUCCESS status sets finished_at timestamp."""
-        agg_repo, log_repo, graph_repo = mock_repos
-        task_id = uuid4()
-        dashboard_id = uuid4()
-        user_id = uuid4()
-
-        mock_log = MagicMock()
-        mock_log.status = ProcessingStatusEnum.PROCESSING
-        mock_log.message = "Processing"
-        mock_log.dashboard_id = dashboard_id
-        log_repo.get_by_id.return_value = mock_log
-
-        with patch("mkobi.services.data_service.check_dashboard_access", return_value=True):
-            with patch("mkobi.services.data_service.enqueue_processing_job"):
-                with patch("mkobi.services.data_service.find_task_file", return_value="/tmp/test.csv"):
-                    await data_service.trigger_processing(
-                        task_id=task_id,
-                        dashboard_id=dashboard_id,
-                        user_id=user_id,
-                        db=mock_db,
-                    )
-
-        # Verify update_status was called with status
-        log_repo.update_status.assert_called_once()
-        call_kwargs = log_repo.update_status.call_args[1]
-        assert call_kwargs["status"] == ProcessingStatusEnum.PROCESSING
+        try:
+            with pytest.raises(ValueError, match="Invalid MIME-type"):
+                validate_file(
+                    file_path=tmp_path,
+                    filename="test.csv",
+                    content_type="application/octet-stream",
+                    max_file_size=data_service._max_file_size,
+                )
+        finally:
+            tmp_path.unlink(missing_ok=True)

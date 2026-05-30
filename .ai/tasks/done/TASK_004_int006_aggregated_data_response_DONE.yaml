@@ -1,0 +1,70 @@
+---
+id: TASK_004_int006_aggregated_data_response
+title: INT-006 — Add missing type and name fields to AggregatedDataResponse
+status: pending
+priority: high
+type: implementation
+depends_on:
+  - TASK_003_fe001_circular_import
+
+source_reference: .ai/audit/99-validation/90-integration-validated.md
+source_section: INT-006 — AggregatedDataResponse shape mismatch
+
+description: >
+  The backend AggregatedDataResponse model is missing `type` and `name` fields
+  that the frontend expects for proper chart rendering. The frontend's
+  api.types.ts declares these fields but the backend never returns them, causing
+  chart.name to render as undefined. Add these fields to the backend response
+  model and populate them from the graph relationship.
+
+goals:
+  - Add `type` and `name` fields to the aggregated data response model
+  - Populate `type` from the graph's graph_type field
+  - Populate `name` from the graph's name field
+  - Ensure the fields are included in the API response serialized from the repository
+
+files:
+  - path: src/mkobi/models/aggregated_data.py
+    targets:
+      - type: class
+        name: AggregatedDataResponse
+    semantic_anchors:
+      insert_after:
+        type: class_definition
+        value: AggregatedDataResponse
+    changes:
+      - action: add_fields
+        description: >
+          Add `type: str` and `name: str` fields to AggregatedDataResponse.
+          These represent the graph type (bar, line, pie, table) and the
+          graph name for chart rendering on the frontend.
+
+  - path: src/mkobi/db/repositories/aggregated_data_repo.py
+    targets:
+      - type: method
+        name: get_aggregated_data
+    semantic_anchors:
+      insert_before:
+        type: return_statement
+    changes:
+      - action: modify_code
+        description: >
+          When constructing the AggregatedDataResponse, populate the `type`
+          field from the associated graph's graph_type and the `name` field
+          from the associated graph's name. This may require a join with the
+          graphs table or eager loading of the graph relationship.
+
+risks:
+  - Low risk: additive change, adds fields that the frontend already expects
+  - Must ensure the graph relationship is available when building the response
+  - May require a database query adjustment (join or eager load)
+
+acceptance_criteria:
+  - AggregatedDataResponse includes `type` field with graph type value
+  - AggregatedDataResponse includes `name` field with graph name value
+  - Frontend chart rendering receives these fields correctly
+  - Existing data tests pass
+
+tests_to_run:
+  - pytest tests/ -k "aggregated" -v
+  - pytest tests/ -k "data" -v

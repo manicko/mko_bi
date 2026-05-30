@@ -5,7 +5,7 @@ Create operations require admin role. Read operations use dashboard access contr
 """
 
 import logging
-from typing import cast
+from typing import Any, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
@@ -41,7 +41,7 @@ async def create_dashboard_graph_endpoint(
     graph: GraphCreate,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
-    graph_repo=Depends(get_graph_repository),
+    graph_repo: Any = Depends(get_graph_repository),
 ) -> GraphRead:
     """Create a new graph for a dashboard.
 
@@ -123,7 +123,7 @@ async def get_dashboard_graphs_endpoint(
     dashboard_id: UUID,
     current_user: UserRead = Depends(require_dashboard_read_access),
     db: AsyncSession = Depends(get_db_dependency),
-    graph_repo=Depends(get_graph_repository),
+    graph_repo: Any = Depends(get_graph_repository),
 ) -> list[GraphRead]:
     """Get all graphs for a dashboard.
 

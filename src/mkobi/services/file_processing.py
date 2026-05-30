@@ -26,11 +26,10 @@ def validate_mime_type(content_type: str | None) -> None:
         content_type: MIME type string from upload header.
 
     Raises:
-        ValueError: If MIME type is not in the allowed list.
+        ValueError: If MIME type is None or not in the allowed list.
     """
     if content_type is None:
-        logger.warning("MIME-type not specified, skipping check")
-        return
+        raise ValueError("Content-Type header is required")
 
     allowed_mime_types = MimeTypeEnum.allowed_values()
     if content_type not in allowed_mime_types:

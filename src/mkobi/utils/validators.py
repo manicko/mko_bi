@@ -180,6 +180,31 @@ def validate_password(password: str, min_length: int = 8) -> bool:
     return True
 
 
+def validate_password_or_raise(password: str, min_length: int = 8) -> None:
+    """Validate password and raise ValueError if invalid.
+
+    Args:
+        password: Password to validate.
+        min_length: Minimum password length.
+
+    Raises:
+        ValueError: If password does not meet strength requirements.
+    """
+    if not password or not isinstance(password, str):
+        raise ValueError("Password is required")
+
+    if len(password) < min_length:
+        raise ValueError(f"Password must be at least {min_length} characters long")
+
+    if not re.search(r"\d", password):
+        raise ValueError("Password must contain at least one digit")
+
+    if not re.search(r"[a-zA-Z]", password):
+        raise ValueError("Password must contain at least one letter")
+
+    return None
+
+
 def raise_if_invalid(condition: bool, message: str, exception_type: type = ValueError) -> None:
     """Raise exception if condition is false.
 

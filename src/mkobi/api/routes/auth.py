@@ -47,6 +47,7 @@ from mkobi.models.auth import (
     TokenWithUser,
 )
 from mkobi.models.user import UserRead
+from mkobi.services.auth_service import AuthService
 
 logger = get_logger(__name__)
 
@@ -56,7 +57,7 @@ router = APIRouter(prefix="/auth", tags=["auth"], redirect_slashes=False)
 async def _handle_login(
     email: str,
     password: str,
-    auth_service,
+    auth_service: AuthService,
     request: Request,
     response: Response,
     db: AsyncSession,
@@ -119,7 +120,7 @@ async def login(
     request: Request,
     response: Response,
     login_data: LoginRequest,
-    auth_service=Depends(get_auth_service),
+    auth_service: AuthService = Depends(get_auth_service),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> TokenWithUser:
     """User login endpoint."""
@@ -144,7 +145,7 @@ async def login_form(
     request: Request,
     response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
-    auth_service=Depends(get_auth_service),
+    auth_service: AuthService = Depends(get_auth_service),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> TokenWithUser:
     """Login endpoint via OAuth2 form."""
@@ -167,7 +168,7 @@ async def login_form(
 )
 async def register(
     register_data: RegisterRequest,
-    auth_service=Depends(get_auth_service),
+    auth_service: AuthService = Depends(get_auth_service),
     admin_user: UserRead = Depends(require_admin_role),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> Token:
@@ -371,7 +372,7 @@ async def logout(
 async def change_password(
     password_data: ChangePasswordRequest,
     current_user: UserRead = Depends(get_current_user_dependency),
-    auth_service=Depends(get_auth_service),
+    auth_service: AuthService = Depends(get_auth_service),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> dict[str, Any]:
     """Password change endpoint.
@@ -441,7 +442,7 @@ async def change_password(
 async def register_request(
     request_data: RegistrationRequestCreate,
     request: Request,
-    auth_service=Depends(get_auth_service),
+    auth_service: AuthService = Depends(get_auth_service),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> dict[str, Any]:
     """Registration request creation endpoint.

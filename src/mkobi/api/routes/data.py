@@ -10,10 +10,11 @@ All operations require authentication and appropriate permissions.
 
 import json
 import logging
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
@@ -23,6 +24,7 @@ from mkobi.api.deps import (
     get_db_dependency,
 )
 from mkobi.core.permissions import check_dashboard_access
+from mkobi.db.models.graphs import Graph
 from mkobi.models.data import ProcessingResultData
 from mkobi.services.data_service import DataService
 
@@ -33,7 +35,7 @@ router = APIRouter(prefix="/data", tags=["data"], redirect_slashes=False)
 
 @router.get(
     "/aggregated",
-    response_model=list[dict[str, Any]],
+    response_model=dict[str, Any],
     status_code=status.HTTP_200_OK,
     summary="Get dashboard aggregated data",
     description="Returns data for all dashboard charts with applied filters.",
@@ -50,7 +52,7 @@ async def get_aggregated_data_endpoint(
     """Get aggregated data for dashboard.
 
     Applies filters to JSONB field dims and groups data by graph_id.
-    Response format: {"graphs": [{"graph_id": "...", "data": [...]}]}
+    Response format: {"graphs": [{"graph_id": "...", "type": "...", "name": "...", "data": [...]}]}
 
     Args:
         dashboard_id: Dashboard ID.
@@ -97,10 +99,24 @@ async def get_aggregated_data_endpoint(
             try:
                 parsed_filters = json.loads(filters)
             except json.JSONDecodeError as e:
+                logger.warning("Invalid JSON in filters")
                 raise HTTPException(
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                    detail=f"Invalid JSON in filters: {e}",
+                    detail="Invalid JSON in filters",
                 ) from e
+
+        # Get graph to retrieve type and name
+        graph_result = await db.execute(
+            select(Graph).where(Graph.id == graph_id)
+        )
+        graph = graph_result.scalar_one_or_none()
+
+        if graph is None:
+            logger.warning("Graph not found: graph_id=%s", graph_id)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Graph not found",
+            )
 
         # Get data through service
         result: list[ProcessingResultData] = await data_service.get_aggregated_data(
@@ -116,7 +132,23 @@ async def get_aggregated_data_endpoint(
             graph_id,
             len(result),
         )
-        return {"graphs": [{"graph_id": str(graph_id), "data": result}]}
+
+        # Build response with graph metadata
+        data_points: list[dict[str, int | float | str]] = []
+        for item in result:
+            if item.get("preview"):
+                data_points.extend(cast(list[dict[str, int | float | str]], item["preview"]))
+
+        return {
+            "graphs": [
+                {
+                    "graph_id": str(graph_id),
+                    "type": graph.type.value,
+                    "name": graph.name,
+                    "data": data_points,
+                }
+            ]
+        }
 
     except ValueError as e:
         logger.warning("Error getting data: %s", e)

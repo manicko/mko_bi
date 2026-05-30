@@ -138,14 +138,13 @@ async def create_dashboard_endpoint(
         ) from e
     except Exception as e:
         logger.error(
-            "Error creating dashboard name=%s: %s",
+            "Error creating dashboard name=%s",
             dashboard_data.name,
-            e,
             exc_info=True,
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Dashboard creation error: {str(e)}",
+            detail="Error creating dashboard",
         ) from e
 
 
@@ -188,14 +187,13 @@ async def get_my_dashboards_endpoint(
         return dashboards
     except Exception as e:
         logger.error(
-            "Error getting user dashboards user_id=%s: %s",
+            "Error getting user dashboards user_id=%s",
             current_user.id,
-            e,
             exc_info=True,
         )
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error getting user dashboards: {str(e)}",
+            detail="Error getting user dashboards",
         ) from e
 
 

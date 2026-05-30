@@ -132,27 +132,27 @@ Directly create a new user account with a specified role. Admin only. This endpo
 
 ---
 
-### 4. Update User Role
+### 4. Update User Role (via /users)
 
 Change the role of an existing user. Admin only. This endpoint accepts a JSON request body (Pydantic `UserUpdateRequest`).
 
 | Attribute      | Value                          |
 | -------------- | ------------------------------ |
 | **Method**     | `PATCH`                        |
-| **Path**       | `/api/v1/users/:id/role`       |
+| **Path**       | `/api/v1/users/{user_id}/role` |
 | **Auth level** | Admin                          |
 
 **Path parameters:**
 
-| Parameter | Type   | Description        |
-| --------- | ------ | ------------------ |
-| `id`      | UUID   | User ID            |
+| Parameter  | Type   | Description        |
+| ---------- | ------ | ------------------ |
+| `user_id`  | UUID   | User ID            |
 
 **Request body:**
 
 ```json
 {
-  "new_role": "editor"
+  "role": "editor"
 }
 ```
 
@@ -162,7 +162,6 @@ Change the role of an existing user. Admin only. This endpoint accepts a JSON re
 
 | Status | Condition                    | Detail                       |
 | ------ | ---------------------------- | ---------------------------- |
-| `403`  | Caller is not admin          | Forbidden                    |
 | `404`  | User not found               | `User not found`             |
 | `422`  | Invalid role value           | Validation error             |
 
@@ -249,7 +248,7 @@ Admin-specific role update (alternative to `/api/v1/users/:id/role`).
 
 ```json
 {
-  "new_role": "viewer"
+  "role": "viewer"
 }
 ```
 
@@ -535,7 +534,7 @@ Displays a table of all users with the ability to change roles and delete users.
 
 **Related API endpoints:**
 - `GET /api/v1/admin/users` — List all users
-- `PATCH /api/v1/admin/users/:id/role` — Update role
+- `PATCH /api/v1/admin/users/:id/role` — Update role (body: `{"role": "editor"}`)
 - `DELETE /api/v1/admin/users/:id` — Delete user
 
 ### Registration Requests (`/admin`)

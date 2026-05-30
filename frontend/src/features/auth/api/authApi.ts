@@ -1,6 +1,7 @@
 import { axiosInstance } from '../../../shared/api/axiosInstance'
 import type { AuthResponse, Token, UserProfile, RegistrationResponse } from '../../../shared/types/api.types'
 import { removeToken } from '../model/authToken'
+import { registerRefreshHandler } from '../../../shared/api/refreshHandler'
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
   const response = await axiosInstance.post<AuthResponse>('/auth/login', { email, password })
@@ -29,3 +30,7 @@ export async function logout(): Promise<void> {
 export function logoutClient(): void {
   removeToken()
 }
+
+// Register the refresh handler to break circular dependency
+// This must happen after refreshToken is defined
+registerRefreshHandler(refreshToken)

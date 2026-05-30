@@ -473,6 +473,8 @@
   - ChartData
   - ChartConfig
   - FilterState
+  - GraphDataResponse
+  - AggregatedDataResponse
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\enums.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.models.enums
@@ -792,6 +794,7 @@
   - mkobi.interfaces.service_interfaces
   - mkobi.models.graph
   - mkobi.models.enums
+  - mkobi.db.models
   classes:
   - GraphService
   functions:
@@ -1556,6 +1559,7 @@
   - mkobi.core.security
   - mkobi.models.auth
   - mkobi.models.user
+  - mkobi.services.auth_service
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\client_errors.py
@@ -1639,9 +1643,11 @@
   - typing
   - uuid
   - fastapi
+  - sqlalchemy
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
   - mkobi.core.permissions
+  - mkobi.db.models.graphs
   - mkobi.models.data
   - mkobi.services.data_service
   classes: []
@@ -1705,8 +1711,10 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.core.logging_config
   - mkobi.models.enums
   - mkobi.models.processing_logs
+  - mkobi.models.user
   - mkobi.services.processing_log_service
   classes: []
   functions: []

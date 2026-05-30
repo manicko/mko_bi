@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import {
   Box,
   Typography,
@@ -42,38 +42,38 @@ export function UploadModal({ open, onClose, dashboardId, onUploadComplete }: Up
   const [uploadComplete, setUploadComplete] = useState(false)
   const [processingFinished, setProcessingFinished] = useState(false)
 
+  // Store onUploadComplete in a ref to avoid stale closure issues in polling effect
+  const onUploadCompleteRef = useRef(onUploadComplete)
+  useEffect(() => {
+    onUploadCompleteRef.current = onUploadComplete
+  }, [onUploadComplete])
+
   // Get the first file's processing log ID for polling
   const processingLogId = fileStates.length > 0 ? fileStates[0].processingLogId ?? null : null
   const { data: statusData } = useProcessingStatus(processingLogId, uploadComplete)
 
-// Update processing status when polling returns data
-   useEffect(() => {
-     if (statusData?.status) {
-       // Store values to avoid stale closure issues
-       const status = statusData.status
+  // Update processing status when polling returns data
+  useEffect(() => {
+    if (statusData?.status) {
+      const status = statusData.status
 
-       // Defer state updates to avoid setState-in-effect
-       queueMicrotask(() => {
-         setFileStates((prev) =>
-           prev.map((f) =>
-             f.processingLogId
-               ? { ...f, processingStatus: status, status: status === 'failed' ? FileUploadStatus.ERROR : f.status }
-               : f
-           )
-         )
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFileStates((prev) =>
+        prev.map((f) =>
+          f.processingLogId
+            ? { ...f, processingStatus: status, status: status === 'failed' ? FileUploadStatus.ERROR : f.status }
+            : f
+        )
+      )
 
-         // Handle completion
-         if (status === 'completed' || status === 'success') {
-           toast.success('Processing complete!')
-           setProcessingFinished(true)
-           if (onUploadComplete) {
-             onUploadComplete()
-           }
-         }
-       })
-     }
-     // eslint-disable-next-line react-hooks/exhaustive-deps
-   }, [statusData])
+      // Handle completion
+      if (status === 'completed' || status === 'success') {
+        toast.success('Processing complete!')
+        setProcessingFinished(true)
+        onUploadCompleteRef.current?.()
+      }
+    }
+  }, [statusData])
 
   const handleModeChange = (_: React.MouseEvent<HTMLElement>, newMode: UploadMode | null) => {
     if (newMode !== null) {
@@ -184,6 +184,7 @@ export function UploadModal({ open, onClose, dashboardId, onUploadComplete }: Up
             value={mode}
             exclusive
             onChange={handleModeChange}
+            aria-label="Upload mode selection"
             sx={{ mb: 2 }}
           >
             <ToggleButton value={UploadMode.OVERWRITE}>

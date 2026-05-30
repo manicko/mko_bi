@@ -6,7 +6,7 @@ All methods use contextual session management and handle errors.
 
 import logging
 from uuid import UUID
-from typing import cast
+from typing import Any, cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -80,7 +80,7 @@ class GraphRepository(IGraphRepository):
             logger.error("Error getting graphs dashboard_id=%s: %s", dashboard_id, e)
             raise
 
-    async def create(self, db: AsyncSession, **kwargs) -> graph_model.Graph | None:
+    async def create(self, db: AsyncSession, **kwargs: Any) -> graph_model.Graph | None:
         """Create new graph.
 
         Args:
@@ -102,7 +102,7 @@ class GraphRepository(IGraphRepository):
             raise
 
     async def update(
-        self, id: UUID, db: AsyncSession, **kwargs
+        self, id: UUID, db: AsyncSession, **kwargs: Any
     ) -> graph_model.Graph | None:
         """Update graph data.
 

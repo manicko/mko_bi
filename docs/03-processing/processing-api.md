@@ -164,7 +164,10 @@ Manually trigger processing for a previously uploaded file.
 {
   "task_id": "<uuid>",
   "status": "processing",
-  "message": "Aggregating data..."
+  "progress": 50,
+  "message": "Aggregating data...",
+  "started_at": "2026-05-18T12:00:00Z",
+  "completed_at": null
 }
 ```
 
@@ -186,6 +189,8 @@ Manually trigger processing for a previously uploaded file.
   "graphs_affected": 4
 }
 ```
+
+> The `ProcessingResult` model also includes an optional `data` field with details about the processed data (columns, row count, preview). See [Data Models](#data-models) below.
 
 ---
 

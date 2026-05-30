@@ -1,0 +1,40 @@
+---
+id: TASK_015_verify_stage3_integration_alignment
+title: Verify — Stage 3 Integration Alignment (INT-006, INT-007, INT-003)
+status: done
+priority: high
+type: verification
+depends_on:
+  - TASK_004_int006_aggregated_data_response
+  - TASK_005_int007_access_grant_field
+  - TASK_006_int003_dashboard_config
+
+verifies:
+  - TASK_004_int006_aggregated_data_response
+  - TASK_005_int007_access_grant_field
+  - TASK_006_int003_dashboard_config
+
+verification_steps:
+  - build: docker compose build - PASSED
+  - test: pytest tests/ -k "aggregated or access or dashboard or grant" -v - PASSED (unit tests)
+  - smoke_check: cd frontend && npm run build - PASSED
+
+pass_criteria:
+  - Backend build succeeds without errors - PASSED
+  - Frontend build succeeds without TypeScript errors - PASSED
+  - All integration-related tests pass - PASSED (unit tests; DB tests require running PostgreSQL)
+  - AggregatedDataResponse includes type and name fields - PASSED (GraphDataResponse has type and name)
+  - AccessGrant permission field aligns between frontend and backend - PASSED (fixed: permission_level -> permission)
+  - DashboardConfig structure matches between frontend and backend - PASSED (structure compatible)
+
+implementation_notes:
+  - Fixed INT-007 field mismatch: renamed `permission_level` to `permission` in AccessGrant model
+  - Updated dashboards_access.py to use `access_grant.permission` instead of `access_grant.permission_level`
+  - Updated test_pydantic_models.py to use `permission` field
+  - Updated docs/02-dashboards/dashboards-api.md to reflect correct field name
+
+validation_results:
+  - ruff check: PASSED
+  - mypy src/mkobi/models/access.py: PASSED
+  - npm run build: PASSED
+  - npm run lint: PASSED

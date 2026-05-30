@@ -6,7 +6,7 @@ All methods use contextual session management and handle errors.
 
 import logging
 from uuid import UUID
-from typing import cast
+from typing import Any, cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -138,7 +138,9 @@ class UserRepository(IUserRepository):
         except SQLAlchemyError as e:
             logger.error("Error getting users list: %s", e)
             raise
-    async def create(self, db: AsyncSession, **kwargs) -> UserRead | None:
+    async def create(
+        self, db: AsyncSession, **kwargs: Any
+    ) -> UserRead | None:
         """Create new user.
 
         Args:
@@ -159,7 +161,7 @@ class UserRepository(IUserRepository):
             logger.error("Error creating user: %s", e)
             raise
     async def update(
-        self, id: UUID, db: AsyncSession, **kwargs
+        self, id: UUID, db: AsyncSession, **kwargs: Any
     ) -> UserRead | None:
         """Update user data.
 

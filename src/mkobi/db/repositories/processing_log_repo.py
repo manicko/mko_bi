@@ -193,8 +193,8 @@ class ProcessingLogRepository(IProcessingLogRepository):
                 )
 
             if filters.date_to is not None:
-                # Convert date to end of day for inclusive filtering
-                end_of_day = datetime.combine(filters.date_to, time(23, 59, 59, 999999))
+                # Convert datetime to end of day for inclusive filtering
+                end_of_day = datetime.combine(filters.date_to.date(), time(23, 59, 59, 999999))
                 query = query.where(
                     processing_log_model.ProcessingLog.started_at <= end_of_day
                 )

@@ -1,7 +1,7 @@
 from collections.abc import AsyncGenerator
 import logging
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine, AsyncSession, async_sessionmaker
 from contextlib import asynccontextmanager
 
 from mkobi.config import get_config
@@ -14,7 +14,7 @@ _engine = None
 _SessionLocal = None
 
 
-async def get_async_engine():
+async def get_async_engine() -> AsyncEngine:
     """Return initialized SQLAlchemy async engine (creates on first call).
 
     Returns:

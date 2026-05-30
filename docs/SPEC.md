@@ -95,7 +95,7 @@ Access is validated on every request via the `dashboard_access` table.
 - [Health Checks](05-health/) — Health and detailed health endpoints.
 - [Backend Architecture](06-backend/) — Clean Architecture layers, configuration, logging, testing.
 - [Frontend Architecture](07-frontend/) — FSD structure, pages, auth flow, upload UI, frontend security.
-- [Security](08-security/) — Rate limiting, CORS, file validation, credential enforcement, access control.
+- [Security](08-security/) — Rate limiting, CORS, file validation, credential enforcement, access control, client error reporting.
 - [Database](09-database/) — Core schema, processing schema, access control tables, indexes, enums.
 - [Deployment](10-deployment/) — Development setup, production deployment, Docker, migrations.
 
@@ -170,10 +170,10 @@ Access is validated on every request via the `dashboard_access` table.
 | 2.6     | 2026-05-20 | Per-IP login rate limiting (email enumeration fix), migration advisory lock, dedicated DB role (least-privilege), migration job compose pattern, stale processing heartbeat, upload memory streaming, weak admin credential detection, config reload for testing, atomic UPSERT admin user, sanitized DB URL logging, LRU token cache |
 | 2.7     | 2026-05-23 | Cookie-based refresh token flow: httpOnly refresh cookies (7-day TTL), 15-min access tokens, POST /auth/logout endpoint, frontend silent refresh on mount, request queue for concurrent 401s, ProtectedRoute loading state during refresh |
 | 2.8     | 2026-05-25 | Docker folder restructure (all compose/Dockerfile/config into docker/ folder), standalone test compose (isolated test-db/test-redis/test-migrate/test-app with separate volumes/networks/ports), conftest.py setdefault for Docker Compose env var precedence, dev/test parallel execution support |
-| 2.9     | 2026-05-26 | Doc updates: admin logs pagination changed from page/page_size to skip/limit (D-001), added temp_password security note for registration approval (D-003), documented frontend enum presence rationale (D-004) |
+| 3.0     | 2026-05-29 | Audit-driven improvements: client error reporting API, password strength validation at API boundary, MIME-type validation hardening (415 on missing Content-Type), error message sanitization across all route modules, dashboard_name resolved in processing log responses, callback registration pattern to break circular frontend dependency, per-IP login rate limiting (email enumeration fix), weak admin credential detection (expanded set), atomic UPSERT for admin user creation, LRU token cache (memory leak fix), sanitized database URL logging, processing log filter status parameter alignment, frontend ARIA accessibility attributes, Zod v4 migration |
 
 ---
 
 **Author:** Senior Python Architect
-**Date:** 2026-05-26
-**Version:** 2.9
+**Date:** 2026-05-29
+**Version:** 3.0

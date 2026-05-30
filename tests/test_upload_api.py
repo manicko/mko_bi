@@ -353,8 +353,9 @@ N,South,Product12,999999.99,249999.99,2023-01-14,999
                     f"/upload/{test_dashboard.id}",
                     files={"file": ("test.csv", f, "text/csv")},
                 )
-            # Polars may parse as single column - accept success or rejection
-            assert response.status_code in [201, 400, 422]
+            # Polars parses semicolon-delimited CSV as single column, which is valid CSV
+            # Processing will fail during dimension validation, but upload accepts it
+            assert response.status_code == 201
         finally:
             csv_path.unlink(missing_ok=True)
 
@@ -425,7 +426,9 @@ N,South,Product12,999999.99,249999.99,2023-01-14,999
                     f"/upload/{test_dashboard.id}",
                     files={"file": ("test.csv", f, "text/csv")},
                 )
-            assert response.status_code in [201, 400, 422]
+            # UTF-16 encoded CSV with UTF-8 Content-Type header will be accepted
+            # (upload accepts any MIME type for CSV files)
+            assert response.status_code == 201
         finally:
             utf16_path.unlink(missing_ok=True)
 
@@ -474,7 +477,11 @@ N,South,Product12,999999.99,249999.99,2023-01-14,999
         test_user: dict,
         test_dashboard: Dashboard,
     ) -> None:
-        """Test upload handling of invalid data types in numeric columns."""
+        """Test upload handling of invalid data types in numeric columns.
+
+        Polars coerces non-numeric strings to null in numeric columns,
+        which is valid behavior - the upload is accepted.
+        """
         # Grant edit access
         access_repo = AccessRepository()
         await access_repo.grant_access(
@@ -485,7 +492,7 @@ N,South,Product12,999999.99,249999.99,2023-01-14,999
         )
         await async_db_session.commit()
 
-        # Non-numeric data in sales and profit columns
+        # Non-numeric data in sales and profit columns - Polars will coerce to null
         csv_content = "category,sales,profit,date,qty\nA,abc,25,2023-01-01,10\nB,200,def,2023-01-02,twenty"
 
         with tempfile.NamedTemporaryFile(
@@ -500,8 +507,8 @@ N,South,Product12,999999.99,249999.99,2023-01-14,999
                     f"/upload/{test_dashboard.id}",
                     files={"file": ("test.csv", f, "text/csv")},
                 )
-            # Should either reject or accept with error logged
-            assert response.status_code in [201, 400, 422]
+            # Polars coerces non-numeric strings to null, so upload is accepted
+            assert response.status_code == 201
         finally:
             invalid_types_path.unlink(missing_ok=True)
 

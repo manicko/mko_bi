@@ -101,14 +101,14 @@ export function LogViewer() {
           <DatePicker
             label="Date From"
             value={filters.date_from ? new Date(filters.date_from) : null}
-            onChange={(date) => setFilters({ ...filters, date_from: date ? date.toISOString().split('T')[0] : undefined })}
+            onChange={(date) => setFilters({ ...filters, date_from: date ? date.toISOString() : undefined })}
             slotProps={{ textField: { size: 'small' } }}
           />
 
           <DatePicker
             label="Date To"
             value={filters.date_to ? new Date(filters.date_to) : null}
-            onChange={(date) => setFilters({ ...filters, date_to: date ? date.toISOString().split('T')[0] : undefined })}
+            onChange={(date) => setFilters({ ...filters, date_to: date ? date.toISOString() : undefined })}
             slotProps={{ textField: { size: 'small' } }}
           />
 

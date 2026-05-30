@@ -230,4 +230,4 @@ The `core/security.py` module provides `set_cookie()` and `delete_cookie()` help
 - [Frontend Security](../07-frontend/frontend-security.md) — JWT handling, CORS, file upload, role-based access
 - [Configuration](../06-backend/configuration.md) — Secrets management, environment variables
 - [Processing API](../03-processing/processing-api.md) — Upload security constraints and rate limiting
-- [Deployment](../10-deployment/deployment.md) — Production deployment and credential enforcement
+- [Client Error Reporting](client-error-reporting.md) — Frontend error logging endpoint for React Error Boundary and uncaught exceptions

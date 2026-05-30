@@ -100,7 +100,7 @@ async def update_user_role_admin_endpoint(
 )
 async def delete_user_admin_endpoint(
     user_id: UUID,
-    user_service=Depends(get_user_service),
+    user_service: Any = Depends(get_user_service),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> None:
     """Delete user (admin endpoint)."""
@@ -138,7 +138,7 @@ async def delete_user_admin_endpoint(
 )
 async def get_registration_requests_admin_endpoint(
     db: AsyncSession = Depends(get_db_dependency),
-    repo=Depends(get_registration_request_repository),
+    repo: Any = Depends(get_registration_request_repository),
 ) -> list[RegistrationRequestItem]:
     """Get all registration requests (admin endpoint)."""
     logger.info("Admin: getting registration requests")
@@ -165,7 +165,7 @@ async def approve_registration_request_admin_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
     auth_service: AuthService = Depends(get_auth_service),
-    repo=Depends(get_registration_request_repository),
+    repo: Any = Depends(get_registration_request_repository),
 ) -> dict[str, Any]:
     """Approve registration request (admin endpoint)."""
     logger.info("Admin: approving registration request: id=%s", request_id)
@@ -229,7 +229,7 @@ async def reject_registration_request_admin_endpoint(
     request_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
-    repo=Depends(get_registration_request_repository),
+    repo: Any = Depends(get_registration_request_repository),
 ) -> dict[str, Any]:
     """Reject registration request (admin endpoint)."""
     logger.info("Admin: rejecting registration request: id=%s", request_id)

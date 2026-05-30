@@ -110,7 +110,7 @@ async def get_db_dependency() -> AsyncSession:
 # --- Dependency Injection for repositories ---
 
 
-def get_user_repository():
+def get_user_repository() -> UserRepository:
     """DI factory for user repository.
 
     Args:
@@ -123,7 +123,7 @@ def get_user_repository():
     return UserRepository()
 
 
-def get_dashboard_repository():
+def get_dashboard_repository() -> Any:
     """DI factory for dashboard repository.
 
     Returns:
@@ -133,7 +133,7 @@ def get_dashboard_repository():
     return DashboardRepository()
 
 
-def get_access_repository():
+def get_access_repository() -> Any:
     """DI factory for access repository.
 
     Returns:
@@ -143,7 +143,7 @@ def get_access_repository():
     return AccessRepository()
 
 
-def get_aggregated_data_repository():
+def get_aggregated_data_repository() -> Any:
     """DI factory for aggregated data repository.
 
     Returns:
@@ -153,7 +153,7 @@ def get_aggregated_data_repository():
     return AggregatedDataRepository()
 
 
-def get_layout_repository():
+def get_layout_repository() -> Any:
     """DI factory for layout repository.
 
     Returns:
@@ -163,7 +163,7 @@ def get_layout_repository():
     return LayoutRepository()
 
 
-def get_filter_repository():
+def get_filter_repository() -> Any:
     """DI factory for filter repository.
 
     Returns:
@@ -173,7 +173,7 @@ def get_filter_repository():
     return FilterRepository()
 
 
-def get_dashboard_filter_repository():
+def get_dashboard_filter_repository() -> Any:
     """DI factory for dashboard filter repository.
 
     Returns:
@@ -183,7 +183,7 @@ def get_dashboard_filter_repository():
     return DashboardFilterRepository()
 
 
-def get_processing_config_repository():
+def get_processing_config_repository() -> Any:
     """DI factory for processing config repository.
 
     Returns:
@@ -193,7 +193,7 @@ def get_processing_config_repository():
     return ProcessingConfigRepository()
 
 
-def get_processing_log_repository():
+def get_processing_log_repository() -> Any:
     """DI factory for processing log repository.
 
     Returns:
@@ -203,7 +203,7 @@ def get_processing_log_repository():
     return ProcessingLogRepository()
 
 
-def get_registration_request_repository():
+def get_registration_request_repository() -> Any:
     """DI factory for registration request repository.
 
     Returns:
@@ -213,7 +213,7 @@ def get_registration_request_repository():
     return RegistrationRequestRepository()
 
 
-def get_graph_repository():
+def get_graph_repository() -> Any:
     """DI factory for graph repository.
 
     Returns:
@@ -227,8 +227,8 @@ def get_graph_repository():
 
 
 def get_auth_service(
-    user_repo=Depends(get_user_repository),
-    reg_request_repo=Depends(get_registration_request_repository),
+    user_repo: UserRepository = Depends(get_user_repository),
+    reg_request_repo: Any = Depends(get_registration_request_repository),
 ) -> AuthService:
     """DI factory for authentication service.
 
@@ -244,7 +244,7 @@ def get_auth_service(
 
 
 def get_user_service(
-    user_repo=Depends(get_user_repository),
+    user_repo: UserRepository = Depends(get_user_repository),
 ) -> UserService:
     """DI factory for user service.
 
@@ -260,9 +260,9 @@ def get_user_service(
 
 
 def get_dashboard_service(
-    dashboard_repo=Depends(get_dashboard_repository),
-    access_repo=Depends(get_access_repository),
-):
+    dashboard_repo: Any = Depends(get_dashboard_repository),
+    access_repo: Any = Depends(get_access_repository),
+) -> Any:
     """DI factory for dashboard service.
 
     Args:
@@ -277,7 +277,7 @@ def get_dashboard_service(
 
 
 def get_filter_service(
-    filter_repo=Depends(get_filter_repository),
+    filter_repo: Any = Depends(get_filter_repository),
 ) -> FilterService:
     """DI factory for filter service.
 
@@ -292,7 +292,7 @@ def get_filter_service(
 
 
 def get_layout_service(
-    layout_repo=Depends(get_layout_repository),
+    layout_repo: Any = Depends(get_layout_repository),
 ) -> LayoutService:
     """DI factory for layout service.
 
@@ -307,9 +307,9 @@ def get_layout_service(
 
 
 def get_data_service(
-    agg_repo=Depends(get_aggregated_data_repository),
-    log_repo=Depends(get_processing_log_repository),
-    graph_repo=Depends(get_graph_repository),
+    agg_repo: Any = Depends(get_aggregated_data_repository),
+    log_repo: Any = Depends(get_processing_log_repository),
+    graph_repo: Any = Depends(get_graph_repository),
 ) -> DataService:
     """DI factory for data service.
 
@@ -326,7 +326,7 @@ def get_data_service(
 
 
 def get_graph_service(
-    graph_repo=Depends(get_graph_repository),
+    graph_repo: Any = Depends(get_graph_repository),
 ) -> GraphService:
     """DI factory for graph service.
 
@@ -341,7 +341,7 @@ def get_graph_service(
 
 
 def get_processing_config_service(
-    config_repo=Depends(get_processing_config_repository),
+    config_repo: Any = Depends(get_processing_config_repository),
 ) -> ProcessingConfigService:
     """DI factory for processing config service.
 
@@ -356,7 +356,7 @@ def get_processing_config_service(
 
 
 def get_processing_log_service(
-    log_repo=Depends(get_processing_log_repository),
+    log_repo: Any = Depends(get_processing_log_repository),
 ) -> ProcessingLogService:
     """DI factory for processing log service.
 
@@ -547,7 +547,9 @@ def require_viewer_role(
     return user
 
 
-def require_role_dependency(required_role: UserRole):
+def require_role_dependency(
+    required_role: UserRole,
+) -> (AsyncSession | UserRead) | None:
     """Create dependency for checking specific role.
 
     Universal dependency for checking any role.
@@ -736,7 +738,7 @@ async def get_dashboard_permissions(
     dashboard_id: UUID,
     user: UserRead = Depends(get_current_user_dependency),
     db: AsyncSession = Depends(get_db_dependency),
-    access_repo=Depends(get_access_repository),
+    access_repo: Any = Depends(get_access_repository),
 ) -> dict[str, Any]:
     """Get user's access permissions for dashboard.
 

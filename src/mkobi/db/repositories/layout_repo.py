@@ -6,7 +6,7 @@ All methods use async session and handle errors.
 
 import logging
 from uuid import UUID
-from typing import cast
+from typing import Any, cast
 
 from sqlalchemy import select
 from sqlalchemy.exc import SQLAlchemyError
@@ -102,7 +102,9 @@ class LayoutRepository(ILayoutRepository):
             logger.error("Error getting layouts list: %s", e)
             raise
 
-    async def create(self, db: AsyncSession, **kwargs) -> layout_model.Layout | None:
+    async def create(
+        self, db: AsyncSession, **kwargs: Any
+    ) -> layout_model.Layout | None:
         """Create new layout.
 
         Args:
@@ -127,7 +129,7 @@ class LayoutRepository(ILayoutRepository):
             raise
 
     async def update(
-        self, id: UUID, db: AsyncSession, **kwargs
+        self, id: UUID, db: AsyncSession, **kwargs: Any
     ) -> layout_model.Layout | None:
         """Update layout data.
 

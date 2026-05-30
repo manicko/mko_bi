@@ -381,14 +381,14 @@ class TestAuthModels:
         grant = AccessGrant(
             user_id="550e8400-e29b-41d4-a716-446655440000",
             dashboard_id="550e8400-e29b-41d4-a716-446655440001",
-            permission_level=DashboardPermission.EDIT,
+            permission=DashboardPermission.EDIT,
         )
-        assert grant.permission_level == DashboardPermission.EDIT
+        assert grant.permission == DashboardPermission.EDIT
 
     def test_access_grant_default_permission(self):
         """Test default access level value."""
         grant = AccessGrant(
             user_id="550e8400-e29b-41d4-a716-446655440000",
-            dashboard_id="550e8400-e29b-41d4-a716-446655440001",
+            dashboard_id="550e8400-e09b-41d4-a716-446655440001",
         )
-        assert grant.permission_level == DashboardPermission.VIEW
+        assert grant.permission == DashboardPermission.VIEW

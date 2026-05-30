@@ -40,8 +40,8 @@ async def bind_filter_endpoint(
     filter_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
-    filter_repo=Depends(get_filter_repository),
-    dashboard_filter_repo=Depends(get_dashboard_filter_repository),
+    filter_repo: Any = Depends(get_filter_repository),
+    dashboard_filter_repo: Any = Depends(get_dashboard_filter_repository),
 ) -> dict[str, Any]:
     """Bind a filter to a dashboard."""
     logger.info(
@@ -112,7 +112,7 @@ async def unbind_filter_endpoint(
     filter_id: UUID,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
-    dashboard_filter_repo=Depends(get_dashboard_filter_repository),
+    dashboard_filter_repo: Any = Depends(get_dashboard_filter_repository),
 ) -> dict[str, Any]:
     """Unbind a filter from a dashboard."""
     logger.info(
@@ -183,7 +183,7 @@ async def get_dashboard_filters_endpoint(
     dashboard_id: UUID,
     current_user: UserRead = Depends(require_dashboard_read_access),
     db: AsyncSession = Depends(get_db_dependency),
-    dashboard_filter_repo=Depends(get_dashboard_filter_repository),
+    dashboard_filter_repo: Any = Depends(get_dashboard_filter_repository),
 ) -> list[dict[str, Any]]:
     """Get all filters bound to a dashboard."""
     logger.info("Getting filters for dashboard: dashboard_id=%s", dashboard_id)
