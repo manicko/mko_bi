@@ -1,0 +1,64 @@
+---
+id: TASK_031_verify_all_tests_pass
+
+title: "Verify — Full test suite after all implementation tasks"
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_029_verify_stage1_security_and_access
+  - TASK_030_verify_int001_aggregated_data_contract
+  - TASK_008_tst002_graph_cross_dashboard_access_tests
+  - TASK_009_tst003_frontend_test_coverage
+  - TASK_001_be001_rate_limiter_fix
+  - TASK_002_fe006_grant_access_dashboard_id
+  - TASK_010_dp001_transaction_boundary_file_move
+  - TASK_011_dp002_processing_config_wiring
+  - TASK_012_dp003_test_transaction_wrapper
+  - TASK_013_dp004_taskqueue_persistence
+  - TASK_014_db001_broken_trigger_migration
+  - TASK_015_db003_test_database_role
+  - TASK_016_int003_upload_response_format
+
+verifies:
+  - TASK_001_be001_rate_limiter_fix
+  - TASK_002_fe006_grant_access_dashboard_id
+  - TASK_008_tst002_graph_cross_dashboard_access_tests
+  - TASK_009_tst003_frontend_test_coverage
+  - TASK_010_dp001_transaction_boundary_file_move
+  - TASK_011_dp002_processing_config_wiring
+  - TASK_012_dp003_test_transaction_wrapper
+  - TASK_013_dp004_taskqueue_persistence
+  - TASK_014_db001_broken_trigger_migration
+  - TASK_015_db003_test_database_role
+  - TASK_016_int003_upload_response_format
+
+type: verification
+
+verification_steps:
+  - build: "cd C:\\py_dev\\mkobi && docker compose build && cd frontend && npm run build"
+  - test: "cd C:\\py_dev\\mkobi && python -m pytest tests/ -v --tb=short"
+  - test: "cd C:\\py_dev\\mkobi\\frontend && npm test -- --run"
+  - smoke_check: "cd C:\\py_dev\\mkobi && ruff check src/ && mypy src/ && cd frontend && npx tsc --noEmit"
+
+pass_criteria:
+  - "Docker build succeeds"
+  - "Backend build succeeds"
+  - "Frontend build succeeds"
+  - "All backend pytest tests pass"
+  - "All frontend vitest tests pass"
+  - "ruff linting passes"
+  - "mypy type-checking passes"
+  - "TypeScript compilation passes"
+
+failure_action: return relevant failing task to rework
+
+rollback_task: ""
+
+tags:
+  - verification
+  - final
+  - full-suite
+  - stage-final

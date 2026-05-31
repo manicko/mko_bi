@@ -1,0 +1,63 @@
+---
+id: TASK_026_sec007_upload_dashboard_existence_check
+
+title: "SEC-007: Add explicit dashboard existence check on upload endpoint"
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_001_be001_rate_limiter_fix
+  - TASK_002_fe006_grant_access_dashboard_id
+
+type: implementation
+
+description: >
+  The upload endpoint checks `check_dashboard_access()` but does NOT verify dashboard
+  existence first. A non-existent dashboard ID would proceed to the access check, which
+  may behave differently and could leak information. Add an explicit dashboard existence
+  check before the access verification to provide a clear 404 error.
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\audit\\99-validation\\04-security-validated.md"
+source_section: "SEC-007: Upload endpoint missing explicit dashboard existence check — MEDIUM (advisory)"
+
+affected_files:
+  - path: "src/mkobi/services/data_service.py"
+    targets:
+      - type: function
+        name: _execute_upload
+    semantic_anchors:
+      insert_before:
+        type: function_call
+        value: "await check_dashboard_access"
+    changes:
+      - action: add_code
+        description: "Add dashboard existence check before access verification"
+        code_hint: |
+          dashboard = await dashboard_repo.get_by_id(dashboard_id, session)
+          if not dashboard:
+              raise AppException(
+                  status_code=404,
+                  detail="Dashboard not found",
+                  error_code="DASHBOARD_NOT_FOUND",
+              )
+
+acceptance_criteria:
+  - "Upload with non-existent dashboard_id returns 404 with clear error code"
+  - "Upload with existing dashboard_id still works normally"
+  - "ruff + mypy pass"
+
+tests_to_run:
+  - command: "cd C:\\py_dev\\mkobi && python -m pytest tests/test_upload_api.py -v -x -k 'not_found or nonexist'"
+    description: "Run upload tests with non-existent dashboard scenarios"
+
+risk: low
+
+estimated_effort: small
+
+tags:
+  - medium
+  - security
+  - upload
+  - SEC-007

@@ -1,128 +1,251 @@
 ---
 # Execution Order — mkobi BI Dashboard Refactoring Plan
-# Generated from validated audit findings (2026-05-29)
-# Total tasks: 15 (12 implementation + 1 verification + 2 advisory follow-ups)
+# Generated from validated audit findings (2026-05-31)
+# Total tasks: 31 (28 implementation + 3 verification)
+# Source: .ai/audit/validated/final-report.md
 
 stages:
-  - name: "Stage 1 — Security Fixes (mandatory, parallel)"
+  - name: "Stage 1 — CRITICAL Fixes (parallel)"
     description: >
-      Both SEC-001 and SEC-003 are independent backend security fixes.
-      They touch different modules and can be executed in parallel.
+      Two independent critical fixes: BE-001 (sync RateLimiter in async context) and
+      FE-006 (missing dashboard_id in grantDashboardAccess). Both have no dependencies
+      and can run in parallel.
     tasks:
-      - id: TASK_001_sec001_password_validation
+      - id: TASK_001_be001_rate_limiter_fix
         depends_on: []
-      - id: TASK_002_sec003_mime_validation
+      - id: TASK_002_fe006_grant_access_dashboard_id
         depends_on: []
 
-  - name: "Stage 2 — Architecture Boundary Fix (mandatory)"
+  - name: "Stage 2 — Security HIGH Fixes (parallel)"
     description: >
-      FE-001 breaks the circular import between shared/api/ and features/auth/.
-      Must be done after Stage 1 to have a stable auth module before restructuring.
+      Three independent security fixes that all depend on Stage 1 completion.
+      SEC-002 (is_active check), SEC-003 (graph endpoint access control),
+      SEC-004 (layout endpoint access control). Can run in parallel.
     tasks:
-      - id: TASK_003_fe001_circular_import
+      - id: TASK_003_sec002_jwt_is_active_check
         depends_on:
-          - TASK_001_sec001_password_validation
-          - TASK_002_sec003_mime_validation
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_004_sec003_graph_endpoint_access_control
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_005_sec004_layout_endpoint_access_control
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
 
-  - name: "Stage 3 — Integration Alignment (mandatory, multi-stage)"
+  - name: "Stage 3 — Integration Fixes"
     description: >
-      Backend response shapes first (INT-006, INT-007 in parallel), then
-      frontend types (INT-003). A verification task runs at the end of the stage.
+      INT-001 (aggregated data graph_id contract) is a cross-cutting change requiring
+      coordinated backend+frontend deployment. INT-005 (trailing slash fix) is a simple
+      frontend fix. Both depend on Stage 2.
     tasks:
-      - id: TASK_004_int006_aggregated_data_response
+      - id: TASK_006_int001_aggregated_data_graph_id
         depends_on:
-          - TASK_003_fe001_circular_import
-      - id: TASK_005_int007_access_grant_field
+          - TASK_003_sec002_jwt_is_active_check
+          - TASK_004_sec003_graph_endpoint_access_control
+          - TASK_005_sec004_layout_endpoint_access_control
+      - id: TASK_007_int005_create_user_trailing_slash
         depends_on:
-          - TASK_003_fe001_circular_import
-      - id: TASK_006_int003_dashboard_config
-        depends_on:
-          - TASK_004_int006_aggregated_data_response
-          - TASK_005_int007_access_grant_field
-      - id: TASK_015_verify_stage3_integration_alignment
-        depends_on:
-          - TASK_004_int006_aggregated_data_response
-          - TASK_005_int007_access_grant_field
-          - TASK_006_int003_dashboard_config
+          - TASK_003_sec002_jwt_is_active_check
+          - TASK_004_sec003_graph_endpoint_access_control
+          - TASK_005_sec004_layout_endpoint_access_control
 
-  - name: "Stage 4 — Error Handling Cleanup (mandatory)"
+  - name: "Stage 4 — Verification: Security & Access"
     description: >
-      BE-016 sanitizes error messages across multiple route modules.
-      Can be done independently after Stage 2.
+      Verify that SEC-002, SEC-003, SEC-004, and INT-005 fixes work correctly.
+      Runs after all Stage 2 and INT-005 tasks complete.
     tasks:
-      - id: TASK_007_be016_error_message_sanitization
+      - id: TASK_029_verify_stage1_security_and_access
         depends_on:
-          - TASK_003_fe001_circular_import
+          - TASK_003_sec002_jwt_is_active_check
+          - TASK_004_sec003_graph_endpoint_access_control
+          - TASK_005_sec004_layout_endpoint_access_control
+          - TASK_007_int005_create_user_trailing_slash
 
-  - name: "Stage 5 — Runtime Bug Fix (mandatory)"
+  - name: "Stage 5 — Integration Verification"
     description: >
-      BUG-004 fixes the Log Viewer empty table. Backend dashboard_name fix (TASK_009)
-      depends on frontend date fix (TASK_008) since they both touch the log viewer flow.
+      Verify INT-001 aggregated data endpoint contract fix.
     tasks:
-      - id: TASK_008_bug004_log_viewer_date_format
+      - id: TASK_030_verify_int001_aggregated_data_contract
         depends_on:
-          - TASK_003_fe001_circular_import
-      - id: TASK_009_bug004_log_viewer_dashboard_name
-        depends_on:
-          - TASK_008_bug004_log_viewer_date_format
+          - TASK_006_int001_aggregated_data_graph_id
 
-  - name: "Stage 6 — Data Processing Fix (mandatory)"
+  - name: "Stage 6 — Data Processing, Database, Tests, Advisory (parallel)"
     description: >
-      DP-002 adds logging to temp file cleanup. Independent after Stage 2.
+      All remaining mandatory and advisory tasks that depend only on Stage 1.
+      These are independent and can run in parallel after Stage 1 completes.
     tasks:
-      - id: TASK_010_dp002_temp_file_cleanup_logging
+      - id: TASK_008_tst002_graph_cross_dashboard_access_tests
         depends_on:
-          - TASK_003_fe001_circular_import
+          - TASK_004_sec003_graph_endpoint_access_control
+      - id: TASK_009_tst003_frontend_test_coverage
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_010_dp001_transaction_boundary_file_move
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_011_dp002_processing_config_wiring
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_012_dp003_test_transaction_wrapper
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_013_dp004_taskqueue_persistence
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_014_db001_broken_trigger_migration
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_015_db003_test_database_role
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_016_int003_upload_response_format
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_017_be003_processing_status_enum_cleanup
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_018_be004_taskqueue_integration_stub
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_019_be008_exception_handler_format
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_020_fe002_unused_getfilter_removal
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_021_fe003_unused_chart_exports
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_022_fe004_layout_uuid_mapping
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_023_fe005_table_chart_a11y
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_024_sec005_fail_closed_rate_limiter_config
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_025_sec006_security_headers_middleware
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_026_sec007_upload_dashboard_existence_check
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_027_tst004_frontend_coverage_threshold
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
+      - id: TASK_028_dc005_database_url_password_validation
+        depends_on:
+          - TASK_001_be001_rate_limiter_fix
+          - TASK_002_fe006_grant_access_dashboard_id
 
-  - name: "Stage 7 — Test Quality Fixes (mandatory)"
+  - name: "Stage 7 — Final Verification"
     description: >
-      TST-005 and TST-003-MERGED are test-only changes. Can be done in parallel
-      after Stage 2. Test changes should be verified by running the test suite.
+      Full test suite verification after all implementation tasks complete.
+      This is the final gate before deployment.
     tasks:
-      - id: TASK_011_tst005_mock_antipattern
+      - id: TASK_031_verify_all_tests_pass
         depends_on:
-          - TASK_003_fe001_circular_import
-      - id: TASK_012_tst003_ambiguous_status_codes
-        depends_on:
-          - TASK_003_fe001_circular_import
-
-  - name: "Stage 8 — Advisory Frontend Fixes (advisory)"
-    description: >
-      FE-002 (stale closure) and FE-004 (ARIA attributes) are low-risk advisory fixes.
-      Can be done independently after Stage 2.
-    tasks:
-      - id: TASK_013_fe002_stale_closure
-        depends_on:
-          - TASK_003_fe001_circular_import
-      - id: TASK_014_fe004_aria_attributes
-        depends_on:
-          - TASK_003_fe001_circular_import
+          - TASK_029_verify_stage1_security_and_access
+          - TASK_030_verify_int001_aggregated_data_contract
+          - TASK_008_tst002_graph_cross_dashboard_access_tests
+          - TASK_009_tst003_frontend_test_coverage
+          - TASK_010_dp001_transaction_boundary_file_move
+          - TASK_011_dp002_processing_config_wiring
+          - TASK_012_dp003_test_transaction_wrapper
+          - TASK_013_dp004_taskqueue_persistence
+          - TASK_014_db001_broken_trigger_migration
+          - TASK_015_db003_test_database_role
+          - TASK_016_int003_upload_response_format
+          - TASK_017_be003_processing_status_enum_cleanup
+          - TASK_018_be004_taskqueue_integration_stub
+          - TASK_019_be008_exception_handler_format
+          - TASK_020_fe002_unused_getfilter_removal
+          - TASK_021_fe003_unused_chart_exports
+          - TASK_022_fe004_layout_uuid_mapping
+          - TASK_023_fe005_table_chart_a11y
+          - TASK_024_sec005_fail_closed_rate_limiter_config
+          - TASK_025_sec006_security_headers_middleware
+          - TASK_026_sec007_upload_dashboard_existence_check
+          - TASK_027_tst004_frontend_coverage_threshold
+          - TASK_028_dc005_database_url_password_validation
 
 # ── Dependency Graph Summary ──
 # TASK_001 ─┐
-#            ├─→ TASK_003 ─┬─→ TASK_004 ─┐
-# TASK_002 ─┘              ├─→ TASK_005 ─┼─→ TASK_006 ─→ TASK_015
-#                          ├─→ TASK_007
-#                          ├─→ TASK_008 ─→ TASK_009
-#                          ├─→ TASK_010
-#                          ├─→ TASK_011
-#                          ├─→ TASK_012
-#                          ├─→ TASK_013
-#                          └─→ TASK_014
+#            ├─→ TASK_002 (independent, parallel)
+#            │
+#            ├─→ Stage 2 (parallel):
+#            │   ├─→ TASK_003 ─┐
+#            │   ├─→ TASK_004 ─┤
+#            │   └─→ TASK_005 ─┘
+#            │       │
+#            │       ├─→ Stage 3:
+#            │       │   ├─→ TASK_006 ─→ TASK_030 (verify)
+#            │       │   └─→ TASK_007 ─┐
+#            │       │                 ├─→ TASK_029 (verify)
+#            │       └─────────────────┘
+#            │
+#            └─→ Stage 6 (parallel, 18 tasks):
+#                ├─→ TASK_008 (depends on TASK_004)
+#                ├─→ TASK_009
+#                ├─→ TASK_010..TASK_028 (advisory)
+#                └─→ ...
+#                    └─→ TASK_031 (final verify)
 
 # ── Parallel Execution Groups ──
 #
 # Group 1 (Stage 1): TASK_001, TASK_002 (independent, parallel)
-# Group 2 (Stage 2): TASK_003 (depends on Group 1)
-# Group 3 (Stage 3): TASK_004, TASK_005 (independent, parallel, depends on Group 2)
-#                     TASK_006 (depends on Group 3)
-#                     TASK_015 (depends on TASK_004, TASK_005, TASK_006)
-# Group 4 (Stages 4-8): TASK_007, TASK_008, TASK_010, TASK_011, TASK_012, TASK_013, TASK_014
-#                       (all depend on Group 2, can run in parallel after Group 2 completes)
-#                       TASK_009 depends on TASK_008
+# Group 2 (Stage 2): TASK_003, TASK_004, TASK_005 (independent, parallel, depends on Group 1)
+# Group 3 (Stage 3): TASK_006, TASK_007 (independent, parallel, depends on Group 2)
+# Group 4 (Stage 4): TASK_029 (verify, depends on Group 2 + TASK_007)
+# Group 5 (Stage 5): TASK_030 (verify, depends on TASK_006)
+# Group 6 (Stage 6): TASK_008..TASK_028 (18 tasks, depends on Group 1 or TASK_004)
+# Group 7 (Stage 7): TASK_031 (final verify, depends on all above)
 
 # ── Rollout Sequence ──
-# 1. Stage 1: Security fixes (SEC-001, SEC-003)
-# 2. Stage 2: Architecture fix (FE-001)
-# 3. Stage 3: Integration alignment (INT-006, INT-007, INT-003) + verify
-# 4. Stages 4-8: All remaining fixes (can run in parallel after Stage 2)
+# 1. Stage 1: CRITICAL fixes (BE-001, FE-006) — parallel
+# 2. Stage 2: Security fixes (SEC-002, SEC-003, SEC-004) — parallel
+# 3. Stage 3: Integration fixes (INT-001, INT-005) — parallel
+# 4. Stage 4: Security verification
+# 5. Stage 5: Integration verification
+# 6. Stage 6: All remaining tasks (data processing, database, tests, advisory) — parallel
+# 7. Stage 7: Final full-suite verification
+
+# ── Finding Coverage ──
+# CRITICAL: BE-001, FE-006, INT-001 → covered
+# HIGH: SEC-002, SEC-003, SEC-004, TST-002, TST-003, INT-005 → covered
+# MEDIUM: BE-005 (overlap with SEC-003), DB-003, DP-001, DP-002, DP-003, DP-004, INT-003 → covered
+# LOW: BE-003, BE-004, BE-008, FE-002, FE-003, FE-004, FE-005 → covered
+# ADVISORY: SEC-005, SEC-006, SEC-007, TST-004, DC-005 → covered
+# REJECTED: BE-002, BE-006, BE-007, FE-001, DB-004, DC-001, DC-002, DC-003, DC-004 → not scheduled
+# DOC-UPDATE: DB-002 → not scheduled (requires research/planning first)
+
+# ── Total Counts ──
+# CRITICAL tasks: 3 (TASK_001, TASK_002, TASK_006)
+# HIGH tasks: 5 (TASK_003, TASK_004, TASK_005, TASK_007, TASK_008, TASK_009)
+# MEDIUM tasks: 8 (TASK_010-TASK_017)
+# LOW/ADVISORY tasks: 12 (TASK_018-TASK_028)
+# VERIFICATION tasks: 3 (TASK_029, TASK_030, TASK_031)
+# TOTAL: 31 tasks

@@ -1,0 +1,106 @@
+---
+id: TASK_009_tst003_frontend_test_coverage
+
+title: "TST-003: Add frontend tests for critical user flows"
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_be001_rate_limiter_fix
+  - TASK_002_fe006_grant_access_dashboard_id
+
+type: implementation
+
+description: >
+  The frontend has only 3 test files for the entire application with zero coverage for
+  DashboardView, FileDropzone, chart components, useAuth, and admin panels. Add tests for
+  the most critical user flows: authentication, dashboard rendering, file upload, and
+  chart rendering.
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\audit\\99-validation\\06-tests-validated.md"
+source_section: "TST-003: Critically low frontend test coverage — HIGH (mandatory)"
+
+affected_files:
+  - path: "frontend/src/features/auth/__tests__/authFlow.test.tsx"
+    targets:
+      - type: file
+        name: authFlow.test.tsx
+    semantic_anchors:
+      file_is_new: true
+    changes:
+      - action: create_file
+        description: "Create authentication flow tests"
+        code_hint: |
+          import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+          import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+          import { LoginForm } from '../ui/LoginForm';
+
+          describe('AuthFlow', () => {
+            it('renders login form', () => {
+              render(
+                <QueryClientProvider client={new QueryClient()}>
+                  <LoginForm />
+                </QueryClientProvider>
+              );
+              expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+              expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+            });
+          });
+
+  - path: "frontend/src/features/dashboards/__tests__/DashboardView.test.tsx"
+    targets:
+      - type: file
+        name: DashboardView.test.tsx
+    semantic_anchors:
+      file_is_new: true
+    changes:
+      - action: create_file
+        description: "Create dashboard rendering tests"
+        code_hint: |
+          import { render, screen, waitFor } from '@testing-library/react';
+          import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+          import { DashboardView } from '../ui/DashboardView';
+
+          // Mock API responses
+          jest.mock('../api/dashboardApi', () => ({
+            useDashboard: () => ({ data: mockDashboard, isLoading: false }),
+            useAggregatedData: () => ({ data: mockGraphData, isLoading: false }),
+          }));
+
+          describe('DashboardView', () => {
+            it('renders dashboard title', async () => {
+              render(
+                <QueryClientProvider client={new QueryClient()}>
+                  <DashboardView dashboardId="test-id" />
+                </QueryClientProvider>
+              );
+              await waitFor(() => {
+                expect(screen.getByText(/test dashboard/i)).toBeInTheDocument();
+              });
+            });
+          });
+
+acceptance_criteria:
+  - "At minimum 3 new test files created for auth, dashboards, and one more critical flow"
+  - "Tests run with `npm test` and pass"
+  - "Tests cover at least: login form rendering, dashboard rendering with mock data, file upload UI"
+  - "Test coverage is meaningfully improved from 0% on tested components"
+
+tests_to_run:
+  - command: "cd C:\\py_dev\\mkobi\\frontend && npm test -- --run"
+    description: "Run frontend test suite"
+  - command: "cd C:\\py_dev\\mkobi\\frontend && npm run build"
+    description: "Build frontend to confirm no compilation errors"
+
+risk: low
+
+estimated_effort: medium
+
+tags:
+  - high
+  - tests
+  - frontend
+  - coverage
+  - TST-003

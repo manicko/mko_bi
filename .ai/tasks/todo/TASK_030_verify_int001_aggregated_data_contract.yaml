@@ -1,0 +1,38 @@
+---
+id: TASK_030_verify_int001_aggregated_data_contract
+
+title: "Verify — INT-001: /data/aggregated contract fix verification"
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_006_int001_aggregated_data_graph_id
+
+verifies:
+  - TASK_006_int001_aggregated_data_graph_id
+
+type: verification
+
+verification_steps:
+  - build: "cd C:\\py_dev\\mkobi && docker compose build app && cd frontend && npm run build"
+  - test: "cd C:\\py_dev\\mkobi && python -m pytest tests/test_data.py -v -x"
+  - smoke_check: "cd C:\\py_dev\\mkobi && python -c \"import requests; r = requests.get('http://localhost:8000/data/aggregated?dashboard_id=test-id'); print(r.status_code, r.json())\""
+
+pass_criteria:
+  - "Backend build succeeds"
+  - "Frontend build succeeds (TypeScript compilation)"
+  - "Data endpoint tests pass"
+  - "GET /data/aggregated?dashboard_id=<id> returns 200 with graphs array (no 422)"
+  - "GET /data/aggregated?dashboard_id=<id>&graph_id=<gid> still works for single graph"
+
+failure_action: return TASK_006_int001_aggregated_data_graph_id to rework
+
+rollback_task: ""
+
+tags:
+  - verification
+  - integration
+  - api-contract
+  - INT-001

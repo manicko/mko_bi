@@ -1,0 +1,72 @@
+---
+id: TASK_025_sec006_security_headers_middleware
+
+title: "SEC-006: Add security headers middleware to FastAPI application"
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_001_be001_rate_limiter_fix
+  - TASK_002_fe006_grant_access_dashboard_id
+
+type: implementation
+
+description: >
+  The FastAPI application layer is missing security headers (X-Content-Type-Options,
+  X-Frame-Options, X-XSS-Protection, Content-Security-Policy, Strict-Transport-Security,
+  Referrer-Policy). While nginx sets some of these, defense-in-depth requires the application
+  to also set them. Add a middleware to `app.py`.
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\audit\\99-validation\\04-security-validated.md"
+source_section: "SEC-006: Missing security headers in the FastAPI application layer — MEDIUM (advisory)"
+
+affected_files:
+  - path: "src/mkobi/app.py"
+    targets:
+      - type: function
+        name: create_app
+    semantic_anchors:
+      insert_after:
+        type: function_call
+        value: "app.add_middleware(GZipMiddleware"
+    changes:
+      - action: add_code
+        description: "Add security headers middleware"
+        code_hint: |
+          from starlette.middleware.base import BaseHTTPMiddleware
+
+          class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+              async def dispatch(self, request, call_next):
+                  response = await call_next(request)
+                  response.headers["X-Content-Type-Options"] = "nosniff"
+                  response.headers["X-Frame-Options"] = "DENY"
+                  response.headers["X-XSS-Protection"] = "1; mode=block"
+                  response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+                  return response
+
+          app.add_middleware(SecurityHeadersMiddleware)
+
+acceptance_criteria:
+  - "Middleware is added in create_app()"
+  - "Responses include X-Content-Type-Options: nosniff"
+  - "Responses include X-Frame-Options: DENY"
+  - "ruff + mypy pass"
+
+tests_to_run:
+  - command: "cd C:\\py_dev\\mkobi && python -m pytest tests/ -v -x -k 'security or header'"
+    description: "Run security-related tests"
+  - command: "cd C:\\py_dev\\mkobi && ruff check src/mkobi/app.py"
+    description: "Lint modified file"
+
+risk: low
+
+estimated_effort: small
+
+tags:
+  - medium
+  - security
+  - headers
+  - middleware
+  - SEC-006

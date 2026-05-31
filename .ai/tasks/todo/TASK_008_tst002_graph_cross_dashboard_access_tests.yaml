@@ -1,0 +1,77 @@
+---
+id: TASK_008_tst002_graph_cross_dashboard_access_tests
+
+title: "TST-002: Add cross-dashboard access tests for graph endpoints"
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_004_sec003_graph_endpoint_access_control
+
+type: implementation
+
+description: >
+  The test suite has no test coverage for cross-dashboard access scenarios on graph endpoints.
+  There is no test that creates a graph on one dashboard and attempts to access it from a user
+  who only has access to a different dashboard. Add tests that verify the SEC-003 fix.
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\audit\\99-validation\\06-tests-validated.md"
+source_section: "TST-002: Global graph endpoints lack dashboard access verification in tests — HIGH (mandatory)"
+
+affected_files:
+  - path: "tests/test_graphs.py"
+    targets:
+      - type: function
+        name: test_get_graph_by_id
+    semantic_anchors:
+      insert_after:
+        type: function_definition
+        value: "def test_get_graph_by_id"
+    changes:
+      - action: add_code
+        description: "Add cross-dashboard access test: create graph on dashboard A, attempt access from user with access only to dashboard B, assert 403"
+        code_hint: |
+          @pytest.mark.asyncio
+          async def test_get_graph_cross_dashboard_forbidden(
+              self, session, user_factory, dashboard_factory, graph_factory, access_factory
+          ):
+              """Graph on dashboard A should not be accessible from user with access only to dashboard B."""
+              # Setup: two dashboards, two users with separate access
+              dashboard_a = await dashboard_factory.create(session)
+              dashboard_b = await dashboard_factory.create(session)
+              user_a = await user_factory.create(session, role=RoleEnum.VIEWER)
+              user_b = await user_factory.create(session, role=RoleEnum.VIEWER)
+              await access_factory.create(session, user_id=user_a.id, dashboard_id=dashboard_a.id, permission=PermissionEnum.READ)
+              await access_factory.create(session, user_id=user_b.id, dashboard_id=dashboard_b.id, permission=PermissionEnum.READ)
+              graph = await graph_factory.create(session, dashboard_id=dashboard_a.id)
+
+              # User B tries to access graph from dashboard A → should get 403
+              token = create_access_token(user_b.id)
+              response = await authenticated_client.get(
+                  f"/graphs/{graph.id}",
+                  headers={"Authorization": f"Bearer {token}"}
+              )
+              assert response.status_code == 403
+
+acceptance_criteria:
+  - "Test creates graph on dashboard A, user with access only to dashboard B"
+  - "Test asserts 403 Forbidden when user B tries to access graph from dashboard A"
+  - "Test asserts 200 OK when user A accesses graph from dashboard A"
+  - "All new and existing tests pass"
+
+tests_to_run:
+  - command: "cd C:\\py_dev\\mkobi && python -m pytest tests/test_graphs.py -v -x"
+    description: "Run graph tests including new cross-dashboard tests"
+
+risk: low
+
+estimated_effort: small
+
+tags:
+  - high
+  - tests
+  - security
+  - access-control
+  - TST-002

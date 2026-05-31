@@ -1,0 +1,66 @@
+---
+id: TASK_027_tst004_frontend_coverage_threshold
+
+title: "TST-004: Add coverage threshold to frontend vite.config.ts"
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_001_be001_rate_limiter_fix
+  - TASK_002_fe006_grant_access_dashboard_id
+
+type: implementation
+
+description: >
+  The frontend `vite.config.ts` has no coverage threshold enforcement. The backend has
+  `fail_under = 80` in pyproject.toml. Add a coverage threshold to the frontend config
+  to prevent regression below a minimum level (start with 50% as a reasonable baseline).
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\audit\\99-validation\\06-tests-validated.md"
+source_section: "TST-004: No coverage threshold in frontend vite.config.ts — MEDIUM (advisory)"
+
+affected_files:
+  - path: "frontend/vite.config.ts"
+    targets:
+      - type: object
+        name: test
+    semantic_anchors:
+      insert_after:
+        type: property
+        value: "setupFiles"
+    changes:
+      - action: add_code
+        description: "Add coverage configuration to test block"
+        code_hint: |
+          coverage: {
+            provider: 'v8',
+            reporter: ['text', 'json', 'html'],
+            thresholds: {
+              statements: 50,
+              branches: 40,
+              functions: 45,
+              lines: 50,
+            },
+          },
+
+acceptance_criteria:
+  - "vite.config.ts includes coverage threshold configuration"
+  - "Thresholds are set at achievable levels (50% statements baseline)"
+  - "`npm test` still passes (or fails only if below threshold)"
+
+tests_to_run:
+  - command: "cd C:\\py_dev\\mkobi\\frontend && npm test -- --coverage"
+    description: "Run frontend tests with coverage"
+
+risk: minimal
+
+estimated_effort: trivial
+
+tags:
+  - low
+  - tests
+  - frontend
+  - coverage
+  - TST-004

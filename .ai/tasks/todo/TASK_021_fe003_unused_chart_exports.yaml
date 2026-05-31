@@ -1,0 +1,64 @@
+---
+id: TASK_021_fe003_unused_chart_exports
+
+title: "FE-003: Remove unused chart component exports"
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_001_be001_rate_limiter_fix
+  - TASK_002_fe006_grant_access_dashboard_id
+
+type: implementation
+
+description: >
+  `BarChart`, `LineChart`, `PieChart`, `TableChart` are exported from `charts/index.ts`
+  but no internal code imports them. `PlotlyChart` is the only chart component actually used.
+  Safe to remove the unused exports.
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\audit\\99-validation\\02-frontend-validated.md"
+source_section: "FE-003: Unused Chart Component Exports — LOW (advisory)"
+
+affected_files:
+  - path: "frontend/src/features/dashboards/ui/charts/index.ts"
+    targets:
+      - type: export
+        name: BarChart
+      - type: export
+        name: LineChart
+      - type: export
+        name: PieChart
+      - type: export
+        name: TableChart
+    semantic_anchors:
+      insert_after:
+        type: export_statement
+    changes:
+      - action: remove_code
+        description: "Remove unused chart exports"
+        remove_targets:
+          - "export { default as BarChart } from './BarChart'"
+          - "export { default as LineChart } from './LineChart'"
+          - "export { default as PieChart } from './PieChart'"
+          - "export { default as TableChart } from './TableChart'"
+
+acceptance_criteria:
+  - "Unused chart exports are removed from index.ts"
+  - "PlotlyChart export remains"
+  - "TypeScript compilation passes"
+
+tests_to_run:
+  - command: "cd C:\\py_dev\\mkobi\\frontend && npx tsc --noEmit"
+    description: "TypeScript check"
+
+risk: minimal
+
+estimated_effort: trivial
+
+tags:
+  - low
+  - frontend
+  - dead-code-removal
+  - FE-003

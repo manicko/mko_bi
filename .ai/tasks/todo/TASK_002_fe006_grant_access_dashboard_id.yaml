@@ -1,0 +1,71 @@
+---
+id: TASK_002_fe006_grant_access_dashboard_id
+
+title: "FE-006: Add dashboard_id to grantDashboardAccess request body"
+
+status: pending
+
+priority: critical
+
+depends_on: []
+
+type: implementation
+
+description: >
+  The frontend `grantDashboardAccess` function in `adminApi.ts` sends only `{user_id, permission}`
+  in the request body, but the backend `POST /dashboards/{dashboard_id}/access` endpoint requires
+  `dashboard_id` in the request body as well (it's also in the path). Without it, the request
+  will fail with HTTP 422. Add `dashboard_id` to the request body object.
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\audit\\99-validation\\02-frontend-validated.md"
+source_section: "FE-006: API Contract Mismatch - Missing dashboard_id in grantDashboardAccess Body"
+
+affected_files:
+  - path: "frontend/src/features/admin/api/adminApi.ts"
+    targets:
+      - type: function
+        name: grantDashboardAccess
+    semantic_anchors:
+      insert_before:
+        type: return_statement
+        value: "return this.request"
+    changes:
+      - action: modify_code
+        description: "Add dashboard_id to the request body in grantDashboardAccess"
+        old_hint: |
+          async grantDashboardAccess(params: { dashboard_id: string; user_id: string; permission: string }) {
+            return this.request('POST', `/dashboards/${params.dashboard_id}/access`, {
+              user_id: params.user_id,
+              permission: params.permission,
+            });
+          }
+        new_hint: |
+          async grantDashboardAccess(params: { dashboard_id: string; user_id: string; permission: string }) {
+            return this.request('POST', `/dashboards/${params.dashboard_id}/access`, {
+              dashboard_id: params.dashboard_id,
+              user_id: params.user_id,
+              permission: params.permission,
+            });
+          }
+
+acceptance_criteria:
+  - "grantDashboardAccess sends dashboard_id in the request body"
+  - "The request matches the backend AccessGrant model expectations"
+  - "TypeScript compilation passes without errors"
+  - "No runtime type errors in the admin module"
+
+tests_to_run:
+  - command: "cd C:\\py_dev\\mkobi\\frontend && npm run build"
+    description: "Build frontend to check TypeScript compilation"
+  - command: "cd C:\\py_dev\\mkobi\\frontend && npx tsc --noEmit"
+    description: "TypeScript type-checking"
+
+risk: minimal
+
+estimated_effort: trivial
+
+tags:
+  - critical
+  - frontend
+  - api-contract
+  - FE-006

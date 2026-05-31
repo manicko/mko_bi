@@ -1,0 +1,64 @@
+---
+id: TASK_018_be004_taskqueue_integration_stub
+
+title: "BE-004: Document TaskQueue integration point for background workers"
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_001_be001_rate_limiter_fix
+  - TASK_002_fe006_grant_access_dashboard_id
+
+type: implementation
+
+description: >
+  The in-memory `TaskQueue` is not integrated with background workers (RQ). It's documented
+  as MVP with a migration path, but the integration point is unclear. Add a clear integration
+  stub method and documentation linking `TaskQueue.enqueue` to the RQ migration path.
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\audit\\99-validation\\01-backend-validated.md"
+source_section: "BE-004: In-memory TaskQueue not integrated with background workers — MEDIUM (advisory)"
+
+affected_files:
+  - path: "src/mkobi/core/task_queue.py"
+    targets:
+      - type: class
+        name: TaskQueue
+    semantic_anchors:
+      insert_after:
+        type: method_definition
+        value: "async def enqueue"
+    changes:
+      - action: add_code
+        description: "Add integration stub method for RQ migration"
+        code_hint: |
+          async def enqueue_with_worker(self, job_func: Callable, *args, **kwargs) -> str:
+              """Enqueue a job for background processing.
+              
+              MVP: Uses in-memory queue (non-persistent).
+              Production: Replace with RQ enqueue via Redis.
+              See docs/11-guides/task-queue-migration.md
+              """
+              return await self.enqueue(job_func, *args, **kwargs)
+
+acceptance_criteria:
+  - "TaskQueue has a documented integration point for RQ migration"
+  - "Code comment links to migration guide"
+  - "ruff + mypy pass"
+
+tests_to_run:
+  - command: "cd C:\\py_dev\\mkobi && python -m pytest tests/ -v -x -k 'task_queue'"
+    description: "Run task queue tests"
+
+risk: minimal
+
+estimated_effort: trivial
+
+tags:
+  - low
+  - backend
+  - task-queue
+  - documentation
+  - BE-004

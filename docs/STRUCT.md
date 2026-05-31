@@ -68,6 +68,8 @@ C:\PY_DEV\MKOBI
 |   |   |       
 |   |   +---tests
 |   |   \---validated
+|   |           final-report.md
+|   |           
 |   +---builders
 |   |   |   build.bat
 |   |   |   
@@ -104,6 +106,8 @@ C:\PY_DEV\MKOBI
 |   |           DECISION_01.md
 |   |           
 |   +---researches
+|   |       RESEARCH_01.md
+|   |       
 |   +---structure
 |   |   |   map.md
 |   |   |   
@@ -123,6 +127,37 @@ C:\PY_DEV\MKOBI
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
+|   |   |       TASK_001_be001_rate_limiter_fix.yaml
+|   |   |       TASK_002_fe006_grant_access_dashboard_id.yaml
+|   |   |       TASK_003_sec002_jwt_is_active_check.yaml
+|   |   |       TASK_004_sec003_graph_endpoint_access_control.yaml
+|   |   |       TASK_005_sec004_layout_endpoint_access_control.yaml
+|   |   |       TASK_006_int001_aggregated_data_graph_id.yaml
+|   |   |       TASK_007_int005_create_user_trailing_slash.yaml
+|   |   |       TASK_008_tst002_graph_cross_dashboard_access_tests.yaml
+|   |   |       TASK_009_tst003_frontend_test_coverage.yaml
+|   |   |       TASK_010_dp001_transaction_boundary_file_move.yaml
+|   |   |       TASK_011_dp002_processing_config_wiring.yaml
+|   |   |       TASK_012_dp003_test_transaction_wrapper.yaml
+|   |   |       TASK_013_dp004_taskqueue_persistence.yaml
+|   |   |       TASK_014_db001_broken_trigger_migration.yaml
+|   |   |       TASK_015_db003_test_database_role.yaml
+|   |   |       TASK_016_int003_upload_response_format.yaml
+|   |   |       TASK_017_be003_processing_status_enum_cleanup.yaml
+|   |   |       TASK_018_be004_taskqueue_integration_stub.yaml
+|   |   |       TASK_019_be008_exception_handler_format.yaml
+|   |   |       TASK_020_fe002_unused_getfilter_removal.yaml
+|   |   |       TASK_021_fe003_unused_chart_exports.yaml
+|   |   |       TASK_022_fe004_layout_uuid_mapping.yaml
+|   |   |       TASK_023_fe005_table_chart_a11y.yaml
+|   |   |       TASK_024_sec005_fail_closed_rate_limiter_config.yaml
+|   |   |       TASK_025_sec006_security_headers_middleware.yaml
+|   |   |       TASK_026_sec007_upload_dashboard_existence_check.yaml
+|   |   |       TASK_027_tst004_frontend_coverage_threshold.yaml
+|   |   |       TASK_028_dc005_database_url_password_validation.yaml
+|   |   |       TASK_029_verify_stage1_security_and_access.yaml
+|   |   |       TASK_030_verify_int001_aggregated_data_contract.yaml
+|   |   |       TASK_031_verify_all_tests_pass.yaml
 |   |   |       
 |   |   \---validation
 |   \---templates

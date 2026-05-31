@@ -1,0 +1,69 @@
+---
+id: TASK_016_int003_upload_response_format
+
+title: "INT-003: Align upload endpoint response with UploadResponse model"
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_001_be001_rate_limiter_fix
+  - TASK_002_fe006_grant_access_dashboard_id
+
+type: implementation
+
+description: >
+  The upload endpoint declares `response_model=dict[str, str | UUID]` and returns ad-hoc dicts
+  like `{"message": ..., "processing_log_id": ...}`, but the service layer actually creates a
+  full `UploadResponse` with `task_id`, `filename`, `dashboard_id`, `status`, `message`,
+  `uploaded_at`. Fix: use the proper `UploadResponse` model as the endpoint response type
+  and return it directly.
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\audit\\99-validation\\90-integration-validated.md"
+source_section: "INT-003: Upload response format mismatch — MEDIUM (mandatory)"
+
+affected_files:
+  - path: "src/mkobi/api/routes/upload.py"
+    targets:
+      - type: function
+        name: upload_file_endpoint
+    semantic_anchors:
+      insert_after:
+        type: decorator
+        value: "router.post"
+      insert_before:
+        type: return_statement
+    changes:
+      - action: modify_code
+        description: "Change response_model to UploadResponse and return it directly"
+        old_hint: "response_model=dict[str, str | UUID]"
+        new_hint: "response_model=UploadResponse"
+      - action: modify_code
+        description: "Return the UploadResponse from the service layer directly"
+        old_hint: |
+          result = await data_service.process_upload_with_session(...)
+          return {"message": "File uploaded", "processing_log_id": result.log_id}
+        new_hint: |
+          return await data_service.process_upload_with_session(...)
+
+acceptance_criteria:
+  - "Upload endpoint returns UploadResponse model"
+  - "Response includes: task_id, filename, dashboard_id, status, message, uploaded_at"
+  - "Frontend UploadResponse type still matches"
+  - "ruff + mypy pass"
+
+tests_to_run:
+  - command: "cd C:\\py_dev\\mkobi && python -m pytest tests/test_upload_api.py -v -x"
+    description: "Run upload API tests"
+
+risk: low
+
+estimated_effort: small
+
+tags:
+  - medium
+  - integration
+  - api-contract
+  - response-format
+  - INT-003

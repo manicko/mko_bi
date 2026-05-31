@@ -1,0 +1,88 @@
+---
+id: TASK_004_sec003_graph_endpoint_access_control
+
+title: "SEC-003: Add dashboard access verification to graph endpoints"
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_be001_rate_limiter_fix
+  - TASK_002_fe006_grant_access_dashboard_id
+
+type: implementation
+
+description: >
+  The global graph endpoints in `graphs.py` (GET /, GET /{graph_id}, PUT /{graph_id}) lack
+  dashboard-level access control. Any authenticated user can access any graph by ID. The fix
+  requires adding a fetch-then-check pattern: fetch the graph by ID, extract its dashboard_id,
+  then call `check_dashboard_access()`.
+
+  The POST / endpoint already requires admin role but should also verify the dashboard_id from
+  the request body matches the graph's dashboard. Note: BE-005 (advisory) is the same finding
+  but sourced from Phase 01. SEC-003 is the security-phase validation. This task implements
+  both fixes.
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\audit\\99-validation\\04-security-validated.md"
+source_section: "SEC-003: Missing IDOR Protection on Graph Endpoints — HIGH (mandatory)"
+
+affected_files:
+  - path: "src/mkobi/api/routes/graphs.py"
+    targets:
+      - type: function
+        name: get_graphs_endpoint
+      - type: function
+        name: get_graph_endpoint
+      - type: function
+        name: update_graph_endpoint
+    semantic_anchors:
+      insert_after:
+        type: parameter_list
+        value: "graph_id: UUID"
+      insert_before:
+        type: return_statement
+        value: "return graph_service"
+    changes:
+      - action: add_code
+        description: "Add dashboard access check to get_graph_endpoint: fetch graph, then check access"
+        code_hint: |
+          # IDOR protection: verify user has access to the graph's dashboard
+          graph_obj = await graph_service.get_by_id(graph_id)
+          if not graph_obj:
+              raise HTTPException(status_code=404, detail="Graph not found")
+          dashboard_id = graph_obj.dashboard_id
+          await check_dashboard_access(dashboard_id, current_user, session, required_level="read")
+      - action: add_code
+        description: "Add admin role check for get_graphs_endpoint to scope by accessible dashboards"
+        code_hint: |
+          # For non-admin users, only return graphs from dashboards they have access to
+          if not current_user.is_admin():
+              accessible_dashboards = await access_service.get_user_dashboard_ids(current_user.id, session)
+              graphs = await graph_service.get_by_dashboards(accessible_dashboards, session)
+              return graphs
+
+acceptance_criteria:
+  - "User without dashboard access cannot GET /graphs/{graph_id} (receives 403)"
+  - "User without dashboard access cannot PUT /graphs/{graph_id} (receives 403)"
+  - "User with dashboard read access can GET graphs from that dashboard"
+  - "Admin users can still access all graphs"
+  - "ruff + mypy pass"
+
+tests_to_run:
+  - command: "cd C:\\py_dev\\mkobi && python -m pytest tests/test_graphs.py -v -x"
+    description: "Run graph endpoint tests"
+  - command: "cd C:\\py_dev\\mkobi && ruff check src/mkobi/api/routes/graphs.py"
+    description: "Lint modified file"
+
+risk: medium
+
+estimated_effort: medium
+
+tags:
+  - high
+  - security
+  - idor
+  - access-control
+  - SEC-003
+  - be-005-overlap

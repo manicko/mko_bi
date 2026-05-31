@@ -1,0 +1,61 @@
+---
+id: TASK_007_int005_create_user_trailing_slash
+
+title: "INT-005: Fix createUser URL missing trailing slash"
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_003_sec002_jwt_is_active_check
+  - TASK_004_sec003_graph_endpoint_access_control
+  - TASK_005_sec004_layout_endpoint_access_control
+
+type: implementation
+
+description: >
+  The frontend `createUser` function posts to `/users` (no trailing slash), but the backend
+  registers the route with `prefix="/users"` and `redirect_slashes=False`. With redirect_slashes
+  disabled, FastAPI won't redirect `/users` to `/users/`, causing a 404 for any admin user
+  creation attempt. This is a single-line frontend URL fix.
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\audit\\99-validation\\90-integration-validated.md"
+source_section: "INT-005: Frontend createUser uses /users without trailing slash — HIGH (mandatory)"
+
+affected_files:
+  - path: "frontend/src/features/admin/api/adminApi.ts"
+    targets:
+      - type: function
+        name: createUser
+    semantic_anchors:
+      insert_before:
+        type: return_statement
+        value: "return this.request('POST', '/users'"
+    changes:
+      - action: modify_code
+        description: "Change '/users' to '/users/' in the createUser URL"
+        old_hint: "return this.request('POST', '/users', userData)"
+        new_hint: "return this.request('POST', '/users/', userData)"
+
+acceptance_criteria:
+  - "createUser sends POST to /users/ (with trailing slash)"
+  - "TypeScript compilation passes"
+  - "Admin user creation no longer returns 404"
+
+tests_to_run:
+  - command: "cd C:\\py_dev\\mkobi\\frontend && npx tsc --noEmit"
+    description: "TypeScript check"
+  - command: "cd C:\\py_dev\\mkobi\\frontend && npm run build"
+    description: "Build frontend"
+
+risk: minimal
+
+estimated_effort: trivial
+
+tags:
+  - high
+  - integration
+  - frontend
+  - single-line-fix
+  - INT-005

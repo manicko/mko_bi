@@ -98,6 +98,8 @@ Don't read task files content, just pass file names.
 
 ## 3.2 Spawn Implementor Subagent
 
+IMPORTANT: Only 2 subagent allowed simultaneously. Do not parallel more than 2 agents.
+
 Display banner:
 
 ```

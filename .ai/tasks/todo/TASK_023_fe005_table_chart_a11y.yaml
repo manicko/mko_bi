@@ -1,0 +1,66 @@
+---
+id: TASK_023_fe005_table_chart_a11y
+
+title: "FE-005: Add accessibility attributes to TableChart component"
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_001_be001_rate_limiter_fix
+  - TASK_002_fe006_grant_access_dashboard_id
+
+type: implementation
+
+description: >
+  The `TableChart` component uses plain `<table>` without `scope="col"`, `<caption>`, or
+  ARIA labels. Add standard accessibility attributes for screen reader compatibility.
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\audit\\99-validation\\02-frontend-validated.md"
+source_section: "FE-005: Missing Accessibility Attributes in TableChart — MEDIUM (advisory)"
+
+affected_files:
+  - path: "frontend/src/features/dashboards/ui/charts/TableChart.tsx"
+    targets:
+      - type: JSXElement
+        name: table
+    semantic_anchors:
+      insert_after:
+        type: JSXOpeningElement
+        value: "<table"
+    changes:
+      - action: add_code
+        description: "Add accessibility attributes to table"
+        code_hint: |
+          <table role="grid" aria-label={`Data table: ${title || 'chart'}`}>
+            <caption className="sr-only">{title || 'Data table'}</caption>
+            <thead>
+              <tr>
+                {columns.map(col => (
+                  <th scope="col" key={col.key}>{col.header}</th>
+                ))}
+              </tr>
+            </thead>
+
+acceptance_criteria:
+  - "Table has role='grid' and aria-label"
+  - "Table has a caption element"
+  - "Column headers have scope='col'"
+  - "TypeScript compilation passes"
+  - "No visual regression"
+
+tests_to_run:
+  - command: "cd C:\\py_dev\\mkobi\\frontend && npx tsc --noEmit"
+    description: "TypeScript check"
+
+risk: minimal
+
+estimated_effort: trivial
+
+tags:
+  - low
+  - frontend
+  - accessibility
+  - a11y
+  - FE-005

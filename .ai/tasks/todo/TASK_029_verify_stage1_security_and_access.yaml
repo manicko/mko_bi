@@ -1,0 +1,43 @@
+---
+id: TASK_029_verify_stage1_security_and_access
+
+title: "Verify — Stage 1+2: Security fixes (SEC-002, SEC-003, SEC-004, INT-005)"
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_003_sec002_jwt_is_active_check
+  - TASK_004_sec003_graph_endpoint_access_control
+  - TASK_005_sec004_layout_endpoint_access_control
+  - TASK_007_int005_create_user_trailing_slash
+
+verifies:
+  - TASK_003_sec002_jwt_is_active_check
+  - TASK_004_sec003_graph_endpoint_access_control
+  - TASK_005_sec004_layout_endpoint_access_control
+  - TASK_007_int005_create_user_trailing_slash
+
+type: verification
+
+verification_steps:
+  - build: "cd C:\\py_dev\\mkobi && docker compose build app"
+  - test: "cd C:\\py_dev\\mkobi && python -m pytest tests/test_auth.py tests/test_graphs.py tests/test_layouts.py -v -x"
+  - smoke_check: "cd C:\\py_dev\\mkobi && docker compose up -d && curl -f http://localhost:8000/health || echo 'Health check failed'"
+
+pass_criteria:
+  - "Docker build succeeds"
+  - "All auth tests pass (including deactivated user 401 test)"
+  - "All graph access control tests pass (including cross-dashboard 403 test)"
+  - "All layout access control tests pass"
+  - "Health endpoint returns 200"
+
+failure_action: return TASK_003_sec002_jwt_is_active_check to rework
+
+rollback_task: ""
+
+tags:
+  - verification
+  - security
+  - stage-1-2
