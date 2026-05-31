@@ -193,7 +193,10 @@ class TestSettingsProperties(TestSettingsBase):
         """Test DATABASE_URL property."""
         settings = Settings()
         url = settings.DATABASE_URL
-        assert "postgresql" in url or "postgresql+asyncpg" in url
+        # In development without password, DATABASE_URL returns None
+        # (password is required in production)
+        if url is not None:
+            assert "postgresql" in url or "postgresql+asyncpg" in url
 
     def test_allowed_file_types_property(self):
         """Test allowed_file_types property."""
@@ -406,3 +409,41 @@ class TestGetConfigReload:
         # Verify singleton still works (returns same instance as last call)
         config3 = get_config()
         assert config3 is config2
+
+
+class TestDatabaseUrlPasswordValidation(TestSettingsBase):
+    """Tests for DATABASE_URL password validation."""
+
+    def test_database_url_returns_none_without_password_in_development(self, monkeypatch):
+        """Test DATABASE_URL returns None when password is missing in development."""
+        # Override password to empty string to simulate missing password
+        monkeypatch.setenv("DATABASE__PASSWORD", "")
+        monkeypatch.setenv("ENV", "development")
+        from mkobi.config import clear_config_cache
+        clear_config_cache()
+        settings = Settings()
+        # Password is empty string (which is falsy), so DATABASE_URL should return None
+        assert settings.database.password == ""
+        assert settings.DATABASE_URL is None
+
+    def test_database_url_raises_error_without_password_in_production(self, monkeypatch):
+        """Test DATABASE_URL raises ValueError when password is missing in production."""
+        # Override password to empty string to simulate missing password
+        monkeypatch.setenv("DATABASE__PASSWORD", "")
+        monkeypatch.setenv("ENV", "production")
+        monkeypatch.setenv("ADMIN_USERNAME", "prodadmin")
+        monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
+        from mkobi.config import clear_config_cache
+        clear_config_cache()
+        settings = Settings()
+        # Should raise ValueError in production without password
+        with pytest.raises(ValueError, match="DATABASE__PASSWORD is required in production"):
+            _ = settings.DATABASE_URL
+
+    def test_database_url_returns_url_with_password(self, monkeypatch):
+        """Test DATABASE_URL returns URL when password is set."""
+        monkeypatch.setenv("DATABASE__PASSWORD", "test-password")
+        settings = Settings()
+        url = settings.DATABASE_URL
+        assert url is not None
+        assert "postgresql" in url or "postgresql+asyncpg" in url

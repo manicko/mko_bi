@@ -135,19 +135,26 @@ class ProcessingLogService(IProcessingLogService):
         log = await self.log_repo.get_by_id(log_id, db)
         return log
 
-    async def update_to_success(
+    async def update_to_completed(
         self, log_id: UUID, message: str | None, db: AsyncSession
     ) -> ProcessingLogRead | None:
-        """Update log status to SUCCESS."""
-        logger.info("Updating log to SUCCESS: log_id=%s", log_id)
+        """Update log status to COMPLETED."""
+        logger.info("Updating log to COMPLETED: log_id=%s", log_id)
         await self.log_repo.update_status(
             log_id,
-            ProcessingStatus.SUCCESS,
+            ProcessingStatus.COMPLETED,
             message or "Processing completed successfully",
             db,
         )
         log = await self.log_repo.get_by_id(log_id, db)
         return log
+
+    async def update_to_success(
+        self, log_id: UUID, message: str | None, db: AsyncSession
+    ) -> ProcessingLogRead | None:
+        """Update log status to SUCCESS (deprecated: use update_to_completed)."""
+        logger.info("Updating log to SUCCESS (deprecated): log_id=%s", log_id)
+        return await self.update_to_completed(log_id, message, db)
 
     async def update_to_failed(
         self, log_id: UUID, error: str, db: AsyncSession

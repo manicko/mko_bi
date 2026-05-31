@@ -484,6 +484,7 @@ Browser              FastAPI              Database
 - **Email blocklist:** Configurable domain blocklist for registration requests
 - **CORS:** Explicit allowed methods and headers (no wildcards in production)
 - **Production credentials:** Default credentials (`admin`/`admin`) are rejected in production
+- **User deactivation:** Deactivated users (`is_active=false`) receive HTTP 401 on any authenticated endpoint, even with a valid JWT. The check is performed in `get_current_user_dependency()` on every request.
 
 ---
 

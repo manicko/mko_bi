@@ -30,11 +30,30 @@ export function TableChart({ data, title }: TableChartProps) {
   return (
     <div>
       {title && <h3>{title}</h3>}
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+      <table
+        role="grid"
+        aria-label={`Data table: ${title || 'chart'}`}
+        style={{ width: '100%', borderCollapse: 'collapse' }}
+      >
+        <caption
+          style={{
+            position: 'absolute',
+            width: '1px',
+            height: '1px',
+            padding: 0,
+            margin: '-1px',
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            border: 0,
+          }}
+        >
+          {title || 'Data table'}
+        </caption>
         <thead>
           <tr>
             {displayColumns.map((col) => (
-              <th key={col} style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>
+              <th key={col} scope="col" style={{ border: '1px solid #ddd', padding: '8px', textAlign: 'left' }}>
                 {col}
               </th>
             ))}

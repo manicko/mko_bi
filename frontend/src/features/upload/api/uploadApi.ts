@@ -50,7 +50,7 @@ export function useProcessingStatus(logId: string | null, enabled: boolean = tru
     refetchInterval: (query) => {
       // Stop polling when processing is complete or failed
       const data = query.state.data
-      if (data?.status === 'completed' || data?.status === 'success' || data?.status === 'failed') {
+      if (data?.status === 'completed' || data?.status === 'failed') {
         return false
       }
       return 2000 // Poll every 2 seconds

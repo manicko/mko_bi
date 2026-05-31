@@ -80,6 +80,38 @@ class GraphRepository(IGraphRepository):
             logger.error("Error getting graphs dashboard_id=%s: %s", dashboard_id, e)
             raise
 
+    async def get_by_dashboard_ids(
+        self, dashboard_ids: list[UUID], db: AsyncSession
+    ) -> list[graph_model.Graph]:
+        """Get all graphs for multiple dashboards.
+
+        Args:
+            dashboard_ids: List of dashboard identifiers (UUID).
+            db: Async database session.
+
+        Returns:
+            List of graphs from the specified dashboards.
+            Empty list if dashboard_ids is empty.
+        """
+        if not dashboard_ids:
+            return []
+        try:
+            result = await db.execute(
+                select(graph_model.Graph).where(
+                    graph_model.Graph.dashboard_id.in_(dashboard_ids)
+                )
+            )
+            graphs = list(result.scalars().all())
+            logger.info(
+                "Graphs retrieved for %d dashboard_ids, count: %s",
+                len(dashboard_ids),
+                len(graphs),
+            )
+            return graphs
+        except SQLAlchemyError as e:
+            logger.error("Error getting graphs by dashboard ids: %s", e)
+            raise
+
     async def create(self, db: AsyncSession, **kwargs: Any) -> graph_model.Graph | None:
         """Create new graph.
 

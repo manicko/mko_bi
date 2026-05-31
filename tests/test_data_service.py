@@ -488,23 +488,23 @@ class TestFileValidation:
             graph_repo=GraphRepository(),
         )
 
-    async def test_validate_file_none_content_type_skips_mime_check(self, data_service):
-        """Test MIME validation skips when content_type is None."""
+    async def test_validate_file_none_content_type_raises_error(self, data_service):
+        """Test MIME validation raises error when content_type is None."""
         from mkobi.services.file_processing import validate_file
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            tmp.write(b"data")
+            tmp.write(b"name,value\ntest,1\n" * 10)
             tmp_path = Path(tmp.name)
 
         try:
-            # When content_type is None, validate_mime_type logs warning and returns without error
-            # This is intentional behavior - MIME check is skipped
-            validate_file(
-                file_path=tmp_path,
-                filename="test.csv",
-                content_type=None,
-                max_file_size=data_service._max_file_size,
-            )
+            # When content_type is None, validate_mime_type raises ValueError
+            with pytest.raises(ValueError, match="Content-Type header is required"):
+                validate_file(
+                    file_path=tmp_path,
+                    filename="test.csv",
+                    content_type=None,
+                    max_file_size=data_service._max_file_size,
+                )
         finally:
             tmp_path.unlink(missing_ok=True)
 

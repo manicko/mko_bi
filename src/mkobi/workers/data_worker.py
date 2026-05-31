@@ -59,7 +59,7 @@ async def _update_processing_log_status(
 
         if started_at is not None:
             values["started_at"] = started_at
-        if status in (ProcessingStatus.SUCCESS, ProcessingStatus.FAILED):
+        if status in (ProcessingStatus.COMPLETED, ProcessingStatus.FAILED):
             values["finished_at"] = finished_at or datetime.now(UTC)
 
         stmt = (
@@ -70,7 +70,7 @@ async def _update_processing_log_status(
         if session is not None:
             # Test mode - use provided session (already in transaction)
             await session.execute(stmt)
-            if status in (ProcessingStatus.SUCCESS, ProcessingStatus.FAILED):
+            if status in (ProcessingStatus.COMPLETED, ProcessingStatus.FAILED):
                 await session.commit()
         else:
             # Production mode - create new session
@@ -225,10 +225,10 @@ async def _process_csv_file_async(
         # Store aggregates in database with mode
         await _store_aggregates(df, dashboard_id, task_id, mode, db_session=db_session)
 
-        # Update status to success
+        # Update status to completed
         await _update_processing_log_status(
             task_id=task_id,
-            status=ProcessingStatus.SUCCESS,
+            status=ProcessingStatus.COMPLETED,
             message=f"Processing completed successfully: {result_data['rows']} rows processed",
             finished_at=datetime.now(UTC),
             session=db_session,
@@ -295,60 +295,61 @@ async def _store_aggregates(
     from mkobi.models.enums import UploadMode
 
     if db_session is not None:
-        # Test mode - use provided session (already in transaction)
-        result = await db_session.execute(
-            select(Graph).where(Graph.dashboard_id == dashboard_id)
-        )
-        graphs = result.scalars().all()
+        # Test mode - use provided session with explicit transaction
+        async with db_session.begin():
+            result = await db_session.execute(
+                select(Graph).where(Graph.dashboard_id == dashboard_id)
+            )
+            graphs = result.scalars().all()
 
-        if not graphs:
-            logger.warning("No graphs found for dashboard: %s", dashboard_id)
-            return
+            if not graphs:
+                logger.warning("No graphs found for dashboard: %s", dashboard_id)
+                return
 
-        rows = df.to_dicts()
+            rows = df.to_dicts()
 
-        aggregates = []
-        for row in rows:
-            for graph in graphs:
-                # Validate graph.dimensions is non-empty and contains valid column names
-                valid_dimensions = [
-                    dim for dim in graph.dimensions if dim in df.columns
-                ] if graph.dimensions else []
-                if not valid_dimensions:
-                    raise ValueError(
-                        f"Graph {graph.id} has no valid dimensions configured. "
-                        f"Dimensions: {graph.dimensions or 'empty'}. "
-                        f"Available DataFrame columns: {list(df.columns)}. "
-                        "Please set dimensions in the graph configuration."
-                    )
-                dims = {
-                    k: v for k, v in row.items() if k in valid_dimensions
-                }
-                metrics = {k: v for k, v in row.items() if k not in dims}
-
-                aggregates.append(
-                    {
-                        "graph_id": str(graph.id),
-                        "dims": dims,
-                        "metrics": metrics,
+            aggregates = []
+            for row in rows:
+                for graph in graphs:
+                    # Validate graph.dimensions is non-empty and contains valid column names
+                    valid_dimensions = [
+                        dim for dim in graph.dimensions if dim in df.columns
+                    ] if graph.dimensions else []
+                    if not valid_dimensions:
+                        raise ValueError(
+                            f"Graph {graph.id} has no valid dimensions configured. "
+                            f"Dimensions: {graph.dimensions or 'empty'}. "
+                            f"Available DataFrame columns: {list(df.columns)}. "
+                            "Please set dimensions in the graph configuration."
+                        )
+                    dims = {
+                        k: v for k, v in row.items() if k in valid_dimensions
                     }
-                )
+                    metrics = {k: v for k, v in row.items() if k not in dims}
 
-        manager = StorageManager(db_session)
-        clear_old = (mode == UploadMode.OVERWRITE)
-        processed = await manager.save_aggregates(
-            dashboard_id=dashboard_id,
-            aggregates=aggregates,
-            clear_old=clear_old,
-        )
+                    aggregates.append(
+                        {
+                            "graph_id": str(graph.id),
+                            "dims": dims,
+                            "metrics": metrics,
+                        }
+                    )
 
-        logger.info(
-            "Aggregates stored: dashboard_id=%s, rows=%d, mode=%s, processed=%d",
-            dashboard_id,
-            len(rows),
-            mode,
-            processed,
-        )
+            manager = StorageManager(db_session)
+            clear_old = (mode == UploadMode.OVERWRITE)
+            processed = await manager.save_aggregates(
+                dashboard_id=dashboard_id,
+                aggregates=aggregates,
+                clear_old=clear_old,
+            )
+
+            logger.info(
+                "Aggregates stored: dashboard_id=%s, rows=%d, mode=%s, processed=%d",
+                dashboard_id,
+                len(rows),
+                mode,
+                processed,
+            )
     else:
         # Production mode - create new session
         async with get_session() as session:

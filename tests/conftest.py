@@ -205,11 +205,6 @@ def _auto_mock_redis(monkeypatch):
     monkeypatch.setattr(redis_client_module, "get_async_redis_client", mock_get_async_redis_client)
     monkeypatch.setattr(redis_client_module, "get_redis_client", mock_get_redis_client)
 
-    # Patch the rate limiter instances in data_service
-    import mkobi.services.data_service as data_service_module
-
-    data_service_module._upload_rate_limiter = AsyncRateLimiter(mock_redis_client)
-
     # Patch auth service rate limiter to always allow (backward compatibility)
     import mkobi.services.auth_service as auth_service_module
 
@@ -242,11 +237,6 @@ def mock_redis(monkeypatch):
         return mock_redis_client
 
     monkeypatch.setattr(redis_client_module, "get_async_redis_client", mock_get_async_redis_client)
-
-    # Patch the rate limiter instances in data_service
-    import mkobi.services.data_service as data_service_module
-
-    data_service_module._upload_rate_limiter = AsyncRateLimiter(mock_redis_client)
 
     # Patch auth service rate limiter to always allow
     import mkobi.services.auth_service as auth_service_module
@@ -283,11 +273,6 @@ def strict_redis(monkeypatch):
         return mock_redis_client
 
     monkeypatch.setattr(redis_client_module, "get_async_redis_client", mock_get_async_redis_client)
-
-    # Patch the rate limiter instances in data_service
-    import mkobi.services.data_service as data_service_module
-
-    data_service_module._upload_rate_limiter = AsyncRateLimiter(mock_redis_client)
 
     # Restore real rate limiting behavior by patching AuthService.__init__
     # to use the original implementation (not the always-True patched version)

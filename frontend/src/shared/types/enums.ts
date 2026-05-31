@@ -54,12 +54,13 @@ export const UploadMode = {
 export type UploadMode = (typeof UploadMode)[keyof typeof UploadMode]
 
 export const ProcessingStatus = {
-  STARTED: 'started',
-  UPLOADED: 'uploaded',
-  PROCESSING: 'processing',
-  SUCCESS: 'success',
-  FAILED: 'failed',
-  COMPLETED: 'completed',
+    STARTED: 'started',
+    UPLOADED: 'uploaded',
+    PROCESSING: 'processing',
+    COMPLETED: 'completed',
+    FAILED: 'failed',
+    // Deprecated: Use COMPLETED instead. Kept for backward compatibility.
+    SUCCESS: 'completed',
 } as const
 
 export type ProcessingStatus = (typeof ProcessingStatus)[keyof typeof ProcessingStatus]

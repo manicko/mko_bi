@@ -217,6 +217,49 @@ class TestRefreshToken:
         assert "User not found" in data["detail"]
 
 
+class TestDeactivatedUser:
+    """Tests for deactivated user authentication."""
+
+    async def test_deactivated_user_receives_401(
+        self, async_client: AsyncClient, async_db_session
+    ) -> None:
+        """Test that deactivated users receive 401 on authenticated requests."""
+        from mkobi.core.security import hash_password, create_access_token
+        from mkobi.db.repositories.user_repo import UserRepository
+        from mkobi.db.models import user as user_model
+        from sqlalchemy import select
+
+        # Create an active user
+        user_repo = UserRepository()
+        user_read = await user_repo.create(
+            db=async_db_session,
+            email="deactivated_test@example.com",
+            password_hash=hash_password("TestPass123!"),
+            role=UserRole.VIEWER,
+            is_active=True,
+        )
+        await async_db_session.commit()
+
+        # Deactivate the user - need to update the SQLAlchemy model in DB
+        user_id = user_read.id
+        result = await async_db_session.execute(
+            select(user_model.User).where(user_model.User.id == user_id)
+        )
+        user_obj = result.scalar_one_or_none()
+        if user_obj:
+            user_obj.is_active = False
+            await async_db_session.commit()
+
+        # Try to access authenticated endpoint with deactivated user's token
+        token = create_access_token({"user_id": str(user_id), "email": user_read.email})
+        async_client.headers = {"Authorization": f"Bearer {token}"}
+
+        response = await async_client.get("/auth/me")
+        assert response.status_code == status.HTTP_401_UNAUTHORIZED
+        data = response.json()
+        assert "deactivated" in data["detail"].lower()
+
+
 class TestRateLimiting:
     """Tests for login rate limiting using strict_redis fixture."""
 

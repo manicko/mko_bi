@@ -22,10 +22,11 @@ from mkobi.api.deps import (
     require_viewer_role,
     get_data_service,
     get_db_dependency,
+    get_graph_repository,
 )
 from mkobi.core.permissions import check_dashboard_access
 from mkobi.db.models.graphs import Graph
-from mkobi.models.data import ProcessingResultData
+from mkobi.models.data import ProcessingResultData, AggregatedDataResponse, GraphDataResponse
 from mkobi.services.data_service import DataService
 
 logger = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ router = APIRouter(prefix="/data", tags=["data"], redirect_slashes=False)
 
 @router.get(
     "/aggregated",
-    response_model=dict[str, Any],
+    response_model=AggregatedDataResponse,
     status_code=status.HTTP_200_OK,
     summary="Get dashboard aggregated data",
     description="Returns data for all dashboard charts with applied filters.",
@@ -45,27 +46,33 @@ async def get_aggregated_data_endpoint(
     current_user: CurrentUser,
     data_service: DataService = Depends(get_data_service),
     db: AsyncSession = Depends(get_db_dependency),
+    graph_repo: Any = Depends(get_graph_repository),
     dashboard_id: UUID = Query(..., description="Dashboard ID"),
-    graph_id: UUID = Query(..., description="Graph ID"),
+    graph_id: UUID | None = Query(default=None, description="Graph ID (optional, returns all dashboard graphs if absent)"),
     filters: str | None = Query(default=None, description="JSON string with filters"),
-) -> dict[str, Any]:
+) -> AggregatedDataResponse:
     """Get aggregated data for dashboard.
 
     Applies filters to JSONB field dims and groups data by graph_id.
     Response format: {"graphs": [{"graph_id": "...", "type": "...", "name": "...", "data": [...]}]}
 
+    When graph_id is provided, returns data for a single graph.
+    When graph_id is absent, returns data for all graphs in the dashboard.
+
     Args:
         dashboard_id: Dashboard ID.
+        graph_id: Graph ID (optional). If absent, returns all dashboard graphs.
         filters: JSON string with filters (optional).
         current_user: Current authenticated user.
         data_service: Data service (dependency injection).
+        graph_repo: Graph repository for fetching graphs (dependency injection).
 
     Returns:
-        dict: Data for charts in React (Plotly.js) format.
+        AggregatedDataResponse: Data for charts in React (Plotly.js) format.
 
     Raises:
         HTTPException 403: If user has no read access to dashboard.
-        HTTPException 404: If dashboard not found.
+        HTTPException 404: If dashboard or graph not found.
         HTTPException 500: On server error.
     """
     logger.info(
@@ -105,50 +112,88 @@ async def get_aggregated_data_endpoint(
                     detail="Invalid JSON in filters",
                 ) from e
 
-        # Get graph to retrieve type and name
-        graph_result = await db.execute(
-            select(Graph).where(Graph.id == graph_id)
-        )
-        graph = graph_result.scalar_one_or_none()
+        # When graph_id is provided, return data for single graph
+        if graph_id is not None:
+            # Get graph to retrieve type and name
+            graph_result = await db.execute(
+                select(Graph).where(Graph.id == graph_id)
+            )
+            single_graph = graph_result.scalar_one_or_none()
 
-        if graph is None:
-            logger.warning("Graph not found: graph_id=%s", graph_id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Graph not found",
+            if single_graph is None:
+                logger.warning("Graph not found: graph_id=%s", graph_id)
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Graph not found",
+                )
+
+            # Get data through service
+            single_result: list[ProcessingResultData] = await data_service.get_aggregated_data(
+                dashboard_id=dashboard_id,
+                graph_id=graph_id,
+                db=db,
+                filters=parsed_filters,
             )
 
-        # Get data through service
-        result: list[ProcessingResultData] = await data_service.get_aggregated_data(
-            dashboard_id=dashboard_id,
-            graph_id=graph_id,
-            db=db,
-            filters=parsed_filters,
-        )
+            logger.info(
+                "Aggregated data retrieved: dashboard_id=%s, graph_id=%s, records_count=%d",
+                dashboard_id,
+                graph_id,
+                len(single_result),
+            )
 
-        logger.info(
-            "Aggregated data retrieved: dashboard_id=%s, graph_id=%s, records_count=%d",
-            dashboard_id,
-            graph_id,
-            len(result),
-        )
+            # Build response with graph metadata
+            single_data_points: list[dict[str, int | float | str]] = []
+            for item in single_result:
+                if item.get("preview"):
+                    single_data_points.extend(cast(list[dict[str, int | float | str]], item["preview"]))
 
-        # Build response with graph metadata
-        data_points: list[dict[str, int | float | str]] = []
-        for item in result:
-            if item.get("preview"):
-                data_points.extend(cast(list[dict[str, int | float | str]], item["preview"]))
+            return AggregatedDataResponse(
+                graphs=[
+                    GraphDataResponse(
+                        graph_id=str(graph_id),
+                        type=single_graph.type,
+                        name=single_graph.name,
+                        data=single_data_points,
+                    )
+                ]
+            )
 
-        return {
-            "graphs": [
-                {
-                    "graph_id": str(graph_id),
-                    "type": graph.type.value,
-                    "name": graph.name,
-                    "data": data_points,
-                }
-            ]
-        }
+        # When graph_id is absent, return data for all graphs in dashboard
+        graphs = await graph_repo.get_by_dashboard_id(dashboard_id, db)
+        graph_responses: list[GraphDataResponse] = []
+
+        for graph_item in graphs:
+            graph_data: list[ProcessingResultData] = await data_service.get_aggregated_data(
+                dashboard_id=dashboard_id,
+                graph_id=graph_item.id,
+                db=db,
+                filters=parsed_filters,
+            )
+
+            logger.info(
+                "Aggregated data retrieved: dashboard_id=%s, graph_id=%s, records_count=%d",
+                dashboard_id,
+                graph_item.id,
+                len(graph_data),
+            )
+
+            # Build response with graph metadata
+            item_data_points: list[dict[str, int | float | str]] = []
+            for item in graph_data:
+                if item.get("preview"):
+                    item_data_points.extend(cast(list[dict[str, int | float | str]], item["preview"]))
+
+            graph_responses.append(
+                GraphDataResponse(
+                    graph_id=str(graph_item.id),
+                    type=graph_item.type,
+                    name=graph_item.name,
+                    data=item_data_points,
+                )
+            )
+
+        return AggregatedDataResponse(graphs=graph_responses)
 
     except ValueError as e:
         logger.warning("Error getting data: %s", e)

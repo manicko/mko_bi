@@ -140,7 +140,7 @@ Access control is enforced on **all** dashboard-related endpoints, not just data
 
 | Endpoint | Auth Level | Access Check |
 | --- | --- | --- |
-| `POST /api/v1/upload/:dashboard_id` | Editor+ | Validates user has edit permission on the dashboard |
+| `POST /api/v1/upload/:dashboard_id` | Editor+ | Verifies dashboard exists (404 if not), then validates user has edit permission on the dashboard |
 | `POST /api/v1/upload/:dashboard_id/process` | Editor+ | Validates task ownership and dashboard access |
 | `GET /api/v1/upload/status/:task_id` | Editor+ | Validates user has access to the task's dashboard |
 | `GET /api/v1/upload/result/:task_id` | Editor+ | Validates user has access to the task's dashboard |

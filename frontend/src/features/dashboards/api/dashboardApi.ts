@@ -6,7 +6,6 @@ import type {
   DashboardDetail,
   AggregatedDataRequest,
   AggregatedDataResponse,
-  FilterDetail,
 } from '../../../shared/types/api.types'
 
 export const dashboardApi = {
@@ -26,11 +25,6 @@ export const dashboardApi = {
     const response = await axiosInstance.get<AggregatedDataResponse>('/data/aggregated', {
       params,
     })
-    return response.data
-  },
-
-  getFilter: async (id: string): Promise<FilterDetail> => {
-    const response = await axiosInstance.get<FilterDetail>(`/filters/${id}`)
     return response.data
   },
 }
@@ -55,13 +49,14 @@ export function useDashboard(id: string) {
 
 export function useAggregatedData(
   dashboardId: string,
-  filters?: Record<string, string | string[] | number | number[]>
+  filters?: Record<string, string | string[] | number | number[]>,
+  graphId?: string
 ) {
   const accessToken = getToken()
   return useQuery({
     queryKey: ['aggregatedData', dashboardId, filters],
     queryFn: () =>
-      dashboardApi.getAggregatedData({ dashboard_id: dashboardId, filters }),
+      dashboardApi.getAggregatedData({ dashboard_id: dashboardId, graph_id: graphId, filters }),
     enabled: !!dashboardId && !!accessToken,
   })
 }

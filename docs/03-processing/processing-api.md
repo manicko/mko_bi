@@ -64,10 +64,15 @@ Content-Type: multipart/form-data
 ```json
 {
   "task_id": "<uuid>",
-  "log_id": "<uuid>",
-  "status": "started"
+  "filename": "data.csv",
+  "dashboard_id": "<uuid>",
+  "status": "started",
+  "message": "File uploaded successfully. Processing queued.",
+  "uploaded_at": "2026-05-31T12:00:00Z"
 }
 ```
+
+The upload endpoint returns a structured `UploadResponse` model (not an ad-hoc dict), providing consistent fields for frontend consumption.
 
 ---
 
@@ -93,6 +98,10 @@ Upload → Parse (Polars) → Transform (LoaderConfig) → Aggregate → Save to
 | **6. Cleanup** | Temporary file deleted |
 
 **Important:** Each upload triggers a **full recalculation** of aggregates for the dashboard. There is no incremental aggregation.
+
+### Processing Configuration Wiring
+
+The upload pipeline automatically fetches the dashboard's `processing_config` from the database and passes it through to the background worker. This ensures that data transformations (LoaderConfig, custom metrics, timezone settings defined in `processing_configs.settings` JSONB) are applied consistently without manual intervention. When no config exists, the pipeline uses safe defaults.
 
 ### Processing Modes
 

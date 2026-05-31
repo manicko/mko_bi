@@ -1,0 +1,56 @@
+id: TASK_001_user_model_force_flag
+
+title: Add force_password_change column to User SQLAlchemy model
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  Add the `force_password_change` boolean column to the User SQLAlchemy model
+  in `src/mkobi/db/models/user.py`. The column must be NOT NULL with
+  `default=False` and `server_default=text("false")` to support existing rows.
+
+goals:
+  - Add force_password_change column to User model
+  - Ensure backward compatibility with existing rows via server_default
+  - Follow existing column definition patterns (Boolean, server_default, text())
+
+files:
+  - path: src/mkobi/db/models/user.py
+    targets:
+      - type: class
+        name: User
+      - type: column
+        name: force_password_change
+    semantic_anchors:
+      insert_after:
+        type: column_definition
+        name: is_active
+
+changes:
+  - action: add_column
+    description: >
+      Add `force_password_change: Mapped[bool]` column after `is_active`,
+      using the same Boolean + server_default pattern as other boolean columns.
+    code_hint: |
+      force_password_change: Mapped[bool] = mapped_column(
+          Boolean,
+          nullable=False,
+          default=False,
+          server_default=text("false"),
+      )
+
+acceptance_criteria:
+  - Column added after is_active in User model
+  - Uses Boolean, nullable=False, default=False, server_default=text("false")
+  - ruff passes, mypy passes
+
+tests_to_run:
+  - ruff check src/mkobi/db/models/user.py
+  - mypy src/mkobi/db/models/user.py
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 1 — TASK_001

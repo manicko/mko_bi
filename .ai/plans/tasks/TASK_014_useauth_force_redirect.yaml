@@ -1,0 +1,85 @@
+id: TASK_014_useauth_force_redirect
+
+title: Handle force password redirect in useAuth.ts login callback
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_010_apitypes_force_flag
+
+description: >
+  Modify `frontend/src/features/auth/model/useAuth.ts` to handle force password
+  redirect. Change the `login()` callback so it returns the AuthResponse
+  (including user data) to the caller instead of being void. This allows
+  LoginForm.tsx to check `response.user.force_password_change` and navigate
+  accordingly. After successful login, the response still returns control
+  to the caller with user data so they can decide where to redirect.
+
+goals:
+  - login() returns AuthResponse so caller can check force_password_change
+  - LoginForm will use the response to navigate to correct destination
+  - No navigation logic remains inside useAuth.login()
+  - Clean separation: useAuth manages auth state, LoginForm manages navigation
+
+files:
+  - path: frontend/src/features/auth/model/useAuth.ts
+    targets:
+      - type: function
+        name: login
+    semantic_anchors:
+      modify:
+        type: callback
+        name: login
+
+changes:
+  - action: modify_login
+    description: >
+      Change the login callback from void to returning AuthResponse.
+      After `setUser(response.user)`, add `return response`.
+    code_hint: |
+      # FROM:
+      const login = useCallback(async (email: string, password: string) => {
+        setIsLoading(true)
+        try {
+          const response = await apiLogin(email, password)
+          setToken(response.access_token)
+          setUser(response.user)
+        } catch (error) {
+          removeToken()
+          setUser(null)
+          throw error
+        } finally {
+          setIsLoading(false)
+        }
+      }, [])
+
+      # TO:
+      const login = useCallback(async (email: string, password: string) => {
+        setIsLoading(true)
+        try {
+          const response = await apiLogin(email, password)
+          setToken(response.access_token)
+          setUser(response.user)
+          return response
+        } catch (error) {
+          removeToken()
+          setUser(null)
+          throw error
+        } finally {
+          setIsLoading(false)
+        }
+      }, [])
+
+acceptance_criteria:
+  - login() returns the AuthResponse (including user data with force_password_change)
+  - No navigation logic inside useAuth.login()
+  - LoginForm receives the response to make routing decision
+  - TypeScript compiles without error
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 4 — TASK_014

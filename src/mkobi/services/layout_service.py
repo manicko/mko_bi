@@ -193,3 +193,39 @@ class LayoutService(ILayoutService):
             await db.rollback()
             logger.error("Error deleting layout id=%s: %s", layout_id, e, exc_info=True)
             raise
+
+    async def get_dashboard_id_for_layout(
+        self, layout_id: UUID, db: AsyncSession
+    ) -> UUID | None:
+        """Get first dashboard ID associated with layout.
+
+        Args:
+            layout_id: Layout identifier.
+            db: Async database session.
+
+        Returns:
+            Dashboard ID if layout has associated dashboard, None otherwise.
+        """
+        logger.info("Getting dashboard for layout: layout_id=%s", layout_id)
+        return await self.layout_repo.get_dashboard_id_for_layout(layout_id, db)
+
+    async def get_layouts_by_dashboard_ids(
+        self, dashboard_ids: list[UUID], db: AsyncSession
+    ) -> list[LayoutRead]:
+        """Get layouts by dashboard IDs.
+
+        Args:
+            dashboard_ids: List of dashboard IDs.
+            db: Async database session.
+
+        Returns:
+            List of layout models.
+        """
+        logger.info(
+            "Getting layouts for dashboards: count=%s", len(dashboard_ids)
+        )
+
+        layout_objs = await self.layout_repo.get_layouts_by_dashboard_ids(
+            dashboard_ids, db
+        )
+        return [LayoutRead.model_validate(layout_obj) for layout_obj in layout_objs]

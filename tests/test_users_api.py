@@ -97,6 +97,10 @@ class TestDeleteAccount:
             await repo.delete(user.id, async_db_session)
         await async_db_session.commit()
 
+        # Verify cleanup
+        remaining = await repo.get_all(async_db_session)
+        assert len(remaining) == 0, "Database cleanup failed"
+
         # Create a sole admin user
         admin_user = await repo.create(
             db=async_db_session,
@@ -118,8 +122,8 @@ class TestDeleteAccount:
         # Verify state: 2 users, 1 admin
         all_after = await repo.get_all(async_db_session)
         admins = [u for u in all_after if u.role == UserRole.ADMIN]
-        assert len(all_after) == 2
-        assert len(admins) == 1
+        assert len(all_after) == 2, f"Expected 2 users, got {len(all_after)}"
+        assert len(admins) == 1, f"Expected 1 admin, got {len(admins)}"
 
         # Login as the admin
         login_resp = await async_client.post(

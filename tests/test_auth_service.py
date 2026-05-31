@@ -43,6 +43,7 @@ class TestAuthService:
             id=uuid4(),
             email="test@example.com",
             role="viewer",
+            is_active=True,
             password_hash=hash_password("TestPass123!"),
         )
 
@@ -63,6 +64,7 @@ class TestAuthService:
             id=uuid4(),
             email="admin@example.com",
             role="admin",
+            is_active=True,
             password_hash=hash_password("AdminPass123!"),
         )
 
@@ -110,51 +112,18 @@ class TestAuthService:
             )
 
     async def test_register_user_empty_password(self, auth_service, mock_user_repo, mock_db):
-        """Test registration with empty password allows authentication.
+        """Test registration rejects empty password.
 
-        Empty passwords are technically allowed (no explicit validation), so this test
-        verifies that a user registered with an empty password can authenticate with it.
+        Password validation requires non-empty passwords with digits and letters.
         """
         empty_password = ""
-        # Register user with empty password
-        mock_user_repo.create.return_value = MagicMock(
-            id=uuid4(),
-            email="empty@example.com",
-            role="viewer",
-            password_hash=hash_password(empty_password),
-        )
-
-        result = await auth_service.register_user(
-            email="empty@example.com",
-            password=empty_password,
-            db=mock_db,
-            role="viewer",
-        )
-
-        assert isinstance(result, UserRead)
-        assert result.email == "empty@example.com"
-
-        # Verify login succeeds with the same empty password
-        # Setup the mock to return a user with the empty password hash
-        mock_login_user = MagicMock()
-        mock_login_user.password_hash = hash_password(empty_password)
-        mock_login_user.id = result.id
-        mock_login_user.email = "empty@example.com"
-        mock_login_user.role = UserRole.VIEWER
-        mock_user_repo.get_by_email_with_hash.return_value = mock_login_user
-
-        from datetime import datetime
-        mock_login_user.created_at = datetime.now()
-
-        login_result = await auth_service.login_user(
-            email="empty@example.com",
-            password=empty_password,
-            db=mock_db,
-        )
-
-        assert login_result is not None
-        assert "access_token" in login_result
-        assert login_result["user"].email == "empty@example.com"
+        with pytest.raises(ValueError, match="Password is required"):
+            await auth_service.register_user(
+                email="empty@example.com",
+                password=empty_password,
+                db=mock_db,
+                role="viewer",
+            )
 
     # --- login_user tests ---
 
@@ -168,6 +137,7 @@ class TestAuthService:
         mock_user.id = uuid4()
         mock_user.email = "test@example.com"
         mock_user.role = UserRole.ADMIN
+        mock_user.is_active = True
         mock_user.created_at = datetime.now()
         mock_user_repo.get_by_email_with_hash.return_value = mock_user
 
@@ -219,6 +189,7 @@ class TestAuthService:
         mock_user.id = uuid4()
         mock_user.email = "auth@example.com"
         mock_user.role = UserRole.EDITOR
+        mock_user.is_active = True
         mock_user_repo.get_by_email_with_hash.return_value = mock_user
         mock_user_repo.get_by_email.return_value = mock_user
 
@@ -329,6 +300,7 @@ class TestAuthService:
         expected_user.email = "found@example.com"
         expected_user.role = UserRole.ADMIN
         expected_user.password_hash = hash_password("password")
+        expected_user.is_active = True
         mock_user_repo.get.return_value = expected_user
 
         result = await auth_service.get_user_by_id(expected_user.id, db=mock_db)
@@ -354,6 +326,7 @@ class TestAuthService:
         expected_user.email = "found@example.com"
         expected_user.role = UserRole.VIEWER
         expected_user.password_hash = hash_password("password")
+        expected_user.is_active = True
         mock_user_repo.get_by_email.return_value = expected_user
 
         result = await auth_service.get_user_by_email("found@example.com", db=mock_db)
@@ -376,12 +349,13 @@ class TestAuthService:
         """Test admin creates user successfully."""
         mock_user_repo.create.return_value = MagicMock(
             id=uuid4(), email="new@example.com", role=UserRole.VIEWER,
-            password_hash=hash_password("password"),
+            is_active=True,
+            password_hash=hash_password("ValidPass123"),
         )
 
         result = await auth_service.create_user(
             email="new@example.com",
-            password="password",
+            password="ValidPass123",
             role=UserRole.VIEWER,
             db=mock_db,
         )

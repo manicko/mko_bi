@@ -80,9 +80,10 @@ describe('ProcessingStatus', () => {
     expect(ProcessingStatus.STARTED).toBe('started')
     expect(ProcessingStatus.UPLOADED).toBe('uploaded')
     expect(ProcessingStatus.PROCESSING).toBe('processing')
-    expect(ProcessingStatus.SUCCESS).toBe('success')
-    expect(ProcessingStatus.FAILED).toBe('failed')
     expect(ProcessingStatus.COMPLETED).toBe('completed')
+    expect(ProcessingStatus.FAILED).toBe('failed')
+    // SUCCESS is deprecated but should equal 'completed' for backward compatibility
+    expect(ProcessingStatus.SUCCESS).toBe('completed')
   })
 
   it('has exactly 6 statuses', () => {

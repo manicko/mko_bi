@@ -98,7 +98,27 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
+|   |   |   EXECUTION_ORDER_01.md
+|   |   |   PLAN_01.md
+|   |   |   
 |   |   \---tasks
+|   |           TASK_001_user_model_force_flag.yaml
+|   |           TASK_002_alembic_migration.yaml
+|   |           TASK_003_pydantic_userread_flag.yaml
+|   |           TASK_004_iauthservice_interface.yaml
+|   |           TASK_005_authservice_reset_password.yaml
+|   |           TASK_006_authservice_clear_flag.yaml
+|   |           TASK_007_admin_reset_endpoint.yaml
+|   |           TASK_008_approve_sets_force_flag.yaml
+|   |           TASK_009_adminapi_reset_function.yaml
+|   |           TASK_010_apitypes_force_flag.yaml
+|   |           TASK_011_reset_result_dialog.yaml
+|   |           TASK_012_usermanagement_reset_button.yaml
+|   |           TASK_013_change_password_force_mode.yaml
+|   |           TASK_014_useauth_force_redirect.yaml
+|   |           TASK_015_loginform_force_redirect.yaml
+|   |           TASK_016_verify_phase01.yaml
+|   |           
 |   +---problems
 |   |   |   CONTEXT_01.md
 |   |   |   
@@ -121,41 +141,42 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
+|   |   |       TASK_001_be001_rate_limiter_fix_DONE.yaml
+|   |   |       TASK_002_fe006_grant_access_dashboard_id_DONE.yaml
+|   |   |       TASK_003_sec002_jwt_is_active_check_DONE.yaml
+|   |   |       TASK_004_sec003_graph_endpoint_access_control_DONE.yaml
+|   |   |       TASK_005_sec004_layout_endpoint_access_control_DONE.yaml
+|   |   |       TASK_006_int001_aggregated_data_graph_id_DONE.yaml
+|   |   |       TASK_007_int005_create_user_trailing_slash_DONE.yaml
+|   |   |       TASK_008_tst002_graph_cross_dashboard_access_tests_DONE.yaml
+|   |   |       TASK_009_tst003_frontend_test_coverage_DONE.yaml
+|   |   |       TASK_010_dp001_transaction_boundary_file_move_DONE.yaml
+|   |   |       TASK_011_dp002_processing_config_wiring_DONE.yaml
+|   |   |       TASK_012_dp003_test_transaction_wrapper_DONE.yaml
+|   |   |       TASK_013_dp004_taskqueue_persistence_DONE.yaml
+|   |   |       TASK_014_db001_broken_trigger_migration_DONE.yaml
+|   |   |       TASK_015_db003_test_database_role_DONE.yaml
+|   |   |       TASK_016_int003_upload_response_format_DONE.yaml
+|   |   |       TASK_017_be003_processing_status_enum_cleanup_DONE.yaml
+|   |   |       TASK_018_be004_taskqueue_integration_stub_DONE.yaml
+|   |   |       TASK_019_be008_exception_handler_format_DONE.yaml
+|   |   |       TASK_020_fe002_unused_getfilter_removal_DONE.yaml
+|   |   |       TASK_021_fe003_unused_chart_exports_DONE.yaml
+|   |   |       TASK_022_fe004_layout_uuid_mapping_DONE.yaml
+|   |   |       TASK_023_fe005_table_chart_a11y_DONE.yaml
+|   |   |       TASK_024_sec005_fail_closed_rate_limiter_config_DONE.yaml
+|   |   |       TASK_025_sec006_security_headers_middleware_DONE.yaml
+|   |   |       TASK_026_sec007_upload_dashboard_existence_check_DONE.yaml
+|   |   |       TASK_027_tst004_frontend_coverage_threshold_DONE.yaml
+|   |   |       TASK_028_dc005_database_url_password_validation_DONE.yaml
+|   |   |       TASK_029_verify_stage1_security_and_access_DONE.yaml
+|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
-|   |   |       TASK_001_be001_rate_limiter_fix.yaml
-|   |   |       TASK_002_fe006_grant_access_dashboard_id.yaml
-|   |   |       TASK_003_sec002_jwt_is_active_check.yaml
-|   |   |       TASK_004_sec003_graph_endpoint_access_control.yaml
-|   |   |       TASK_005_sec004_layout_endpoint_access_control.yaml
-|   |   |       TASK_006_int001_aggregated_data_graph_id.yaml
-|   |   |       TASK_007_int005_create_user_trailing_slash.yaml
-|   |   |       TASK_008_tst002_graph_cross_dashboard_access_tests.yaml
-|   |   |       TASK_009_tst003_frontend_test_coverage.yaml
-|   |   |       TASK_010_dp001_transaction_boundary_file_move.yaml
-|   |   |       TASK_011_dp002_processing_config_wiring.yaml
-|   |   |       TASK_012_dp003_test_transaction_wrapper.yaml
-|   |   |       TASK_013_dp004_taskqueue_persistence.yaml
-|   |   |       TASK_014_db001_broken_trigger_migration.yaml
-|   |   |       TASK_015_db003_test_database_role.yaml
-|   |   |       TASK_016_int003_upload_response_format.yaml
-|   |   |       TASK_017_be003_processing_status_enum_cleanup.yaml
-|   |   |       TASK_018_be004_taskqueue_integration_stub.yaml
-|   |   |       TASK_019_be008_exception_handler_format.yaml
-|   |   |       TASK_020_fe002_unused_getfilter_removal.yaml
-|   |   |       TASK_021_fe003_unused_chart_exports.yaml
-|   |   |       TASK_022_fe004_layout_uuid_mapping.yaml
-|   |   |       TASK_023_fe005_table_chart_a11y.yaml
-|   |   |       TASK_024_sec005_fail_closed_rate_limiter_config.yaml
-|   |   |       TASK_025_sec006_security_headers_middleware.yaml
-|   |   |       TASK_026_sec007_upload_dashboard_existence_check.yaml
-|   |   |       TASK_027_tst004_frontend_coverage_threshold.yaml
-|   |   |       TASK_028_dc005_database_url_password_validation.yaml
-|   |   |       TASK_029_verify_stage1_security_and_access.yaml
 |   |   |       TASK_030_verify_int001_aggregated_data_contract.yaml
 |   |   |       TASK_031_verify_all_tests_pass.yaml
 |   |   |       
@@ -4300,6 +4321,7 @@ C:\PY_DEV\MKOBI
 |           667405885731847680
 |           6735482999765834792
 |           6833625021446709262
+|           6838092479933338148
 |           6892763454862441121
 |           7152645585890148736
 |           7283139603309816298
@@ -18416,6 +18438,7 @@ C:\PY_DEV\MKOBI
 |           070decb4-616a-4f8c-ac4a-1424962a58b2.csv.gz
 |           0736552f-4ad7-4d25-aa3e-ffcb310acfee.csv
 |           075308d8-58ba-4147-b513-bfbf07971da4.csv
+|           0774dec5-117f-4553-9821-9e84e60f1f50.csv
 |           07c04bf1-2170-44ce-8e05-593d449ae85a.csv
 |           07d80db1-bb76-48d4-98e1-9b695ef1eb8d.csv
 |           07dc99ea-de16-45ff-b216-715b1470169d.csv
@@ -18544,6 +18567,7 @@ C:\PY_DEV\MKOBI
 |           1f41cfd1-3ef0-4a6a-bab4-57da54f9bf5f.csv.gz
 |           1f451e0a-0573-4c1b-a559-54bd3875e8c6.csv
 |           1f67c3d9-ae23-4aeb-86e1-557a4fd22a7a.csv
+|           1fcc4582-968d-4745-891b-071e64eef6f3.csv.gz
 |           1febeee9-9fee-4c02-a39d-683d93ff4b3b.csv
 |           200101d4-7f1f-4eed-891f-c335b5f8c1f5.csv.gz
 |           201d6018-2f7c-41f2-9bf5-cc4a29f12ab5.csv
@@ -18634,6 +18658,7 @@ C:\PY_DEV\MKOBI
 |           2d8f8656-0fd8-42c1-a301-ea40c27e4e8b.csv
 |           2dbccdc1-7645-40c9-aa9a-5c72d7836307.csv.gz
 |           2e0dad88-91e5-4028-9159-d9ef34cb1fa1.csv
+|           2e171da2-d71d-4e00-816c-9f655f6c1b5e.csv
 |           2e3eefe3-1198-458c-ac0e-e70aebc96a4f.csv
 |           2e51c516-5d9c-4bb8-a35f-32a31f9ad682.csv
 |           2e5324fb-fa47-4fec-867c-3faaebe3b4f2.csv
@@ -18653,6 +18678,7 @@ C:\PY_DEV\MKOBI
 |           305ff074-e995-4df1-bfaa-53e1491bdddc.csv
 |           30cb6621-078d-4ebc-a97a-1fbaf8307117.csv.gz
 |           31152a84-a77d-4720-a093-263b5d8e5242.csv
+|           316b8e7c-f8ca-4233-8ea3-ce2e7e9c431e.csv
 |           317c62a3-5215-48aa-8d29-fec6c1d611a3.csv.gz
 |           31a9f1d7-4e20-4911-9c60-ee4f141d4316.csv
 |           31b7e0c7-fdf8-4d25-a608-4df68520a594.csv
@@ -18742,6 +18768,7 @@ C:\PY_DEV\MKOBI
 |           3e9573f0-2286-41b4-8090-e109bb0b85c1.csv
 |           3e9b5e71-2886-4009-80e4-c62d9f779057.csv
 |           3ec59116-976b-4222-be74-c99093f28adf.csv
+|           3f02059f-ad99-4c8a-9308-fb8fd25d6a7d.csv
 |           3fb8ac89-acab-4832-9bcc-e403cc70e590.csv
 |           3fc56689-849b-437f-82d5-b86d0a629a01.csv.gz
 |           3fc8b34a-197f-40c8-ad4b-21fa780a1d3c.csv
@@ -18769,6 +18796,7 @@ C:\PY_DEV\MKOBI
 |           444b992a-1403-4119-9db4-e6d8141cc39c.csv
 |           449db921-4503-4c4d-9e87-93331eb9c2e7.csv
 |           45196632-6e77-43a2-8af1-1749dd8103ab.csv
+|           456cdeb0-8347-4fb1-af68-1ec923ebe9aa.csv.gz
 |           457d0efe-6a6c-4add-8b45-a28113301fbe.csv
 |           459b3f40-7e8f-4863-96e1-fe004fcdd619.csv
 |           45ad0ac8-5a40-4170-87e5-d424b47ac204.csv
@@ -18903,6 +18931,7 @@ C:\PY_DEV\MKOBI
 |           60d05c26-91df-4a5b-9ab3-2826e3f295b4.csv.gz
 |           612e5ee8-b15b-48f4-925f-2a56c29faee2.csv
 |           6136b209-242e-48bb-9f0b-d779da81dd38.csv
+|           6206111a-b28c-42b5-9adb-9bcf0ac9bb09.csv
 |           62280e5d-e80d-4ef8-b380-666203afba37.csv
 |           625b87f2-90c2-49ba-b02b-0daa9bd3bc1f.csv
 |           62732362-8f5f-4a37-aedf-ef2552b287cc.csv.gz
@@ -18951,6 +18980,7 @@ C:\PY_DEV\MKOBI
 |           69e9a53a-c9de-4c5a-bc0a-16fd89527800.csv
 |           6a2b51ea-9b0c-4647-a7e2-ea4e9822f628.csv.gz
 |           6a6a199b-e8dd-4062-82dc-f8c27b9ab071.csv
+|           6b463d13-509d-433e-b0d4-d8f84b8a214a.csv
 |           6b5769e0-6d0f-4067-aa62-02fea5f1573b.csv
 |           6b598c58-45d6-4e38-ab3c-85ca9b586a80.csv
 |           6b5ffb23-e797-4a8d-b216-53dd3ea8c87d.csv
@@ -18965,6 +18995,7 @@ C:\PY_DEV\MKOBI
 |           6d084631-82ef-4c43-9fea-8c99163eba7e.csv
 |           6d1bda27-ea3e-454c-b213-b447c21937bb.csv.gz
 |           6d276495-7314-4ccd-8fa4-c0088256c8bc.csv
+|           6d75ebed-33ea-4eb3-817f-4d494e3c5af2.csv
 |           6d800e8d-5873-4fd1-99d4-834f6a369d3c.csv
 |           6d86cad4-2cc1-4749-85fa-677d54194433.csv
 |           6dcd7ed2-b0b5-416d-b303-8a9a486cf55d.csv
@@ -18974,6 +19005,7 @@ C:\PY_DEV\MKOBI
 |           6f0f13eb-5cea-46ef-885e-f2286ae45892.csv
 |           6f45efd4-bfb2-4f23-9848-b0b13faea2c3.csv
 |           6fa2a02e-bb47-44cc-8f19-70d6b6f5264c.csv
+|           6fc27d3a-90c3-4af0-b692-31a6214b3b3f.csv
 |           6fc9f6bf-bed4-4d1a-a16e-ddd4200ad9c7.csv
 |           6fcc99f2-4383-463b-803c-755cda40c03e.csv
 |           707a7a1d-4cef-4118-b1dc-111590034191.csv
@@ -19234,6 +19266,7 @@ C:\PY_DEV\MKOBI
 |           a13890a2-8685-4912-a098-2f1e4cdb4e4c.csv
 |           a1621840-ece6-49f2-a1b1-c390e0d0be71.csv
 |           a1c103ef-76ce-4073-b4ed-56b2373546a5.csv
+|           a1faf78c-475a-4d21-9ed5-8bd41cd8168f.csv
 |           a2250125-6e49-45e4-86b2-d9cb60c67e40.csv
 |           a22990ba-3b2d-4685-b9b0-af44c89ede43.csv
 |           a237b25d-214c-45ca-ab1d-79c6052281bf.csv
@@ -19280,6 +19313,7 @@ C:\PY_DEV\MKOBI
 |           a94274f1-6967-4e89-8e70-ba629a864ab1.csv
 |           a96f6470-655b-4c46-88e7-5205880ccb9b.csv
 |           a9921365-faac-43d6-ae71-aeac9e1f987f.csv
+|           a9921c47-238a-42e5-abfc-fb6761dc5e5e.csv.gz
 |           a99d6941-560d-4364-bdc4-c486fa799808.csv.gz
 |           a9aeadec-01db-43d9-9da7-30a6d4fe43fb.csv
 |           a9b7384b-9756-4915-835c-cdd6f0901017.csv
@@ -19581,12 +19615,14 @@ C:\PY_DEV\MKOBI
 |           df77df4b-701e-445a-8c76-e49825cf49ba.csv
 |           df8f82e6-9c46-4b2f-9147-54e07c779067.csv
 |           dfd0b260-b36e-40b8-b6c6-2df7f0ec7f71.csv.gz
+|           dfe59243-1060-4599-8618-24605d7efe6b.csv
 |           dfefa7b9-b358-4fbc-89d4-1e137a860c42.csv
 |           e020f20a-adf7-4475-bed2-4079142e1b29.csv
 |           e059ad87-6b1a-4964-87d6-070dc8fc090e.csv
 |           e1291478-8af4-40ce-a3b3-5914df5c63f4.csv.gz
 |           e12da748-3659-4056-a8ee-c83d6a0ca5bd.csv
 |           e13c465d-331b-4786-b724-181f6e1c4c42.csv
+|           e174d67c-49d9-437b-808f-9e11bf929f60.csv.gz
 |           e1c83a7f-c605-4279-9022-18018583e3d4.csv.gz
 |           e21e0313-e3f2-4dea-b605-800092f31c82.csv
 |           e22ee562-5476-437e-b9b8-d54244dde08a.csv
@@ -19599,6 +19635,7 @@ C:\PY_DEV\MKOBI
 |           e39ff198-8b35-4a41-b9ba-45181aa73b2e.csv
 |           e3b5933a-5a58-4522-bce7-55dec34f4e8e.csv
 |           e3d6bbe2-68a2-4e75-b2ed-c5ce88ac5b49.csv
+|           e3de1693-0d99-455f-b137-42032089d31e.csv
 |           e3fe9aba-2996-47ae-bf63-9c3b9573ff3b.csv
 |           e4406400-9300-48cf-9e1f-83ecea9bf254.csv
 |           e4416b13-880c-4b6a-979b-0c86a503d669.csv
@@ -19708,9 +19745,11 @@ C:\PY_DEV\MKOBI
 |           f71c6f86-c5da-4ff1-8d9e-a30fba4392c4.csv
 |           f7909a7a-6266-4cd8-ac7d-6ad1101884dc.csv
 |           f7ed60eb-8ed0-4d1d-a8d8-2d772db5a820.csv
+|           f8629cd8-5431-4f11-810d-da866fde1649.csv
 |           f86cfe20-8f9c-4199-85bf-f5f3cb9533cf.csv
 |           f874df32-3a66-4ccf-be38-a8ab21f2f195.csv.gz
 |           f8770f38-d307-4d19-8eae-670e98a1c537.csv
+|           f8b16fdd-cf37-44a0-8a74-5a9930dba24d.csv
 |           f910824f-f33f-4672-83bf-534c665d023d.csv
 |           f937b46c-e30b-4c16-b9af-f563473321de.csv
 |           f93a0849-a1dc-4469-a4c1-f14f62dff977.csv
@@ -19936,6 +19975,7 @@ C:\PY_DEV\MKOBI
 |   |       
 |   +---10-deployment
 |   |       deployment.md
+|   |       security-checklist.md
 |   |       
 |   +---11-guides
 |   |       docker.md
@@ -19960,29 +20000,74 @@ C:\PY_DEV\MKOBI
 |   |   tsconfig.node.json
 |   |   vite.config.ts
 |   |   
+|   +---coverage
+|   |   |   base.css
+|   |   |   block-navigation.js
+|   |   |   coverage-final.json
+|   |   |   favicon.png
+|   |   |   index.html
+|   |   |   prettify.css
+|   |   |   prettify.js
+|   |   |   sort-arrow-sprite.png
+|   |   |   sorter.js
+|   |   |   
+|   |   +---features
+|   |   |   +---auth
+|   |   |   |   |   index.html
+|   |   |   |   |   index.ts.html
+|   |   |   |   |   
+|   |   |   |   +---model
+|   |   |   |   |       authToken.ts.html
+|   |   |   |   |       index.html
+|   |   |   |   |       
+|   |   |   |   \---ui
+|   |   |   |           index.html
+|   |   |   |           LoginForm.tsx.html
+|   |   |   |           RegisterForm.tsx.html
+|   |   |   |           
+|   |   |   +---dashboards
+|   |   |   |   \---ui
+|   |   |   |       |   DashboardView.tsx.html
+|   |   |   |       |   index.html
+|   |   |   |       |   
+|   |   |   |       \---charts
+|   |   |   |               index.html
+|   |   |   |               index.ts.html
+|   |   |   |               
+|   |   |   \---upload
+|   |   |       \---ui
+|   |   |               FileDropzone.tsx.html
+|   |   |               index.html
+|   |   |               
+|   |   \---shared
+|   |       \---types
+|   |               enums.ts.html
+|   |               formSchemas.ts.html
+|   |               index.html
+|   |               
 |   +---dist
 |   |   |   favicon.svg
 |   |   |   icons.svg
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           AdminPanel-rqyGytfo.js
-|   |           ChangePasswordPage-CwDaAgCc.js
-|   |           dashboardApi-CEIMd-V2.js
-|   |           DashboardList-WMfD-LYp.js
-|   |           DashboardView-BI9Twda_.js
+|   |           AdminPanel-CpT8XECi.js
+|   |           ChangePasswordPage-DPh4r2Te.js
+|   |           dashboardApi-BPHln-es.js
+|   |           DashboardList-ARcAwL-L.js
+|   |           DashboardView-Cf1wG7WV.js
 |   |           enums-C2UQ_cl5.js
 |   |           formSchemas-DG7LnQby.js
-|   |           index-DedgxxcX.js
-|   |           LoginForm-uF5DvFvG.js
+|   |           index-Df-MPYVx.js
+|   |           LoginForm-Dt-nVaQZ.js
 |   |           mui-BjK8oc7r.js
 |   |           plotly-BNZeab9N.js
 |   |           react-DBNNFkHU.js
-|   |           RegisterForm-CYxIfWn3.js
+|   |           RegisterForm-3lVimk8T.js
 |   |           rolldown-runtime-S-ySWqyJ.js
 |   |           shortUuid-TYuFZJYs.js
-|   |           userApi-q41aziH9.js
-|   |           UserProfile-R0tPPPQi.js
+|   |           userApi-DhHUBx68.js
+|   |           UserProfile-C_cmhXNy.js
 |   |           vendor-DVV7EcJf.js
 |   |           
 |   +---node_modules
@@ -21464,6 +21549,23 @@ C:\PY_DEV\MKOBI
 |   |   |                       isReactComponent.js
 |   |   |                       isReactComponent.js.map
 |   |   |                       
+|   |   +---@bcoe
+|   |   |   \---v8-coverage
+|   |   |       |   LICENSE.md
+|   |   |       |   LICENSE.txt
+|   |   |       |   package.json
+|   |   |       |   README.md
+|   |   |       |   
+|   |   |       \---src
+|   |   |           \---lib
+|   |   |                   ascii.js
+|   |   |                   clone.js
+|   |   |                   compare.js
+|   |   |                   index.js
+|   |   |                   merge.js
+|   |   |                   normalize.js
+|   |   |                   range-tree.js
+|   |   |                   
 |   |   +---@bramus
 |   |   |   \---specificity
 |   |   |       |   index.d.ts
@@ -79091,6 +79193,21 @@ C:\PY_DEV\MKOBI
 |   |   |               preamble.d.ts
 |   |   |               
 |   |   +---@vitest
+|   |   |   +---coverage-v8
+|   |   |   |   |   LICENSE
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   \---dist
+|   |   |   |           browser.d.ts
+|   |   |   |           browser.js
+|   |   |   |           index.d.ts
+|   |   |   |           index.js
+|   |   |   |           load-provider-CdgAx3rL.js
+|   |   |   |           pathe.M-eThtNZ-BTaAGrLg.js
+|   |   |   |           provider.d.ts
+|   |   |   |           provider.js
+|   |   |   |           
 |   |   |   +---expect
 |   |   |   |   |   LICENSE
 |   |   |   |   |   package.json
@@ -79588,6 +79705,23 @@ C:\PY_DEV\MKOBI
 |   |   |       package.json
 |   |   |       README.md
 |   |   |       
+|   |   +---ast-v8-to-istanbul
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---dist
+|   |   |   |       index.d.mts
+|   |   |   |       index.mjs
+|   |   |   |       
+|   |   |   \---node_modules
+|   |   |       \---js-tokens
+|   |   |               index.d.ts
+|   |   |               index.js
+|   |   |               LICENSE
+|   |   |               package.json
+|   |   |               README.md
+|   |   |               
 |   |   +---asynckit
 |   |   |   |   bench.js
 |   |   |   |   index.js
@@ -91495,6 +91629,13 @@ C:\PY_DEV\MKOBI
 |   |   |   \---test
 |   |   |           index.js
 |   |   |           
+|   |   +---has-flag
+|   |   |       index.d.ts
+|   |   |       index.js
+|   |   |       license
+|   |   |       package.json
+|   |   |       readme.md
+|   |   |       
 |   |   +---has-hover
 |   |   |       .eslintrc.json
 |   |   |       .npmignore
@@ -91700,6 +91841,24 @@ C:\PY_DEV\MKOBI
 |   |   |   \---lib
 |   |   |           html-encoding-sniffer.js
 |   |   |           
+|   |   +---html-escaper
+|   |   |   |   index.js
+|   |   |   |   LICENSE.txt
+|   |   |   |   min.js
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   +---cjs
+|   |   |   |       index.js
+|   |   |   |       package.json
+|   |   |   |       
+|   |   |   +---esm
+|   |   |   |       index.js
+|   |   |   |       
+|   |   |   \---test
+|   |   |           index.js
+|   |   |           package.json
+|   |   |           
 |   |   +---iconv-lite
 |   |   |   |   Changelog.md
 |   |   |   |   LICENSE
@@ -91901,6 +92060,115 @@ C:\PY_DEV\MKOBI
 |   |   |   \---test
 |   |   |           basic.js
 |   |   |           
+|   |   +---istanbul-lib-coverage
+|   |   |   |   CHANGELOG.md
+|   |   |   |   index.js
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---lib
+|   |   |           coverage-map.js
+|   |   |           coverage-summary.js
+|   |   |           data-properties.js
+|   |   |           file-coverage.js
+|   |   |           percent.js
+|   |   |           
+|   |   +---istanbul-lib-report
+|   |   |   |   CHANGELOG.md
+|   |   |   |   index.js
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---lib
+|   |   |           context.js
+|   |   |           file-writer.js
+|   |   |           path.js
+|   |   |           report-base.js
+|   |   |           summarizer-factory.js
+|   |   |           tree.js
+|   |   |           watermarks.js
+|   |   |           xml-writer.js
+|   |   |           
+|   |   +---istanbul-reports
+|   |   |   |   CHANGELOG.md
+|   |   |   |   index.js
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---lib
+|   |   |       +---clover
+|   |   |       |       index.js
+|   |   |       |       
+|   |   |       +---cobertura
+|   |   |       |       index.js
+|   |   |       |       
+|   |   |       +---html
+|   |   |       |   |   annotator.js
+|   |   |       |   |   index.js
+|   |   |       |   |   insertion-text.js
+|   |   |       |   |   
+|   |   |       |   \---assets
+|   |   |       |       |   base.css
+|   |   |       |       |   block-navigation.js
+|   |   |       |       |   favicon.png
+|   |   |       |       |   sort-arrow-sprite.png
+|   |   |       |       |   sorter.js
+|   |   |       |       |   
+|   |   |       |       \---vendor
+|   |   |       |               prettify.css
+|   |   |       |               prettify.js
+|   |   |       |               
+|   |   |       +---html-spa
+|   |   |       |   |   .babelrc
+|   |   |       |   |   index.js
+|   |   |       |   |   webpack.config.js
+|   |   |       |   |   
+|   |   |       |   +---assets
+|   |   |       |   |       bundle.js
+|   |   |       |   |       sort-arrow-sprite.png
+|   |   |       |   |       spa.css
+|   |   |       |   |       
+|   |   |       |   \---src
+|   |   |       |           fileBreadcrumbs.js
+|   |   |       |           filterToggle.js
+|   |   |       |           flattenToggle.js
+|   |   |       |           getChildData.js
+|   |   |       |           index.js
+|   |   |       |           routing.js
+|   |   |       |           summaryHeader.js
+|   |   |       |           summaryTableHeader.js
+|   |   |       |           summaryTableLine.js
+|   |   |       |           
+|   |   |       +---json
+|   |   |       |       index.js
+|   |   |       |       
+|   |   |       +---json-summary
+|   |   |       |       index.js
+|   |   |       |       
+|   |   |       +---lcov
+|   |   |       |       index.js
+|   |   |       |       
+|   |   |       +---lcovonly
+|   |   |       |       index.js
+|   |   |       |       
+|   |   |       +---none
+|   |   |       |       index.js
+|   |   |       |       
+|   |   |       +---teamcity
+|   |   |       |       index.js
+|   |   |       |       
+|   |   |       +---text
+|   |   |       |       index.js
+|   |   |       |       
+|   |   |       +---text-lcov
+|   |   |       |       index.js
+|   |   |       |       
+|   |   |       \---text-summary
+|   |   |               index.js
+|   |   |               
 |   |   +---js-tokens
 |   |   |       CHANGELOG.md
 |   |   |       index.js
@@ -92986,6 +93254,99 @@ C:\PY_DEV\MKOBI
 |   |   |           magic-string.umd.js
 |   |   |           magic-string.umd.js.map
 |   |   |           
+|   |   +---magicast
+|   |   |   |   LICENSE
+|   |   |   |   package.json
+|   |   |   |   README.md
+|   |   |   |   
+|   |   |   \---dist
+|   |   |           builders-mk_DIY8_.js
+|   |   |           core.d.ts
+|   |   |           core.js
+|   |   |           helpers.d.ts
+|   |   |           helpers.js
+|   |   |           index.d.ts
+|   |   |           index.js
+|   |   |           types-D5FmR3uJ.d.ts
+|   |   |           
+|   |   +---make-dir
+|   |   |   |   index.d.ts
+|   |   |   |   index.js
+|   |   |   |   license
+|   |   |   |   package.json
+|   |   |   |   readme.md
+|   |   |   |   
+|   |   |   \---node_modules
+|   |   |       +---.bin
+|   |   |       |       semver
+|   |   |       |       semver.cmd
+|   |   |       |       semver.ps1
+|   |   |       |       
+|   |   |       \---semver
+|   |   |           |   index.js
+|   |   |           |   LICENSE
+|   |   |           |   package.json
+|   |   |           |   preload.js
+|   |   |           |   range.bnf
+|   |   |           |   README.md
+|   |   |           |   
+|   |   |           +---bin
+|   |   |           |       semver.js
+|   |   |           |       
+|   |   |           +---classes
+|   |   |           |       comparator.js
+|   |   |           |       index.js
+|   |   |           |       range.js
+|   |   |           |       semver.js
+|   |   |           |       
+|   |   |           +---functions
+|   |   |           |       clean.js
+|   |   |           |       cmp.js
+|   |   |           |       coerce.js
+|   |   |           |       compare-build.js
+|   |   |           |       compare-loose.js
+|   |   |           |       compare.js
+|   |   |           |       diff.js
+|   |   |           |       eq.js
+|   |   |           |       gt.js
+|   |   |           |       gte.js
+|   |   |           |       inc.js
+|   |   |           |       lt.js
+|   |   |           |       lte.js
+|   |   |           |       major.js
+|   |   |           |       minor.js
+|   |   |           |       neq.js
+|   |   |           |       parse.js
+|   |   |           |       patch.js
+|   |   |           |       prerelease.js
+|   |   |           |       rcompare.js
+|   |   |           |       rsort.js
+|   |   |           |       satisfies.js
+|   |   |           |       sort.js
+|   |   |           |       truncate.js
+|   |   |           |       valid.js
+|   |   |           |       
+|   |   |           +---internal
+|   |   |           |       constants.js
+|   |   |           |       debug.js
+|   |   |           |       identifiers.js
+|   |   |           |       lrucache.js
+|   |   |           |       parse-options.js
+|   |   |           |       re.js
+|   |   |           |       
+|   |   |           \---ranges
+|   |   |                   gtr.js
+|   |   |                   intersects.js
+|   |   |                   ltr.js
+|   |   |                   max-satisfying.js
+|   |   |                   min-satisfying.js
+|   |   |                   min-version.js
+|   |   |                   outside.js
+|   |   |                   simplify.js
+|   |   |                   subset.js
+|   |   |                   to-comparators.js
+|   |   |                   valid.js
+|   |   |                   
 |   |   +---map-limit
 |   |   |   |   index.js
 |   |   |   |   LICENSE.md
@@ -98084,6 +98445,13 @@ C:\PY_DEV\MKOBI
 |   |   |                   sort.js
 |   |   |                   within.js
 |   |   |                   
+|   |   +---supports-color
+|   |   |       browser.js
+|   |   |       index.js
+|   |   |       license
+|   |   |       package.json
+|   |   |       readme.md
+|   |   |       
 |   |   +---supports-preserve-symlinks-flag
 |   |   |   |   .eslintrc
 |   |   |   |   .nycrc
@@ -99512,8 +99880,8 @@ C:\PY_DEV\MKOBI
 |   |   |       |       benchmark.CX_oY03V.js
 |   |   |       |       benchmark.d.DAaHLpsq.d.ts
 |   |   |       |       browser.d.BcoexmFG.d.ts
-|   |   |       |       cac.CVxlyDFd.js
-|   |   |       |       cli-api.B5majYba.js
+|   |   |       |       cac.BuBILSID.js
+|   |   |       |       cli-api.C6CiCDM3.js
 |   |   |       |       config.d.A1h_Y6Jt.d.ts
 |   |   |       |       console.3WNpx0tS.js
 |   |   |       |       constants.CPYnjOGj.js
@@ -100692,9 +101060,12 @@ C:\PY_DEV\MKOBI
 |       |   |   |   \---__tests__
 |       |   |   |           authToken.test.ts
 |       |   |   |           
-|       |   |   \---ui
-|       |   |           LoginForm.tsx
-|       |   |           RegisterForm.tsx
+|       |   |   +---ui
+|       |   |   |       LoginForm.tsx
+|       |   |   |       RegisterForm.tsx
+|       |   |   |       
+|       |   |   \---__tests__
+|       |   |           authFlow.test.tsx
 |       |   |           
 |       |   +---dashboards
 |       |   |   |   index.ts
@@ -100703,28 +101074,34 @@ C:\PY_DEV\MKOBI
 |       |   |   |       dashboardApi.ts
 |       |   |   |       
 |       |   |   +---model
-|       |   |   \---ui
-|       |   |       |   DashboardFilters.tsx
-|       |   |       |   DashboardList.tsx
-|       |   |       |   DashboardView.tsx
-|       |   |       |   
-|       |   |       \---charts
-|       |   |               BarChart.tsx
-|       |   |               index.ts
-|       |   |               LineChart.tsx
-|       |   |               PieChart.tsx
-|       |   |               PlotlyChart.tsx
-|       |   |               TableChart.tsx
-|       |   |               
+|       |   |   +---ui
+|       |   |   |   |   DashboardFilters.tsx
+|       |   |   |   |   DashboardList.tsx
+|       |   |   |   |   DashboardView.tsx
+|       |   |   |   |   
+|       |   |   |   \---charts
+|       |   |   |           BarChart.tsx
+|       |   |   |           index.ts
+|       |   |   |           LineChart.tsx
+|       |   |   |           PieChart.tsx
+|       |   |   |           PlotlyChart.tsx
+|       |   |   |           TableChart.tsx
+|       |   |   |           
+|       |   |   \---__tests__
+|       |   |           DashboardView.test.tsx
+|       |   |           
 |       |   +---upload
 |       |   |   |   index.ts
 |       |   |   |   
 |       |   |   +---api
 |       |   |   |       uploadApi.ts
 |       |   |   |       
-|       |   |   \---ui
-|       |   |           FileDropzone.tsx
-|       |   |           UploadModal.tsx
+|       |   |   +---ui
+|       |   |   |       FileDropzone.tsx
+|       |   |   |       UploadModal.tsx
+|       |   |   |       
+|       |   |   \---__tests__
+|       |   |           FileDropzone.test.tsx
 |       |   |           
 |       |   \---users
 |       |       |   index.ts
@@ -101924,293 +102301,285 @@ C:\PY_DEV\MKOBI
 |           readme.md
 |           
 +---src
-|   +---mkobi
-|   |   |   app.py
-|   |   |   config.py
-|   |   |   main.py
-|   |   |   py.typed
-|   |   |   
-|   |   +---api
-|   |   |   |   deps.py
-|   |   |   |   __init__.py
-|   |   |   |   
-|   |   |   +---routes
-|   |   |   |   |   admin.py
-|   |   |   |   |   auth.py
-|   |   |   |   |   client_errors.py
-|   |   |   |   |   dashboards.py
-|   |   |   |   |   dashboards_access.py
-|   |   |   |   |   dashboards_crud.py
-|   |   |   |   |   dashboards_filters.py
-|   |   |   |   |   dashboards_graphs.py
-|   |   |   |   |   data.py
-|   |   |   |   |   filters.py
-|   |   |   |   |   graphs.py
-|   |   |   |   |   layouts.py
-|   |   |   |   |   processing_configs.py
-|   |   |   |   |   processing_logs.py
-|   |   |   |   |   upload.py
-|   |   |   |   |   users.py
-|   |   |   |   |   __init__.py
-|   |   |   |   |   
-|   |   |   |   \---__pycache__
-|   |   |   |           admin.cpython-314.pyc
-|   |   |   |           auth.cpython-314.pyc
-|   |   |   |           client_errors.cpython-314.pyc
-|   |   |   |           dashboards.cpython-314.pyc
-|   |   |   |           dashboards_access.cpython-314.pyc
-|   |   |   |           dashboards_crud.cpython-314.pyc
-|   |   |   |           dashboards_filters.cpython-314.pyc
-|   |   |   |           dashboards_graphs.cpython-314.pyc
-|   |   |   |           data.cpython-314.pyc
-|   |   |   |           filters.cpython-314.pyc
-|   |   |   |           graphs.cpython-314.pyc
-|   |   |   |           layouts.cpython-314.pyc
-|   |   |   |           processing_configs.cpython-314.pyc
-|   |   |   |           processing_logs.cpython-314.pyc
-|   |   |   |           upload.cpython-314.pyc
-|   |   |   |           users.cpython-314.pyc
-|   |   |   |           __init__.cpython-314.pyc
-|   |   |   |           
-|   |   |   \---__pycache__
-|   |   |           deps.cpython-314.pyc
-|   |   |           __init__.cpython-314.pyc
-|   |   |           
-|   |   +---core
-|   |   |   |   base_repository.py
-|   |   |   |   logging_config.py
-|   |   |   |   permissions.py
-|   |   |   |   redis_client.py
-|   |   |   |   security.py
-|   |   |   |   task_queue.py
-|   |   |   |   __init__.py
-|   |   |   |   
-|   |   |   \---__pycache__
-|   |   |           base_repository.cpython-314.pyc
-|   |   |           logging_config.cpython-314.pyc
-|   |   |           permissions.cpython-314.pyc
-|   |   |           redis_client.cpython-314.pyc
-|   |   |           security.cpython-314.pyc
-|   |   |           task_queue.cpython-314.pyc
-|   |   |           __init__.cpython-314.pyc
-|   |   |           
-|   |   +---data
-|   |   |   |   __init__.py
-|   |   |   |   
-|   |   |   +---loaders
-|   |   |   |   |   loader.py
-|   |   |   |   |   validator.py
-|   |   |   |   |   __init__.py
-|   |   |   |   |   
-|   |   |   |   \---__pycache__
-|   |   |   |           loader.cpython-314.pyc
-|   |   |   |           validator.cpython-314.pyc
-|   |   |   |           __init__.cpython-314.pyc
-|   |   |   |           
-|   |   |   +---processing
-|   |   |   |   |   aggregate_transforms.py
-|   |   |   |   |   filter_transforms.py
-|   |   |   |   |   formula_parser.py
-|   |   |   |   |   registry.py
-|   |   |   |   |   transformations.py
-|   |   |   |   |   __init__.py
-|   |   |   |   |   
-|   |   |   |   \---__pycache__
-|   |   |   |           aggregate_transforms.cpython-314.pyc
-|   |   |   |           filter_transforms.cpython-314.pyc
-|   |   |   |           formula_parser.cpython-314.pyc
-|   |   |   |           registry.cpython-314.pyc
-|   |   |   |           transformations.cpython-314.pyc
-|   |   |   |           __init__.cpython-314.pyc
-|   |   |   |           
-|   |   |   +---storage
-|   |   |   |   |   manager.py
-|   |   |   |   |   __init__.py
-|   |   |   |   |   
-|   |   |   |   \---__pycache__
-|   |   |   |           manager.cpython-314.pyc
-|   |   |   |           __init__.cpython-314.pyc
-|   |   |   |           
-|   |   |   \---__pycache__
-|   |   |           __init__.cpython-314.pyc
-|   |   |           
-|   |   +---db
-|   |   |   |   base.py
-|   |   |   |   session.py
-|   |   |   |   starter.py
-|   |   |   |   __init__.py
-|   |   |   |   
-|   |   |   +---models
-|   |   |   |   |   access.py
-|   |   |   |   |   aggregated_data.py
-|   |   |   |   |   dashboard.py
-|   |   |   |   |   filters.py
-|   |   |   |   |   graphs.py
-|   |   |   |   |   layout.py
-|   |   |   |   |   processing_configs.py
-|   |   |   |   |   processing_logs.py
-|   |   |   |   |   registration_request.py
-|   |   |   |   |   user.py
-|   |   |   |   |   __init__.py
-|   |   |   |   |   
-|   |   |   |   \---__pycache__
-|   |   |   |           access.cpython-314.pyc
-|   |   |   |           aggregated_data.cpython-314.pyc
-|   |   |   |           dashboard.cpython-314.pyc
-|   |   |   |           filters.cpython-314.pyc
-|   |   |   |           graphs.cpython-314.pyc
-|   |   |   |           layout.cpython-314.pyc
-|   |   |   |           processing_configs.cpython-314.pyc
-|   |   |   |           processing_logs.cpython-314.pyc
-|   |   |   |           registration_request.cpython-314.pyc
-|   |   |   |           user.cpython-314.pyc
-|   |   |   |           __init__.cpython-314.pyc
-|   |   |   |           
-|   |   |   +---repositories
-|   |   |   |   |   access_repo.py
-|   |   |   |   |   aggregated_data_repo.py
-|   |   |   |   |   dashboard_filter_repo.py
-|   |   |   |   |   dashboard_repo.py
-|   |   |   |   |   filter_repo.py
-|   |   |   |   |   graph_repo.py
-|   |   |   |   |   layout_repo.py
-|   |   |   |   |   processing_config_repo.py
-|   |   |   |   |   processing_log_repo.py
-|   |   |   |   |   registration_request_repo.py
-|   |   |   |   |   user_repo.py
-|   |   |   |   |   __init__.py
-|   |   |   |   |   
-|   |   |   |   \---__pycache__
-|   |   |   |           access_repo.cpython-314.pyc
-|   |   |   |           aggregated_data_repo.cpython-314.pyc
-|   |   |   |           dashboard_filter_repo.cpython-314.pyc
-|   |   |   |           dashboard_repo.cpython-314.pyc
-|   |   |   |           filter_repo.cpython-314.pyc
-|   |   |   |           graph_repo.cpython-314.pyc
-|   |   |   |           layout_repo.cpython-314.pyc
-|   |   |   |           processing_config_repo.cpython-314.pyc
-|   |   |   |           processing_log_repo.cpython-314.pyc
-|   |   |   |           registration_request_repo.cpython-314.pyc
-|   |   |   |           user_repo.cpython-314.pyc
-|   |   |   |           __init__.cpython-314.pyc
-|   |   |   |           
-|   |   |   \---__pycache__
-|   |   |           base.cpython-314.pyc
-|   |   |           session.cpython-314.pyc
-|   |   |           starter.cpython-314.pyc
-|   |   |           __init__.cpython-314.pyc
-|   |   |           
-|   |   +---interfaces
-|   |   |   |   repository_interfaces.py
-|   |   |   |   service_interfaces.py
-|   |   |   |   __init__.py
-|   |   |   |   
-|   |   |   \---__pycache__
-|   |   |           repository_interfaces.cpython-314.pyc
-|   |   |           service_interfaces.cpython-314.pyc
-|   |   |           __init__.cpython-314.pyc
-|   |   |           
-|   |   +---models
-|   |   |   |   access.py
-|   |   |   |   auth.py
-|   |   |   |   dashboard.py
-|   |   |   |   data.py
-|   |   |   |   enums.py
-|   |   |   |   filters.py
-|   |   |   |   graph.py
-|   |   |   |   layout.py
-|   |   |   |   processing_configs.py
-|   |   |   |   processing_logs.py
-|   |   |   |   style.py
-|   |   |   |   transformation_configs.py
-|   |   |   |   types.py
-|   |   |   |   user.py
-|   |   |   |   __init__.py
-|   |   |   |   
-|   |   |   \---__pycache__
-|   |   |           access.cpython-314.pyc
-|   |   |           auth.cpython-314.pyc
-|   |   |           dashboard.cpython-314.pyc
-|   |   |           data.cpython-314.pyc
-|   |   |           enums.cpython-314.pyc
-|   |   |           filters.cpython-314.pyc
-|   |   |           graph.cpython-314.pyc
-|   |   |           layout.cpython-314.pyc
-|   |   |           processing_configs.cpython-314.pyc
-|   |   |           processing_logs.cpython-314.pyc
-|   |   |           transformation_configs.cpython-314.pyc
-|   |   |           types.cpython-314.pyc
-|   |   |           user.cpython-314.pyc
-|   |   |           user_roles.cpython-314.pyc
-|   |   |           __init__.cpython-314.pyc
-|   |   |           
-|   |   +---services
-|   |   |   |   auth_service.py
-|   |   |   |   dashboard_service.py
-|   |   |   |   data_service.py
-|   |   |   |   file_cleanup.py
-|   |   |   |   file_processing.py
-|   |   |   |   filter_service.py
-|   |   |   |   graph_service.py
-|   |   |   |   layout_service.py
-|   |   |   |   processing_config_service.py
-|   |   |   |   processing_log_service.py
-|   |   |   |   user_service.py
-|   |   |   |   __init__.py
-|   |   |   |   
-|   |   |   \---__pycache__
-|   |   |           auth_service.cpython-314.pyc
-|   |   |           dashboard_service.cpython-314.pyc
-|   |   |           data_service.cpython-314.pyc
-|   |   |           file_cleanup.cpython-314.pyc
-|   |   |           file_processing.cpython-314.pyc
-|   |   |           filter_service.cpython-314.pyc
-|   |   |           graph_service.cpython-314.pyc
-|   |   |           layout_service.cpython-314.pyc
-|   |   |           processing_config_service.cpython-314.pyc
-|   |   |           processing_log_service.cpython-314.pyc
-|   |   |           user_service.cpython-314.pyc
-|   |   |           __init__.cpython-314.pyc
-|   |   |           
-|   |   +---settings
-|   |   |       app.yaml
-|   |   |       README.md
-|   |   |       
-|   |   +---utils
-|   |   |   |   decorators.py
-|   |   |   |   exceptions.py
-|   |   |   |   file_utils.py
-|   |   |   |   time_utils.py
-|   |   |   |   validators.py
-|   |   |   |   __init__.py
-|   |   |   |   
-|   |   |   \---__pycache__
-|   |   |           exceptions.cpython-314.pyc
-|   |   |           file_utils.cpython-314.pyc
-|   |   |           time_utils.cpython-314.pyc
-|   |   |           validators.cpython-314.pyc
-|   |   |           __init__.cpython-314.pyc
-|   |   |           
-|   |   +---workers
-|   |   |   |   data_worker.py
-|   |   |   |   
-|   |   |   \---__pycache__
-|   |   |           data_worker.cpython-314.pyc
-|   |   |           
-|   |   \---__pycache__
-|   |           app.cpython-314.pyc
-|   |           config.cpython-314.pyc
-|   |           dash_app.cpython-314.pyc
-|   |           main.cpython-314.pyc
-|   |           
-|   \---mkobi.egg-info
-|           dependency_links.txt
-|           entry_points.txt
-|           PKG-INFO
-|           requires.txt
-|           SOURCES.txt
-|           top_level.txt
-|           
+|   \---mkobi
+|       |   app.py
+|       |   config.py
+|       |   main.py
+|       |   py.typed
+|       |   
+|       +---api
+|       |   |   deps.py
+|       |   |   __init__.py
+|       |   |   
+|       |   +---routes
+|       |   |   |   admin.py
+|       |   |   |   auth.py
+|       |   |   |   client_errors.py
+|       |   |   |   dashboards.py
+|       |   |   |   dashboards_access.py
+|       |   |   |   dashboards_crud.py
+|       |   |   |   dashboards_filters.py
+|       |   |   |   dashboards_graphs.py
+|       |   |   |   data.py
+|       |   |   |   filters.py
+|       |   |   |   graphs.py
+|       |   |   |   layouts.py
+|       |   |   |   processing_configs.py
+|       |   |   |   processing_logs.py
+|       |   |   |   upload.py
+|       |   |   |   users.py
+|       |   |   |   __init__.py
+|       |   |   |   
+|       |   |   \---__pycache__
+|       |   |           admin.cpython-314.pyc
+|       |   |           auth.cpython-314.pyc
+|       |   |           client_errors.cpython-314.pyc
+|       |   |           dashboards.cpython-314.pyc
+|       |   |           dashboards_access.cpython-314.pyc
+|       |   |           dashboards_crud.cpython-314.pyc
+|       |   |           dashboards_filters.cpython-314.pyc
+|       |   |           dashboards_graphs.cpython-314.pyc
+|       |   |           data.cpython-314.pyc
+|       |   |           filters.cpython-314.pyc
+|       |   |           graphs.cpython-314.pyc
+|       |   |           layouts.cpython-314.pyc
+|       |   |           processing_configs.cpython-314.pyc
+|       |   |           processing_logs.cpython-314.pyc
+|       |   |           upload.cpython-314.pyc
+|       |   |           users.cpython-314.pyc
+|       |   |           __init__.cpython-314.pyc
+|       |   |           
+|       |   \---__pycache__
+|       |           deps.cpython-314.pyc
+|       |           __init__.cpython-314.pyc
+|       |           
+|       +---core
+|       |   |   base_repository.py
+|       |   |   logging_config.py
+|       |   |   permissions.py
+|       |   |   redis_client.py
+|       |   |   security.py
+|       |   |   task_queue.py
+|       |   |   __init__.py
+|       |   |   
+|       |   \---__pycache__
+|       |           base_repository.cpython-314.pyc
+|       |           logging_config.cpython-314.pyc
+|       |           permissions.cpython-314.pyc
+|       |           redis_client.cpython-314.pyc
+|       |           security.cpython-314.pyc
+|       |           task_queue.cpython-314.pyc
+|       |           __init__.cpython-314.pyc
+|       |           
+|       +---data
+|       |   |   __init__.py
+|       |   |   
+|       |   +---loaders
+|       |   |   |   loader.py
+|       |   |   |   validator.py
+|       |   |   |   __init__.py
+|       |   |   |   
+|       |   |   \---__pycache__
+|       |   |           loader.cpython-314.pyc
+|       |   |           validator.cpython-314.pyc
+|       |   |           __init__.cpython-314.pyc
+|       |   |           
+|       |   +---processing
+|       |   |   |   aggregate_transforms.py
+|       |   |   |   filter_transforms.py
+|       |   |   |   formula_parser.py
+|       |   |   |   registry.py
+|       |   |   |   transformations.py
+|       |   |   |   __init__.py
+|       |   |   |   
+|       |   |   \---__pycache__
+|       |   |           aggregate_transforms.cpython-314.pyc
+|       |   |           filter_transforms.cpython-314.pyc
+|       |   |           formula_parser.cpython-314.pyc
+|       |   |           registry.cpython-314.pyc
+|       |   |           transformations.cpython-314.pyc
+|       |   |           __init__.cpython-314.pyc
+|       |   |           
+|       |   +---storage
+|       |   |   |   manager.py
+|       |   |   |   __init__.py
+|       |   |   |   
+|       |   |   \---__pycache__
+|       |   |           manager.cpython-314.pyc
+|       |   |           __init__.cpython-314.pyc
+|       |   |           
+|       |   \---__pycache__
+|       |           __init__.cpython-314.pyc
+|       |           
+|       +---db
+|       |   |   base.py
+|       |   |   session.py
+|       |   |   starter.py
+|       |   |   __init__.py
+|       |   |   
+|       |   +---models
+|       |   |   |   access.py
+|       |   |   |   aggregated_data.py
+|       |   |   |   dashboard.py
+|       |   |   |   filters.py
+|       |   |   |   graphs.py
+|       |   |   |   layout.py
+|       |   |   |   processing_configs.py
+|       |   |   |   processing_logs.py
+|       |   |   |   registration_request.py
+|       |   |   |   user.py
+|       |   |   |   __init__.py
+|       |   |   |   
+|       |   |   \---__pycache__
+|       |   |           access.cpython-314.pyc
+|       |   |           aggregated_data.cpython-314.pyc
+|       |   |           dashboard.cpython-314.pyc
+|       |   |           filters.cpython-314.pyc
+|       |   |           graphs.cpython-314.pyc
+|       |   |           layout.cpython-314.pyc
+|       |   |           processing_configs.cpython-314.pyc
+|       |   |           processing_logs.cpython-314.pyc
+|       |   |           registration_request.cpython-314.pyc
+|       |   |           user.cpython-314.pyc
+|       |   |           __init__.cpython-314.pyc
+|       |   |           
+|       |   +---repositories
+|       |   |   |   access_repo.py
+|       |   |   |   aggregated_data_repo.py
+|       |   |   |   dashboard_filter_repo.py
+|       |   |   |   dashboard_repo.py
+|       |   |   |   filter_repo.py
+|       |   |   |   graph_repo.py
+|       |   |   |   layout_repo.py
+|       |   |   |   processing_config_repo.py
+|       |   |   |   processing_log_repo.py
+|       |   |   |   registration_request_repo.py
+|       |   |   |   user_repo.py
+|       |   |   |   __init__.py
+|       |   |   |   
+|       |   |   \---__pycache__
+|       |   |           access_repo.cpython-314.pyc
+|       |   |           aggregated_data_repo.cpython-314.pyc
+|       |   |           dashboard_filter_repo.cpython-314.pyc
+|       |   |           dashboard_repo.cpython-314.pyc
+|       |   |           filter_repo.cpython-314.pyc
+|       |   |           graph_repo.cpython-314.pyc
+|       |   |           layout_repo.cpython-314.pyc
+|       |   |           processing_config_repo.cpython-314.pyc
+|       |   |           processing_log_repo.cpython-314.pyc
+|       |   |           registration_request_repo.cpython-314.pyc
+|       |   |           user_repo.cpython-314.pyc
+|       |   |           __init__.cpython-314.pyc
+|       |   |           
+|       |   \---__pycache__
+|       |           base.cpython-314.pyc
+|       |           session.cpython-314.pyc
+|       |           starter.cpython-314.pyc
+|       |           __init__.cpython-314.pyc
+|       |           
+|       +---interfaces
+|       |   |   repository_interfaces.py
+|       |   |   service_interfaces.py
+|       |   |   __init__.py
+|       |   |   
+|       |   \---__pycache__
+|       |           repository_interfaces.cpython-314.pyc
+|       |           service_interfaces.cpython-314.pyc
+|       |           __init__.cpython-314.pyc
+|       |           
+|       +---models
+|       |   |   access.py
+|       |   |   auth.py
+|       |   |   dashboard.py
+|       |   |   data.py
+|       |   |   enums.py
+|       |   |   filters.py
+|       |   |   graph.py
+|       |   |   layout.py
+|       |   |   processing_configs.py
+|       |   |   processing_logs.py
+|       |   |   style.py
+|       |   |   transformation_configs.py
+|       |   |   types.py
+|       |   |   user.py
+|       |   |   __init__.py
+|       |   |   
+|       |   \---__pycache__
+|       |           access.cpython-314.pyc
+|       |           auth.cpython-314.pyc
+|       |           dashboard.cpython-314.pyc
+|       |           data.cpython-314.pyc
+|       |           enums.cpython-314.pyc
+|       |           filters.cpython-314.pyc
+|       |           graph.cpython-314.pyc
+|       |           layout.cpython-314.pyc
+|       |           processing_configs.cpython-314.pyc
+|       |           processing_logs.cpython-314.pyc
+|       |           transformation_configs.cpython-314.pyc
+|       |           types.cpython-314.pyc
+|       |           user.cpython-314.pyc
+|       |           user_roles.cpython-314.pyc
+|       |           __init__.cpython-314.pyc
+|       |           
+|       +---services
+|       |   |   auth_service.py
+|       |   |   dashboard_service.py
+|       |   |   data_service.py
+|       |   |   file_cleanup.py
+|       |   |   file_processing.py
+|       |   |   filter_service.py
+|       |   |   graph_service.py
+|       |   |   layout_service.py
+|       |   |   processing_config_service.py
+|       |   |   processing_log_service.py
+|       |   |   user_service.py
+|       |   |   __init__.py
+|       |   |   
+|       |   \---__pycache__
+|       |           auth_service.cpython-314.pyc
+|       |           dashboard_service.cpython-314.pyc
+|       |           data_service.cpython-314.pyc
+|       |           file_cleanup.cpython-314.pyc
+|       |           file_processing.cpython-314.pyc
+|       |           filter_service.cpython-314.pyc
+|       |           graph_service.cpython-314.pyc
+|       |           layout_service.cpython-314.pyc
+|       |           processing_config_service.cpython-314.pyc
+|       |           processing_log_service.cpython-314.pyc
+|       |           user_service.cpython-314.pyc
+|       |           __init__.cpython-314.pyc
+|       |           
+|       +---settings
+|       |       app.yaml
+|       |       README.md
+|       |       
+|       +---utils
+|       |   |   decorators.py
+|       |   |   exceptions.py
+|       |   |   file_utils.py
+|       |   |   time_utils.py
+|       |   |   validators.py
+|       |   |   __init__.py
+|       |   |   
+|       |   \---__pycache__
+|       |           exceptions.cpython-314.pyc
+|       |           file_utils.cpython-314.pyc
+|       |           time_utils.cpython-314.pyc
+|       |           validators.cpython-314.pyc
+|       |           __init__.cpython-314.pyc
+|       |           
+|       +---workers
+|       |   |   data_worker.py
+|       |   |   
+|       |   \---__pycache__
+|       |           data_worker.cpython-314.pyc
+|       |           
+|       \---__pycache__
+|               app.cpython-314.pyc
+|               config.cpython-314.pyc
+|               dash_app.cpython-314.pyc
+|               main.cpython-314.pyc
+|               
 \---tests
     |   conftest.py
     |   test_auth.py
@@ -102219,6 +102588,7 @@ C:\PY_DEV\MKOBI
     |   test_config.py
     |   test_dashboards_api.py
     |   test_data_csv_loader.py
+    |   test_data_endpoint.py
     |   test_data_service.py
     |   test_data_transformations.py
     |   test_data_validator.py
@@ -102235,6 +102605,7 @@ C:\PY_DEV\MKOBI
     |   test_services_integration.py
     |   test_storage_manager.py
     |   test_upload_api.py
+    |   test_upload_api.py.bak
     |   test_users_api.py
     |   
     \---__pycache__
@@ -102246,6 +102617,7 @@ C:\PY_DEV\MKOBI
             test_config.cpython-314-pytest-9.0.3.pyc
             test_dashboards_api.cpython-314-pytest-9.0.3.pyc
             test_data_csv_loader.cpython-314-pytest-9.0.3.pyc
+            test_data_endpoint.cpython-314-pytest-9.0.3.pyc
             test_data_loader.cpython-314-pytest-9.0.3.pyc
             test_data_processing.cpython-314-pytest-9.0.3.pyc
             test_data_service.cpython-314-pytest-9.0.3.pyc

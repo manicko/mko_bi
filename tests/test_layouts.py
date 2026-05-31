@@ -5,6 +5,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.db.repositories.layout_repo import LayoutRepository
+from mkobi.models.enums import UserRole
 
 
 class TestLayoutsAPI:
@@ -187,3 +188,159 @@ class TestLayoutsAPI:
 
         response = await authenticated_client.delete(f"/layouts/{layout.id}")
         assert response.status_code == status.HTTP_204_NO_CONTENT
+
+    async def test_get_layout_requires_dashboard_access(
+        self, async_db_session: AsyncSession, authenticated_client: AsyncClient, test_user: dict
+    ) -> None:
+        """Test that getting layout by ID requires dashboard access."""
+        from mkobi.db.repositories.user_repo import UserRepository
+        from mkobi.db.repositories.dashboard_repo import DashboardRepository
+
+        # Create a viewer user
+        user_repo = UserRepository()
+        viewer = await user_repo.create(
+            db=async_db_session,
+            email="layout_viewer@example.com",
+            password_hash="hash",
+            role=UserRole.VIEWER,
+        )
+        await async_db_session.flush()
+
+        # Create a dashboard with a layout
+        layout_repo = LayoutRepository()
+        layout = await layout_repo.create(
+            db=async_db_session,
+            name="dashboard_layout",
+            definition={"grid": []},
+        )
+        await async_db_session.flush()
+
+        dashboard_repo = DashboardRepository()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="Protected Dashboard",
+        )
+        dashboard.layout_id = layout.id  # Associate layout with dashboard
+        await async_db_session.flush()
+
+        # Login as viewer (no access granted)
+        from mkobi.core.security import create_access_token
+        token = create_access_token({"user_id": str(viewer.id), "email": viewer.email})
+        viewer_client = authenticated_client
+        viewer_client.headers["Authorization"] = f"Bearer {token}"
+
+        # Viewer should not have access to layout tied to a dashboard they don't have access to
+        response = await viewer_client.get(f"/layouts/{layout.id}")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert "access" in response.json()["detail"].lower()
+
+    async def test_get_layout_orphaned_returns_404(
+        self, async_db_session: AsyncSession, authenticated_client: AsyncClient, test_user: dict
+    ) -> None:
+        """Test that orphaned layout (no dashboard) returns 404 for non-admin."""
+        from mkobi.db.repositories.user_repo import UserRepository
+
+        # Create a viewer user
+        user_repo = UserRepository()
+        viewer = await user_repo.create(
+            db=async_db_session,
+            email="layout_viewer_orphan@example.com",
+            password_hash="hash",
+            role=UserRole.VIEWER,
+        )
+        await async_db_session.flush()
+
+        # Create a layout without associating it to any dashboard
+        layout_repo = LayoutRepository()
+        layout = await layout_repo.create(
+            db=async_db_session,
+            name="orphaned_layout",
+            definition={"grid": []},
+        )
+        await async_db_session.flush()
+
+        # Login as viewer
+        from mkobi.core.security import create_access_token
+        token = create_access_token({"user_id": str(viewer.id), "email": viewer.email})
+        viewer_client = authenticated_client
+        viewer_client.headers["Authorization"] = f"Bearer {token}"
+
+        # Viewer should get 404 for orphaned layout (to prevent enumeration)
+        response = await viewer_client.get(f"/layouts/{layout.id}")
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+
+    async def test_get_layout_with_dashboard_access(
+        self, async_db_session: AsyncSession, authenticated_client: AsyncClient, test_user: dict
+    ) -> None:
+        """Test that user with dashboard read access can get the layout."""
+        from mkobi.db.repositories.access_repo import AccessRepository
+        from mkobi.db.repositories.user_repo import UserRepository
+        from mkobi.db.repositories.dashboard_repo import DashboardRepository
+
+        # Create a viewer user
+        user_repo = UserRepository()
+        viewer = await user_repo.create(
+            db=async_db_session,
+            email="layout_viewer_with_access@example.com",
+            password_hash="hash",
+            role=UserRole.VIEWER,
+        )
+        await async_db_session.flush()
+
+        # Create a dashboard with a layout
+        layout_repo = LayoutRepository()
+        layout = await layout_repo.create(
+            db=async_db_session,
+            name="accessible_dashboard_layout",
+            definition={"grid": []},
+        )
+        await async_db_session.flush()
+
+        dashboard_repo = DashboardRepository()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="Accessible Dashboard",
+        )
+        dashboard.layout_id = layout.id
+        await async_db_session.flush()
+
+        # Grant view access to the viewer
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=viewer.id,
+            dashboard_id=dashboard.id,
+            permission="view",
+        )
+        await async_db_session.flush()
+
+        # Login as viewer
+        from mkobi.core.security import create_access_token
+        token = create_access_token({"user_id": str(viewer.id), "email": viewer.email})
+        viewer_client = authenticated_client
+        viewer_client.headers["Authorization"] = f"Bearer {token}"
+
+        # Viewer should have access to layout tied to a dashboard they have access to
+        response = await viewer_client.get(f"/layouts/{layout.id}")
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["id"] == str(layout.id)
+
+    async def test_get_layout_admin_can_access_any(
+        self, async_db_session: AsyncSession, authenticated_client: AsyncClient, test_user: dict
+    ) -> None:
+        """Test that admin can access any layout including orphaned ones."""
+        # Create an orphaned layout
+        layout_repo = LayoutRepository()
+        layout = await layout_repo.create(
+            db=async_db_session,
+            name="orphaned_for_admin_test",
+            definition={"grid": []},
+        )
+        await async_db_session.flush()
+
+        # Admin should be able to access orphaned layout
+        response = await authenticated_client.get(f"/layouts/{layout.id}")
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["id"] == str(layout.id)

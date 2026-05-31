@@ -1,5 +1,1 @@
 export { PlotlyChart } from './PlotlyChart'
-export { BarChart } from './BarChart'
-export { LineChart } from './LineChart'
-export { PieChart } from './PieChart'
-export { TableChart } from './TableChart'

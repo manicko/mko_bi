@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse, Response
 from pydantic import ValidationError
 from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.middleware.base import BaseHTTPMiddleware
 
 from mkobi.api import routes
 from mkobi.config import get_config
@@ -42,6 +43,35 @@ setup_logging(
 logger = logging.getLogger(__name__)
 
 
+class SecurityHeadersMiddleware(BaseHTTPMiddleware):
+    """Middleware to add security headers to all responses.
+
+    Implements defense-in-depth by setting security headers at the application layer
+    in addition to nginx. Headers include:
+    - X-Content-Type-Options: Prevents MIME type sniffing
+    - X-Frame-Options: Prevents clickjacking
+    - X-XSS-Protection: Enables browser XSS filter
+    - Referrer-Policy: Controls referrer information
+    """
+
+    async def dispatch(self, request: Request, call_next: Any) -> Any:
+        """Add security headers to response.
+
+        Args:
+            request: The incoming HTTP request.
+            call_next: The next handler in the middleware chain.
+
+        Returns:
+            Response with security headers added.
+        """
+        response = await call_next(request)
+        response.headers["X-Content-Type-Options"] = "nosniff"
+        response.headers["X-Frame-Options"] = "DENY"
+        response.headers["X-XSS-Protection"] = "1; mode=block"
+        response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        return response
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> Any:
     """Application lifecycle manager.
@@ -62,15 +92,15 @@ async def lifespan(app: FastAPI) -> Any:
         logs_retention_days=config.logs_retention_days,
     )
     starter = DatabaseStarter(starter_config)
-    
+
     # Background task for stale processing cleanup
     cleanup_task: asyncio.Task[None] | None = None
-    
+
     try:
         logger.info("Initializing application...")
         await starter.startup()
         logger.info("Application initialized successfully")
-        
+
         # Start background cleanup task for stale processing logs
         cleanup_task = asyncio.create_task(
             start_stale_processing_cleanup_task(
@@ -79,7 +109,7 @@ async def lifespan(app: FastAPI) -> Any:
             )
         )
         logger.info("Started stale processing cleanup background task")
-        
+
         yield
     except DatabaseNotFoundError as e:
         logger.error("Database not found: %s", e)
@@ -92,7 +122,7 @@ async def lifespan(app: FastAPI) -> Any:
         raise
     finally:
         logger.info("Shutting down application...")
-        
+
         # Cancel background cleanup task
         if cleanup_task is not None and not cleanup_task.done():
             cleanup_task.cancel()
@@ -101,7 +131,7 @@ async def lifespan(app: FastAPI) -> Any:
             except asyncio.CancelledError:
                 pass
             logger.info("Stale processing cleanup task cancelled")
-        
+
         await starter.shutdown()
 
 
@@ -162,6 +192,9 @@ def create_app() -> FastAPI:
         GZipMiddleware,
         minimum_size=1000,
     )
+
+    # Configure security headers middleware (defense-in-depth)
+    application.add_middleware(SecurityHeadersMiddleware)
 
     # Register routers with /api/v1 prefix
     application.include_router(routes.auth.router, prefix="/api/v1")
@@ -252,6 +285,7 @@ def create_app() -> FastAPI:
             content={
                 "detail": exc.detail,
                 "status_code": exc.status_code,
+                "error_code": f"HTTP_{exc.status_code}",
             },
         )
 
@@ -266,6 +300,7 @@ def create_app() -> FastAPI:
                 "detail": "Validation error",
                 "errors": exc.errors(),
                 "status_code": 422,
+                "error_code": "VALIDATION_ERROR",
             },
         )
 
@@ -280,8 +315,13 @@ def create_app() -> FastAPI:
                 "detail": "Validation error",
                 "errors": exc.errors(),
                 "status_code": 422,
+                "error_code": "VALIDATION_ERROR",
             },
         )
+
+    # Register custom exception handlers (AppException and global handler)
+    from mkobi.utils.exceptions import add_exception_handlers
+    add_exception_handlers(application)
 
     return application
 

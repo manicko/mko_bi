@@ -15,6 +15,8 @@ from mkobi.api.deps import (
     CurrentUser,
     get_layout_service,
 )
+from mkobi.core.permissions import check_dashboard_access
+from mkobi.db.repositories.access_repo import AccessRepository
 from mkobi.models.layout import (
     LayoutRead,
     LayoutUpdate,
@@ -105,14 +107,17 @@ async def create_layout_endpoint(
     response_model=list[LayoutRead],
     status_code=status.HTTP_200_OK,
     summary="List layouts",
-    description="Returns list of all layouts.",
+    description="Returns list of layouts. Non-admin users see layouts from accessible dashboards only.",
 )
 async def get_layouts_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
     layout_service: LayoutService = Depends(get_layout_service),
 ) -> list[LayoutRead]:
-    """Get list of all layouts.
+    """Get list of layouts.
+
+    Non-admin users only see layouts from dashboards they have access to.
+    Admins see all layouts.
 
     Args:
         current_user: Current authenticated user.
@@ -125,11 +130,23 @@ async def get_layouts_endpoint(
     Raises:
         HTTPException 500: On database error.
     """
-    logger.info("Getting layout list")
+    logger.info("Getting layout list for user_id=%s", current_user.id)
 
     try:
-        layouts: list[LayoutRead] = await layout_service.get_all_layouts(db=db)
-        logger.info("Retrieved layouts: %s", len(layouts))
+        if current_user.role == UserRole.ADMIN:
+            layouts: list[LayoutRead] = await layout_service.get_all_layouts(db=db)
+        else:
+            # Non-admin users: get only layouts from accessible dashboards
+            access_repo = AccessRepository()
+            accessible_dashboards = [
+                d.id for d in await access_repo.get_user_dashboards(
+                    user_id=current_user.id, db=db
+                )
+            ]
+            layouts = await layout_service.get_layouts_by_dashboard_ids(
+                dashboard_ids=accessible_dashboards, db=db
+            )
+        logger.info("Retrieved layouts: count=%s", len(layouts))
         return layouts
     except Exception as e:
         logger.error("Error getting layout list", exc_info=True)
@@ -144,7 +161,7 @@ async def get_layouts_endpoint(
     response_model=LayoutRead,
     status_code=status.HTTP_200_OK,
     summary="Get layout by ID",
-    description="Returns layout data by ID.",
+    description="Returns layout data by ID. Requires read access to associated dashboard.",
 )
 async def get_layout_endpoint(
     layout_id: UUID,
@@ -152,7 +169,11 @@ async def get_layout_endpoint(
     db: AsyncSession = Depends(get_db_dependency),
     layout_service: LayoutService = Depends(get_layout_service),
 ) -> LayoutRead:
-    """Get layout by ID.
+    """Get layout by ID with dashboard access control.
+
+    IDOR protection: verifies user has read access to the dashboard(s)
+    associated with the layout. For orphaned layouts (no dashboard association),
+    returns 404 to prevent enumeration.
 
     Args:
         layout_id: Layout ID.
@@ -164,10 +185,11 @@ async def get_layout_endpoint(
         LayoutRead: Layout model.
 
     Raises:
-        HTTPException 404: If layout not found.
+        HTTPException 404: If layout not found or no associated dashboard.
+        HTTPException 403: If user has no read access to the dashboard.
         HTTPException 500: On database error.
     """
-    logger.info("Layout request: layout_id=%s", layout_id)
+    logger.info("Layout request: layout_id=%s, user_id=%s", layout_id, current_user.id)
 
     try:
         layout = await layout_service.get_layout(layout_id=layout_id, db=db)
@@ -177,6 +199,38 @@ async def get_layout_endpoint(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Layout not found",
             )
+
+        # Admin bypass: admins can access any layout
+        if current_user.role != UserRole.ADMIN:
+            # Resolve layout's dashboard association
+            dashboard_id = await layout_service.get_dashboard_id_for_layout(layout_id, db)
+            if dashboard_id is None:
+                # Orphaned layout - return 404 to prevent enumeration
+                logger.warning("Orphaned layout (no dashboard) accessed: id=%s", layout_id)
+                raise HTTPException(
+                    status_code=status.HTTP_404_NOT_FOUND,
+                    detail="Layout not found",
+                )
+
+            # IDOR protection: verify user has read access to the dashboard
+            has_access = await check_dashboard_access(
+                user_id=current_user.id,
+                dashboard_id=dashboard_id,
+                db=db,
+                required_permission="view",
+            )
+            if not has_access:
+                logger.warning(
+                    "Access denied to layout: user_id=%s, layout_id=%s, dashboard_id=%s",
+                    current_user.id,
+                    layout_id,
+                    dashboard_id,
+                )
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="You do not have read access to this layout",
+                )
+
         return layout
     except HTTPException:
         raise

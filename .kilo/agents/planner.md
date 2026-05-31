@@ -91,19 +91,10 @@ Study and use:
 - existing tasks
 - rollout ordering files
 
-## Load Plan Content (CRITICAL)
+## Load Plan/Examples Content (CRITICAL)
 
-When a plan file (e.g. PLAN_01.md) exists and contains XML `` blocks with
-full task specifications, the content inside those blocks MUST be copied
-verbatim into each task YAML. Do NOT summarize, paraphrase, or reconstruct
-from headings alone. The XML block IS the task specification.
-
-Process:
-1. For each task in the plan, locate the full XML block
-2. Copy ALL inner content: frontmatter, details, checklists, validation, file lists
-3. The YAML task file must be a 1:1 transliteration of the XML block into YAML structure
-4. Include source references: plan_reference, plan_section, source files/blocks
-5. Headings and brief descriptions alone are NEVER sufficient
+When source contains XML or yaml or `` blocks with
+full task specifications, examples or reference, copy the content inside those blocks into each task YAML. Do NOT summarize, paraphrase, or reconstruct.
 
 # Planning Responsibilities
 

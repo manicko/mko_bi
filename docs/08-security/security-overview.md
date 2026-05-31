@@ -223,11 +223,53 @@ The `core/security.py` module provides `set_cookie()` and `delete_cookie()` help
 
 ---
 
+## Security Headers Middleware
+
+The FastAPI application includes a `SecurityHeadersMiddleware` that sets defense-in-depth HTTP security headers on every response. While nginx may also set these headers, the application-layer middleware provides protection even when nginx is not deployed or is misconfigured.
+
+| Header | Value | Purpose |
+| --- | --- | --- |
+| `X-Content-Type-Options` | `nosniff` | Prevents MIME-type sniffing attacks |
+| `X-Frame-Options` | `DENY` | Prevents clickjacking by disallowing iframe embedding |
+| `X-XSS-Protection` | `1; mode=block` | Enables browser XSS filter (legacy browsers) |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` | Limits referrer information leakage on cross-origin requests |
+
+---
+
+## Error Response Format
+
+All API error responses follow a consistent format with a machine-readable `error_code` field. This enables programmatic error handling on the frontend and simplifies monitoring/alerting on the backend.
+
+### Standard Error Fields
+
+```json
+{
+  "detail": "Human-readable error description",
+  "error_code": "MACHINE_READABLE_CODE"
+}
+```
+
+### Error Code Categories
+
+| Category | HTTP Status | Example Codes |
+| --- | --- | --- |
+| Authentication | `401` | `HTTP_401`, `INVALID_TOKEN`, `USER_DEACTIVATED` |
+| Authorization | `403` | `HTTP_403`, `PERMISSION_DENIED`, `ACCESS_DENIED` |
+| Not Found | `404` | `HTTP_404`, `NOT_FOUND`, `DASHBOARD_NOT_FOUND` |
+| Validation | `422` | `VALIDATION_ERROR`, `HTTP_422` |
+| Rate Limit | `429` | `HTTP_429` |
+| Server Error | `500` | `INTERNAL_ERROR`, `HTTP_500` |
+| File Upload | `400`/`422` | `FILE_UPLOAD_ERROR` |
+
+> The `AppException` class in `src/mkobi/utils/exceptions.py` is the primary vehicle for raising structured errors. Custom exception handlers are registered in `create_app()` to ensure consistent formatting across all error paths.
+
+---
+
 ## Cross-References
 
 - [Authentication API](../01-auth/auth-api.md) — Auth endpoint security, rate limiting details
 - [Access Control](access-control.md) — Dashboard-level permission enforcement model
-- [Frontend Security](../07-frontend/frontend-security.md) — JWT handling, CORS, file upload, role-based access
+- [Frontend Security](../07-frontend/frontend-security.md) — JWT handling, CORS, file upload security
 - [Configuration](../06-backend/configuration.md) — Secrets management, environment variables
 - [Processing API](../03-processing/processing-api.md) — Upload security constraints and rate limiting
 - [Client Error Reporting](client-error-reporting.md) — Frontend error logging endpoint for React Error Boundary and uncaught exceptions

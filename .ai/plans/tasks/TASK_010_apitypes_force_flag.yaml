@@ -1,0 +1,51 @@
+id: TASK_010_apitypes_force_flag
+
+title: Add force_password_change to api.types.ts
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_003_pydantic_userread_flag
+
+description: >
+  Add `force_password_change: boolean` field to the `UserProfile` and `AdminUser`
+  interfaces in `frontend/src/shared/types/api.types.ts`. This type is used by
+  `useAuth.ts`, `LoginForm.tsx`, and admin components.
+
+goals:
+  - Add force_password_change: boolean to UserProfile
+  - Add force_password_change: boolean to AdminUser
+  - Frontend checks user.force_password_change directly
+
+files:
+  - path: frontend/src/shared/types/api.types.ts
+    targets:
+      - type: interface
+        name: UserProfile
+      - type: interface
+        name: AdminUser
+    semantic_anchors:
+      insert_after:
+        type: field
+        name: created_at
+
+changes:
+  - action: add_field
+    description: >
+      Add `force_password_change: boolean` to both UserProfile and AdminUser
+      interfaces, after `created_at` field.
+    code_hint: |
+      force_password_change: boolean
+
+acceptance_criteria:
+  - UserProfile interface includes force_password_change: boolean
+  - AdminUser interface includes force_password_change: boolean
+  - TypeScript compiles without error
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 4 — TASK_010

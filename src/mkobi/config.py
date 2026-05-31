@@ -396,8 +396,19 @@ class Settings(BaseSettings):
         upload_path.mkdir(parents=True, exist_ok=True)
 
     @property
-    def DATABASE_URL(self) -> str:
-        """Build PostgreSQL connection URL."""
+    def DATABASE_URL(self) -> str | None:
+        """Build PostgreSQL connection URL.
+
+        Returns None in non-production if password is missing.
+        Raises ValueError in production if password is missing.
+        """
+        if not self.database.password:
+            if self.environment == EnvironmentEnum.PRODUCTION:
+                raise ValueError(
+                    "DATABASE__PASSWORD is required in production. "
+                    "Set MKOBI_APP_PASSWORD environment variable."
+                )
+            return None
         return str(self.database.database_url)
 
     @property

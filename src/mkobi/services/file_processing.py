@@ -120,6 +120,7 @@ async def process_upload_with_session(
     mode: UploadMode,
     max_file_size: int,
     db: AsyncSession,
+    processing_config: dict[str, Any] | None = None,
 ) -> UUID:
     """Process uploaded file with an active session.
 
@@ -135,6 +136,7 @@ async def process_upload_with_session(
         mode: Upload mode (OVERWRITE clears old data, APPEND keeps it).
         max_file_size: Maximum allowed file size in bytes.
         db: Database session.
+        processing_config: Optional processing configuration for transformations.
 
     Returns:
         UUID: The processing log ID (task ID).
@@ -166,16 +168,12 @@ async def process_upload_with_session(
     )
     await db.flush()
 
-    # Move file to final location with log ID as filename
-    final_file_path = upload_dir / f"{log.id}{file_ext}"
-    file_path.replace(final_file_path)
-
     logger.info(
-        "File moved to final location: path=%s, size=%d, mode=%s",
-        final_file_path, file_size, mode
+        "File validated for processing: size=%d, mode=%s",
+        file_size, mode
     )
 
-    # Update status to UPLOADED after file is saved successfully
+    # Update status to UPLOADED after validation
     await log_repo.update_status(
         log_id=log.id,
         status=ProcessingStatus.UPLOADED,
@@ -184,23 +182,38 @@ async def process_upload_with_session(
     )
     await db.commit()
 
-    # Enqueue job with mode parameter - use log.id as the identifier
-    from mkobi.workers.data_worker import process_csv_background
+    # Move file to final location with log ID as filename AFTER successful commit
+    final_file_path = upload_dir / f"{log.id}{file_ext}"
+    try:
+        file_path.replace(final_file_path)
+    except Exception:
+        logger.error(
+            "Failed to move file to final path after commit, log_id=%s",
+            log.id,
+            exc_info=True
+        )
+        raise
 
-    await enqueue_job(
-        process_csv_background,
+    logger.info(
+        "File moved to final location: path=%s, size=%d, mode=%s",
+        final_file_path, file_size, mode
+    )
+
+    # Enqueue job with processing config - use log.id as the identifier
+    await enqueue_processing_job(
         file_path=str(final_file_path),
-        dashboard_id=str(dashboard_id),
-        task_id=str(log.id),
-        log_id=str(log.id),
+        dashboard_id=dashboard_id,
+        task_id=log.id,
         mode=str(mode),
+        processing_config=processing_config,
     )
 
     logger.info(
-        "Task enqueued: task_id=%s, dashboard_id=%s, mode=%s",
+        "Task enqueued: task_id=%s, dashboard_id=%s, mode=%s, config=%s",
         log.id,
         dashboard_id,
         mode,
+        "present" if processing_config else "none",
     )
 
     return cast(UUID, log.id)
@@ -271,6 +284,7 @@ async def enqueue_processing_job(
     dashboard_id: UUID,
     task_id: UUID,
     mode: str = "overwrite",
+    processing_config: dict[str, Any] | None = None,
 ) -> None:
     """Enqueue a background processing job.
 
@@ -279,6 +293,7 @@ async def enqueue_processing_job(
         dashboard_id: Target dashboard ID.
         task_id: Processing log ID.
         mode: Upload mode (overwrite or append).
+        processing_config: Processing configuration dictionary for transformations.
     """
     from mkobi.workers.data_worker import process_csv_background
 
@@ -289,4 +304,5 @@ async def enqueue_processing_job(
         task_id=str(task_id),
         log_id=str(task_id),
         mode=mode,
+        processing_config_dict=processing_config,
     )

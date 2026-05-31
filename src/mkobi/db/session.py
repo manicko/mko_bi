@@ -25,6 +25,13 @@ async def get_async_engine() -> AsyncEngine:
         config = get_config()
         DATABASE_URL = config.DATABASE_URL
 
+        if DATABASE_URL is None:
+            raise ValueError(
+                "DATABASE_URL is not configured. "
+                "Set DATABASE__PASSWORD environment variable for production "
+                "or ensure database password is configured for development."
+            )
+
         # Replace postgresql:// with postgresql+asyncpg://
         if DATABASE_URL.startswith("postgresql://"):
             DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+asyncpg://", 1)

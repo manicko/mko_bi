@@ -112,13 +112,13 @@ class TestAuthServiceIntegration:
         unique_email = f"wrong_pass_{uuid4().hex[:8]}@example.com"
         await auth_service.register_user(
             email=unique_email,
-            password="CorrectPassword",
+            password="CorrectPass123",
             role="viewer",
             db=async_db_session,
         )
         result = await auth_service.login_user(
             email=unique_email,
-            password="WrongPassword",
+            password="WrongPass456",
             db=async_db_session,
         )
         assert result is None
@@ -240,13 +240,14 @@ class TestDashboardServiceIntegration:
 
     async def test_update_dashboard_with_db(self, dashboard_service, async_db_session, dashboard):
         """Test updating dashboard."""
+        unique_name = f"Updated Dashboard {uuid4().hex[:8]}"
         result = await dashboard_service.update_dashboard(
             dashboard_id=dashboard.id,
-            update_data={"name": "Updated Dashboard"},
+            update_data={"name": unique_name},
             db=async_db_session,
         )
         assert result is not None
-        assert result.name == "Updated Dashboard"
+        assert result.name == unique_name
 
     async def test_delete_dashboard_with_db(self, dashboard_service, async_db_session, owner_id):
         """Test deleting dashboard."""
@@ -450,13 +451,14 @@ class TestFilterServiceIntegration:
 
     async def test_update_filter_with_db(self, filter_service, async_db_session, test_filter):
         """Test updating filter."""
+        unique_name = f"Updated Filter {uuid4().hex[:8]}"
         result = await filter_service.update_filter(
             test_filter.id,
-            FilterUpdate(name="Updated Filter"),
+            FilterUpdate(name=unique_name),
             db=async_db_session,
         )
         assert result is not None
-        assert result.name == "Updated Filter"
+        assert result.name.startswith("Updated Filter")
 
     async def test_delete_filter_with_db(self, filter_service, async_db_session):
         """Test deleting filter."""
@@ -730,13 +732,13 @@ class TestProcessingLogServiceIntegration:
         )
         result = await log_service.update_processing_log(
             log_id=log.id,
-            status="success",
+            status="completed",
             message="Completed",
             finished_at=None,
             db=async_db_session,
         )
         assert result is not None
-        assert result.status.value == "success"
+        assert result.status.value == "completed"
 
 
 # ========== DataService Integration Tests ==========

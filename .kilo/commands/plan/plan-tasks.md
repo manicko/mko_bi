@@ -35,34 +35,52 @@ Generate:
 
 # Workflow
 
-## Step 1 — Load Validated Findings and plans
-
-Study:
+## Step 1 Preparation List files only (do not read contents): 
 - `C:\py_dev\mkobi\.ai\audit\validated\**` 
 - `C:\py_dev\mkobi\.ai\plans\**`
 
-For:
-- validated audit findings
+---
+## Step 2 User Selection (Mandatory) 
+Display discovered files. 
+Ask the user to select: 
+- one file 
+- multiple files 
+- ALL files 
+Do not continue until a selection is provided. If the user selects ALL, include all discovered files.
+
+---
+## Step 3 — Study selected files.
+
+Use ONLY:
+
+- validated findings
 - safety validation results
 - rollout constraints
-- rejected findings
 - semantic stability analysis
 
-Use ONLY validated findings.
-
 Ignore:
+
 - rejected findings
 - stale findings
 - unsafe recommendations
 
+Conflict resolution:
+
+- prefer safety constraints
+- prefer higher-confidence findings
+- surface conflicts in task metadata
+- never merge conflicting recommendations into a single task
+
 ---
 
-## Step 2 — Load Structural & Semantic Context
+## Step 4 — Load Structural & Semantic Context
 
 Study:
+
 - `C:\py_dev\mkobi\.ai\structure\**`
 
 Including:
+
 - dependency graphs
 - semantic anchor maps
 - symbol graphs
@@ -71,6 +89,7 @@ Including:
 - execution order files
 
 Analyze:
+
 - dependency chains
 - integration boundaries
 - coupling zones
@@ -79,9 +98,9 @@ Analyze:
 
 ---
 
-## Step 3 — Build Dependency-Aware Execution Graph
-
+## Step 5 — Build Dependency-Aware Execution Graph
 Create:
+
 - isolated implementation blocks
 - dependency-aware task DAG
 - rollout sequencing
@@ -92,9 +111,14 @@ Rules:
 - one coherent problem per task
 - minimize coupling
 - minimize overlap
-- maximize task survivability
+- maximize survivability
 - maximize safe parallel execution
 - preserve architectural boundaries
+
+Do not split work unless:
+- dependency isolation improves
+- risk containment improves
+- parallel execution improves
 
 Avoid:
 - broad rewrites
@@ -103,14 +127,14 @@ Avoid:
 - fragile sequencing assumptions
 
 Use:
-- explicit `depends_on`
+- explicit depends_on
 - semantic anchors
 - symbol paths
 - dependency graph analysis
 
 ---
 
-## Step 4 — Define Semantic Targets
+## Step 6 — Define Semantic Targets
 
 For every task define:
 - affected files
@@ -146,7 +170,7 @@ Never use:
 
 ---
 
-## Step 5 — Generate Semantic Task Specifications
+## Step 7 — Generate Semantic Task Specifications
 
 Use template:
 - `C:\py_dev\mkobi\.ai\tasks\templates\task_template.yaml`
@@ -170,45 +194,66 @@ Task requirements:
 - semantically targetable
 - resilient to unrelated code shifts
 
+Acceptance criteria must be:
+- objective
+- testable
+- binary pass/fail
+
+Tasks with no dependencies must explicitly contain:
+
+```yaml
+depends_on: []
+```
+
 ---
 
-## Step 5.5 — Insert Verification Tasks
+## Step 8 — Insert Verification Tasks
 
-Verification strategy depends on task scope:
 
-**Simple tasks** (single function, trivial/small effort, low/minimal risk):
-- Do NOT create a separate verification task.
-- Verification is inline — the implementor runs `tests_to_run` and checks `acceptance_criteria` as part of the implementation task itself.
-- The task is only marked complete after tests pass.
+### Simple Tasks
 
-**Multi-stage tasks** (cross-module, medium+ risk, multi-step):
-- Insert a single verification task at the END of the stage, after all implementation tasks in that stage.
-- The verification task depends on all implementation tasks in that stage.
+Criteria:
 
-Pattern for multi-stage:
-```
-TASK_001_implement_stage1_step1   → implementation (inline verify)
-TASK_002_implement_stage1_step2   → implementation (inline verify)
-TASK_003_verify_stage1            → verification (depends_on: TASK_001, TASK_002)
-TASK_004_implement_stage2        → depends_on: TASK_003
-```
-
-Verification task must:
-- have `type: verification`
-- reference implementation tasks via `verifies: [TASK_XXX_name, ...]`
-- define `verification_steps` (build, test, smoke_check)
-- define `pass_criteria`
-- define `failure_action: return TASK_XXX to rework`
-- for infrastructure: run the actual service and confirm it works
-- for code: run tests_to_run and confirm they pass
+* single function
+* trivial implementation
+* low risk
 
 Rules:
-- Separate verification tasks are optional for simple tasks, mandatory for multi-stage work
-- Numbering must stay sequential
 
+* no dedicated verification task
+* verification is inline
+* implementation task completes only after tests pass
+
+### Multi-Stage Tasks
+
+Criteria:
+
+* cross-module
+* medium or high risk
+* multi-step rollout
+
+Rules:
+
+* create one verification task at the end of the stage
+* verification task depends on all implementation tasks in the stage
+
+Verification task requirements:
+
+```yaml
+type: verification
+verifies:
+  - TASK_XXX
+verification_steps:
+  - build
+  - test
+  - smoke_check
+pass_criteria:
+failure_action:
+  return task to rework
+```
 ---
 
-## Step 6 — Generate Execution Ordering
+## Step 9— Generate Execution Ordering
 
 Use template:
 - `C:\py_dev\mkobi\.ai\tasks\templates\order_template.yaml`
@@ -229,27 +274,32 @@ Rules:
 
 ---
 
-## Step 7 — Save Tasks
-
-Save:
-- task yaml files
-- execution ordering file
+## Step 11 — Save Tasks
 
 Directory:
-- `C:\py_dev\.ai\todo\`
+* `C:\py_dev\mkobi\.ai\tasks\todo\`
 
 Before creating:
-- check existing tasks
-- merge/update instead of duplicating
-- preserve dependency integrity
-- preserve rollout ordering consistency
+* check existing tasks
+* merge/update instead of duplicating
+* preserve dependency integrity
+* preserve rollout ordering consistency
+
+Duplicate detection:
+A task is considered duplicate if:
+* objective matches
+* primary symbol targets overlap
+* intended change is semantically equivalent
 
 Naming:
-- `TASK_<XXX>_<task_id>_<short_name>.yaml`
+
+```text
+TASK_<XXX>_<task_id>_<short_name>.yaml
+```
 
 Where:
-- `XXX` = exact rollout execution position
-- numbering must preserve sortable execution order
+* XXX = exact rollout execution position
+* numbering must preserve sortable execution order
 
 ---
 

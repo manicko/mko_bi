@@ -112,6 +112,7 @@ frontend/src/
 # In src/mkobi/api/routes/admin.py
 import string
 
+
 @router.post(
     "/users/{user_id}/reset-password",
     status_code=status.HTTP_200_OK,
@@ -126,7 +127,11 @@ async def reset_user_password_admin_endpoint(
     auth_service: AuthService = Depends(get_auth_service),
 ) -> dict[str, Any]:
     """Reset user password and return temporary password."""
-    logger.info("Admin: resetting password for user: id=%s, admin=%s", user_id, current_user.email)
+    logger.info(
+        "Admin: resetting password for user: id=%s, admin=%s",
+        user_id,
+        current_user.email,
+    )
     try:
         result = await auth_service.reset_password_admin(
             user_id=user_id,
@@ -158,19 +163,19 @@ async def reset_user_password_admin_endpoint(
 # In src/mkobi/services/auth_service.py — add method to AuthService class
 def _generate_temp_password(self, length: int = 8) -> str:
     """Generate a cryptographically secure 8-char password with letters + digits.
-    
+
     Ensures at least one letter and one digit. Used up to 3 attempts
     to produce a password passing Pydantic validation.
     """
     alphabet = string.ascii_letters + string.digits
     for attempt in range(3):
-        password = ''.join(secrets.choice(alphabet) for _ in range(length))
-        if re.search(r'[a-zA-Z]', password) and re.search(r'\d', password):
+        password = "".join(secrets.choice(alphabet) for _ in range(length))
+        if re.search(r"[a-zA-Z]", password) and re.search(r"\d", password):
             return password
     # Fallback (astronomically unlikely to reach): force letter+digit
     password = secrets.choice(string.ascii_letters) + secrets.choice(string.digits)
-    password += ''.join(secrets.choice(alphabet) for _ in range(length - 2))
-    return ''.join(random.sample(password, len(password)))  # shuffle
+    password += "".join(secrets.choice(alphabet) for _ in range(length - 2))
+    return "".join(random.sample(password, len(password)))  # shuffle
 
 
 async def reset_password_admin(
@@ -180,32 +185,32 @@ async def reset_password_admin(
     db: AsyncSession,
 ) -> dict[str, Any] | None:
     """Admin-triggered password reset.
-    
+
     Generates temp password, hashes it, saves to user record,
     sets force_password_change flag.
-    
+
     Returns:
         dict with message, user_id, temp_password on success.
         None if user not found.
-        
+
     Raises:
         ValueError: If admin resets own password (policy: prevent self-reset).
     """
     logger.info("Admin password reset: user_id=%s, admin_id=%s", user_id, admin_user_id)
-    
+
     # Policy: prevent admin from resetting own password
     if user_id == admin_user_id:
         logger.warning("Admin attempted self-password-reset: %s", admin_user_id)
         raise ValueError("Admin cannot reset own password")
-    
+
     user_obj = await self.user_repo.get_with_hash(user_id, db)
     if user_obj is None:
         logger.warning("User not found for password reset: %s", user_id)
         return None
-    
+
     temp_password = self._generate_temp_password()
     password_hash = hash_password(temp_password)
-    
+
     # Atomic update: new hash + force flag
     await self.user_repo.update(
         id=user_id,
@@ -214,7 +219,7 @@ async def reset_password_admin(
         force_password_change=True,
     )
     await db.commit()
-    
+
     logger.info("Password reset successful: user_id=%s", user_id)
     return {
         "message": "Password reset successfully",
@@ -236,7 +241,9 @@ async def reset_password_admin(
 ```python
 # In auth_service.py — modify login_user() return
 # The user_read is built from user_obj; add force_password_change to UserRead Pydantic model
-user_read = UserRead.model_validate(user_obj)  # will include force_password_change if added to model
+user_read = UserRead.model_validate(
+    user_obj
+)  # will include force_password_change if added to model
 return {
     "access_token": ...,
     "token_type": "bearer",
@@ -343,7 +350,9 @@ export function ChangePasswordPage() {
 ```python
 # In auth_service.py — change_password() method, after successful change
 # Add: clear force_password_change flag
-await self.user_repo.update(user_id, db, password_hash=password_hash, force_password_change=False)
+await self.user_repo.update(
+    user_id, db, password_hash=password_hash, force_password_change=False
+)
 ```
 
 ### Pattern 4: Admin Result Dialog (Screen 2)
@@ -531,20 +540,21 @@ Revises: <previous>
 Create Date: 2026-05-31
 
 """
+
 from alembic import op
 import sqlalchemy as sa
 
-revision = '<generated>'
-down_revision = '<previous>'
+revision = "<generated>"
+down_revision = "<previous>"
 branch_labels = None
 depends_on = None
 
 
 def upgrade() -> None:
     op.add_column(
-        'users',
+        "users",
         sa.Column(
-            'force_password_change',
+            "force_password_change",
             sa.Boolean(),
             nullable=False,
             server_default=sa.false(),
@@ -553,7 +563,7 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_column('users', 'force_password_change')
+    op.drop_column("users", "force_password_change")
 ```
 
 ### Extending UserRead with force_password_change
@@ -578,7 +588,9 @@ class UserRead(UserBase):
 # FROM:
 await self.user_repo.update(user_id, db, password_hash=password_hash)
 # TO:
-await self.user_repo.update(user_id, db, password_hash=password_hash, force_password_change=False)
+await self.user_repo.update(
+    user_id, db, password_hash=password_hash, force_password_change=False
+)
 ```
 
 ### UserRepo Update with force_password_change
@@ -759,7 +771,7 @@ void (async () => {
 ### Secondary (MEDIUM confidence)
 
 - **docs\SPEC.md** (v3.0, 2026-05-29) — Architecture decisions: Clean Architecture layers, Cookie-based refresh tokens, Login returns user data pattern, Temp password security note (no logging, HTTPS, one-time use, out-of-band delivery), ConfirmDialog pattern, JWT + bcrypt auth
-- **C:\py_dev\mkobi\docs\README_DOCKER.md** — (referenced for context)
+- **C:\py_dev\mkobi\docs\10-deployment\deployment.md** — (referenced for context)
 
 ### Tertiary (LOW confidence)
 

@@ -101,10 +101,10 @@ class ProcessingLogRepository(IProcessingLogRepository):
             if message is not None:
                 log_obj.message = message
 
-            # Set finished_at on successful completion or error, or use explicit value
+            # Set finished_at on completed or failed status, or use explicit value
             if finished_at is not None:
                 log_obj.finished_at = finished_at
-            elif status in (ProcessingStatus.SUCCESS, ProcessingStatus.FAILED):
+            elif status in (ProcessingStatus.COMPLETED, ProcessingStatus.FAILED):
                 log_obj.finished_at = datetime.now(UTC)
 
             await db.flush()

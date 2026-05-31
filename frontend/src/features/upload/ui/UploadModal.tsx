@@ -67,7 +67,7 @@ export function UploadModal({ open, onClose, dashboardId, onUploadComplete }: Up
       )
 
       // Handle completion
-      if (status === 'completed' || status === 'success') {
+      if (status === 'completed') {
         toast.success('Processing complete!')
         setProcessingFinished(true)
         onUploadCompleteRef.current?.()
@@ -138,7 +138,7 @@ export function UploadModal({ open, onClose, dashboardId, onUploadComplete }: Up
                   ...f,
                   status: FileUploadStatus.SUCCESS,
                   progress: 100,
-                  processingLogId: response.processing_log_id,
+                  processingLogId: response.task_id,
                 }
               : f
           )

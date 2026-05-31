@@ -80,6 +80,7 @@ __all__ = [
     "get_processing_config_service",
     "get_processing_log_service",
     "get_token_from_header",
+    "check_dashboard_access",
 ]
 
 
@@ -306,25 +307,6 @@ def get_layout_service(
     return LayoutService(layout_repo)
 
 
-def get_data_service(
-    agg_repo: Any = Depends(get_aggregated_data_repository),
-    log_repo: Any = Depends(get_processing_log_repository),
-    graph_repo: Any = Depends(get_graph_repository),
-) -> DataService:
-    """DI factory for data service.
-
-    Args:
-        agg_repo: Injected aggregated data repository.
-        log_repo: Injected processing log repository.
-        graph_repo: Injected graph repository.
-
-    Returns:
-        DataService: Data service implementation.
-    """
-    from mkobi.services.data_service import DataService
-    return DataService(agg_repo, log_repo, graph_repo)
-
-
 def get_graph_service(
     graph_repo: Any = Depends(get_graph_repository),
 ) -> GraphService:
@@ -368,6 +350,29 @@ def get_processing_log_service(
     """
     from mkobi.services.processing_log_service import ProcessingLogService
     return ProcessingLogService(log_repo)
+
+
+def get_data_service(
+    agg_repo: Any = Depends(get_aggregated_data_repository),
+    log_repo: Any = Depends(get_processing_log_repository),
+    graph_repo: Any = Depends(get_graph_repository),
+    config_service: Any = Depends(get_processing_config_service),
+    dashboard_repo: Any = Depends(get_dashboard_repository),
+) -> DataService:
+    """DI factory for data service.
+
+    Args:
+        agg_repo: Injected aggregated data repository.
+        log_repo: Injected processing log repository.
+        graph_repo: Injected graph repository.
+        config_service: Injected processing config service.
+        dashboard_repo: Injected dashboard repository for existence checks.
+
+    Returns:
+        DataService: Data service implementation.
+    """
+    from mkobi.services.data_service import DataService
+    return DataService(agg_repo, log_repo, graph_repo, config_service, dashboard_repo)
 
 
 # --- Authentication ---
@@ -447,8 +452,18 @@ async def get_current_user_dependency(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        if not user.is_active:
+            logger.warning("User account deactivated: user_id=%s", user_id)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User account is deactivated",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
         logger.info("User authenticated: user_id=%s", user_id)
         return cast(UserRead, UserRead.model_validate(user))
+    except HTTPException:
+        raise
     except ExpiredSignatureError as e:
         logger.warning("Token expired")
         raise HTTPException(

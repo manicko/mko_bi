@@ -12,6 +12,7 @@
   - pydantic
   - sqlalchemy
   - starlette.exceptions
+  - starlette.middleware.base
   - mkobi.api
   - mkobi.config
   - mkobi.core.logging_config
@@ -19,11 +20,13 @@
   - mkobi.db.starter
   - mkobi.models.enums
   - mkobi.workers.data_worker
+  - mkobi.utils.exceptions
   - pathlib
   - starlette.staticfiles
   - starlette.responses
   - starlette.exceptions
   classes:
+  - SecurityHeadersMiddleware
   - SPAStaticFiles
   functions:
   - create_app
@@ -138,10 +141,10 @@
   - mkobi.services.dashboard_service
   - mkobi.services.filter_service
   - mkobi.services.layout_service
-  - mkobi.services.data_service
   - mkobi.services.graph_service
   - mkobi.services.processing_config_service
   - mkobi.services.processing_log_service
+  - mkobi.services.data_service
   classes: []
   functions:
   - get_user_repository
@@ -160,10 +163,10 @@
   - get_dashboard_service
   - get_filter_service
   - get_layout_service
-  - get_data_service
   - get_graph_service
   - get_processing_config_service
   - get_processing_log_service
+  - get_data_service
   - get_token_from_header
   - require_admin_role
   - require_editor_role
@@ -724,13 +727,12 @@
   - mkobi.config
   - mkobi.core.logging_config
   - mkobi.core.permissions
-  - mkobi.core.redis_client
-  - mkobi.core.security
   - mkobi.interfaces.repository_interfaces
   - mkobi.interfaces.service_interfaces
   - mkobi.models.data
   - mkobi.models.enums
   - mkobi.services.file_processing
+  - mkobi.utils.exceptions
   classes:
   - DataService
   functions:
@@ -760,7 +762,6 @@
   - mkobi.core.task_queue
   - mkobi.data.loaders.loader
   - mkobi.models.enums
-  - mkobi.workers.data_worker
   - mkobi.workers.data_worker
   classes: []
   functions:
@@ -1295,6 +1296,8 @@
   - mkobi.db.models
   - mkobi.interfaces.repository_interfaces
   - sqlalchemy.ext.asyncio
+  - mkobi.db.models.dashboard
+  - mkobi.db.models.dashboard
   classes:
   - LayoutRepository
   functions: []
@@ -1678,6 +1681,8 @@
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
   - mkobi.models.graph
+  - mkobi.models.enums
+  - mkobi.db.repositories.access_repo
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
@@ -1688,6 +1693,8 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.core.permissions
+  - mkobi.db.repositories.access_repo
   - mkobi.models.layout
   - mkobi.models.enums
   - mkobi.services.layout_service

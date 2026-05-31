@@ -14,14 +14,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mkobi.config import get_config
 from mkobi.core.logging_config import get_logger
 from mkobi.core.permissions import check_dashboard_access, PermissionError
-from mkobi.core.redis_client import get_redis_client
-from mkobi.core.security import RateLimiter
 from mkobi.interfaces.repository_interfaces import (
     IAggregatedDataRepository,
+    IDashboardRepository,
     IGraphRepository,
     IProcessingLogRepository,
 )
-from mkobi.interfaces.service_interfaces import IDataService
+from mkobi.interfaces.service_interfaces import IDataService, IProcessingConfigService
 from mkobi.models.data import ProcessingResultData, ProcessingResult, ProcessingStatusResponse, UploadResponse
 from mkobi.models.enums import ProcessingStatus, UploadMode
 from mkobi.services.file_processing import (
@@ -30,6 +29,7 @@ from mkobi.services.file_processing import (
     get_and_validate_processing_log,
     process_upload_with_session,
 )
+from mkobi.utils.exceptions import AppException
 
 logger = get_logger(__name__)
 
@@ -42,36 +42,24 @@ class DataService(IDataService):
         agg_repo: IAggregatedDataRepository,
         log_repo: IProcessingLogRepository,
         graph_repo: IGraphRepository,
+        config_service: IProcessingConfigService | None = None,
+        dashboard_repo: IDashboardRepository | None = None,
     ) -> None:
-        """Initialize service with injected repositories."""
+        """Initialize service with injected repositories.
+
+        Args:
+            agg_repo: Aggregated data repository.
+            log_repo: Processing log repository.
+            graph_repo: Graph repository.
+            config_service: Optional processing config service for fetching configs.
+            dashboard_repo: Optional dashboard repository for existence checks.
+        """
         self.agg_repo = agg_repo
         self.log_repo = log_repo
         self.graph_repo = graph_repo
-        self._upload_rate_limiter: RateLimiter | None = None
-        self._rate_limiter_healthy: bool = False
-        config = get_config()
-        try:
-            self._upload_rate_limiter = RateLimiter(
-                get_redis_client(),
-                fail_closed=config.rate_limiter_fail_closed,
-            )
-            self._rate_limiter_healthy = True
-        except Exception as e:
-            logger.error(
-                "Rate limiter disabled due to Redis unavailability: %s", e,
-            )
-            if config.rate_limiter_fail_closed:
-                logger.critical(
-                    "Rate limiter FAIL-CLOSED mode enabled - uploads will be rejected"
-                )
-            else:
-                logger.warning(
-                    "Rate limiter disabled - uploads will not be rate-limited"
-                )
-            self._upload_rate_limiter = None
-        self._upload_rate_limit = 10
-        self._upload_rate_period = 60
-        self._max_file_size = config.max_file_size
+        self.config_service = config_service
+        self.dashboard_repo = dashboard_repo
+        self._max_file_size = get_config().max_file_size
 
     async def process_upload(
         self,
@@ -114,6 +102,20 @@ class DataService(IDataService):
         db: AsyncSession,
     ) -> UploadResponse:
         """Execute upload with permission check and file processing."""
+        # Check dashboard existence before access verification
+        if self.dashboard_repo is not None:
+            dashboard = await self.dashboard_repo.get(dashboard_id, db)
+            if dashboard is None:
+                logger.warning(
+                    "Dashboard not found for upload: dashboard_id=%s",
+                    dashboard_id,
+                )
+                raise AppException(
+                    status_code=404,
+                    detail="Dashboard not found",
+                    error_code="DASHBOARD_NOT_FOUND",
+                )
+
         if user_id:
             has_access = await check_dashboard_access(
                 user_id=user_id,
@@ -130,6 +132,19 @@ class DataService(IDataService):
                     "No permission to process data for this dashboard"
                 )
 
+        # Fetch processing config if config_service is available
+        processing_config: dict[str, Any] | None = None
+        if self.config_service is not None:
+            config_response = await self.config_service.get_processing_config_by_dashboard(
+                dashboard_id, db
+            )
+            processing_config = dict(config_response.settings) if config_response else None
+            if processing_config:
+                logger.info(
+                    "Processing config fetched for dashboard: dashboard_id=%s",
+                    dashboard_id,
+                )
+
         log_id = await process_upload_with_session(
             file_path=file_path,
             dashboard_id=dashboard_id,
@@ -139,6 +154,7 @@ class DataService(IDataService):
             mode=mode,
             max_file_size=self._max_file_size,
             db=db,
+            processing_config=processing_config,
         )
 
         return UploadResponse(
@@ -270,10 +286,12 @@ class DataService(IDataService):
         await enqueue_processing_job(
             file_path=file_path, dashboard_id=dashboard_id,
             task_id=task_id, mode="overwrite",
+            processing_config=processing_config,
         )
         logger.info(
-            "Processing triggered: task_id=%s, dashboard_id=%s",
+            "Processing triggered: task_id=%s, dashboard_id=%s, config=%s",
             task_id, dashboard_id,
+            "present" if processing_config else "none",
         )
         return ProcessingStatusResponse(
             task_id=task_id,
@@ -306,7 +324,7 @@ class DataService(IDataService):
             filename=log.message or "unknown",
             dashboard_id=log.dashboard_id,
             status=log.status,
-            progress=50 if log.status == ProcessingStatus.PROCESSING else 100 if log.status == ProcessingStatus.SUCCESS else 0,
+            progress=50 if log.status == ProcessingStatus.PROCESSING else 100 if log.status == ProcessingStatus.COMPLETED else 0,
             message=log.message,
             started_at=log.started_at,
             completed_at=log.finished_at,
@@ -329,7 +347,7 @@ class DataService(IDataService):
             )
             if not has_access:
                 raise PermissionError("No permission to view this dashboard")
-        if log.status != ProcessingStatus.SUCCESS:
+        if log.status != ProcessingStatus.COMPLETED:
             return ProcessingResult(
                 success=False, task_id=task_id,
                 dashboard_id=log.dashboard_id, rows_processed=0,
@@ -345,4 +363,3 @@ class DataService(IDataService):
             dashboard_id=log.dashboard_id, rows_processed=rows_processed,
             message="Processing completed successfully",
         )
-

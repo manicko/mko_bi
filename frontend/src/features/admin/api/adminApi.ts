@@ -11,6 +11,15 @@ import type {
   LogFilters,
 } from '../../../shared/types/api.types'
 
+// Layout type matching backend LayoutRead model
+export interface LayoutRead {
+  id: string
+  name: string
+  definition: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
 // User Management API
 export async function getUsers(): Promise<AdminUser[]> {
   const response = await axiosInstance.get<AdminUser[]>('/admin/users')
@@ -18,7 +27,7 @@ export async function getUsers(): Promise<AdminUser[]> {
 }
 
 export async function createUser(data: CreateUserRequest): Promise<AdminUser> {
-  const response = await axiosInstance.post<AdminUser>('/users', data)
+  const response = await axiosInstance.post<AdminUser>('/users/', data)
   return response.data
 }
 
@@ -45,17 +54,21 @@ export async function rejectRequest(requestId: string): Promise<void> {
   await axiosInstance.post(`/admin/registration-requests/${requestId}/reject`)
 }
 
-// Layout name to UUID mapping - must match seeded layout records in DB
-const LAYOUT_NAME_TO_ID: Record<string, string> = {
-  'single-column': '00000000-0000-0000-0000-000000000001',
-  'two-columns': '00000000-0000-0000-0000-000000000002',
-  'grid': '00000000-0000-0000-0000-000000000003',
+// Layout API
+export async function getLayouts(): Promise<LayoutRead[]> {
+  const response = await axiosInstance.get<LayoutRead[]>('/layouts')
+  return response.data
+}
+
+export async function getLayoutByName(name: string): Promise<LayoutRead | null> {
+  const layouts = await getLayouts()
+  return layouts.find((layout) => layout.name === name) || null
 }
 
 // Dashboard Management API
 export async function getDashboardsAdmin(): Promise<DashboardAdmin[]> {
-    const response = await axiosInstance.get<DashboardAdmin[]>('/dashboards/')
-    return response.data
+  const response = await axiosInstance.get<DashboardAdmin[]>('/dashboards/')
+  return response.data
 }
 
 export async function createDashboard(data: CreateDashboardRequest): Promise<DashboardAdmin> {
@@ -63,8 +76,13 @@ export async function createDashboard(data: CreateDashboardRequest): Promise<Das
   if (data.description) {
     payload.description = data.description
   }
+  // Fetch layout by name dynamically instead of using hardcoded UUID mapping
   if (data.layout) {
-    payload.layout_id = LAYOUT_NAME_TO_ID[data.layout]
+    const layout = await getLayoutByName(data.layout)
+    if (layout) {
+      payload.layout_id = layout.id
+    }
+    // Graceful fallback: layout_id is optional, backend will use default if not provided
   }
   // config is optional - will use backend default if not provided
   const response = await axiosInstance.post<DashboardAdmin>('/dashboards', payload)
@@ -81,7 +99,10 @@ export async function deleteDashboard(dashboardId: string): Promise<void> {
 }
 
 export async function grantDashboardAccess(dashboardId: string, data: GrantAccessRequest): Promise<void> {
-  await axiosInstance.post(`/dashboards/${dashboardId}/access`, data)
+  await axiosInstance.post(`/dashboards/${dashboardId}/access`, {
+    ...data,
+    dashboard_id: dashboardId,
+  })
 }
 
 // Logs API

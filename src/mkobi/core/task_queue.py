@@ -51,10 +51,33 @@ class TaskQueue:
         logger.info("Task enqueued: task_id=%s", task_id)
         return task_id
 
+    async def enqueue_with_worker(
+        self, job_func: Callable[..., Any], *args: Any, **kwargs: Any
+    ) -> str:
+        """Enqueue a job for background worker processing.
+
+        MVP: Uses in-memory queue (non-persistent, tasks lost on restart).
+        Production: Replace with RQ enqueue via Redis for persistence and scaling.
+        See docs/11-guides/task-queue-migration.md for migration guide.
+
+        This method serves as the integration point for background worker migration.
+        The stub below delegates to the in-memory queue; during migration, replace
+        the implementation with `rq.Queue.enqueue()` for Redis/RQ compatibility.
+
+        Args:
+            job_func: Function to execute (sync for RQ, async for in-memory).
+            *args: Positional arguments for the function.
+            **kwargs: Keyword arguments for the function.
+
+        Returns:
+            str: Unique job/task ID.
+        """
+        return await self.enqueue(job_func, *args, **kwargs)
+
     async def process_next(self) -> None:
         """Process the next task in the queue.
 
-        Executes the task function and updates status to SUCCESS or FAILED.
+        Executes the task function and updates status to COMPLETED or FAILED.
         """
         try:
             task = await self._queue.get()
@@ -66,7 +89,7 @@ class TaskQueue:
             self._statuses[task_id] = ProcessingStatus.PROCESSING
             try:
                 result = await func(*args, **kwargs)
-                self._statuses[task_id] = ProcessingStatus.SUCCESS
+                self._statuses[task_id] = ProcessingStatus.COMPLETED
                 self._results[task_id] = result
                 logger.info("Task processed successfully: task_id=%s", task_id)
             except Exception as e:
@@ -116,6 +139,19 @@ class TaskQueue:
             Optional[str]: Error message, or None if no error.
         """
         return self._errors.get(task_id)
+
+    async def shutdown(self) -> None:
+        """Log warning for pending tasks on shutdown.
+
+        Called during application shutdown to warn about tasks that will be lost.
+        """
+        pending = self._queue.qsize()
+        if pending > 0:
+            logger.warning(
+                "TaskQueue shutting down with %d pending tasks. "
+                "These will be lost. Consider using Redis/RQ for persistence.",
+                pending,
+            )
 
 
 # Global default queue instance for backward compatibility

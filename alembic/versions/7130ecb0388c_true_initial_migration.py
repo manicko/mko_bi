@@ -9,13 +9,14 @@ Revises:
 Create Date: 2026-05-03 17:10:00.000000
 
 """
+
 from collections.abc import Sequence
 
 from alembic import op
 from sqlalchemy.dialects.postgresql import ENUM
 
 # revision identifiers, used by Alembic.
-revision: str = '7130ecb0388c'
+revision: str = "7130ecb0388c"
 down_revision: str | Sequence[str] | None = None
 branch_labels: str | Sequence[str] | None = None
 depends_on: str | Sequence[str] | None = None
@@ -24,26 +25,37 @@ depends_on: str | Sequence[str] | None = None
 def upgrade() -> None:
     """Create all tables from scratch according to SPEC.md."""
     # Create enum types using Alembic's proper API (idempotent with checkfirst)
-    user_role_enum = ENUM('admin', 'editor', 'viewer', name='user_role')
+    user_role_enum = ENUM("admin", "editor", "viewer", name="user_role")
     user_role_enum.create(op.get_bind(), checkfirst=True)
 
-    dashboard_permission_enum = ENUM('view', 'edit', 'admin', name='dashboard_permission_level')
+    dashboard_permission_enum = ENUM(
+        "view", "edit", "admin", name="dashboard_permission_level"
+    )
     dashboard_permission_enum.create(op.get_bind(), checkfirst=True)
 
-    graph_type_enum = ENUM('bar', 'line', 'pie', 'table', name='graph_type')
+    graph_type_enum = ENUM("bar", "line", "pie", "table", name="graph_type")
     graph_type_enum.create(op.get_bind(), checkfirst=True)
 
-    filter_type_enum = ENUM('select', 'multiselect', 'range', 'date', name='filter_type')
+    filter_type_enum = ENUM(
+        "select", "multiselect", "range", "date", name="filter_type"
+    )
     filter_type_enum.create(op.get_bind(), checkfirst=True)
 
     processing_status_enum = ENUM(
-        'started', 'uploaded', 'processing', 'success', 'failed', 'completed',
-        name='processing_status'
+        "started",
+        "uploaded",
+        "processing",
+        "success",
+        "failed",
+        "completed",
+        name="processing_status",
     )
     processing_status_enum.create(op.get_bind(), checkfirst=True)
 
     # Create registration_status enum
-    registration_status_enum = ENUM('pending', 'approved', 'rejected', name='registration_status')
+    registration_status_enum = ENUM(
+        "pending", "approved", "rejected", name="registration_status"
+    )
     registration_status_enum.create(op.get_bind(), checkfirst=True)
 
     # Create users table (with existence check)
@@ -86,7 +98,9 @@ def upgrade() -> None:
             updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
         );
     """)
-    op.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_dashboards_name ON dashboards (name)")
+    op.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_dashboards_name ON dashboards (name)"
+    )
 
     # Create graphs table
     op.execute("""
@@ -101,8 +115,12 @@ def upgrade() -> None:
             created_at TIMESTAMPTZ NOT NULL DEFAULT now()
         );
     """)
-    op.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_graphs_dashboard_name ON graphs (dashboard_id, name)")
-    op.execute("CREATE INDEX IF NOT EXISTS idx_graphs_dashboard ON graphs (dashboard_id)")
+    op.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_graphs_dashboard_name ON graphs (dashboard_id, name)"
+    )
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_graphs_dashboard ON graphs (dashboard_id)"
+    )
 
     # Create filters table
     op.execute("""
@@ -125,8 +143,12 @@ def upgrade() -> None:
             PRIMARY KEY (user_id, dashboard_id)
         );
     """)
-    op.execute("CREATE INDEX IF NOT EXISTS idx_dashboard_access_user ON dashboard_access (user_id)")
-    op.execute("CREATE INDEX IF NOT EXISTS idx_dashboard_access_dashboard ON dashboard_access (dashboard_id)")
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_dashboard_access_user ON dashboard_access (user_id)"
+    )
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_dashboard_access_dashboard ON dashboard_access (dashboard_id)"
+    )
 
     # Create dashboard_filters table (many-to-many)
     op.execute("""
@@ -136,7 +158,9 @@ def upgrade() -> None:
             PRIMARY KEY (dashboard_id, filter_id)
         );
     """)
-    op.execute("CREATE INDEX IF NOT EXISTS idx_dashboard_filters_dashboard_filter ON dashboard_filters (dashboard_id, filter_id)")
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_dashboard_filters_dashboard_filter ON dashboard_filters (dashboard_id, filter_id)"
+    )
 
     # Create processing_configs table
     op.execute("""
@@ -157,10 +181,18 @@ def upgrade() -> None:
             metrics JSONB NOT NULL
         );
     """)
-    op.execute("CREATE INDEX IF NOT EXISTS idx_aggregated_data_dashboard_id ON aggregated_data (dashboard_id)")
-    op.execute("CREATE INDEX IF NOT EXISTS idx_aggregated_data_graph_id ON aggregated_data (graph_id)")
-    op.execute("CREATE INDEX IF NOT EXISTS idx_aggregated_data_dims_gin ON aggregated_data USING GIN (dims)")
-    op.execute("CREATE UNIQUE INDEX IF NOT EXISTS uq_aggregated_data_dashboard_graph_dims ON aggregated_data (dashboard_id, graph_id, dims)")
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_aggregated_data_dashboard_id ON aggregated_data (dashboard_id)"
+    )
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_aggregated_data_graph_id ON aggregated_data (graph_id)"
+    )
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_aggregated_data_dims_gin ON aggregated_data USING GIN (dims)"
+    )
+    op.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS uq_aggregated_data_dashboard_graph_dims ON aggregated_data (dashboard_id, graph_id, dims)"
+    )
 
     # Create processing_logs table
     op.execute("""
@@ -173,7 +205,9 @@ def upgrade() -> None:
             finished_at TIMESTAMPTZ
         );
     """)
-    op.execute("CREATE INDEX IF NOT EXISTS idx_processing_logs_dashboard_id ON processing_logs (dashboard_id)")
+    op.execute(
+        "CREATE INDEX IF NOT EXISTS idx_processing_logs_dashboard_id ON processing_logs (dashboard_id)"
+    )
 
     # Create registration_requests table
     op.execute("""
@@ -226,7 +260,9 @@ def upgrade() -> None:
         END $$;
     """)
 
-    op.execute("DROP TRIGGER IF EXISTS update_processing_configs_updated_at ON processing_configs")
+    op.execute(
+        "DROP TRIGGER IF EXISTS update_processing_configs_updated_at ON processing_configs"
+    )
     op.execute("""
         DO $$ BEGIN
             IF NOT EXISTS (
@@ -252,6 +288,10 @@ def upgrade() -> None:
         END $$;
     """)
 
+    # Create trigger for graphs table
+    # NOTE: The update_graphs_updated_at trigger was initially created but references a
+    # non-existent `updated_at` column. Migration ffd23f1f7e2b drops this trigger.
+    # The column was never added. This trigger is not needed for the current schema.
     op.execute("DROP TRIGGER IF EXISTS update_graphs_updated_at ON graphs")
     op.execute("""
         DO $$ BEGIN
@@ -283,7 +323,9 @@ def downgrade() -> None:
     """Drop all triggers, tables, and enum types in reverse dependency order."""
     # Drop triggers (must be dropped before the trigger function)
     op.execute("DROP TRIGGER IF EXISTS update_dashboards_updated_at ON dashboards")
-    op.execute("DROP TRIGGER IF EXISTS update_processing_configs_updated_at ON processing_configs")
+    op.execute(
+        "DROP TRIGGER IF EXISTS update_processing_configs_updated_at ON processing_configs"
+    )
     op.execute("DROP TRIGGER IF EXISTS update_layouts_updated_at ON layouts")
     op.execute("DROP TRIGGER IF EXISTS update_graphs_updated_at ON graphs")
     op.execute("DROP TRIGGER IF EXISTS update_users_updated_at ON users")
@@ -305,20 +347,20 @@ def downgrade() -> None:
     op.execute("DROP TABLE IF EXISTS users CASCADE")
 
     # Drop enum types using Alembic's proper API (idempotent with checkfirst)
-    user_role_enum = ENUM(name='user_role')
+    user_role_enum = ENUM(name="user_role")
     user_role_enum.drop(op.get_bind(), checkfirst=True)
 
-    dashboard_permission_enum = ENUM(name='dashboard_permission_level')
+    dashboard_permission_enum = ENUM(name="dashboard_permission_level")
     dashboard_permission_enum.drop(op.get_bind(), checkfirst=True)
 
-    graph_type_enum = ENUM(name='graph_type')
+    graph_type_enum = ENUM(name="graph_type")
     graph_type_enum.drop(op.get_bind(), checkfirst=True)
 
-    filter_type_enum = ENUM(name='filter_type')
+    filter_type_enum = ENUM(name="filter_type")
     filter_type_enum.drop(op.get_bind(), checkfirst=True)
 
-    processing_status_enum = ENUM(name='processing_status')
+    processing_status_enum = ENUM(name="processing_status")
     processing_status_enum.drop(op.get_bind(), checkfirst=True)
 
-    registration_status_enum = ENUM(name='registration_status')
+    registration_status_enum = ENUM(name="registration_status")
     registration_status_enum.drop(op.get_bind(), checkfirst=True)

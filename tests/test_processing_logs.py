@@ -58,13 +58,13 @@ class TestProcessingLogModels:
         log_id = uuid4()
         read_obj = ProcessingLogRead(
             id=log_id,
-            status=ProcessingStatus.SUCCESS,
-            message="Success",
+            status=ProcessingStatus.COMPLETED,
+            message="Completed",
             started_at=datetime.now(),
             finished_at=datetime.now(),
         )
         assert read_obj.id == log_id
-        assert read_obj.status == ProcessingStatus.SUCCESS
+        assert read_obj.status == ProcessingStatus.COMPLETED
 
 
 class TestProcessingLogRepository:
@@ -101,7 +101,7 @@ class TestProcessingLogRepository:
 
         await repo.update_status(
             log_id=log.id,
-            status=ProcessingStatus.SUCCESS,
+            status=ProcessingStatus.COMPLETED,
             message="Completed",
             db=async_db_session,
         )
@@ -109,7 +109,7 @@ class TestProcessingLogRepository:
         # Verify update
         updated = await repo.get_by_id(log.id, db=async_db_session)
         assert updated is not None
-        assert updated.status == ProcessingStatus.SUCCESS
+        assert updated.status == ProcessingStatus.COMPLETED
         assert updated.message == "Completed"
         assert updated.finished_at is not None
 
@@ -127,7 +127,7 @@ class TestProcessingLogRepository:
         )
         await repo.create_log(
             dashboard_id=None,
-            status=ProcessingStatus.SUCCESS,
+            status=ProcessingStatus.COMPLETED,
             message="Test2",
             db=async_db_session,
         )
@@ -148,18 +148,18 @@ class TestProcessingLogRepository:
         )
         await repo.create_log(
             dashboard_id=None,
-            status=ProcessingStatus.SUCCESS,
+            status=ProcessingStatus.COMPLETED,
             message="Test2",
             db=async_db_session,
         )
 
         filters = ProcessingLogFilter(
-            status=ProcessingStatus.SUCCESS,
+            status=ProcessingStatus.COMPLETED,
         )
 
         logs = await repo.get_filtered(filters, db=async_db_session)
         assert len(logs) == 1
-        assert logs[0].status == ProcessingStatus.SUCCESS
+        assert logs[0].status == ProcessingStatus.COMPLETED
 
 
 class TestProcessingLogService:
@@ -182,18 +182,18 @@ class TestProcessingLogService:
         assert result.status == ProcessingStatus.STARTED
 
     @pytest.mark.asyncio
-    async def test_update_to_success(self, service, async_db_session):
-        """Test updating log to success."""
+    async def test_update_to_completed(self, service, async_db_session):
+        """Test updating log to completed."""
         # First create a log
         log = await service.create_started_log(None, async_db_session)
 
-        # Update to success
-        result = await service.update_to_success(
-            log.id, "All good", async_db_session
+        # Update to completed
+        result = await service.update_to_completed(
+            log.id, "All good", async_db_session,
         )
 
         assert result is not None
-        assert result.status == ProcessingStatus.SUCCESS
+        assert result.status == ProcessingStatus.COMPLETED
         assert result.message == "All good"
 
     @pytest.mark.asyncio
@@ -216,7 +216,7 @@ class TestProcessingLogService:
         """Test getting filtered logs via service."""
         # Create logs
         log1 = await service.create_started_log(None, async_db_session)
-        await service.update_to_success(
+        await service.update_to_completed(
             log1.id,
             "Done",
             async_db_session,
@@ -224,12 +224,12 @@ class TestProcessingLogService:
         await service.create_started_log(None, async_db_session)
 
         filters = ProcessingLogFilter(
-            status=ProcessingStatus.SUCCESS,
+            status=ProcessingStatus.COMPLETED,
         )
 
         logs = await service.get_filtered(filters, async_db_session)
         assert len(logs) == 1
-        assert logs[0].status == ProcessingStatus.SUCCESS
+        assert logs[0].status == ProcessingStatus.COMPLETED
 
     @pytest.mark.asyncio
     async def test_update_processing_log_with_finished_at(self, service, async_db_session):
@@ -241,14 +241,14 @@ class TestProcessingLogService:
         custom_finished = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
         result = await service.update_processing_log(
             log_id=log.id,
-            status="success",
+            status="completed",
             message="Custom finished",
             finished_at=custom_finished,
             db=async_db_session,
         )
 
         assert result is not None
-        assert result.status == ProcessingStatus.SUCCESS
+        assert result.status == ProcessingStatus.COMPLETED
         assert result.message == "Custom finished"
         # finished_at should be close to our custom time (within 1 second tolerance)
         assert result.finished_at is not None
@@ -265,15 +265,15 @@ class TestProcessingLogService:
         # Update with invalid finished_at - should fall back to None/default behavior
         result = await service.update_processing_log(
             log_id=log.id,
-            status="success",
+            status="completed",
             message="Invalid timestamp",
             finished_at="not-a-valid-timestamp",
             db=async_db_session,
         )
 
         assert result is not None
-        assert result.status == ProcessingStatus.SUCCESS
-        # finished_at should be set automatically for SUCCESS
+        assert result.status == ProcessingStatus.COMPLETED
+        # finished_at should be set automatically for COMPLETED
         assert result.finished_at is not None
 
 
@@ -307,11 +307,11 @@ class TestStaleProcessingCleanup:
             db=async_db_session,
         )
 
-        # Create a SUCCESS log (should not be affected)
-        success_log = await repo.create_log(
+        # Create a COMPLETED log (should not be affected)
+        completed_log = await repo.create_log(
             dashboard_id=None,
-            status=ProcessingStatus.SUCCESS,
-            message="Success",
+            status=ProcessingStatus.COMPLETED,
+            message="Completed",
             db=async_db_session,
         )
 
@@ -331,10 +331,10 @@ class TestStaleProcessingCleanup:
         assert fresh is not None
         assert fresh.status == ProcessingStatus.PROCESSING
 
-        # Verify SUCCESS log is unchanged
-        success = await repo.get_by_id(success_log.id, db=async_db_session)
-        assert success is not None
-        assert success.status == ProcessingStatus.SUCCESS
+        # Verify COMPLETED log is unchanged
+        completed = await repo.get_by_id(completed_log.id, db=async_db_session)
+        assert completed is not None
+        assert completed.status == ProcessingStatus.COMPLETED
 
     @pytest.mark.asyncio
     async def test_cleanup_no_stale_entries(self, async_db_session):

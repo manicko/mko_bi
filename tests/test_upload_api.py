@@ -111,7 +111,7 @@ N,South,Product12,999999.99,249999.99,2023-01-14,999
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
         assert "message" in data
-        assert "processing_log_id" in data
+        assert "task_id" in data
 
     async def test_upload_csv_gz_success(
         self,
@@ -512,6 +512,26 @@ N,South,Product12,999999.99,249999.99,2023-01-14,999
         finally:
             invalid_types_path.unlink(missing_ok=True)
 
+    async def test_upload_nonexistent_dashboard(
+        self,
+        authenticated_client: AsyncClient,
+        async_db_session,
+        test_user: dict,
+        csv_file: Path,
+    ) -> None:
+        """Test upload to non-existent dashboard returns 404."""
+        # Use a valid UUID that doesn't exist in the database
+        nonexistent_dashboard_id = UUID("00000000-0000-0000-0000-000000000001")
+
+        with open(csv_file, "rb") as f:
+            response = await authenticated_client.post(
+                f"/upload/{nonexistent_dashboard_id}",
+                files={"file": ("test.csv", f, "text/csv")},
+            )
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        data = response.json()
+        assert "dashboard" in data.get("detail", "").lower()
+
 
 class TestTempFileCleanup:
     """Tests for temporary file cleanup behavior in upload processing."""
@@ -584,7 +604,7 @@ class TestTempFileCleanup:
 
             assert response.status_code == status.HTTP_201_CREATED
             data = response.json()
-            task_id = data["processing_log_id"]
+            task_id = data["task_id"]
 
             # Process the background job synchronously for testing
             # This simulates what would happen in a real worker
@@ -660,7 +680,7 @@ class TestTempFileCleanup:
 
             assert response.status_code == status.HTTP_201_CREATED
             data = response.json()
-            task_id = data["processing_log_id"]
+            task_id = data["task_id"]
 
             # Call cleanup_task_files directly (simulating post-processing cleanup)
             file_cleanup.cleanup_task_files(task_id=UUID(task_id))
@@ -729,7 +749,7 @@ class TestTempFileCleanup:
 
             assert response.status_code == status.HTTP_201_CREATED
             data = response.json()
-            task_id = data["processing_log_id"]
+            task_id = data["task_id"]
 
             # Create the task file manually for processing
             task_file = upload_dir / f"{task_id}.csv"

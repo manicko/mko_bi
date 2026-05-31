@@ -8,7 +8,7 @@ alwaysApply: true
 [Project Structure](C:\py_dev\mkobi\.ai\structure\map.md)
 [Full Project Structure including dependencies and semantic for audit and development)](C:\py_dev\mkobi\.ai\structure**)
 [Important project specification](C:\py_dev\mkobi\docs\SPEC.md)
-[Docker specification](C:\py_dev\mkobi\docs\README_DOCKER.md)
+[Docker specification](C:\py_dev\mkobi\docs\10-deployment\deployment.md)
 [Important project commands](C:\py_dev\mkobi\.ai\context\commands.md)
 [Important context](C:\py_dev\mkobi\.ai\context)
 [Doc Maintenance Rules](C:\py_dev\mkobi\docs/00-overview/doc-maintenance-rules.md) — **read before any doc-modifying task**

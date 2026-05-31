@@ -165,16 +165,16 @@ class DataPipeline:
                 clear_old=clear_old,
             )
 
-            # Update status to SUCCESS
+            # Update status to completed
             await self.log_service.update_processing_log(
                 log_id=log_entry.id,
-                status=ProcessingStatus.SUCCESS.value,
+                status=ProcessingStatus.COMPLETED.value,
                 message="Processing completed successfully",
                 finished_at=None,
                 db=db,
             )
 
-            log_entry.status = ProcessingStatus.SUCCESS
+            log_entry.status = ProcessingStatus.COMPLETED
             logger.info("Pipeline completed successfully: dashboard_id=%s", dashboard_id)
             return log_entry
 

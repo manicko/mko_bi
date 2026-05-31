@@ -61,9 +61,8 @@ class ProcessingStatus(StrEnum):
     STARTED = "started"
     UPLOADED = "uploaded"
     PROCESSING = "processing"
-    SUCCESS = "success"
-    FAILED = "failed"
     COMPLETED = "completed"
+    FAILED = "failed"
 
 
 class EnvironmentEnum(StrEnum):

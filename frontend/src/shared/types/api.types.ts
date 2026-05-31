@@ -63,8 +63,6 @@ export interface UploadResponse {
   status: string
   message: string
   uploaded_at: string
-  // Frontend convenience - maps to task_id for processing status tracking
-  processing_log_id: string
 }
 
 export interface DashboardConfig {
@@ -133,6 +131,7 @@ export interface DashboardDetail {
 
 export interface AggregatedDataRequest {
   dashboard_id: string
+  graph_id?: string
   filters?: Record<string, string | string[] | number | number[]>
 }
 
@@ -203,7 +202,7 @@ export interface DashboardAdmin {
 export interface CreateDashboardRequest {
   name: string
   description?: string
-  layout?: 'single-column' | 'two-columns' | 'grid'
+  layout?: string
 }
 
 export interface UpdateDashboardRequest {
@@ -218,6 +217,7 @@ export interface DashboardAccess {
 }
 
 export interface GrantAccessRequest {
+  dashboard_id: string
   user_id: string
   permission: DashboardPermission
 }

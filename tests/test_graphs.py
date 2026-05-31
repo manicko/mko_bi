@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mkobi.core.security import create_access_token, hash_password
 from mkobi.db.repositories.user_repo import UserRepository
 from mkobi.db.repositories.graph_repo import GraphRepository
-from mkobi.models.enums import GraphType
+from mkobi.models.enums import GraphType, UserRole, DashboardPermission
 
 
 class TestGraphsAPI:
@@ -288,6 +288,90 @@ class TestGraphsAPI:
         assert data["id"] == str(graph.id)
         assert data["name"] == "detail_test_graph"
         assert data["type"] == GraphType.LINE
+
+    async def test_get_graph_cross_dashboard_forbidden(
+        self, async_client: AsyncClient, async_db_session: AsyncSession
+    ) -> None:
+        """Graph on dashboard A should not be accessible from user with access only to dashboard B."""
+        from mkobi.db.repositories.dashboard_repo import DashboardRepository
+        from mkobi.db.repositories.access_repo import AccessRepository
+
+        # Create two dashboards
+        dashboard_repo = DashboardRepository()
+        dashboard_a = await dashboard_repo.create(
+            db=async_db_session,
+            name="dashboard-a-for-cross-access-test",
+            config={"graph_types": ["bar"]},
+        )
+        dashboard_b = await dashboard_repo.create(
+            db=async_db_session,
+            name="dashboard-b-for-cross-access-test",
+            config={"graph_types": ["line"]},
+        )
+        await async_db_session.flush()
+
+        # Create two viewer users with separate access
+        user_repo = UserRepository()
+        user_a = await user_repo.create(
+            db=async_db_session,
+            email=f"viewer_a_{uuid.uuid4().hex[:8]}@example.com",
+            password_hash=hash_password("TestPass123!"),
+            role=UserRole.VIEWER,
+        )
+        user_b = await user_repo.create(
+            db=async_db_session,
+            email=f"viewer_b_{uuid.uuid4().hex[:8]}@example.com",
+            password_hash=hash_password("TestPass123!"),
+            role=UserRole.VIEWER,
+        )
+        await async_db_session.flush()
+
+        # Grant access: user_a to dashboard_a, user_b to dashboard_b
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=user_a.id,
+            dashboard_id=dashboard_a.id,
+            permission=DashboardPermission.VIEW,
+        )
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=user_b.id,
+            dashboard_id=dashboard_b.id,
+            permission=DashboardPermission.VIEW,
+        )
+        await async_db_session.flush()
+
+        # Create graph on dashboard_a
+        repo = GraphRepository()
+        graph = await repo.create(
+            db=async_db_session,
+            name="cross-access-test-graph",
+            type=GraphType.BAR,
+            dashboard_id=dashboard_a.id,
+            config={"xaxis": {"title": "Category"}},
+            dimensions=["category"],
+            metrics=["sales"],
+        )
+        await async_db_session.flush()
+
+        # Login as user B (has access only to dashboard B)
+        token_b = create_access_token({"user_id": str(user_b.id), "email": user_b.email})
+        async_client.headers = {"Authorization": f"Bearer {token_b}"}
+
+        # User B tries to access graph from dashboard A -> should get 403
+        response = await async_client.get(f"/graphs/{graph.id}")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+        # Login as user A (has access to dashboard A) -> should get 200
+        token_a = create_access_token({"user_id": str(user_a.id), "email": user_a.email})
+        async_client.headers = {"Authorization": f"Bearer {token_a}"}
+
+        response = await async_client.get(f"/graphs/{graph.id}")
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["id"] == str(graph.id)
+        assert data["name"] == "cross-access-test-graph"
 
     async def test_get_graph_not_found(
         self, async_db_session: AsyncSession, authenticated_client: AsyncClient

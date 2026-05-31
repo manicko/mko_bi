@@ -516,6 +516,29 @@
   hooks: []
   jsx_tags:
     - <Box>
+- path: C:/py_dev/mkobi/frontend/src/features/auth/__tests__/authFlow.test.tsx
+  module: C:.py_dev.mkobi.frontend.src.features.auth.__tests__.authFlow.test
+  layer: unknown
+  imports:
+    - vitest
+    - '@testing-library/react'
+    - '@tanstack/react-query'
+    - ../ui/LoginForm
+    - ../ui/RegisterForm
+  components: []
+  hooks: []
+  jsx_tags:
+    - <QueryClientProvider client={queryClient}>
+    - <a href={to} data-testid="link">
+    - <Wrapper>
+    - <Wrapper>
+    - <Wrapper>
+    - <Wrapper>
+    - <Wrapper>
+    - <Wrapper>
+    - <Wrapper>
+    - <Wrapper>
+    - <Wrapper>
 - path: C:/py_dev/mkobi/frontend/src/features/auth/api/authApi.ts
   module: C:.py_dev.mkobi.frontend.src.features.auth.api.authApi
   layer: api
@@ -601,6 +624,27 @@
               loading={isSubmitting} loadingPosition="start">
     - '<Typography sx={{ mt: 2, textAlign: ''center'' }}>'
     - <Link to="/login">
+- path: >-
+    C:/py_dev/mkobi/frontend/src/features/dashboards/__tests__/DashboardView.test.tsx
+  module: >-
+    C:.py_dev.mkobi.frontend.src.features.dashboards.__tests__.DashboardView.test
+  layer: unknown
+  imports:
+    - vitest
+    - '@testing-library/react'
+    - '@tanstack/react-query'
+    - ../ui/DashboardView
+  components: []
+  hooks: []
+  jsx_tags:
+    - <div data-testid="plotly-chart">
+    - <div data-testid="dashboard-filters">
+    - <QueryClientProvider client={queryClient}>
+    - <Wrapper>
+    - <Wrapper>
+    - <Wrapper>
+    - <Wrapper>
+    - <Wrapper>
 - path: C:/py_dev/mkobi/frontend/src/features/dashboards/api/dashboardApi.ts
   module: C:.py_dev.mkobi.frontend.src.features.dashboards.api.dashboardApi
   layer: api
@@ -718,6 +762,17 @@
     - <Typography variant="h6" gutterBottom>
     - '<Stack sx={{ height: 400 }}>'
     - <Alert severity="info">
+- path: C:/py_dev/mkobi/frontend/src/features/upload/__tests__/FileDropzone.test.tsx
+  module: C:.py_dev.mkobi.frontend.src.features.upload.__tests__.FileDropzone.test
+  layer: unknown
+  imports:
+    - vitest
+    - '@testing-library/react'
+    - ../ui/FileDropzone
+    - react-dropzone
+  components: []
+  hooks: []
+  jsx_tags: []
 - path: C:/py_dev/mkobi/frontend/src/features/upload/api/uploadApi.ts
   module: C:.py_dev.mkobi.frontend.src.features.upload.api.uploadApi
   layer: api
@@ -1071,12 +1126,31 @@
     - <p>
     - <div>
     - <h3>
-    - '<table style={{ width: ''100%'', borderCollapse: ''collapse'' }}>'
+    - |-
+      <table
+              role="grid"
+              aria-label={`Data table: ${title || 'chart'}`}
+              style={{ width: '100%', borderCollapse: 'collapse' }}
+            >
+    - |-
+      <caption
+                style={{
+                  position: 'absolute',
+                  width: '1px',
+                  height: '1px',
+                  padding: 0,
+                  margin: '-1px',
+                  overflow: 'hidden',
+                  clip: 'rect(0, 0, 0, 0)',
+                  whiteSpace: 'nowrap',
+                  border: 0,
+                }}
+              >
     - <thead>
     - <tr>
     - >-
-      <th key={col} style={{ border: '1px solid #ddd', padding: '8px',
-      textAlign: 'left' }}>
+      <th key={col} scope="col" style={{ border: '1px solid #ddd', padding:
+      '8px', textAlign: 'left' }}>
     - <tbody>
     - <tr key={idx}>
     - '<td key={col} style={{ border: ''1px solid #ddd'', padding: ''8px'' }}>'

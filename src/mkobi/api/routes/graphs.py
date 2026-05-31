@@ -18,12 +18,14 @@ from mkobi.api.deps import (
     get_graph_repository,
     require_admin_role,
     CurrentUser,
+    check_dashboard_access,
 )
 from mkobi.models.graph import (
     GraphCreate,
     GraphRead,
     GraphUpdate,
 )
+from mkobi.models.enums import UserRole
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +40,7 @@ router = APIRouter(prefix="/graphs", tags=["graphs"], redirect_slashes=False)
     response_model=GraphRead,
     status_code=status.HTTP_201_CREATED,
     summary="Create a new graph",
-    description="Creates a new graph. Requires admin role.",
+    description="Creates a new graph. Requires admin role and dashboard access.",
     dependencies=[Depends(require_admin_role)],
 )
 async def create_graph_endpoint(
@@ -46,7 +48,10 @@ async def create_graph_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
 ) -> GraphRead:
-    """Create a new graph.
+    """Create a new graph with dashboard access control.
+
+    IDOR protection: verifies user has admin access to the dashboard
+    specified in the request body.
 
     Args:
         graph: Model with data for creating the graph.
@@ -57,6 +62,7 @@ async def create_graph_endpoint(
         GraphRead: Model of the created graph.
 
     Raises:
+        HTTPException 403: If user has no admin access to the dashboard.
         HTTPException 422: If data validation failed.
         HTTPException 500: On database error.
     """
@@ -68,6 +74,23 @@ async def create_graph_endpoint(
     )
 
     try:
+        # IDOR protection: verify user has admin access to the dashboard
+        if not await check_dashboard_access(
+            user_id=current_user.id,
+            dashboard_id=graph.dashboard_id,
+            db=db,
+            required_permission="admin",
+        ):
+            logger.warning(
+                "Admin access denied to create graph: user_id=%s, dashboard_id=%s",
+                current_user.id,
+                graph.dashboard_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have admin access to this dashboard",
+            )
+
         graph_repo = get_graph_repository()
         result = await graph_repo.create(
             db=db,
@@ -80,7 +103,10 @@ async def create_graph_endpoint(
         )
         await db.commit()
         return cast(GraphRead, GraphRead.model_validate(result))
+    except HTTPException:
+        raise
     except ValueError as e:
+        await db.rollback()
         logger.warning("Validation error creating graph: %s", e)
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -100,13 +126,16 @@ async def create_graph_endpoint(
     response_model=list[GraphRead],
     status_code=status.HTTP_200_OK,
     summary="List all graphs",
-    description="Returns a list of all graphs (global list).",
+    description="Returns a list of graphs available to the user.",
 )
 async def get_graphs_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
 ) -> list[GraphRead]:
-    """Get all graphs.
+    """Get graphs accessible to current user.
+
+    Non-admin users only see graphs from dashboards they have access to.
+    Admins see all graphs.
 
     Args:
         current_user: Current authenticated user.
@@ -118,11 +147,23 @@ async def get_graphs_endpoint(
     Raises:
         HTTPException 500: On database error.
     """
-    logger.info("Getting all graphs")
+    logger.info("Getting graphs for user_id=%s", current_user.id)
 
     try:
         graph_repo = get_graph_repository()
-        graphs = await graph_repo.get_all(db=db)
+        # Admin bypass is handled inside check_dashboard_access
+        if current_user.role != UserRole.ADMIN:
+            # Non-admin: get only graphs from accessible dashboards
+            from mkobi.db.repositories.access_repo import AccessRepository
+            access_repo = AccessRepository()
+            accessible_dashboards = [
+                d.id for d in await access_repo.get_user_dashboards(
+                    user_id=current_user.id, db=db
+                )
+            ]
+            graphs = await graph_repo.get_by_dashboard_ids(accessible_dashboards, db)
+        else:
+            graphs = await graph_repo.get_all(db=db)
         return [GraphRead.model_validate(g) for g in graphs]
     except Exception as e:
         logger.error("Error getting graphs: %s", e)
@@ -144,7 +185,9 @@ async def get_graph_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
 ) -> GraphRead:
-    """Get graph by ID.
+    """Get graph by ID with access control.
+
+    IDOR protection: verifies user has read access to the graph's dashboard.
 
     Args:
         graph_id: Graph ID.
@@ -156,9 +199,10 @@ async def get_graph_endpoint(
 
     Raises:
         HTTPException 404: If graph not found.
+        HTTPException 403: If user has no read access to the dashboard.
         HTTPException 500: On database error.
     """
-    logger.info("Requesting graph: graph_id=%s", graph_id)
+    logger.info("Requesting graph: graph_id=%s, user_id=%s", graph_id, current_user.id)
 
     try:
         graph_repo = get_graph_repository()
@@ -169,6 +213,25 @@ async def get_graph_endpoint(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Graph not found",
             )
+
+        # IDOR protection: verify user has read access to the graph's dashboard
+        if not await check_dashboard_access(
+            user_id=current_user.id,
+            dashboard_id=graph.dashboard_id,
+            db=db,
+            required_permission="view",
+        ):
+            logger.warning(
+                "Access denied to graph: user_id=%s, graph_id=%s, dashboard_id=%s",
+                current_user.id,
+                graph_id,
+                graph.dashboard_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have read access to this graph",
+            )
+
         return cast(GraphRead, GraphRead.model_validate(graph))
     except HTTPException:
         raise
@@ -185,7 +248,7 @@ async def get_graph_endpoint(
     response_model=GraphRead,
     status_code=status.HTTP_200_OK,
     summary="Update graph",
-    description="Updates graph data. Requires admin role.",
+    description="Updates graph data. Requires admin role and dashboard access.",
     dependencies=[Depends(require_admin_role)],
 )
 async def update_graph_endpoint(
@@ -194,7 +257,10 @@ async def update_graph_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
 ) -> GraphRead:
-    """Update graph.
+    """Update graph with dashboard access control.
+
+    IDOR protection: verifies user is admin (already enforced by dependency)
+    and has access to the graph's dashboard.
 
     Args:
         graph_id: Graph ID to update.
@@ -207,6 +273,7 @@ async def update_graph_endpoint(
 
     Raises:
         HTTPException 404: If graph not found.
+        HTTPException 403: If user has no admin access to the dashboard.
         HTTPException 422: If data validation failed.
         HTTPException 500: On database error.
     """
@@ -217,6 +284,34 @@ async def update_graph_endpoint(
     )
 
     try:
+        graph_repo = get_graph_repository()
+        # Fetch graph first to get dashboard_id
+        existing_graph = await graph_repo.get(id=graph_id, db=db)
+        if existing_graph is None:
+            logger.warning("Graph not found for update: id=%s", graph_id)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Graph not found",
+            )
+
+        # IDOR protection: verify user has admin access to the graph's dashboard
+        if not await check_dashboard_access(
+            user_id=current_user.id,
+            dashboard_id=existing_graph.dashboard_id,
+            db=db,
+            required_permission="admin",
+        ):
+            logger.warning(
+                "Admin access denied to graph: user_id=%s, graph_id=%s, dashboard_id=%s",
+                current_user.id,
+                graph_id,
+                existing_graph.dashboard_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have admin access to this graph",
+            )
+
         # Prepare update data
         update_data: dict[str, Any] = {}
         if graph_update.name is not None:
@@ -230,7 +325,6 @@ async def update_graph_endpoint(
         if graph_update.metrics is not None:
             update_data["metrics"] = graph_update.metrics
 
-        graph_repo = get_graph_repository()
         result = await graph_repo.update(
             graph_id, db, **update_data
         )
@@ -263,7 +357,7 @@ async def update_graph_endpoint(
     "/{graph_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete graph",
-    description="Deletes a graph. Requires admin role.",
+    description="Deletes a graph. Requires admin role and dashboard access.",
     dependencies=[Depends(require_admin_role)],
 )
 async def delete_graph_endpoint(
@@ -271,7 +365,10 @@ async def delete_graph_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
 ) -> None:
-    """Delete graph.
+    """Delete graph with dashboard access control.
+
+    IDOR protection: verifies user is admin (already enforced by dependency)
+    and has access to the graph's dashboard.
 
     Args:
         graph_id: Graph ID to delete.
@@ -280,6 +377,7 @@ async def delete_graph_endpoint(
 
     Raises:
         HTTPException 404: If graph not found.
+        HTTPException 403: If user has no admin access to the dashboard.
         HTTPException 500: On database error.
     """
     logger.info(
@@ -290,6 +388,33 @@ async def delete_graph_endpoint(
 
     try:
         graph_repo = get_graph_repository()
+        # Fetch graph first to get dashboard_id
+        existing_graph = await graph_repo.get(id=graph_id, db=db)
+        if existing_graph is None:
+            logger.warning("Graph not found for deletion: id=%s", graph_id)
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Graph not found",
+            )
+
+        # IDOR protection: verify user has admin access to the graph's dashboard
+        if not await check_dashboard_access(
+            user_id=current_user.id,
+            dashboard_id=existing_graph.dashboard_id,
+            db=db,
+            required_permission="admin",
+        ):
+            logger.warning(
+                "Admin access denied to graph: user_id=%s, graph_id=%s, dashboard_id=%s",
+                current_user.id,
+                graph_id,
+                existing_graph.dashboard_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You do not have admin access to this graph",
+            )
+
         result = await graph_repo.delete(graph_id, db)
         if not result:
             logger.warning("Graph not found for deletion: id=%s", graph_id)

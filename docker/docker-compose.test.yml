@@ -87,8 +87,8 @@ services:
       UV_CACHE_DIR: /tmp/.cache/uv
       DATABASE__HOST: test-db
       DATABASE__PORT: 5432
-      DATABASE__USER: postgres
-      DATABASE__PASSWORD: ${DATABASE__PASSWORD:-test_password}
+      DATABASE__USER: mkobi_app
+      DATABASE__PASSWORD: ${MKOBI_APP_PASSWORD:-test_app_password}
       DATABASE__DBNAME: bidb_test
       DATABASE__TEST_DBNAME: bidb_test
       DATABASE__ADMIN_USER: postgres

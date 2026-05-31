@@ -191,3 +191,72 @@ class LayoutRepository(ILayoutRepository):
         except SQLAlchemyError as e:
             logger.error("Error deleting layout id=%s: %s", id, e)
             raise
+
+    async def get_dashboard_id_for_layout(
+        self, layout_id: UUID, db: AsyncSession
+    ) -> UUID | None:
+        """Get first dashboard ID associated with layout.
+
+        Args:
+            layout_id: Layout identifier (UUID).
+            db: Async database session.
+
+        Returns:
+            Dashboard ID if layout has associated dashboard, None otherwise.
+
+        Raises:
+            SQLAlchemyError: On database error.
+        """
+        try:
+            from mkobi.db.models.dashboard import Dashboard
+            result = await db.execute(
+                select(Dashboard.id)
+                .where(Dashboard.layout_id == layout_id)
+                .limit(1)
+            )
+            dashboard_id_raw = result.scalar_one_or_none()
+            if dashboard_id_raw:
+                logger.info(
+                    "Dashboard found for layout: layout_id=%s, dashboard_id=%s",
+                    layout_id,
+                    dashboard_id_raw,
+                )
+                return cast(UUID | None, dashboard_id_raw)
+            logger.debug("No dashboard found for layout: id=%s", layout_id)
+            return None
+        except SQLAlchemyError as e:
+            logger.error(
+                "Error getting dashboard for layout id=%s: %s", layout_id, e
+            )
+            raise
+
+    async def get_layouts_by_dashboard_ids(
+        self, dashboard_ids: list[UUID], db: AsyncSession
+    ) -> list[layout_model.Layout]:
+        """Get layouts by dashboard IDs.
+
+        Args:
+            dashboard_ids: List of dashboard IDs.
+            db: Async database session.
+
+        Returns:
+            List of layout models.
+
+        Raises:
+            SQLAlchemyError: On database error.
+        """
+        try:
+            from mkobi.db.models.dashboard import Dashboard
+            result = await db.execute(
+                select(layout_model.Layout)
+                .join(Dashboard, layout_model.Layout.id == Dashboard.layout_id)
+                .where(Dashboard.id.in_(dashboard_ids))
+            )
+            layouts = list(result.scalars().all())
+            logger.info(
+                "Layouts retrieved for dashboards: count=%s", len(layouts)
+            )
+            return layouts
+        except SQLAlchemyError as e:
+            logger.error("Error getting layouts by dashboard ids: %s", e)
+            raise

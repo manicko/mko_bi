@@ -148,6 +148,12 @@ Access is validated on every request via the `dashboard_access` table.
 - **Atomic UPSERT for admin user** — `ensure_admin_user()` uses `INSERT ... ON CONFLICT (email) DO NOTHING` instead of check-then-create, eliminating the TOCTOU race condition on concurrent startup.
 - **Sanitized database URL logging** — `_apply_migrations()` logs the database URL with `render_as_string(hide_password=True)` to prevent credential leakage in log files.
 - **LRU token cache** — `_token_cache` in permissions.py uses `functools.lru_cache(maxsize=1000)` instead of an unbounded dict, preventing memory leaks in long-running processes.
+- **User deactivation enforcement** — `get_current_user_dependency()` checks `user.is_active` on every authenticated request. Deactivated users receive HTTP 401 with detail "User account is deactivated", preventing access even with a valid JWT.
+- **Security headers middleware** — `SecurityHeadersMiddleware` in `app.py` sets `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `X-XSS-Protection: 1; mode=block`, and `Referrer-Policy: strict-origin-when-cross-origin` on every response as defense-in-depth.
+- **Standardized error format** — All exception handlers (HTTP, validation, AppException) return responses with a consistent `error_code` field, enabling programmatic frontend error handling and simplified backend monitoring.
+- **Processing config auto-wiring** — The upload pipeline automatically fetches the dashboard's `processing_config` from the database and passes it through to the background worker, ensuring transformations are applied consistently.
+- **Upload response model** — The upload endpoint returns a structured `UploadResponse` model (with `task_id`, `filename`, `dashboard_id`, `status`, `message`, `uploaded_at`) instead of an ad-hoc dict.
+- **Upload transaction safety** — File move to final path occurs after DB commit to prevent orphan files on commit failure. The dashboard existence is verified before the access check on upload, returning a clear 404 for non-existent dashboards.
 - **Cookie-based refresh tokens** — Refresh tokens are stored in httpOnly cookies (`mkobi_refresh_token`) instead of the request body, eliminating XSS-based token theft. The access token lifetime was reduced from 30 to 15 minutes; refresh tokens live 7 days. Login sets the cookie, refresh reads from it, logout clears it.
 - **POST /auth/logout endpoint** — Dedicated logout endpoint that clears the refresh token cookie. The frontend calls this on logout and then clears the in-memory access token.
 - **Frontend silent refresh** — On app initialization, if no access token exists, the frontend attempts a silent refresh using the httpOnly cookie. This keeps users logged in across page refreshes without requiring re-authentication.
@@ -172,9 +178,10 @@ Access is validated on every request via the `dashboard_access` table.
 | 2.8     | 2026-05-25 | Docker folder restructure (all compose/Dockerfile/config into docker/ folder), standalone test compose (isolated test-db/test-redis/test-migrate/test-app with separate volumes/networks/ports), conftest.py setdefault for Docker Compose env var precedence, dev/test parallel execution support |
 | 2.9     | 2026-05-26 | Doc updates: admin logs pagination changed from page/page_size to skip/limit (D-001), added temp_password security note for registration approval (D-003), documented frontend enum presence rationale (D-004) |
 | 3.0     | 2026-05-29 | Audit-driven improvements: client error reporting API, password strength validation at Pydantic model level, MIME-type validation hardening (415 on missing Content-Type), error message sanitization across all route modules (no internal detail leaks), dashboard_name resolved in processing log responses via join, callback registration pattern to break circular frontend dependency (axiosInstance ↔ authApi), processing log filter status parameter alignment (status → status_filter), frontend ARIA accessibility attributes for upload components, LogViewer error handling and null-safe datetime rendering |
+| 3.1     | 2026-05-31 | Security hardening: is_active check on JWT auth (deactivated users get 401), security headers middleware (X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy), standardized error response format with error_code field across all exception handlers. Data integrity: transaction-safe file move (after DB commit), automatic processing config wiring through upload pipeline, structured UploadResponse model for upload endpoint, explicit dashboard existence check before access verification on upload. |
 
 ---
 
 **Author:** Senior Python Architect
-**Date:** 2026-05-29
-**Version:** 3.0
+**Date:** 2026-05-31
+**Version:** 3.1

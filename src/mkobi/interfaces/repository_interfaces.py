@@ -229,6 +229,36 @@ class ILayoutRepository(IRepository):
         """Get layout by name."""
         pass
 
+    @abc.abstractmethod
+    async def get_dashboard_id_for_layout(
+        self, layout_id: UUID, db: AsyncSession
+    ) -> UUID | None:
+        """Get first dashboard ID associated with layout.
+
+        Args:
+            layout_id: Layout identifier.
+            db: Async database session.
+
+        Returns:
+            Dashboard ID if layout has associated dashboard, None otherwise.
+        """
+        pass
+
+    @abc.abstractmethod
+    async def get_layouts_by_dashboard_ids(
+        self, dashboard_ids: list[UUID], db: AsyncSession
+    ) -> list[Any]:
+        """Get layouts by dashboard IDs.
+
+        Args:
+            dashboard_ids: List of dashboard IDs.
+            db: Async database session.
+
+        Returns:
+            List of layout models.
+        """
+        pass
+
 
 class IFilterRepository(IRepository):
     """Filter repository interface."""
@@ -247,6 +277,13 @@ class IGraphRepository(IRepository):
         self, dashboard_id: UUID, db: AsyncSession
     ) -> list[Any]:
         """Get graphs by dashboard ID."""
+        pass
+
+    @abc.abstractmethod
+    async def get_by_dashboard_ids(
+        self, dashboard_ids: list[UUID], db: AsyncSession
+    ) -> list[Any]:
+        """Get graphs by multiple dashboard IDs."""
         pass
 
     @abc.abstractmethod

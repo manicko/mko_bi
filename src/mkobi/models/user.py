@@ -43,6 +43,7 @@ class UserRead(UserBase):
     """Model for reading user data (without password)."""
 
     id: UUID
+    is_active: bool
     created_at: datetime
 
     @computed_field  # type: ignore[prop-decorator]
@@ -71,6 +72,7 @@ class UserDB(UserBase):
 
     id: UUID
     password_hash: str
+    is_active: bool
     created_at: datetime
 
     model_config = ConfigDict(

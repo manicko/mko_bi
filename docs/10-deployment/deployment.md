@@ -301,6 +301,7 @@ Use Strategy 1 for complex, stable charts that rarely change. Use Strategy 2 for
 - [Backend Architecture](../06-backend/architecture.md) — System architecture and startup lifecycle
 - [Configuration](../06-backend/configuration.md) — Config sources, secrets, and environment variables
 - [Security Overview](../08-security/security-overview.md) — Production credential enforcement and security constraints
+- [Security Checklist](security-checklist.md) — Production security verification checklist
 - [Health API](../05-health/health-api.md) — Health check endpoints for load balancers and Kubernetes
 - [Task Queue](../03-processing/task-queue.md) — Redis/RQ migration for production background processing
 - [Logging](../06-backend/logging.md) — Structured JSON logging in production

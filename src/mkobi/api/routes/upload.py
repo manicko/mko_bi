@@ -30,9 +30,11 @@ from mkobi.models.data import (
     ProcessingConfig,
     ProcessingResult,
     ProcessingStatusResponse,
+    UploadResponse,
 )
 from mkobi.models.enums import UploadMode
 from mkobi.services.data_service import DataService
+from mkobi.utils.exceptions import AppException
 
 router = APIRouter(prefix="/upload", tags=["upload"], redirect_slashes=False)
 
@@ -44,6 +46,7 @@ CHUNK_SIZE = 8192
 
 @router.post(
     "/{dashboard_id}",
+    response_model=UploadResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Upload file",
     description="Uploads a CSV file for processing. Available to editors and admins only.",
@@ -55,7 +58,7 @@ async def upload_file_endpoint(
     mode: UploadMode = UploadMode.OVERWRITE,
     db: AsyncSession = Depends(get_db_dependency),
     data_service: DataService = Depends(get_data_service),
-) -> dict[str, str | UUID]:
+) -> UploadResponse:
     """Upload file for dashboard."""
     logger.info(
         "File upload started",
@@ -175,16 +178,13 @@ async def upload_file_endpoint(
             logger.info(
                 "File uploaded successfully",
                 extra={
-                    "processing_log_id": str(result.task_id),
+                    "task_id": str(result.task_id),
                     "file_name": file.filename,
                     "mode": mode,
                 },
             )
 
-            return {
-                "message": result.message,
-                "processing_log_id": result.task_id,
-            }
+            return result
         finally:
             # Clean up temp file if processing failed (file was not moved to final location)
             # temp_file_path no longer exists if process_upload succeeded (file was moved)
@@ -194,6 +194,9 @@ async def upload_file_endpoint(
 
     except HTTPException:
         raise
+    except AppException as e:
+        # Re-raise AppException to let global handler format it with error_code
+        raise e
     except ValueError as e:
         _handle_value_error(e)
     except PermissionError as e:
