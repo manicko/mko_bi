@@ -57,6 +57,16 @@ class IAuthService(abc.ABC):
         pass
 
     @abc.abstractmethod
+    async def reset_password_admin(
+        self,
+        user_id: UUID,
+        admin_user_id: UUID,
+        db: AsyncSession,
+    ) -> dict[str, Any] | None:
+        """Admin-triggered password reset. Generates temp password."""
+        pass
+
+    @abc.abstractmethod
     def create_access_token(self, user_id: UUID, role: str) -> str:
         """Create access token for user."""
         pass

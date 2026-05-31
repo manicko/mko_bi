@@ -1,12 +1,15 @@
-"""Integration tests for cookie-based authentication flow.
+"""Integration tests for cookie-based authentication flow and admin password reset.
 
 Tests cover the complete cookie-based authentication flow:
 - Login sets refresh token cookie
 - Refresh reads from cookie
 - Logout clears cookie
 - Edge cases (missing cookie, invalid cookie)
+
+Also tests for admin password reset endpoint and registration approval flow.
 """
 
+import re
 from fastapi import status
 from httpx import AsyncClient
 
@@ -234,3 +237,259 @@ class TestCookieAuthFlow:
             cookies={"mkobi_refresh_token": expired_token},
         )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+class TestAdminResetPasswordEndpoint:
+    """Tests for POST /admin/users/{user_id}/reset-password endpoint."""
+
+    async def test_admin_reset_password_success(
+        self, async_client: AsyncClient, test_user: dict, async_db_session
+    ) -> None:
+        """Test admin can reset another user's password."""
+        # Create a target user (viewer) for the admin to reset
+        from mkobi.core.security import create_access_token, hash_password
+        from mkobi.db.repositories.user_repo import UserRepository
+        from mkobi.models.enums import UserRole
+
+        user_repo = UserRepository()
+        target_user = await user_repo.create(
+            db=async_db_session,
+            email="target_reset@example.com",
+            password_hash=hash_password("TargetPass123!"),
+            role=UserRole.VIEWER,
+        )
+        await async_db_session.commit()
+
+        # Create admin user for testing
+        admin_user = await user_repo.create(
+            db=async_db_session,
+            email="admin_reset_test@example.com",
+            password_hash=hash_password("AdminPass123!"),
+            role=UserRole.ADMIN,
+        )
+        await async_db_session.commit()
+
+        admin_token = create_access_token({
+            "user_id": str(admin_user.id),
+            "email": admin_user.email,
+        })
+
+        # Admin resets target user's password
+        response = await async_client.post(
+            f"/admin/users/{target_user.id}/reset-password",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert "temp_password" in data
+        assert "user_id" in data
+        assert data["user_id"] == str(target_user.id)
+        assert len(data["temp_password"]) >= 16
+        # Verify temp password has letters and digits
+        assert re.search(r"[a-zA-Z]", data["temp_password"]) is not None
+        assert re.search(r"\d", data["temp_password"]) is not None
+
+    async def test_admin_reset_password_self_guard(
+        self, async_client: AsyncClient, async_db_session
+    ) -> None:
+        """Test admin cannot reset own password."""
+        from mkobi.core.security import create_access_token, hash_password
+        from mkobi.db.repositories.user_repo import UserRepository
+        from mkobi.models.enums import UserRole
+
+        user_repo = UserRepository()
+        admin_user = await user_repo.create(
+            db=async_db_session,
+            email="admin_self_reset@example.com",
+            password_hash=hash_password("AdminPass123!"),
+            role=UserRole.ADMIN,
+        )
+        await async_db_session.commit()
+
+        admin_token = create_access_token({
+            "user_id": str(admin_user.id),
+            "email": admin_user.email,
+        })
+
+        # Admin tries to reset own password - should fail
+        response = await async_client.post(
+            f"/admin/users/{admin_user.id}/reset-password",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "own password" in response.json()["detail"].lower()
+
+    async def test_admin_reset_password_nonexistent_user(
+        self, async_client: AsyncClient, async_db_session
+    ) -> None:
+        """Test admin reset password for non-existent user returns 400."""
+        from uuid import uuid4
+
+        from mkobi.core.security import create_access_token, hash_password
+        from mkobi.db.repositories.user_repo import UserRepository
+        from mkobi.models.enums import UserRole
+
+        user_repo = UserRepository()
+        admin_user = await user_repo.create(
+            db=async_db_session,
+            email="admin_nonexist_reset@example.com",
+            password_hash=hash_password("AdminPass123!"),
+            role=UserRole.ADMIN,
+        )
+        await async_db_session.commit()
+
+        admin_token = create_access_token({
+            "user_id": str(admin_user.id),
+            "email": admin_user.email,
+        })
+
+        # Try to reset non-existent user
+        fake_user_id = uuid4()
+        response = await async_client.post(
+            f"/admin/users/{fake_user_id}/reset-password",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        assert "not found" in response.json()["detail"].lower()
+
+    async def test_admin_reset_password_non_admin_forbidden(
+        self, async_client: AsyncClient, async_db_session
+    ) -> None:
+        """Test non-admin user cannot access admin reset password endpoint."""
+        from uuid import uuid4
+
+        from mkobi.core.security import create_access_token, hash_password
+        from mkobi.db.repositories.user_repo import UserRepository
+        from mkobi.models.enums import UserRole
+
+        user_repo = UserRepository()
+        viewer_user = await user_repo.create(
+            db=async_db_session,
+            email="viewer_reset_forbidden@example.com",
+            password_hash=hash_password("ViewerPass123!"),
+            role=UserRole.VIEWER,
+        )
+        await async_db_session.commit()
+
+        viewer_token = create_access_token({
+            "user_id": str(viewer_user.id),
+            "email": viewer_user.email,
+        })
+
+        # Viewer tries to access admin endpoint - should be forbidden
+        fake_user_id = uuid4()
+        response = await async_client.post(
+            f"/admin/users/{fake_user_id}/reset-password",
+            headers={"Authorization": f"Bearer {viewer_token}"},
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+class TestRegistrationApprovalForcePasswordChange:
+    """Tests for force_password_change flag during registration approval."""
+
+    async def test_approve_registration_sets_force_password_change(
+        self, async_client: AsyncClient, async_db_session
+    ) -> None:
+        """Test that approving registration sets force_password_change=True on user."""
+        from mkobi.core.security import create_access_token, hash_password
+        from mkobi.db.repositories.registration_request_repo import (
+            RegistrationRequestRepository,
+        )
+        from mkobi.db.repositories.user_repo import UserRepository
+        from mkobi.models.enums import UserRole
+
+        user_repo = UserRepository()
+
+        # Create admin user
+        admin_user = await user_repo.create(
+            db=async_db_session,
+            email="admin_approve_test@example.com",
+            password_hash=hash_password("AdminPass123!"),
+            role=UserRole.ADMIN,
+        )
+        await async_db_session.commit()
+
+        admin_token = create_access_token({
+            "user_id": str(admin_user.id),
+            "email": admin_user.email,
+        })
+
+        # Create registration request
+        reg_repo = RegistrationRequestRepository()
+        reg_request = await reg_repo.create(
+            email="approve_force_test@example.com",
+            ip="127.0.0.1",
+            db=async_db_session,
+        )
+        await async_db_session.commit()
+
+        # Approve the registration request
+        response = await async_client.post(
+            f"/admin/registration-requests/{reg_request.id}/approve",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+
+        # Verify user was created with force_password_change=True
+        user = await user_repo.get_by_email(
+            email="approve_force_test@example.com",
+            db=async_db_session,
+        )
+        assert user is not None
+        assert user.force_password_change is True
+
+    async def test_password_change_clears_force_password_change(
+        self, async_client: AsyncClient, async_db_session
+    ) -> None:
+        """Test that changing password clears force_password_change flag."""
+        from mkobi.core.security import hash_password
+        from mkobi.db.repositories.user_repo import UserRepository
+        from mkobi.models.enums import UserRole
+
+        user_repo = UserRepository()
+
+        # Create a user with force_password_change=True
+        user = await user_repo.create(
+            db=async_db_session,
+            email="force_change_clear@example.com",
+            password_hash=hash_password("TempPass123!"),
+            role=UserRole.VIEWER,
+        )
+        # Manually set the flag (simulating approved registration state)
+        await user_repo.update(
+            user.id, async_db_session,
+            force_password_change=True,
+        )
+        await async_db_session.commit()
+
+        # Verify initial state
+        user = await user_repo.get(user.id, async_db_session)
+        assert user.force_password_change is True
+
+        # Login to get access token
+        login_response = await async_client.post(
+            "/auth/login",
+            json={
+                "email": "force_change_clear@example.com",
+                "password": "TempPass123!",
+            },
+        )
+        assert login_response.status_code == status.HTTP_200_OK
+        token = login_response.json()["access_token"]
+
+        # Change password
+        change_response = await async_client.post(
+            "/auth/change-password",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "current_password": "TempPass123!",
+                "new_password": "NewPass123!",
+                "confirm_password": "NewPass123!",
+            },
+        )
+        assert change_response.status_code == status.HTTP_200_OK
+
+        # Verify flag is cleared
+        user = await user_repo.get(user.id, async_db_session)
+        assert user.force_password_change is False

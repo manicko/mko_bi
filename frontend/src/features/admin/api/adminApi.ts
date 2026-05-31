@@ -40,6 +40,19 @@ export async function deleteUser(userId: string): Promise<void> {
   await axiosInstance.delete(`/admin/users/${userId}`)
 }
 
+export async function resetUserPassword(userId: string): Promise<{
+  message: string
+  user_id: string
+  temp_password: string
+}> {
+  const response = await axiosInstance.post<{
+    message: string
+    user_id: string
+    temp_password: string
+  }>(`/admin/users/${userId}/reset-password`)
+  return response.data
+}
+
 // Registration Requests API
 export async function getRegistrationRequests(): Promise<RegistrationRequestItem[]> {
   const response = await axiosInstance.get<RegistrationRequestItem[]>('/admin/registration-requests')

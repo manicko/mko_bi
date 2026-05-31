@@ -214,6 +214,34 @@ When multiple requests fail with `401` simultaneously (e.g., right after token e
 
 On app mount, `useAuth` checks if an access token exists in memory. If not, it attempts a silent refresh using the httpOnly cookie. This keeps users logged in across page refreshes without requiring re-authentication. During the refresh, `ProtectedRoute` shows a loading spinner to prevent a flash of the login page.
 
+## Force Password Change Flow
+
+When a user's `force_password_change` flag is `true` (set by admin password reset or registration approval), the system enforces a password change before granting access to the dashboard.
+
+### Login Redirect
+
+1. User submits login form with valid credentials.
+2. Server returns `TokenWithUser` with `force_password_change: true` in the user object.
+3. `LoginForm.tsx` checks `response.user.force_password_change` after a successful login.
+4. If `true`: redirects to `/profile/change-password?force=true` (instead of `/dashboards`).
+5. If `false`: redirects to `/dashboards` (normal flow).
+
+### Silent Refresh Redirect
+
+1. On app mount, if no access token exists, the frontend attempts a silent refresh using the httpOnly cookie.
+2. After fetching the profile, the frontend checks `profile.force_password_change`.
+3. If `true`: redirects via `window.location.href` to `/profile/change-password?force=true`.
+4. This ensures that users with forced password changes are redirected even across page refreshes.
+
+### Change Password Force Mode
+
+The `ChangePasswordPage` reads the `?force=true` query parameter:
+- **Info Alert** is shown: "Password change is required. Please set a new password to continue."
+- **Cancel button** is disabled — the user must change their password to proceed.
+- On successful password change, the backend clears the `force_password_change` flag, and the user is redirected to `/profile`.
+
+---
+
 ## Logout Flow
 
 1. User clicks logout in the Header menu.

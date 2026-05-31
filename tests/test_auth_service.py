@@ -1,4 +1,5 @@
 """Unit tests for AuthService business logic."""
+import re
 from unittest.mock import AsyncMock, MagicMock
 from uuid import uuid4
 
@@ -419,3 +420,125 @@ class TestAuthService:
             ValueError, match="This email domain is not allowed for registration"
         ):
             await auth_service.register_request("user@tempmail.com", db=mock_db, ip="127.0.0.1")
+
+    # --- reset_password_admin tests ---
+
+    async def test_reset_password_admin_success(self, auth_service, mock_user_repo, mock_db):
+        """Test successful admin password reset."""
+        target_user_id = uuid4()
+        admin_user_id = uuid4()
+        mock_user = MagicMock()
+        mock_user.id = target_user_id
+        mock_user_repo.get_with_hash = AsyncMock(return_value=mock_user)
+        mock_user_repo.update = AsyncMock()
+
+        result = await auth_service.reset_password_admin(
+            user_id=target_user_id,
+            admin_user_id=admin_user_id,
+            db=mock_db,
+        )
+
+        assert result is not None
+        assert "temp_password" in result
+        assert "user_id" in result
+        assert result["user_id"] == str(target_user_id)
+        assert "message" in result
+        mock_user_repo.update.assert_called_once()
+        mock_db.commit.assert_called_once()
+
+    async def test_reset_password_admin_db_commit_called(self, auth_service, mock_user_repo, mock_db):
+        """Test db.commit() is called during reset."""
+        target_user_id = uuid4()
+        admin_user_id = uuid4()
+        mock_user = MagicMock()
+        mock_user.id = target_user_id
+        mock_user_repo.get_with_hash = AsyncMock(return_value=mock_user)
+        mock_user_repo.update = AsyncMock()
+
+        await auth_service.reset_password_admin(
+            user_id=target_user_id,
+            admin_user_id=admin_user_id,
+            db=mock_db,
+        )
+
+        mock_db.commit.assert_called_once()
+
+    async def test_reset_password_admin_update_params(self, auth_service, mock_user_repo, mock_db):
+        """Test user_repo.update called with correct parameters."""
+        target_user_id = uuid4()
+        admin_user_id = uuid4()
+        mock_user = MagicMock()
+        mock_user.id = target_user_id
+        mock_user_repo.get_with_hash = AsyncMock(return_value=mock_user)
+        mock_user_repo.update = AsyncMock()
+
+        result = await auth_service.reset_password_admin(
+            user_id=target_user_id,
+            admin_user_id=admin_user_id,
+            db=mock_db,
+        )
+
+        # Verify update was called with password_hash and force_password_change=True
+        mock_user_repo.update.assert_called_once()
+        call_args = mock_user_repo.update.call_args
+        assert "password_hash" in call_args.kwargs
+        assert call_args.kwargs["force_password_change"] is True
+        # Verify hash_password was used (hash is not raw password)
+        assert call_args.kwargs["password_hash"] != result["temp_password"]
+
+    async def test_reset_password_admin_self_guard(self, auth_service, mock_user_repo, mock_db):
+        """Test self-reset guard raises ValueError."""
+        same_id = uuid4()
+
+        with pytest.raises(ValueError, match="Admin cannot reset own password"):
+            await auth_service.reset_password_admin(
+                user_id=same_id,
+                admin_user_id=same_id,
+                db=mock_db,
+            )
+
+    async def test_reset_password_admin_user_not_found(self, auth_service, mock_user_repo, mock_db):
+        """Test returns None for non-existent user."""
+        mock_user_repo.get_with_hash = AsyncMock(return_value=None)
+
+        result = await auth_service.reset_password_admin(
+            user_id=uuid4(),
+            admin_user_id=uuid4(),
+            db=mock_db,
+        )
+
+        assert result is None
+        mock_user_repo.update.assert_not_called()
+        mock_db.commit.assert_not_called()
+
+    # --- _generate_temp_password tests ---
+
+    async def test_generate_temp_password_length(self, auth_service):
+        """Test generated password is exactly 16 characters for security."""
+        password = auth_service._generate_temp_password()
+
+        assert len(password) == 16
+
+    async def test_generate_temp_password_has_letter_and_digit(self, auth_service):
+        """Test generated password contains at least one letter and one digit."""
+        password = auth_service._generate_temp_password()
+
+        assert re.search(r"[a-zA-Z]", password) is not None
+        assert re.search(r"\d", password) is not None
+
+    async def test_generate_temp_password_alphanumeric_only(self, auth_service):
+        """Test password only contains characters from a-zA-Z0-9."""
+        password = auth_service._generate_temp_password()
+
+        assert re.fullmatch(r"[a-zA-Z0-9]+", password) is not None
+
+    async def test_generate_temp_password_different_each_time(self, auth_service):
+        """Test multiple invocations produce different passwords."""
+        passwords = [
+            auth_service._generate_temp_password()
+            for _ in range(100)
+        ]
+
+        # With 62 possible chars and 16 positions, we expect all to be unique
+        unique_passwords = set(passwords)
+        assert len(unique_passwords) > 90  # Allow some collision tolerance

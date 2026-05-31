@@ -695,6 +695,7 @@
   - create_access_token
   - verify_token
   - validate_refresh_token
+  - _generate_temp_password
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.services.dashboard_service
   layer: unknown

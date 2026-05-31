@@ -201,18 +201,28 @@ The application consists of **7 UI pages** (plus a 404 fallback). Authenticated 
 
 **Component:** `features/users/ui/ChangePasswordPage.tsx`
 **Access:** Authenticated users
-**Entry point:** Button on the Profile page.
+**Entry point:** Button on the Profile page, or forced redirect from login.
 
 ### UI Elements
 
 | Element | Type | Description |
 | --- | --- | --- |
+| Info Alert | `Alert` | Shown in force mode: "Password change is required. Please set a new password to continue." |
 | Current password field | `TextField` | Required; `type="password"` |
 | New password field | `TextField` | Minimum 8 characters (validated via Zod) |
 | Confirm password field | `TextField` | Must match new password |
 | Change Password button | `Button` | Submits the form |
-| Cancel button | `Button` | Navigates back to `/profile` |
+| Cancel button | `Button` | Navigates back to `/profile`; disabled in force mode |
 | Error alert | `Alert` | Shown on failure |
+
+### Force Mode
+
+When the URL contains `?force=true`, the page enters **force mode**:
+- An informational `Alert` is displayed at the top: "Password change is required. Please set a new password to continue."
+- The Cancel button is disabled (user must change password to proceed)
+- The form fields and validation remain identical to normal mode
+
+Force mode is triggered automatically when the login response or silent refresh returns `force_password_change: true`. The frontend redirects to `/profile/change-password?force=true` using `window.location.href`.
 
 ### API Endpoints
 
@@ -220,7 +230,7 @@ The application consists of **7 UI pages** (plus a 404 fallback). Authenticated 
 | --- | --- | --- | --- |
 | Change password | `POST` | `/api/v1/auth/change-password` | `{ current_password, new_password, confirm_password }` |
 
-**Success response:** `200` `{ message: "Password changed successfully" }` — redirect to `/profile` with success notification.
+**Success response:** `200` `{ message: "Password changed successfully" }` — redirect to `/profile` with success notification. The `force_password_change` flag is automatically cleared on the backend after a successful change.
 
 **Error responses:** `400` (confirmation mismatch), `401` (current password incorrect).
 
@@ -242,7 +252,7 @@ The admin panel uses a tabbed interface with 4 sections. Tab state (pagination, 
 
 | Tab | Component | Description |
 | --- | --- | --- |
-| User Management | `UserManagement` | DataGrid with inline role editing (singleSelect dropdown), row highlight during save, ConfirmDialog for delete, toast notifications |
+| User Management | `UserManagement` | DataGrid with inline role editing (singleSelect dropdown), row highlight during save, ConfirmDialog for delete and reset password, toast notifications, ResetPasswordResultDialog for displaying temp password |
 | Registration Requests | `RegistrationRequests` | DataGrid with approve/reject actions via ConfirmDialog with configurable labels ("Approve"/"Reject"), toast notifications |
 | Dashboard Management | `DashboardManagement` | DataGrid with short UUID, create/edit dialogs, ConfirmDialog for delete, toast notifications |
 | Log Viewer | `LogViewer` | Processing logs with filtering and pagination |
@@ -254,12 +264,23 @@ The admin panel uses a tabbed interface with 4 sections. Tab state (pagination, 
 | List users | `GET` | `/api/v1/admin/users` |
 | Update user role | `PATCH` | `/api/v1/admin/users/:id/role` |
 | Delete user | `DELETE` | `/api/v1/admin/users/:id` |
+| Reset user password | `POST` | `/api/v1/admin/users/:id/reset-password` |
 | List registration requests | `GET` | `/api/v1/admin/registration-requests` |
 | Approve request | `POST` | `/api/v1/admin/registration-requests/:id/approve` |
 | Reject request | `POST` | `/api/v1/admin/registration-requests/:id/reject` |
 | List processing logs | `GET` | `/api/v1/admin/logs` |
 | Get single log | `GET` | `/api/v1/admin/logs/:log_id` |
 | Dashboard CRUD | `GET/POST/PUT/DELETE` | `/api/v1/dashboards` |
+
+### User Management Tab — Password Reset Flow
+
+1. Each user row in the `UserManagement` DataGrid includes a "Reset Password" action button (Key icon) alongside the Delete button.
+2. Clicking Reset Password opens a `ConfirmDialog` with the message: "Generate a new temporary password for {email}? The current password will be immediately invalidated."
+3. On confirmation, `POST /api/v1/admin/users/:id/reset-password` is called.
+4. On success, the `ResetPasswordResultDialog` opens, displaying the temporary password in a read-only TextField with a Copy button (uses `navigator.clipboard.writeText` + toast "Copied").
+5. The admin copies the temp password and communicates it securely to the user.
+6. The user's `force_password_change` flag is set to `True`, so on next login they are forced to change their password.
+7. On error, a toast "Failed to reset password" is shown.
 
 ### Registration Approval Flow
 

@@ -68,8 +68,10 @@ A web application for:
 | email          | TEXT   | Unique, not null               |
 | password_hash  | TEXT   | Bcrypt hash                    |
 | role           | TEXT   | `admin` \| `editor` \| `viewer` |
+| is_active      | BOOL   | Account activation flag        |
+| force_password_change | BOOL | Forces password change on next login |
 
-> The `UserRead` Pydantic model exposes a computed `display_name` field derived from the email prefix (text before `@`). This field is included in all API responses returning user data (login, profile, user management).
+> The `UserRead` Pydantic model exposes a computed `display_name` field derived from the email prefix (text before `@`). This field is included in all API responses returning user data (login, profile, user management). The `force_password_change` field is also included in login responses; when `true`, the frontend redirects to the forced password change page.
 
 ### Dashboard
 

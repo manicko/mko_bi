@@ -63,12 +63,13 @@ Authenticate a user by email and password.
     "email": "user@example.com",
     "role": "viewer",
     "display_name": "user",
+    "force_password_change": false,
     "created_at": "2026-04-24T16:02:46+03:00"
   }
 }
 ```
 
-> The login response includes the full user profile (`TokenWithUser` model), eliminating the need for a separate `/auth/me` call after login. The `display_name` field is computed from the email prefix (text before `@`).
+> The login response includes the full user profile (`TokenWithUser` model), eliminating the need for a separate `/auth/me` call after login. The `display_name` field is computed from the email prefix (text before `@`). The `force_password_change` field indicates whether the user must change their password on next login — when `true`, the frontend redirects to `/profile/change-password?force=true`.
 
 > **Cookie:** On success, the server also sets an httpOnly cookie `mkobi_refresh_token` containing the refresh token (7-day TTL). The cookie uses `Secure`, `HttpOnly`, and `SameSite=Strict` attributes.
 
@@ -272,6 +273,7 @@ Retrieve the currently authenticated user's profile.
   "email": "user@example.com",
   "role": "viewer",
   "display_name": "user",
+  "force_password_change": false,
   "created_at": "2026-04-24T16:02:46+03:00"
 }
 ```
@@ -323,6 +325,8 @@ Change the current user's password.
 **Notes:**
 - The user remains logged in after a password change (token is not invalidated)
 - New password must be at least 8 characters (enforced by frontend via Zod)
+- The `force_password_change` flag is automatically cleared on the backend after a successful password change. This prevents an infinite force-change loop when a user is required to change their password (e.g., after admin reset or registration approval).
+- If the user was in force-change mode (redirected via `?force=true`), they are redirected back to `/profile` after successfully changing their password.
 
 ---
 
@@ -366,9 +370,10 @@ Browser                          FastAPI
 3. Server looks up user by email and verifies the bcrypt password hash
 4. On success, server creates a JWT access token (15-minute expiration) and a refresh token (7-day expiration)
 5. Server sets the refresh token as an httpOnly cookie (`mkobi_refresh_token`) with `Secure`, `HttpOnly`, and `SameSite=Strict` attributes
-6. Server returns `TokenWithUser` — the access token plus the full user profile (including computed `display_name`)
+6. Server returns `TokenWithUser` — the access token plus the full user profile (including computed `display_name` and `force_password_change` flag)
 7. Client stores the access token in memory and sets user state immediately (no separate `/me` call needed)
-8. Client redirects to the dashboard list page
+8. **If `force_password_change` is `true`:** Client redirects to `/profile/change-password?force=true`
+9. **Otherwise:** Client redirects to the dashboard list page
 
 ---
 
@@ -470,8 +475,9 @@ Browser              FastAPI              Database
 4. Server creates a `registration_requests` record with status `pending`
 5. Admin reviews pending requests via the admin panel (`/admin`)
 6. Admin approves the request — a user account is created with a random temporary password
-7. Admin communicates the temporary password to the new user
-8. New user logs in and changes their password
+7. The user's `force_password_change` flag is set to `True`, requiring them to change their password on first login
+8. Admin communicates the temporary password to the new user
+9. New user logs in and is redirected to `/profile/change-password?force=true` to set a new password
 
 ---
 

@@ -35,8 +35,12 @@ export function LoginForm() {
     try {
       setError(null)
       setIsSubmitting(true)
-      await login(data.email, data.password)
-      void navigate('/dashboards')
+      const response = await login(data.email, data.password)
+      if (response.user.force_password_change) {
+        void navigate('/profile/change-password?force=true')
+      } else {
+        void navigate('/dashboards')
+      }
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : 'Login failed'
       setError(message)

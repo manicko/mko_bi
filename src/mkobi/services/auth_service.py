@@ -5,6 +5,8 @@ users in the BI Dashboard system. Uses class-based approach.
 """
 
 import re
+import secrets
+import string
 from typing import Any, cast
 from uuid import UUID
 
@@ -495,8 +497,85 @@ class AuthService(IAuthService):
             raise ValueError("New password must be different from current password")
 
         password_hash = hash_password(new_password)
-        await self.user_repo.update(user_id, db, password_hash=password_hash)
+        await self.user_repo.update(
+            user_id, db, password_hash=password_hash, force_password_change=False
+        )
         await db.commit()
 
         logger.info("Password changed successfully", extra={"user_id": str(user_id)})
         return True
+
+    def _generate_temp_password(self, length: int = 16) -> str:
+        """Generate a cryptographically secure 16-char password with letters + digits.
+
+        Ensures at least one letter and one digit. Up to 3 attempts
+        to produce a password passing Pydantic validation.
+        """
+        alphabet = string.ascii_letters + string.digits
+        for _attempt in range(3):
+            password = "".join(secrets.choice(alphabet) for _ in range(length))
+            if re.search(r"[a-zA-Z]", password) and re.search(r"\d", password):
+                return password
+        # Fallback (astronomically unlikely to reach)
+        password = secrets.choice(string.ascii_letters) + secrets.choice(string.digits)
+        password += "".join(secrets.choice(alphabet) for _ in range(length - 2))
+        # Shuffle to avoid predictable positions
+        password_list = list(password)
+        secrets.SystemRandom().shuffle(password_list)
+        return "".join(password_list)
+
+    async def reset_password_admin(
+        self,
+        user_id: UUID,
+        admin_user_id: UUID,
+        db: AsyncSession,
+    ) -> dict[str, Any] | None:
+        """Admin-triggered password reset.
+
+        Generates temp password, hashes it, saves to user record,
+        sets force_password_change flag.
+
+        Returns:
+            dict with message, user_id, temp_password on success.
+            None if user not found.
+
+        Raises:
+            ValueError: If admin resets own password.
+        """
+        logger.info(
+            "Admin password reset: user_id=%s, admin_id=%s",
+            user_id, admin_user_id,
+        )
+
+        if user_id == admin_user_id:
+            logger.warning(
+                "Admin attempted self-password-reset: %s", admin_user_id,
+            )
+            raise ValueError("Admin cannot reset own password")
+
+        user_obj = await self.user_repo.get_with_hash(user_id, db)
+        if user_obj is None:
+            logger.warning(
+                "User not found for password reset: %s", user_id,
+            )
+            return None
+
+        temp_password = self._generate_temp_password()
+        validate_password_or_raise(temp_password)
+        password_hash = hash_password(temp_password)
+
+        await self.user_repo.update(
+            user_id, db,
+            password_hash=password_hash,
+            force_password_change=True,
+        )
+        await db.commit()
+
+        logger.info(
+            "Password reset successful: user_id=%s", user_id,
+        )
+        return {
+            "message": "Password reset successfully",
+            "user_id": str(user_id),
+            "temp_password": temp_password,
+        }

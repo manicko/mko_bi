@@ -1,6 +1,6 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { Box, Button, TextField, Typography, Alert } from '@mui/material'
 import { useState } from 'react'
 import { changePasswordSchema, type ChangePasswordFormData } from '../../../shared/types/formSchemas'
@@ -9,6 +9,8 @@ import { toast } from 'react-hot-toast'
 
 export function ChangePasswordPage() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const isForceMode = searchParams.get('force') === 'true'
   const [error, setError] = useState<string | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
 
@@ -45,6 +47,12 @@ export function ChangePasswordPage() {
       <Typography variant="h4" component="h1" gutterBottom>
         Change Password
       </Typography>
+
+      {isForceMode && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          Password change is required. Please set a new password to continue.
+        </Alert>
+      )}
 
       {error && (
         <Alert severity="error" sx={{ mb: 2 }}>
@@ -94,7 +102,7 @@ export function ChangePasswordPage() {
           <Button
             variant="outlined"
             onClick={handleCancel}
-            disabled={isSubmitting}
+            disabled={isSubmitting || isForceMode}
           >
             Cancel
           </Button>

@@ -11,6 +11,7 @@ export interface UserProfile {
   role: UserRole
   display_name: string
   created_at: string
+  force_password_change: boolean
 }
 
 export interface DashboardSummary {
@@ -169,6 +170,7 @@ export interface AdminUser {
   email: string
   role: UserRole
   created_at: string
+  force_password_change: boolean
 }
 
 export interface UpdateUserRoleRequest {

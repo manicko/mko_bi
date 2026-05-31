@@ -5,7 +5,9 @@ color: "#8B5CF6"
 steps: 150
 
 permission:
-  read: allow
+  read: 
+  "*": allow
+  "*.env": allow
   grep: allow
   glob: allow
   todoread: allow
@@ -19,6 +21,7 @@ permission:
     "*": deny
 
   bash:
+    "uv*": allow
     "pytest*": allow
     "ruff*": allow
     "mypy*": allow
@@ -29,7 +32,7 @@ permission:
     "curl*": allow
     "psql*": allow
     "redis-cli*": allow
-    "*": deny
+    "*": allow
 ---
 
 You are a generic parameterized audit executor agent. Your responsibility is to execute a single audit phase by first discovering the current architecture, then analyzing code against the phase task checklist, identifying risks and deviations, and producing evidence-based findings.

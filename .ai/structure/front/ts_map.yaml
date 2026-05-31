@@ -494,6 +494,34 @@
   jsx_tags:
     - '<Typography sx={{ p: 3, textAlign: ''center'', color: ''text.secondary'' }}>'
     - <Box>
+- path: C:/py_dev/mkobi/frontend/src/features/admin/ui/ResetPasswordResultDialog.tsx
+  module: C:.py_dev.mkobi.frontend.src.features.admin.ui.ResetPasswordResultDialog
+  layer: unknown
+  imports:
+    - react
+    - '@mui/material'
+    - '@mui/icons-material/ContentCopy'
+    - react-hot-toast
+  components:
+    - ResetPasswordResultDialog
+  hooks: []
+  jsx_tags:
+    - <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    - <DialogTitle>
+    - <DialogContent>
+    - '<DialogContentText sx={{ mb: 2 }}>'
+    - <strong>
+    - '<Box sx={{ display: ''flex'', alignItems: ''center'', gap: 1 }}>'
+    - |-
+      <Button
+                  variant="outlined"
+                  onClick={() => {
+                    void handleCopy()
+                  }}
+                  startIcon={<ContentCopyIcon />}
+                >
+    - <DialogActions>
+    - <Button onClick={onClose} variant="contained">
 - path: C:/py_dev/mkobi/frontend/src/features/admin/ui/UserManagement.tsx
   module: C:.py_dev.mkobi.frontend.src.features.admin.ui.UserManagement
   layer: unknown
@@ -507,6 +535,7 @@
     - '@tanstack/react-query'
     - ../../../shared/hooks/useConfirmDialog
     - ../../../shared/components/ConfirmDialog
+    - ./ResetPasswordResultDialog
     - ../../../shared/utils/shortUuid
     - react-hot-toast
     - ../../../shared/types/api.types
@@ -897,6 +926,7 @@
   jsx_tags:
     - '<Box sx={{ p: 3, maxWidth: 400, mx: ''auto'' }}>'
     - <Typography variant="h4" component="h1" gutterBottom>
+    - '<Alert severity="info" sx={{ mb: 2 }}>'
     - '<Alert severity="error" sx={{ mb: 2 }}>'
     - >-
       <Box component="form" onSubmit={(e) => void
@@ -912,7 +942,7 @@
       <Button
                   variant="outlined"
                   onClick={handleCancel}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isForceMode}
                 >
 - path: C:/py_dev/mkobi/frontend/src/features/users/ui/UserProfile.tsx
   module: C:.py_dev.mkobi.frontend.src.features.users.ui.UserProfile

@@ -1,7 +1,6 @@
 """Admin routes for user management and registration requests."""
 
 import logging
-import secrets
 from typing import Any
 from uuid import UUID
 
@@ -125,6 +124,52 @@ async def delete_user_admin_endpoint(
         ) from e
 
 
+@router.post(
+    "/users/{user_id}/reset-password",
+    status_code=status.HTTP_200_OK,
+    summary="Reset user password (admin)",
+    description="Generates a temporary password, sets force_password_change flag.",
+    dependencies=[Depends(require_admin_role)],
+)
+async def reset_user_password_admin_endpoint(
+    user_id: UUID,
+    current_user: CurrentUser,
+    db: AsyncSession = Depends(get_db_dependency),
+    auth_service: AuthService = Depends(get_auth_service),
+) -> dict[str, Any]:
+    """Reset user password and return temporary password."""
+    logger.info(
+        "Admin: resetting password for user: id=%s, admin=%s",
+        user_id, current_user.email,
+    )
+    try:
+        result = await auth_service.reset_password_admin(
+            user_id=user_id,
+            admin_user_id=current_user.id,
+            db=db,
+        )
+        if result is None:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User not found",
+            )
+        return result
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+    except HTTPException:
+        raise
+    except Exception as exc:
+        await db.rollback()
+        logger.error("Error resetting user password: %s", exc)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error resetting user password",
+        ) from exc
+
+
 # --- Registration Requests ---
 
 
@@ -185,12 +230,17 @@ async def approve_registration_request_admin_endpoint(
             )
 
         # Create user with random temporary password
-        temp_password = secrets.token_urlsafe(16)
+        temp_password = auth_service._generate_temp_password()
         user = await auth_service.create_user(
             email=req.email,
             password=temp_password,
             role=UserRole.VIEWER,
             db=db,
+        )
+
+        # Set force_password_change flag - user must change temp password on first login
+        await auth_service.user_repo.update(
+            user.id, db, force_password_change=True,
         )
 
         # Update request status

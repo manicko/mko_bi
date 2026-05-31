@@ -49,6 +49,7 @@ Retrieve a list of all registered users. Admin only.
     "email": "admin@example.com",
     "role": "admin",
     "is_active": true,
+    "force_password_change": false,
     "created_at": "2026-04-24T16:02:46+03:00"
   },
   {
@@ -56,6 +57,7 @@ Retrieve a list of all registered users. Admin only.
     "email": "editor@example.com",
     "role": "editor",
     "is_active": true,
+    "force_password_change": false,
     "created_at": "2026-04-25T10:00:00+03:00"
   }
 ]
@@ -87,6 +89,7 @@ Retrieve a single user by ID. Accessible to the user themselves or to admins.
   "email": "admin@example.com",
   "role": "admin",
   "is_active": true,
+  "force_password_change": false,
   "created_at": "2026-04-24T16:02:46+03:00"
 }
 ```
@@ -196,7 +199,51 @@ Delete a user account. Admin only.
 
 ---
 
-### 6. Delete Own Account (Self-Deletion)
+### 6. Reset User Password (Admin)
+
+Admin-triggered password reset. Generates a temporary password for the target user and sets `force_password_change=True`, requiring the user to change their password on next login.
+
+| Attribute      | Value                                              |
+| -------------- | -------------------------------------------------- |
+| **Method**     | `POST`                                             |
+| **Path**       | `/api/v1/admin/users/{user_id}/reset-password`     |
+| **Auth level** | Admin                                              |
+
+**Path parameters:**
+
+| Parameter  | Type   | Description        |
+| ---------- | ------ | ------------------ |
+| `user_id`  | UUID   | Target user ID     |
+
+**Response** (`200 OK`):
+
+```json
+{
+  "message": "Password reset successfully",
+  "user_id": "880e8400-e29b-41d4-a716-446655440003",
+  "temp_password": "xK9mP2nQ5rT8vW1y"
+}
+```
+
+**Error responses:**
+
+| Status | Condition                        | Detail                                    |
+| ------ | -------------------------------- | ----------------------------------------- |
+| `400`  | Admin attempts self-reset        | `Admin cannot reset own password`         |
+| `400`  | User not found                   | `User not found`                          |
+| `500`  | Unexpected server error          | `Error resetting user password`           |
+
+**Side effects:**
+- Generates a 16-character cryptographically secure temporary password (letters + digits, at least one of each)
+- Stores the bcrypt hash of the temporary password in the `users` table
+- Sets `force_password_change=True` on the target user
+- The admin should communicate the temporary password to the user through a secure out-of-band channel
+
+> **Security:** The `temp_password` is returned in plaintext JSON. HTTPS must be enforced in production. Never log the `temp_password` in application logs. The password is one-time use — the user must change it on next login.
+
+---
+
+### 7. Delete Own Account (Self-Deletion)
 
 Allow a non-admin user to delete their own account.
 
@@ -220,7 +267,7 @@ Allow a non-admin user to delete their own account.
 
 These endpoints are exclusively available under the `/api/v1/admin` path and require the `admin` role.
 
-### 7. Admin: List Users
+### 8. Admin: List Users
 
 Admin-specific user listing (alternative to `/api/v1/users`).
 
@@ -234,7 +281,7 @@ Admin-specific user listing (alternative to `/api/v1/users`).
 
 ---
 
-### 8. Admin: Update User Role
+### 9. Admin: Update User Role
 
 Admin-specific role update (alternative to `/api/v1/users/:id/role`).
 
@@ -256,7 +303,7 @@ Admin-specific role update (alternative to `/api/v1/users/:id/role`).
 
 ---
 
-### 9. Admin: Delete User
+### 10. Admin: Delete User
 
 Admin-specific user deletion (alternative to `/api/v1/users/:id`).
 
@@ -270,7 +317,7 @@ Admin-specific user deletion (alternative to `/api/v1/users/:id`).
 
 ---
 
-### 10. List Registration Requests
+### 11. List Registration Requests
 
 Retrieve all registration requests, optionally filtered by status.
 
@@ -304,7 +351,7 @@ Retrieve all registration requests, optionally filtered by status.
 
 ---
 
-### 11. Approve Registration Request
+### 12. Approve Registration Request
 
 Approve a pending registration request. Creates a new user account with a randomly generated temporary password.
 
@@ -351,7 +398,7 @@ Approve a pending registration request. Creates a new user account with a random
 
 ---
 
-### 12. Reject Registration Request
+### 13. Reject Registration Request
 
 Reject a pending registration request.
 
@@ -388,7 +435,7 @@ Reject a pending registration request.
 
 ---
 
-### 13. List Processing Logs
+### 14. List Processing Logs
 
 Retrieve processing logs with filtering and pagination. Admin only.
 
@@ -426,7 +473,7 @@ Retrieve processing logs with filtering and pagination. Admin only.
 
 ---
 
-### 14. Get Single Processing Log
+### 15. Get Single Processing Log
 
 Retrieve a single processing log entry by ID. Admin only.
 
@@ -481,13 +528,15 @@ Browser (User)        FastAPI              Database
   │                     │  (secrets.token_    │
   │                     │   urlsafe(16))      │
   │                     │                     │
-  │                     │  INSERT users       │
-  │                     │────────────────────►│
-  │                     │  (bcrypt hash of    │
-  │                     │   temp_password)    │
-  │                     │◄────────────────────│
-  │                     │                     │
-  │                     │  UPDATE             │
+   │                     │  INSERT users       │
+   │                     │────────────────────►│
+   │                     │  (bcrypt hash of    │
+   │                     │   temp_password,    │
+   │                     │   force_password_   │
+   │                     │   change=TRUE)      │
+   │                     │◄────────────────────│
+   │                     │                     │
+   │                     │  UPDATE             │
   │                     │  registration_      │
   │                     │  requests           │
   │                     │────────────────────►│
@@ -509,13 +558,14 @@ Browser (User)        FastAPI              Database
 
 ### Temporary Password Generation
 
-When a registration request is approved, the system generates a cryptographically random temporary password using `secrets.token_urlsafe(16)`. This password:
+When a registration request is approved, the system generates a cryptographically secure 16-character temporary password (letters + digits, at least one of each) using `_generate_temp_password()`. This password:
 
-- Is generated using a cryptographically secure random number generator
+- Is generated using `secrets.choice(string.ascii_letters + string.digits)` with up to 3 attempts to produce a password passing Pydantic validation
 - Is returned in the `temp_password` field of the approval response
 - Is stored as a bcrypt hash in the `users` table (never in plaintext)
+- The user's `force_password_change` flag is set to `True`, requiring a password change on first login
 - Must be communicated to the new user by the admin through an available channel
-- Should be changed by the user upon first login
+- Should be changed by the user upon first login (enforced by the frontend redirect to `/profile/change-password?force=true`)
 
 ---
 
@@ -525,16 +575,18 @@ The admin panel is accessible at the `/admin` route and provides the following s
 
 ### User Management (`/admin`)
 
-Displays a table of all users with the ability to change roles and delete users.
+Displays a table of all users with the ability to change roles, reset passwords, and delete users.
 
 **Key operations:**
 - View all users (email, role, active status, creation date)
 - Change user role via dropdown (calls `PATCH /api/v1/admin/users/:id/role`)
+- Reset user password (calls `POST /api/v1/admin/users/:id/reset-password`) — generates a temporary password, sets `force_password_change=True`, shows result in `ResetPasswordResultDialog` with copy-to-clipboard
 - Delete a user (calls `DELETE /api/v1/admin/users/:id`)
 
 **Related API endpoints:**
 - `GET /api/v1/admin/users` — List all users
 - `PATCH /api/v1/admin/users/:id/role` — Update role (body: `{"role": "editor"}`)
+- `POST /api/v1/admin/users/:id/reset-password` — Reset password (returns `{ message, user_id, temp_password }`)
 - `DELETE /api/v1/admin/users/:id` — Delete user
 
 ### Registration Requests (`/admin`)

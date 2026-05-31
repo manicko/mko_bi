@@ -53,6 +53,7 @@ CREATE TABLE users (
     password_hash   VARCHAR(255) NOT NULL,
     role            user_role NOT NULL DEFAULT 'viewer',
     is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+    force_password_change BOOLEAN NOT NULL DEFAULT FALSE,
     created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -65,6 +66,7 @@ CREATE TABLE users (
 | `password_hash` | `VARCHAR(255)` | `NOT NULL`                              | Bcrypt password hash           |
 | `role`          | `user_role`  | `NOT NULL`, `DEFAULT 'viewer'`           | `admin` \| `editor` \| `viewer` |
 | `is_active`     | `BOOLEAN`    | `NOT NULL`, `DEFAULT TRUE`               | Account activation flag        |
+| `force_password_change` | `BOOLEAN` | `NOT NULL`, `DEFAULT FALSE`       | Forces password change on next login |
 | `created_at`    | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()`             | Creation timestamp             |
 | `updated_at`    | `TIMESTAMPTZ` | `NOT NULL`, `DEFAULT now()`             | Last update timestamp          |
 
@@ -73,6 +75,8 @@ CREATE TABLE users (
 **Indexes:**
 - `idx_users_email` — `UNIQUE` index on `email`
 - `idx_users_role` — B-tree index on `role`
+
+> The `force_password_change` column is set to `TRUE` when an admin resets a user's password or approves a registration request. The `change_password()` service method clears this flag (`force_password_change=False`) after a successful password change, preventing an infinite force-change loop. The frontend checks this field in the login response and redirects to `/profile/change-password?force=true` when set.
 
 ---
 

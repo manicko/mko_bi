@@ -45,6 +45,7 @@ class UserRead(UserBase):
     id: UUID
     is_active: bool
     created_at: datetime
+    force_password_change: bool = False
 
     @computed_field  # type: ignore[prop-decorator]
     @property

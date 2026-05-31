@@ -188,6 +188,14 @@ Individual UI elements are conditionally rendered based on role:
 
 ---
 
+### Silent Refresh Force Redirect
+
+On app mount, when the silent refresh `useEffect` fetches the user profile, it checks `profile.force_password_change`. If `true`, the frontend immediately redirects via `window.location.href` to `/profile/change-password?force=true`. This ensures that users with forced password changes cannot access any page until they update their password, even across page refreshes.
+
+> **Note:** The `window.location.href` approach (instead of React Router's `navigate()`) is used because the silent refresh runs inside a `useEffect` and the redirect must happen outside the React rendering cycle to avoid stale state issues.
+
+---
+
 ## Email Validation (Registration)
 
 Email validation is applied on both frontend and backend:

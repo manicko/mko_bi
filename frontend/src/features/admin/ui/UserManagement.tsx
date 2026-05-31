@@ -2,11 +2,12 @@ import { useState, useMemo, useCallback } from 'react'
 import { DataGrid, GridActionsCellItem, type GridRowId, type GridRenderCellParams } from '@mui/x-data-grid'
 import type { GridColDef, GridRowClassNameParams } from '@mui/x-data-grid'
 import { Box } from '@mui/material'
-import { Delete as DeleteIcon } from '@mui/icons-material'
-import { getUsers, changeUserRole, deleteUser } from '../api/adminApi'
+import { Delete as DeleteIcon, Key as ResetPasswordIcon } from '@mui/icons-material'
+import { getUsers, changeUserRole, deleteUser, resetUserPassword } from '../api/adminApi'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useConfirmDialog } from '../../../shared/hooks/useConfirmDialog'
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog'
+import { ResetPasswordResultDialog } from './ResetPasswordResultDialog'
 import { shortUuid } from '../../../shared/utils/shortUuid'
 import { toast } from 'react-hot-toast'
 import type { AdminUser } from '../../../shared/types/api.types'
@@ -21,6 +22,10 @@ export function UserManagement() {
   const queryClient = useQueryClient()
   const confirmDialog = useConfirmDialog()
   const [savingRows, setSavingRows] = useState<GridRowId[]>([])
+  const [resetResult, setResetResult] = useState<{
+    tempPassword: string
+    userEmail: string
+  } | null>(null)
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin', 'users'],
@@ -48,6 +53,22 @@ export function UserManagement() {
     },
     onError: () => {
       toast.error('Failed to delete user')
+    },
+  })
+
+  const resetPasswordMutation = useMutation({
+    mutationFn: resetUserPassword,
+    onSuccess: (data, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+      const user = users.find((u) => u.id === variables)
+      setResetResult({
+        tempPassword: data.temp_password,
+        userEmail: user?.email ?? '',
+      })
+      toast.success('Password reset successfully')
+    },
+    onError: () => {
+      toast.error('Failed to reset password')
     },
   })
 
@@ -91,6 +112,20 @@ export function UserManagement() {
     [confirmDialog, deleteMutation],
   )
 
+  const handleResetPassword = useCallback(
+    (user: AdminUser) => {
+      confirmDialog.confirm({
+        title: 'Reset Password',
+        message: `Generate a new temporary password for ${user.email}? The current password will be immediately invalidated.`,
+        confirmLabel: 'Confirm',
+        onConfirm: () => {
+          void resetPasswordMutation.mutateAsync(user.id)
+        },
+      })
+    },
+    [confirmDialog, resetPasswordMutation],
+  )
+
   const columns = useMemo(
     (): GridColDef<UserRow>[] => [
       {
@@ -114,14 +149,19 @@ export function UserManagement() {
         headerName: 'Actions',
         type: 'actions',
         width: 150,
-renderCell: ({ row }: GridRenderCellParams<UserRow>) => (
-           <>
-             <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={() => handleDelete(row)} />
-           </>
-         ),
+        renderCell: ({ row }: GridRenderCellParams<UserRow>) => (
+          <>
+            <GridActionsCellItem icon={<DeleteIcon />} label="Delete" onClick={() => handleDelete(row)} />
+            <GridActionsCellItem
+              icon={<ResetPasswordIcon />}
+              label="Reset Password"
+              onClick={() => handleResetPassword(row)}
+            />
+          </>
+        ),
       },
     ],
-    [handleDelete],
+    [handleDelete, handleResetPassword],
   )
 
   const rows: UserRow[] = users.map((user) => ({
@@ -129,6 +169,7 @@ renderCell: ({ row }: GridRenderCellParams<UserRow>) => (
     email: user.email,
     role: user.role,
     created_at: new Date(user.created_at).toLocaleString(),
+    force_password_change: user.force_password_change,
   }))
 
   return (
@@ -160,7 +201,13 @@ renderCell: ({ row }: GridRenderCellParams<UserRow>) => (
         confirmLabel={confirmDialog.confirmLabel}
         onConfirm={confirmDialog.handleConfirm}
         onCancel={confirmDialog.handleCancel}
-        loading={deleteMutation.isPending}
+        loading={deleteMutation.isPending || resetPasswordMutation.isPending}
+      />
+      <ResetPasswordResultDialog
+        open={resetResult !== null}
+        tempPassword={resetResult?.tempPassword ?? ''}
+        userEmail={resetResult?.userEmail ?? ''}
+        onClose={() => setResetResult(null)}
       />
     </Box>
   )

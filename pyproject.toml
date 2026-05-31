@@ -162,13 +162,9 @@ disallow_any_generics = true
 check_untyped_defs = true
 no_implicit_reexport = true
 ignore_missing_imports = true
-namespace_packages = false
+namespace_packages = true
 explicit_package_bases = true
 mypy_path = ["src"]
-
-[[tool.mypy.overrides]]
-module = ["db.*"]
-ignore_errors = true
 
 [[tool.mypy.overrides]]
 module = ["mkobi.*"]
@@ -191,7 +187,7 @@ module = ["alembic.*"]
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-path = "tests"
+module = ["tests.*"]
 ignore_errors = true
 
 

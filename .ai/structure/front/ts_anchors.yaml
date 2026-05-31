@@ -110,6 +110,13 @@
   type: component
   value: RegistrationRequests
   stable_hash: 981bcfb9
+- id: 16dda3fb
+  file: C:/py_dev/mkobi/frontend/src/features/admin/ui/ResetPasswordResultDialog.tsx
+  symbol_path:
+    - ResetPasswordResultDialog
+  type: component
+  value: ResetPasswordResultDialog
+  stable_hash: 16dda3fb
 - id: 4cbe3e4d
   file: C:/py_dev/mkobi/frontend/src/features/admin/ui/UserManagement.tsx
   symbol_path:
