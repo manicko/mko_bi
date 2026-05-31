@@ -417,6 +417,7 @@
   - uuid
   - mkobi.models.enums
   - mkobi.models.user
+  - mkobi.utils.validators
   classes:
   - LoginRequest
   - RegistrationRequestCreate
@@ -430,6 +431,7 @@
   - SuccessResponse
   functions:
   - serialize_ip
+  - validate_password_field
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.models.dashboard
   layer: unknown
@@ -677,6 +679,7 @@
   - mkobi.core.security
   - mkobi.interfaces.repository_interfaces
   - mkobi.interfaces.service_interfaces
+  - mkobi.utils.validators
   - mkobi.models.enums
   - mkobi.models.user
   - mkobi.config
@@ -956,6 +959,7 @@
   - validate_uuid
   - validate_string
   - validate_password
+  - validate_password_or_raise
   - raise_if_invalid
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\__init__.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.utils.__init__

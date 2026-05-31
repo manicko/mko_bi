@@ -13,6 +13,7 @@ allowed-tools:
 
 <objective>
 Execute the complete multi-agent audit pipeline: prepare context, execute all phases with executors, validate findings, and merge into final report.
+
 </objective>
 
 <process>
@@ -24,7 +25,6 @@ Read `.ai/context/commands.md` for verification commands.
 Read `AGENTS.md` for project guidelines.
 List documentation structure from `docs/` folder.
 
-**Do NOT read production code, documentation content.**
 
 Set variables:
 - `{BASE_CONTEXT}` = summary of the above files
@@ -33,11 +33,18 @@ Set variables:
 - {AUDIT-EXECUTOR} - model from `C:\py_dev\mkobi\.ai\models\lookup_table.md`
 - {VALIDATOR} -  model from `C:\py_dev\mkobi\.ai\models\lookup_table.md`
 
+# 1.1 DO NOT
+- Read executor role or executor tasks and templates, just provide links
+- Read production code, full documentation content
+
+
 ## 2. Execute Phase Loop 
 
 For each phase file in `{TASK_FILES}` (sorted by phase number) follow steps 2.1-2.6:
 
-IMPORTANT: do not read task files or findings templates just pass file paths to agent to read them 
+IMPORTANT: 
+- do not read task files or findings templates just pass file paths to agent to read them 
+- Max allowed parallel subagents = 2 
 
 <phase_loop>
 
@@ -88,12 +95,6 @@ Task(
 ### 2.5 Verify Validation Output
 Check that `.ai/audit/99-validation/{PHASE_NUMBER}-{PHASE_NAME}-validated.md` exists.
 If missing or empty: retry once, then escalate on second failure.
-
-### 2.6 Parallel Execution Option
-After Phase N completes executor and validator, Phase N+1 executor may start in parallel.
-This reduces total pipeline latency.
-
-If network errors or task completion problems occur: switch to consecutive execution.
 
 </phase_loop>
 

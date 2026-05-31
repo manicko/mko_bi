@@ -33,7 +33,6 @@ C:\PY_DEV\MKOBI
 |   |   |       findings.md
 |   |   |       
 |   |   +---05-docker
-|   |   +---05-infrastructure
 |   |   |       findings.md
 |   |   |       
 |   |   +---06-tests
@@ -53,7 +52,7 @@ C:\PY_DEV\MKOBI
 |   |   |       02-frontend-validated.md
 |   |   |       03-database-validated.md
 |   |   |       04-security-validated.md
-|   |   |       05-infrastructure-validated.md
+|   |   |       05-docker-validated.md
 |   |   |       06-tests-validated.md
 |   |   |       07-data-processing-validated.md
 |   |   |       08-deployment-config-validated.md
@@ -62,8 +61,6 @@ C:\PY_DEV\MKOBI
 |   |   +---db
 |   |   +---docker
 |   |   +---problems
-|   |   |       implementation_audit_001.md
-|   |   |       
 |   |   +---project
 |   |   +---templates
 |   |   |       audit-final-report.md
@@ -71,9 +68,6 @@ C:\PY_DEV\MKOBI
 |   |   |       
 |   |   +---tests
 |   |   \---validated
-|   |           BUG-004-log-viewer-empty-table.md
-|   |           final-report.md
-|   |           
 |   +---builders
 |   |   |   build.bat
 |   |   |   
@@ -104,7 +98,11 @@ C:\PY_DEV\MKOBI
 |   +---plans
 |   |   \---tasks
 |   +---problems
+|   |   |   CONTEXT_01.md
+|   |   |   
 |   |   \---decisions
+|   |           DECISION_01.md
+|   |           
 |   +---researches
 |   +---structure
 |   |   |   map.md
@@ -119,22 +117,6 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
-|   |   |       TASK_001_sec001_password_validation_DONE.yaml
-|   |   |       TASK_002_sec003_mime_validation_DONE.yaml
-|   |   |       TASK_003_fe001_circular_import_DONE.yaml
-|   |   |       TASK_004_int006_aggregated_data_response_DONE.yaml
-|   |   |       TASK_005_int007_access_grant_field_DONE.yaml
-|   |   |       TASK_006_int003_dashboard_config_DONE.yaml
-|   |   |       TASK_007_be016_error_message_sanitization_DONE.yaml
-|   |   |       TASK_008_bug004_log_viewer_date_format_DONE.yaml
-|   |   |       TASK_009_bug004_log_viewer_dashboard_name_DONE.yaml
-|   |   |       TASK_010_dp002_temp_file_cleanup_logging_DONE.yaml
-|   |   |       TASK_011_tst005_mock_antipattern_DONE.yaml
-|   |   |       TASK_012_tst003_ambiguous_status_codes_DONE.yaml
-|   |   |       TASK_013_fe002_stale_closure_DONE.yaml
-|   |   |       TASK_014_fe004_aria_attributes_DONE.yaml
-|   |   |       TASK_015_verify_stage3_integration_alignment_DONE.yaml
-|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
@@ -4235,6 +4217,7 @@ C:\PY_DEV\MKOBI
 |           1585135333544026547
 |           15931875610329894108
 |           15996359271151126581
+|           16046144574879741032
 |           16294550865607449170
 |           16465980159764868755
 |           16694333838154772341
@@ -4250,6 +4233,7 @@ C:\PY_DEV\MKOBI
 |           2005181514682530500
 |           2487259879282215702
 |           2538837565174628824
+|           2579218018333130348
 |           2595011032096545692
 |           2811555875434957630
 |           2860230903318966006
@@ -4280,6 +4264,7 @@ C:\PY_DEV\MKOBI
 |           6570399622211204762
 |           667405885731847680
 |           6735482999765834792
+|           6833625021446709262
 |           6892763454862441121
 |           7152645585890148736
 |           7283139603309816298
@@ -4299,6 +4284,7 @@ C:\PY_DEV\MKOBI
 |           9653023392263037788
 |           9750208591691005672
 |           9778448368005484923
+|           9891234191485983440
 |           9937099668536583205
 |           999224519614300536
 |           
@@ -19903,6 +19889,7 @@ C:\PY_DEV\MKOBI
 |   |       
 |   +---08-security
 |   |       access-control.md
+|   |       client-error-reporting.md
 |   |       security-overview.md
 |   |       
 |   +---09-database
@@ -19944,23 +19931,23 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           AdminPanel-DtFO-8GQ.js
-|   |           ChangePasswordPage-C0AX2Nlr.js
-|   |           dashboardApi-CK4_szKk.js
-|   |           DashboardList-CK7KAyhV.js
-|   |           DashboardView-BKV4zNDA.js
+|   |           AdminPanel-rqyGytfo.js
+|   |           ChangePasswordPage-CwDaAgCc.js
+|   |           dashboardApi-CEIMd-V2.js
+|   |           DashboardList-WMfD-LYp.js
+|   |           DashboardView-BI9Twda_.js
 |   |           enums-C2UQ_cl5.js
 |   |           formSchemas-DG7LnQby.js
-|   |           index-yP2DCZIk.js
-|   |           LoginForm-CgFbU__K.js
+|   |           index-DedgxxcX.js
+|   |           LoginForm-uF5DvFvG.js
 |   |           mui-BjK8oc7r.js
 |   |           plotly-BNZeab9N.js
 |   |           react-DBNNFkHU.js
-|   |           RegisterForm-BZZr_PkJ.js
+|   |           RegisterForm-CYxIfWn3.js
 |   |           rolldown-runtime-S-ySWqyJ.js
 |   |           shortUuid-TYuFZJYs.js
-|   |           userApi-DrA2WNrS.js
-|   |           UserProfile-BvhdVCW7.js
+|   |           userApi-q41aziH9.js
+|   |           UserProfile-R0tPPPQi.js
 |   |           vendor-DVV7EcJf.js
 |   |           
 |   +---node_modules
@@ -100718,6 +100705,7 @@ C:\PY_DEV\MKOBI
 |       |   +---api
 |       |   |       axiosInstance.ts
 |       |   |       index.ts
+|       |   |       refreshHandler.ts
 |       |   |       
 |       |   +---components
 |       |   |   |   AccessDenied.tsx
