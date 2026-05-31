@@ -1,0 +1,102 @@
+id: TASK_017_test_auth_service_reset
+
+title: Write unit tests for AuthService.reset_password_admin() and _generate_temp_password()
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_005_authservice_reset_password
+
+description: >
+  Write unit tests for the new `_generate_temp_password()` and `reset_password_admin()`
+  methods in `AuthService`. Tests go in `tests/test_auth_service.py` (existing file).
+  Uses pytest with async support (existing conftest.py provides async fixtures).
+
+  Test cases for `_generate_temp_password()`:
+  - Generated password is exactly 8 characters
+  - Contains at least one letter and one digit
+  - Multiple invocations produce different passwords (non-deterministic)
+  - Password only contains characters from [a-zA-Z0-9]
+
+  Test cases for `reset_password_admin()`:
+  - Successfully generates temp password, hashes it, sets force_password_change=True
+  - Returns dict with message, user_id (str), temp_password on success
+  - Self-reset guard (user_id == admin_user_id) raises ValueError
+  - Returns None for non-existent user (user_repo.get_with_hash returns None)
+  - Verifies db.commit() is called
+  - Verifies user_repo.update() called with password_hash and force_password_change=True
+  - Verifies hash_password() is used (not raw bcrypt)
+
+goals:
+  - Unit test _generate_temp_password() for format guarantees
+  - Unit test reset_password_admin() success and error paths
+  - Mock user_repo and db session (no real DB needed)
+  - All tests pass with pytest
+
+files:
+  - path: tests/test_auth_service.py
+    targets:
+      - type: new_test_class_or_functions
+        name: test_generate_temp_password
+      - type: new_test_class_or_functions
+        name: test_reset_password_admin
+
+changes:
+  - action: add_tests
+    description: >
+      Add test functions to existing `tests/test_auth_service.py`.
+      Use pytest-asyncio for async test functions. Mock dependencies
+      (user_repo, db) using unittest.mock.AsyncMock or pytest-mock.
+    code_hint: |
+      @pytest.mark.asyncio
+      async def test_reset_password_admin_success(mocker):
+          # Arrange
+          mock_user_repo = mocker.MagicMock()
+          mock_user_repo.get_with_hash = AsyncMock(return_value=MockUser())
+          mock_user_repo.update = AsyncMock()
+          mock_db = AsyncMock()
+          mock_db.commit = AsyncMock()
+
+          service = AuthService.__new__(AuthService)
+          service.user_repo = mock_user_repo
+
+          # Act
+          result = await service.reset_password_admin(
+              user_id=uuid4(),
+              admin_user_id=uuid4(),
+              db=mock_db,
+          )
+
+          # Assert
+          assert result is not None
+          assert "temp_password" in result
+          assert "user_id" in result
+          mock_user_repo.update.assert_called_once()
+          mock_db.commit.assert_called_once()
+
+      @pytest.mark.asyncio
+      async def test_reset_password_admin_self_guard(mocker):
+          service = AuthService.__new__(AuthService)
+          same_id = uuid4()
+          with pytest.raises(ValueError, match="Admin cannot reset own password"):
+              await service.reset_password_admin(
+                  user_id=same_id,
+                  admin_user_id=same_id,
+                  db=AsyncMock(),
+              )
+
+acceptance_criteria:
+  - All new tests pass: pytest tests/test_auth_service.py -v
+  - _generate_temp_password tests verify format (8 chars, letter+digit)
+  - reset_password_admin tests cover: success, self-guard, user-not-found
+  - No real database calls (all mocked)
+  - ruff passes on test file
+
+tests_to_run:
+  - pytest tests/test_auth_service.py -v
+  - ruff check tests/test_auth_service.py
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 2 — Tests

@@ -1,0 +1,59 @@
+id: TASK_004_iauthservice_interface
+
+title: Add reset_password_admin() to IAuthService abstract interface
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  Add the `reset_password_admin()` abstract method to the `IAuthService`
+  interface in `src/mkobi/interfaces/service_interfaces.py`. This ensures
+  the concrete AuthService implements the method.
+
+goals:
+  - Add reset_password_admin() abstract method to IAuthService
+  - Follow existing pattern: @abc.abstractmethod + pass body
+  - Correct type hints matching the implementation signature
+
+files:
+  - path: src/mkobi/interfaces/service_interfaces.py
+    targets:
+      - type: class
+        name: IAuthService
+    semantic_anchors:
+      insert_before:
+        type: method
+        name: create_access_token
+
+changes:
+  - action: add_method
+    description: >
+      Add `reset_password_admin()` abstract method to IAuthService class,
+      before the `create_access_token` method. Uses UUID types for user_id
+      and admin_user_id, AsyncSession for db, returns dict[str, Any] | None.
+    code_hint: |
+      @abc.abstractmethod
+      async def reset_password_admin(
+          self,
+          user_id: UUID,
+          admin_user_id: UUID,
+          db: AsyncSession,
+      ) -> dict[str, Any] | None:
+          """Admin-triggered password reset. Generates temp password."""
+          pass
+
+acceptance_criteria:
+  - Abstract method added before create_access_token in IAuthService
+  - Has UUID user_id, UUID admin_user_id, AsyncSession db parameters
+  - Returns dict[str, Any] | None
+  - ruff passes, mypy passes
+
+tests_to_run:
+  - ruff check src/mkobi/interfaces/service_interfaces.py
+  - mypy src/mkobi/interfaces/service_interfaces.py
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 1 — TASK_004

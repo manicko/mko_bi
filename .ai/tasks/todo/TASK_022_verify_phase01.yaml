@@ -1,0 +1,61 @@
+id: TASK_022_verify_phase01
+
+title: Verify Phase 01 — Admin Password Reset end-to-end
+
+status: pending
+
+type: verification
+
+priority: high
+
+depends_on:
+  - TASK_019_verify_wave2
+  - TASK_020_verify_wave3
+  - TASK_021_verify_wave4
+
+verifies:
+  - TASK_019_verify_wave2
+  - TASK_020_verify_wave3
+  - TASK_021_verify_wave4
+
+verification_steps:
+  - build: docker compose build
+  - test: >
+      ruff check src/mkobi/ &&
+      mypy src/mkobi/ &&
+      cd frontend && npx tsc --noEmit &&
+      pytest tests/test_auth_service.py tests/test_auth_api.py -v
+  - smoke_check: >
+      1. Start services: docker compose up -d
+      2. Login as admin
+      3. Navigate to User Management
+      4. Click "Reset Password" for a non-admin user
+      5. Verify ConfirmDialog appears with Confirm/Cancel, buttons disabled + spinner on confirm
+      6. On success, verify ResetPasswordResultDialog shows temp password, Copy, Close
+      7. Copy button copies to clipboard + shows "Copied" toast
+      8. Close button dismisses dialog
+      9. Login as the reset user with temp password
+      10. Verify redirect to /profile/change-password?force=true
+      11. Verify Cancel button disabled, info Alert visible
+      12. Submit new password successfully
+      13. Verify login works and user goes to /dashboards (flag cleared)
+      14. Verify admin self-reset returns HTTP 400
+      15. Verify approve-registration sets force_password_change=True
+
+pass_criteria:
+  - All ruff/mypy checks pass
+  - Frontend TypeScript compiles without errors
+  - All unit and integration tests pass
+  - Full manual flow works end-to-end
+  - force_password_change flag is set on reset and cleared on password change
+  - Self-reset prevention returns appropriate error
+  - Approve-registration flow correctly sets force flag
+
+failure_action: Return relevant wave verification task(s) to rework, which will cascade to implementation tasks
+
+rollback_task: >
+  Revert alembic migration (alembic downgrade -1),
+  revert all modified source files to pre-phase state.
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 5 — Final Verification

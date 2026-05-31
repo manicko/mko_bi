@@ -1,0 +1,115 @@
+id: TASK_011_reset_result_dialog
+
+title: Create ResetPasswordResultDialog component (Screen 2)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Create new file `frontend/src/features/admin/ui/ResetPasswordResultDialog.tsx`.
+  This is Screen 2 of the password reset flow. Shows the temp password in a
+  read-only TextField with a Copy button (navigator.clipboard.writeText + toast "Copied")
+  and a Close button. Both buttons visible simultaneously.
+
+goals:
+  - New file at frontend/src/features/admin/ui/ResetPasswordResultDialog.tsx
+  - Uses MUI Dialog, DialogTitle, DialogContent, DialogActions
+  - Read-only TextField for temp password
+  - Copy button with navigator.clipboard.writeText + toast.success("Copied")
+  - Close button to dismiss
+  - Props: open, tempPassword, userEmail, onClose
+  - Uses MUI ContentCopy icon
+
+files:
+  - path: frontend/src/features/admin/ui/ResetPasswordResultDialog.tsx
+    targets:
+      - type: new_component
+        name: ResetPasswordResultDialog
+    semantic_anchors: []
+
+changes:
+  - action: create_file
+    description: >
+      Create ResetPasswordResultDialog component. Full implementation per research.
+      Uses useState for copied state, async handleCopy with try/catch,
+      Box with display:flex for textfield+button layout.
+    code_hint: |
+      import { useState } from "react"
+      import {
+        Dialog, DialogTitle, DialogContent, DialogContentText,
+        DialogActions, Button, TextField, Box,
+      } from "@mui/material"
+      import ContentCopyIcon from "@mui/icons-material/ContentCopy"
+      import { toast } from "react-hot-toast"
+
+      interface ResetPasswordResultDialogProps {
+        open: boolean
+        tempPassword: string
+        userEmail: string
+        onClose: () => void
+      }
+
+      export function ResetPasswordResultDialog({
+        open, tempPassword, userEmail, onClose,
+      }: ResetPasswordResultDialogProps) {
+        const [copied, setCopied] = useState(false)
+
+        const handleCopy = async () => {
+          try {
+            await navigator.clipboard.writeText(tempPassword)
+            setCopied(true)
+            toast.success("Copied")
+            setTimeout(() => setCopied(false), 3000)
+          } catch {
+            toast.error("Failed to copy")
+          }
+        }
+
+        return (
+          <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+            <DialogTitle>Password Reset</DialogTitle>
+            <DialogContent>
+              <DialogContentText sx={{ mb: 2 }}>
+                Password for <strong>{userEmail}</strong> has been reset.
+                Copy the temporary password and share it securely.
+              </DialogContentText>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <TextField
+                  value={tempPassword}
+                  fullWidth
+                  InputProps={{ readOnly: true }}
+                  size="small"
+                />
+                <Button
+                  variant="outlined"
+                  onClick={() => { void handleCopy() }}
+                  startIcon={<ContentCopyIcon />}
+                >
+                  {copied ? "Copied" : "Copy"}
+                </Button>
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={onClose} variant="contained">
+                Close
+              </Button>
+            </DialogActions>
+          </Dialog>
+        )
+      }
+
+acceptance_criteria:
+  - File created at correct path
+  - Interface has open, tempPassword, userEmail, onClose props
+  - Copy button uses navigator.clipboard.writeText + toast
+  - Both Copy and Close buttons visible simultaneously
+  - TypeScript compiles without error
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 4 — TASK_011

@@ -1,0 +1,55 @@
+id: TASK_006_authservice_clear_flag
+
+title: Modify change_password() to clear force_password_change flag
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_user_model_force_flag
+
+description: >
+  Modify the existing `change_password()` method in `AuthService` to include
+  `force_password_change=False` in the `user_repo.update()` call. This ensures
+  that after a user successfully changes their password (including in force mode),
+  the flag is cleared and they won't be stuck in the force-change loop.
+
+goals:
+  - Clear force_password_change flag after successful password change
+  - Minimal change: just add force_password_change=False to existing update() call
+  - Prevent force-password-change infinite loop (Pitfall 1)
+
+files:
+  - path: src/mkobi/services/auth_service.py
+    targets:
+      - type: method
+        name: change_password
+    semantic_anchors:
+      modify:
+        type: function_call
+        name: user_repo.update
+        # In change_password(), line: await self.user_repo.update(user_id, db, password_hash=password_hash)
+
+changes:
+  - action: modify_call
+    description: >
+      Change the existing `self.user_repo.update()` call in `change_password()`
+      from `password_hash=password_hash` to `password_hash=password_hash, force_password_change=False`.
+    code_hint: |
+      # FROM:
+      await self.user_repo.update(user_id, db, password_hash=password_hash)
+      # TO:
+      await self.user_repo.update(user_id, db, password_hash=password_hash, force_password_change=False)
+
+acceptance_criteria:
+  - change_password() update call includes force_password_change=False
+  - All other behavior unchanged
+  - ruff passes, mypy passes
+
+tests_to_run:
+  - ruff check src/mkobi/services/auth_service.py
+  - mypy src/mkobi/services/auth_service.py
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 2 — TASK_006

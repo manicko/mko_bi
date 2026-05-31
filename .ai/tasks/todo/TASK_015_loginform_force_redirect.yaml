@@ -1,0 +1,64 @@
+id: TASK_015_loginform_force_redirect
+
+title: Update LoginForm.tsx for force redirect based on login response
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_014_useauth_force_redirect
+
+description: >
+  Modify `frontend/src/features/auth/ui/LoginForm.tsx` to handle the force
+  password change redirect. After `await login(data.email, data.password)`,
+  capture the response and check `response.user.force_password_change`. If true,
+  navigate to `/profile/change-password?force=true`. Otherwise navigate to
+  `/dashboards`. LoginForm already calls navigate — just add the conditional branch.
+
+goals:
+  - After login, check user.force_password_change
+  - Redirect to force change-password or dashboards accordingly
+  - Minimal change to existing LoginForm logic
+  - No useAuth-internal navigation (handled in LoginForm)
+
+files:
+  - path: frontend/src/features/auth/ui/LoginForm.tsx
+    targets:
+      - type: component
+        name: LoginForm
+    semantic_anchors:
+      modify:
+        type: statement
+        name: await login(data.email, data.password)
+
+changes:
+  - action: modify_onSubmit
+    description: >
+      Change the onSubmit handler to capture the login response and branch
+      navigation based on force_password_change.
+    code_hint: |
+      # FROM:
+      await login(data.email, data.password)
+      void navigate('/dashboards')
+
+      # TO:
+      const response = await login(data.email, data.password)
+      if (response.user.force_password_change) {
+        void navigate('/profile/change-password?force=true')
+      } else {
+        void navigate('/dashboards')
+      }
+
+acceptance_criteria:
+  - LoginForm captures response from login()
+  - Branches navigation based on force_password_change
+  - Normal users go to /dashboards
+  - Force-change users go to /profile/change-password?force=true
+  - TypeScript compiles without error
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 4 — TASK_015

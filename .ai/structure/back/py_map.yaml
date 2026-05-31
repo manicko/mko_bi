@@ -1747,6 +1747,7 @@
   - mkobi.models.data
   - mkobi.models.enums
   - mkobi.services.data_service
+  - mkobi.utils.exceptions
   classes: []
   functions:
   - _handle_value_error

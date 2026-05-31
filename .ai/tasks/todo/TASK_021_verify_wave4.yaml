@@ -1,0 +1,49 @@
+id: TASK_021_verify_wave4
+
+title: Verify Wave 4 — Frontend (reset UI, force mode, type safety)
+
+status: pending
+
+type: verification
+
+depends_on:
+  - TASK_009_adminapi_reset_function
+  - TASK_010_apitypes_force_flag
+  - TASK_011_reset_result_dialog
+  - TASK_012_usermanagement_reset_button
+  - TASK_013_change_password_force_mode
+  - TASK_014_useauth_force_redirect
+  - TASK_015_loginform_force_redirect
+
+verifies:
+  - TASK_009_adminapi_reset_function
+  - TASK_010_apitypes_force_flag
+  - TASK_011_reset_result_dialog
+  - TASK_012_usermanagement_reset_button
+  - TASK_013_change_password_force_mode
+  - TASK_014_useauth_force_redirect
+  - TASK_015_loginform_force_redirect
+
+verification_steps:
+  - test: >
+      cd frontend && npx tsc --noEmit
+  - smoke_check: >
+      1. Build frontend: cd frontend && npm run build
+      2. ResetPasswordResultDialog renders with temp password + Copy + Close buttons
+      3. UserManagement shows Reset Password button in each row
+      4. Clicking Reset Password opens ConfirmDialog
+      5. ChangePasswordPage with ?force=true shows info Alert and disabled Cancel
+      6. useAuth.login() returns redirect to /profile/change-password?force=true when flag is set
+      7. TypeScript compilation succeeds with zero errors
+
+pass_criteria:
+  - TypeScript compiles without errors (tsc --noEmit)
+  - Frontend build succeeds
+  - All new components and hooks are correctly wired
+  - No `any` types introduced
+  - force_password_change field exists on UserProfile and AdminUser interfaces
+
+failure_action: Return relevant frontend task(s) to rework
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 4 — Verification Gate

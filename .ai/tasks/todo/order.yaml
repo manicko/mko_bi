@@ -1,0 +1,164 @@
+# Execution Order — PLAN_01: Admin User Password Reset
+# Phase 01 — Dependency-Aware Task DAG
+#
+# Total tasks: 22
+#   Implementation tasks: 15 (TASK_001–TASK_015)
+#   Test tasks: 2 (TASK_017, TASK_018)
+#   Verification tasks: 4 (TASK_016 skipped, TASK_019–TASK_022)
+#   Parallel waves: 6
+
+tasks:
+  # ══════════════════════════════════════════════════════════════
+  # Wave 1 — Foundation (Parallel, no dependencies)
+  # ══════════════════════════════════════════════════════════════
+  - id: TASK_001_user_model_force_flag
+    depends_on: []
+    wave: 1
+    type: implementation
+
+  - id: TASK_002_alembic_migration
+    depends_on: []
+    wave: 1
+    type: implementation
+
+  - id: TASK_003_pydantic_userread_flag
+    depends_on: []
+    wave: 1
+    type: implementation
+
+  - id: TASK_004_iauthservice_interface
+    depends_on: []
+    wave: 1
+    type: implementation
+
+  # ══════════════════════════════════════════════════════════════
+  # Wave 2 — Backend Service Logic (depends on Wave 1)
+  # ══════════════════════════════════════════════════════════════
+  - id: TASK_005_authservice_reset_password
+    depends_on:
+      - TASK_001_user_model_force_flag
+      - TASK_003_pydantic_userread_flag
+      - TASK_004_iauthservice_interface
+    wave: 2
+    type: implementation
+
+  - id: TASK_006_authservice_clear_flag
+    depends_on:
+      - TASK_001_user_model_force_flag
+    wave: 2
+    type: implementation
+
+  # ══════════════════════════════════════════════════════════════
+  # Wave 3 — Backend API Endpoints (depends on Wave 2)
+  # ══════════════════════════════════════════════════════════════
+  - id: TASK_007_admin_reset_endpoint
+    depends_on:
+      - TASK_005_authservice_reset_password
+    wave: 3
+    type: implementation
+
+  - id: TASK_008_approve_sets_force_flag
+    depends_on:
+      - TASK_006_authservice_clear_flag
+    wave: 3
+    type: implementation
+
+  # ══════════════════════════════════════════════════════════════
+  # Wave 4 — Frontend (depends on Wave 1, can start after Wave 1 completes)
+  # ══════════════════════════════════════════════════════════════
+  - id: TASK_009_adminapi_reset_function
+    depends_on:
+      - TASK_003_pydantic_userread_flag
+    wave: 4
+    type: implementation
+
+  - id: TASK_010_apitypes_force_flag
+    depends_on:
+      - TASK_003_pydantic_userread_flag
+    wave: 4
+    type: implementation
+
+  - id: TASK_011_reset_result_dialog
+    depends_on: []
+    wave: 4
+    type: implementation
+
+  - id: TASK_012_usermanagement_reset_button
+    depends_on:
+      - TASK_009_adminapi_reset_function
+      - TASK_011_reset_result_dialog
+    wave: 4
+    type: implementation
+
+  - id: TASK_013_change_password_force_mode
+    depends_on: []
+    wave: 4
+    type: implementation
+
+  - id: TASK_014_useauth_force_redirect
+    depends_on:
+      - TASK_010_apitypes_force_flag
+    wave: 4
+    type: implementation
+
+  - id: TASK_015_loginform_force_redirect
+    depends_on:
+      - TASK_014_useauth_force_redirect
+    wave: 4
+    type: implementation
+
+  # ══════════════════════════════════════════════════════════════
+  # Wave 5 — Test Writing (depends on implementation tasks)
+  # ══════════════════════════════════════════════════════════════
+  - id: TASK_017_test_auth_service_reset
+    depends_on:
+      - TASK_005_authservice_reset_password
+    wave: 5
+    type: test
+
+  - id: TASK_018_test_admin_endpoint
+    depends_on:
+      - TASK_007_admin_reset_endpoint
+      - TASK_008_approve_sets_force_flag
+      - TASK_017_test_auth_service_reset
+    wave: 5
+    type: test
+
+  # ══════════════════════════════════════════════════════════════
+  # Wave 6 — Verification Gates (depends on implementation + tests)
+  # ══════════════════════════════════════════════════════════════
+  - id: TASK_019_verify_wave2
+    depends_on:
+      - TASK_005_authservice_reset_password
+      - TASK_006_authservice_clear_flag
+      - TASK_017_test_auth_service_reset
+    wave: 6
+    type: verification
+
+  - id: TASK_020_verify_wave3
+    depends_on:
+      - TASK_007_admin_reset_endpoint
+      - TASK_008_approve_sets_force_flag
+      - TASK_018_test_admin_endpoint
+    wave: 6
+    type: verification
+
+  - id: TASK_021_verify_wave4
+    depends_on:
+      - TASK_009_adminapi_reset_function
+      - TASK_010_apitypes_force_flag
+      - TASK_011_reset_result_dialog
+      - TASK_012_usermanagement_reset_button
+      - TASK_013_change_password_force_mode
+      - TASK_014_useauth_force_redirect
+      - TASK_015_loginform_force_redirect
+    wave: 6
+    type: verification
+
+  - id: TASK_022_verify_phase01
+    depends_on:
+      - TASK_019_verify_wave2
+      - TASK_020_verify_wave3
+      - TASK_021_verify_wave4
+    wave: 6
+    type: verification
