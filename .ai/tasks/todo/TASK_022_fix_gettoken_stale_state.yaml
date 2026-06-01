@@ -1,0 +1,58 @@
+id: TASK_022_fix_gettoken_stale_state
+
+title: Fix getToken() outside React render cycle — stale enabled state in dashboardApi (FE-005)
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+source_section: FE-005 — getToken() outside React render cycle — stale enabled state
+
+description: >
+  The dashboardApi.ts file calls getToken() outside the React render cycle, causing stale
+  `enabled` state in TanStack Query hooks. When the auth token changes (login/logout),
+  the query doesn't re-evaluate because `getToken()` is called at module load time, not
+  at render time. Move the token access inside the query function or use a React context.
+
+goals:
+  - Move getToken() call inside query functions or use AuthContext
+  - Ensure queries re-evaluate when auth state changes
+  - Fix stale enabled state on all dashboard API hooks
+
+files:
+  - path: frontend/src/features/dashboards/api/dashboardApi.ts
+    targets:
+      - type: hook
+        value: useMyDashboards, useDashboard, useAggregatedData, useInvalidateDashboard
+    semantic_anchors:
+      insert_after:
+        type: function_call
+        value: queryFn
+    changes:
+      - action: modify_code
+        description: Move getToken() inside queryFn instead of module-level call
+        code_hint: |
+          // Before (stale):
+          const token = getToken();
+          queryFn: () => fetchDashboards(token)
+          
+          // After (reactive):
+          queryFn: () => fetchDashboards(getToken())
+
+acceptance_criteria:
+  - Auth token is read at query execution time, not module load time
+  - Queries correctly enable/disable based on current auth state
+  - Login/logout triggers query re-evaluation
+  - Dashboard API tests pass
+
+tests_to_run:
+  - cd frontend && npm test -- --testPathPattern="dashboard"
+  - cd frontend && npx vitest run src/features/dashboards/api/
+
+risk: low
+
+notes: >
+  HIGH — Frontend runtime fix. Focused change to dashboardApi.ts hooks.

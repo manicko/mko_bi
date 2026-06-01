@@ -1,0 +1,59 @@
+id: TASK_021_fix_processing_status_response_mismatch
+
+title: Fix ProcessingStatusResponse field mismatch — finished_at vs completed_at (INT-005)
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+source_section: INT-005 — ProcessingStatusResponse field mismatch (finished_at vs completed_at)
+
+description: >
+  The frontend expects `finished_at` in the ProcessingStatusResponse but the backend returns
+  `completed_at`. This causes the frontend to never display processing completion time.
+  Align the backend model or frontend type to use a consistent field name.
+
+goals:
+  - Align ProcessingStatusResponse field names between frontend and backend
+  - Fix missing fields (progress, task_id, filename, dashboard_id) if needed
+  - Update either frontend types or backend model to match
+
+files:
+  - path: src/mkobi/models/processing.py
+    targets:
+      - type: class
+        name: ProcessingStatusResponse
+    changes:
+      - action: modify_code
+        description: Rename completed_at to finished_at to match frontend expectation, or add alias
+        code_hint: |
+          class ProcessingStatusResponse(BaseModel):
+            # Either rename:
+            finished_at: Optional[datetime] = None
+            # Or add alias with validation_alias
+
+  - path: frontend/src/features/dashboards/types.ts
+    targets:
+      - type: interface
+        name: ProcessingStatusResponse
+    changes:
+      - action: verify_code
+        description: Ensure frontend type matches backend model
+
+acceptance_criteria:
+  - Frontend and backend use consistent field names for ProcessingStatusResponse
+  - Processing status displays correctly in the frontend
+  - API response includes all expected fields
+
+tests_to_run:
+  - pytest tests/ -v -k "processing" --tb=short
+  - cd frontend && npm test -- --testPathPattern="processing|status"
+
+risk: low
+
+notes: >
+  HIGH — Integration fix. Decide on the canonical field name (prefer backend naming
+  convention) and update the other side. Minimal code change.

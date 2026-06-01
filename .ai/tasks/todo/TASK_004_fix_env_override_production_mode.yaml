@@ -1,0 +1,56 @@
+id: TASK_004_fix_env_override_production_mode
+
+title: Fix .env overriding production mode in Docker Compose (INF-02)
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+source_section: INF-02 — .env with weak credentials overrides production compose's ${ENV:-production} default
+
+description: >
+  The .env file with weak development credentials overrides the production Docker Compose
+  file's ${ENV:-production} default. This means production deployments could accidentally
+  use development credentials. Fix the Docker Compose configuration so that production
+  mode defaults are not overridden by the .env file.
+
+goals:
+  - Ensure docker-compose.yml production defaults are not overridden by .env
+  - Separate development and production environment configurations
+  - Prevent accidental use of development credentials in production
+
+files:
+  - path: docker/docker-compose.yml
+    targets:
+      - type: environment_variable
+        value: ${ENV:-production}
+    changes:
+      - action: modify_code
+        description: Add explicit env_file or override mechanism to prevent .env from affecting production services
+        code_hint: |
+          For production services, explicitly set env_file: .env.production
+          or remove ${ENV} references that could be overridden by .env
+
+  - path: docker/docker-compose.override.yml
+    targets:
+      - type: service_definition
+    changes:
+      - action: verify_code
+        description: Verify override.yml is only loaded for development, not production
+
+acceptance_criteria:
+  - Production compose configuration does not source weak credentials from .env
+  - Development override remains functional
+  - `docker compose config` shows correct environment for each service
+
+tests_to_run:
+  - docker compose -f docker/docker-compose.yml config > /dev/null
+
+risk: medium
+
+notes: >
+  HIGH — Security-sensitive configuration fix. Verify that the fix does not break
+  local development workflow.

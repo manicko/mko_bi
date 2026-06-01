@@ -1,0 +1,79 @@
+id: TASK_010_implement_token_revocation
+
+title: Implement token revocation mechanism — deactivated users must not use valid tokens (SEC-001)
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+source_section: SEC-001 — No token revocation — deactivated users can use valid tokens until expiry
+
+description: >
+  There is no token revocation mechanism. When a user is deactivated or logs out, their JWT
+  tokens remain valid until expiry (up to 7 days for refresh tokens). Implement a token
+  blacklist using Redis to store revoked token IDs, and check the blacklist on every
+  authenticated request.
+
+goals:
+  - Add token blacklist storage in Redis (key: "token_blacklist:{jti}")
+  - Revoke tokens on logout and user deactivation
+  - Check blacklist in authentication dependency
+  - Tokens are invalidated immediately upon revocation
+
+files:
+  - path: src/mkobi/core/security.py
+    targets:
+      - type: function
+        name: decode_token
+    changes:
+      - action: add_code
+        description: Add token blacklist check in decode_token or create a new verify_token function
+        code_hint: |
+          async def verify_token(token: str, redis: Redis) -> TokenPayload:
+              payload = decode_token(token)
+              is_blacklisted = await redis.exists(f"token_blacklist:{payload.jti}")
+              if is_blacklisted:
+                  raise HTTPException(status_code=401, detail="Token has been revoked")
+              return payload
+
+  - path: src/mkobi/api/routes/auth.py
+    targets:
+      - type: route_handler
+        name: (logout endpoint)
+    changes:
+      - action: add_code
+        description: Add token revocation on logout
+        code_hint: |
+          await redis.setex(
+              f"token_blacklist:{token_payload.jti}",
+              settings.jwt_access_token_expire_minutes * 60,
+              "revoked"
+          )
+
+  - path: src/mkobi/api/deps.py
+    targets:
+      - type: function
+        name: get_current_user
+    changes:
+      - action: modify_code
+        description: Update get_current_user to check token blacklist
+
+acceptance_criteria:
+  - Revoked tokens are rejected with 401
+  - Logout revokes the current access token
+  - User deactivation revokes all active tokens
+  - Token blacklist entries expire automatically (no indefinite growth)
+  - Authentication tests pass
+
+tests_to_run:
+  - pytest tests/ -v -k "auth" --tb=short
+  - pytest tests/ -v -k "token" --tb=short
+
+risk: medium
+
+notes: >
+  HIGH — Security-critical. Requires Redis connection in the auth flow. Ensure the
+  blacklist check does not add significant latency to every request.

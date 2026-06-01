@@ -1,0 +1,101 @@
+id: TASK_040_test_resource_access_control
+
+title: Task: Write tests for resource-level access control on dashboards (SEC-003)
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_012_add_resource_level_access_control
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+source_section: SEC-003 — Dashboard update/delete endpoints lack resource-level access control
+
+description: >
+  Implementing TASK_012 adds resource-level access checks to dashboard update/delete
+  endpoints. Write tests that verify users without explicit access to a dashboard
+  cannot modify or delete it, while users with access and admins can.
+
+goals:
+  - Test that a user without dashboard access gets 403 on update
+  - Test that a user without dashboard access gets 403 on delete
+  - Test that a user with editor access can update
+  - Test that an admin can update/delete any dashboard (bypass)
+  - Test that the dashboard owner can update/delete
+  - Test that access list is checked (not just role level)
+
+files:
+  - path: tests/test_resource_access_control.py
+    targets:
+      - type: test_file
+    changes:
+      - action: create_file
+        description: Create resource-level access control tests
+        code_hint: |
+          import pytest
+          from httpx import AsyncClient
+
+
+          class TestResourceAccessControl:
+            """Test resource-level access control on dashboard CRUD."""
+
+            async def test_no_access_user_cannot_update(
+                self, client: AsyncClient, no_access_headers, dashboard_id
+            ):
+                """User without dashboard access should get 403 on update."""
+                response = await client.put(
+                    f"/api/v1/dashboards/{dashboard_id}",
+                    headers=no_access_headers,
+                    json={"name": "Hacked Name"}
+                )
+                assert response.status_code == 403
+
+            async def test_no_access_user_cannot_delete(
+                self, client: AsyncClient, no_access_headers, dashboard_id
+            ):
+                """User without dashboard access should get 403 on delete."""
+                response = await client.delete(
+                    f"/api/v1/dashboards/{dashboard_id}",
+                    headers=no_access_headers
+                )
+                assert response.status_code == 403
+
+            async def test_admin_can_update_any_dashboard(
+                self, client: AsyncClient, admin_headers, dashboard_id
+            ):
+                """Admin should bypass resource-level checks."""
+                response = await client.put(
+                    f"/api/v1/dashboards/{dashboard_id}",
+                    headers=admin_headers,
+                    json={"name": "Admin Updated"}
+                )
+                assert response.status_code == 200
+
+            async def test_user_with_access_can_update(
+                self, client: AsyncClient, editor_headers, editor_dashboard_id
+            ):
+                """User with explicit dashboard access should succeed."""
+                response = await client.put(
+                    f"/api/v1/dashboards/{editor_dashboard_id}",
+                    headers=editor_headers,
+                    json={"name": "Editor Updated"}
+                )
+                assert response.status_code == 200
+
+acceptance_criteria:
+  - 403 returned for unauthorized update/delete attempts
+  - 200 returned for authorized access
+  - Admin bypass works correctly
+  - Tests cover PUT and DELETE endpoints
+
+tests_to_run:
+  - pytest tests/test_resource_access_control.py -v --tb=short
+  - pytest tests/ -v -k "dashboard or access" --tb=short (full suite still green)
+
+risk: low
+
+notes: >
+  Test task for TASK_012. Depends on implementation being complete.
+  Requires test fixtures for users with different access levels (no-access, editor, admin).
+  Reuse existing dashboard fixtures from conftest.py.

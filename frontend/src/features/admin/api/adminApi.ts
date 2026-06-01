@@ -120,6 +120,6 @@ export async function grantDashboardAccess(dashboardId: string, data: GrantAcces
 
 // Logs API
 export async function getLogs(filters?: LogFilters): Promise<ProcessingLog[]> {
-  const response = await axiosInstance.get<ProcessingLog[]>('/admin/logs', { params: filters })
+  const response = await axiosInstance.get<ProcessingLog[]>('/admin/logs/', { params: filters })
   return response.data
 }

@@ -1,0 +1,51 @@
+id: TASK_007_fix_missing_permission_error_import
+
+title: Fix missing PermissionError import in data.py — 500 instead of 403 (BE-003)
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_006_fix_custom_permission_error_shadow
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+source_section: BE-003 — PermissionError not imported in data.py — 500 instead of 403
+
+description: >
+  The data.py route file uses DashboardPermissionError (formerly PermissionError) in exception
+  handlers but does not import it. This causes a NameError at runtime, resulting in 500 Internal
+  Server Error responses instead of the intended 403 Forbidden. Add the missing import after
+  the rename in TASK_006.
+
+goals:
+  - Add missing DashboardPermissionError import to data.py
+  - Ensure 403 responses are returned correctly for permission denied cases
+
+files:
+  - path: src/mkobi/api/routes/data.py
+    targets:
+      - type: import_section
+    semantic_anchors:
+      insert_after:
+        type: import_statement
+        value: from mkobi
+    changes:
+      - action: add_code
+        description: Add import for DashboardPermissionError
+        code_hint: |
+          from mkobi.core.permissions import DashboardPermissionError
+
+acceptance_criteria:
+  - data.py imports DashboardPermissionError
+  - Permission denied scenarios return 403, not 500
+  - ruff check and mypy pass
+
+tests_to_run:
+  - pytest tests/ -v -k "data" --tb=short
+  - ruff check src/mkobi/api/routes/data.py
+
+risk: low
+
+notes: >
+  HIGH — Depends on TASK_006 (PermissionError rename). Simple fix: add the missing import.

@@ -1,0 +1,79 @@
+id: TASK_020_increase_frontend_test_coverage
+
+title: Increase frontend test coverage — critical components have zero tests (TST-004)
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+source_section: TST-004 — Frontend coverage critically sparse — 82 tests/6 files, zero coverage for critical components
+
+description: >
+  The frontend has only 82 tests across 6 files. Critical components like ProtectedRoute,
+  RoleBasedAccess, and chart components have zero test coverage. Add comprehensive tests
+  for these critical components and increase overall coverage.
+
+goals:
+  - Add tests for ProtectedRoute component (authentication guard)
+  - Add tests for RoleBasedAccess component (permission guard)
+  - Add tests for chart components (PlotlyChart at minimum)
+  - Add tests for useAuth hook (including force_password_change flow)
+  - Achieve at least 70% coverage on critical components
+
+files:
+  - path: frontend/src/shared/components/ProtectedRoute.test.tsx
+    targets:
+      - type: test_file
+    changes:
+      - action: create_file
+        description: Create tests for ProtectedRoute component
+        code_hint: |
+          import { render, screen } from '@testing-library/react';
+          import { ProtectedRoute } from './ProtectedRoute';
+          import { MemoryRouter } from 'react-router-dom';
+
+          describe('ProtectedRoute', () => {
+              it('renders children when authenticated', () => { ... });
+              it('redirects to login when not authenticated', () => { ... });
+          });
+
+  - path: frontend/src/shared/components/RoleBasedAccess.test.tsx
+    targets:
+      - type: test_file
+    changes:
+      - action: create_file
+        description: Create tests for RoleBasedAccess component
+
+  - path: frontend/src/features/auth/model/useAuth.test.ts
+    targets:
+      - type: test_file
+    changes:
+      - action: create_file
+        description: Create tests for useAuth hook
+
+  - path: frontend/src/features/dashboards/ui/charts/PlotlyChart.test.tsx
+    targets:
+      - type: test_file
+    changes:
+      - action: create_file
+        description: Create tests for PlotlyChart component
+
+acceptance_criteria:
+  - ProtectedRoute has test coverage
+  - RoleBasedAccess has test coverage
+  - useAuth hook has test coverage
+  - PlotlyChart has test coverage
+  - All new tests pass with `npm test` or `vitest`
+
+tests_to_run:
+  - cd frontend && npm test -- --coverage
+  - cd frontend && npx vitest run --coverage
+
+risk: low
+
+notes: >
+  HIGH — Testing improvement. No production code changes. Focus on critical components
+  first (auth, permissions, charts).

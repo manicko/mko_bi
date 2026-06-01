@@ -1,0 +1,59 @@
+id: TASK_017_fix_silent_exception_swallowing
+
+title: Fix _update_processing_log_status silently swallowing all exceptions (DP-004)
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+source_section: DP-004 — _update_processing_log_status silently swallows all exceptions
+
+description: >
+  The _update_processing_log_status function in data_worker.py has a bare try/except that
+  silently catches all exceptions. This means processing log status updates can fail without
+  any indication, making debugging impossible and leaving processing logs in inconsistent
+  states. Replace with proper exception handling that logs errors and handles specific
+  exception types.
+
+goals:
+  - Replace bare try/except with specific exception handling
+  - Log all exceptions with appropriate severity
+  - Re-raise critical exceptions that should not be swallowed
+  - Ensure processing log status is updated reliably
+
+files:
+  - path: src/mkobi/services/data_worker.py
+    targets:
+      - type: function
+        name: _update_processing_log_status
+    semantic_anchors:
+      insert_after:
+        type: try_block
+    changes:
+      - action: replace_code
+        description: Replace bare except with specific exception handling and logging
+        code_hint: |
+          except SQLAlchemyError as e:
+              logger.error("Failed to update processing log status: %s", e)
+              await session.rollback()
+          except Exception as e:
+              logger.exception("Unexpected error updating processing log status: %s", e)
+              raise
+
+acceptance_criteria:
+  - Bare try/except is removed
+  - All exceptions are logged with appropriate level
+  - Critical exceptions are re-raised
+  - Processing log tests pass
+
+tests_to_run:
+  - pytest tests/ -v -k "worker" --tb=short
+  - pytest tests/ -v -k "processing" --tb=short
+
+risk: low
+
+notes: >
+  HIGH — Fix improves observability and prevents silent failures. Low risk, focused change.

@@ -57,6 +57,7 @@ services:
       DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-postgres}
       DATABASE__DBNAME: bidb
       DATABASE__TEST_DBNAME: bidb_test
+      REDIS__HOST: redis
       JWT__ALGORITHM: HS256
       JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
       # Admin credentials (valid email format required)

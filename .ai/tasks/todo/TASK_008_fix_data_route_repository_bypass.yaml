@@ -1,0 +1,64 @@
+id: TASK_008_fix_data_route_repository_bypass
+
+title: Refactor data.py to use repository layer instead of raw select(Graph) (BE-002)
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_006_fix_custom_permission_error_shadow
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+source_section: BE-002 — data.py bypasses repository layer with raw select(Graph)
+
+description: >
+  The data.py route file bypasses the repository layer by using raw SQLAlchemy select(Graph)
+  queries directly. This violates the Clean Architecture pattern (API -> Service -> Repository).
+  Refactor to use the GraphRepository for all database access in data.py.
+
+goals:
+  - Replace raw select(Graph) queries in data.py with GraphRepository method calls
+  - Add any missing query methods to GraphRepository
+  - Maintain API contract (same response format)
+
+files:
+  - path: src/mkobi/api/routes/data.py
+    targets:
+      - type: route_handler
+    semantic_anchors:
+      insert_after:
+        type: function_call
+        value: select(Graph)
+    changes:
+      - action: replace_code
+        description: Replace raw SQLAlchemy queries with GraphRepository method calls
+        code_hint: |
+          # Before: session.execute(select(Graph).where(...))
+          # After: graph_repo.get_graphs_by_dashboard(dashboard_id)
+
+  - path: src/mkobi/db/repositories/graph_repository.py
+    targets:
+      - type: class
+        name: GraphRepository
+    changes:
+      - action: add_code
+        description: Add any missing query methods needed by data.py
+
+acceptance_criteria:
+  - data.py uses GraphRepository for all database access
+  - No raw SQLAlchemy select() calls remain in route handlers
+  - API responses unchanged
+  - All data-related tests pass
+
+tests_to_run:
+  - pytest tests/ -v -k "data" --tb=short
+  - ruff check src/mkobi/
+  - mypy src/mkobi/
+
+risk: medium
+
+notes: >
+  HIGH — Architectural fix. Depends on TASK_006 for the PermissionError rename since
+  data.py is being modified. Ensure GraphRepository has all needed query methods before
+  refactoring the route.

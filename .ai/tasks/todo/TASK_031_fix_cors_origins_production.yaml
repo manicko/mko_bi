@@ -1,0 +1,48 @@
+id: TASK_031_fix_cors_origins_production
+
+title: Fix CORS_ORIGINS defaulting to localhost in production compose (DC-005)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+source_section: DC-005 — CORS_ORIGINS defaults to localhost in production compose
+
+description: >
+  The production Docker Compose configuration has CORS_ORIGINS defaulting to localhost,
+  which will reject requests from production frontend domains. Update the production
+  compose to either not set a default (require explicit configuration) or use a
+  production-appropriate default.
+
+goals:
+  - Remove localhost default from production CORS_ORIGINS
+  - Require explicit CORS_ORIGINS configuration in production
+  - Document CORS configuration for production deployments
+
+files:
+  - path: docker/docker-compose.yml
+    targets:
+      - type: environment_variable
+        value: CORS_ORIGINS
+    changes:
+      - action: modify_code
+        description: Remove localhost default from production CORS_ORIGINS
+        code_hint: |
+          # Production: require explicit setting
+          CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS must be set in production}
+
+acceptance_criteria:
+  - Production compose does not default CORS_ORIGINS to localhost
+  - Application refuses to start in production without CORS_ORIGINS set
+  - Development configuration unchanged
+
+tests_to_run:
+  - docker compose -f docker/docker-compose.yml config > /dev/null
+
+risk: low
+
+notes: >
+  MEDIUM — Configuration fix. Low risk, prevents production misconfiguration.

@@ -1,0 +1,57 @@
+id: TASK_025_fix_orm_unique_index_drift
+
+title: Fix ORM unique=True vs raw CREATE UNIQUE INDEX mismatch — eliminate false alembic drift (DB-02)
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_024_fix_migration_chain_branch
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+source_section: DB-02 — ORM unique=True vs raw CREATE UNIQUE INDEX — alembic check always reports false drift
+
+description: >
+  Some models use ORM `unique=True` on columns while corresponding migrations use raw
+  `CREATE UNIQUE INDEX`. This inconsistency causes `alembic check` to always report false
+  drift. Standardize on one approach: either use ORM `unique=True` everywhere or raw
+  `CREATE UNIQUE INDEX` everywhere, and update migrations/models to match.
+
+goals:
+  - Identify all tables with unique=True vs CREATE UNIQUE INDEX mismatch
+  - Choose one convention and apply it consistently
+  - Remove redundant index creation from migrations
+  - Ensure `alembic check` reports no drift
+
+files:
+  - path: src/mkobi/db/models/
+    targets:
+      - type: model_class
+    changes:
+      - action: verify_code
+        description: Ensure unique constraints are consistently defined (ORM unique=True only)
+
+  - path: alembic/versions/
+    targets:
+      - type: migration_file
+    changes:
+      - action: remove_code
+        description: Remove redundant CREATE UNIQUE INDEX statements where ORM unique=True exists
+
+acceptance_criteria:
+  - All unique constraints use a single consistent approach
+  - No redundant CREATE UNIQUE INDEX in migrations
+  - `alembic check` reports no drift
+  - All migration tests pass
+
+tests_to_run:
+  - alembic check
+  - alembic upgrade head
+  - pytest tests/ -v
+
+risk: medium
+
+notes: >
+  MEDIUM — Database consistency fix. Depends on TASK_024 (migration branch fix).
+  Prefer ORM unique=True for consistency with SQLAlchemy patterns.

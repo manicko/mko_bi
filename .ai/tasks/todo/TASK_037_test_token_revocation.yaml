@@ -1,0 +1,101 @@
+id: TASK_037_test_token_revocation
+
+title: Task: Write tests for token revocation mechanism (SEC-001)
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_010_implement_token_revocation
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+source_section: SEC-001 — No token revocation — deactivated users can use valid tokens until expiry
+
+description: >
+  Implementing TASK_010 adds a complete token revocation mechanism with Redis-backed
+  blacklist. Existing authentication tests do not cover revocation scenarios. Write
+  comprehensive tests that validate the full lifecycle: token creation, revocation on
+  logout, rejection of revoked tokens, automatic expiry of blacklist entries, and
+  behavior during user deactivation.
+
+goals:
+  - Test that a valid token works before revocation
+  - Test that a revoked token returns 401 on authenticated endpoints
+  - Test that logout revokes the current access token
+  - Test that blacklist entries expire after TTL (no indefinite growth)
+  - Test that user deactivation revokes all active tokens
+  - Test that other users' tokens are not affected by one user's revocation
+
+files:
+  - path: tests/test_token_revocation.py
+    targets:
+      - type: test_file
+    changes:
+      - action: create_file
+        description: Create comprehensive token revocation tests
+        code_hint: |
+          import pytest
+          from httpx import AsyncClient
+
+
+          class TestTokenRevocation:
+              """Test token blacklist mechanism."""
+
+              async def test_valid_token_works(self, client: AsyncClient, auth_headers):
+                  """Valid token should grant access."""
+                  response = await client.get("/api/v1/dashboards", headers=auth_headers)
+                  assert response.status_code == 200
+
+              async def test_revoked_token_returns_401(self, client: AsyncClient, auth_headers):
+                  """After logout, old token should be rejected."""
+                  logout_response = await client.post("/api/v1/auth/logout", headers=auth_headers)
+                  assert logout_response.status_code == 200
+
+                  response = await client.get("/api/v1/dashboards", headers=auth_headers)
+                  assert response.status_code == 401
+                  assert "revoked" in response.json()["detail"].lower()
+
+              async def test_blacklist_entry_expires(self, client: AsyncClient, auth_headers):
+                  """Blacklist entry should expire after TTL, restoring token validity."""
+                  import asyncio
+                  from mkobi.core.config import get_config
+
+                  settings = get_config()
+                  ttl = settings.jwt_access_token_expire_minutes * 60
+
+                  await client.post("/api/v1/auth/logout", headers=auth_headers)
+                  assert (await client.get("/api/v1/dashboards", headers=auth_headers)).status_code == 401
+
+                  # Wait for expiry (use shorter TTL in test config or mock)
+                  # await asyncio.sleep(ttl + 1)
+                  # assert (await client.get("/api/v1/dashboards", headers=auth_headers)).status_code == 200
+
+              async def test_other_user_token_unaffected(
+                  self, client: AsyncClient, admin_headers, user_headers
+              ):
+                  """Revoking one user's token should not affect another user."""
+                  await client.post("/api/v1/auth/logout", headers=admin_headers)
+
+                  # Admin token is revoked
+                  assert (await client.get("/api/v1/dashboards", headers=admin_headers)).status_code == 401
+
+                  # User token still works
+                  assert (await client.get("/api/v1/dashboards", headers=user_headers)).status_code == 200
+
+acceptance_criteria:
+  - All revocation test scenarios pass
+  - Tests cover: valid token, revoked token, logout flow, cross-user isolation
+  - Test file follows existing pytest conventions (async, fixtures)
+  - No mocks for Redis — use the same test infrastructure as other auth tests
+
+tests_to_run:
+  - pytest tests/test_token_revocation.py -v --tb=short
+  - pytest tests/ -v -k "auth or token" --tb=short (full suite still green)
+
+risk: low
+
+notes: >
+  Test task for TASK_010. Depends on implementation being complete.
+  Use the same test fixtures and patterns as existing auth tests.
+  For TTL expiry test, consider using a short test TTL or mocking time.

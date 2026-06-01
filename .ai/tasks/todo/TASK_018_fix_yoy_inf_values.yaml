@@ -1,0 +1,59 @@
+id: TASK_018_fix_yoy_inf_values
+
+title: Fix YoY calculation producing inf values breaking JSON serialization (DP-008)
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+source_section: DP-008 — YoY calculation produces inf values not handled by fill_nan
+
+description: >
+  The Year-over-Year (YoY) calculation in aggregate_transforms.py produces infinity values
+  when dividing by zero (e.g., previous year value is 0). The fill_nan() call does not
+  handle inf values, causing JSON serialization to fail. Add inf handling after YoY
+  calculation.
+
+goals:
+  - Handle division by zero in YoY calculation
+  - Replace inf/-inf values with None or 0
+  - Ensure JSON serialization succeeds for all YoY results
+
+files:
+  - path: src/mkobi/data/aggregate_transforms.py
+    targets:
+      - type: function
+        name: (YoY calculation function)
+    semantic_anchors:
+      insert_after:
+        type: function_call
+        value: fill_nan
+    changes:
+      - action: add_code
+        description: Add inf handling after fill_nan in the YoY calculation
+        code_hint: |
+          # After fill_nan, replace inf values
+          result = result.with_columns(
+              pl.when(pl.col("yoy").is_infinite())
+              .then(None)
+              .otherwise(pl.col("yoy"))
+              .alias("yoy")
+          )
+
+acceptance_criteria:
+  - YoY calculation handles division by zero gracefully
+  - No inf/-inf values in output data
+  - JSON serialization succeeds for all YoY results
+  - Data processing tests pass
+
+tests_to_run:
+  - pytest tests/ -v -k "aggregate" --tb=short
+  - pytest tests/ -v -k "yoy" --tb=short
+
+risk: low
+
+notes: >
+  HIGH — Data quality fix. Low risk, focused change to aggregate_transforms.py.

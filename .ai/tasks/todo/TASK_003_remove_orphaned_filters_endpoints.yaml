@@ -1,0 +1,65 @@
+id: TASK_003_remove_orphaned_filters_endpoints
+
+title: Remove orphaned /api/v1/filters CRUD endpoints — no frontend consumer (INT-002)
+
+status: pending
+
+priority: critical
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+source_section: INT-002 — /api/v1/filters CRUD endpoints orphaned — no frontend consumer
+
+description: >
+  The /api/v1/filters CRUD endpoints in filters.py are orphaned — no frontend code consumes them.
+  These endpoints increase attack surface unnecessarily. Remove the route definitions from
+  filters.py and unregister the router from app.py.
+
+goals:
+  - Remove orphaned filter CRUD route definitions
+  - Unregister the filters router from the main app
+  - Reduce attack surface
+
+files:
+  - path: src/mkobi/api/routes/filters.py
+    targets:
+      - type: router
+        name: router
+    semantic_anchors:
+      insert_before:
+        type: decorator
+        value: @router.
+    changes:
+      - action: remove_code
+        description: Remove all CRUD endpoint handlers from filters.py (GET, POST, PUT, DELETE)
+
+  - path: src/mkobi/api/app.py
+    targets:
+      - type: function
+        name: create_app
+    semantic_anchors:
+      insert_after:
+        type: function_call
+        value: include_router
+    changes:
+      - action: remove_code
+        description: Remove the filters router inclusion from app.py
+        code_hint: |
+          Remove: app.include_router(filters_router, prefix="/api/v1/filters", tags=["filters"])
+
+acceptance_criteria:
+  - /api/v1/filters endpoints no longer respond to requests
+  - Filters router is not registered in app.py
+  - Application starts without errors
+  - No frontend code references these endpoints (verify with grep)
+
+tests_to_run:
+  - pytest tests/ -v -k "filter" --tb=short
+  - ruff check src/mkobi/
+
+risk: low
+
+notes: >
+  CRITICAL — Orphaned endpoints increase attack surface. Verify no frontend code calls
+  /api/v1/filters before removal. If frontend code exists, wire it up instead of removing.

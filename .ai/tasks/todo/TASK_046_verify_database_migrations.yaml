@@ -1,0 +1,36 @@
+id: TASK_046_verify_database_migrations
+
+title: Verify — Database migration and schema fixes (DB-01, DB-02, DB-03, DB-04, DB-05, DB-07)
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_024_fix_migration_chain_branch
+  - TASK_025_fix_orm_unique_index_drift
+  - TASK_026_add_missing_fk_indexes
+  - TASK_027_add_force_password_change_to_test_db
+
+verifies:
+  - TASK_024_fix_migration_chain_branch
+  - TASK_025_fix_orm_unique_index_drift
+  - TASK_026_add_missing_fk_indexes
+  - TASK_027_add_force_password_change_to_test_db
+
+verification_steps:
+  - build: docker compose build backend
+  - test: pytest tests/ -v --tb=short
+  - smoke_check: alembic check && alembic upgrade head && alembic downgrade base && alembic upgrade head
+
+pass_criteria:
+  - Docker build succeeds
+  - `alembic check` reports no drift
+  - All migrations upgrade and downgrade cleanly
+  - Test database schema matches production
+  - All FK indexes exist
+  - All tests pass
+
+failure_action: Return relevant implementation task to rework
+
+risk: low

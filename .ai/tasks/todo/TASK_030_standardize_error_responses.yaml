@@ -1,0 +1,57 @@
+id: TASK_030_standardize_error_responses
+
+title: Standardize error response formats across API endpoints (INT-008)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+source_section: INT-008 — Inconsistent error response formats across endpoints
+
+description: >
+  Different API endpoints return error responses in different formats (some return plain
+  strings, some return structured JSON, some return Pydantic validation errors). Create
+  a consistent error response model and apply it globally via exception handlers.
+
+goals:
+  - Define a standard ErrorResponse model
+  - Add global exception handlers for consistent error format
+  - Ensure all endpoints return errors in the same format
+
+files:
+  - path: src/mkobi/api/app.py
+    targets:
+      - type: function
+        name: create_app
+    changes:
+      - action: add_code
+        description: Add global exception handlers for consistent error responses
+        code_hint: |
+          class ErrorResponse(BaseModel):
+              error: str
+              detail: Optional[str] = None
+              code: Optional[str] = None
+
+          @app.exception_handler(HTTPException)
+          async def http_exception_handler(request, exc):
+              return JSONResponse(
+                  status_code=exc.status_code,
+                  content=ErrorResponse(error=exc.detail, code=str(exc.status_code)).model_dump()
+              )
+
+acceptance_criteria:
+  - All API errors return a consistent JSON structure
+  - ErrorResponse model is defined and used globally
+  - Existing tests pass with updated error format
+
+tests_to_run:
+  - pytest tests/ -v --tb=short
+
+risk: medium
+
+notes: >
+  MEDIUM — API consistency improvement. May require updating tests that check
+  specific error response formats.

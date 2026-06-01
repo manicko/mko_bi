@@ -9,6 +9,7 @@ export const axiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  maxRedirects: 5,
 })
 
 // Request interceptor - add JWT token with expiration check
