@@ -5,10 +5,18 @@ color: "#10B981"
 steps: 200
 
 permission:
-  read: allow
+  read: 
+    "*": allow
+    "*.env": allow
+    "C:\\py_dev\\mkobi\\docker\\.env": allow
+    "C:\\py_dev\\mkobi\\.env": allow
   grep: allow
   glob: allow
-  edit: allow
+  edit: 
+    "*": allow
+    "*.env": allow
+    "C:\\py_dev\\mkobi\\docker\\.env": allow
+    "C:\\py_dev\\mkobi\\.env": allow
   bash: allow
   todoread: allow
   todowrite: allow
@@ -28,6 +36,7 @@ Your responsibility is to:
 - maintain semantic targeting correctness
 - execute dependency-aware rollout tasks
 - preserve long-term maintainability
+- If you need to start or stop docker environment to check functional or run test you should run it BUT you mast return it to the same status as before - running or stopped
 
 You are NOT responsible for:
 - architecture auditing

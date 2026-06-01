@@ -16,7 +16,7 @@ problems-only: true
 - **Do NOT** produce a clean bill of health for each phase.
 - Only report: rejected findings (with reason), merged findings (with mapping), reclassified findings (old type → new type), cross-phase conflicts (same root cause found by multiple phases), and rollout safety issues (dependency problems).
 - If all findings across all phases pass validation with no conflicts, write: `All audit findings validated. No rejections, merges, or conflicts.`
-
+- If you need to start or stop docker environment to check functional or run test you should run it following the documantation instruction in dev mode BUT you mast return it to the same status as before - running or stopped
 ---
 
 ## Objective

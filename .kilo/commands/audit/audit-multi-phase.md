@@ -100,7 +100,7 @@ If missing or empty: retry once, then escalate on second failure.
 
 ## 3. Merge Final Report
 
-Use template `.kilo/commands/audit/templates/audit-final-report.md`.
+Use template `.ai/audit/templates/final-report.md`.
 Merge all validated findings from `.ai/audit/99-validation/` into `.ai/audit/final-report.md`.
 
 </process>

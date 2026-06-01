@@ -100,7 +100,6 @@ Analyze:
 
 ## Step 5 — Build Dependency-Aware Execution Graph
 Create:
-
 - isolated implementation blocks
 - dependency-aware task DAG
 - rollout sequencing
@@ -207,19 +206,30 @@ depends_on: []
 
 ---
 
-## Step 8 — Insert Verification Tasks
+## Step 8 — Insert Test Tasks
 
+For every feature, first decide whether it requires testing. Do not create tests for trivial code, simple data mappings, or implementation details.
+
+When tests are needed, set task to build tests that:
+- Validate real user-visible or business-critical behavior.
+- Exercise complete workflows and interactions between components.
+- Detect regressions that would matter in production.
+- Cover realistic edge cases and failure modes.
+- Remain valid after internal refactoring.
+
+---
+
+
+## Step 9 — Insert Verification Tasks
 
 ### Simple Tasks
 
 Criteria:
-
 * single function
 * trivial implementation
 * low risk
 
 Rules:
-
 * no dedicated verification task
 * verification is inline
 * implementation task completes only after tests pass
@@ -253,7 +263,8 @@ failure_action:
 ```
 ---
 
-## Step 9— Generate Execution Ordering
+
+## Step 10 — Generate Execution Ordering
 
 Use template:
 - `C:\py_dev\mkobi\.ai\tasks\templates\order_template.yaml`

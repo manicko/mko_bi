@@ -5,7 +5,11 @@ color: "#3B82F6"
 steps: 140
 
 permission:
-  read: allow
+  read: 
+    "*": allow
+    "*.env": allow
+    "C:\\py_dev\\mkobi\\docker\\.env": allow
+    "C:\\py_dev\\mkobi\\.env": allow
   grep: allow
   glob: allow
   todoread: allow

@@ -149,6 +149,8 @@ activemq-data/
 
 # Environments
 .env
+# MCP server config - local copy of .env for Docker Desktop Windows compatibility
+.ai/mcp/.env
 .envrc
 .venv
 env/

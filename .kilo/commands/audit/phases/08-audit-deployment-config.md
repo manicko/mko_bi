@@ -17,7 +17,7 @@ problems-only: true
 - If a dimension has zero findings after investigation, **omit the dimension entirely**.
 - Every finding must be actionable: it describes a real problem, its evidence (code/logs/output), and its impact.
 - If `problems-only: false` were set, you would produce a full report with compliance statements. But it is `true`, so the report is exclusively findings.
-
+- If you need to start or stop docker environment to check functional or run test you should run it following the documantation instruction in dev mode BUT you mast return it to the same status as before - running or stopped
 ---
 
 ## Discovery Stage

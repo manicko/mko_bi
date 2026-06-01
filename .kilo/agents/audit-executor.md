@@ -8,6 +8,8 @@ permission:
   read: 
   "*": allow
   "*.env": allow
+  "C:\\py_dev\\mkobi\\docker\\.env": allow
+  "C:\\py_dev\\mkobi\\.env": allow
   grep: allow
   glob: allow
   todoread: allow
@@ -114,6 +116,7 @@ Write findings to `.ai/audit/{phase-name}/findings.md` using the audit findings 
 - **Minimal Assumptions**: Discover rather than assume implementation details
 - **Outcome-Focused**: Evaluate whether architectural goals are met, not just compliance
 - **Progressive Disclosure**: Start broad, then focus on specific issues based on discovery
+- If you need to start or stop docker environment to check functional or run test you should run it BUT you mast return it to the same status as before - running or stopped
 
 ## Reference
 

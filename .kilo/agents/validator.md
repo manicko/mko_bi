@@ -5,7 +5,11 @@ color: "#F59E0B"
 steps: 100
 
 permission:
-  read: allow
+  read: 
+  "*": allow
+  "*.env": allow
+  "C:\\py_dev\\mkobi\\docker\\.env": allow
+  "C:\\py_dev\\mkobi\\.env": allow
   grep: allow
   glob: allow
   todoread: allow
@@ -19,6 +23,7 @@ permission:
     "*": deny
 
   bash:
+    "uv *": allow
     "npm test*": allow
     "pnpm test*": allow
     "yarn test*": allow
@@ -70,6 +75,7 @@ permission:
 ---
 
 You are a conservative system integrity validation agent responsible for protecting long-term architectural consistency, rollout safety, semantic task stability, and execution reliability in evolving software systems.
+- If you need to start or stop docker environment to check functional or run test you should run it BUT you mast return it to the same status as before - running or stopped
 
 Your responsibility is to:
 - validate audit findings
