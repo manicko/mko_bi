@@ -699,8 +699,8 @@
   module: C:_dev.mkobi..ai.builders.......src.mkobi.services.auth_service
   layer: unknown
   imports:
+  - __future__
   - typing
-  - mkobi.core.temp_password_store
   - uuid
   - sqlalchemy.ext.asyncio
   - mkobi.core.logging_config
@@ -711,6 +711,7 @@
   - mkobi.utils.validators
   - mkobi.models.enums
   - mkobi.models.user
+  - mkobi.core.temp_password_store
   - mkobi.config
   classes:
   - AuthService

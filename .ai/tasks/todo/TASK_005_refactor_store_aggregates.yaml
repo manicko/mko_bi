@@ -1,0 +1,112 @@
+---
+
+id: TASK_005_refactor_store_aggregates
+
+title: "Refactor _store_aggregates to per-chart GROUP BY aggregation with filter values"
+
+type: implementation
+
+wave: 2
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_003_aggregation_service
+  - TASK_004_wire_csv_parsing_config
+
+role: implementor
+
+autonomous: true
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\plans\\PLAN_02.md"
+source_section: "Wave 2: Backend Aggregation Pipeline — TASK_005"
+
+description: >
+  Refactor _store_aggregates() in data_worker.py to replace the current row-by-row iteration
+  with per-chart Polars GROUP BY aggregation using AggregationService. After storing aggregates,
+  extract and persist filter values into dashboard_filter_values table. The current implementation
+  (lines ~278-411) iterates raw DataFrame rows and splits dims/metrics per graph without actual
+  aggregation. This must be replaced with proper Polars groupby().agg().
+
+goals:
+  - _store_aggregates uses AggregationService for per-chart GROUP BY (no row-by-row iteration)
+  - StorageManager.save_aggregates called with correct aggregates list
+  - Filter values extracted and saved to dashboard_filter_values table after aggregation
+  - Both test-mode (db_session provided) and production-mode (new session) branches updated
+  - No nested transaction/savepoint issues
+  - ruff + mypy pass on data_worker.py
+
+files:
+  - path: src/mkobi/workers/data_worker.py
+
+    targets:
+      - type: function
+        name: _store_aggregates
+
+    semantic_anchors:
+      rewrite_function:
+        type: function
+        name: _store_aggregates
+      preserve:
+        type: transaction_boundary
+        description: "Do not create nested savepoints; respect caller-managed session"
+
+    changes:
+      - action: rewrite_function
+        description: |
+          Replace the entire _store_aggregates function body.
+
+          New logic:
+          1. Import Filter model and AggregationService (at top of function to avoid circular imports)
+          2. Query all graphs for the dashboard:
+             result = await session.execute(select(Graph).where(Graph.dashboard_id == dashboard_id))
+             graphs = result.scalars().all()
+             If no graphs, log warning and return.
+          3. Query all dashboard filters:
+             result = await session.execute(
+                 select(Filter).join(dashboard_filters).where(dashboard_filters.c.dashboard_id == dashboard_id)
+             )
+             dashboard_filter_objs = result.scalars().all()
+          4. Call AggregationService.aggregate_for_dashboard(df, graphs, dashboard_filter_objs)
+          5. Convert records to StorageManager format and save:
+             agg_service = AggregationService()
+             records = await agg_service.aggregate_for_dashboard(df, graphs, dashboard_filter_objs)
+             aggregates = [{"graph_id": r["graph_id"], "dims": r["dims"], "metrics": r["metrics"]} for r in records]
+             manager = StorageManager(db_session)
+             clear_old = (mode == UploadMode.OVERWRITE)
+             processed = await manager.save_aggregates(dashboard_id=dashboard_id, aggregates=aggregates, clear_old=clear_old)
+          6. Extract and save filter values:
+             filter_names = [f.name for f in dashboard_filter_objs]
+             filter_values = await agg_service.extract_filter_values(records, filter_names)
+             filter_values_repo = DashboardFilterValuesRepository()
+             for fname, fvalues in filter_values.items():
+                 await filter_values_repo.save_filter_values(dashboard_id, fname, fvalues, db_session)
+          7. Log results.
+
+          Both test-mode and production-mode branches need same logic (only session management differs).
+
+          IMPORTANT -- Avoid double-begin nesting: The current _store_aggregates internally wraps
+          itself in `async with session.begin()` when `db_session is None` (production mode). In production
+          mode, the caller (process_csv_file_async) already manages the session context. The refactored
+          _store_aggregates should NOT use `async with db_session.begin()` when called with an externally-
+          managed session. The existing session/transaction boundary from the caller must be respected.
+
+acceptance_criteria:
+  - _store_aggregates uses AggregationService for per-chart GROUP BY (no row-by-row iteration)
+  - StorageManager.save_aggregates called with correct aggregates list
+  - Filter values extracted and saved to dashboard_filter_values table after aggregation
+  - Both test-mode (db_session provided) and production-mode (new session) branches updated
+  - _normalize_json_keys not needed on dims (already strings from AggregationService)
+  - No nested transaction/savepoint issues
+  - ruff + mypy pass on data_worker.py
+
+tests_to_run:
+  - ruff check src/mkobi/workers/data_worker.py
+  - mypy src/mkobi/workers/data_worker.py
+
+risk: medium
+
+verification: inline
+

@@ -1,0 +1,114 @@
+---
+
+id: TASK_009_seed_test_media_dash
+
+title: "Seed test_media_dash DB records (dashboard, graphs, filters, processing_config)"
+
+type: implementation
+
+wave: 3
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_dashboard_filter_values_model
+  - TASK_005_refactor_store_aggregates
+
+role: implementor
+
+autonomous: true
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\plans\\PLAN_02.md"
+source_section: "Wave 3: API Layer — TASK_009"
+
+description: >
+  Create a seed script that creates the test_media_dash dashboard with all required DB records:
+  1 dashboard, 2 graphs, 2 filters, 2 dashboard_filter bindings, 1 processing_config.
+  This script will be run manually to set up the test dashboard in the database.
+
+goals:
+  - Script creates test_media_dash dashboard with ID printed
+  - Two graphs created with correct dimensions/metrics
+  - Two filters created and bound to dashboard (targetaudience, category)
+  - ProcessingConfig created with CSV settings (separator, encoding, dates, decimals)
+  - All created in single transaction (all-or-nothing)
+  - Script is idempotent (can re-run without duplicates)
+  - ruff + mypy pass
+
+files:
+  - path: data/seed_test_media_dash.py
+
+    targets:
+      - type: script
+        name: seed_test_media_dash
+
+    semantic_anchors:
+      create_new_file: true
+
+    changes:
+      - action: create_file
+        description: |
+          Create an async seed script using the application's DI/session system.
+          Uses get_session() + AsyncSession for DB operations.
+
+          Steps:
+          1. Check if dashboard "test_media_dash" already exists (by name). If yes, skip or update.
+          2. Create Dashboard: name="test_media_dash", description="Test media dashboard for Phase 02"
+             with config JSONB containing:
+             {
+               "filters": [
+                 {"field": "targetaudience", "type": "multiselect", "source": "data", "multi": true},
+                 {"field": "category", "type": "multiselect", "source": "data", "multi": true}
+               ]
+             }
+          3. Create Graph 1: name="Monthly TVR by Brand", type=GraphType.BAR,
+             dimensions=["year", "month", "month_label", "brand"],
+             metrics=["tvr"],
+             config={"x": "month_label", "color": "brand", "metrics": ["tvr_sum"], "orientation": "v", "barmode": "group"}
+          4. Create Graph 2: name="Monthly TVR by Advertiser", type=GraphType.BAR,
+             dimensions=["year", "month", "month_label", "advertiser"],
+             metrics=["tvr"],
+             config={"x": "month_label", "color": "advertiser", "metrics": ["tvr_sum"], "orientation": "v", "barmode": "group"}
+          5. Create Filter 1: name="targetaudience", type=FilterType.MULTISELECT, config={"source": "data"}
+          6. Create Filter 2: name="category", type=FilterType.MULTISELECT, config={"source": "data"}
+          7. Bind filters to dashboard via dashboard_filters table
+          8. Create ProcessingConfig for dashboard with settings:
+             {
+               "separator": ";",
+               "encoding": "utf-8-sig",
+               "date_format": "%d/%m/%Y",
+               "decimal_separator": ",",
+               "column_types": {"date": "date", "TVR": "float", "advertiser": "str", "brand": "str",
+                               "targetaudience": "str", "category": "str"},
+               "date_column": "date",
+               "computed_fields": [
+                 {"name": "year", "expr": "pl.col('date').dt.year()"},
+                 {"name": "month", "expr": "pl.col('date').dt.month()"},
+                 {"name": "month_label", "expr": "pl.col('date').dt.strftime('%b %Y')"}
+               ],
+               "renames": {"TVR": "tvr"}
+             }
+          9. Commit all or none in a single transaction.
+          10. Print summary of created records with their IDs.
+
+acceptance_criteria:
+  - Script creates test_media_dash dashboard with ID printed
+  - Two graphs created with correct dimensions/metrics
+      - Graph 1: dimensions=["year","month","month_label","brand"], metrics=["tvr"]
+      - Graph 2: dimensions=["year","month","month_label","advertiser"], metrics=["tvr"]
+  - Two filters created and bound to dashboard (targetaudience, category)
+  - ProcessingConfig created with CSV settings (separator, encoding, dates, decimals)
+  - All created in single transaction (all-or-nothing)
+  - Script is idempotent (can re-run without duplicates)
+  - ruff + mypy pass
+
+tests_to_run:
+  - ruff check data/seed_test_media_dash.py
+  - mypy data/seed_test_media_dash.py
+  - python data/seed_test_media_dash.py (run script and verify DB records in PostgreSQL)
+
+risk: low
+
+verification: inline

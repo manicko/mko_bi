@@ -1,0 +1,117 @@
+---
+
+id: TASK_001_dashboard_filter_values_model
+
+title: "Create dashboard_filter_values DB model + Alembic migration"
+
+type: implementation
+
+wave: 1
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+role: implementor
+
+autonomous: true
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\plans\\PLAN_02.md"
+source_section: "Wave 1: Database Layer — TASK_001"
+
+description: >
+  Create a new SQLAlchemy model `DashboardFilterValue` for the `dashboard_filter_values` table
+  and an Alembic migration. This table stores distinct filter values extracted from aggregated data
+  to populate filter UI checkboxes. Must follow existing model patterns (Base, Mapped, mapped_column,
+  PG_UUID, BigInteger PK, indexes). Model goes in its own file. Update `__init__.py` to export it.
+  The migration follows existing patterns (op.create_table or op.execute with raw SQL).
+
+goals:
+  - Create DashboardFilterValue SQLAlchemy model in its own module
+  - Model exported from db/models/__init__.py
+  - Alembic migration creates table with correct schema, FK, unique + lookup indexes
+  - Migration downgrade drops the table
+  - ruff + mypy pass on new model file
+
+files:
+  - path: src/mkobi/db/models/dashboard_filter_values.py
+
+    targets:
+      - type: class
+        name: DashboardFilterValue
+
+    semantic_anchors:
+      create_new_file: true
+
+    changes:
+      - action: create_file
+        description: |
+          Create DashboardFilterValue model with:
+          - __tablename__ = "dashboard_filter_values"
+          - Table args: unique index "uq_dashboard_filter_values" on (dashboard_id, filter_name, filter_value),
+            plus lookup index "idx_dashboard_filter_values_lookup" on (dashboard_id, filter_name)
+          - id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+          - dashboard_id: Mapped[UUID] = mapped_column(PG_UUID, ForeignKey("dashboards.id", ondelete="CASCADE"))
+          - filter_name: Mapped[str] = mapped_column(String(255))
+          - filter_value: Mapped[str] = mapped_column(String(1024))
+          - __repr__ returning f"<DashboardFilterValue id={self.id} dashboard_id={self.dashboard_id} filter_name={self.filter_name}>"
+
+  - path: src/mkobi/db/models/__init__.py
+
+    targets:
+      - type: module_export
+        name: DashboardFilterValue
+
+    semantic_anchors:
+      insert_after:
+        type: import_statement
+        value: mkobi.db.models.graphs
+
+    changes:
+      - action: edit_file
+        description: |
+          Add import: from mkobi.db.models.dashboard_filter_values import DashboardFilterValue
+          Add "DashboardFilterValue" to __all__ list
+
+  - path: alembic/versions/<new_revision>_add_dashboard_filter_values_table.py
+
+    targets:
+      - type: migration
+        name: add_dashboard_filter_values_table
+
+    semantic_anchors:
+      insert_after:
+        type: existing_migration
+        value: "64730d3d3446"  # HEAD: merge_branches_for_force_password
+
+    changes:
+      - action: create_file
+        description: |
+          Create Alembic migration following existing pattern (see a2153f0f6094_add_composite_index_aggregated_data.py).
+          upgrade(): CREATE TABLE dashboard_filter_values with columns (id bigint generated always as identity PK,
+          dashboard_id uuid NOT NULL REFERENCES dashboards(id) ON DELETE CASCADE,
+          filter_name varchar(255) NOT NULL, filter_value varchar(1024) NOT NULL)
+          + CREATE UNIQUE INDEX uq_dashboard_filter_values ON (dashboard_id, filter_name, filter_value)
+          + CREATE INDEX idx_dashboard_filter_values_lookup ON (dashboard_id, filter_name)
+          downgrade(): DROP TABLE IF EXISTS dashboard_filter_values
+
+acceptance_criteria:
+  - DashboardFilterValue model exists, imports cleanly, follows existing model conventions
+  - Model exported from db/models/__init__.py
+  - Migration creates table with correct columns, FK, unique index, and lookup index
+  - Migration downgrade drops the table
+  - ruff check passes on new files
+  - mypy passes on new model file
+
+tests_to_run:
+  - ruff check src/mkobi/db/models/dashboard_filter_values.py
+  - mypy src/mkobi/db/models/dashboard_filter_values.py
+  - alembic upgrade head (verify migration applies)
+  - alembic downgrade -1 (verify migration reverts)
+
+risk: low
+
+verification: inline
+

@@ -1,0 +1,101 @@
+---
+
+id: TASK_004_wire_csv_parsing_config
+
+title: "Wire CSV parsing config from processing_config into data_worker -> CSVLoader"
+
+type: implementation
+
+wave: 2
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+role: implementor
+
+autonomous: true
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\plans\\PLAN_02.md"
+source_section: "Wave 2: Backend Aggregation Pipeline — TASK_004"
+
+description: >
+  The data_worker's _process_csv_file_async() currently creates CSVLoader() with no config
+  and calls loader.load_csv(file_path) using defaults. The processing_config_dict contains
+  settings (separator, encoding, decimal_separator, column_types, etc.) that need to be
+  extracted and applied. Wire this config from processing_config_dict to the loader.
+  Additionally, handle decimal_separator via post-read Polars transformation since
+  CSVLoader does not natively support it.
+
+goals:
+  - CSV parsing config (separator, encoding) extracted and passed to loader.load_csv()
+  - column_types extracted from processing_config settings
+  - Post-read transformation for comma decimal separator on float columns
+  - Existing behavior unchanged when no processing_config_dict provided
+  - ruff + mypy pass on data_worker.py
+
+files:
+  - path: src/mkobi/workers/data_worker.py
+
+    targets:
+      - type: function
+        name: _process_csv_file_async
+
+    semantic_anchors:
+      modify_within:
+        type: function
+        name: _process_csv_file_async
+      insert_after:
+        type: variable_assignment
+        value: "if processing_config_dict:"
+
+    changes:
+      - action: modify_function
+        description: |
+          In _process_csv_file_async, replace the current:
+
+            loader = CSVLoader()
+            df = await asyncio.to_thread(loader.load_csv, file_path)
+
+          With config extraction and decimal handling:
+
+            csv_parse_config = {}
+            column_types = {}
+            if processing_config_dict:
+                settings = processing_config_dict.get("settings", processing_config_dict)
+                if settings.get("separator"):
+                    csv_parse_config["separator"] = settings["separator"]
+                if settings.get("encoding"):
+                    csv_parse_config["encoding"] = settings["encoding"]
+                if settings.get("column_types"):
+                    column_types = settings["column_types"]
+
+            loader = CSVLoader()
+            df = await asyncio.to_thread(loader.load_csv, file_path, csv_parse_config if csv_parse_config else None)
+
+          CRITICAL: After loading, apply post-read transformation for float columns with comma decimal separator:
+
+            if settings.get("decimal_separator") == ",":
+                for col_name, col_type in column_types.items():
+                    if col_type == "float" and col_name in df.columns:
+                        df = df.with_columns(
+                            pl.col(col_name).str.replace(",", ".").cast(pl.Float64).alias(col_name)
+                        )
+
+acceptance_criteria:
+  - CSV parsing config (separator, encoding) extracted and passed to loader.load_csv()
+  - column_types extracted from processing_config settings
+  - Post-read transformation applied: float columns have comma replaced with period and cast to Float64
+  - Existing behavior unchanged when no processing_config_dict provided
+  - ruff + mypy pass on data_worker.py
+
+tests_to_run:
+  - ruff check src/mkobi/workers/data_worker.py
+  - mypy src/mkobi/workers/data_worker.py
+
+risk: low
+
+verification: inline
+

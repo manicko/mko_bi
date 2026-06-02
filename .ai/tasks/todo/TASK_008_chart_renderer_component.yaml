@@ -1,0 +1,94 @@
+---
+
+id: TASK_008_chart_renderer_component
+
+title: "Create ChartRenderer component that derives chart type from graph data"
+
+type: implementation
+
+wave: 4
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_006_filter_values_api_endpoint
+
+role: implementor
+
+autonomous: true
+
+source_reference: "C:\\py_dev\\mkobi\\.ai\\plans\\PLAN_02.md"
+source_section: "Wave 4: Frontend — TASK_008"
+
+description: >
+  Create a new ChartRenderer component that serves as a thin adapter between the aggregated data
+  API response and the specific chart components (BarChart, etc.). It reads graph.type
+  from the API response and renders the appropriate chart component. For Phase 02, only
+  'bar' chart type is implemented -- line and pie are explicitly DEFERRED.
+
+goals:
+  - ChartRenderer imports from existing BarChart component
+  - Handles 'bar' type and defaults to bar for unknown types
+  - Line and pie branches are NOT implemented (deferred)
+  - TypeScript typecheck passes
+  - Only 'bar' type is implemented for Phase 02
+
+files:
+  - path: frontend/src/features/dashboards/ui/charts/ChartRenderer.tsx
+
+    targets:
+      - type: component
+        name: ChartRenderer
+
+    semantic_anchors:
+      create_new_file: true
+      follow_pattern:
+        type: component
+        file: frontend/src/features/dashboards/ui/charts/BarChart.tsx
+
+    changes:
+      - action: create_file
+        description: |
+          Create ChartRenderer component.
+
+          interface ChartRendererProps {
+            graph: GraphDataWithConfig  // { graph_id, type, name, data: [...data points...], layout? }
+          }
+
+          export function ChartRenderer({ graph }: ChartRendererProps) {
+            const data = graph.data || []
+
+            switch (graph.type) {
+              case 'bar':
+              default:
+                return (
+                  <BarChart
+                    data={{
+                      x: data.map(d => d[Object.keys(d)[0]]),
+                      y: data.map(d => d[Object.keys(d)[1]] || 0),
+                    }}
+                    title={graph.name}
+                  />
+                )
+            }
+          }
+
+          Note: Only 'bar' type is implemented for Phase 02. Line and pie chart types are
+          DEFERRED to a future phase. The default case falls through to BarChart for safety.
+
+acceptance_criteria:
+  - ChartRenderer imports from existing BarChart component
+  - Handles 'bar' type and defaults to bar for unknown types
+  - Line and pie branches are NOT implemented (deferred)
+  - TypeScript typecheck passes
+  - Component can optionally replace inline <PlotlyChart> in DashboardView
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+risk: low
+
+verification: inline
+

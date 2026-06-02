@@ -103,6 +103,13 @@
   type: component
   value: LogViewer
   stable_hash: 062d59f6
+- id: c4aefeb2
+  file: C:/py_dev/mkobi/frontend/src/features/admin/ui/RegistrationRequests.tsx
+  symbol_path:
+    - RetrievePasswordDialog
+  type: component
+  value: RetrievePasswordDialog
+  stable_hash: c4aefeb2
 - id: 981bcfb9
   file: C:/py_dev/mkobi/frontend/src/features/admin/ui/RegistrationRequests.tsx
   symbol_path:
@@ -117,6 +124,13 @@
   type: component
   value: ResetPasswordResultDialog
   stable_hash: 16dda3fb
+- id: abdcfcaf
+  file: C:/py_dev/mkobi/frontend/src/features/admin/ui/UserManagement.tsx
+  symbol_path:
+    - RetrievePasswordDialog
+  type: component
+  value: RetrievePasswordDialog
+  stable_hash: abdcfcaf
 - id: 4cbe3e4d
   file: C:/py_dev/mkobi/frontend/src/features/admin/ui/UserManagement.tsx
   symbol_path:
