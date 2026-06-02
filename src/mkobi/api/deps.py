@@ -22,6 +22,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
 if TYPE_CHECKING:
+    from mkobi.services.auth_service import AuthService
     from mkobi.services.data_service import DataService
     from mkobi.services.filter_service import FilterService
     from mkobi.services.graph_service import GraphService
@@ -37,6 +38,7 @@ from mkobi.core.permissions import (
 )
 from mkobi.core.redis_client import get_async_redis_client
 from mkobi.core.security import decode_token, is_token_revoked, is_user_tokens_revoked
+from mkobi.core.temp_password_store import TempPasswordStore
 from mkobi.db.repositories.user_repo import UserRepository
 # DEPRECATED: get_session is kept for backwards compatibility only.
 # External code may import it from here. Remove in v2.0.
@@ -73,6 +75,7 @@ __all__ = [
     "get_processing_log_repository",
     "get_graph_repository",
     "get_auth_service",
+    "get_temp_password_store",
     "get_user_service",
     "get_dashboard_service",
     "get_filter_service",
@@ -120,6 +123,24 @@ async def get_redis_client_dependency() -> Any:
         aioredis.Redis: Asynchronous Redis client instance.
     """
     return get_async_redis_client()
+
+
+# --- TempPasswordStore dependency ---
+
+
+def get_temp_password_store() -> TempPasswordStore:
+    """DI factory for TempPasswordStore.
+
+    Returns:
+        TempPasswordStore: Configured with async Redis client and TTL from settings.
+    """
+    from mkobi.config import get_config
+
+    config = get_config()
+    return TempPasswordStore(
+        redis_client=get_async_redis_client(),
+        ttl_seconds=config.temp_password_ttl_seconds,
+    )
 
 
 # --- Dependency Injection for repositories ---
@@ -244,18 +265,20 @@ def get_graph_repository() -> Any:
 def get_auth_service(
     user_repo: UserRepository = Depends(get_user_repository),
     reg_request_repo: Any = Depends(get_registration_request_repository),
+    temp_password_store: TempPasswordStore | None = Depends(get_temp_password_store),
 ) -> AuthService:
     """DI factory for authentication service.
 
     Args:
         user_repo: Injected user repository.
         reg_request_repo: Injected registration request repository.
+        temp_password_store: Optional temp password store for retrieval tokens.
 
     Returns:
         AuthService: Authentication service implementation.
     """
     from mkobi.services.auth_service import AuthService
-    return AuthService(user_repo, reg_request_repo)
+    return AuthService(user_repo, reg_request_repo, temp_password_store=temp_password_store)
 
 
 def get_user_service(

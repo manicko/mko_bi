@@ -276,20 +276,26 @@ The admin panel uses a tabbed interface with 4 sections. Tab state (pagination, 
 
 1. Each user row in the `UserManagement` DataGrid includes a "Reset Password" action button (Key icon) alongside the Delete button.
 2. Clicking Reset Password opens a `ConfirmDialog` with the message: "Generate a new temporary password for {email}? The current password will be immediately invalidated."
-3. On confirmation, `POST /api/v1/admin/users/:id/reset-password` is called.
-4. On success, the `ResetPasswordResultDialog` opens, displaying the temporary password in a read-only TextField with a Copy button (uses `navigator.clipboard.writeText` + toast "Copied").
-5. The admin copies the temp password and communicates it securely to the user.
-6. The user's `force_password_change` flag is set to `True`, so on next login they are forced to change their password.
-7. On error, a toast "Failed to reset password" is shown.
+3. On confirmation, `POST /api/v1/admin/users/{user_id}/reset-password` is called.
+4. On success, a `RetrievePasswordDialog` opens with a "Show Password" button.
+5. Clicking "Show Password" calls `GET /api/v1/admin/temp-passwords/{retrieval_token}`.
+6. On success, the password is displayed in `ResetPasswordResultDialog` with a Copy button (uses `navigator.clipboard.writeText` + toast "Copied").
+7. On error (404 — expired/already retrieved), a toast "Password expired or already retrieved" is shown.
+8. The admin copies the temp password and communicates it securely to the user.
+9. The user's `force_password_change` flag is set to `True`, so on next login they are forced to change their password.
 
 ### Registration Approval Flow
 
 1. Admin views pending registration requests in a DataGrid table.
 2. Approve/reject actions use `ConfirmDialog` with configurable `confirmLabel` ("Approve" / "Reject").
 3. On approve: `POST /api/v1/admin/registration-requests/:id/approve` creates a user with a random temporary password.
-4. The `temp_password` is returned in the response for the admin to communicate to the new user.
-5. On reject: the request status is set to `rejected`.
-6. Toast notifications confirm success/failure of actions.
+4. On success, a `RetrievePasswordDialog` opens with a "Show Password" button.
+5. Clicking "Show Password" calls `GET /api/v1/admin/temp-passwords/{retrieval_token}`.
+6. On success, the password is displayed in `ResetPasswordResultDialog` with a Copy button.
+7. On error (404 — expired/already retrieved), a toast "Password expired or already retrieved" is shown.
+8. On reject: the request status is set to `rejected`.
+
+> **Note:** Both flows use a two-step retrieval pattern — reset/approve returns a `retrieval_token`, and the password is fetched separately via `GET /admin/temp-passwords/{token}`. This ensures plaintext passwords never appear in the reset/approve API responses. Toast notifications confirm success/failure of actions.
 
 ---
 

@@ -305,6 +305,27 @@ class Settings(BaseSettings):
     # --- Rate Limiter ---
     rate_limiter_fail_closed: bool = Field(default=False, alias="RATE_LIMITER_FAIL_CLOSED")
 
+    # --- Temp Password ---
+    temp_password_ttl_seconds: int = Field(default=86400, alias="TEMP_PASSWORD_TTL_SECONDS")
+
+    @field_validator("temp_password_ttl_seconds")
+    @classmethod
+    def validate_temp_password_ttl(cls, value: int) -> int:
+        """Validate temp password TTL is at least 60 seconds.
+
+        Args:
+            value: TTL value in seconds.
+
+        Returns:
+            int: Validated TTL value.
+
+        Raises:
+            ValueError: If TTL is less than 60 seconds.
+        """
+        if value < 60:
+            raise ValueError("TEMP_PASSWORD_TTL_SECONDS must be at least 60 seconds")
+        return value
+
     @model_validator(mode="after")
     def validate_admin_credentials(self) -> "Settings":
         """Validate admin credentials are explicitly set in production.

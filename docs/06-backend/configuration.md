@@ -64,6 +64,7 @@ All environment variables use the double-underscore (`__`) delimiter for nesting
 | `STALE_FILE_THRESHOLD_HOURS`  | `stale_file_threshold_hours` | `24`      | Temp file cleanup threshold     |
 | `RATE_LIMITER_FAIL_CLOSED`    | `rate_limiter_fail_closed` | `false`      | Fail-closed on Redis outage     |
 | `CORS_ORIGINS`                | `cors_origins`           | `[]`           | Allowed CORS origins            |
+| `TEMP_PASSWORD_TTL_SECONDS`   | `temp_password_ttl_seconds` | `86400`     | Temp password Redis TTL (min 60s) |
 
 ## Secrets Management
 
@@ -120,6 +121,14 @@ In development, default credentials are permitted but a warning is logged.
 
 - `CORS_ORIGINS` must be explicitly configured in production
 - The application validates CORS configuration at startup and raises an error if origins are not set in production mode
+
+### Temp Password TTL
+
+- `TEMP_PASSWORD_TTL_SECONDS` controls the Redis TTL for temporarily stored passwords (default: `86400` = 24 hours)
+- A Pydantic `field_validator` enforces a minimum value of `60` seconds
+- Passwords are stored in Redis via `TempPasswordStore` and automatically expire after the configured TTL
+- This setting affects both admin password reset and registration approval flows
+- Passwords are also deleted immediately upon retrieval (single-use pattern)
 
 ## YAML Configuration
 

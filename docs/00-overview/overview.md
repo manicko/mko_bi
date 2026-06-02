@@ -163,7 +163,7 @@ The FastAPI backend exposes the following endpoint groups:
 | Processing Configs  | Read/Write processing settings                 | Editor+       |
 | Upload & Processing | File upload, processing triggers, status, result | Editor+       |
 | Aggregated Data     | Retrieve chart data as JSON                    | Viewer+       |
-| Admin               | User management, registration requests, logs   | Admin         |
+| Admin               | User management, registration requests, logs, temp password retrieval | Admin         |
 | Health              | Health checks                                  | Public        |
 
 > See [API Responsibilities](../SPEC.md#14-api-responsibilities-fastapi) in SPEC.md for full endpoint listing.

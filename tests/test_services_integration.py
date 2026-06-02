@@ -833,10 +833,11 @@ class TestRegistrationApprovalFlow:
         )
         assert approve_response.status_code == 200
 
-        # Verify response contains temp_password
+        # Verify response contains retrieval_token (not temp_password)
         data = approve_response.json()
-        assert "temp_password" in data
+        assert "retrieval_token" in data
         assert "user_id" in data
+        assert "temp_password" not in data
         assert data["message"] == "Registration request approved"
 
         # Verify user exists in DB
@@ -845,9 +846,6 @@ class TestRegistrationApprovalFlow:
 
         # Verify user has viewer role (default for approved registrations)
         assert user.role == UserRole.VIEWER
-
-        # Verify temp password is long enough (security requirement)
-        assert len(data["temp_password"]) >= 16
 
     async def test_reject_registration_does_not_create_user(
         self,
@@ -894,6 +892,9 @@ class TestRegistrationApprovalFlow:
         registration_request_repo,
     ):
         """Verify user can login with temp password after approval."""
+        from mkobi.core.temp_password_store import TempPasswordStore
+        from mkobi.main import app
+
         unique_email = f"logintemp_{uuid4().hex[:8]}@example.com"
 
         # Create registration request via public endpoint
@@ -908,14 +909,20 @@ class TestRegistrationApprovalFlow:
         req = next((r for r in requests if r.email == unique_email), None)
         assert req is not None, "Registration request should be created"
 
-        # Approve via admin endpoint
+        # Approve via admin endpoint - get retrieval_token
         approve_response = await async_client.post(
             f"/admin/registration-requests/{req.id}/approve",
             headers=auth_headers,
         )
         assert approve_response.status_code == 200
 
-        temp_password = approve_response.json()["temp_password"]
+        retrieval_token = approve_response.json()["retrieval_token"]
+
+        # Retrieve temp password from Redis using the same mock client
+        # that the endpoint used (stored in app.state.mock_redis)
+        mock_redis = app.state.mock_redis
+        temp_password = await TempPasswordStore(mock_redis).retrieve(retrieval_token)
+        assert temp_password is not None, "Temp password should be retrievable from Redis"
 
         # Login with the temp password
         login_response = await async_client.post(

@@ -65,19 +65,23 @@ C:\PY_DEV\MKOBI
 |   |       
 |   +---plans
 |   |   |   PLAN_01.md
+|   |   |   PLAN_03.md
 |   |   |   
 |   |   \---tasks
 |   +---problems
 |   |   |   CONTEXT_01.md
 |   |   |   CONTEXT_02.md
+|   |   |   CONTEXT_03.md
 |   |   |   
 |   |   \---decisions
 |   |           DECISION_01.md
 |   |           DECISION_02.md
+|   |           DECISION_03.md
 |   |           
 |   +---researches
 |   |       RESEARCH_01.md
 |   |       RESEARCH_02.md
+|   |       RESEARCH_03.md
 |   |       
 |   +---structure
 |   |   |   map.md
@@ -92,11 +96,26 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
+|   |   |       TASK_001_backend_temp_password_store_DONE.yaml
+|   |   |       TASK_002_backend_settings_di_DONE.yaml
+|   |   |       TASK_003_backend_auth_service_reset_password_DONE.yaml
+|   |   |       TASK_004_backend_approve_endpoint_DONE.yaml
+|   |   |       TASK_005_backend_retrieval_endpoint_DONE.yaml
+|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
+|   |   |       order.yaml
+|   |   |       TASK_006_frontend_api_types.yaml
+|   |   |       TASK_007_frontend_user_management.yaml
+|   |   |       TASK_008_frontend_registration_requests.yaml
+|   |   |       TASK_009_backend_tests.yaml
+|   |   |       TASK_010_verify_phase_01.yaml
+|   |   |       TASK_03_001_header_nav_styling.yaml
+|   |   |       TASK_03_002_verify_styling.yaml
+|   |   |       
 |   |   \---validation
 |   \---templates
 |           decision.md
@@ -4144,6 +4163,7 @@ C:\PY_DEV\MKOBI
 |           10737132678416349065
 |           10742838609778655603
 |           10935714315424551900
+|           10938613591103303777
 |           10948476163302620677
 |           1095519094892101606
 |           11092974304706959660
@@ -4187,6 +4207,7 @@ C:\PY_DEV\MKOBI
 |           15352730184470552885
 |           1547959260298683871
 |           15573187231842253987
+|           15720867240633417268
 |           1585135333544026547
 |           15931875610329894108
 |           15996359271151126581
@@ -18389,6 +18410,7 @@ C:\PY_DEV\MKOBI
 |           42dc6a05-bc91-463a-b344-ce4e877821ee.csv
 |           43ecc743-954f-4cf0-9259-be76f12eefe2.csv
 |           4455d6dd-b006-4c90-85ab-1ae18768f15f.csv
+|           46af11fd-1982-4fd3-a018-84814645eb03.csv
 |           4818e548-4a1c-47dd-b932-b16dcfd79522.csv
 |           48b99e63-44f9-4eb0-9db5-69a16eb963d3.csv
 |           496499bb-b3a2-4ebf-bae9-df5506c5bfc9.csv
@@ -18438,6 +18460,7 @@ C:\PY_DEV\MKOBI
 |           8763f077-cb4b-4b60-8636-afb9c11b1230.csv.gz
 |           87fddff6-f39c-404f-8d9a-f7b163f93347.csv
 |           89e49007-a3ba-48ab-a927-e7515fbf11de.csv
+|           8a856f74-aa46-40ad-a0c1-f65f17905dcf.csv
 |           8a9704eb-21a3-4f0a-a16c-887f33b86f69.csv
 |           8f3a7c33-2f27-4904-83fd-f73461be49ac.csv
 |           8f976a76-f0ca-4267-bc1c-f74fa9ced860.csv.gz
@@ -18530,6 +18553,7 @@ C:\PY_DEV\MKOBI
 |           f71295a7-9252-4243-8a3a-69928cb1bc6f.csv
 |           fb64278b-695d-4ec2-9246-0601234ebb91.csv
 |           fcddd3e6-e4ae-4736-9423-334233370a26.csv.gz
+|           fe33192d-9be7-48eb-9a38-394025f4b111.csv.gz
 |           fe56beed-7cde-46d2-a4f9-790eb7ae9736.csv
 |           
 +---docker
@@ -100999,6 +101023,7 @@ C:\PY_DEV\MKOBI
 |       |   |   redis_client.py
 |       |   |   security.py
 |       |   |   task_queue.py
+|       |   |   temp_password_store.py
 |       |   |   __init__.py
 |       |   |   
 |       |   \---__pycache__
@@ -101008,6 +101033,7 @@ C:\PY_DEV\MKOBI
 |       |           redis_client.cpython-314.pyc
 |       |           security.cpython-314.pyc
 |       |           task_queue.cpython-314.pyc
+|       |           temp_password_store.cpython-314.pyc
 |       |           __init__.cpython-314.pyc
 |       |           
 |       +---data
@@ -101252,6 +101278,18 @@ C:\PY_DEV\MKOBI
     |   test_upload_api.py.bak
     |   test_users_api.py
     |   
+    +---api
+    |   |   test_temp_password_retrieval.py
+    |   |   
+    |   \---__pycache__
+    |           test_temp_password_retrieval.cpython-314-pytest-9.0.3.pyc
+    |           
+    +---core
+    |   |   test_temp_password_store.py
+    |   |   
+    |   \---__pycache__
+    |           test_temp_password_store.cpython-314-pytest-9.0.3.pyc
+    |           
     \---__pycache__
             conftest.cpython-314-pytest-9.0.3.pyc
             conftest.cpython-314.pyc

@@ -70,6 +70,7 @@
   - admin_database_url
   - validate_secret_key
   - __init__
+  - validate_temp_password_ttl
   - validate_admin_credentials
   - validate_cors_origins
   - settings_customise_sources
@@ -114,6 +115,7 @@
   - jose
   - sqlalchemy.ext.asyncio
   - uuid
+  - mkobi.services.auth_service
   - mkobi.services.data_service
   - mkobi.services.filter_service
   - mkobi.services.graph_service
@@ -124,11 +126,13 @@
   - mkobi.core.permissions
   - mkobi.core.redis_client
   - mkobi.core.security
+  - mkobi.core.temp_password_store
   - mkobi.db.repositories.user_repo
   - mkobi.db.session
   - mkobi.models.enums
   - mkobi.models.user
   - mkobi.services.auth_service
+  - mkobi.config
   - mkobi.db.repositories.user_repo
   - mkobi.db.repositories.dashboard_repo
   - mkobi.db.repositories.access_repo
@@ -151,6 +155,7 @@
   - mkobi.services.data_service
   classes: []
   functions:
+  - get_temp_password_store
   - get_user_repository
   - get_dashboard_repository
   - get_access_repository
@@ -279,6 +284,15 @@
   functions:
   - __init__
   - get_task_queue
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\temp_password_store.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.core.temp_password_store
+  layer: unknown
+  imports:
+  - typing
+  classes:
+  - TempPasswordStore
+  functions:
+  - __init__
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\__init__.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.core.__init__
   layer: unknown
@@ -686,6 +700,7 @@
   layer: unknown
   imports:
   - typing
+  - mkobi.core.temp_password_store
   - uuid
   - sqlalchemy.ext.asyncio
   - mkobi.core.logging_config
@@ -1564,6 +1579,7 @@
   - mkobi.models.auth
   - mkobi.services.auth_service
   - mkobi.core.security
+  - mkobi.core.temp_password_store
   - mkobi.config
   classes: []
   functions: []

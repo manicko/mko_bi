@@ -123,6 +123,10 @@ class MockRedis:
     async def get(self, key):
         return self._data.get(key)
 
+    async def set(self, key, value, ex=None):
+        """Set a key with optional TTL (TTL not enforced in mock)."""
+        self._data[key] = value
+
     async def exists(self, key):
         """Check if key exists in mock Redis."""
         return 1 if key in self._data else 0
@@ -131,7 +135,7 @@ class MockRedis:
         """Set key with TTL in mock Redis."""
         self._data[key] = value
 
-    def pipeline(self):
+    def pipeline(self, transaction=True):
         return MockPipeline(self)
 
     async def incr(self, key):
@@ -172,9 +176,40 @@ class MockPipeline:
     async def expire(self, key, ttl):
         return await self._redis.expire(key, ttl)
 
+    def get(self, key):
+        """Queue GET command for later execution.
+
+        Note: Redis-py pipeline commands are synchronous (just queue),
+        only execute() is async.
+        """
+        self._commands.append(("get", key))
+
+    def delete(self, key):
+        """Queue DELETE command for later execution.
+
+        Note: Redis-py pipeline commands are synchronous (just queue),
+        only execute() is async.
+        """
+        self._commands.append(("delete", key))
+
     async def execute(self):
-        """Mock execute - commands are already applied."""
-        pass
+        """Execute all queued commands and return results.
+
+        Returns list of results matching the order of queued commands.
+        For GET commands, returns the value; for DELETE, returns the count.
+        """
+        results = []
+        for cmd_type, key in self._commands:
+            if cmd_type == "get":
+                results.append(self._redis._data.get(key))
+            elif cmd_type == "delete":
+                if key in self._redis._data:
+                    del self._redis._data[key]
+                    results.append(1)
+                else:
+                    results.append(0)
+        self._commands.clear()
+        return results
 
 
 # Store original AuthService.__init__ before any patches are applied
@@ -411,10 +446,15 @@ async def async_client(async_db_session):
     Overrides the get_db_dependency to use the test's session.
     This ensures the API and test use the same session.
     """
-    from mkobi.api.deps import get_db_dependency, get_redis_client_dependency
+    from mkobi.api.deps import (
+        get_db_dependency,
+        get_redis_client_dependency,
+        get_temp_password_store,
+    )
     from mkobi.main import app
     import httpx
     from httpx import ASGITransport
+    from mkobi.core.temp_password_store import TempPasswordStore
 
     # Override the database dependency to use test session
     async def override_get_db() -> AsyncSession:
@@ -427,6 +467,14 @@ async def async_client(async_db_session):
     async def override_get_redis():
         return mock_redis
     app.dependency_overrides[get_redis_client_dependency] = override_get_redis
+
+    # Override TempPasswordStore to use the same mock Redis
+    def override_get_temp_password():
+        return TempPasswordStore(redis_client=mock_redis)
+    app.dependency_overrides[get_temp_password_store] = override_get_temp_password
+
+    # Store mock_redis on the app for access by tests
+    app.state.mock_redis = mock_redis
 
     transport = ASGITransport(app=app)
     async with httpx.AsyncClient(

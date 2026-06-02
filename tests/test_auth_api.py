@@ -281,13 +281,25 @@ class TestAdminResetPasswordEndpoint:
         )
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        assert "temp_password" in data
+        # Response contains retrieval_token, not temp_password directly
+        assert "retrieval_token" in data
         assert "user_id" in data
         assert data["user_id"] == str(target_user.id)
-        assert len(data["temp_password"]) >= 16
+
+        # Admin uses retrieval endpoint to get the temp password
+        retrieval_token = data["retrieval_token"]
+        retrieve_response = await async_client.get(
+            f"/admin/temp-passwords/{retrieval_token}",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert retrieve_response.status_code == status.HTTP_200_OK
+        retrieve_data = retrieve_response.json()
+        assert "temp_password" in retrieve_data
+        temp_password = retrieve_data["temp_password"]
+        assert len(temp_password) >= 16
         # Verify temp password has letters and digits
-        assert re.search(r"[a-zA-Z]", data["temp_password"]) is not None
-        assert re.search(r"\d", data["temp_password"]) is not None
+        assert re.search(r"[a-zA-Z]", temp_password) is not None
+        assert re.search(r"\d", temp_password) is not None
 
     async def test_admin_reset_password_self_guard(
         self, async_client: AsyncClient, async_db_session
@@ -431,6 +443,13 @@ class TestRegistrationApprovalForcePasswordChange:
         )
         assert response.status_code == status.HTTP_200_OK
 
+        # Verify response contains retrieval_token (not temp_password)
+        data = response.json()
+        assert "retrieval_token" in data
+        assert "user_id" in data
+        assert "temp_password" not in data
+        assert data["message"] == "Registration request approved"
+
         # Verify user was created with force_password_change=True
         user = await user_repo.get_by_email(
             email="approve_force_test@example.com",
@@ -505,7 +524,7 @@ class TestRegistrationApprovalForcePasswordChange:
         user_repo = UserRepository()
 
         # Create a user
-        user = await user_repo.create(
+        await user_repo.create(
             db=async_db_session,
             email="password_mismatch_test@example.com",
             password_hash=hash_password("TempPass123!"),

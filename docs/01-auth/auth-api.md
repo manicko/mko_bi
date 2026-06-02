@@ -471,8 +471,15 @@ Browser              FastAPI              Database
   │                    │◄───────────────────│
   │                    │                    │
   │  Admin receives    │                    │
-  │  temp_password     │                    │
+  │  retrieval_token   │                    │
   │  via response      │                    │
+  │                    │                    │
+  │  Admin retrieves   │                    │
+  │  temp_password via │                    │
+  │  GET /admin/temp-  │                    │
+  │  passwords/{token} │                    │
+  │  and communicates  │                    │
+  │  it to new user    │                    │
 ```
 
 1. User submits their email on the registration page (`/register`)
@@ -482,8 +489,10 @@ Browser              FastAPI              Database
 5. Admin reviews pending requests via the admin panel (`/admin`)
 6. Admin approves the request — a user account is created with a random temporary password
 7. The user's `force_password_change` flag is set to `True`, requiring them to change their password on first login
-8. Admin communicates the temporary password to the new user
-9. New user logs in and is redirected to `/profile/change-password?force=true` to set a new password
+8. The response includes a `retrieval_token` (UUID) instead of the plaintext password
+9. Admin retrieves the temporary password via `GET /api/v1/admin/temp-passwords/{retrieval_token}` (one-time, admin only)
+10. Admin communicates the temporary password to the new user
+11. New user logs in and is redirected to `/profile/change-password?force=true` to set a new password
 
 ---
 

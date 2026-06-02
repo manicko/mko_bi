@@ -63,7 +63,7 @@ class IAuthService(abc.ABC):
         admin_user_id: UUID,
         db: AsyncSession,
     ) -> dict[str, Any] | None:
-        """Admin-triggered password reset. Generates temp password."""
+        """Admin-triggered password reset. Generates temp password and returns retrieval token."""
         pass
 
     @abc.abstractmethod

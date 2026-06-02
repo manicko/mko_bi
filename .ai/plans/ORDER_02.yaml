@@ -1,0 +1,60 @@
+tasks:
+  - id: TASK_001_dashboard_filter_values_model
+    depends_on: []
+    wave: 1
+
+  - id: TASK_002_dashboard_filter_values_repository
+    depends_on:
+      - TASK_001_dashboard_filter_values_model
+    wave: 1
+
+  - id: TASK_003_aggregation_service
+    depends_on:
+      - TASK_001_dashboard_filter_values_model
+      - TASK_002_dashboard_filter_values_repository
+    wave: 2
+
+  - id: TASK_004_wire_csv_parsing_config
+    depends_on: []
+    wave: 2
+
+  - id: TASK_005_refactor_store_aggregates
+    depends_on:
+      - TASK_003_aggregation_service
+      - TASK_004_wire_csv_parsing_config
+    wave: 2
+
+  - id: TASK_006_filter_values_api_endpoint
+    depends_on:
+      - TASK_002_dashboard_filter_values_repository
+      - TASK_005_refactor_store_aggregates
+    wave: 3
+
+  - id: TASK_009_seed_test_media_dash
+    depends_on:
+      - TASK_005_refactor_store_aggregates
+      - TASK_006_filter_values_api_endpoint
+    wave: 3
+
+  - id: TASK_007_frontend_filter_values_hook
+    depends_on:
+      - TASK_006_filter_values_api_endpoint
+    wave: 4
+
+  - id: TASK_008_chart_renderer_component
+    depends_on:
+      - TASK_006_filter_values_api_endpoint
+    wave: 4
+
+  - id: TASK_010_verify_phase_02
+    depends_on:
+      - TASK_001_dashboard_filter_values_model
+      - TASK_002_dashboard_filter_values_repository
+      - TASK_003_aggregation_service
+      - TASK_004_wire_csv_parsing_config
+      - TASK_005_refactor_store_aggregates
+      - TASK_006_filter_values_api_endpoint
+      - TASK_007_frontend_filter_values_hook
+      - TASK_008_chart_renderer_component
+      - TASK_009_seed_test_media_dash
+    wave: 5

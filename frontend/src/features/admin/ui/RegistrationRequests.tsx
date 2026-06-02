@@ -1,18 +1,82 @@
 import { useState, useMemo, useCallback } from 'react'
 import { DataGrid, GridActionsCellItem, type GridRenderCellParams } from '@mui/x-data-grid'
 import type { GridColDef } from '@mui/x-data-grid'
-import { Box, Chip, Typography } from '@mui/material'
+import { Box, Chip, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button, Typography } from '@mui/material'
 import { Check as ApproveIcon, Close as RejectIcon } from '@mui/icons-material'
-import { getRegistrationRequests, approveRequest, rejectRequest } from '../api/adminApi'
+import { getRegistrationRequests, approveRequest, rejectRequest, retrieveTempPassword } from '../api/adminApi'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog'
+import { ResetPasswordResultDialog } from './ResetPasswordResultDialog'
 import { toast } from 'react-hot-toast'
 import type { RegistrationRequestItem } from '../../../shared/types/api.types'
+
+interface RetrievePasswordDialogProps {
+  open: boolean
+  retrievalToken: string
+  userEmail: string
+  onClose: () => void
+  onPasswordRetrieved: (tempPassword: string, userEmail: string) => void
+}
+
+function RetrievePasswordDialog({
+  open,
+  retrievalToken,
+  userEmail,
+  onClose,
+  onPasswordRetrieved,
+}: RetrievePasswordDialogProps) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(false)
+
+  const handleRetrieve = async () => {
+    setLoading(true)
+    setError(false)
+    try {
+      const data = await retrieveTempPassword(retrievalToken)
+      onPasswordRetrieved(data.temp_password, userEmail)
+    } catch {
+      setError(true)
+      toast.error('Password expired or already retrieved')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Retrieve Password</DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          Click "Show Password" to retrieve the temporary password for {userEmail}. This can only
+          be done once.
+        </DialogContentText>
+        {error && (
+          <DialogContentText color="error" sx={{ mt: 2 }}>
+            Password expired or already retrieved.
+          </DialogContentText>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={() => { void handleRetrieve() }} variant="contained" disabled={loading}>
+          {loading ? 'Retrieving...' : 'Show Password'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
 
 export function RegistrationRequests() {
   const [selectedRequest, setSelectedRequest] = useState<RegistrationRequestItem | null>(null)
   const [actionType, setActionType] = useState<'approve' | 'reject'>('approve')
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+
+  const [pendingRetrievalToken, setPendingRetrievalToken] = useState<string | null>(null)
+  const [approvedEmail, setApprovedEmail] = useState<string>('')
+  const [showPasswordMode, setShowPasswordMode] = useState(false)
+
+  const [tempPassword, setTempPassword] = useState<string | null>(null)
+  const [tempPasswordEmail, setTempPasswordEmail] = useState<string | null>(null)
 
   const queryClient = useQueryClient()
 
@@ -24,8 +88,11 @@ export function RegistrationRequests() {
 
   const approveMutation = useMutation({
     mutationFn: approveRequest,
-    onSuccess: () => {
+    onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'registration-requests'] })
+      setPendingRetrievalToken(data.retrieval_token)
+      setApprovedEmail(selectedRequest?.email ?? '')
+      setShowPasswordMode(true)
       setConfirmDialogOpen(false)
       toast.success('Request approved successfully')
     },
@@ -57,6 +124,14 @@ export function RegistrationRequests() {
     setActionType('reject')
     setConfirmDialogOpen(true)
   }, [])
+
+  const handlePasswordRetrieved = useCallback(
+    (password: string, email: string) => {
+      setTempPassword(password)
+      setTempPasswordEmail(email)
+    },
+    [],
+  )
 
   const columns: GridColDef[] = useMemo(
     () => [
@@ -146,6 +221,28 @@ export function RegistrationRequests() {
         onCancel={() => setConfirmDialogOpen(false)}
         loading={approveMutation.isPending || rejectMutation.isPending}
         confirmLabel={actionType === 'approve' ? 'Approve' : 'Reject'}
+      />
+
+      <RetrievePasswordDialog
+        open={showPasswordMode}
+        retrievalToken={pendingRetrievalToken ?? ''}
+        userEmail={approvedEmail}
+        onClose={() => {
+          setShowPasswordMode(false)
+          setPendingRetrievalToken(null)
+        }}
+        onPasswordRetrieved={handlePasswordRetrieved}
+      />
+
+      <ResetPasswordResultDialog
+        open={tempPassword !== null}
+        tempPassword={tempPassword ?? ''}
+        userEmail={tempPasswordEmail ?? ''}
+        onClose={() => {
+          setTempPassword(null)
+          setTempPasswordEmail(null)
+          setShowPasswordMode(false)
+        }}
       />
     </Box>
   )

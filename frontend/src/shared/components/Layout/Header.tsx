@@ -57,12 +57,20 @@ export function Header() {
             {NAV_ITEMS.filter(item => !item.roles || item.roles.includes(user.role)).map(item => (
               <Button
                 key={item.path}
-                color={isActive(item.path) ? 'success' : 'inherit'}
                 onClick={() => handleNavigation(item.path)}
                 sx={{
                   mr: 1,
-                  borderBottom: isActive(item.path) ? '2px solid' : 'none',
-                  borderBottomColor: 'success.light',
+                  color: isActive(item.path) ? '#fff' : 'rgba(255, 255, 255, 0.75)',
+                  fontWeight: isActive(item.path) ? 600 : 400,
+                  borderBottom: isActive(item.path) ? '2px solid #fff' : 'none',
+                  borderRadius: 0,
+                  transition: 'color 200ms ease, border-bottom-color 200ms ease',
+                  ...(!isActive(item.path) && {
+                    '&:hover': {
+                      color: 'rgba(255, 255, 255, 0.9)',
+                      borderBottom: '1px solid rgba(255, 255, 255, 0.3)',
+                    },
+                  }),
                 }}
               >
                 {item.label}

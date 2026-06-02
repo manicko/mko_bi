@@ -234,6 +234,80 @@ Tokens can be immediately revoked before their natural expiration. This is imple
 
 ---
 
+## Temporary Password Delivery
+
+### Overview
+
+The system uses a **retrieval-token pattern** for secure temporary password delivery. Instead of returning plaintext passwords in API responses, the backend stores passwords in Redis and returns a `retrieval_token` (UUID). The admin retrieves the password in a separate step via a one-time retrieval endpoint.
+
+### TempPasswordStore
+
+`TempPasswordStore` (`src/mkobi/core/temp_password_store.py`) provides Redis-backed one-time temporary password storage:
+
+| Property | Value | Description |
+| --- | --- | --- |
+| Storage backend | Redis (`asyncio`) | Uses `redis.asyncio` pipeline for atomic operations |
+| Key pattern | `temp_pwd:{token}` | Token-prefixed keys for namespacing |
+| TTL | Configurable via `TEMP_PASSWORD_TTL_SECONDS` (default: 86400 = 24h, minimum: 60s) | Auto-expiring entries prevent indefinite Redis growth |
+| Retrieval semantics | Atomic GET+DELETE via pipeline | Single-use: password is deleted upon retrieval |
+
+### Operations
+
+**`store(token, password)`** — Stores a temporary password under the given token with TTL. Fail-open on errors (logs but does not crash).
+
+**`retrieve(token)`** — Atomically retrieves and deletes the password. Returns the password string on success, `None` if not found/expired/already retrieved. Graceful degradation on errors (returns `None`).
+
+### Retrieval Flow
+
+```
+Admin Panel                    Backend                     Redis
+    │                            │                           │
+    │  POST /admin/users/:id/    │                           │
+    │  reset-password            │                           │
+    │───────────────────────────►│                           │
+    │                            │  Generate UUID token     │
+    │                            │  Generate temp password  │
+    │                            │  Store bcrypt hash in DB │
+    │                            │  temp_password_store.    │
+    │                            │  store(token, password)  │
+    │                            │──────────────────────────►│
+    │                            │                           │
+    │  200 OK                    │                           │
+    │  { retrieval_token }       │                           │
+    │◄───────────────────────────│                           │
+    │                            │                           │
+    │  Admin clicks "Show       │                           │
+    │  Password"                 │                           │
+    │  GET /admin/temp-          │                           │
+    │  passwords/{token}         │                           │
+    │───────────────────────────►│                           │
+    │                            │  retrieve(token)         │
+    │                            │  (atomic GET+DELETE)     │
+    │                            │──────────────────────────►│
+    │                            │                           │
+    │                            │  password (or None)      │
+    │                            │◄──────────────────────────│
+    │  200 OK { temp_password }  │                           │
+    │  (or 404 if expired/used)  │                           │
+    │◄───────────────────────────│                           │
+```
+
+### Security Properties
+
+- **No plaintext passwords in API logs**: Reset/approve endpoints return `retrieval_token`, not `temp_password`. Only the retrieval endpoint returns the plaintext password, in a separate API call that can be audited.
+- **One-time use**: Passwords are deleted from Redis upon retrieval via atomic pipeline (GET+DEL in single transaction).
+- **Auto-expiry**: Redis TTL ensures passwords don't persist indefinitely even if never retrieved.
+- **No Redis log entries**: The plaintext password is never logged by the application.
+- **Endpoints affected**: `POST /api/v1/admin/users/{id}/reset-password` and `POST /api/v1/admin/registration-requests/{id}/approve` — both return `retrieval_token` instead of `temp_password`.
+
+### Configuration
+
+| Variable | Default | Min | Description |
+| --- | --- | --- | --- |
+| `TEMP_PASSWORD_TTL_SECONDS` | `86400` (24h) | `60` | TTL for stored temporary passwords. Validated by Pydantic `field_validator`. |
+
+---
+
 ## Cookie Security
 
 The `mkobi_refresh_token` cookie is the cornerstone of the refresh token security model. It is used exclusively for storing the refresh token and has the following attributes:

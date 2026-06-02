@@ -439,7 +439,7 @@ class TestAuthService:
         )
 
         assert result is not None
-        assert "temp_password" in result
+        assert "retrieval_token" in result
         assert "user_id" in result
         assert result["user_id"] == str(target_user_id)
         assert "message" in result
@@ -483,8 +483,39 @@ class TestAuthService:
         call_args = mock_user_repo.update.call_args
         assert "password_hash" in call_args.kwargs
         assert call_args.kwargs["force_password_change"] is True
-        # Verify hash_password was used (hash is not raw password)
-        assert call_args.kwargs["password_hash"] != result["temp_password"]
+        # Verify retrieval_token is returned (UUID string)
+        assert "retrieval_token" in result
+
+    async def test_reset_password_admin_with_temp_password_store(
+        self, mock_user_repo, mock_reg_request_repo, mock_db
+    ):
+        """Test that temp_password_store.store is called when provided."""
+        from mkobi.core.temp_password_store import TempPasswordStore
+
+        mock_temp_password_store = AsyncMock(spec=TempPasswordStore)
+        auth_service = AuthService(
+            mock_user_repo, mock_reg_request_repo, temp_password_store=mock_temp_password_store
+        )
+
+        target_user_id = uuid4()
+        admin_user_id = uuid4()
+        mock_user = MagicMock()
+        mock_user.id = target_user_id
+        mock_user_repo.get_with_hash = AsyncMock(return_value=mock_user)
+        mock_user_repo.update = AsyncMock()
+
+        result = await auth_service.reset_password_admin(
+            user_id=target_user_id,
+            admin_user_id=admin_user_id,
+            db=mock_db,
+        )
+
+        assert result is not None
+        assert "retrieval_token" in result
+        # Verify store was called with the retrieval token
+        mock_temp_password_store.store.assert_called_once()
+        call_args = mock_temp_password_store.store.call_args
+        assert call_args[0][0] == result["retrieval_token"]  # token passed as first arg
 
     async def test_reset_password_admin_self_guard(self, auth_service, mock_user_repo, mock_db):
         """Test self-reset guard raises ValueError."""

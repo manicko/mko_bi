@@ -43,12 +43,12 @@ export async function deleteUser(userId: string): Promise<void> {
 export async function resetUserPassword(userId: string): Promise<{
   message: string
   user_id: string
-  temp_password: string
+  retrieval_token: string
 }> {
   const response = await axiosInstance.post<{
     message: string
     user_id: string
-    temp_password: string
+    retrieval_token: string
   }>(`/admin/users/${userId}/reset-password`)
   return response.data
 }
@@ -59,8 +59,26 @@ export async function getRegistrationRequests(): Promise<RegistrationRequestItem
   return response.data
 }
 
-export async function approveRequest(requestId: string): Promise<void> {
-  await axiosInstance.post(`/admin/registration-requests/${requestId}/approve`)
+export async function approveRequest(requestId: string): Promise<{
+  message: string
+  user_id: string
+  retrieval_token: string
+}> {
+  const response = await axiosInstance.post<{
+    message: string
+    user_id: string
+    retrieval_token: string
+  }>(`/admin/registration-requests/${requestId}/approve`)
+  return response.data
+}
+
+export async function retrieveTempPassword(retrievalToken: string): Promise<{
+  temp_password: string
+}> {
+  const response = await axiosInstance.get<{ temp_password: string }>(
+    `/admin/temp-passwords/${retrievalToken}`
+  )
+  return response.data
 }
 
 export async function rejectRequest(requestId: string): Promise<void> {

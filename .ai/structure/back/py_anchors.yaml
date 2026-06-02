@@ -663,6 +663,36 @@
   value: Field
   stable_hash: f97e1b65
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: f97e1b65
+  symbol_path:
+  - Settings
+  type: function_call
+  value: Field
+  stable_hash: f97e1b65
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: 1016c1a5
+  symbol_path:
+  - Settings
+  - validate_temp_password_ttl
+  type: function_call
+  value: ValueError
+  stable_hash: 1016c1a5
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: cdb748f8
+  symbol_path:
+  - Settings
+  - validate_temp_password_ttl
+  type: return_statement
+  stable_hash: cdb748f8
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: eed1752c
+  symbol_path:
+  - Settings
+  - validate_temp_password_ttl
+  type: function_call
+  value: field_validator
+  stable_hash: eed1752c
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
 - id: '45645561'
   symbol_path:
   - Settings
@@ -1044,6 +1074,33 @@
   value: get_async_redis_client
   stable_hash: bdb08b9c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
+- id: d0e7d73d
+  symbol_path:
+  - get_temp_password_store
+  type: function_call
+  value: get_config
+  stable_hash: d0e7d73d
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
+- id: d0128754
+  symbol_path:
+  - get_temp_password_store
+  type: return_statement
+  stable_hash: d0128754
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
+- id: 9012af64
+  symbol_path:
+  - get_temp_password_store
+  type: function_call
+  value: TempPasswordStore
+  stable_hash: 9012af64
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
+- id: 761c10b1
+  symbol_path:
+  - get_temp_password_store
+  type: function_call
+  value: get_async_redis_client
+  stable_hash: 761c10b1
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: 271ccf38
   symbol_path:
   - get_user_repository
@@ -1186,6 +1243,13 @@
   type: function_call
   value: GraphRepository
   stable_hash: 1447d652
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
+- id: c5a43286
+  symbol_path:
+  - get_auth_service
+  type: function_call
+  value: Depends
+  stable_hash: c5a43286
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: c5a43286
   symbol_path:
@@ -2739,6 +2803,18 @@
   type: return_statement
   stable_hash: 96a1c03e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\task_queue.py
+- id: 2c176485
+  symbol_path:
+  - TempPasswordStore
+  type: return_statement
+  stable_hash: 2c176485
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\temp_password_store.py
+- id: 2c176485
+  symbol_path:
+  - TempPasswordStore
+  type: return_statement
+  stable_hash: 2c176485
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\temp_password_store.py
 - id: ec12389b
   symbol_path: []
   type: function_call
@@ -4555,6 +4631,20 @@
   type: function_call
   value: hash_password
   stable_hash: ff5bdd9b
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
+- id: cff3c344
+  symbol_path:
+  - AuthService
+  type: function_call
+  value: str
+  stable_hash: cff3c344
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
+- id: 7c1fe1a9
+  symbol_path:
+  - AuthService
+  type: function_call
+  value: uuid4
+  stable_hash: 7c1fe1a9
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
 - id: 98feca73
   symbol_path:
@@ -12732,6 +12822,12 @@
   value: Depends
   stable_hash: 303cb73d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+- id: 303cb73d
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: 303cb73d
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 9965ca0f
   symbol_path: []
   type: function_call
@@ -12743,6 +12839,18 @@
   type: function_call
   value: HTTPException
   stable_hash: 9965ca0f
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+- id: 86b2b28e
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: 86b2b28e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+- id: 38e7bfc0
+  symbol_path: []
+  type: function_call
+  value: uuid4
+  stable_hash: 38e7bfc0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 8b3acff2
   symbol_path: []
@@ -12801,6 +12909,29 @@
   type: function_call
   value: HTTPException
   stable_hash: 9965ca0f
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+- id: 303cb73d
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: 303cb73d
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+- id: 303cb73d
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: 303cb73d
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+- id: 9965ca0f
+  symbol_path: []
+  type: function_call
+  value: HTTPException
+  stable_hash: 9965ca0f
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+- id: 8b3acff2
+  symbol_path: []
+  type: return_statement
+  stable_hash: 8b3acff2
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 303cb73d
   symbol_path: []

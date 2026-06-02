@@ -1,9 +1,9 @@
 import { useState, useMemo, useCallback } from 'react'
 import { DataGrid, GridActionsCellItem, type GridRowId, type GridRenderCellParams } from '@mui/x-data-grid'
 import type { GridColDef, GridRowClassNameParams } from '@mui/x-data-grid'
-import { Box } from '@mui/material'
+import { Box, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button } from '@mui/material'
 import { Delete as DeleteIcon, Key as ResetPasswordIcon } from '@mui/icons-material'
-import { getUsers, changeUserRole, deleteUser, resetUserPassword } from '../api/adminApi'
+import { getUsers, changeUserRole, deleteUser, resetUserPassword, retrieveTempPassword } from '../api/adminApi'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useConfirmDialog } from '../../../shared/hooks/useConfirmDialog'
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog'
@@ -18,6 +18,62 @@ const ROLE_OPTIONS = [UserRole.ADMIN, UserRole.EDITOR, UserRole.VIEWER]
 // Row type for DataGrid - same as AdminUser since is_active was removed
 type UserRow = AdminUser
 
+interface RetrievePasswordDialogProps {
+  open: boolean
+  retrievalToken: string
+  userEmail: string
+  onClose: () => void
+  onPasswordRetrieved: (tempPassword: string, userEmail: string) => void
+}
+
+function RetrievePasswordDialog({
+  open,
+  retrievalToken,
+  userEmail,
+  onClose,
+  onPasswordRetrieved,
+}: RetrievePasswordDialogProps) {
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(false)
+
+  const handleRetrieve = async () => {
+    setLoading(true)
+    setError(false)
+    try {
+      const data = await retrieveTempPassword(retrievalToken)
+      onPasswordRetrieved(data.temp_password, userEmail)
+    } catch {
+      setError(true)
+      toast.error('Password expired or already retrieved')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>Retrieve Password</DialogTitle>
+      <DialogContent>
+        <DialogContentText>
+          Click "Show Password" to retrieve the temporary password for {userEmail}. This can only be
+          done once.
+        </DialogContentText>
+        {error && (
+          <DialogContentText color="error" sx={{ mt: 2 }}>
+            Password expired or already retrieved.
+          </DialogContentText>
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={() => { void handleRetrieve() }} variant="contained" disabled={loading}>
+          {loading ? 'Retrieving...' : 'Show Password'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
 export function UserManagement() {
   const queryClient = useQueryClient()
   const confirmDialog = useConfirmDialog()
@@ -26,6 +82,10 @@ export function UserManagement() {
     tempPassword: string
     userEmail: string
   } | null>(null)
+
+  const [pendingRetrievalToken, setPendingRetrievalToken] = useState<string | null>(null)
+  const [pendingUserEmail, setPendingUserEmail] = useState<string | null>(null)
+  const [showPasswordMode, setShowPasswordMode] = useState(false)
 
   const { data: users = [], isLoading } = useQuery({
     queryKey: ['admin', 'users'],
@@ -61,10 +121,9 @@ export function UserManagement() {
     onSuccess: (data, variables) => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
       const user = users.find((u) => u.id === variables)
-      setResetResult({
-        tempPassword: data.temp_password,
-        userEmail: user?.email ?? '',
-      })
+      setPendingRetrievalToken(data.retrieval_token)
+      setPendingUserEmail(user?.email ?? '')
+      setShowPasswordMode(true)
       toast.success('Password reset successfully')
     },
     onError: () => {
@@ -124,6 +183,13 @@ export function UserManagement() {
       })
     },
     [confirmDialog, resetPasswordMutation],
+  )
+
+  const handlePasswordRetrieved = useCallback(
+    (tempPassword: string, userEmail: string) => {
+      setResetResult({ tempPassword, userEmail })
+    },
+    [],
   )
 
   const columns = useMemo(
@@ -203,11 +269,25 @@ export function UserManagement() {
         onCancel={confirmDialog.handleCancel}
         loading={deleteMutation.isPending || resetPasswordMutation.isPending}
       />
+      <RetrievePasswordDialog
+        open={showPasswordMode}
+        retrievalToken={pendingRetrievalToken ?? ''}
+        userEmail={pendingUserEmail ?? ''}
+        onClose={() => {
+          setShowPasswordMode(false)
+          setPendingRetrievalToken(null)
+          setPendingUserEmail(null)
+        }}
+        onPasswordRetrieved={handlePasswordRetrieved}
+      />
       <ResetPasswordResultDialog
         open={resetResult !== null}
         tempPassword={resetResult?.tempPassword ?? ''}
         userEmail={resetResult?.userEmail ?? ''}
-        onClose={() => setResetResult(null)}
+        onClose={() => {
+          setResetResult(null)
+          setShowPasswordMode(false)
+        }}
       />
     </Box>
   )

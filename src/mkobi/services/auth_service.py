@@ -4,11 +4,14 @@ Provides business logic for registration, authentication and authorization
 users in the BI Dashboard system. Uses class-based approach.
 """
 
+from __future__ import annotations
+
 import re
 import secrets
 import string
-from typing import Any, cast
-from uuid import UUID
+from typing import TYPE_CHECKING, Any, cast
+
+from uuid import UUID, uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -28,6 +31,9 @@ from mkobi.utils.validators import validate_password_or_raise
 from mkobi.models.enums import RegistrationStatus, UserRole
 from mkobi.models.user import UserRead
 
+if TYPE_CHECKING:
+    from mkobi.core.temp_password_store import TempPasswordStore
+
 logger = get_logger(__name__)
 
 # Regular expression for email validation
@@ -46,9 +52,11 @@ class AuthService(IAuthService):
         user_repo: IUserRepository,
         reg_request_repo: IRegistrationRequestRepository,
         config: Any | None = None,
+        temp_password_store: TempPasswordStore | None = None,
     ) -> None:
         self.user_repo = user_repo
         self.reg_request_repo = reg_request_repo
+        self.temp_password_store = temp_password_store
         # Store config and preprocess blocked domains for efficient lookup
         if config is None:
             from mkobi.config import get_config
@@ -533,10 +541,11 @@ class AuthService(IAuthService):
         """Admin-triggered password reset.
 
         Generates temp password, hashes it, saves to user record,
-        sets force_password_change flag.
+        sets force_password_change flag, stores temp password in Redis
+        and returns retrieval token for later retrieval.
 
         Returns:
-            dict with message, user_id, temp_password on success.
+            dict with message, user_id, retrieval_token on success.
             None if user not found.
 
         Raises:
@@ -564,6 +573,10 @@ class AuthService(IAuthService):
         validate_password_or_raise(temp_password)
         password_hash = hash_password(temp_password)
 
+        retrieval_token = str(uuid4())
+        if self.temp_password_store is not None:
+            await self.temp_password_store.store(retrieval_token, temp_password)
+
         await self.user_repo.update(
             user_id, db,
             password_hash=password_hash,
@@ -572,10 +585,10 @@ class AuthService(IAuthService):
         await db.commit()
 
         logger.info(
-            "Password reset successful: user_id=%s", user_id,
+            "Password reset successful: user_id=%s, token=%s...", user_id, retrieval_token[:8],
         )
         return {
             "message": "Password reset successfully",
             "user_id": str(user_id),
-            "temp_password": temp_password,
+            "retrieval_token": retrieval_token,
         }

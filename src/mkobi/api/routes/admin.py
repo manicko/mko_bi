@@ -2,7 +2,7 @@
 
 import logging
 from typing import Any
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -15,6 +15,7 @@ from mkobi.api.deps import (
     get_user_service,
     get_redis_client_dependency,
     require_admin_role,
+    get_temp_password_store,
 )
 from mkobi.interfaces import IUserService
 from mkobi.models.enums import RegistrationStatus, UserRole
@@ -22,6 +23,7 @@ from mkobi.models.user import UserRead, UserUpdateRequest, UserUpdateActiveReque
 from mkobi.models.auth import RegistrationRequestItem
 from mkobi.services.auth_service import AuthService
 from mkobi.core.security import revoke_all_user_tokens
+from mkobi.core.temp_password_store import TempPasswordStore
 
 logger = logging.getLogger(__name__)
 
@@ -270,6 +272,7 @@ async def approve_registration_request_admin_endpoint(
     db: AsyncSession = Depends(get_db_dependency),
     auth_service: AuthService = Depends(get_auth_service),
     repo: Any = Depends(get_registration_request_repository),
+    temp_password_store: TempPasswordStore = Depends(get_temp_password_store),
 ) -> dict[str, Any]:
     """Approve registration request (admin endpoint)."""
     logger.info("Admin: approving registration request: id=%s", request_id)
@@ -302,6 +305,10 @@ async def approve_registration_request_admin_endpoint(
             user.id, db, force_password_change=True,
         )
 
+        # Generate retrieval token and store temp password in Redis
+        retrieval_token = str(uuid4())
+        await temp_password_store.store(retrieval_token, temp_password)
+
         # Update request status
         await repo.update_status(
             request_id=request_id,
@@ -314,7 +321,7 @@ async def approve_registration_request_admin_endpoint(
         return {
             "message": "Registration request approved",
             "user_id": str(user.id),
-            "temp_password": temp_password,
+            "retrieval_token": retrieval_token,
         }
     except HTTPException:
         raise
@@ -375,3 +382,28 @@ async def reject_registration_request_admin_endpoint(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error rejecting registration request",
         ) from e
+
+
+# --- Temp Password Retrieval ---
+
+
+@router.get(
+    "/temp-passwords/{retrieval_token}",
+    status_code=status.HTTP_200_OK,
+    summary="Retrieve temporary password (admin)",
+    description="Returns a one-time temporary password. Admin only. Password is deleted after retrieval.",
+    dependencies=[Depends(require_admin_role)],
+)
+async def retrieve_temp_password_admin_endpoint(
+    retrieval_token: str,
+    temp_password_store: TempPasswordStore = Depends(get_temp_password_store),
+) -> dict[str, str]:
+    """Retrieve a temporary password by its retrieval token (one-time, admin only)."""
+    logger.info("Admin: retrieving temp password: token=%s...", retrieval_token[:8])
+    password = await temp_password_store.retrieve(retrieval_token)
+    if password is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Temporary password not found or already retrieved",
+        )
+    return {"temp_password": password}

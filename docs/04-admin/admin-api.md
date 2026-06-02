@@ -221,7 +221,7 @@ Admin-triggered password reset. Generates a temporary password for the target us
 {
   "message": "Password reset successfully",
   "user_id": "880e8400-e29b-41d4-a716-446655440003",
-  "temp_password": "xK9mP2nQ5rT8vW1y"
+  "retrieval_token": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 }
 ```
 
@@ -237,9 +237,10 @@ Admin-triggered password reset. Generates a temporary password for the target us
 - Generates a 16-character cryptographically secure temporary password (letters + digits, at least one of each)
 - Stores the bcrypt hash of the temporary password in the `users` table
 - Sets `force_password_change=True` on the target user
-- The admin should communicate the temporary password to the user through a secure out-of-band channel
+- Stores the **plaintext** temporary password in Redis via `TempPasswordStore` under the `retrieval_token`
+- Returns `retrieval_token` (UUID) in the response instead of `temp_password`
 
-> **Security:** The `temp_password` is returned in plaintext JSON. HTTPS must be enforced in production. Never log the `temp_password` in application logs. The password is one-time use — the user must change it on next login.
+> **Security:** The temporary password is **never returned in the response**. Instead, a `retrieval_token` is returned. The admin retrieves the password via `GET /api/v1/admin/temp-passwords/{retrieval_token}` when needed. This ensures the plaintext password never appears in API response logs. The password is stored in Redis with TTL (default: 24h, configurable via `TEMP_PASSWORD_TTL_SECONDS`) and is deleted upon retrieval (single-use).
 
 ---
 
@@ -373,7 +374,7 @@ Approve a pending registration request. Creates a new user account with a random
 {
   "message": "Registration approved",
   "user_id": "880e8400-e29b-41d4-a716-446655440003",
-  "temp_password": "xK9mP2nQ5rT8vW1y"
+  "retrieval_token": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
 }
 ```
 
@@ -388,13 +389,11 @@ Approve a pending registration request. Creates a new user account with a random
 **Side effects:**
 - Creates a new user in the `users` table with the email from the request
 - Sets the user's password to a cryptographically random temporary password
+- Stores the plaintext temporary password in Redis via `TempPasswordStore` under the `retrieval_token`
 - Updates the `registration_requests` record: status → `approved`, `reviewed_by` → admin user ID, `reviewed_at` → current timestamp
+- Sets `force_password_change=True` on the new user
 
-> **Security Note:** The `temp_password` is returned in **plaintext JSON**. Ensure the following:
-> - HTTPS is enforced in production — never transmit temp passwords over plain HTTP.
-> - The temp password is **one-time use** — the user should be forced to change it on first login.
-> - **Never log** the `temp_password` in application logs or audit trails.
-> - The admin should communicate the temp password to the new user through a **secure out-of-band channel** (e.g., in person, encrypted messaging), not via the same email used for registration.
+> **Security Note:** The `retrieval_token` (UUID) is returned instead of a plaintext `temp_password`. The admin retrieves the actual password via `GET /api/v1/admin/temp-passwords/{retrieval_token}` when needed. This ensures the plaintext password never appears in API response logs. The password is stored in Redis with TTL (default: 24h) and is single-use.
 
 ---
 
@@ -435,7 +434,46 @@ Reject a pending registration request.
 
 ---
 
-### 14. List Processing Logs
+### 14. Retrieve Temporary Password
+
+Retrieve a one-time temporary password by its retrieval token. Admin only. The password is deleted from Redis upon retrieval (single-use).
+
+| Attribute      | Value                                              |
+| -------------- | -------------------------------------------------- |
+| **Method**     | `GET`                                              |
+| **Path**       | `/api/v1/admin/temp-passwords/{retrieval_token}`   |
+| **Auth level** | Admin                                              |
+
+**Path parameters:**
+
+| Parameter          | Type   | Description              |
+| ------------------ | ------ | ------------------------ |
+| `retrieval_token`  | UUID   | The retrieval token from a reset/approve response |
+
+**Response** (`200 OK`):
+
+```json
+{
+  "temp_password": "xK9mP2nQ5rT8vW1y"
+}
+```
+
+**Error responses:**
+
+| Status | Condition                                | Detail                                        |
+| ------ | ---------------------------------------- | --------------------------------------------- |
+| `404`  | Token not found / expired / already used | `Temporary password not found or already retrieved` |
+
+**Side effects:**
+- The password is **deleted** from Redis (single-use via atomic GET+DELETE pipeline)
+- Subsequent requests with the same token return 404
+- The plaintext password is logged at INFO level for audit purposes
+
+> **Security:** This is the **only** API endpoint that returns the plaintext `temp_password`. It requires admin authentication. The password is accessible only once — after retrieval, it is permanently deleted from Redis. Tokens auto-expire after `TEMP_PASSWORD_TTL_SECONDS` (default: 24h) if never retrieved.
+
+---
+
+### 15. List Processing Logs
 
 Retrieve processing logs with filtering and pagination. Admin only.
 
@@ -545,15 +583,18 @@ Browser (User)        FastAPI              Database
   │                     │   reviewed_at)      │
   │                     │◄────────────────────│
   │                     │                     │
-  │  200 OK             │                     │
-  │  { message,         │                     │
-  │    user_id,         │                     │
-  │    temp_password }  │                     │
-  │◄────────────────────│                     │
-  │                     │                     │
-  │  Admin communicates │                     │
-  │  temp_password to   │                     │
-  │  new user           │                     │
+   │  200 OK             │                     │
+   │  { message,         │                     │
+   │    user_id,         │                     │
+   │    retrieval_token }│                     │
+   │◄────────────────────│                     │
+   │                     │                     │
+   │  Admin retrieves    │                     │
+   │  temp_password via  │                     │
+   │  GET /admin/temp-   │                     │
+   │  passwords/{token}  │                     │
+   │  and communicates   │                     │
+   │  it to new user     │                     │
 ```
 
 ### Temporary Password Generation
@@ -586,7 +627,7 @@ Displays a table of all users with the ability to change roles, reset passwords,
 **Related API endpoints:**
 - `GET /api/v1/admin/users` — List all users
 - `PATCH /api/v1/admin/users/:id/role` — Update role (body: `{"role": "editor"}`)
-- `POST /api/v1/admin/users/:id/reset-password` — Reset password (returns `{ message, user_id, temp_password }`)
+- `POST /api/v1/admin/users/:id/reset-password` — Reset password (returns `{ message, user_id, retrieval_token }`)
 - `DELETE /api/v1/admin/users/:id` — Delete user
 
 ### Registration Requests (`/admin`)
@@ -601,8 +642,9 @@ Displays pending registration requests with approve/reject actions.
 
 **Related API endpoints:**
 - `GET /api/v1/admin/registration-requests` — List requests
-- `POST /api/v1/admin/registration-requests/:id/approve` — Approve
+- `POST /api/v1/admin/registration-requests/:id/approve` — Approve (returns `{ message, user_id, retrieval_token }`)
 - `POST /api/v1/admin/registration-requests/:id/reject` — Reject
+- `GET /api/v1/admin/temp-passwords/{retrieval_token}` — Retrieve temporary password (admin only, one-time)
 
 ### Dashboard Management (`/admin`)
 

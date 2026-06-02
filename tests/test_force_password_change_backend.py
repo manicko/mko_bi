@@ -4,6 +4,8 @@ Tests verify that the login response includes the force_password_change boolean 
 and that it correctly reflects the user's state.
 """
 
+import re
+
 from httpx import AsyncClient
 
 
@@ -116,7 +118,26 @@ class TestForcePasswordChangeBackend:
             headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert reset_response.status_code == 200
-        temp_password = reset_response.json()["temp_password"]
+        reset_data = reset_response.json()
+        # Response contains retrieval_token, not temp_password directly
+        assert "retrieval_token" in reset_data
+        assert "user_id" in reset_data
+        assert reset_data["user_id"] == str(target_user.id)
+
+        # Admin uses retrieval endpoint to get the temp password
+        retrieval_token = reset_data["retrieval_token"]
+        retrieve_response = await async_client.get(
+            f"/admin/temp-passwords/{retrieval_token}",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert retrieve_response.status_code == 200
+        retrieve_data = retrieve_response.json()
+        assert "temp_password" in retrieve_data
+        temp_password = retrieve_data["temp_password"]
+        assert len(temp_password) >= 16
+        # Verify temp password has letters and digits
+        assert re.search(r"[a-zA-Z]", temp_password) is not None
+        assert re.search(r"\d", temp_password) is not None
 
         # Target user logs in with temp password
         login_response = await async_client.post(
