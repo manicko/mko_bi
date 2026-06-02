@@ -1,0 +1,196 @@
+id: TASK_007_frontend_user_management
+
+title: Update UserManagement component — retrieve password flow instead of direct display
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_006_frontend_api_types
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: TASK_007_frontend_user_management
+
+description: >
+  Update UserManagement.tsx to use the new retrieval flow. After password reset,
+  show a dialog with a "Show Password" button that calls retrieveTempPassword API.
+  On success, display the password in ResetPasswordResultDialog with copy-to-clipboard.
+  On 404, show error toast. No temp_password is read from the reset response.
+
+goals:
+  - Replace direct temp_password display with retrieval flow
+  - Add RetrievePasswordDialog component (inline in same file)
+  - Show "Show Password" dialog after reset success
+  - Call retrieveTempPassword on button click
+  - Display password in ResetPasswordResultDialog on success
+  - Show error toast on 404 (expired/already retrieved)
+  - No temp_password read from reset response
+
+files:
+  - path: frontend/src/features/admin/ui/UserManagement.tsx
+    targets:
+      - type: component
+        name: UserManagement
+      - type: component
+        name: RetrievePasswordDialog
+    semantic_anchors:
+      insert_after:
+        type: state_declaration
+        value: "const [resetResult, setResetResult]"
+      insert_before:
+        type: jsx_element
+        value: "<ResetPasswordResultDialog"
+
+changes:
+  - action: modify_code
+    description: >
+      Add new state variables for the retrieval flow: pendingRetrievalToken and showPasswordMode.
+      Import retrieveTempPassword from adminApi and add useMutation for it.
+
+    code_hint: |
+      # Add state after existing resetResult state:
+      const [pendingRetrievalToken, setPendingRetrievalToken] = useState<string | null>(null)
+      const [showPasswordMode, setShowPasswordMode] = useState(false)
+
+      # Update import to include retrieveTempPassword:
+      import { getUsers, changeUserRole, deleteUser, resetUserPassword, retrieveTempPassword } from '../api/adminApi'
+
+  - action: modify_code
+    description: >
+      Modify resetPasswordMutation onSuccess handler to store retrieval_token and
+      show password dialog instead of reading temp_password from response.
+
+    code_hint: |
+      # Change onSuccess from:
+      # onSuccess: (data, variables) => {
+      #   void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+      #   const user = users.find((u) => u.id === variables)
+      #   setResetResult({
+      #     tempPassword: data.temp_password,
+      #     userEmail: user?.email ?? '',
+      #   })
+      #   toast.success('Password reset successfully')
+      # },
+
+      # To:
+      onSuccess: (data, variables) => {
+        void queryClient.invalidateQueries({ queryKey: ['admin', 'users'] })
+        setPendingRetrievalToken(data.retrieval_token)
+        setShowPasswordMode(true)
+        toast.success('Password reset successfully')
+      },
+
+  - action: add_code
+    description: >
+      Add RetrievePasswordDialog component in the same file. It shows when
+      showPasswordMode is true, has a "Show Password" button that calls
+      retrieveTempPassword(pendingRetrievalToken), and on success shows
+      ResetPasswordResultDialog with the password. On error (404), shows error toast.
+
+    code_hint: |
+      # Add after UserManagement component or as a separate component in same file:
+      interface RetrievePasswordDialogProps {
+        open: boolean
+        retrievalToken: string
+        userEmail: string
+        onClose: () => void
+      }
+
+      function RetrievePasswordDialog({ open, retrievalToken, userEmail, onClose }: RetrievePasswordDialogProps) {
+        const [password, setPassword] = useState<string | null>(null)
+        const [loading, setLoading] = useState(false)
+        const [error, setError] = useState(false)
+
+        const handleRetrieve = async () => {
+          setLoading(true)
+          setError(false)
+          try {
+            const data = await retrieveTempPassword(retrievalToken)
+            setPassword(data.temp_password)
+          } catch {
+            setError(true)
+            toast.error('Password expired or already retrieved')
+          } finally {
+            setLoading(false)
+          }
+        }
+
+        if (password) {
+          return (
+            <ResetPasswordResultDialog
+              open={true}
+              tempPassword={password}
+              userEmail={userEmail}
+              onClose={() => {
+                setPassword(null)
+                onClose()
+              }}
+            />
+          )
+        }
+
+        return (
+          <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+            <DialogTitle>Retrieve Password</DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                Click "Show Password" to retrieve the temporary password for {userEmail}.
+                This can only be done once.
+              </DialogContentText>
+              {error && (
+                <DialogContentText color="error" sx={{ mt: 1 }}>
+                  Password expired or already retrieved.
+                </DialogContentText>
+              )}
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={onClose}>Cancel</Button>
+              <Button onClick={() => { void handleRetrieve() }} variant="contained" disabled={loading}>
+                {loading ? 'Retrieving...' : 'Show Password'}
+              </Button>
+            </DialogActions>
+          </Dialog>
+        )
+      }
+
+  - action: modify_code
+    description: >
+      Add the RetrievePasswordDialog JSX at the bottom of UserManagement component,
+      replacing the old ResetPasswordResultDialog usage. Remove the old resetResult
+      state usage for the dialog.
+
+    code_hint: |
+      # In the return JSX, replace:
+      # <ResetPasswordResultDialog
+      #   open={resetResult !== null}
+      #   tempPassword={resetResult?.tempPassword ?? ''}
+      #   userEmail={resetResult?.userEmail ?? ''}
+      #   onClose={() => setResetResult(null)}
+      # />
+
+      # With:
+      {showPasswordMode && (
+        <RetrievePasswordDialog
+          open={showPasswordMode}
+          retrievalToken={pendingRetrievalToken ?? ''}
+          userEmail={/* find user email from users array using pendingRetrievalToken context */}
+          onClose={() => {
+            setShowPasswordMode(false)
+            setPendingRetrievalToken(null)
+          }}
+        />
+      )}
+
+acceptance_criteria:
+  - After reset, admin sees a dialog with "Show Password" button
+  - Clicking "Show Password" calls retrieveTempPassword API
+  - Password is displayed in ResetPasswordResultDialog with copy-to-clipboard
+  - If token expired (404), shows error toast "Password expired or already retrieved"
+  - No temp_password is ever read from the reset response
+  - TypeScript compilation passes
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+
+risk_level: medium

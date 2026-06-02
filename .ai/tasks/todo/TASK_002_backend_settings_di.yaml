@@ -1,0 +1,107 @@
+id: TASK_002_backend_settings_di
+
+title: Add temp_password_ttl_seconds setting and TempPasswordStore DI factory
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_backend_temp_password_store
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: TASK_002_backend_settings_di
+
+description: >
+  Add TEMP_PASSWORD_TTL_SECONDS configuration field to Settings class in config.py
+  with a field validator enforcing minimum 60 seconds. Add get_temp_password_store()
+  factory function in deps.py for dependency injection of TempPasswordStore.
+
+goals:
+  - Add temp_password_ttl_seconds field to Settings with default 86400 (24h)
+  - Add field_validator to enforce minimum TTL of 60 seconds
+  - Add get_temp_password_store() factory in deps.py
+  - Export get_temp_password_store in deps.py __all__
+
+files:
+  - path: src/mkobi/config.py
+    targets:
+      - type: class
+        name: Settings
+    semantic_anchors:
+      insert_after:
+        type: field_definition
+        value: "rate_limiter_fail_closed: bool = Field(default=False, alias=\"RATE_LIMITER_FAIL_CLOSED\")"
+      insert_before:
+        type: model_validator
+        value: "def validate_admin_credentials"
+
+  - path: src/mkobi/api/deps.py
+    targets:
+      - type: function
+        name: get_temp_password_store
+    semantic_anchors:
+      insert_after:
+        type: function_definition
+        value: "def get_auth_service"
+      insert_before:
+        type: function_definition
+        value: "def get_user_service"
+
+changes:
+  - action: add_code
+    description: >
+      In config.py, add temp_password_ttl_seconds field to Settings class after
+      the rate_limiter_fail_closed field. Add a @field_validator("temp_password_ttl_seconds")
+      that rejects values below 60 seconds.
+
+    code_hint: |
+      # Add after rate_limiter_fail_closed field (~line 306):
+      temp_password_ttl_seconds: int = Field(default=86400, alias="TEMP_PASSWORD_TTL_SECONDS")
+
+      # Add field_validator before validate_admin_credentials model_validator:
+      @field_validator("temp_password_ttl_seconds")
+      @classmethod
+      def validate_ttl(cls, value: int) -> int:
+          if value < 60:
+              raise ValueError("TEMP_PASSWORD_TTL_SECONDS must be at least 60 seconds")
+          return value
+
+  - action: add_code
+    description: >
+      In deps.py, add get_temp_password_store() factory function after get_auth_service().
+      Import TempPasswordStore from mkobi.core.temp_password_store and get_async_redis_client
+      from mkobi.core.redis_client. Add "get_temp_password_store" to __all__ list.
+
+    code_hint: |
+      # Add imports at top of deps.py:
+      from mkobi.core.temp_password_store import TempPasswordStore
+      from mkobi.core.redis_client import get_async_redis_client
+      from mkobi.config import get_config
+
+      # Add after get_auth_service function:
+      def get_temp_password_store() -> TempPasswordStore:
+          """DI factory for TempPasswordStore.
+
+          Returns:
+              TempPasswordStore: Configured with async Redis client and TTL from settings.
+          """
+          config = get_config()
+          return TempPasswordStore(
+              redis_client=get_async_redis_client(),
+              ttl_seconds=config.temp_password_ttl_seconds,
+          )
+
+      # Add "get_temp_password_store" to __all__ list
+
+acceptance_criteria:
+  - TEMP_PASSWORD_TTL_SECONDS env var accepted, default 86400
+  - Values below 60 are rejected by field_validator
+  - get_temp_password_store() returns properly configured TempPasswordStore instance
+  - get_temp_password_store is exported in deps.py __all__
+  - No caching layer added (direct instantiation per request)
+
+tests_to_run:
+  - pytest tests/ -k "temp_password" -v
+
+risk_level: low

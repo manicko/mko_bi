@@ -1,0 +1,88 @@
+id: TASK_004_backend_approve_endpoint
+
+title: Update approve endpoint to store temp password in Redis and return retrieval_token
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_backend_temp_password_store
+  - TASK_002_backend_settings_di
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: TASK_004_backend_approve_endpoint
+
+description: >
+  Modify approve_registration_request_admin_endpoint in admin.py to inject
+  TempPasswordStore via DI, generate a retrieval_token (UUID4), store the
+  plaintext temp password in Redis, and return retrieval_token instead of
+  temp_password in the response.
+
+goals:
+  - Add TempPasswordStore DI to approve endpoint function signature
+  - Generate retrieval_token after user creation
+  - Store temp_password in Redis via temp_password_store.store()
+  - Return {message, user_id, retrieval_token} — NO temp_password key
+  - Preserve force_password_change=True behavior (unchanged)
+
+files:
+  - path: src/mkobi/api/routes/admin.py
+    targets:
+      - type: function
+        name: approve_registration_request_admin_endpoint
+    semantic_anchors:
+      insert_after:
+        type: function_call
+        value: "auth_service.create_user"
+      insert_before:
+        type: return_statement
+        value: "return {\"message\": \"Registration request approved\""
+
+changes:
+  - action: modify_code
+    description: >
+      Add imports for uuid4, TempPasswordStore, and get_temp_password_store.
+      Add temp_password_store: TempPasswordStore = Depends(get_temp_password_store)
+      to the approve_registration_request_admin_endpoint function signature.
+
+    code_hint: |
+      # Add imports at top of file:
+      from uuid import uuid4
+      from mkobi.core.temp_password_store import TempPasswordStore
+      from mkobi.api.deps import get_temp_password_store
+
+      # Add to function signature:
+      temp_password_store: TempPasswordStore = Depends(get_temp_password_store),
+
+  - action: modify_code
+    description: >
+      After user creation (user = await auth_service.create_user(...)) and after
+      force_password_change update, generate retrieval_token and store password in Redis.
+      Change the return dict to use retrieval_token instead of temp_password.
+
+    code_hint: |
+      # After force_password_change update (~line 301-303), add:
+      retrieval_token = str(uuid4())
+      await temp_password_store.store(retrieval_token, temp_password)
+
+      # Change return dict from:
+      # return {"message": "Registration request approved", "user_id": str(user.id), "temp_password": temp_password}
+      # To:
+      return {
+          "message": "Registration request approved",
+          "user_id": str(user.id),
+          "retrieval_token": retrieval_token,
+      }
+
+acceptance_criteria:
+  - Approve endpoint returns retrieval_token (UUID string), not temp_password
+  - Password stored in Redis before response is sent
+  - force_password_change=True still set on user (unchanged)
+  - DB commit happens after Redis store (non-critical if Redis fails)
+  - No temp_password key in response dict
+
+tests_to_run:
+  - pytest tests/ -k "approve" -v
+
+risk_level: medium

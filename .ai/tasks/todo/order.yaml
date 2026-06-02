@@ -1,0 +1,90 @@
+# Phase 01: Secure Temp Password Delivery — Execution Order
+# Source: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+#
+# Wave 1: Backend Foundation (TASK_001, TASK_002) — parallel safe
+# Wave 2: Backend Endpoint Changes (TASK_003, TASK_004, TASK_005) — parallel safe after Wave 1
+# Wave 3: Frontend Changes (TASK_006, TASK_007, TASK_008) — parallel safe after Wave 2
+# Wave 4: Tests & Verification (TASK_009, TASK_010) — sequential after all implementation
+
+tasks:
+  # ── Wave 1: Backend Foundation ──
+
+  - id: TASK_001_backend_temp_password_store
+    depends_on: []
+    wave: 1
+    parallel_group: wave_1
+
+  - id: TASK_002_backend_settings_di
+    depends_on:
+      - TASK_001_backend_temp_password_store
+    wave: 1
+    parallel_group: wave_1
+
+  # ── Wave 2: Backend Endpoint Changes ──
+
+  - id: TASK_003_backend_auth_service_reset_password
+    depends_on:
+      - TASK_001_backend_temp_password_store
+      - TASK_002_backend_settings_di
+    wave: 2
+    parallel_group: wave_2
+
+  - id: TASK_004_backend_approve_endpoint
+    depends_on:
+      - TASK_001_backend_temp_password_store
+      - TASK_002_backend_settings_di
+    wave: 2
+    parallel_group: wave_2
+
+  - id: TASK_005_backend_retrieval_endpoint
+    depends_on:
+      - TASK_001_backend_temp_password_store
+      - TASK_002_backend_settings_di
+    wave: 2
+    parallel_group: wave_2
+
+  # ── Wave 3: Frontend Changes ──
+
+  - id: TASK_006_frontend_api_types
+    depends_on:
+      - TASK_003_backend_auth_service_reset_password
+      - TASK_004_backend_approve_endpoint
+      - TASK_005_backend_retrieval_endpoint
+    wave: 3
+    parallel_group: wave_3
+
+  - id: TASK_007_frontend_user_management
+    depends_on:
+      - TASK_006_frontend_api_types
+    wave: 3
+    parallel_group: wave_3
+
+  - id: TASK_008_frontend_registration_requests
+    depends_on:
+      - TASK_006_frontend_api_types
+    wave: 3
+    parallel_group: wave_3
+
+  # ── Wave 4: Tests & Verification ──
+
+  - id: TASK_009_backend_tests
+    depends_on:
+      - TASK_003_backend_auth_service_reset_password
+      - TASK_004_backend_approve_endpoint
+      - TASK_005_backend_retrieval_endpoint
+    wave: 4
+    parallel_group: wave_4
+
+  - id: TASK_010_verify_phase_01
+    depends_on:
+      - TASK_001_backend_temp_password_store
+      - TASK_002_backend_settings_di
+      - TASK_003_backend_auth_service_reset_password
+      - TASK_004_backend_approve_endpoint
+      - TASK_005_backend_retrieval_endpoint
+      - TASK_006_frontend_api_types
+      - TASK_007_frontend_user_management
+      - TASK_008_frontend_registration_requests
+      - TASK_009_backend_tests
+    wave: 4
+    parallel_group: wave_4
