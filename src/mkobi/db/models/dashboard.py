@@ -10,6 +10,7 @@ from sqlalchemy import (
     String,
     Text,
     text,
+    Index,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -29,6 +30,11 @@ if TYPE_CHECKING:
 
 class Dashboard(Base):
     __tablename__ = "dashboards"
+    __table_args__ = (
+        Index("idx_dashboards_name", "name", unique=True),
+        Index("idx_dashboards_layout_id", "layout_id"),
+        Index("idx_dashboards_created_by", "created_by"),
+    )
 
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
@@ -40,7 +46,6 @@ class Dashboard(Base):
     name: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
-        unique=True,
     )
 
     description: Mapped[str | None] = mapped_column(

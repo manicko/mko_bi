@@ -234,7 +234,11 @@ class TestDashboardAccessDependencies:
     async def test_write_access_denied_for_editor_with_edit_permission(
         self, async_client, async_db_session, test_user
     ) -> None:
-        """Test that editor with edit permission gets 403 for write (admin role required)."""
+        """Test that editor with edit permission can update dashboard.
+
+        Editor with edit permission now CAN update the dashboard after
+        resource-level access control was implemented (TASK_012).
+        """
         # Create dashboard
         dashboard_repo = DashboardRepository()
         dashboard = await dashboard_repo.create(
@@ -263,16 +267,13 @@ class TestDashboardAccessDependencies:
         await async_db_session.commit()
         token = create_access_token({"user_id": str(editor_user.id), "email": editor_user.email})
 
-        # PUT endpoint requires admin role, so editor with edit permission gets 403.
-        # This verifies that edit permission on dashboard does not grant write access
-        # to endpoints that require global ADMIN role.
+        # Editor with edit permission can now update the dashboard
         response = await async_client.put(
             f"/dashboards/{dashboard.id}",
             json={"description": "Updated description"},
             headers={"Authorization": f"Bearer {token}"},
         )
-        # Editor should get 403 because update endpoint requires admin role
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        assert response.status_code == status.HTTP_200_OK
 
     async def test_write_access_with_view_only(
         self, async_client, async_db_session, test_user
@@ -317,11 +318,10 @@ class TestDashboardAccessDependencies:
     async def test_admin_access_with_admin_permission(
         self, async_client, async_db_session, test_user
     ) -> None:
-        """Test that user with admin permission still needs ADMIN role for delete.
+        """Test that editor with admin dashboard permission can delete.
 
-        Note: The delete endpoint requires require_admin_role (global ADMIN role),
-        not just dashboard admin permission. This tests that editor with admin
-        dashboard permission gets 403 because they lack global ADMIN role.
+        After resource-level access control (TASK_012), editors with admin
+        permission on a dashboard can delete it (no global ADMIN role required).
         """
         # Create dashboard
         dashboard_repo = DashboardRepository()
@@ -351,13 +351,13 @@ class TestDashboardAccessDependencies:
         await async_db_session.commit()
         token = create_access_token({"user_id": str(editor_user.id), "email": editor_user.email})
 
-        # Delete requires global ADMIN role, not just dashboard admin permission
+        # Delete endpoint now checks dashboard admin permission
         response = await async_client.delete(
             f"/dashboards/{dashboard.id}",
             headers={"Authorization": f"Bearer {token}"},
         )
-        # Editor gets 403 because delete endpoint requires ADMIN role (not dashboard permission)
-        assert response.status_code == status.HTTP_403_FORBIDDEN
+        # Editor with admin permission on dashboard should succeed
+        assert response.status_code == status.HTTP_204_NO_CONTENT
 
     async def test_admin_access_with_admin_role(
         self, async_client, async_db_session, test_user

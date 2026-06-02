@@ -55,6 +55,12 @@ axiosInstance.interceptors.response.use(
         return Promise.reject(error)
       }
 
+      // Skip retry for refresh endpoint - prevents infinite loop when no refresh cookie exists
+      if (error.config?.url?.includes('/auth/refresh')) {
+        removeToken()
+        return Promise.reject(error)
+      }
+
       const originalConfig = error.config
 
       // If config is missing, reject immediately

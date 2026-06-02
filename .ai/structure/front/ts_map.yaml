@@ -286,6 +286,32 @@
     - '<div style={{ padding: ''20px'' }}>'
     - <Typography variant="h4">
     - <Typography>
+- path: C:/py_dev/mkobi/frontend/src/shared/components/ProtectedRoute.test.tsx
+  module: C:.py_dev.mkobi.frontend.src.shared.components.ProtectedRoute.test
+  layer: component
+  imports:
+    - vitest
+    - '@testing-library/react'
+    - react-router-dom
+    - ./ProtectedRoute
+    - ../../features/auth
+  components: []
+  hooks: []
+  jsx_tags:
+    - <div data-testid="box">
+    - <div data-testid="circular-progress">
+    - <MemoryRouter>
+    - <ProtectedRoute>
+    - <div>
+    - <MemoryRouter>
+    - <ProtectedRoute>
+    - <div>
+    - <MemoryRouter initialEntries={['/protected']}>
+    - <ProtectedRoute>
+    - <div>
+    - <MemoryRouter initialEntries={['/protected']}>
+    - <ProtectedRoute>
+    - <div>
 - path: C:/py_dev/mkobi/frontend/src/shared/components/ProtectedRoute.tsx
   module: C:.py_dev.mkobi.frontend.src.shared.components.ProtectedRoute
   layer: component
@@ -300,6 +326,38 @@
     - >-
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems:
       'center', minHeight: '100vh' }}>
+- path: C:/py_dev/mkobi/frontend/src/shared/components/RoleBasedAccess.test.tsx
+  module: C:.py_dev.mkobi.frontend.src.shared.components.RoleBasedAccess.test
+  layer: component
+  imports:
+    - vitest
+    - '@testing-library/react'
+    - ./RoleBasedAccess
+    - ../../features/auth
+  components: []
+  hooks: []
+  jsx_tags:
+    - <RoleBasedAccess roles={['admin', 'editor']}>
+    - <div>
+    - <RoleBasedAccess roles={['admin', 'editor']}>
+    - <div>
+    - >-
+      <RoleBasedAccess roles={['admin', 'editor']} fallback={<div>Access
+      Denied</div>}>
+    - <div>
+    - <div>
+    - <RoleBasedAccess roles={['admin']}>
+    - <div>
+    - <RoleBasedAccess roles={['admin']} fallback={<div>Login Required</div>}>
+    - <div>
+    - <div>
+    - <RoleBasedAccess roles={['admin']}>
+    - <div>
+    - <RoleBasedAccess roles={['admin', 'editor', 'viewer']}>
+    - <div>
+    - <RoleBasedAccess roles={['admin']} fallback={<div>Not Admin</div>}>
+    - <div>
+    - <button>
 - path: C:/py_dev/mkobi/frontend/src/shared/components/RoleBasedAccess.tsx
   module: C:.py_dev.mkobi.frontend.src.shared.components.RoleBasedAccess
   layer: component
@@ -584,8 +642,10 @@
   layer: unknown
   imports:
     - zod
+    - react
   components: []
-  hooks: []
+  hooks:
+    - useAuthToken
   jsx_tags: []
 - path: C:/py_dev/mkobi/frontend/src/features/auth/model/useAuth.ts
   module: C:.py_dev.mkobi.frontend.src.features.auth.model.useAuth
@@ -1097,6 +1157,33 @@
   components: []
   hooks: []
   jsx_tags: []
+- path: >-
+    C:/py_dev/mkobi/frontend/src/features/auth/model/__tests__/useAuth.forcePassword.test.ts
+  module: >-
+    C:.py_dev.mkobi.frontend.src.features.auth.model.__tests__.useAuth.forcePassword.test
+  layer: unknown
+  imports:
+    - vitest
+    - '@testing-library/react'
+    - ../../api/authApi
+    - ../useAuth
+  components: []
+  hooks: []
+  jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/features/auth/model/__tests__/useAuth.test.tsx
+  module: C:.py_dev.mkobi.frontend.src.features.auth.model.__tests__.useAuth.test
+  layer: unknown
+  imports:
+    - vitest
+    - '@testing-library/react'
+    - '@tanstack/react-query'
+    - ../useAuth
+    - ../../api/authApi
+    - ../authToken
+  components: []
+  hooks: []
+  jsx_tags:
+    - <QueryClientProvider client={queryClient}>
 - path: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/BarChart.tsx
   module: C:.py_dev.mkobi.frontend.src.features.dashboards.ui.charts.BarChart
   layer: unknown
@@ -1134,6 +1221,22 @@
     - PieChart
   hooks: []
   jsx_tags: []
+- path: >-
+    C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/PlotlyChart.test.tsx
+  module: C:.py_dev.mkobi.frontend.src.features.dashboards.ui.charts.PlotlyChart.test
+  layer: unknown
+  imports:
+    - vitest
+    - '@testing-library/react'
+    - ./PlotlyChart
+    - react-plotly.js
+  components: []
+  hooks: []
+  jsx_tags:
+    - >-
+      <div data-testid="plotly-chart" data-layout={JSON.stringify(layout)}
+      data-config={JSON.stringify(config)} data-style={JSON.stringify(style)}>
+    - <div data-testid="plotly-data">
 - path: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/PlotlyChart.tsx
   module: C:.py_dev.mkobi.frontend.src.features.dashboards.ui.charts.PlotlyChart
   layer: unknown

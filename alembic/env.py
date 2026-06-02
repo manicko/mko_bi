@@ -27,6 +27,7 @@ from mkobi.db.models import (  # noqa: F401, E402
     Layout,
     ProcessingConfig,
     ProcessingLog,
+    RegistrationRequest,
     User,
 )
 from mkobi.db.base import Base  # noqa: E402

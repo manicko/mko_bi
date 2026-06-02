@@ -63,6 +63,7 @@ names from the list. {TASKS_FILES_TO_IMPLEMENT} of files PRESERVING execution or
 - IMPORTANT: `C:\py_dev\mkobi\.ai\context\commands.md`
 - `AGENTS.md`
 - `C:\py_dev\mkobi\docs\SPEC.md`
+- C:\py_dev\mkobi\docs\11-guides\docker.md
 
 
 Understand:

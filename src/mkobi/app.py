@@ -30,6 +30,7 @@ from mkobi.db.starter import (
     SchemaNotFoundError,
 )
 from mkobi.models.enums import EnvironmentEnum
+from mkobi.models.types import ErrorResponse
 from mkobi.workers.data_worker import start_stale_processing_cleanup_task
 
 # Get configuration and setup logging
@@ -52,6 +53,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     - X-Frame-Options: Prevents clickjacking
     - X-XSS-Protection: Enables browser XSS filter
     - Referrer-Policy: Controls referrer information
+    - Strict-Transport-Security: Enforces HTTPS connections (HSTS)
+    - Content-Security-Policy: Prevents XSS and injection attacks (CSP)
     """
 
     async def dispatch(self, request: Request, call_next: Any) -> Any:
@@ -69,6 +72,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+        response.headers["Content-Security-Policy"] = "default-src 'self'"
         return response
 
 
@@ -205,7 +210,6 @@ def create_app() -> FastAPI:
     application.include_router(routes.upload.router, prefix="/api/v1")
     application.include_router(routes.data.router, prefix="/api/v1")
     application.include_router(routes.client_errors.router, prefix="/api/v1")
-    application.include_router(routes.filters.router, prefix="/api/v1/filters")
     application.include_router(routes.processing_configs.router, prefix="/api/v1")
     application.include_router(routes.processing_logs.router, prefix="/api/v1")
     application.include_router(routes.admin.router, prefix="/api/v1")
@@ -275,47 +279,73 @@ def create_app() -> FastAPI:
     _setup_static_files(application)
 
     # Exception handlers
+    def _make_errors_serializable(errors: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Convert error context to JSON-serializable format.
+
+        Pydantic's errors() can contain non-serializable objects in ctx.
+        This function converts them to strings.
+
+        Args:
+            errors: List of error dictionaries from Pydantic.
+
+        Returns:
+            List of error dictionaries with serializable values.
+        """
+        serializable = []
+        for err in errors:
+            clean_err = dict(err)
+            if "ctx" in clean_err and "error" in clean_err["ctx"]:
+                clean_err["ctx"] = {"error": str(clean_err["ctx"]["error"])}
+            serializable.append(clean_err)
+        return serializable
+
     @application.exception_handler(StarletteHTTPException)
     async def http_exception_handler(
-        request: Request, exc: StarletteHTTPException
+        request: Request, exc: StarletteHTTPException,
     ) -> JSONResponse:
         """Handler for HTTP exceptions."""
+        response = ErrorResponse(
+            error=exc.detail or "Error",
+            code=f"HTTP_{exc.status_code}",
+        )
         return JSONResponse(
             status_code=exc.status_code,
-            content={
-                "detail": exc.detail,
-                "status_code": exc.status_code,
-                "error_code": f"HTTP_{exc.status_code}",
-            },
+            content=response.model_dump(),
         )
 
     @application.exception_handler(RequestValidationError)
     async def validation_exception_handler(
-        request: Request, exc: RequestValidationError
+        request: Request, exc: RequestValidationError,
     ) -> JSONResponse:
         """Handler for request validation errors."""
+        response = ErrorResponse(
+            error="Validation error",
+            detail="Request validation failed",
+            code="VALIDATION_ERROR",
+        )
         return JSONResponse(
             status_code=422,
             content={
-                "detail": "Validation error",
-                "errors": exc.errors(),
-                "status_code": 422,
-                "error_code": "VALIDATION_ERROR",
+                **response.model_dump(),
+                "errors": _make_errors_serializable(exc.errors()),
             },
         )
 
     @application.exception_handler(ValidationError)
     async def pydantic_validation_exception_handler(
-        request: Request, exc: ValidationError
+        request: Request, exc: ValidationError,
     ) -> JSONResponse:
         """Handler for Pydantic validation errors."""
+        response = ErrorResponse(
+            error="Validation error",
+            detail="Pydantic validation failed",
+            code="VALIDATION_ERROR",
+        )
         return JSONResponse(
             status_code=422,
             content={
-                "detail": "Validation error",
-                "errors": exc.errors(),
-                "status_code": 422,
-                "error_code": "VALIDATION_ERROR",
+                **response.model_dump(),
+                "errors": _make_errors_serializable(exc.errors()),
             },
         )
 

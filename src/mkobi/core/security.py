@@ -36,11 +36,23 @@ def _get_config() -> Any:
 # Constants
 SALT_ROUNDS: int = 12
 MAX_PASSWORD_LENGTH: int = 72
+BLACKLIST_PREFIX: str = "token_blacklist:"
+REFRESH_TOKEN_BLACKLIST_PREFIX: str = "refresh_token_blacklist:"
 
 # Cookie security defaults
 COOKIE_HTTPONLY: bool = True
 COOKIE_SAMESITE: str = "strict"
 COOKIE_NAME: str = "mkobi_refresh_token"
+
+
+def _generate_jti() -> str:
+    """Generate a unique JWT ID for token identification.
+
+    Returns:
+        str: Unique identifier string for JWT.
+    """
+    import secrets
+    return secrets.token_urlsafe(32)
 
 
 class RateLimiter:
@@ -243,7 +255,7 @@ def create_access_token(
         expire = datetime.now(UTC) + timedelta(
             minutes=config.jwt.access_token_expire_minutes
         )
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "jti": _generate_jti()})
     secret_key = config.jwt.secret_key
     if secret_key is None:
         raise ValueError("JWT_SECRET_KEY must be configured")
@@ -261,6 +273,7 @@ def create_refresh_token(data: dict[str, Any]) -> str:
 
     Token contains provided data and expiration time (exp).
     Uses refresh_token_expire_minutes from config (default 7 days = 10080 minutes).
+    Includes jti (JWT ID) for token revocation support.
 
     Args:
         data: Data to include in the token (e.g., user_id, email).
@@ -283,7 +296,7 @@ def create_refresh_token(data: dict[str, Any]) -> str:
     expire = datetime.now(UTC) + timedelta(
         minutes=config.jwt.refresh_token_expire_minutes
     )
-    to_encode.update({"exp": expire})
+    to_encode.update({"exp": expire, "jti": _generate_jti()})
     secret_key = config.jwt.secret_key
     if secret_key is None:
         raise ValueError("JWT_SECRET_KEY must be configured")
@@ -417,3 +430,97 @@ def delete_secure_cookie(response: Response, key: str) -> None:
         secure=config.app.cookie_secure,
         samesite=COOKIE_SAMESITE,
     )
+
+
+# --- Token Revocation Functions ---
+
+
+async def revoke_token(redis_client: aioredis.Redis, jti: str, expires_in_seconds: int) -> None:
+    """Revoke a token by adding its jti to the Redis blacklist.
+
+    Args:
+        redis_client: Async Redis client.
+        jti: JWT ID to revoke.
+        expires_in_seconds: TTL for the blacklist entry in seconds.
+    """
+    key = f"{BLACKLIST_PREFIX}{jti}"
+    await redis_client.setex(key, expires_in_seconds, "revoked")
+    logger.info("Token revoked in blacklist: jti=%s", jti)
+
+
+async def revoke_refresh_token(redis_client: aioredis.Redis, jti: str, expires_in_seconds: int) -> None:
+    """Revoke a refresh token by adding its jti to the Redis blacklist.
+
+    Args:
+        redis_client: Async Redis client.
+        jti: JWT ID to revoke.
+        expires_in_seconds: TTL for the blacklist entry in seconds.
+    """
+    key = f"{REFRESH_TOKEN_BLACKLIST_PREFIX}{jti}"
+    await redis_client.setex(key, expires_in_seconds, "revoked")
+    logger.info("Refresh token revoked in blacklist: jti=%s", jti)
+
+
+async def is_token_revoked(redis_client: aioredis.Redis, jti: str) -> bool:
+    """Check if a token is revoked.
+
+    Args:
+        redis_client: Async Redis client.
+        jti: JWT ID to check.
+
+    Returns:
+        bool: True if token is revoked, False otherwise.
+    """
+    key = f"{BLACKLIST_PREFIX}{jti}"
+    exists = await redis_client.exists(key)
+    return bool(exists)
+
+
+async def is_refresh_token_revoked(redis_client: aioredis.Redis, jti: str) -> bool:
+    """Check if a refresh token is revoked.
+
+    Args:
+        redis_client: Async Redis client.
+        jti: JWT ID to check.
+
+    Returns:
+        bool: True if token is revoked, False otherwise.
+    """
+    key = f"{REFRESH_TOKEN_BLACKLIST_PREFIX}{jti}"
+    exists = await redis_client.exists(key)
+    return bool(exists)
+
+
+async def revoke_all_user_tokens(
+    redis_client: aioredis.Redis, user_id: UUID, access_ttl: int, refresh_ttl: int
+) -> None:
+    """Revoke all tokens for a user by storing their user_id in a revocation set.
+
+    This adds a user-level revocation that affects all current tokens.
+
+    Args:
+        redis_client: Async Redis client.
+        user_id: User ID whose tokens should be revoked.
+        access_ttl: TTL for access token blacklist entries.
+        refresh_ttl: TTL for refresh token blacklist entries.
+    """
+    key = f"user_tokens_revoked:{user_id}"
+    # Store a marker with the longer TTL (refresh token typically lives longer)
+    ttl = max(access_ttl, refresh_ttl)
+    await redis_client.setex(key, ttl, "revoked")
+    logger.info("All tokens revoked for user: id=%s", user_id)
+
+
+async def is_user_tokens_revoked(redis_client: aioredis.Redis, user_id: UUID) -> bool:
+    """Check if user's tokens are revoked (user-level revocation).
+
+    Args:
+        redis_client: Async Redis client.
+        user_id: User ID to check.
+
+    Returns:
+        bool: True if user's tokens are revoked, False otherwise.
+    """
+    key = f"user_tokens_revoked:{user_id}"
+    exists = await redis_client.exists(key)
+    return bool(exists)

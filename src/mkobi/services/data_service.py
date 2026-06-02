@@ -13,7 +13,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.config import get_config
 from mkobi.core.logging_config import get_logger
-from mkobi.core.permissions import check_dashboard_access, PermissionError
+from mkobi.core.permissions import check_dashboard_access, DashboardPermissionError
 from mkobi.interfaces.repository_interfaces import (
     IAggregatedDataRepository,
     IDashboardRepository,
@@ -128,7 +128,7 @@ class DataService(IDataService):
                     "Processing denied: user_id=%s, dashboard_id=%s",
                     user_id, dashboard_id,
                 )
-                raise PermissionError(
+                raise DashboardPermissionError(
                     "No permission to process data for this dashboard"
                 )
 
@@ -272,7 +272,7 @@ class DataService(IDataService):
                     "Processing denied: user_id=%s, dashboard_id=%s",
                     user_id, dashboard_id,
                 )
-                raise PermissionError("No permission to process data for this dashboard")
+                raise DashboardPermissionError("No permission to process data for this dashboard")
         log = await get_and_validate_processing_log(
             task_id=task_id, dashboard_id=dashboard_id,
             log_repo=self.log_repo, db=db,
@@ -318,7 +318,7 @@ class DataService(IDataService):
                 required_permission="view", db=db,
             )
             if not has_access:
-                raise PermissionError("No permission to view this dashboard")
+                raise DashboardPermissionError("No permission to view this dashboard")
         return ProcessingStatusResponse(
             task_id=task_id,
             filename=log.message or "unknown",
@@ -327,7 +327,7 @@ class DataService(IDataService):
             progress=50 if log.status == ProcessingStatus.PROCESSING else 100 if log.status == ProcessingStatus.COMPLETED else 0,
             message=log.message,
             started_at=log.started_at,
-            completed_at=log.finished_at,
+            finished_at=log.finished_at,
         )
 
     async def get_processing_result(
@@ -346,7 +346,7 @@ class DataService(IDataService):
                 required_permission="view", db=db,
             )
             if not has_access:
-                raise PermissionError("No permission to view this dashboard")
+                raise DashboardPermissionError("No permission to view this dashboard")
         if log.status != ProcessingStatus.COMPLETED:
             return ProcessingResult(
                 success=False, task_id=task_id,

@@ -152,7 +152,11 @@ export interface GraphDataWithConfig {
 // UploadMode is now imported from './enums'
 
 export interface ProcessingStatusResponse {
+  task_id: string
+  filename: string
+  dashboard_id: string
   status: ProcessingStatus
+  progress: number
   message?: string
   started_at?: string
   finished_at?: string

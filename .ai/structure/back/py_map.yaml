@@ -19,6 +19,7 @@
   - mkobi.db.session
   - mkobi.db.starter
   - mkobi.models.enums
+  - mkobi.models.types
   - mkobi.workers.data_worker
   - mkobi.utils.exceptions
   - pathlib
@@ -30,6 +31,7 @@
   - SPAStaticFiles
   functions:
   - create_app
+  - _make_errors_serializable
   - _setup_static_files
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.config
@@ -66,6 +68,7 @@
   - __repr__
   - database_url
   - admin_database_url
+  - validate_secret_key
   - __init__
   - validate_admin_credentials
   - validate_cors_origins
@@ -119,6 +122,7 @@
   - mkobi.services.processing_log_service
   - mkobi.services.user_service
   - mkobi.core.permissions
+  - mkobi.core.redis_client
   - mkobi.core.security
   - mkobi.db.repositories.user_repo
   - mkobi.db.session
@@ -220,7 +224,7 @@
   - mkobi.models.enums
   - mkobi.models.user
   classes:
-  - PermissionError
+  - DashboardPermissionError
   - AuthenticationError
   functions:
   - _get_role_level
@@ -250,6 +254,7 @@
   - AsyncRateLimiter
   functions:
   - _get_config
+  - _generate_jti
   - __init__
   - check_rate_limit
   - __init__
@@ -435,6 +440,8 @@
   functions:
   - serialize_ip
   - validate_password_field
+  - check_passwords_match
+  - validate_new_password_field
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\dashboard.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.models.dashboard
   layer: unknown
@@ -450,6 +457,7 @@
   - DashboardCreate
   - DashboardRead
   - DashboardUpdate
+  - DashboardSummary
   - DashboardAdmin
   functions:
   - validate_name
@@ -636,6 +644,7 @@
   - GraphConfigModel
   - FilterConfigModel
   - ProcessingSettingsModel
+  - ErrorResponse
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\user.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.models.user
@@ -653,6 +662,7 @@
   - UserUpdate
   - UserCreateRequest
   - UserUpdateRequest
+  - UserUpdateActiveRequest
   functions:
   - display_name
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\__init__.py
@@ -665,6 +675,7 @@
   - mkobi.models.graph
   - mkobi.models.processing_configs
   - mkobi.models.processing_logs
+  - mkobi.models.types
   - mkobi.models.user
   - mkobi.models.transformation_configs
   - mkobi.models.enums
@@ -766,6 +777,8 @@
   - mkobi.workers.data_worker
   classes: []
   functions:
+  - detect_mime_type_from_content
+  - detect_mime_type_from_content
   - validate_mime_type
   - validate_file
   - find_task_file
@@ -905,8 +918,10 @@
   imports:
   - fastapi
   - fastapi.responses
+  - pydantic
   - mkobi.core.logging_config
   classes:
+  - ErrorResponse
   - AppException
   - NotFoundException
   - PermissionDeniedException
@@ -980,6 +995,7 @@
   - typing
   - uuid
   - sqlalchemy
+  - sqlalchemy.exc
   - sqlalchemy.ext.asyncio
   - mkobi.data.loaders.loader
   - mkobi.data.processing.transformations
@@ -1547,6 +1563,8 @@
   - mkobi.models.user
   - mkobi.models.auth
   - mkobi.services.auth_service
+  - mkobi.core.security
+  - mkobi.config
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
@@ -1615,6 +1633,7 @@
   - mkobi.models.dashboard
   - mkobi.services.dashboard_service
   - mkobi.utils.exceptions
+  - mkobi.models.enums
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
@@ -1651,11 +1670,9 @@
   - typing
   - uuid
   - fastapi
-  - sqlalchemy
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
   - mkobi.core.permissions
-  - mkobi.db.models.graphs
   - mkobi.models.data
   - mkobi.services.data_service
   classes: []
@@ -1663,13 +1680,7 @@
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\filters.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.filters
   layer: unknown
-  imports:
-  - uuid
-  - fastapi
-  - sqlalchemy.ext.asyncio
-  - mkobi.api.deps
-  - mkobi.models.filters
-  - mkobi.services.filter_service
+  imports: []
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py

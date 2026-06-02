@@ -22,6 +22,7 @@ from mkobi.models.dashboard import (
     DashboardCreate,
     DashboardRead,
     DashboardUpdate,
+    DashboardSummary,
 )
 from mkobi.models.data import (
     DataUpload,
@@ -34,6 +35,7 @@ from mkobi.models.auth import (
     Token,
     TokenData,
     TokenWithUser,
+    ChangePasswordRequest,
 )
 from mkobi.models.access import (
     AccessCheck,
@@ -215,6 +217,38 @@ class TestDashboardModels:
         assert len(config.charts) == 1
         assert config.charts[0]["type"] == GraphType.BAR
 
+    def test_dashboard_summary_with_permission(self):
+        """Test DashboardSummary model includes permission field."""
+        from datetime import datetime
+        summary = DashboardSummary(
+            id=uuid.UUID("550e8400-e29b-41d4-a716-446655440000"),
+            name="Test Dashboard",
+            description="Test description",
+            permission=DashboardPermission.VIEW,
+            created_at=datetime.now(),
+        )
+        assert summary.id == uuid.UUID("550e8400-e29b-41d4-a716-446655440000")
+        assert summary.name == "Test Dashboard"
+        assert summary.permission == DashboardPermission.VIEW
+
+    def test_dashboard_summary_permission_serialization(self):
+        """Test DashboardSummary permission field serializes correctly."""
+        from datetime import datetime
+        summary = DashboardSummary(
+            id=uuid.UUID("550e8400-e29b-41d4-a716-446655440000"),
+            name="Test Dashboard",
+            description="Test description",
+            permission=DashboardPermission.EDIT,
+            created_at=datetime.now(),
+        )
+        # Test model serialization
+        data = summary.model_dump()
+        assert data["permission"] == "edit"
+
+        # Test JSON serialization
+        json_data = summary.model_dump(mode="json")
+        assert json_data["permission"] == "edit"
+
 
 class TestDataModels:
     """Tests for Pydantic data models."""
@@ -395,3 +429,42 @@ class TestAuthModels:
             dashboard_id="550e8400-e09b-41d4-a716-446655440001",
         )
         assert grant.permission == DashboardPermission.VIEW
+
+    def test_change_password_request_valid(self):
+        """Test valid change password request."""
+        req = ChangePasswordRequest(
+            current_password="OldPass123!",
+            new_password="NewPass456!",
+            confirm_password="NewPass456!",
+        )
+        assert req.current_password == "OldPass123!"
+        assert req.new_password == "NewPass456!"
+
+    def test_change_password_request_passwords_match(self):
+        """Test valid change password request with matching passwords."""
+        req = ChangePasswordRequest(
+            current_password="OldPass123!",
+            new_password="NewPass456!",
+            confirm_password="NewPass456!",
+        )
+        assert req.new_password == req.confirm_password
+
+    def test_change_password_request_passwords_mismatch(self):
+        """Test validation error when passwords do not match."""
+        with pytest.raises(ValidationError) as exc_info:
+            ChangePasswordRequest(
+                current_password="OldPass123!",
+                new_password="NewPass456!",
+                confirm_password="DifferentPass!",
+            )
+        errors = exc_info.value.errors()
+        assert any("do not match" in str(err.get("msg", "")) for err in errors)
+
+    def test_change_password_request_weak_password(self):
+        """Test validation error for weak new password."""
+        with pytest.raises(ValidationError):
+            ChangePasswordRequest(
+                current_password="OldPass123!",
+                new_password="weak",
+                confirm_password="weak",
+            )

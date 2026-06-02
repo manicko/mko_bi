@@ -5,10 +5,24 @@ Provides base application exception and specialized subclasses, plus FastAPI exc
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 from mkobi.core.logging_config import get_logger
 
 logger = get_logger(__name__)
+
+
+class ErrorResponse(BaseModel):
+    """Standardized error response model for all API errors.
+
+    Provides a consistent JSON structure for error responses across all endpoints.
+    """
+
+    error: str
+    detail: str | None = None
+    code: str | None = None
+
+    model_config = {"extra": "allow"}
 
 
 class AppException(Exception):
@@ -92,32 +106,31 @@ def add_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(AppException)
     async def app_exception_handler(
-        request: Request, exc: AppException
+        request: Request, exc: AppException,
     ) -> JSONResponse:
         logger.error(
             "AppException raised: error_code=%s, detail=%s",
             exc.error_code,
             exc.detail,
         )
+        response = ErrorResponse(
+            error=exc.detail,
+            code=exc.error_code,
+        )
         return JSONResponse(
             status_code=exc.status_code,
-            content={
-                "status_code": exc.status_code,
-                "detail": exc.detail,
-                "error_code": exc.error_code,
-            },
+            content=response.model_dump(),
         )
 
     @app.exception_handler(Exception)
     async def global_exception_handler(
-        request: Request, exc: Exception
+        request: Request, exc: Exception,
     ) -> JSONResponse:
         logger.error("Unhandled exception: %s", exc)
         return JSONResponse(
             status_code=500,
-            content={
-                "status_code": 500,
-                "detail": "Internal server error",
-                "error_code": "INTERNAL_ERROR",
-            },
+            content=ErrorResponse(
+                error="Internal server error",
+                code="INTERNAL_ERROR",
+            ).model_dump(),
         )

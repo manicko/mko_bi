@@ -13,7 +13,6 @@ from sqlalchemy import (
     Index,
     String,
     text,
-    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -103,7 +102,7 @@ class Graph(Base):
 
     __table_args__ = (
         # Unique constraint: combination of dashboard_id and name must be unique
-        UniqueConstraint("dashboard_id", "name", name="idx_graphs_dashboard_name"),
+        Index("idx_graphs_dashboard_name", "dashboard_id", "name", unique=True),
         # Index for dashboard lookup performance
         Index("idx_graphs_dashboard", "dashboard_id"),
     )

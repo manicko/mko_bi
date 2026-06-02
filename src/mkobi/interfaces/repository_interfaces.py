@@ -66,8 +66,8 @@ class IDashboardRepository(IRepository):
     @abc.abstractmethod
     async def get_by_user(
         self, user_id: UUID, db: AsyncSession, is_admin: bool = False
-    ) -> list[Any]:
-        """Get dashboards by user (dashboards available to user)."""
+    ) -> list[tuple[Any, str | None]]:
+        """Get dashboards by user (dashboards available to user) with permission."""
         pass
 
     @abc.abstractmethod

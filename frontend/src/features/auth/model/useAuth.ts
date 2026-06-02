@@ -27,6 +27,10 @@ export function useAuth() {
       const response = await apiLogin(email, password)
       setToken(response.access_token)
       setUser(response.user)
+      // Security: Redirect to password change if flag is set after admin password reset
+      if (response.user.force_password_change) {
+        window.location.href = '/profile/change-password?force=true'
+      }
       return response
     } catch (error) {
       removeToken()

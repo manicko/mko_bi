@@ -20,11 +20,12 @@ This document provides comprehensive Docker setup instructions for the mkobi BI 
 ## Overview
 
 This project uses a multi-stage Dockerfile with the following targets:
-- **base** - Common base image with system dependencies
-- **dev** - Development environment with hot reload
-- **test** - Environment for running tests
-- **prod** - Production image with multiple workers (default)
-- **frontend-builder** - Builds React SPA (intermediate stage)
+- **frontend-builder** — Builds React SPA (intermediate stage)
+- **base** — Common base image with system dependencies (build-essential, libpq-dev, libmagic1)
+- **prod-base** — Minimal runtime base for production (libpq5, libmagic1 only; no build tools)
+- **dev** — Development environment with hot reload
+- **test** — Environment for running tests
+- **prod** — Production image with multiple workers (default)
 
 ## Prerequisites
 
@@ -66,21 +67,24 @@ docker compose -f docker/docker-compose.yml --env-file .env logs -f frontend
 ### Testing
 
 ```bash
-# Start test environment
-docker compose -f docker/docker-compose.test.yml up -d
+# Start test environment (standalone compose, no production overlap)
+docker compose -f docker/docker-compose.test.yml up -d --build
 
 # Run tests
-docker compose -f docker/docker-compose.test.yml exec test-app uv run pytest tests/ -v
+docker compose -f docker/docker-compose.test.yml exec test-app /app/.venv/bin/pytest tests/ -v
 
 # Stop test environment
 docker compose -f docker/docker-compose.test.yml down
 ```
 
+> **Test Compose is Standalone:** `docker-compose.test.yml` defines its own isolated services (`test-db`, `test-redis`, `test-migrate`, `test-app`), volumes (`test_postgres_data`, `test_redis_data`), and network (`test_network`). It uses shifted host ports (5433, 6380, 8001) so it can run in parallel with the production compose without conflicts.
+
 ## Multi-Stage Builds Explained
 
 ### Stage: base
-- Python 3.12-slim as base
-- Installs system dependencies (build-essential, libpq-dev)
+- Python 3.12-slim-bookworm as base
+- Installs system dependencies: `build-essential`, `libpq-dev`, `libmagic1`, `curl`
+  - `libmagic1` is required for server-side MIME type detection (python-magic library) in the file upload pipeline
 - Installs uv for fast dependency management
 - Creates non-root user for security
 
@@ -103,11 +107,20 @@ docker compose -f docker/docker-compose.test.yml down
 - Sets `ENV=test`
 - Default command runs pytest
 
+### Stage: prod-base
+- Python 3.12-slim-bookworm as base
+- Installs only runtime dependencies: `libpq5`, `libmagic1`, `curl`
+- No build tools (build-essential, libpq-dev) — smaller attack surface
+- Installs uv for dependency management
+- Creates non-root user
+- Extended by `prod` stage
+
 ### Stage: prod (default target)
-- Extends base
-- Installs only production dependencies
+- Extends **prod-base** (not `base`) for minimal image size
+- Installs only production dependencies (`uv sync --no-dev`)
 - Copies frontend build artifacts from frontend-builder stage
 - Runs with multiple workers (`--workers 4`)
+- Includes HEALTHCHECK directive (curl `/health`)
 
 ## Layer Caching Optimizations
 
@@ -137,6 +150,15 @@ docker build -f docker/Dockerfile --build-arg UV_VERSION=v0.1.0 --target prod -t
 
 Environment variables are loaded from `.env` in the project root. All Docker Compose commands require `--env-file .env` flag to load them, because `docker-compose.yml` uses `${VAR:?error}` enforcement patterns that prevent startup without explicit values.
 
+**Important:** The `.env` file in the project root is a **development template** with placeholder values. For **production deployments**, use `docker/.env.production` instead:
+```bash
+# Production deployment (correct)
+docker compose --env-file docker/.env.production -f docker/docker-compose.yml up -d
+
+# Development (correct)
+docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml up -d
+```
+
 **Required variables in `.env`:**
 - `DATABASE__PASSWORD` — PostgreSQL superuser password
 - `MKOBI_APP_PASSWORD` — Application database role password
@@ -157,6 +179,42 @@ Key variables:
 - `APP__COOKIE_SECURE` — Cookie Secure attribute (true/false). Defaults to `true`. Set to `false` in development when using HTTP, as browsers will not send cookies with the Secure flag over unencrypted connections.
 
 **Security Note:** For production deployments, always set `DATABASE__PASSWORD`, `MKOBI_APP_PASSWORD`, and `JWT__SECRET_KEY` to strong, unique values. The compose file uses `${VAR:?error}` enforcement — services will fail to start without these variables explicitly set.
+
+## Production Services (profiles: production)
+
+The following services are defined in `docker-compose.yml` with `profiles: [production]`. They are **not** started by default — use `--profile production` to include them:
+
+### RQ Worker (`rq-worker`)
+
+Runs the Redis Queue worker for background task processing (CSV uploads, data aggregation).
+
+```bash
+# Start production environment with RQ worker
+docker compose -f docker/docker-compose.yml --profile production up -d
+```
+
+- **Command:** `uv run rq worker --url redis://redis:6379/0`
+- **Depends on:** `redis` (healthy), `migrate` (completed successfully)
+- **Environment:** Same as `app` service but with `AUTO_MIGRATE: "false"` (migrations handled by the `migrate` service)
+- **Shares volume:** `app_data` (access to the same upload/temp files as the app)
+- **Shares alembic config:** Mounted read-only for migration rollback capability
+
+> **Note:** The RQ worker is the production implementation of the task queue. The in-memory `asyncio.Queue` (MVP) is used when the RQ worker is not running. See [Task Queue Migration](./task-queue-migration.md) for the migration plan details.
+
+### Nginx Reverse Proxy (`nginx`)
+
+Optional Nginx reverse proxy for production. Serves the React SPA static files and proxies API requests to FastAPI.
+
+```bash
+# Start with nginx
+docker compose -f docker/docker-compose.yml --profile production up -d
+```
+
+- **Depends on:** `app`
+- **Ports:** `80:80`
+- **Volumes:** `nginx.conf` (read-only), `frontend/dist` (read-only)
+
+See [Deployment](../10-deployment/deployment.md) for the nginx configuration details.
 
 ## Volumes
 
@@ -180,7 +238,7 @@ docker compose -f docker/docker-compose.yml --env-file .env ps
 docker compose -f docker/docker-compose.yml --env-file .env logs -f app
 
 # Execute command in running container
-docker compose -f docker/docker-compose.yml --env-file .env exec app uv run pytest tests/
+docker compose -f docker/docker-compose.yml --env-file .env exec app /app/.venv/bin/pytest tests/
 
 # Open shell in container
 docker compose -f docker/docker-compose.yml --env-file .env exec app /bin/bash
@@ -253,27 +311,12 @@ This means Docker Compose cannot find your `.env` file. Ensure you:
 ├── docker/
 │   ├── docker-compose.yml            # Production compose file
 │   ├── docker-compose.override.yml   # Development overrides
-│   ├── docker-compose.test.yml       # Test environment
-│   ├── Dockerfile                  # Multi-stage Dockerfile
+│   ├── docker-compose.test.yml       # Test environment (standalone)
+│   ├── Dockerfile                    # Multi-stage Dockerfile
 │   ├── init-scripts/
-│   │   └── 01-create-app-role.sh     # DB initialization
+│   │   └── 01-create-app-role.sh     # DB initialization (creates mkobi_app role)
 │   └── nginx/
-│       └── nginx.conf                # Nginx configuration (optional)
-└── frontend/
-    ├── dist/                         # Built frontend (generated)
-    ...
-```
-.
-├── .dockerignore                   # Build context file (at root)
-├── docker/
-│   ├── docker-compose.yml            # Production compose file
-│   ├── docker-compose.override.yml   # Development overrides
-│   ├── docker-compose.test.yml       # Test environment
-│   ├── Dockerfile                  # Multi-stage Dockerfile
-│   ├── init-scripts/
-│   │   └── 01-create-app-role.sh     # DB initialization
-│   └── nginx/
-│       └── nginx.conf                # Nginx configuration (optional)
+│       └── nginx.conf                # Nginx configuration (production profile)
 └── frontend/
     ├── dist/                         # Built frontend (generated)
     └── ...

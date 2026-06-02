@@ -18,27 +18,74 @@ from mkobi.models.enums import FileExtensionEnum, MimeTypeEnum, ProcessingStatus
 
 logger = get_logger(__name__)
 
+# Try to import python-magic, fall back to content-based detection if unavailable
+try:
+    import magic
 
-def validate_mime_type(content_type: str | None) -> None:
-    """Validate MIME-type of uploaded file.
+    def detect_mime_type_from_content(file_path: Path) -> str:
+        """Detect MIME type from actual file content using python-magic.
+
+        Args:
+            file_path: Path to the file to analyze.
+
+        Returns:
+            str: Detected MIME type string.
+        """
+        with open(file_path, "rb") as f:
+            file_buffer = f.read(2048)
+        detected_mime = magic.from_buffer(file_buffer, mime=True)
+        return detected_mime or "application/octet-stream"
+
+except ImportError:
+    def detect_mime_type_from_content(file_path: Path) -> str:
+        """Detect MIME type from file content using gzip magic bytes fallback.
+
+        This fallback is used when python-magic/libmagic is not available
+        (e.g., on Windows without libmagic installed).
+
+        Args:
+            file_path: Path to the file to analyze.
+
+        Returns:
+            str: Detected MIME type string (text/csv or application/gzip).
+        """
+        with open(file_path, "rb") as f:
+            file_buffer = f.read(2048)
+
+        # Check for gzip magic bytes (1f 8b)
+        if file_buffer[:2] == b"\x1f\x8b":
+            return "application/gzip"
+
+        # If content looks like CSV (contains commas and newlines), treat as text/csv
+        # This is a best-effort fallback - production should use python-magic
+        if b"\n" in file_buffer and (b"," in file_buffer or b";" in file_buffer):
+            return "text/csv"
+
+        return "application/octet-stream"
+
+
+def validate_mime_type(file_path: Path) -> None:
+    """Validate MIME-type of uploaded file by detecting from content.
+
+    Uses python-magic to detect the actual MIME type from file bytes,
+    preventing MIME type spoofing attacks.
 
     Args:
-        content_type: MIME type string from upload header.
+        file_path: Path to the uploaded file to validate.
 
     Raises:
-        ValueError: If MIME type is None or not in the allowed list.
+        ValueError: If detected MIME type is not in the allowed list.
     """
-    if content_type is None:
-        raise ValueError("Content-Type header is required")
+    detected_mime = detect_mime_type_from_content(file_path)
 
     allowed_mime_types = MimeTypeEnum.allowed_values()
-    if content_type not in allowed_mime_types:
+    if detected_mime not in allowed_mime_types:
         logger.error(
-            "Invalid MIME-type: %s. Allowed: %s",
-            content_type,
+            "Invalid MIME-type detected: %s. Allowed: %s",
+            detected_mime,
             allowed_mime_types,
         )
-        raise ValueError(f"Invalid MIME-type: {content_type}")
+        raise ValueError(f"Detected MIME type {detected_mime} not allowed")
 
 
 def validate_file(
@@ -50,11 +97,12 @@ def validate_file(
     """Validate uploaded file.
 
     Checks file content, MIME type, format, and size limits.
+    MIME type is detected from file content (not client header) to prevent spoofing.
 
     Args:
         file_path: Path to the uploaded file.
         filename: Original filename from upload.
-        content_type: MIME type from upload header.
+        content_type: MIME type from upload header (unused - detected from content instead).
         max_file_size: Maximum allowed file size in bytes.
 
     Returns:
@@ -73,8 +121,8 @@ def validate_file(
     if file_size == 0:
         raise ValueError("File content is empty")
 
-    # 2. Check MIME-type
-    validate_mime_type(content_type)
+    # 2. Check MIME-type from file content (prevents spoofing)
+    validate_mime_type(file_path)
 
     # 3. Check file format
     config = get_config()

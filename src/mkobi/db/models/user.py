@@ -26,7 +26,10 @@ class User(Base):
     """User model for BI Dashboard system."""
 
     __tablename__ = "users"
-    __table_args__ = (Index("ix_users_role", "role"),)
+    __table_args__ = (
+        Index("idx_users_email", "email", unique=True),
+        Index("idx_users_role", "role"),
+    )
 
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
@@ -38,7 +41,6 @@ class User(Base):
     email: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
-        unique=True,
     )
 
     password_hash: Mapped[str] = mapped_column(

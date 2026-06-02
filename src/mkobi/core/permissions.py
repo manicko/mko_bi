@@ -45,7 +45,7 @@ PERMISSION_LEVELS: dict[DashboardPermission, int] = {
 # --- Exceptions ---
 
 
-class PermissionError(Exception):
+class DashboardPermissionError(Exception):
     """Exception raised when access rights are insufficient."""
 
     pass

@@ -9,6 +9,8 @@ services:
       DATABASE_URI: postgresql://postgres:${DATABASE__PASSWORD}@host.docker.internal:5432/bidb
     command:
       - --access-mode=unrestricted
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   postgres-bidb-test-mcp:
     image: crystaldba/postgres-mcp
@@ -17,6 +19,12 @@ services:
     env_file:
       - .env
     environment:
-      DATABASE_URI: postgresql://postgres:${DATABASE__PASSWORD}@host.docker.internal:5433/bidb_test
+      DATABASE_URI: postgresql://postgres:${DATABASE__PASSWORD}@test-db:5432/bidb_test
     command:
       - --access-mode=unrestricted
+    networks:
+      - docker_test_network
+
+networks:
+  docker_test_network:
+    external: true

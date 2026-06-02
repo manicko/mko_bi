@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { useSyncExternalStore } from 'react'
 
 // JWT payload schema for runtime validation
 // Access tokens contain user_id; refresh tokens contain sub
@@ -72,6 +73,64 @@ const isBrowser = typeof window !== 'undefined'
 // When false (development), sessionStorage is used as a convenience fallback.
 const USE_MEMORY_STORAGE = import.meta.env.PROD
 
+// Subscriber list for reactive token updates
+type TokenListener = (token: string | null) => void
+const tokenListeners: Set<TokenListener> = new Set()
+
+/**
+ * Get the current token value for notifications.
+ * Returns the correct token based on storage mode.
+ */
+function getCurrentToken(): string | null {
+  if (USE_MEMORY_STORAGE) {
+    return memoryToken
+  }
+  // Fallback to sessionStorage for development
+  return isBrowser ? sessionStorage.getItem(TOKEN_KEY) : null
+}
+
+/**
+ * Subscribe to token changes. Returns an unsubscribe function.
+ * Used by useSyncExternalStore to enable reactive token access in React hooks.
+ * In development mode, also listens to storage events for cross-tab updates.
+ */
+export function subscribeToken(listener: TokenListener): () => void {
+  tokenListeners.add(listener)
+
+  // In development mode, also listen for storage events (cross-tab sync)
+  const storageHandler = () => {
+    listener(getCurrentToken())
+  }
+  if (!USE_MEMORY_STORAGE && isBrowser) {
+    window.addEventListener('storage', storageHandler)
+  }
+
+  return () => {
+    tokenListeners.delete(listener)
+    if (!USE_MEMORY_STORAGE && isBrowser) {
+      window.removeEventListener('storage', storageHandler)
+    }
+  }
+}
+
+/**
+ * Get current token snapshot for useSyncExternalStore.
+ */
+export function getSnapshot(): string | null {
+  if (USE_MEMORY_STORAGE) {
+    return memoryToken
+  }
+  // Fallback to sessionStorage for development
+  return isBrowser ? sessionStorage.getItem(TOKEN_KEY) : null
+}
+
+/**
+ * Server snapshot for useSyncExternalStore (used during SSR).
+ */
+export function getServerSnapshot(): string | null {
+  return null
+}
+
 export function getToken(): string | null {
   if (USE_MEMORY_STORAGE) {
     return memoryToken
@@ -89,6 +148,9 @@ export function setToken(token: string): void {
       sessionStorage.setItem(TOKEN_KEY, token)
     }
   }
+  // Notify all listeners of the token change
+  const currentToken = getCurrentToken()
+  tokenListeners.forEach((listener) => listener(currentToken))
 }
 
 export function removeToken(): void {
@@ -96,6 +158,8 @@ export function removeToken(): void {
   if (isBrowser) {
     sessionStorage.removeItem(TOKEN_KEY)
   }
+  // Notify all listeners of the token change
+  tokenListeners.forEach((listener) => listener(null))
 }
 
 // Token expiration check (if JWT has expiration)
@@ -122,4 +186,13 @@ export function getTokenWithExpirationCheck(): string | null {
   }
 
   return token
+}
+
+/**
+ * Reactive hook to access the current auth token.
+ * Uses useSyncExternalStore to notify React when the token changes (login/logout).
+ * This ensures TanStack Query hooks can re-evaluate their `enabled` state reactively.
+ */
+export function useAuthToken(): string | null {
+  return useSyncExternalStore(subscribeToken, getSnapshot, getServerSnapshot)
 }

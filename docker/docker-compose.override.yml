@@ -16,9 +16,9 @@ services:
       DATABASE__HOST: db
       DATABASE__PORT: 5432
       DATABASE__DBNAME: bidb
-      DATABASE__PASSWORD: ${DATABASE__PASSWORD:-postgres}
+      DATABASE__PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD must be set}
       JWT__ALGORITHM: HS256
-      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:?JWT__SECRET_KEY must be set}
     depends_on:
       db:
         condition: service_healthy
@@ -52,19 +52,20 @@ services:
       DATABASE__HOST: db
       DATABASE__PORT: 5432
       DATABASE__USER: mkobi_app
-      DATABASE__PASSWORD: ${MKOBI_APP_PASSWORD:-secure_password}
+      DATABASE__PASSWORD: ${MKOBI_APP_PASSWORD:?MKOBI_APP_PASSWORD must be set}
       DATABASE__ADMIN_USER: postgres
-      DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-postgres}
+      DATABASE__ADMIN_PASSWORD: ${DATABASE__ADMIN_PASSWORD:?DATABASE__ADMIN_PASSWORD must be set}
       DATABASE__DBNAME: bidb
       DATABASE__TEST_DBNAME: bidb_test
       REDIS__HOST: redis
       JWT__ALGORITHM: HS256
-      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:?JWT__SECRET_KEY must be set}
       # Admin credentials (valid email format required)
-      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin@example.com}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin@example.com}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?ADMIN_USERNAME must be set}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set}
       LOGGING__LEVEL: DEBUG
       AUTO_MIGRATE: "false"
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000"]}
     volumes:
       # Mount source code for hot reload (writable for egg-info generation)
       - ../src:/app/src
@@ -77,14 +78,14 @@ services:
     healthcheck:
       disable: true
 
-  # Override rq-worker for development (remove production profile requirement)
+# Override rq-worker for development (remove production profile requirement)
   rq-worker:
     profiles: []
     environment:
-      DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-postgres}
-      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-dev-secret-key-for-local-development}
-      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin@example.com}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin@example.com}
+      DATABASE__ADMIN_PASSWORD: ${DATABASE__ADMIN_PASSWORD:?DATABASE__ADMIN_PASSWORD must be set}
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:?JWT__SECRET_KEY must be set}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:?ADMIN_USERNAME must be set}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set}
 
   db:
     # Expose port for local development tools
@@ -92,7 +93,7 @@ services:
       - "5432:5432"
     environment:
       # Override production postgres password with development default
-      POSTGRES_PASSWORD: ${DATABASE__PASSWORD:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD must be set}
 
 volumes:
   frontend_node_modules:

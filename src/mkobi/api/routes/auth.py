@@ -21,6 +21,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mkobi.api.deps import (
     get_auth_service,
     get_current_user_dependency,
+    get_redis_client_dependency,
     require_admin_role,
     get_db_dependency,
 )
@@ -33,9 +34,14 @@ from mkobi.core.security import (
     COOKIE_NAME,
     create_access_token,
     create_refresh_token,
+    decode_token,
     validate_refresh_token,
     delete_secure_cookie,
     set_secure_cookie,
+    revoke_token,
+    revoke_refresh_token,
+    is_refresh_token_revoked,
+    is_user_tokens_revoked,
 )
 from mkobi.models.auth import (
     ChangePasswordRequest,
@@ -246,7 +252,9 @@ async def register(
 )
 async def refresh(
     request: Request,
+    response: Response,
     session: Annotated[AsyncSession, Depends(get_db_dependency)],
+    redis_client: Any = Depends(get_redis_client_dependency),
 ) -> Token:
     """Token refresh endpoint.
 
@@ -256,12 +264,13 @@ async def refresh(
     Args:
         request: Request object to access cookies.
         session: Async database session.
+        redis_client: Async Redis client for blacklist check.
 
     Returns:
         Token: Model with new access_token and token_type.
 
     Raises:
-        HTTPException 401: Invalid or expired token.
+        HTTPException 401: Invalid, expired, or revoked token.
     """
     refresh_token_value = request.cookies.get(COOKIE_NAME)
     if not refresh_token_value:
@@ -283,6 +292,17 @@ async def refresh(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    # Check if refresh token is revoked
+    jti = payload.get("jti")
+    if jti:
+        if await is_refresh_token_revoked(redis_client, jti):
+            logger.warning("Revoked refresh token used: jti=%s", jti)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Refresh token has been revoked",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
     user_id = payload.get("sub")
     if user_id is None:
         logger.warning("Token missing user_id")
@@ -298,6 +318,16 @@ async def refresh(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    # Check if user's tokens are revoked (user-level revocation for deactivation)
+    if await is_user_tokens_revoked(redis_client, UUID(user_id)):
+        logger.warning("User tokens revoked: user_id=%s", user_id)
+        delete_secure_cookie(response, COOKIE_NAME)
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has been revoked",
             headers={"WWW-Authenticate": "Bearer"},
         )
 
@@ -341,24 +371,51 @@ async def get_current_user_info(
     response_model=SuccessResponse,
     status_code=status.HTTP_200_OK,
     summary="User logout",
-    description="Logout current user by clearing refresh token cookie.",
+    description="Logout current user by revoking tokens and clearing refresh token cookie.",
 )
 async def logout(
+    request: Request,
     response: Response,
     current_user: Annotated[UserRead, Depends(get_current_user_dependency)],
+    redis_client: Any = Depends(get_redis_client_dependency),
 ) -> SuccessResponse:
     """Logout endpoint.
 
-    Clears the refresh token cookie and logs the user out.
+    Revokes the current access token and refresh token cookie,
+    then clears the refresh token cookie.
 
     Args:
+        request: Request object to get tokens from header and cookies.
         response: FastAPI Response object to set/delete cookies.
         current_user: Currently authenticated user.
+        redis_client: Async Redis client for token revocation.
 
     Returns:
         SuccessResponse: Success message.
     """
     logger.info("User logging out", extra={"email": current_user.email})
+
+    # Revoke refresh token from cookie
+    refresh_token_value = request.cookies.get(COOKIE_NAME)
+    if refresh_token_value:
+        refresh_payload = decode_token(refresh_token_value)
+        if refresh_payload:
+            refresh_jti = refresh_payload.get("jti")
+            if refresh_jti:
+                refresh_ttl = get_config().jwt.refresh_token_expire_minutes * 60
+                await revoke_refresh_token(redis_client, refresh_jti, refresh_ttl)
+
+    # Revoke access token from Authorization header
+    auth_header = request.headers.get("Authorization")
+    if auth_header and auth_header.startswith("Bearer "):
+        access_token = auth_header[7:]  # Remove "Bearer " prefix
+        access_payload = decode_token(access_token)
+        if access_payload:
+            access_jti = access_payload.get("jti")
+            if access_jti:
+                access_ttl = get_config().jwt.access_token_expire_minutes * 60
+                await revoke_token(redis_client, access_jti, access_ttl)
+
     delete_secure_cookie(response, COOKIE_NAME)
     return SuccessResponse(message="Logged out successfully")
 
@@ -389,20 +446,9 @@ async def change_password(
         dict: Success message.
 
     Raises:
-        HTTPException 400: If password confirmation does not match.
+        HTTPException 422: If password confirmation does not match.
         HTTPException 401: If current password is incorrect.
     """
-    # Validate password confirmation matches
-    if password_data.new_password != password_data.confirm_password:
-        logger.warning(
-            "Password change failed: confirmation mismatch",
-            extra={"user_id": str(current_user.id)},
-        )
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="New password and confirmation do not match",
-        )
-
     try:
         await auth_service.change_password(
             user_id=current_user.id,

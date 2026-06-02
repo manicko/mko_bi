@@ -16,16 +16,20 @@ from mkobi.api.deps import (
     get_db_dependency,
     require_admin_role,
     require_viewer_role,
+    require_editor_role,
     get_dashboard_service,
+    check_dashboard_access,
 )
 from mkobi.models.dashboard import (
     DashboardAdmin,
     DashboardRead,
     DashboardCreate,
     DashboardUpdate,
+    DashboardSummary,
 )
 from mkobi.services.dashboard_service import DashboardService
 from mkobi.utils.exceptions import PermissionDeniedException
+from mkobi.models.enums import UserRole
 
 logger = logging.getLogger(__name__)
 
@@ -150,7 +154,7 @@ async def create_dashboard_endpoint(
 
 @router.get(
     "/my",
-    response_model=list[DashboardRead],
+    response_model=list[DashboardSummary],
     status_code=status.HTTP_200_OK,
     summary="Get user dashboards",
     description="Returns list of dashboards available to current user.",
@@ -159,7 +163,7 @@ async def get_my_dashboards_endpoint(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db_dependency),
     dashboard_service: DashboardService = Depends(get_dashboard_service),
-) -> list[DashboardRead]:
+) -> list[DashboardSummary]:
     """Get user dashboards.
 
     Args:
@@ -168,7 +172,7 @@ async def get_my_dashboards_endpoint(
         dashboard_service: Injected dashboard service.
 
     Returns:
-        list[DashboardRead]: List of dashboards available to user.
+        list[DashboardSummary]: List of dashboards available to user with permission.
 
     Raises:
         HTTPException 500: On database error.
@@ -278,8 +282,8 @@ async def get_dashboard_endpoint(
     response_model=DashboardRead,
     status_code=status.HTTP_200_OK,
     summary="Update dashboard",
-    description="Updates dashboard configuration. Available only to admins.",
-    dependencies=[Depends(require_admin_role)],
+    description="Updates dashboard configuration. Available to admins or editors with edit access.",
+    dependencies=[Depends(require_editor_role)],
 )
 async def update_dashboard_endpoint(
     dashboard_id: UUID,
@@ -290,7 +294,7 @@ async def update_dashboard_endpoint(
 ) -> DashboardRead:
     """Update dashboard.
 
-    Available only to dashboard owner (user with admin permission).
+    Available to dashboard owners (users with admin/edit permission) or system admins.
 
     Args:
         dashboard_id: Dashboard ID to update.
@@ -313,6 +317,26 @@ async def update_dashboard_endpoint(
         dashboard_id,
         current_user.id,
     )
+
+    # Check resource-level access: admin role or edit permission on dashboard
+    # Admin users bypass resource-level checks
+    if current_user.role != UserRole.ADMIN:
+        has_edit_access = await check_dashboard_access(
+            user_id=current_user.id,
+            dashboard_id=dashboard_id,
+            db=db,
+            required_permission="edit",
+        )
+        if not has_edit_access:
+            logger.warning(
+                "Access denied for update: user_id=%s, dashboard_id=%s",
+                current_user.id,
+                dashboard_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have access to this dashboard",
+            )
 
     try:
         updated = await dashboard_service.update_dashboard(
@@ -347,8 +371,8 @@ async def update_dashboard_endpoint(
     "/{dashboard_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete dashboard",
-    description="Deletes dashboard. Available only to admins.",
-    dependencies=[Depends(require_admin_role)],
+    description="Deletes dashboard. Available to admins or users with admin access to the dashboard.",
+    dependencies=[Depends(require_editor_role)],
 )
 async def delete_dashboard_endpoint(
     dashboard_id: UUID,
@@ -358,7 +382,7 @@ async def delete_dashboard_endpoint(
 ) -> None:
     """Delete dashboard.
 
-    Available only to dashboard owner (user with admin permission).
+    Available to dashboard admins (users with admin permission on dashboard) or system admins.
 
     Args:
         dashboard_id: Dashboard ID to delete.
@@ -376,6 +400,26 @@ async def delete_dashboard_endpoint(
         dashboard_id,
         current_user.id,
     )
+
+    # Check resource-level access: system admin role or admin permission on dashboard
+    # System admins bypass resource-level checks
+    if current_user.role != UserRole.ADMIN:
+        has_admin_access = await check_dashboard_access(
+            user_id=current_user.id,
+            dashboard_id=dashboard_id,
+            db=db,
+            required_permission="admin",
+        )
+        if not has_admin_access:
+            logger.warning(
+                "Access denied for delete: user_id=%s, dashboard_id=%s",
+                current_user.id,
+                dashboard_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have access to this dashboard",
+            )
 
     try:
         result = await dashboard_service.delete_dashboard(

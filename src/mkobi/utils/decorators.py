@@ -10,7 +10,7 @@ import logging
 from collections.abc import Callable
 from typing import Any, ParamSpec, TypeVar, cast
 
-from mkobi.core.permissions import check_role
+from mkobi.core.permissions import check_role, DashboardPermissionError
 from mkobi.models.enums import UserRole
 
 logger = logging.getLogger(__name__)
@@ -258,12 +258,12 @@ def require_role(
                         "User not provided in %s for role check",
                         func.__name__,
                     )
-                    raise PermissionError("User not found")
+                    raise DashboardPermissionError("User not found")
 
                 user_role = getattr(user, "role", None)
                 if not user_role:
                     logger.error("User role not found in %s", func.__name__)
-                    raise PermissionError("User role not found")
+                    raise DashboardPermissionError("User role not found")
 
                 if not check_role(str(user_role), str(required_role)):
                     logger.warning(
@@ -272,7 +272,7 @@ def require_role(
                         user_role,
                         required_role,
                     )
-                    raise PermissionError(f"Required role: {required_role} or higher")
+                    raise DashboardPermissionError(f"Required role: {required_role} or higher")
 
                 return await func(*args, **kwargs)
 
@@ -287,12 +287,12 @@ def require_role(
                         "User not provided in %s for role check",
                         func.__name__,
                     )
-                    raise PermissionError("User not found")
+                    raise DashboardPermissionError("User not found")
 
                 user_role = getattr(user, "role", None)
                 if not user_role:
                     logger.error("User role not found in %s", func.__name__)
-                    raise PermissionError("User role not found")
+                    raise DashboardPermissionError("User role not found")
 
                 if not check_role(str(user_role), str(required_role)):
                     logger.warning(
@@ -301,7 +301,7 @@ def require_role(
                         user_role,
                         required_role,
                     )
-                    raise PermissionError(f"Required role: {required_role} or higher")
+                    raise DashboardPermissionError(f"Required role: {required_role} or higher")
 
                 return func(*args, **kwargs)
 

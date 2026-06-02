@@ -13,13 +13,15 @@ from mkobi.api.deps import (
     get_db_dependency,
     get_registration_request_repository,
     get_user_service,
+    get_redis_client_dependency,
     require_admin_role,
 )
 from mkobi.interfaces import IUserService
 from mkobi.models.enums import RegistrationStatus, UserRole
-from mkobi.models.user import UserRead, UserUpdateRequest
+from mkobi.models.user import UserRead, UserUpdateRequest, UserUpdateActiveRequest
 from mkobi.models.auth import RegistrationRequestItem
 from mkobi.services.auth_service import AuthService
+from mkobi.core.security import revoke_all_user_tokens
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +123,63 @@ async def delete_user_admin_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error deleting user",
+        ) from e
+
+
+@router.patch(
+    "/users/{user_id}/active",
+    response_model=UserRead,
+    status_code=status.HTTP_200_OK,
+    summary="Update user active status (admin)",
+    description="Deactivates or reactivates a user. Revokes all tokens on deactivation. Admin only.",
+    dependencies=[Depends(require_admin_role)],
+)
+async def update_user_active_admin_endpoint(
+    user_id: UUID,
+    user_data: UserUpdateActiveRequest,
+    user_service: IUserService = Depends(get_user_service),
+    db: AsyncSession = Depends(get_db_dependency),
+    redis_client: Any = Depends(get_redis_client_dependency),
+) -> UserRead:
+    """Update user active status (admin endpoint)."""
+    from mkobi.config import get_config
+
+    logger.info(
+        "Admin: updating user active status: id=%s, is_active=%s",
+        user_id,
+        user_data.is_active,
+    )
+    try:
+        # First update the user status in database
+        updated = await user_service.update_user_active_status(
+            user_id=user_id, is_active=user_data.is_active, db=db
+        )
+        if updated is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        # On deactivation, revoke all user tokens via Redis
+        if not user_data.is_active:
+            settings = get_config()
+            await revoke_all_user_tokens(
+                redis_client=redis_client,
+                user_id=user_id,
+                access_ttl=settings.jwt.access_token_expire_minutes * 60,
+                refresh_ttl=settings.jwt.refresh_token_expire_minutes * 60,
+            )
+            logger.info("All tokens revoked for deactivated user: id=%s", user_id)
+
+        return updated
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        logger.error("Error updating user active status: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error updating user active status",
         ) from e
 
 

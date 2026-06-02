@@ -1,7 +1,7 @@
 import logging
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import yaml
 from pydantic import BaseModel, Field, PostgresDsn, field_validator, model_validator
@@ -128,6 +128,29 @@ class JWTSettings(BaseModel):
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_minutes: int = 10080
+
+    # Weak secrets that should be rejected
+    WEAK_SECRETS: ClassVar[set[str]] = {"password", "secret", "admin", "123456", "change_me", "default", "dev-secret-key-for-local-development", "change_me_in_production", "change_me_use_openssl_rand_hex_32"}
+
+    @field_validator("secret_key")
+    @classmethod
+    def validate_secret_key(cls, v: str | None) -> str | None:
+        """Validate JWT secret key strength.
+
+        In production, ensures the secret is at least 32 characters
+        and not a common weak value.
+        """
+        if v is None:
+            return v
+        if len(v) < 32:
+            raise ValueError(
+                "JWT secret key must be at least 32 characters for security"
+            )
+        if v.lower() in cls.WEAK_SECRETS:
+            raise ValueError(
+                "JWT secret key is too common. Please generate a strong secret."
+            )
+        return v
 
 
 class RedisSettings(BaseModel):

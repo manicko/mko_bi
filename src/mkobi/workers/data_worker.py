@@ -14,6 +14,7 @@ from uuid import UUID
 
 import polars as pl
 from sqlalchemy import select, update
+from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.data.loaders.loader import CSVLoader
@@ -80,8 +81,13 @@ async def _update_processing_log_status(
         logger.info(
             "Processing log updated: task_id=%s, status=%s", task_id, status
         )
+    except SQLAlchemyError as e:
+        logger.error("Failed to update processing log status: %s", e)
+        if session is not None:
+            await session.rollback()
     except Exception as e:
-        logger.error("Error updating processing log: %s", e)
+        logger.exception("Unexpected error updating processing log status: %s", e)
+        raise
 
 
 async def cleanup_stale_processing_logs(

@@ -23,6 +23,7 @@ from mkobi.db.repositories.access_repo import AccessRepository
 from mkobi.services.dashboard_service import DashboardService
 from mkobi.core.security import hash_password
 from mkobi.models.graph import GraphCreate
+from mkobi.core.permissions import DashboardPermissionError
 
 
 # ========== Integration Tests for DataService ==========
@@ -158,9 +159,7 @@ class TestDataServiceIntegration:
 
         try:
             with patch("mkobi.services.data_service.check_dashboard_access", return_value=False):
-                from mkobi.core.permissions import PermissionError
-
-                with pytest.raises(PermissionError):
+                with pytest.raises(DashboardPermissionError):
                     await data_service.process_upload(
                         file_path=tmp_path,
                         dashboard_id=test_dashboard.id,
@@ -345,9 +344,7 @@ class TestDataServiceIntegration:
         task_id = log.id
 
         with patch("mkobi.services.data_service.check_dashboard_access", return_value=False):
-            from mkobi.core.permissions import PermissionError
-
-            with pytest.raises(PermissionError):
+            with pytest.raises(DashboardPermissionError):
                 await data_service.trigger_processing(
                     task_id, test_dashboard.id, uuid4(), db=async_db_session,
                 )
@@ -489,7 +486,11 @@ class TestFileValidation:
         )
 
     async def test_validate_file_none_content_type_raises_error(self, data_service):
-        """Test MIME validation raises error when content_type is None."""
+        """Test MIME validation raises error when content_type is None.
+
+        Note: MIME type is now detected from file content, not from header.
+        This test validates that the file still exists and has valid content.
+        """
         from mkobi.services.file_processing import validate_file
 
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
@@ -497,14 +498,13 @@ class TestFileValidation:
             tmp_path = Path(tmp.name)
 
         try:
-            # When content_type is None, validate_mime_type raises ValueError
-            with pytest.raises(ValueError, match="Content-Type header is required"):
-                validate_file(
-                    file_path=tmp_path,
-                    filename="test.csv",
-                    content_type=None,
-                    max_file_size=data_service._max_file_size,
-                )
+            # MIME type is detected from content, so any CSV passes validation
+            validate_file(
+                file_path=tmp_path,
+                filename="test.csv",
+                content_type=None,
+                max_file_size=data_service._max_file_size,
+            )
         finally:
             tmp_path.unlink(missing_ok=True)
 
@@ -527,11 +527,16 @@ class TestFileValidation:
             tmp_path.unlink(missing_ok=True)
 
     async def test_validate_file_valid_gz(self, data_service):
-        """Test validation passes for valid .csv.gz file."""
+        """Test validation passes for valid .csv.gz file.
+
+        Note: MIME type is detected from content (gzip magic bytes 0x1f 0x8b).
+        """
         from mkobi.services.file_processing import validate_file
 
+        # Create actual gzip content (gzip magic bytes at start)
         with tempfile.NamedTemporaryFile(suffix=".csv.gz", delete=False) as tmp:
-            tmp.write(b"compressed data")
+            # Write gzip magic bytes followed by some CSV data
+            tmp.write(b"\x1f\x8b\x08\x00compressed data")
             tmp_path = Path(tmp.name)
 
         try:
@@ -545,11 +550,17 @@ class TestFileValidation:
             tmp_path.unlink(missing_ok=True)
 
     async def test_validate_file_invalid_extension(self, data_service):
-        """Test validation rejects .txt extension."""
+        """Test validation rejects .txt extension.
+
+        Note: With MIME detection from content, this test verifies that
+        non-CSV content is rejected regardless of extension or header.
+        """
         from mkobi.services.file_processing import validate_file
 
+        # Create a file with .txt extension but content that would pass MIME check
+        # (contains commas and newlines - looks like CSV)
         with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as tmp:
-            tmp.write(b"some text")
+            tmp.write(b"col1,col2\nval1,val2\n")
             tmp_path = Path(tmp.name)
 
         try:
@@ -564,19 +575,76 @@ class TestFileValidation:
             tmp_path.unlink(missing_ok=True)
 
     async def test_validate_file_invalid_mime(self, data_service):
-        """Test validation rejects disallowed MIME type."""
+        """Test validation rejects disallowed MIME type detected from content.
+
+        MIME type is now detected from file content using python-magic,
+        not from the client-provided Content-Type header.
+        """
         from mkobi.services.file_processing import validate_file
 
+        # Create a file with content that will be detected as text/plain
+        # (plain text "data" without CSV structure should be detected as text/plain)
         with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
             tmp.write(b"data")
             tmp_path = Path(tmp.name)
 
         try:
-            with pytest.raises(ValueError, match="Invalid MIME-type"):
+            with pytest.raises(ValueError, match="Detected MIME type"):
                 validate_file(
                     file_path=tmp_path,
                     filename="test.csv",
-                    content_type="application/octet-stream",
+                    content_type="text/csv",  # This header is now ignored
+                    max_file_size=data_service._max_file_size,
+                )
+        finally:
+            tmp_path.unlink(missing_ok=True)
+
+    async def test_validate_file_spoofed_mime_type_rejected(self, data_service):
+        """Test that spoofed Content-Type header is rejected based on actual content.
+
+        Security test: An attacker uploads an executable with CSV extension
+        and text/csv Content-Type header. The actual content detection should
+        reject the malicious file.
+        """
+        from mkobi.services.file_processing import validate_file
+
+        # Create a file with ELF header (Linux executable) - will be detected as application/x-executable
+        elf_header = b"\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
+            tmp.write(elf_header)
+            tmp_path = Path(tmp.name)
+
+        try:
+            # Even with spoofed CSV Content-Type header, actual MIME detection should reject
+            with pytest.raises(ValueError, match="Detected MIME type"):
+                validate_file(
+                    file_path=tmp_path,
+                    filename="malicious.csv",
+                    content_type="text/csv",  # Spoofed header
+                    max_file_size=data_service._max_file_size,
+                )
+        finally:
+            tmp_path.unlink(missing_ok=True)
+
+    async def test_validate_file_spoofed_gzip_rejected(self, data_service):
+        """Test that spoofed gzip header is rejected when content is not actually gzip."""
+        from mkobi.services.file_processing import validate_file
+
+        # Create a file with fake gzip header but not actual gzip content
+        # python-magic will detect this as application/x-gzip if it has proper gzip magic bytes
+        # but we test with content that will be detected as something else
+        with tempfile.NamedTemporaryFile(suffix=".csv.gz", delete=False) as tmp:
+            # Write plain text pretending to be gzip
+            tmp.write(b"This is not gzipped content but claims to be gzip")
+            tmp_path = Path(tmp.name)
+
+        try:
+            # This should fail because content is not actual gzip
+            with pytest.raises(ValueError, match="Detected MIME type"):
+                validate_file(
+                    file_path=tmp_path,
+                    filename="fake.csv.gz",
+                    content_type="application/gzip",  # Spoofed header
                     max_file_size=data_service._max_file_size,
                 )
         finally:

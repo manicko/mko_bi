@@ -29,6 +29,7 @@ class Filter(Base):
     """
 
     __tablename__ = "filters"
+    __table_args__ = (Index("idx_filters_name", "name", unique=True),)
 
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),
@@ -40,7 +41,6 @@ class Filter(Base):
     name: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
-        unique=True,
     )
 
     type: Mapped[FilterType] = mapped_column(

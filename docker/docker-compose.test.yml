@@ -64,10 +64,10 @@ services:
       DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-test_password}
       REDIS__HOST: test-redis
       REDIS__PORT: 6379
-      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-test_secret_key}
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-test_jwt_secret_key_for_integration_tests_32_chars}
       JWT__ALGORITHM: HS256
-      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin@example.com}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin@example.com}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-test-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-test-password-for-integration-tests}
     depends_on:
       test-db:
         condition: service_healthy
@@ -95,10 +95,10 @@ services:
       DATABASE__ADMIN_PASSWORD: ${DATABASE__PASSWORD:-test_password}
       REDIS__HOST: test-redis
       REDIS__PORT: 6379
-      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-test_secret_key}
+      JWT__SECRET_KEY: ${JWT__SECRET_KEY:-test_jwt_secret_key_for_integration_tests_32_chars}
       JWT__ALGORITHM: HS256
-      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin@example.com}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin@example.com}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-test-admin@example.com}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-test-password-for-integration-tests}
       LOGGING__LEVEL: WARNING
       RECREATE_TEST_DB: "true"
     ports:

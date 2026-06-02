@@ -23,6 +23,7 @@ from mkobi.interfaces.repository_interfaces import (
 from mkobi.models.dashboard import (
     DashboardConfig,
     DashboardRead,
+    DashboardSummary,
 )
 from mkobi.models.enums import DashboardPermission, GraphType, UserRole
 from mkobi.models.layout import LayoutRead
@@ -224,8 +225,8 @@ class DashboardService(IDashboardService):
         user_id: UUID,
         db: AsyncSession,
         user_role: str | None = None,
-    ) -> list[DashboardRead]:
-        """Get user dashboards.
+    ) -> list[DashboardSummary]:
+        """Get user dashboards with their access permission.
 
         Args:
             user_id: User ID.
@@ -233,14 +234,27 @@ class DashboardService(IDashboardService):
             user_role: User role (for admin bypass).
 
         Returns:
-            list[DashboardRead]: List of user dashboards.
+            list[DashboardSummary]: List of user dashboards with permission.
         """
         is_admin = user_role == UserRole.ADMIN
 
-        dashboards = await self.dashboard_repo.get_by_user(user_id, db, is_admin=is_admin)
-        result = []
-        for dashboard in dashboards:
-            result.append(await self._dashboard_to_read(dashboard, db))
+        dashboards_with_permission = await self.dashboard_repo.get_by_user(
+            user_id, db, is_admin=is_admin
+        )
+        result: list[DashboardSummary] = []
+        for dashboard, permission in dashboards_with_permission:
+            # For admin bypass, use VIEW as default permission
+            # (admin has full access to all dashboards)
+            perm_value = permission if permission else DashboardPermission.VIEW
+            result.append(
+                DashboardSummary(
+                    id=dashboard.id,
+                    name=dashboard.name,
+                    description=dashboard.description,
+                    permission=DashboardPermission(perm_value),
+                    created_at=dashboard.created_at,
+                )
+            )
         return result
 
     async def update_dashboard(

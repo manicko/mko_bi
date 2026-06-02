@@ -141,3 +141,18 @@ class UserUpdateRequest(BaseModel):
             }
         },
     )
+
+
+class UserUpdateActiveRequest(BaseModel):
+    """Request model for updating user active status."""
+
+    is_active: bool
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "is_active": False,
+            }
+        },
+    )

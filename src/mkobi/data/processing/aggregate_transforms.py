@@ -207,6 +207,13 @@ def _calculate_yoy(
     ])
 
     result = result.with_columns([pl.col(alias).fill_nan(None)])
+    # Handle infinity values from division by zero edge cases
+    result = result.with_columns(
+        pl.when(pl.col(alias).is_infinite())
+        .then(None)
+        .otherwise(pl.col(alias))
+        .alias(alias)
+    )
     temp_cols = ["__prev_value", "__prev_year"]
     for col in temp_cols:
         if col in result.columns:

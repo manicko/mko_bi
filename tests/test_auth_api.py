@@ -128,7 +128,7 @@ class TestCookieAuthFlow:
         """Test that refresh fails without refresh cookie."""
         response = await async_client.post("/auth/refresh")
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
-        assert response.json()["detail"] == "Refresh token not found"
+        assert response.json()["error"] == "Refresh token not found"
 
     async def test_refresh_fails_with_invalid_cookie(
         self, async_client: AsyncClient
@@ -139,7 +139,7 @@ class TestCookieAuthFlow:
             cookies={"mkobi_refresh_token": "invalid.token.here"},
         )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
-        assert response.json()["detail"] == "Invalid token"
+        assert response.json()["error"] == "Invalid token"
 
     async def test_refresh_returns_new_access_token(
         self, async_client: AsyncClient, test_user: dict
@@ -317,7 +317,7 @@ class TestAdminResetPasswordEndpoint:
             headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "own password" in response.json()["detail"].lower()
+        assert "own password" in response.json()["error"].lower()
 
     async def test_admin_reset_password_nonexistent_user(
         self, async_client: AsyncClient, async_db_session
@@ -350,7 +350,7 @@ class TestAdminResetPasswordEndpoint:
             headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "not found" in response.json()["detail"].lower()
+        assert "not found" in response.json()["error"].lower()
 
     async def test_admin_reset_password_non_admin_forbidden(
         self, async_client: AsyncClient, async_db_session
@@ -493,3 +493,49 @@ class TestRegistrationApprovalForcePasswordChange:
         # Verify flag is cleared
         user = await user_repo.get(user.id, async_db_session)
         assert user.force_password_change is False
+
+    async def test_password_change_mismatch_returns_422(
+        self, async_client: AsyncClient, async_db_session
+    ) -> None:
+        """Test that mismatched passwords return 422 validation error."""
+        from mkobi.core.security import hash_password
+        from mkobi.db.repositories.user_repo import UserRepository
+        from mkobi.models.enums import UserRole
+
+        user_repo = UserRepository()
+
+        # Create a user
+        user = await user_repo.create(
+            db=async_db_session,
+            email="password_mismatch_test@example.com",
+            password_hash=hash_password("TempPass123!"),
+            role=UserRole.VIEWER,
+        )
+        await async_db_session.commit()
+
+        # Login to get access token
+        login_response = await async_client.post(
+            "/auth/login",
+            json={
+                "email": "password_mismatch_test@example.com",
+                "password": "TempPass123!",
+            },
+        )
+        assert login_response.status_code == status.HTTP_200_OK
+        token = login_response.json()["access_token"]
+
+        # Try to change password with mismatched confirmation
+        change_response = await async_client.post(
+            "/auth/change-password",
+            headers={"Authorization": f"Bearer {token}"},
+            json={
+                "current_password": "TempPass123!",
+                "new_password": "NewPass123!",
+                "confirm_password": "DifferentPass123!",
+            },
+        )
+        assert change_response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        data = change_response.json()
+        # Check that error message is in the errors list
+        errors_str = str(data.get("errors", []))
+        assert "do not match" in errors_str.lower() or "mismatch" in errors_str.lower()

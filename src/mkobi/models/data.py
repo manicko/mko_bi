@@ -91,7 +91,7 @@ class ProcessingStatusResponse(BaseModel):
     progress: int = Field(0, ge=0, le=100)
     message: str | None = None
     started_at: datetime | None = None
-    completed_at: datetime | None = None
+    finished_at: datetime | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -104,7 +104,7 @@ class ProcessingStatusResponse(BaseModel):
                 "progress": 50,
                 "message": "Processing data...",
                 "started_at": "2026-04-24T16:02:46+03:00",
-                "completed_at": None,
+                "finished_at": None,
             }
         },
     )

@@ -5,7 +5,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 from uuid import UUID
 
-from mkobi.models.enums import GraphType
+from mkobi.models.enums import DashboardPermission, GraphType
 from mkobi.models.layout import LayoutRead
 
 
@@ -147,6 +147,20 @@ class DashboardUpdate(BaseModel):
                 "layout_id": "550e8400-e29b-41d4-a716-446655440001",
             }
         },
+    )
+
+
+class DashboardSummary(BaseModel):
+    """Model for dashboard list view with user's access permission."""
+
+    id: UUID
+    name: str
+    description: str | None
+    permission: DashboardPermission
+    created_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True,
     )
 
 

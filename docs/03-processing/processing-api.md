@@ -54,9 +54,10 @@ Content-Type: multipart/form-data
 
 - Allowed file extensions: `.csv`, `.csv.gz`
 - Allowed MIME types: `text/csv`, `application/gzip`, `application/x-gzip`
+- **MIME type detection:** Server-side content sniffing using `python-magic` (reads first 2KB of file bytes to detect actual MIME type — does not trust client `Content-Type` header). Falls back to extension-based detection if `libmagic` is unavailable.
 - Encoding: UTF-8
 - Rate limiting is enforced on upload endpoints
-- Maximum file size is enforced on the backend
+- Maximum file size is enforced on the backend, including cumulative byte tracking during streaming writes (applies even when the client does not provide `Content-Length`)
 - Temporary files are deleted after processing
 
 **Response** (`200 OK`):
@@ -169,16 +170,16 @@ Manually trigger processing for a previously uploaded file.
 
 **Response** (`200 OK`):
 
-```json
-{
-  "task_id": "<uuid>",
-  "status": "processing",
-  "progress": 50,
-  "message": "Aggregating data...",
-  "started_at": "2026-05-18T12:00:00Z",
-  "completed_at": null
-}
-```
+ ```json
+ {
+   "task_id": "<uuid>",
+   "status": "processing",
+   "progress": 50,
+   "message": "Aggregating data...",
+   "started_at": "2026-05-18T12:00:00Z",
+   "finished_at": null
+ }
+ ```
 
 ### Get Processing Result
 

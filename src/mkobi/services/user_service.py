@@ -245,6 +245,45 @@ class UserService(IUserService):
             logger.warning("Failed to update user role: id=%s", user_id)
             return None
 
+    async def update_user_active_status(
+        self, user_id: UUID, is_active: bool, db: AsyncSession
+    ) -> UserRead | None:
+        """Update user active status (deactivate/reactivate user).
+
+        Args:
+            user_id: User identifier.
+            is_active: New active status.
+            db: Async database session.
+
+        Returns:
+            UserRead of updated user or None if user not found.
+
+        Raises:
+            SQLAlchemyError: On database error.
+        """
+        logger.info("Updating user active status: id=%s, is_active=%s", user_id, is_active)
+
+        # Check user existence
+        user_obj = await _validate_user_exists(user_id, db, self.user_repo)
+        if user_obj is None:
+            return None
+
+        # Update is_active through repository
+        updated_user = await self.user_repo.update(
+            id=user_id, db=db, is_active=is_active
+        )
+
+        if updated_user:
+            logger.info(
+                "User active status updated: id=%s, is_active=%s",
+                user_id,
+                is_active,
+            )
+            return cast(UserRead, UserRead.model_validate(updated_user))
+        else:
+            logger.warning("Failed to update user active status: id=%s", user_id)
+            return None
+
     async def delete_user(self, user_id: UUID, db: AsyncSession) -> bool:
         """Delete user from system.
 

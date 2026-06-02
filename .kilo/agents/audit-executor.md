@@ -9,7 +9,10 @@ permission:
   "*": allow
   "*.env": allow
   "C:\\py_dev\\mkobi\\docker\\.env": allow
+  "C:\\py_dev\\mkobi\\docker\\.env*": allow
   "C:\\py_dev\\mkobi\\.env": allow
+  "C:\\py_dev\\mkobi\\docker\\.env.development": allow
+  "C:\\py_dev\\mkobi\\docker\\.env.production": allow
   grep: allow
   glob: allow
   todoread: allow

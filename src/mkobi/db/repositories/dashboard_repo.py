@@ -57,8 +57,8 @@ class DashboardRepository(IDashboardRepository):
 
     async def get_by_user(
         self, user_id: UUID, db: AsyncSession, is_admin: bool = False
-    ) -> list[dashboard_model.Dashboard]:
-        """Get all dashboards available to user.
+    ) -> list[tuple[dashboard_model.Dashboard, str | None]]:
+        """Get all dashboards available to user with their access permission.
 
         Args:
             user_id: User identifier (UUID).
@@ -66,7 +66,8 @@ class DashboardRepository(IDashboardRepository):
             is_admin: If True, returns all dashboards (admin bypass).
 
         Returns:
-            List of dashboards available to user.
+            List of tuples (dashboard, permission) where permission is the user's
+            access level or None for admin bypass.
         """
         try:
             if is_admin:
@@ -81,15 +82,17 @@ class DashboardRepository(IDashboardRepository):
                     "All dashboards retrieved for admin user",
                     extra={"user_id": str(user_id), "count": len(dashboards)},
                 )
-                return dashboards
+                # For admin, permission is None (admin bypass)
+                return [(d, None) for d in dashboards]
 
             result = await db.execute(
-                select(dashboard_model.Dashboard)
+                select(dashboard_model.Dashboard, access_model.DashboardAccess.permission)
                 .join(access_model.DashboardAccess)
                 .where(access_model.DashboardAccess.user_id == user_id)
                 .options(selectinload(dashboard_model.Dashboard.layout))
             )
-            dashboards = list(result.scalars().all())
+            results = result.all()
+            dashboards = [(row[0], row[1]) for row in results]
             logger.info(
                 "Dashboards retrieved for user",
                 extra={"user_id": str(user_id), "count": len(dashboards)},

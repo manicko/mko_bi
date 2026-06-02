@@ -232,7 +232,7 @@ class TestLayoutsAPI:
         # Viewer should not have access to layout tied to a dashboard they don't have access to
         response = await viewer_client.get(f"/layouts/{layout.id}")
         assert response.status_code == status.HTTP_403_FORBIDDEN
-        assert "access" in response.json()["detail"].lower()
+        assert "access" in response.json()["error"].lower()
 
     async def test_get_layout_orphaned_returns_404(
         self, async_db_session: AsyncSession, authenticated_client: AsyncClient, test_user: dict

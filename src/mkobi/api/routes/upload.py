@@ -2,7 +2,6 @@
 
 This module provides endpoints for:
 - Uploading CSV files
-- Triggering data processing
 - Checking processing status
 
 All operations require authentication and appropriate permissions.
@@ -24,10 +23,9 @@ from mkobi.api.deps import (
 from mkobi.config import get_config
 from mkobi.core.logging_config import get_logger
 from mkobi.core import redis_client
-from mkobi.core.permissions import PermissionError as PermissionError
+from mkobi.core.permissions import DashboardPermissionError
 from mkobi.core.security import AsyncRateLimiter
 from mkobi.models.data import (
-    ProcessingConfig,
     ProcessingResult,
     ProcessingStatusResponse,
     UploadResponse,
@@ -154,8 +152,25 @@ async def upload_file_endpoint(
             total_bytes = 0
             async with aiofiles.open(temp_file_path, "wb") as f:
                 while chunk := await file.read(CHUNK_SIZE):
-                    await f.write(chunk)
                     total_bytes += len(chunk)
+                    # Enforce size limit during streaming even when file.size is None
+                    # This prevents disk exhaustion attacks when Content-Length is missing
+                    if total_bytes > config.max_file_size:
+                        await file.close()
+                        temp_file_path.unlink(missing_ok=True)
+                        logger.warning(
+                            "Upload rejected: cumulative size exceeds limit",
+                            extra={
+                                "file_name": sanitized_filename,
+                                "size_bytes": total_bytes,
+                                "max_bytes": config.max_file_size,
+                            },
+                        )
+                        raise HTTPException(
+                            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                            detail=f"File size exceeds maximum limit of {config.upload.max_file_size_mb}MB",
+                        )
+                    await f.write(chunk)
 
             await file.close()
 
@@ -199,7 +214,7 @@ async def upload_file_endpoint(
         raise e
     except ValueError as e:
         _handle_value_error(e)
-    except PermissionError as e:
+    except DashboardPermissionError as e:
         logger.warning("Permission denied for upload: %s", e)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -210,67 +225,6 @@ async def upload_file_endpoint(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Error during file upload",
-        ) from e
-
-
-@router.post(
-    "/{dashboard_id}/process",
-    response_model=ProcessingStatusResponse,
-    status_code=status.HTTP_202_ACCEPTED,
-    summary="Start processing",
-    description="Starts processing of uploaded file.",
-)
-async def process_file_endpoint(
-    task_id: UUID,
-    dashboard_id: UUID,
-    current_user: EditorUser,
-    db: AsyncSession = Depends(get_db_dependency),
-    data_service: DataService = Depends(get_data_service),
-    config: ProcessingConfig | None = None,
-) -> ProcessingStatusResponse:
-    """Start processing of uploaded file."""
-    logger.info(
-        "Processing start requested",
-        extra={
-            "task_id": str(task_id),
-            "dashboard_id": str(dashboard_id),
-            "user_id": str(current_user.id),
-        },
-    )
-
-    try:
-        result = await data_service.trigger_processing(
-            task_id=task_id,
-            dashboard_id=dashboard_id,
-            user_id=current_user.id,
-            processing_config=config,
-            db=db,
-        )
-
-        logger.info(
-            "Processing started",
-            extra={"task_id": str(task_id), "status": result.status},
-        )
-
-        return result
-
-    except ValueError as e:
-        logger.warning("Error starting processing", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail="Invalid processing request",
-        ) from e
-    except PermissionError as e:
-        logger.warning("Permission denied for processing", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Access denied",
-        ) from e
-    except Exception as e:
-        logger.error("Error starting processing", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Error starting processing",
         ) from e
 
 
@@ -316,7 +270,7 @@ async def get_status_endpoint(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Task not found",
         ) from e
-    except PermissionError as e:
+    except DashboardPermissionError as e:
         logger.warning("Permission denied for status check", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -372,7 +326,7 @@ async def get_result_endpoint(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Result not found",
         ) from e
-    except PermissionError as e:
+    except DashboardPermissionError as e:
         logger.warning("Permission denied for result", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

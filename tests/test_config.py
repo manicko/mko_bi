@@ -72,9 +72,9 @@ class TestSettingsFromEnv(TestSettingsBase):
 
     def test_load_jwt_secret_from_env(self, monkeypatch):
         """Test loading JWT__SECRET_KEY from environment variable."""
-        monkeypatch.setenv("JWT__SECRET_KEY", "test-secret-from-env")
+        monkeypatch.setenv("JWT__SECRET_KEY", "test-secret-from-env-32-characters-long")
         settings = Settings()
-        assert settings.jwt.secret_key == "test-secret-from-env"
+        assert settings.jwt.secret_key == "test-secret-from-env-32-characters-long"
 
     def test_load_upload_max_file_size_mb_from_env(self, monkeypatch):
         """Test loading UPLOAD__MAX_FILE_SIZE_MB from environment variable."""
@@ -140,7 +140,7 @@ class TestSettingsDockerSecrets(TestSettingsBase):
         """Test that Docker secrets override YAML."""
         # Create temporary file with secret
         secret_file = tmp_path / "jwt_secret"
-        secret_file.write_text("secret-from-file")
+        secret_file.write_text("secret-from-file-32-characters-long")
 
         # Set environment variable with _FILE suffix
         monkeypatch.setenv("JWT__SECRET_KEY_FILE", str(secret_file))
@@ -148,7 +148,7 @@ class TestSettingsDockerSecrets(TestSettingsBase):
         monkeypatch.delenv("JWT__SECRET_KEY", raising=False)
 
         settings = Settings()
-        assert settings.jwt.secret_key == "secret-from-file"
+        assert settings.jwt.secret_key == "secret-from-file-32-characters-long"
 
 
 class TestSettingsPriority(TestSettingsBase):
@@ -175,7 +175,7 @@ class TestSettingsPriority(TestSettingsBase):
         """
         # Create file with secret
         secret_file = tmp_path / "secret"
-        secret_file.write_text("secret-value")
+        secret_file.write_text("secret-value-32-characters-for-testing")
 
         # Set variables - remove JWT__SECRET_KEY env var so Docker secret takes effect
         monkeypatch.setenv("JWT__SECRET_KEY_FILE", str(secret_file))
@@ -183,7 +183,7 @@ class TestSettingsPriority(TestSettingsBase):
 
         settings = Settings()
         # Docker secret should be loaded
-        assert settings.jwt.secret_key == "secret-value"
+        assert settings.jwt.secret_key == "secret-value-32-characters-for-testing"
 
 
 class TestSettingsProperties(TestSettingsBase):
@@ -350,6 +350,40 @@ class TestWeakCredentialDetection(TestSettingsBase):
         settings = Settings()
         assert settings.admin_username == "secure_admin"
         assert settings.admin_password == "StrongP@ss1"
+
+
+class TestJWTSecretValidation(TestSettingsBase):
+    """Tests for JWT secret key strength validation."""
+
+    def test_short_jwt_secret_rejected(self, monkeypatch):
+        """Verify JWT secret shorter than 32 characters is rejected."""
+        monkeypatch.setenv("JWT__SECRET_KEY", "tooshort")
+        with pytest.raises(ValueError, match="at least 32 characters"):
+            Settings()
+
+    def test_weak_jwt_secret_rejected(self, monkeypatch):
+        """Verify weak JWT secrets are rejected."""
+        monkeypatch.setenv("JWT__SECRET_KEY", "dev-secret-key-for-local-development")
+        with pytest.raises(ValueError, match="too common"):
+            Settings()
+
+    def test_placeholder_jwt_secret_rejected(self, monkeypatch):
+        """Verify placeholder JWT secret is rejected (it's in WEAK_SECRETS)."""
+        monkeypatch.setenv("JWT__SECRET_KEY", "dev-secret-key-for-local-development")
+        with pytest.raises(ValueError, match="too common"):
+            Settings()
+
+    def test_none_jwt_secret_accepted(self, monkeypatch):
+        """Verify None JWT secret is accepted (optional in development)."""
+        monkeypatch.delenv("JWT__SECRET_KEY", raising=False)
+        settings = Settings()
+        assert settings.jwt.secret_key is None
+
+    def test_strong_jwt_secret_accepted(self, monkeypatch):
+        """Verify strong JWT secret passes validation."""
+        monkeypatch.setenv("JWT__SECRET_KEY", "strong-jwt-secret-key-32-characters-long!")
+        settings = Settings()
+        assert settings.jwt.secret_key == "strong-jwt-secret-key-32-characters-long!"
 
 
 class TestGetConfigReload:

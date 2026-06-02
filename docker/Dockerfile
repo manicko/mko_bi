@@ -43,6 +43,7 @@ RUN rm -f /etc/apt/sources.list.d/*.sources && \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
+    libmagic1 \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
@@ -76,6 +77,7 @@ RUN rm -f /etc/apt/sources.list.d/*.sources && \
 # Install only runtime dependencies (libpq5 for PostgreSQL, curl for healthcheck)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
+    libmagic1 \
     curl \
     && rm -rf /var/lib/apt/lists/*
 

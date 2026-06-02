@@ -8,6 +8,7 @@ tags:
   - dashboard-access
   - enforcement-points
   - route-guards
+  - resource-level-access
 related:
   - security-overview
   - auth-api
@@ -113,6 +114,14 @@ Access control is enforced on **all** dashboard-related endpoints, not just data
 | `GET /api/v1/dashboards/my` | Any authenticated | Returns only dashboards the user has access to; admins see all dashboards |
 | `GET /api/v1/dashboards/:id` | Any authenticated | Validates user has access to the specific dashboard; 403 if access denied, 404 if not found; admins bypass access check |
 | `GET /api/v1/data/aggregated` | Any authenticated | Validates dashboard access before returning data |
+
+### Dashboard CRUD Endpoints
+
+| Endpoint | Auth Level | Access Check |
+| --- | --- | --- |
+| `POST /api/v1/dashboards` | Admin only | Admin role required for creation; no resource-level check needed (new resource) |
+| `PUT /api/v1/dashboards/:id` | Admin or editor | Resource-level access check: admin role bypasses; otherwise requires `edit` or `admin` permission on the dashboard |
+| `DELETE /api/v1/dashboards/:id` | Admin only | Admin role required; resource-level access check with admin bypass |
 
 ### Filter Endpoints
 

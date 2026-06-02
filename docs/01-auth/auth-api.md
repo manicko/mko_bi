@@ -11,6 +11,8 @@ tags:
   - security
   - cookies
   - refresh-tokens
+  - token-revocation
+  - password-validation
 related:
   - security-overview
   - access-control
@@ -240,8 +242,12 @@ Log out the current user by clearing the refresh token cookie.
 ```
 
 **Side effects:**
+- Revokes the access token by adding its `jti` to a Redis-backed blacklist (auto-expiring after the token's remaining TTL)
+- Revokes the refresh token by adding its `jti` to a separate Redis-backed blacklist (auto-expiring after the refresh token's remaining TTL)
 - Clears the `mkobi_refresh_token` cookie
 - The frontend also clears the in-memory access token
+
+> Once revoked, the token is immediately rejected on any subsequent authenticated request, even if it has not yet expired. See [Token Revocation](../08-security/security-overview.md#token-revocation) for details.
 
 **Error responses:**
 
@@ -324,7 +330,7 @@ Change the current user's password.
 
 **Notes:**
 - The user remains logged in after a password change (token is not invalidated)
-- New password must be at least 8 characters (enforced by frontend via Zod)
+- New password must meet backend strength requirements: at least 8 characters, at least one letter, and at least one digit. Enforced by Pydantic `field_validator` — returns 422 if requirements are not met
 - The `force_password_change` flag is automatically cleared on the backend after a successful password change. This prevents an infinite force-change loop when a user is required to change their password (e.g., after admin reset or registration approval).
 - If the user was in force-change mode (redirected via `?force=true`), they are redirected back to `/profile` after successfully changing their password.
 
@@ -484,8 +490,10 @@ Browser              FastAPI              Database
 ## Security Constraints
 
 - **Password hashing:** bcrypt (never stored in plaintext)
+- **Password strength validation (backend):** Passwords must be at least 8 characters and contain at least one letter and one digit. Enforced by Pydantic `field_validator` on `ChangePasswordRequest.new_password` and `UserCreateRequest.password` — rejects weak passwords at the model level before they reach the service layer.
 - **JWT:** Signed tokens with expiration; payload contains `user_id`, `email`, `role`. Access tokens expire after **15 minutes**.
 - **Refresh tokens:** Stored in httpOnly cookies (`mkobi_refresh_token`) with `Secure`, `HttpOnly`, and `SameSite=Strict` attributes. 7-day expiration. Not accessible to JavaScript.
+- **Token revocation:** Redis-backed blacklist with auto-expiring entries. Revoked tokens are rejected immediately, even if they have not expired. Logout revokes both access and refresh tokens. See [Token Revocation](../08-security/security-overview.md#token-revocation) for details.
 - **Rate limiting:** Redis-based; fail-open by default, configurable to fail-closed
 - **Email blocklist:** Configurable domain blocklist for registration requests
 - **CORS:** Explicit allowed methods and headers (no wildcards in production)

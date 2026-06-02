@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator, model_validator
 from uuid import UUID
 
 from mkobi.models.enums import UserRole
@@ -192,6 +192,20 @@ class ChangePasswordRequest(BaseModel):
             }
         },
     )
+
+    @model_validator(mode="after")
+    def check_passwords_match(self) -> "ChangePasswordRequest":
+        """Validate that new password matches confirmation."""
+        if self.new_password != self.confirm_password:
+            raise ValueError("Passwords do not match")
+        return self
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_new_password_field(cls, v: str) -> str:
+        """Validate new password meets strength requirements."""
+        validate_password_or_raise(v)
+        return v
 
 
 class SuccessResponse(BaseModel):

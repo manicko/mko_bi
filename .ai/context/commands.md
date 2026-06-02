@@ -1,10 +1,14 @@
 # Project Commands
 
 ## Environment
+
 - **OS:** Windows
 - **Package manager (Python):** uv
 - **Package manager (Frontend):** npm
-- **Database:** PostgreSQL (localhost:5432, db: bidb, user: postgres, pass: 1234)
+- **Database (Development):** PostgreSQL (localhost:5432, db: bidb, user: mkobi_app)
+- **Database (Testing):** PostgreSQL (localhost:5433, db: bidb_test, user: mkobi_app)
+  - Default password: `test_app_password` (mkobi_app user)
+  - Admin password: `test_password` (postgres user)
 
 ---
 
@@ -13,9 +17,16 @@
 > **Before running any tests, lint, type checks, or database operations — ensure Docker services are running.**
 > Full setup and start instructions: [`docs/11-guides/docker.md`](../11-guides/docker.md)
 
-Quick check:
+> **Important:** Use `.env` for development and `docker/.env.production` for production deployments. The `.env` file contains placeholder values and is gitignored.
+
+Quick check (test environment):
 ```powershell
-docker compose -f docker/docker-compose.yml ps
+docker compose -f docker/docker-compose.test.yml ps
+```
+
+Quick check (dev environment):
+```powershell
+docker compose -f docker/docker-compose.yml --env-file .env ps
 ```
 
 ---
@@ -25,12 +36,16 @@ docker compose -f docker/docker-compose.yml ps
 | Task | Command |
 |------|---------|
 | Run tests | `uv run pytest <path>` |
+| Run tests (in Docker) | `docker compose -f docker/docker-compose.test.yml exec test-app /app/.venv/bin/pytest tests/ -v` |
+| Start test environment | `docker compose -f docker/docker-compose.test.yml up -d --build` |
+| Stop test environment | `docker compose -f docker/docker-compose.test.yml down -v` |
 | Lint (ruff) | `uv run ruff check <path>` |
 | Type check (mypy) | `uv run mypy <path>` |
 | Migrations | `uv run alembic ...` |
 | Add dependency | `uv add <package>` |
 | Add dev dependency | `uv add --dev <package>` |
-| Database CLI | `set "PGPASSWORD=1234" & psql -h localhost -p 5432 -U postgres -d bidb` |
+| Database CLI (dev) | `set "PGPASSWORD=<your_password>" & psql -h localhost -p 5432 -U postgres -d bidb` |
+| Database CLI (test) | `set "PGPASSWORD=test_password" & psql -h localhost -p 5433 -U postgres -d bidb_test` |
 
 > **Always run from repo root:** `C:\py_dev\mkobi`
 

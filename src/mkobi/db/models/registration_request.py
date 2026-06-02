@@ -11,6 +11,7 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    Index,
     String,
     text,
 )
@@ -32,6 +33,7 @@ class RegistrationRequest(Base):
     """
 
     __tablename__ = "registration_requests"
+    __table_args__ = (Index("idx_registration_requests_reviewed_by", "reviewed_by"),)
 
     id: Mapped[UUID] = mapped_column(
         PG_UUID(as_uuid=True),

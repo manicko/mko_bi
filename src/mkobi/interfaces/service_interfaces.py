@@ -10,7 +10,7 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from mkobi.models.dashboard import DashboardRead
+from mkobi.models.dashboard import DashboardRead, DashboardSummary
 from mkobi.models.data import ProcessingResultData, ProcessingResult, ProcessingStatusResponse, UploadResponse
 from mkobi.models.enums import UploadMode, UserRole
 from mkobi.models.filters import FilterRead, FilterUpdate
@@ -136,6 +136,13 @@ class IUserService(abc.ABC):
         pass
 
     @abc.abstractmethod
+    async def update_user_active_status(
+        self, user_id: UUID, is_active: bool, db: AsyncSession
+    ) -> UserRead | None:
+        """Update user active status (deactivate/reactivate user)."""
+        pass
+
+    @abc.abstractmethod
     async def get_all_users(self, db: AsyncSession) -> list[UserRead]:
         """Get all users."""
         pass
@@ -183,8 +190,8 @@ class IDashboardService(abc.ABC):
         user_id: UUID,
         db: AsyncSession,
         user_role: str | None = None,
-    ) -> list[DashboardRead]:
-        """Get user dashboards."""
+    ) -> list[DashboardSummary]:
+        """Get user dashboards with permission."""
         pass
 
     @abc.abstractmethod

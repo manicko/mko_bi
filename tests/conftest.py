@@ -15,11 +15,12 @@ from sqlalchemy.pool import NullPool
 # Use setdefault to allow Docker Compose env vars to take precedence in containers
 os.environ.setdefault("ENV", "test")
 os.environ.setdefault("DATABASE__HOST", "localhost")
-os.environ.setdefault("DATABASE__PORT", "5432")
+os.environ.setdefault("DATABASE__PORT", "5433")
 os.environ.setdefault("DATABASE__DBNAME", "bidb_test")
-os.environ.setdefault("DATABASE__USER", "postgres")
-os.environ.setdefault("DATABASE__PASSWORD", "1234")
-os.environ.setdefault("DATABASE__ADMIN_PASSWORD", "1234")
+os.environ.setdefault("DATABASE__USER", "mkobi_app")
+os.environ.setdefault("DATABASE__PASSWORD", "test_app_password")
+os.environ.setdefault("DATABASE__ADMIN_USER", "postgres")
+os.environ.setdefault("DATABASE__ADMIN_PASSWORD", "test_password")
 os.environ.setdefault("DATABASE__TEST_DBNAME", "bidb_test")
 os.environ.setdefault("JWT__SECRET_KEY", "test_secret_key_change_in_production")
 os.environ.setdefault("REDIS__HOST", "localhost")
@@ -36,10 +37,12 @@ def pytest_load_initial_conftests(early_config, parser, args):
     # Use setdefault to allow Docker Compose env vars to take precedence in containers
     os.environ.setdefault("ENV", "test")
     os.environ.setdefault("DATABASE__HOST", "localhost")
-    os.environ.setdefault("DATABASE__PORT", "5432")
+    os.environ.setdefault("DATABASE__PORT", "5433")
     os.environ.setdefault("DATABASE__DBNAME", "bidb_test")
-    os.environ.setdefault("DATABASE__USER", "postgres")
-    os.environ.setdefault("DATABASE__PASSWORD", "1234")
+    os.environ.setdefault("DATABASE__USER", "mkobi_app")
+    os.environ.setdefault("DATABASE__ADMIN_USER", "postgres")
+    os.environ.setdefault("DATABASE__PASSWORD", "test_app_password")
+    os.environ.setdefault("DATABASE__ADMIN_PASSWORD", "test_password")
     os.environ.setdefault("DATABASE__TEST_DBNAME", "bidb_test")
     os.environ.setdefault("JWT__SECRET_KEY", "test_secret_key_change_in_production")
     os.environ.setdefault("REDIS__HOST", "localhost")
@@ -96,6 +99,7 @@ from mkobi.db.models import (  # noqa: E402, F401
     Layout,
     ProcessingConfig,
     ProcessingLog,
+    RegistrationRequest,
     User,
 )
 
@@ -118,6 +122,14 @@ class MockRedis:
 
     async def get(self, key):
         return self._data.get(key)
+
+    async def exists(self, key):
+        """Check if key exists in mock Redis."""
+        return 1 if key in self._data else 0
+
+    async def setex(self, key, ttl, value):
+        """Set key with TTL in mock Redis."""
+        self._data[key] = value
 
     def pipeline(self):
         return MockPipeline(self)
@@ -399,7 +411,7 @@ async def async_client(async_db_session):
     Overrides the get_db_dependency to use the test's session.
     This ensures the API and test use the same session.
     """
-    from mkobi.api.deps import get_db_dependency
+    from mkobi.api.deps import get_db_dependency, get_redis_client_dependency
     from mkobi.main import app
     import httpx
     from httpx import ASGITransport
@@ -409,6 +421,12 @@ async def async_client(async_db_session):
         yield async_db_session
 
     app.dependency_overrides[get_db_dependency] = override_get_db
+
+    # Create a mock Redis client for testing
+    mock_redis = MockRedis()
+    async def override_get_redis():
+        return mock_redis
+    app.dependency_overrides[get_redis_client_dependency] = override_get_redis
 
     transport = ASGITransport(app=app)
     async with httpx.AsyncClient(

@@ -165,6 +165,9 @@ The project uses a multi-stage Dockerfile supporting dev, test, and prod targets
 # Production (default target)
 docker compose -f docker/docker-compose.yml up -d
 
+# Production with RQ worker and nginx (production profile)
+docker compose -f docker/docker-compose.yml --profile production up -d
+
 # Development with hot reload and frontend dev server
 docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml up -d
 ```
@@ -175,10 +178,20 @@ docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.ym
 
 | Target | Base | Dependencies | Workers | Use Case |
 |--------|------|-------------|---------|----------|
-| `base` | python:3.12-slim-bookworm | System only | — | Shared base |
+| `base` | python:3.12-slim-bookworm | System + build tools | — | Shared base for dev/test |
+| `prod-base` | python:3.12-slim-bookworm | Runtime only (libpq5, libmagic1) | — | Minimal base for prod |
 | `dev` | base | All (incl. dev) | 1 (--reload) | Local dev |
 | `test` | base | All (incl. dev) | 1 (pytest) | CI/CD |
-| `prod` | base | Production only | 4 | Production |
+| `prod` | prod-base | Production only | 4 | Production |
+
+### Production Profiles
+
+Services with `profiles: [production]` are not started by default. Use `--profile production` to include them:
+
+- **rq-worker** — Redis Queue worker for background task processing. Runs `uv run rq worker --url redis://redis:6379/0`. Shares `app_data` volume with the app service.
+- **nginx** — Reverse proxy serving React SPA and proxying API requests to FastAPI.
+
+See [Docker Guide](../11-guides/docker.md#production-services-profiles-production) for details.
 
 ### Required Production Variables
 

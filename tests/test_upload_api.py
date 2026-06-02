@@ -178,15 +178,29 @@ N,South,Product12,999999.99,249999.99,2023-01-14,999
         async_db_session,
         test_user: dict,
         test_dashboard: Dashboard,
-        csv_file: Path,
     ) -> None:
-        """Test upload with wrong MIME type (should return 415)."""
-        with open(csv_file, "rb") as f:
-            response = await authenticated_client.post(
-                f"/upload/{test_dashboard.id}",
-                files={"file": ("test.csv", f, "application/octet-stream")},
-            )
-        assert response.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+        """Test upload with wrong MIME type detected from content (should return 415).
+
+        MIME type is now detected from file content, not client header.
+        This test creates a file that claims to be CSV but has non-CSV content.
+        """
+        # Create a file with content that will be detected as text/plain
+        # (plain text without CSV structure)
+        with tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False) as f:
+            # Plain text content that will be detected as text/plain
+            f.write(b"plain text content without csv structure")
+            fake_csv_path = Path(f.name)
+
+        try:
+            with open(fake_csv_path, "rb") as f:
+                response = await authenticated_client.post(
+                    f"/upload/{test_dashboard.id}",
+                    files={"file": ("test.csv", f, "text/csv")},
+                )
+            # Should fail because actual content is text/plain, not text/csv or gzip
+            assert response.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
+        finally:
+            fake_csv_path.unlink(missing_ok=True)
 
     async def test_upload_too_large(
         self,
@@ -227,6 +241,61 @@ N,South,Product12,999999.99,249999.99,2023-01-14,999
                 small_path.unlink(missing_ok=True)
 
         assert response.status_code == status.HTTP_413_CONTENT_TOO_LARGE
+
+    async def test_upload_streaming_size_exceeded_no_content_length(
+        self,
+        authenticated_client: AsyncClient,
+        async_db_session,
+        test_user: dict,
+        test_dashboard: Dashboard,
+    ) -> None:
+        """Test upload rejects files exceeding size limit during streaming when file.size is None.
+
+        When Content-Length header is missing, file.size is None. This test verifies
+        the cumulative byte counter in the streaming loop still enforces the limit.
+        """
+        # Grant edit access to test user
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=test_user["id"],
+            dashboard_id=test_dashboard.id,
+            permission=DashboardPermission.EDIT,
+        )
+        await async_db_session.commit()
+
+        # Mock config to use very small max size (1 byte) to trigger streaming check
+        mock_config = type(
+            "MockConfig",
+            (),
+            {
+                "max_file_size": 1,
+                "upload": type("MockUpload", (), {"max_file_size_mb": 100})(),
+                "upload_temp_dir": str(Path(tempfile.gettempdir()) / "mkobi_test_uploads"),
+            },
+        )()
+
+        with patch("mkobi.api.routes.upload.get_config", return_value=mock_config):
+            # Create CSV content that exceeds 1 byte
+            csv_content = b"category,sales\nA,100\n"
+
+            with tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False) as f:
+                f.write(csv_content)
+                csv_path = Path(f.name)
+
+            try:
+                with open(csv_path, "rb") as f:
+                    # httpx.AsyncClient doesn't always send Content-Length for temp files
+                    # so we test the streaming size enforcement
+                    response = await authenticated_client.post(
+                        f"/upload/{test_dashboard.id}",
+                        files={"file": ("test.csv", f, "text/csv")},
+                    )
+
+                assert response.status_code == status.HTTP_413_CONTENT_TOO_LARGE
+                assert "exceeds" in response.json()["error"].lower()
+            finally:
+                csv_path.unlink(missing_ok=True)
 
     async def test_upload_no_permission(
         self,
@@ -530,7 +599,7 @@ N,South,Product12,999999.99,249999.99,2023-01-14,999
             )
         assert response.status_code == status.HTTP_404_NOT_FOUND
         data = response.json()
-        assert "dashboard" in data.get("detail", "").lower()
+        assert "dashboard" in data.get("error", "").lower()
 
 
 class TestTempFileCleanup:

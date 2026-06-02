@@ -35,7 +35,8 @@ from mkobi.core.permissions import (
     check_role,
     AuthenticationError,
 )
-from mkobi.core.security import decode_token
+from mkobi.core.redis_client import get_async_redis_client
+from mkobi.core.security import decode_token, is_token_revoked, is_user_tokens_revoked
 from mkobi.db.repositories.user_repo import UserRepository
 # DEPRECATED: get_session is kept for backwards compatibility only.
 # External code may import it from here. Remove in v2.0.
@@ -81,6 +82,7 @@ __all__ = [
     "get_processing_log_service",
     "get_token_from_header",
     "check_dashboard_access",
+    "get_redis_client_dependency",
 ]
 
 
@@ -106,6 +108,18 @@ async def get_db_dependency() -> AsyncSession:
     """
     async with get_session() as db:
         yield db
+
+
+# --- Redis dependency ---
+
+
+async def get_redis_client_dependency() -> Any:
+    """Async Redis client dependency for FastAPI routes.
+
+    Returns:
+        aioredis.Redis: Asynchronous Redis client instance.
+    """
+    return get_async_redis_client()
 
 
 # --- Dependency Injection for repositories ---
@@ -405,21 +419,23 @@ def get_token_from_header(
 async def get_current_user_dependency(
     token: str = Depends(get_token_from_header),
     db: AsyncSession = Depends(get_db_dependency),
+    redis_client: Any = Depends(get_redis_client_dependency),
 ) -> UserRead:
     """Get current authenticated user.
 
     Decodes JWT token, extracts user_id and retrieves user
-    data from database.
+    data from database. Checks token blacklist for revocation.
 
     Args:
         token: JWT access token.
         db: Database session.
+        redis_client: Async Redis client for token blacklist check.
 
     Returns:
         UserRead: Current user data.
 
     Raises:
-        HTTPException: If token is invalid or user not found.
+        HTTPException: If token is invalid, revoked, or user not found.
     """
     try:
         payload = decode_token(token)
@@ -431,6 +447,17 @@ async def get_current_user_dependency(
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
+        # Check if token is revoked
+        jti = payload.get("jti")
+        if jti:
+            if await is_token_revoked(redis_client, jti):
+                logger.warning("Revoked token used: jti=%s", jti)
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED,
+                    detail="Token has been revoked",
+                    headers={"WWW-Authenticate": "Bearer"},
+                )
+
         user_id_raw = payload.get("user_id")
         if user_id_raw is None:
             logger.warning("Token missing user_id")
@@ -441,6 +468,15 @@ async def get_current_user_dependency(
             )
 
         user_id = UUID(str(user_id_raw))
+
+        # Check if user's tokens are revoked (user-level revocation for deactivation)
+        if await is_user_tokens_revoked(redis_client, user_id):
+            logger.warning("User tokens revoked: user_id=%s", user_id)
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has been revoked",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
 
         repo = UserRepository()
         user = await repo.get(id=user_id, db=db)
@@ -741,6 +777,7 @@ async def require_dashboard_admin_access(
 
 
 # --- Combined dependencies ---
+
 
 # Typed aliases for convenience
 CurrentUser = Annotated[UserRead, Depends(get_current_user_dependency)]

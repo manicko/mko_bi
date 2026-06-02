@@ -124,6 +124,13 @@
   type: component
   value: UserManagement
   stable_hash: 4cbe3e4d
+- id: 9d4eb940
+  file: C:/py_dev/mkobi/frontend/src/features/auth/model/authToken.ts
+  symbol_path:
+    - useAuthToken
+  type: hook
+  value: useAuthToken
+  stable_hash: 9d4eb940
 - id: 9151f52f
   file: C:/py_dev/mkobi/frontend/src/features/auth/model/useAuth.ts
   symbol_path:

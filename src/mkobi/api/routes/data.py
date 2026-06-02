@@ -14,7 +14,6 @@ from typing import Any, cast
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
@@ -24,8 +23,7 @@ from mkobi.api.deps import (
     get_db_dependency,
     get_graph_repository,
 )
-from mkobi.core.permissions import check_dashboard_access
-from mkobi.db.models.graphs import Graph
+from mkobi.core.permissions import check_dashboard_access, DashboardPermissionError
 from mkobi.models.data import ProcessingResultData, AggregatedDataResponse, GraphDataResponse
 from mkobi.services.data_service import DataService
 
@@ -114,11 +112,8 @@ async def get_aggregated_data_endpoint(
 
         # When graph_id is provided, return data for single graph
         if graph_id is not None:
-            # Get graph to retrieve type and name
-            graph_result = await db.execute(
-                select(Graph).where(Graph.id == graph_id)
-            )
-            single_graph = graph_result.scalar_one_or_none()
+            # Get graph to retrieve type and name using repository
+            single_graph = await graph_repo.get(id=graph_id, db=db)
 
             if single_graph is None:
                 logger.warning("Graph not found: graph_id=%s", graph_id)
@@ -201,7 +196,7 @@ async def get_aggregated_data_endpoint(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=str(e),
         ) from e
-    except PermissionError as e:
+    except DashboardPermissionError as e:
         logger.warning("Access denied: %s", e)
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

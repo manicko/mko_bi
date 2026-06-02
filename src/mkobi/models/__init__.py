@@ -45,6 +45,9 @@ from mkobi.models.processing_logs import (
     ProcessingLogRead,
     ProcessingLogUpdate,
 )
+from mkobi.models.types import (
+    ErrorResponse,
+)
 from mkobi.models.user import UserCreate, UserDB, UserRead, UserUpdate
 from mkobi.models.transformation_configs import (
     AggregationConfig,
@@ -126,6 +129,8 @@ __all__ = [
     "FilterConfig",
     "ShareConfig",
     "YoyConfig",
+    # Error Response
+    "ErrorResponse",
     # Enums
     "AggregationFunctionEnum",
     "BarmodeEnum",

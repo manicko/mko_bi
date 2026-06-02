@@ -9,6 +9,9 @@ tags:
   - credentials
   - secrets-management
   - jwt-security
+  - token-revocation
+  - password-validation
+  - mime-detection
 related:
   - access-control
   - auth-api
@@ -75,9 +78,9 @@ The rate limiter depends on Redis. When Redis is unavailable, the system operate
 
 1. **Frontend (UX):** `react-dropzone` filters by MIME type; extension check on filename.
 2. **Backend (security boundary):**
-   - MIME type validation against whitelist (`text/csv`, `application/gzip`, `application/x-gzip`)
+   - MIME type detection from file content using `python-magic` (server-side content sniffing from first 2KB of file bytes — does not trust the client `Content-Type` header). Falls back to extension-based detection if `libmagic` is unavailable.
    - File extension validation (`.csv`, `.csv.gz`)
-   - Maximum file size enforcement
+   - Maximum file size enforcement (cumulative byte tracking during streaming — applies even when the client does not provide `Content-Length`, preventing disk exhaustion attacks)
    - Rate limiting on upload endpoints
 
 ### File Lifecycle
@@ -181,9 +184,13 @@ Registration requests are checked against a configurable email domain blocklist:
 ## Password Security
 
 - Passwords are stored as **bcrypt hashes** (never plaintext)
-- Minimum length: 8 characters (enforced by frontend Zod schema)
+- **Backend strength validation:** Passwords must meet the following requirements, enforced by Pydantic `field_validator` on `ChangePasswordRequest.new_password` and `UserCreateRequest.password`:
+  - Minimum length: 8 characters
+  - At least one letter (`a-zA-Z`)
+  - At least one digit (`0-9`)
+- Frontend Zod schema also enforces these rules for UX (real-time feedback)
 - Password change requires current password verification
-- Users remain logged in after password change (token is not invalidated)
+- Users remain logged in after password change (token is not invalidated by password change alone)
 - Registration approval generates a cryptographically random temporary password via `secrets.token_urlsafe(16)`
 
 ---
@@ -195,6 +202,35 @@ Registration requests are checked against a configurable email domain blocklist:
 - **Access tokens:** 15-minute expiration, stored in memory on the frontend (not in `localStorage` or cookies — XSS-safe)
 - **Refresh tokens:** 7-day expiration, stored in httpOnly cookies (`mkobi_refresh_token`), set with `Secure`, `HttpOnly`, and `SameSite=Strict` attributes
 - Axios interceptors attach the access token to every request and handle `401` responses by attempting a silent refresh
+
+---
+
+## Token Revocation
+
+### Overview
+
+Tokens can be immediately revoked before their natural expiration. This is implemented using a Redis-backed blacklist with auto-expiring entries, preventing indefinite growth.
+
+### Revocation Triggers
+
+| Trigger | Tokens Revoked | Mechanism |
+| --- | --- | --- |
+| `POST /api/v1/auth/logout` | Access token + refresh token | Both JTIs added to Redis blacklist with TTL = remaining token lifetime |
+| User deactivation (`is_active=false`) | All future requests rejected | `get_current_user_dependency()` checks `is_active` on every request |
+
+### Blacklist Details
+
+- **Access token blacklist:** Redis key `token_blacklist:{jti}` with `SETEX` TTL = access token remaining seconds
+- **Refresh token blacklist:** Redis key `refresh_token_blacklist:{jti}` with `SETEX` TTL = refresh token remaining seconds
+- **Auto-expiry:** Blacklist entries expire automatically after the token would have expired naturally, preventing indefinite Redis growth
+- **Auth check:** `is_token_revoked()` is called in `get_current_user_dependency()` on every authenticated request; `is_refresh_token_revoked()` is called during token refresh
+
+### Security Properties
+
+- Revoked tokens are rejected immediately with HTTP 401, even if they have not yet expired
+- Both access and refresh tokens can be individually revoked
+- The blacklist is checked before any business logic executes (in the auth dependency)
+- If Redis is unavailable, the revocation check degrades gracefully (logged at WARNING level) — see [Rate Limiter Failure Behavior](#rate-limiter-failure-behavior-high-risk) for the general Redis degradation pattern
 
 ---
 

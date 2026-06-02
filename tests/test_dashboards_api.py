@@ -40,6 +40,57 @@ class TestGetMyDashboards:
         assert isinstance(data, list)
         assert any(d["id"] == str(dashboard.id) for d in data)
 
+    async def test_get_my_dashboards_includes_permission(
+        self, async_client: AsyncClient, async_db_session
+    ) -> None:
+        """Test that dashboard list includes permission field for non-admin users."""
+        from mkobi.db.repositories.user_repo import UserRepository
+        from mkobi.core.security import create_access_token
+
+        # Create a non-admin user
+        user_repo = UserRepository()
+        editor_user = await user_repo.create(
+            db=async_db_session,
+            email="permission_test_user@example.com",
+            password_hash="hash",
+            role=UserRole.EDITOR,
+        )
+        await async_db_session.flush()
+
+        # Create dashboard
+        dashboard_repo = DashboardRepository()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="test-permission-dashboard",
+            created_by=editor_user.id,
+        )
+        await async_db_session.flush()
+
+        # Grant edit access to the user
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=editor_user.id,
+            dashboard_id=dashboard.id,
+            permission=DashboardPermission.EDIT,
+        )
+        await async_db_session.flush()
+
+        token = create_access_token({"user_id": str(editor_user.id), "email": editor_user.email})
+        async_client.headers["Authorization"] = f"Bearer {token}"
+
+        response = await async_client.get("/dashboards/my")
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+
+        # Find the dashboard in the response
+        dashboard_data = next(
+            (d for d in data if d["id"] == str(dashboard.id)), None
+        )
+        assert dashboard_data is not None, "Dashboard not found in response"
+        assert "permission" in dashboard_data, "permission field missing from response"
+        assert dashboard_data["permission"] == DashboardPermission.EDIT.value
+
 
 class TestGetDashboardDetail:
     """Tests for GET /api/v1/dashboards/{id} endpoint."""
@@ -215,7 +266,7 @@ class TestUpdateDashboard:
     async def test_update_dashboard_forbidden(
         self, async_client: AsyncClient, async_db_session
     ) -> None:
-        """Test updating dashboard without admin role (403)."""
+        """Test updating dashboard without editor role (403)."""
         # Create viewer user and dashboard
         from mkobi.db.repositories.user_repo import UserRepository
 
@@ -248,6 +299,112 @@ class TestUpdateDashboard:
         )
         assert response.status_code == status.HTTP_403_FORBIDDEN
 
+    async def test_update_dashboard_editor_without_access(
+        self, async_client: AsyncClient, async_db_session
+    ) -> None:
+        """Test updating dashboard as editor without explicit access (403)."""
+        # Create editor user
+        from mkobi.db.repositories.user_repo import UserRepository
+
+        user_repo = UserRepository()
+        editor_user = await user_repo.create(
+            db=async_db_session,
+            email="editor_no_access@example.com",
+            password_hash="hash",
+            role=UserRole.EDITOR,
+        )
+        await async_db_session.flush()
+
+        # Create a dashboard owned by another user
+        dashboard_repo = DashboardRepository()
+        other_user = await user_repo.create(
+            db=async_db_session,
+            email="other_owner_update@example.com",
+            password_hash="hash",
+            role=UserRole.EDITOR,
+        )
+        await async_db_session.flush()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="editor-update-test-dashboard",
+            created_by=other_user.id,
+        )
+        await async_db_session.flush()
+
+        # Login as editor (no access to this dashboard)
+        from mkobi.core.security import create_access_token
+
+        token = create_access_token(
+            {"user_id": str(editor_user.id), "email": editor_user.email}
+        )
+        async_client.headers["Authorization"] = f"Bearer {token}"
+
+        # Editor has role but no access grant - should return 403
+        response = await async_client.put(
+            f"/dashboards/{dashboard.id}",
+            json={"name": "hacked_name"},
+        )
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    async def test_update_dashboard_editor_with_access(
+        self, async_client: AsyncClient, async_db_session
+    ) -> None:
+        """Test updating dashboard as editor with explicit edit access (200)."""
+        # Create editor user
+        from mkobi.db.repositories.user_repo import UserRepository
+
+        user_repo = UserRepository()
+        editor_user = await user_repo.create(
+            db=async_db_session,
+            email="editor_with_access@example.com",
+            password_hash="hash",
+            role=UserRole.EDITOR,
+        )
+        await async_db_session.flush()
+
+        # Create a dashboard owned by another user
+        dashboard_repo = DashboardRepository()
+        other_user = await user_repo.create(
+            db=async_db_session,
+            email="other_owner_update2@example.com",
+            password_hash="hash",
+            role=UserRole.EDITOR,
+        )
+        await async_db_session.flush()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="editor-update-test-dashboard2",
+            created_by=other_user.id,
+        )
+        await async_db_session.flush()
+
+        # Grant edit access to editor
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=editor_user.id,
+            dashboard_id=dashboard.id,
+            permission=DashboardPermission.EDIT,
+        )
+        await async_db_session.flush()
+
+        # Login as editor (with access)
+        from mkobi.core.security import create_access_token
+
+        token = create_access_token(
+            {"user_id": str(editor_user.id), "email": editor_user.email}
+        )
+        async_client.headers["Authorization"] = f"Bearer {token}"
+
+        # Editor has role AND access grant - should succeed
+        response = await async_client.put(
+            f"/dashboards/{dashboard.id}",
+            json={"name": "updated_by_editor"},
+        )
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data["name"] == "updated_by_editor"
+
 
 class TestDeleteDashboard:
     """Tests for DELETE /api/v1/dashboards/{id} endpoint."""
@@ -255,7 +412,7 @@ class TestDeleteDashboard:
     async def test_delete_dashboard_admin(
         self, authenticated_client: AsyncClient, async_db_session, test_user: dict
     ) -> None:
-        """Test deleting dashboard as admin (success)."""
+        """Test deleting dashboard as system admin (success)."""
         # Admin can delete any dashboard without explicit access grant
         repo = DashboardRepository()
         dashboard = await repo.create(
@@ -300,6 +457,114 @@ class TestDeleteDashboard:
 
         response = await async_client.delete(f"/dashboards/{dashboard.id}")
         assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    async def test_delete_dashboard_editor_without_admin_access(
+        self, async_client: AsyncClient, async_db_session
+    ) -> None:
+        """Test deleting dashboard as editor without admin access (403)."""
+        # Create editor user
+        from mkobi.db.repositories.user_repo import UserRepository
+
+        user_repo = UserRepository()
+        editor_user = await user_repo.create(
+            db=async_db_session,
+            email="editor_no_admin_access@example.com",
+            password_hash="hash",
+            role=UserRole.EDITOR,
+        )
+        await async_db_session.flush()
+
+        # Create a dashboard owned by another user
+        dashboard_repo = DashboardRepository()
+        other_user = await user_repo.create(
+            db=async_db_session,
+            email="other_owner_delete@example.com",
+            password_hash="hash",
+            role=UserRole.EDITOR,
+        )
+        await async_db_session.flush()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="editor-delete-test-dashboard",
+            created_by=other_user.id,
+        )
+        await async_db_session.flush()
+
+        # Grant edit access (not admin) to editor
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=editor_user.id,
+            dashboard_id=dashboard.id,
+            permission=DashboardPermission.EDIT,
+        )
+        await async_db_session.flush()
+
+        # Login as editor (with edit but not admin access)
+        from mkobi.core.security import create_access_token
+
+        token = create_access_token(
+            {"user_id": str(editor_user.id), "email": editor_user.email}
+        )
+        async_client.headers["Authorization"] = f"Bearer {token}"
+
+        # Editor has role and edit access but NOT admin access - should fail
+        response = await async_client.delete(f"/dashboards/{dashboard.id}")
+        assert response.status_code == status.HTTP_403_FORBIDDEN
+
+    async def test_delete_dashboard_editor_with_admin_access(
+        self, async_client: AsyncClient, async_db_session
+    ) -> None:
+        """Test deleting dashboard as editor with admin access on dashboard (200)."""
+        # Create editor user
+        from mkobi.db.repositories.user_repo import UserRepository
+
+        user_repo = UserRepository()
+        editor_user = await user_repo.create(
+            db=async_db_session,
+            email="editor_with_admin_access@example.com",
+            password_hash="hash",
+            role=UserRole.EDITOR,
+        )
+        await async_db_session.flush()
+
+        # Create a dashboard owned by another user
+        dashboard_repo = DashboardRepository()
+        other_user = await user_repo.create(
+            db=async_db_session,
+            email="other_owner_delete2@example.com",
+            password_hash="hash",
+            role=UserRole.EDITOR,
+        )
+        await async_db_session.flush()
+        dashboard = await dashboard_repo.create(
+            db=async_db_session,
+            name="editor-delete-test-dashboard2",
+            created_by=other_user.id,
+        )
+        await async_db_session.flush()
+
+        # Grant admin access to editor
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=editor_user.id,
+            dashboard_id=dashboard.id,
+            permission=DashboardPermission.ADMIN,
+        )
+        await async_db_session.flush()
+
+        # Login as editor (with admin access on this dashboard)
+        from mkobi.core.security import create_access_token
+
+        token = create_access_token(
+            {"user_id": str(editor_user.id), "email": editor_user.email}
+        )
+        async_client.headers["Authorization"] = f"Bearer {token}"
+
+        # Editor has role and admin access on dashboard - should succeed
+        response = await async_client.delete(f"/dashboards/{dashboard.id}")
+        assert response.status_code == status.HTTP_204_NO_CONTENT
 
 
 class TestAccessControl:

@@ -148,7 +148,14 @@ activemq-data/
 *.sage.py
 
 # Environments
+# Ignore .env files in root directory
 .env
+# Ignore .env.* files in root directory only (not in docker/ subdirectory)
+/.env.*
+# Docker environment templates (keep in repository for reference)
+!.env.example
+!docker/.env.development
+!docker/.env.production
 # MCP server config - local copy of .env for Docker Desktop Windows compatibility
 .ai/mcp/.env
 .envrc
