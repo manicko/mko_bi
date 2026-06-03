@@ -64,23 +64,21 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
-|   |   |   ORDER_02.yaml
-|   |   |   PLAN_02.md
-|   |   |   TASK_001_dashboard_filter_values_model.yaml
-|   |   |   TASK_002_dashboard_filter_values_repository.yaml
-|   |   |   TASK_003_aggregation_service.yaml
-|   |   |   TASK_004_wire_csv_parsing_config.yaml
-|   |   |   TASK_005_refactor_store_aggregates.yaml
-|   |   |   TASK_006_filter_values_api_endpoint.yaml
-|   |   |   TASK_007_frontend_filter_values_hook.yaml
-|   |   |   TASK_008_chart_renderer_component.yaml
-|   |   |   TASK_009_seed_test_media_dash.yaml
-|   |   |   TASK_010_verify_phase_02.yaml
+|   |   |   ORDER_01.yaml
+|   |   |   PLAN_01.md
+|   |   |   TASK_001_guide_first_half.yaml
+|   |   |   TASK_002_guide_second_half.yaml
+|   |   |   TASK_003_verify_guide.yaml
 |   |   |   
 |   |   \---tasks
 |   +---problems
+|   |   |   CONTEXT_01.md
+|   |   |   
 |   |   \---decisions
+|   |           DECISION_01.md
+|   |           
 |   +---researches
+|   |       RESEARCH_01.md
 |   |       RESEARCH_02.md
 |   |       
 |   +---structure
@@ -96,24 +94,30 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
+|   |   |       TASK_001_dashboard_filter_values_model_DONE.yaml
+|   |   |       TASK_002_dashboard_filter_values_repository_DONE.yaml
+|   |   |       TASK_003_aggregation_service_DONE.yaml
+|   |   |       TASK_004_wire_csv_parsing_config_DONE.yaml
+|   |   |       TASK_005_refactor_store_aggregates_DONE.yaml
+|   |   |       TASK_006_filter_values_api_endpoint_DONE.yaml
+|   |   |       TASK_007_frontend_filter_values_hook_DONE.yaml
+|   |   |       TASK_008_chart_renderer_component_DONE.yaml
+|   |   |       TASK_009_seed_test_media_dash_DONE.yaml
+|   |   |       TASK_010_verify_phase_02_DONE.yaml
+|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
-|   |   |       TASK_001_dashboard_filter_values_model.yaml
-|   |   |       TASK_002_dashboard_filter_values_repository.yaml
-|   |   |       TASK_003_aggregation_service.yaml
-|   |   |       TASK_004_wire_csv_parsing_config.yaml
-|   |   |       TASK_005_refactor_store_aggregates.yaml
-|   |   |       TASK_006_filter_values_api_endpoint.yaml
-|   |   |       TASK_007_frontend_filter_values_hook.yaml
-|   |   |       TASK_008_chart_renderer_component.yaml
-|   |   |       TASK_009_seed_test_media_dash.yaml
-|   |   |       TASK_010_verify_phase_02.yaml
+|   |   |       TASK_001_guide_first_half.yaml
+|   |   |       TASK_002_guide_second_half.yaml
+|   |   |       TASK_003_verify_guide.yaml
 |   |   |       
 |   |   \---validation
+|   |           implementation_audit_001.md
+|   |           
 |   \---templates
 |           decision.md
 |           ui-brand.md
@@ -4276,6 +4280,7 @@ C:\PY_DEV\MKOBI
 |           9653023392263037788
 |           9750208591691005672
 |           9778448368005484923
+|           9884324470963683366
 |           9891234191485983440
 |           9937099668536583205
 |           999224519614300536
@@ -18332,16 +18337,19 @@ C:\PY_DEV\MKOBI
 |   +---versions
 |   |   |   000000000000_initial_migration.py
 |   |   |   000000000001_add_missing_fk_indexes.py
+|   |   |   000000000002_add_dashboard_filter_values_table.py
 |   |   |   
 |   |   \---__pycache__
 |   |           000000000000_initial_migration.cpython-314.pyc
 |   |           000000000001_add_missing_fk_indexes.cpython-314.pyc
+|   |           000000000002_add_dashboard_filter_values_table.cpython-314.pyc
 |   |           
 |   \---__pycache__
 |           env.cpython-314.pyc
 |           
 +---data
 |   |   .gitkeep
+|   |   seed_test_media_dash.py
 |   |   
 |   +---logs
 |   |       app.json.log.1
@@ -18360,6 +18368,7 @@ C:\PY_DEV\MKOBI
 |           0352f2a7-8767-478b-b226-caf7e3b81aeb.csv
 |           050a5164-8087-45cf-865e-3c5605e57b95.csv
 |           05a29084-0e64-4d54-9ff0-a72237c1337f.csv.gz
+|           06220462-d413-4dec-9218-8c3f25f6c445.csv.gz
 |           070e6a97-ef83-4a43-8431-04598806f9d5.csv.gz
 |           080fbdc5-8736-48fc-bd73-53cce512a8d9.csv.gz
 |           0a959326-c4fb-4f46-b507-3a00cf4f29eb.csv.gz
@@ -18393,6 +18402,7 @@ C:\PY_DEV\MKOBI
 |           34704cc9-a2ae-4166-89a8-f424b391477b.csv
 |           350f91e6-c618-4dd0-8b6e-c6a1d30f0848.csv
 |           352f454e-c5d9-4208-b957-61003394aada.csv
+|           357dac51-16da-4174-82c0-ed2a751835cd.csv
 |           35f51e4e-ef8c-4e78-a8e8-7f455dbe1279.csv.gz
 |           3704b2af-4837-47bc-87b9-b9205d82ab4e.csv.gz
 |           375da9e5-e5c4-46cf-8658-a4837535bc79.csv
@@ -18414,6 +18424,7 @@ C:\PY_DEV\MKOBI
 |           48b99e63-44f9-4eb0-9db5-69a16eb963d3.csv
 |           496499bb-b3a2-4ebf-bae9-df5506c5bfc9.csv
 |           49c3e8a9-53e5-4e5d-903b-c45d5faaed1d.csv
+|           4a7b2b9c-08c3-464f-8ab7-743dae26e77d.csv.gz
 |           4a7bbc34-dfb8-4d48-bcdb-cc4225f64cf8.csv
 |           4c8f72f4-4440-4810-be9d-017bbc9411c0.csv
 |           4cbb2296-630d-4302-b46c-85785093a8fd.csv
@@ -18445,11 +18456,13 @@ C:\PY_DEV\MKOBI
 |           6c6129d8-e809-4c12-a1d6-66b10065bcf5.csv
 |           6cd5996f-cc58-4121-a99d-8c22ef303337.csv.gz
 |           6cfe1819-5b9d-4140-8c3f-9527276467f8.csv
+|           6ebe9753-8b18-4ff0-b5e2-2a804583ca89.csv
 |           6f7707e8-9829-4297-9f99-56ab80402986.csv
 |           6f944c5b-a4c1-4e6d-a20d-6a33b67b2a5d.csv
 |           718b28ae-aaf5-40d6-ab33-86741339d324.csv.gz
 |           75b89152-868f-49bb-a80c-6c77d0ae5e40.csv
 |           777aa6ad-cb7f-4016-b175-aae339e0ad48.csv
+|           77c932a8-cf0c-4472-9102-313a1e3a9a8e.csv.gz
 |           7919d019-4fbf-4cb1-9a43-fb3550ddb7fc.csv
 |           7aea842f-1838-4f44-9bf3-043b98a32974.csv
 |           7ca6ec54-bbab-4404-b2c2-4a59d6b15da4.csv
@@ -18512,6 +18525,7 @@ C:\PY_DEV\MKOBI
 |           bb0d7f49-5abe-4cd2-ad32-7d87bb460b93.csv
 |           bb3361cd-9b80-4790-8d14-3af31add72b7.csv
 |           bb6990e6-a55f-4107-8957-e20b32dfcf85.csv
+|           bd009ef6-f299-468e-9d93-3f818ad2e844.csv
 |           bd101045-5bb8-4f42-93e7-c9bb7c998786.csv
 |           bfa144a1-68e9-4580-bcd0-9f126bbcd359.csv
 |           c1a79e49-84f9-41d6-ae65-185cd88e07d1.csv
@@ -18520,6 +18534,7 @@ C:\PY_DEV\MKOBI
 |           c83c9770-4609-4ec1-991e-cd431ce4349b.csv
 |           c8a7f453-fed2-4de9-b0f6-0b542452b5dd.csv.gz
 |           c8b9487f-d522-4c65-a36d-02bc51b512a5.csv
+|           cbff79ea-834e-402d-b56e-84aa8142103a.csv
 |           cca123dd-658e-4355-a312-062040409253.csv
 |           cdad6aa7-ae45-425d-96d6-559145c5679d.csv
 |           ce6570da-b667-4053-8186-e7a6c88c0b71.csv
@@ -18541,9 +18556,11 @@ C:\PY_DEV\MKOBI
 |           de152f76-5d07-4988-a987-6227e7a3538f.csv
 |           df1a0aa0-6c74-4f2c-9b56-346eafd030fd.csv.gz
 |           e05d15f1-31ae-46fa-9bbf-38b2e9b50199.csv
+|           e4ff0673-50ac-4cce-9b36-509921c97e0f.csv
 |           e507a3f0-8e5b-41cf-b840-242554e18740.csv.gz
 |           e655f6a3-2dc8-47f0-bed5-5bf7ad36d62d.csv.gz
 |           e67b8daa-8275-4556-85a7-38d79d0180c3.csv
+|           e6ab87c1-0887-40d7-9965-d2d2554c2a0a.csv.gz
 |           e7633444-4d83-486c-acd1-078cf0bdf902.csv
 |           e7947029-5d13-45b3-a373-e7592aa418b9.csv
 |           e7e367de-5a33-43f0-823a-bc06ecfead35.csv
@@ -18561,6 +18578,7 @@ C:\PY_DEV\MKOBI
 |           f435fb3c-9442-45ab-a5e7-68552f60bb63.csv
 |           f45d80be-7fda-4cd0-8275-5af19f5cc617.csv
 |           f5513012-cdfe-4cfe-9c82-461def6ff3c6.csv
+|           f5e90588-2942-4fee-a2c0-6b53d7151623.csv
 |           f71295a7-9252-4243-8a3a-69928cb1bc6f.csv
 |           fb64278b-695d-4ec2-9246-0601234ebb91.csv
 |           fcddd3e6-e4ae-4736-9423-334233370a26.csv.gz
@@ -18719,23 +18737,23 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           AdminPanel-BdcYobbo.js
-|   |           ChangePasswordPage-rdLoleaX.js
-|   |           dashboardApi-DNEmrq1u.js
-|   |           DashboardList-EFRMWote.js
-|   |           DashboardView-DdQMiehC.js
+|   |           AdminPanel-BfL2uFeh.js
+|   |           ChangePasswordPage-DD1UKzwW.js
+|   |           dashboardApi-BbmQN08W.js
+|   |           DashboardList-CjvnQwF4.js
+|   |           DashboardView-D463q2H_.js
 |   |           enums-C2UQ_cl5.js
 |   |           formSchemas-9t2fc2Ft.js
-|   |           index-DLd4RWSN.js
-|   |           LoginForm-DqsCrvmj.js
+|   |           index-9ruWLRuD.js
+|   |           LoginForm-DR7N9Tmc.js
 |   |           mui-nuHIX8iL.js
 |   |           plotly-BNZeab9N.js
 |   |           react-BIoCyPHR.js
-|   |           RegisterForm-TZ0yWuCh.js
+|   |           RegisterForm-Cp39-cB-.js
 |   |           rolldown-runtime-S-ySWqyJ.js
 |   |           shortUuid-TYuFZJYs.js
-|   |           userApi-LtE6M2Os.js
-|   |           UserProfile-DVBnZoOt.js
+|   |           userApi-k3JlPeid.js
+|   |           UserProfile-L9EEG-v9.js
 |   |           vendor-Bx3jSdF9.js
 |   |           
 |   +---node_modules
@@ -99752,6 +99770,7 @@ C:\PY_DEV\MKOBI
 |       |   |   |   |   
 |       |   |   |   \---charts
 |       |   |   |           BarChart.tsx
+|       |   |   |           ChartRenderer.tsx
 |       |   |   |           index.ts
 |       |   |   |           LineChart.tsx
 |       |   |   |           PieChart.tsx
@@ -100996,6 +101015,7 @@ C:\PY_DEV\MKOBI
 |   |   |   |   |   dashboards_graphs.py
 |   |   |   |   |   data.py
 |   |   |   |   |   filters.py
+|   |   |   |   |   filter_values.py
 |   |   |   |   |   graphs.py
 |   |   |   |   |   layouts.py
 |   |   |   |   |   processing_configs.py
@@ -101015,6 +101035,7 @@ C:\PY_DEV\MKOBI
 |   |   |   |           dashboards_graphs.cpython-314.pyc
 |   |   |   |           data.cpython-314.pyc
 |   |   |   |           filters.cpython-314.pyc
+|   |   |   |           filter_values.cpython-314.pyc
 |   |   |   |           graphs.cpython-314.pyc
 |   |   |   |           layouts.cpython-314.pyc
 |   |   |   |           processing_configs.cpython-314.pyc
@@ -101097,6 +101118,7 @@ C:\PY_DEV\MKOBI
 |   |   |   |   |   access.py
 |   |   |   |   |   aggregated_data.py
 |   |   |   |   |   dashboard.py
+|   |   |   |   |   dashboard_filter_values.py
 |   |   |   |   |   filters.py
 |   |   |   |   |   graphs.py
 |   |   |   |   |   layout.py
@@ -101110,6 +101132,7 @@ C:\PY_DEV\MKOBI
 |   |   |   |           access.cpython-314.pyc
 |   |   |   |           aggregated_data.cpython-314.pyc
 |   |   |   |           dashboard.cpython-314.pyc
+|   |   |   |           dashboard_filter_values.cpython-314.pyc
 |   |   |   |           filters.cpython-314.pyc
 |   |   |   |           graphs.cpython-314.pyc
 |   |   |   |           layout.cpython-314.pyc
@@ -101123,6 +101146,7 @@ C:\PY_DEV\MKOBI
 |   |   |   |   |   access_repo.py
 |   |   |   |   |   aggregated_data_repo.py
 |   |   |   |   |   dashboard_filter_repo.py
+|   |   |   |   |   dashboard_filter_values_repo.py
 |   |   |   |   |   dashboard_repo.py
 |   |   |   |   |   filter_repo.py
 |   |   |   |   |   graph_repo.py
@@ -101137,6 +101161,7 @@ C:\PY_DEV\MKOBI
 |   |   |   |           access_repo.cpython-314.pyc
 |   |   |   |           aggregated_data_repo.cpython-314.pyc
 |   |   |   |           dashboard_filter_repo.cpython-314.pyc
+|   |   |   |           dashboard_filter_values_repo.cpython-314.pyc
 |   |   |   |           dashboard_repo.cpython-314.pyc
 |   |   |   |           filter_repo.cpython-314.pyc
 |   |   |   |           graph_repo.cpython-314.pyc
@@ -101198,12 +101223,14 @@ C:\PY_DEV\MKOBI
 |   |   |           __init__.cpython-314.pyc
 |   |   |           
 |   |   +---services
+|   |   |   |   aggregation_service.py
 |   |   |   |   auth_service.py
 |   |   |   |   dashboard_service.py
 |   |   |   |   data_service.py
 |   |   |   |   file_cleanup.py
 |   |   |   |   file_processing.py
 |   |   |   |   filter_service.py
+|   |   |   |   filter_values_service.py
 |   |   |   |   graph_service.py
 |   |   |   |   layout_service.py
 |   |   |   |   processing_config_service.py
@@ -101218,6 +101245,7 @@ C:\PY_DEV\MKOBI
 |   |   |           file_cleanup.cpython-314.pyc
 |   |   |           file_processing.cpython-314.pyc
 |   |   |           filter_service.cpython-314.pyc
+|   |   |           filter_values_service.cpython-314.pyc
 |   |   |           graph_service.cpython-314.pyc
 |   |   |           layout_service.cpython-314.pyc
 |   |   |           processing_config_service.cpython-314.pyc

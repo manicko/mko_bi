@@ -24,6 +24,7 @@ from mkobi.data.processing.transformations import (
 )
 from mkobi.db.models.graphs import Graph
 from mkobi.db.models.processing_logs import ProcessingLog
+from mkobi.db.models.filters import Filter, dashboard_filters
 from mkobi.db.session import get_session
 from mkobi.models.data import ProcessingConfig
 from mkobi.models.enums import ProcessingStatus
@@ -184,10 +185,35 @@ async def _process_csv_file_async(
             session=db_session,
         )
 
+        # Extract CSV parsing config from processing_config
+        csv_parse_config: dict[str, Any] = {}
+        column_types: dict[str, str] = {}
+        settings: dict[str, Any] | None = None
+
+        if processing_config_dict:
+            settings = processing_config_dict.get("settings", processing_config_dict)
+            if settings.get("separator"):
+                csv_parse_config["separator"] = settings["separator"]
+            if settings.get("encoding"):
+                csv_parse_config["encoding"] = settings["encoding"]
+            if settings.get("column_types"):
+                column_types = settings["column_types"]
+
         # Load and process CSV (run in thread since Polars is sync)
         loader = CSVLoader()
-        df = await asyncio.to_thread(loader.load_csv, file_path)
+        df = await asyncio.to_thread(
+            loader.load_csv, file_path, csv_parse_config if csv_parse_config else None
+        )
         logger.info("File loaded: %d rows, %d columns", df.shape[0], df.shape[1])
+
+        # Apply decimal separator transformation for float columns with comma decimal
+        if settings and settings.get("decimal_separator") == ",":
+            for col_name, col_type in column_types.items():
+                if col_type == "float" and col_name in df.columns:
+                    df = df.with_columns(
+                        pl.col(col_name).str.replace(",", ".").cast(pl.Float64).alias(col_name)
+                    )
+                    logger.debug("Applied decimal separator transformation to column: %s", col_name)
 
         # Apply processing config if provided
         if processing_config_dict:
@@ -299,106 +325,127 @@ async def _store_aggregates(
     """
     from mkobi.data.storage.manager import StorageManager
     from mkobi.models.enums import UploadMode
+    from mkobi.models.graph import GraphRead
+    from mkobi.models.filters import FilterRead
+    from mkobi.services.aggregation_service import AggregationService
+    from mkobi.db.repositories.dashboard_filter_values_repo import DashboardFilterValuesRepository
+
+    # Helper to convert ORM Graph to GraphRead
+    def _to_graph_read(g: Graph) -> GraphRead:
+        return GraphRead(
+            id=g.id,
+            name=g.name,
+            type=g.type,
+            dashboard_id=g.dashboard_id,
+            config=g.config or {},
+            dimensions=g.dimensions or [],
+            metrics=g.metrics or [],
+            created_at=g.created_at,
+        )
+
+    # Helper to convert ORM Filter to FilterRead
+    def _to_filter_read(f: Filter) -> FilterRead:
+        return FilterRead(
+            id=f.id,
+            name=f.name,
+            type=f.type,
+            config=f.config or {},
+            created_at=f.created_at,
+        )
 
     if db_session is not None:
-        # Test mode - use provided session with explicit transaction
-        async with db_session.begin():
-            result = await db_session.execute(
-                select(Graph).where(Graph.dashboard_id == dashboard_id)
+        # Test mode - use provided session without creating nested transaction
+        # Caller manages the transaction
+        result = await db_session.execute(
+            select(Graph).where(Graph.dashboard_id == dashboard_id)
+        )
+        graph_reads = [_to_graph_read(g) for g in result.scalars().all()]
+
+        if not graph_reads:
+            logger.warning("No graphs found for dashboard: %s", dashboard_id)
+            return
+
+        # Query dashboard filters via join table
+        result = await db_session.execute(
+            select(Filter).join(dashboard_filters).where(
+                dashboard_filters.c.dashboard_id == dashboard_id
             )
-            graphs = result.scalars().all()
+        )
+        filter_reads = [_to_filter_read(f) for f in result.scalars().all()]
 
-            if not graphs:
-                logger.warning("No graphs found for dashboard: %s", dashboard_id)
-                return
+        # Use AggregationService for per-chart GROUP BY aggregation
+        agg_service = AggregationService()
+        records = await agg_service.aggregate_for_dashboard(df, graph_reads, filter_reads)
 
-            rows = df.to_dicts()
+        # Convert records to StorageManager format
+        aggregates = [
+            {"graph_id": r["graph_id"], "dims": r["dims"], "metrics": r["metrics"]}
+            for r in records
+        ]
 
-            aggregates = []
-            for row in rows:
-                for graph in graphs:
-                    # Validate graph.dimensions is non-empty and contains valid column names
-                    valid_dimensions = [
-                        dim for dim in graph.dimensions if dim in df.columns
-                    ] if graph.dimensions else []
-                    if not valid_dimensions:
-                        raise ValueError(
-                            f"Graph {graph.id} has no valid dimensions configured. "
-                            f"Dimensions: {graph.dimensions or 'empty'}. "
-                            f"Available DataFrame columns: {list(df.columns)}. "
-                            "Please set dimensions in the graph configuration."
-                        )
-                    dims = {
-                        k: v for k, v in row.items() if k in valid_dimensions
-                    }
-                    metrics = {k: v for k, v in row.items() if k not in dims}
+        manager = StorageManager(db_session)
+        clear_old = (mode == UploadMode.OVERWRITE)
+        processed = await manager.save_aggregates(
+            dashboard_id=dashboard_id,
+            aggregates=aggregates,
+            clear_old=clear_old,
+        )
 
-                    aggregates.append(
-                        {
-                            "graph_id": str(graph.id),
-                            "dims": dims,
-                            "metrics": metrics,
-                        }
+        logger.info(
+            "Aggregates stored: dashboard_id=%s, records=%d, mode=%s, processed=%d",
+            dashboard_id,
+            len(records),
+            mode,
+            processed,
+        )
+
+        # Extract and save filter values
+        filter_names = [f.name for f in filter_reads]
+        if filter_names:
+            filter_values = await agg_service.extract_filter_values(records, filter_names)
+            filter_values_repo = DashboardFilterValuesRepository()
+            for fname, fvalues in filter_values.items():
+                if fvalues:
+                    await filter_values_repo.save_filter_values(
+                        dashboard_id, fname, fvalues, db_session
                     )
-
-            manager = StorageManager(db_session)
-            clear_old = (mode == UploadMode.OVERWRITE)
-            processed = await manager.save_aggregates(
-                dashboard_id=dashboard_id,
-                aggregates=aggregates,
-                clear_old=clear_old,
-            )
-
-            logger.info(
-                "Aggregates stored: dashboard_id=%s, rows=%d, mode=%s, processed=%d",
-                dashboard_id,
-                len(rows),
-                mode,
-                processed,
-            )
+                    logger.info(
+                        "Filter values saved: dashboard_id=%s, filter_name=%s, count=%d",
+                        dashboard_id,
+                        fname,
+                        len(fvalues),
+                    )
     else:
         # Production mode - create new session
         async with get_session() as session:
-            # Use session.begin() for explicit transaction control
-            # This ensures atomicity: either all aggregates are saved or none
             async with session.begin():
+                # Query graphs for the dashboard
                 result = await session.execute(
                     select(Graph).where(Graph.dashboard_id == dashboard_id)
                 )
-                graphs = result.scalars().all()
+                graph_reads = [_to_graph_read(g) for g in result.scalars().all()]
 
-                if not graphs:
+                if not graph_reads:
                     logger.warning("No graphs found for dashboard: %s", dashboard_id)
                     return
 
-                rows = df.to_dicts()
+                # Query dashboard filters via join table
+                result = await session.execute(
+                    select(Filter).join(dashboard_filters).where(
+                        dashboard_filters.c.dashboard_id == dashboard_id
+                    )
+                )
+                filter_reads = [_to_filter_read(f) for f in result.scalars().all()]
 
-                aggregates = []
-                for row in rows:
-                    for graph in graphs:
-                        # Validate graph.dimensions is non-empty and contains valid column names
-                        valid_dimensions = [
-                            dim for dim in graph.dimensions if dim in df.columns
-                        ] if graph.dimensions else []
-                        if not valid_dimensions:
-                            raise ValueError(
-                                f"Graph {graph.id} has no valid dimensions configured. "
-                                f"Dimensions: {graph.dimensions or 'empty'}. "
-                                f"Available DataFrame columns: {list(df.columns)}. "
-                                "Please set dimensions in the graph configuration."
-                            )
-                        dims = {
-                            k: v for k, v in row.items() if k in valid_dimensions
-                        }
-                        metrics = {k: v for k, v in row.items() if k not in dims}
+                # Use AggregationService for per-chart GROUP BY aggregation
+                agg_service = AggregationService()
+                records = await agg_service.aggregate_for_dashboard(df, graph_reads, filter_reads)
 
-                        aggregates.append(
-                            {
-                                "graph_id": str(graph.id),
-                                "dims": dims,
-                                "metrics": metrics,
-                            }
-                        )
+                # Convert records to StorageManager format
+                aggregates = [
+                    {"graph_id": r["graph_id"], "dims": r["dims"], "metrics": r["metrics"]}
+                    for r in records
+                ]
 
                 manager = StorageManager(session)
                 clear_old = (mode == UploadMode.OVERWRITE)
@@ -409,12 +456,29 @@ async def _store_aggregates(
                 )
 
                 logger.info(
-                    "Aggregates stored: dashboard_id=%s, rows=%d, mode=%s, processed=%d",
+                    "Aggregates stored: dashboard_id=%s, records=%d, mode=%s, processed=%d",
                     dashboard_id,
-                    len(rows),
+                    len(records),
                     mode,
                     processed,
                 )
+
+                # Extract and save filter values
+                filter_names = [f.name for f in filter_reads]
+                if filter_names:
+                    filter_values = await agg_service.extract_filter_values(records, filter_names)
+                    filter_values_repo = DashboardFilterValuesRepository()
+                    for fname, fvalues in filter_values.items():
+                        if fvalues:
+                            await filter_values_repo.save_filter_values(
+                                dashboard_id, fname, fvalues, session
+                            )
+                            logger.info(
+                                "Filter values saved: dashboard_id=%s, filter_name=%s, count=%d",
+                                dashboard_id,
+                                fname,
+                                len(fvalues),
+                            )
 
 
 async def process_csv_background(

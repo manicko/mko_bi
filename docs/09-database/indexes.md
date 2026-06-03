@@ -142,6 +142,8 @@ The following indexes are also defined in the schema but are not part of the 7 c
 | `idx_dashboard_filters_dashboard_filter`  | `dashboard_filters`  | B-tree    | `dashboard_id`, `filter_id` | Optimize join table lookups |
 | `idx_processing_logs_dashboard_id`        | `processing_logs`    | B-tree    | `dashboard_id`         | Filter logs by dashboard         |
 | `uq_aggregated_data_dashboard_graph_dims` | `aggregated_data`    | `UNIQUE`  | `dashboard_id`, `graph_id`, `dims::text` | UPSERT conflict detection |
+| `uq_dashboard_filter_values`              | `dashboard_filter_values` | `UNIQUE` | `dashboard_id`, `filter_name`, `filter_value` | Idempotent filter value writes |
+| `idx_dashboard_filter_values_lookup`      | `dashboard_filter_values` | B-tree | `dashboard_id`, `filter_name` | Fast lookup of filter values by dashboard + name |
 
 ---
 

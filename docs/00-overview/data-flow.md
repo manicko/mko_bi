@@ -50,10 +50,11 @@ User (Browser)
                       ▼
 ┌─────────────────────────────────────────────────────────┐
 │  4. AGGREGATE                                           │
-│  ├─ GroupBy operations                                  │
+│  ├─ Per-chart GROUP BY (graph.dims + filter.dims)       │
 │  ├─ YoY (Year-over-Year) calculations                   │
 │  ├─ Share/ratio computations                            │
 │  ├─ Custom metric aggregation                           │
+│  ├─ Filter values extracted from aggregated data        │
 │  └─ Full recalculation (all aggregates rebuilt)         │
 └─────────────────────┬───────────────────────────────────┘
                       │
@@ -61,6 +62,7 @@ User (Browser)
 ┌─────────────────────────────────────────────────────────┐
 │  5. SAVE TO POSTGRESQL                                  │
 │  ├─ Write to aggregated_data table (JSONB dims+metrics) │
+│  ├─ Write to dashboard_filter_values table (filter UI)  │
 │  ├─ JSONB keys normalized (sorted) for UPSERT           │
 │  └─ Temp file deleted                                   │
 └─────────────────────┬───────────────────────────────────┘
@@ -87,10 +89,11 @@ User (Browser)
 ## Upload Details
 
 * **Formats**: `.csv`, `.csv.gz`
-* **Encoding**: UTF-8
+* **Encoding**: UTF-8 (or as specified in `processing_config.settings.encoding`)
 * **Lifecycle**: File is uploaded → processed → deleted
 * **History**: Not stored (only aggregated results persist)
 * **Mode**: `overwrite` (replaces all data) or `append` (adds to existing)
+* **CSV parsing**: Separator, encoding, column types, and decimal separator are read from the dashboard's `processing_config` and applied during the parse phase
 
 ## Processing Details
 
@@ -107,12 +110,27 @@ User (Browser)
 * **Processing config wiring**: The dashboard's `processing_config` (from `processing_configs` table) is automatically fetched and passed through the upload pipeline to the background worker, ensuring transformations use the correct loader settings and custom metrics.
 * **Transaction safety**: File move to final path occurs **after** DB commit to prevent orphan files. On commit failure, the file remains at the temp path for cleanup.
 
+## Aggregation Architecture
+
+The aggregation step uses `AggregationService` which performs **per-chart GROUP BY** with Polars. For each graph, the GROUP BY columns include both the graph's dimensions and the dashboard's filter dimensions. This produces one row per unique combination of dimension values with aggregated metric values (sum by default).
+
+After aggregation, distinct filter values are extracted from the aggregated records and persisted to the `dashboard_filter_values` table. These values are used to dynamically populate filter UI controls (checkboxes, dropdowns) when the filter's `config.source` is set to `"data"`.
+
+```
+CSV data → AggregationService.aggregate_for_dashboard()
+         ├─ For each graph: GROUP BY (graph.dims + filter.dims)
+         ├─ Produce aggregated records (dims + metrics)
+         ├─ StorageManager.save_aggregates() → aggregated_data table
+         └─ extract_filter_values() → dashboard_filter_values table
+```
+
 ## Storage Details
 
 * **Only aggregated data is stored** (raw files are not persisted)
 * **Structure**: Single `aggregated_data` table using JSONB for all dashboards
   * `dims` — dimension values (key-value for filters and axes)
   * `metrics` — metric values (key-value for display)
+* **Filter value cache**: `dashboard_filter_values` stores distinct values per (dashboard, filter_name). Automatically rebuilt on each upload. See [Processing Schema](../09-database/schema-processing.md) for the table definition.
 * **Data is shared** (not user-dependent; access controlled via `dashboard_access` table). See [Access Control](../08-security/access-control.md) for the permission model.
 * **JSONB normalization**: `dims` keys are sorted recursively before writes to ensure deterministic UPSERT conflict detection
 

@@ -1,6 +1,7 @@
 from mkobi.db.models.access import DashboardAccess
 from mkobi.db.models.aggregated_data import AggregatedData
 from mkobi.db.models.dashboard import Dashboard
+from mkobi.db.models.dashboard_filter_values import DashboardFilterValue
 from mkobi.db.models.filters import Filter
 from mkobi.db.models.graphs import Graph
 from mkobi.db.models.layout import Layout
@@ -13,6 +14,7 @@ __all__ = [
     "DashboardAccess",
     "AggregatedData",
     "Dashboard",
+    "DashboardFilterValue",
     "Filter",
     "Graph",
     "Layout",

@@ -25,6 +25,7 @@ if TYPE_CHECKING:
     from mkobi.services.auth_service import AuthService
     from mkobi.services.data_service import DataService
     from mkobi.services.filter_service import FilterService
+    from mkobi.services.filter_values_service import FilterValuesService
     from mkobi.services.graph_service import GraphService
     from mkobi.services.layout_service import LayoutService
     from mkobi.services.processing_config_service import ProcessingConfigService
@@ -38,11 +39,10 @@ from mkobi.core.permissions import (
 )
 from mkobi.core.redis_client import get_async_redis_client
 from mkobi.core.security import decode_token, is_token_revoked, is_user_tokens_revoked
+from mkobi.interfaces.repository_interfaces import IDashboardFilterValuesRepository
 from mkobi.core.temp_password_store import TempPasswordStore
-from mkobi.db.repositories.user_repo import UserRepository
-# DEPRECATED: get_session is kept for backwards compatibility only.
-# External code may import it from here. Remove in v2.0.
 from mkobi.db.session import get_db, get_session  # noqa: F401
+from mkobi.db.repositories.user_repo import UserRepository
 from mkobi.models.enums import UserRole
 from mkobi.models.user import UserRead
 from mkobi.services.auth_service import AuthService
@@ -71,6 +71,7 @@ __all__ = [
     "get_layout_repository",
     "get_filter_repository",
     "get_dashboard_filter_repository",
+    "get_dashboard_filter_values_repository",
     "get_processing_config_repository",
     "get_processing_log_repository",
     "get_graph_repository",
@@ -79,6 +80,7 @@ __all__ = [
     "get_user_service",
     "get_dashboard_service",
     "get_filter_service",
+    "get_filter_values_service",
     "get_layout_service",
     "get_data_service",
     "get_processing_config_service",
@@ -259,6 +261,18 @@ def get_graph_repository() -> Any:
     return GraphRepository()
 
 
+def get_dashboard_filter_values_repository() -> IDashboardFilterValuesRepository:
+    """DI factory for dashboard filter values repository.
+
+    Returns:
+        DashboardFilterValuesRepository: Dashboard filter values repository implementation.
+    """
+    from mkobi.db.repositories.dashboard_filter_values_repo import (
+        DashboardFilterValuesRepository,
+    )
+    return DashboardFilterValuesRepository()
+
+
 # --- Dependency Injection for services ---
 
 
@@ -357,6 +371,21 @@ def get_graph_service(
     """
     from mkobi.services.graph_service import GraphService
     return GraphService(graph_repo)
+
+
+def get_filter_values_service(
+    filter_values_repo: IDashboardFilterValuesRepository = Depends(get_dashboard_filter_values_repository),
+) -> FilterValuesService:
+    """DI factory for filter values service.
+
+    Args:
+        filter_values_repo: Injected dashboard filter values repository.
+
+    Returns:
+        FilterValuesService: Filter values service implementation.
+    """
+    from mkobi.services.filter_values_service import FilterValuesService
+    return FilterValuesService(repo=filter_values_repo)
 
 
 def get_processing_config_service(

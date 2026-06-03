@@ -20,6 +20,7 @@ from mkobi.db.base import Base
 if TYPE_CHECKING:
     from mkobi.db.models.access import DashboardAccess
     from mkobi.db.models.aggregated_data import AggregatedData
+    from mkobi.db.models.dashboard_filter_values import DashboardFilterValue
     from mkobi.db.models.filters import Filter
     from mkobi.db.models.graph import Graph
     from mkobi.db.models.layout import Layout
@@ -142,6 +143,14 @@ class Dashboard(Base):
     # Relationship with processing logs
     processing_logs: Mapped[list[ProcessingLog]] = relationship(
         "ProcessingLog",
+        back_populates="dashboard",
+        cascade="all, delete-orphan",
+        lazy="selectin",
+    )
+
+    # Relationship with filter values
+    filter_values: Mapped[list[DashboardFilterValue]] = relationship(
+        "DashboardFilterValue",
         back_populates="dashboard",
         cascade="all, delete-orphan",
         lazy="selectin",

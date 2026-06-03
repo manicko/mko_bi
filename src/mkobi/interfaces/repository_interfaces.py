@@ -294,6 +294,31 @@ class IGraphRepository(IRepository):
         pass
 
 
+class IDashboardFilterValuesRepository(abc.ABC):
+    """Dashboard filter values repository interface."""
+
+    @abc.abstractmethod
+    async def get_filter_values(
+        self, dashboard_id: UUID, filter_name: str, db: AsyncSession
+    ) -> list[str]:
+        """Get filter values by dashboard ID and filter name."""
+        pass
+
+    @abc.abstractmethod
+    async def save_filter_values(
+        self, dashboard_id: UUID, filter_name: str, values: list[str], db: AsyncSession
+    ) -> int:
+        """Save filter values (clear-then-insert for idempotency)."""
+        pass
+
+    @abc.abstractmethod
+    async def clear_dashboard_values(
+        self, dashboard_id: UUID, db: AsyncSession
+    ) -> int:
+        """Clear all filter values for a dashboard."""
+        pass
+
+
 class IProcessingConfigRepository(IRepository):
     """Processing config repository interface."""
 

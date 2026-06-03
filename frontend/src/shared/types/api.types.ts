@@ -113,6 +113,11 @@ export interface FilterConfig {
   options?: Array<{ label: string; value: string }>
 }
 
+export interface FilterValuesResponse {
+  filter_name: string
+  values: string[]
+}
+
 export interface RegistrationRequest {
   email: string
 }

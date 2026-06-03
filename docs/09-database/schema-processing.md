@@ -94,6 +94,36 @@ CREATE TABLE aggregated_data (
 
 ---
 
+### `dashboard_filter_values` — Filter Value Cache
+
+Stores distinct filter values extracted from aggregated data during CSV processing. Used to populate filter UI checkboxes when a filter's `config.source` is set to `"data"`.
+
+```sql
+CREATE TABLE dashboard_filter_values (
+    id              BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    dashboard_id    UUID NOT NULL REFERENCES dashboards(id) ON DELETE CASCADE,
+    filter_name     VARCHAR(255) NOT NULL,
+    filter_value    VARCHAR(1024) NOT NULL
+);
+```
+
+| Column        | Type         | Constraints                              | Description                    |
+| ------------- | ------------ | ---------------------------------------- | ------------------------------ |
+| `id`          | `BIGINT`     | `PRIMARY KEY`, `GENERATED ALWAYS AS IDENTITY` | Auto-incrementing identifier |
+| `dashboard_id`| `UUID`       | `NOT NULL`, `REFERENCES dashboards(id) ON DELETE CASCADE` | Parent dashboard               |
+| `filter_name` | `VARCHAR(255)` | `NOT NULL`                             | Filter/dimension name          |
+| `filter_value`| `VARCHAR(1024)` | `NOT NULL`                             | Distinct value for the filter  |
+
+**Lifecycle:** Values are extracted from aggregated data after each CSV upload and cleared/re-populated on subsequent uploads (idempotent overwrite). This table acts as a cache — it contains no data that cannot be regenerated from `aggregated_data`.
+
+**Indexes:**
+- `uq_dashboard_filter_values` — `UNIQUE` index on `(dashboard_id, filter_name, filter_value)` for idempotent writes
+- `idx_dashboard_filter_values_lookup` — B-tree index on `(dashboard_id, filter_name)` for fast lookup by dashboard + filter name
+
+See [Filter Value Source](../02-dashboards/dashboards-api.md#filter-value-source) for details on how filters use this table vs. static options.
+
+---
+
 ### `processing_logs` — Processing History
 
 Tracks the status of data processing tasks from start to completion or failure.

@@ -22,6 +22,7 @@ from mkobi.db.models import (  # noqa: F401, E402
     AggregatedData,
     Dashboard,
     DashboardAccess,
+    DashboardFilterValue,
     Filter,
     Graph,
     Layout,

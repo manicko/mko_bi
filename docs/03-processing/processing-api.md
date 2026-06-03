@@ -84,21 +84,31 @@ The upload endpoint returns a structured `UploadResponse` model (not an ad-hoc d
 The data processing pipeline is triggered automatically after file upload or manually via the process endpoint.
 
 ```
-Upload → Parse (Polars) → Transform (LoaderConfig) → Aggregate → Save to PostgreSQL
+Upload → Parse (Polars) → Transform (processing_config) → Aggregate → Save to PostgreSQL
 ```
 
 ### Stage Details
 
 | Stage | Description |
 | ----- | ----------- |
-| **1. Upload** | File saved to temporary directory via `platformdirs` |
-| **2. Parse** | File read using Polars; encoding validated as UTF-8 |
-| **3. Transform** | Data transformed according to the dashboard's `processing_configs` settings |
-| **4. Aggregate** | GroupBy, YoY, share calculations, and custom metrics computed |
-| **5. Save** | Results written to `aggregated_data` table (JSONB `dims` + `metrics`) |
-| **6. Cleanup** | Temporary file deleted |
+| **1. Upload** | File saved to temporary directory via `platformdirs`; MIME type and size validated |
+| **2. Parse** | File read using Polars; CSV parsing config (separator, encoding, column_types) applied from `processing_config` |
+| **3. Transform** | Post-read transformations applied (e.g., decimal separator normalization for float columns) |
+| **4. Aggregate** | Per-chart GROUP BY via `AggregationService`: for each graph, GROUP BY columns = graph.dimensions + dashboard.filter.dimensions; metric values summed |
+| **5. Filter Value Extraction** | Distinct values for each dashboard filter dimension extracted from aggregated records |
+| **6. Save** | Aggregated records written to `aggregated_data` table; filter values written to `dashboard_filter_values` table (idempotent overwrite) |
+| **7. Cleanup** | Temporary file deleted |
 
-**Important:** Each upload triggers a **full recalculation** of aggregates for the dashboard. There is no incremental aggregation.
+**Important:** Each upload triggers a **full recalculation** — both `aggregated_data` and `dashboard_filter_values` are rebuilt from scratch. There is no incremental aggregation.
+
+### Aggregation Architecture
+
+The `AggregationService` (`src/mkobi/services/aggregation_service.py`) performs per-chart Polars GROUP BY aggregation. Key characteristics:
+
+- GROUP BY columns for each graph = `graph.dimensions` + `dashboard.filters.dimensions`
+- All dimension values stored as strings (`str()` conversion) for consistent JSON serialization
+- Metric aggregation default: `sum` (configurable via `metric_agg` parameter)
+- Filter values are extracted after aggregation via `extract_filter_values()` which scans all aggregated records for distinct values per filter name
 
 ### Processing Configuration Wiring
 

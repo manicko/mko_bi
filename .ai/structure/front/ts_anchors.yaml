@@ -194,6 +194,13 @@
   type: hook
   value: useInvalidateDashboard
   stable_hash: c17c0660
+- id: 6c0e4ed9
+  file: C:/py_dev/mkobi/frontend/src/features/dashboards/api/dashboardApi.ts
+  symbol_path:
+    - useFilterValues
+  type: hook
+  value: useFilterValues
+  stable_hash: 6c0e4ed9
 - id: dbc96dec
   file: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/DashboardFilters.tsx
   symbol_path:
@@ -285,6 +292,13 @@
   type: component
   value: BarChart
   stable_hash: f2935dc8
+- id: e88d88d5
+  file: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/ChartRenderer.tsx
+  symbol_path:
+    - ChartRenderer
+  type: component
+  value: ChartRenderer
+  stable_hash: e88d88d5
 - id: 54ea06b6
   file: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/LineChart.tsx
   symbol_path:

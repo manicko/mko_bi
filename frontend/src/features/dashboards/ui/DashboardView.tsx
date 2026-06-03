@@ -12,7 +12,7 @@ import {
 import { useDashboard, useAggregatedData, useInvalidateDashboard } from '../api/dashboardApi'
 import { UploadModal } from '../../upload/ui/UploadModal'
 import { DashboardFilters } from './DashboardFilters'
-import { PlotlyChart } from './charts'
+import { ChartRenderer } from './charts/ChartRenderer'
 import type { GraphDataWithConfig, FilterDetail } from '../../../shared/types/api.types'
 import type { FilterType } from '../../../shared/types/enums'
 
@@ -113,6 +113,7 @@ export function DashboardView() {
               filters={filterDetails}
               values={filters}
               onChange={handleFilterChange}
+              dashboardId={id || ''}
             />
           </Grid>
         )}
@@ -143,7 +144,7 @@ export function DashboardView() {
                     {graph.name}
                   </Typography>
                   <Stack sx={{ height: 400 }}>
-                    <PlotlyChart data={graph.data} layout={graph.layout} />
+                    <ChartRenderer graph={graph} />
                   </Stack>
                 </Paper>
               ))}

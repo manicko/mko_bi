@@ -1,11 +1,12 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import axiosInstance from '../../../shared/api/axiosInstance'
-import { useAuthToken } from '../../../features/auth/model/authToken'
+import { useAuthToken, getToken } from '../../../features/auth/model/authToken'
 import type {
   DashboardSummary,
   DashboardDetail,
   AggregatedDataRequest,
   AggregatedDataResponse,
+  FilterValuesResponse,
 } from '../../../shared/types/api.types'
 
 export const dashboardApi = {
@@ -25,6 +26,17 @@ export const dashboardApi = {
     const response = await axiosInstance.get<AggregatedDataResponse>('/data/aggregated', {
       params,
     })
+    return response.data
+  },
+
+  getFilterValues: async (
+    dashboardId: string,
+    filterName: string
+  ): Promise<FilterValuesResponse> => {
+    const response = await axiosInstance.get<FilterValuesResponse>(
+      `/dashboards/${dashboardId}/filter-values`,
+      { params: { filter_name: filterName } }
+    )
     return response.data
   },
 }
@@ -69,4 +81,13 @@ export function useInvalidateDashboard() {
     invalidateAggregatedData: (dashboardId: string) =>
       queryClient.invalidateQueries({ queryKey: ['aggregatedData', dashboardId] }),
   }
+}
+
+export function useFilterValues(dashboardId: string, filterName: string) {
+  const accessToken = getToken()
+  return useQuery({
+    queryKey: ['filterValues', dashboardId, filterName],
+    queryFn: () => dashboardApi.getFilterValues(dashboardId, filterName),
+    enabled: !!dashboardId && !!filterName && !!accessToken,
+  })
 }

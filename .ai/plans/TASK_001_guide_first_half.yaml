@@ -1,0 +1,47 @@
+id: task_001
+
+title: Write first half of Dashboard Creation Guide (sections 1-7)
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+files:
+  - path: docs/11-guides/create-dashboard.md
+    targets:
+      - type: file
+        name: create-dashboard.md
+    changes:
+      - action: create_file
+        description: >
+          Create docs/11-guides/create-dashboard.md and write the first half of content:
+          YAML frontmatter, Purpose, Prerequisites, Pre-Creation Planning, Create Dashboard,
+          Configure Layout, Add Graphs sections.
+      - action: add_content
+        description: Write frontmatter with id=create-dashboard, domain=guides, tags, related
+      - action: add_content
+        description: Write Purpose section
+      - action: add_content
+        description: Write Prerequisites one-liner ("You must have the Admin role to create dashboards.")
+      - action: add_content
+        description: Write Pre-Creation Planning section — brief planning checklist (data, columns, charts, processing config)
+      - action: add_content
+        description: Write Create the Dashboard section — POST /dashboards, name/description/layout form, textual UI description
+      - action: add_content
+        description: Write Configure the Layout section — brief conceptual overview (rows/columns/graph slots). Do NOT document layouts.definition JSONB. Cross-link to dashboards-api.md
+      - action: add_content
+        description: Write Add Graphs section — types (bar/line/pie/table), dimensions, metrics, config. Cross-link to dashboards-api.md
+
+acceptance_criteria:
+  - docs/11-guides/create-dashboard.md created
+  - Valid YAML frontmatter present
+  - Purpose section at top
+  - All first-half sections written with cross-links
+  - No screenshots — textual UI descriptions only
+  - All content in English
+
+risk: low
+
+type: implementation

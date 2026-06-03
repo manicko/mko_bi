@@ -1,0 +1,57 @@
+id: task_002
+
+title: Write second half of Dashboard Creation Guide (sections 8-15)
+
+status: pending
+
+priority: high
+
+depends_on:
+  - task_001
+
+files:
+  - path: docs/11-guides/create-dashboard.md
+    targets:
+      - type: file
+        name: create-dashboard.md
+    changes:
+      - action: append_content
+        description: >
+          Append the second half of content to the existing guide:
+          Add/Bind Filters, Set Up Processing Config, Upload Data, Verify Results,
+          Grant Dashboard Access, Ongoing Operations, Troubleshooting,
+          Appendix (3 JSON examples), Cross-Links section.
+      - action: add_content
+        description: Write Add/Bind Filters section — filter types, binding to dashboard, cross-link to dashboards-api.md
+      - action: add_content
+        description: Write Set Up Processing Config section — CSV parsing settings overview, cross-link to processing-api.md, reference appendix for examples
+      - action: add_content
+        description: Write Upload Data section — POST /upload/{dashboard_id}, file constraints, mode, task queue, cross-link to processing-api.md
+      - action: add_content
+        description: Write Verify Results section — check processing status, view data, apply filters, cross-link to data-flow.md
+      - action: add_content
+        description: Write Grant Dashboard Access section — POST/GET/DELETE /dashboards/{id}/access, permission levels, cross-link to dashboards-api.md and schema-access.md
+      - action: add_content
+        description: Write Ongoing Operations section — re-uploading, modifying config, managing filters, re-granting access
+      - action: add_content
+        description: Write Troubleshooting section — common issues (upload rejected, processing stuck, no data, filter not working, access grant not working)
+      - action: add_content
+        description: Write Appendix with 3 annotated JSON processing config examples (simple → medium → complex)
+      - action: add_content
+        description: Write DB/API Reference section — compact summary table of relevant tables
+      - action: add_content
+        description: Write Cross-Links section — list all referenced docs with relative paths
+
+acceptance_criteria:
+  - All second-half sections appended to create-dashboard.md
+  - Appendix has 3 annotated JSON examples (simple, medium, complex)
+  - DB/API reference section with summary table
+  - Cross-Links section at end
+  - All cross-links use ../ relative paths
+  - No screenshots — textual UI descriptions only
+  - All content in English
+  - No deferred topics covered (no auto-wiring depth, no layout JSON schema)
+
+risk: low
+
+type: implementation

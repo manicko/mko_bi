@@ -771,6 +771,7 @@
     - useDashboard
     - useAggregatedData
     - useInvalidateDashboard
+    - useFilterValues
   jsx_tags: []
 - path: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/DashboardFilters.tsx
   module: C:.py_dev.mkobi.frontend.src.features.dashboards.ui.DashboardFilters
@@ -778,6 +779,7 @@
   imports:
     - react
     - '@mui/material'
+    - ../api/dashboardApi
     - ../../../shared/types/api.types
   components:
     - DashboardFilters
@@ -834,7 +836,7 @@
     - ../api/dashboardApi
     - ../../upload/ui/UploadModal
     - ./DashboardFilters
-    - ./charts
+    - ./charts/ChartRenderer
     - ../../../shared/types/api.types
     - ../../../shared/types/enums
   components:
@@ -1223,6 +1225,16 @@
     - ../../../../shared/types/api.types
   components:
     - BarChart
+  hooks: []
+  jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/ChartRenderer.tsx
+  module: C:.py_dev.mkobi.frontend.src.features.dashboards.ui.charts.ChartRenderer
+  layer: unknown
+  imports:
+    - ./PlotlyChart
+    - ../../../../shared/types/api.types
+  components:
+    - ChartRenderer
   hooks: []
   jsx_tags: []
 - path: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/index.ts

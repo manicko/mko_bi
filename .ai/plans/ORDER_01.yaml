@@ -1,0 +1,11 @@
+tasks:
+  - id: task_001
+    depends_on: []
+
+  - id: task_002
+    depends_on:
+      - task_001
+
+  - id: task_003
+    depends_on:
+      - task_002

@@ -600,6 +600,17 @@ Filters support the following types, defined by the `FilterType` StrEnum:
 | `range`       | Numeric range (min/max)                          | Range slider        |
 | `date`        | Date or date range selection                     | Date picker         |
 
+### Filter Value Source
+
+Filters can receive their option values from two different sources, controlled by the `config.source` field:
+
+| Source       | Description |
+| ------------ | ----------- |
+| `dims` (default) | Static options defined in `config.options` |
+| `data`       | Dynamic values extracted from aggregated data and stored in `dashboard_filter_values` table |
+
+When `source === "data"`, the frontend fetches values from `GET /api/v1/dashboards/{dashboard_id}/filter-values?filter_name={name}` instead of using static options. Values are automatically extracted and persisted to the `dashboard_filter_values` table during each CSV upload processing run. See [Processing Schema](../09-database/schema-processing.md) for the table definition.
+
 ### Backend Implementation
 
 Filters are applied on the backend through parameterized SQL queries against the `aggregated_data` table. The `dims` JSONB column is filtered using PostgreSQL JSONB operators. Filter values are never interpolated into SQL strings — all queries use SQLAlchemy parameterized queries.
@@ -609,6 +620,37 @@ Example filter application flow:
 1. Frontend sends selected filter values as query parameters
 2. Backend constructs a query filtering `aggregated_data.dims` using JSONB containment operators (`@>`)
 3. Filtered results are returned as graph data
+
+---
+
+## Filter Values Endpoint
+
+### 32. Get Filter Values
+
+Returns distinct values for a specific filter/dimension of a dashboard. Values are extracted from aggregated data and cached in the `dashboard_filter_values` table. Used to dynamically populate filter UI controls when `config.source === "data"`.
+
+| Attribute      | Value                                              |
+| -------------- | -------------------------------------------------- |
+| **Method**     | `GET`                                              |
+| **Path**       | `/api/v1/dashboards/{dashboard_id}/filter-values`  |
+| **Auth level** | Any authenticated user (with dashboard access)     |
+| **Query param**| `filter_name` — Name of the filter/dimension       |
+
+**Response** (`200 OK`):
+
+```json
+{
+  "filter_name": "category",
+  "values": ["Electronics", "Food", "Services"]
+}
+```
+
+**Error responses:**
+
+| Status | Condition                    | Detail                       |
+| ------ | ---------------------------- | ---------------------------- |
+| `403`  | User lacks dashboard access  | `Access denied`              |
+| `500`  | Database error               | `Error getting filter values` |
 
 ---
 

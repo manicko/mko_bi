@@ -115,6 +115,17 @@ A web application for:
 | reviewed_by     | UUID   | Admin who reviewed              |
 | reviewed_at     | TIMESTAMPTZ | Review timestamp           |
 
+### Dashboard Filter Value
+
+| Field        | Type   | Description                                   |
+| ------------ | ------ | --------------------------------------------- |
+| id           | BIGINT | Auto-incrementing primary key                 |
+| dashboard_id | UUID   | References dashboards.id (CASCADE on delete)  |
+| filter_name  | TEXT   | Filter/dimension name (e.g., "category")      |
+| filter_value | TEXT   | Distinct value for the filter (e.g., "Food")  |
+
+> The `dashboard_filter_values` table caches distinct filter values extracted during CSV processing. It supports dynamic filter UI population when a filter's `config.source` is set to `"data"`. Values are rebuilt on each upload. See [Processing Schema](../09-database/schema-processing.md) for the full table definition.
+
 ### Dashboard-Filter Binding
 
 | Field        | Type   | Description                     |

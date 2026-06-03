@@ -118,6 +118,7 @@
   - mkobi.services.auth_service
   - mkobi.services.data_service
   - mkobi.services.filter_service
+  - mkobi.services.filter_values_service
   - mkobi.services.graph_service
   - mkobi.services.layout_service
   - mkobi.services.processing_config_service
@@ -126,9 +127,10 @@
   - mkobi.core.permissions
   - mkobi.core.redis_client
   - mkobi.core.security
+  - mkobi.interfaces.repository_interfaces
   - mkobi.core.temp_password_store
-  - mkobi.db.repositories.user_repo
   - mkobi.db.session
+  - mkobi.db.repositories.user_repo
   - mkobi.models.enums
   - mkobi.models.user
   - mkobi.services.auth_service
@@ -144,12 +146,14 @@
   - mkobi.db.repositories.processing_log_repo
   - mkobi.db.repositories.registration_request_repo
   - mkobi.db.repositories.graph_repo
+  - mkobi.db.repositories.dashboard_filter_values_repo
   - mkobi.services.auth_service
   - mkobi.services.user_service
   - mkobi.services.dashboard_service
   - mkobi.services.filter_service
   - mkobi.services.layout_service
   - mkobi.services.graph_service
+  - mkobi.services.filter_values_service
   - mkobi.services.processing_config_service
   - mkobi.services.processing_log_service
   - mkobi.services.data_service
@@ -167,12 +171,14 @@
   - get_processing_log_repository
   - get_registration_request_repository
   - get_graph_repository
+  - get_dashboard_filter_values_repository
   - get_auth_service
   - get_user_service
   - get_dashboard_service
   - get_filter_service
   - get_layout_service
   - get_graph_service
+  - get_filter_values_service
   - get_processing_config_service
   - get_processing_log_service
   - get_data_service
@@ -377,6 +383,7 @@
   - ILayoutRepository
   - IFilterRepository
   - IGraphRepository
+  - IDashboardFilterValuesRepository
   - IProcessingConfigRepository
   - IProcessingLogRepository
   functions: []
@@ -695,6 +702,17 @@
   - mkobi.models.enums
   classes: []
   functions: []
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.services.aggregation_service
+  layer: unknown
+  imports:
+  - typing
+  - mkobi.models.graph
+  - mkobi.models.filters
+  classes:
+  - AggregationService
+  functions:
+  - __init__
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.services.auth_service
   layer: unknown
@@ -817,6 +835,18 @@
   - _validate_filter_type
   - _validate_filter_name
   - _validate_filter_config
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\filter_values_service.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.services.filter_values_service
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - sqlalchemy.ext.asyncio
+  - mkobi.interfaces.repository_interfaces
+  classes:
+  - FilterValuesService
+  functions:
+  - __init__
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\graph_service.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.services.graph_service
   layer: unknown
@@ -1017,13 +1047,20 @@
   - mkobi.data.processing.transformations
   - mkobi.db.models.graphs
   - mkobi.db.models.processing_logs
+  - mkobi.db.models.filters
   - mkobi.db.session
   - mkobi.models.data
   - mkobi.models.enums
   - mkobi.data.storage.manager
   - mkobi.models.enums
+  - mkobi.models.graph
+  - mkobi.models.filters
+  - mkobi.services.aggregation_service
+  - mkobi.db.repositories.dashboard_filter_values_repo
   classes: []
   functions:
+  - _to_graph_read
+  - _to_filter_read
   - process_csv_background_sync
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\access.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.db.models.access
@@ -1079,6 +1116,7 @@
   - mkobi.db.base
   - mkobi.db.models.access
   - mkobi.db.models.aggregated_data
+  - mkobi.db.models.dashboard_filter_values
   - mkobi.db.models.filters
   - mkobi.db.models.graph
   - mkobi.db.models.layout
@@ -1087,6 +1125,23 @@
   - mkobi.db.models.user
   classes:
   - Dashboard
+  functions:
+  - __repr__
+  - __str__
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard_filter_values.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.models.dashboard_filter_values
+  layer: unknown
+  imports:
+  - __future__
+  - typing
+  - uuid
+  - sqlalchemy
+  - sqlalchemy.dialects.postgresql
+  - sqlalchemy.orm
+  - mkobi.db.base
+  - mkobi.db.models.dashboard
+  classes:
+  - DashboardFilterValue
   functions:
   - __repr__
   - __str__
@@ -1224,6 +1279,7 @@
   - mkobi.db.models.access
   - mkobi.db.models.aggregated_data
   - mkobi.db.models.dashboard
+  - mkobi.db.models.dashboard_filter_values
   - mkobi.db.models.filters
   - mkobi.db.models.graphs
   - mkobi.db.models.layout
@@ -1273,6 +1329,20 @@
   - sqlalchemy.ext.asyncio
   classes:
   - DashboardFilterRepository
+  functions: []
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_filter_values_repo.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.repositories.dashboard_filter_values_repo
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - sqlalchemy
+  - sqlalchemy.exc
+  - sqlalchemy.ext.asyncio
+  - mkobi.db.models.dashboard_filter_values
+  - mkobi.interfaces.repository_interfaces
+  classes:
+  - DashboardFilterValuesRepository
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_repo.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.db.repositories.dashboard_repo
@@ -1406,7 +1476,9 @@
   - mkobi.db.repositories.access_repo
   - mkobi.db.repositories.aggregated_data_repo
   - mkobi.db.repositories.dashboard_repo
+  - mkobi.db.repositories.dashboard_filter_values_repo
   - mkobi.db.repositories.filter_repo
+  - mkobi.db.repositories.graph_repo
   - mkobi.db.repositories.processing_config_repo
   - mkobi.db.repositories.processing_log_repo
   - mkobi.db.repositories.user_repo
@@ -1624,6 +1696,7 @@
   - mkobi.api.routes.dashboards_access
   - mkobi.api.routes.dashboards_filters
   - mkobi.api.routes.dashboards_graphs
+  - mkobi.api.routes.filter_values
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
@@ -1698,6 +1771,19 @@
   module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.filters
   layer: unknown
   imports: []
+  classes: []
+  functions: []
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\filter_values.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.filter_values
+  layer: unknown
+  imports:
+  - typing
+  - uuid
+  - fastapi
+  - sqlalchemy.ext.asyncio
+  - mkobi.api.deps
+  - mkobi.models.user
+  - mkobi.services.filter_values_service
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py

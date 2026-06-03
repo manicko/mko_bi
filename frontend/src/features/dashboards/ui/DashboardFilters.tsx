@@ -13,18 +13,21 @@ import {
   Paper,
   Box,
 } from '@mui/material'
+import { useFilterValues } from '../api/dashboardApi'
 import type { FilterDetail } from '../../../shared/types/api.types'
 
 interface DashboardFiltersProps {
   filters: FilterDetail[]
   values: Record<string, string | string[] | number | number[]>
   onChange: (filters: Record<string, string | string[] | number | number[]>) => void
+  dashboardId: string
 }
 
 export function DashboardFilters({
   filters,
   values,
   onChange,
+  dashboardId,
 }: DashboardFiltersProps) {
   const [localFilters, setLocalFilters] = useState<
     Record<string, string | string[] | number | number[]>
@@ -64,13 +67,14 @@ export function DashboardFilters({
       <Typography variant="h6" gutterBottom>
         Filters
       </Typography>
-      <Stack spacing={2}>
+<Stack spacing={2}>
         {filters.map((filter) => (
           <FilterField
             key={filter.id}
             filter={filter}
             value={localFilters[filter.name]}
             onChange={(value) => handleFilterChange(filter.name, value)}
+            dashboardId={dashboardId}
           />
         ))}
         <Stack direction="row" spacing={1}>
@@ -90,10 +94,16 @@ interface FilterFieldProps {
   filter: FilterDetail
   value: string | string[] | number | number[] | undefined
   onChange: (value: string | string[] | number | number[]) => void
+  dashboardId: string
 }
 
-function FilterField({ filter, value, onChange }: FilterFieldProps) {
+function FilterField({ filter, value, onChange, dashboardId }: FilterFieldProps) {
   const config = filter.config
+  const { data: filterValuesData } = useFilterValues(dashboardId, filter.name)
+  const dynamicValues = config.source === 'data' ? (filterValuesData?.values || []) : []
+  const options = config.source === 'data'
+    ? dynamicValues.map(v => ({ label: v, value: v }))
+    : (config.options || [])
 
   switch (filter.type) {
     case 'select':
@@ -105,7 +115,7 @@ function FilterField({ filter, value, onChange }: FilterFieldProps) {
             label={filter.name}
             onChange={(e) => onChange(e.target.value)}
           >
-            {(config.options || []).map((opt) => (
+            {options.map((opt) => (
               <MenuItem key={opt.value} value={opt.value}>
                 {opt.label}
               </MenuItem>
@@ -132,7 +142,7 @@ function FilterField({ filter, value, onChange }: FilterFieldProps) {
               </Box>
             )}
           >
-            {(config.options || []).map((opt) => (
+            {options.map((opt) => (
               <MenuItem key={opt.value} value={opt.value}>
                 {opt.label}
               </MenuItem>

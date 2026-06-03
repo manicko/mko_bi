@@ -1244,6 +1244,19 @@
   value: GraphRepository
   stable_hash: 1447d652
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
+- id: ddcba012
+  symbol_path:
+  - get_dashboard_filter_values_repository
+  type: return_statement
+  stable_hash: ddcba012
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
+- id: 2ed28eac
+  symbol_path:
+  - get_dashboard_filter_values_repository
+  type: function_call
+  value: DashboardFilterValuesRepository
+  stable_hash: 2ed28eac
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: c5a43286
   symbol_path:
   - get_auth_service
@@ -1384,6 +1397,26 @@
   type: function_call
   value: GraphService
   stable_hash: 3f260d68
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
+- id: e4d075b5
+  symbol_path:
+  - get_filter_values_service
+  type: function_call
+  value: Depends
+  stable_hash: e4d075b5
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
+- id: 1c58a50f
+  symbol_path:
+  - get_filter_values_service
+  type: return_statement
+  stable_hash: 1c58a50f
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
+- id: 5f3d054a
+  symbol_path:
+  - get_filter_values_service
+  type: function_call
+  value: FilterValuesService
+  stable_hash: 5f3d054a
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: 37da84b6
   symbol_path:
@@ -4049,6 +4082,53 @@
   value: ConfigDict
   stable_hash: 18f0e036
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\user.py
+- id: 0e826164
+  symbol_path:
+  - AggregationService
+  type: function_call
+  value: str
+  stable_hash: 0e826164
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+- id: f31bbff2
+  symbol_path:
+  - AggregationService
+  type: return_statement
+  stable_hash: f31bbff2
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+- id: 03849bb8
+  symbol_path:
+  - AggregationService
+  type: function_call
+  value: set
+  stable_hash: 03849bb8
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+- id: 0e826164
+  symbol_path:
+  - AggregationService
+  type: function_call
+  value: str
+  stable_hash: 0e826164
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+- id: f31bbff2
+  symbol_path:
+  - AggregationService
+  type: return_statement
+  stable_hash: f31bbff2
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+- id: 71666f94
+  symbol_path:
+  - AggregationService
+  type: function_call
+  value: sorted
+  stable_hash: 71666f94
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+- id: 57b32a33
+  symbol_path:
+  - AggregationService
+  type: function_call
+  value: list
+  stable_hash: 57b32a33
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
 - id: 6358e82b
   symbol_path: []
   type: function_call
@@ -5815,6 +5895,19 @@
   value: ValueError
   stable_hash: 8841f784
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\filter_service.py
+- id: aaa16fde
+  symbol_path:
+  - FilterValuesService
+  type: return_statement
+  stable_hash: aaa16fde
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\filter_values_service.py
+- id: 81a24d20
+  symbol_path:
+  - FilterValuesService
+  type: function_call
+  value: cast
+  stable_hash: 81a24d20
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\filter_values_service.py
 - id: a15cb034
   symbol_path:
   - GraphService
@@ -7686,40 +7779,84 @@
   type: return_statement
   stable_hash: 2f6f6eb3
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 11664d38
+  symbol_path:
+  - _to_graph_read
+  type: return_statement
+  stable_hash: 11664d38
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 68ac8bf9
+  symbol_path:
+  - _to_graph_read
+  type: function_call
+  value: GraphRead
+  stable_hash: 68ac8bf9
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: e61aaa20
+  symbol_path:
+  - _to_filter_read
+  type: return_statement
+  stable_hash: e61aaa20
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: c5ce49a2
+  symbol_path:
+  - _to_filter_read
+  type: function_call
+  value: FilterRead
+  stable_hash: c5ce49a2
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: 51619eda
   symbol_path: []
   type: function_call
   value: select
   stable_hash: 51619eda
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 073252e2
+  symbol_path: []
+  type: function_call
+  value: _to_graph_read
+  stable_hash: 073252e2
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: 2f6f6eb3
   symbol_path: []
   type: return_statement
   stable_hash: 2f6f6eb3
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
-- id: 4806d5f0
+- id: 51619eda
   symbol_path: []
   type: function_call
-  value: ValueError
-  stable_hash: 4806d5f0
+  value: select
+  stable_hash: 51619eda
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
-- id: 588a8f2b
+- id: f74563fd
   symbol_path: []
   type: function_call
-  value: list
-  stable_hash: 588a8f2b
+  value: _to_filter_read
+  stable_hash: f74563fd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
-- id: c22d8585
+- id: 5d8dd172
   symbol_path: []
   type: function_call
-  value: str
-  stable_hash: c22d8585
+  value: AggregationService
+  stable_hash: 5d8dd172
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: d6516cac
   symbol_path: []
   type: function_call
   value: StorageManager
   stable_hash: d6516cac
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: cfde3df1
+  symbol_path: []
+  type: function_call
+  value: len
+  stable_hash: cfde3df1
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: d0fba401
+  symbol_path: []
+  type: function_call
+  value: DashboardFilterValuesRepository
+  stable_hash: d0fba401
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: cfde3df1
   symbol_path: []
@@ -7739,34 +7876,52 @@
   value: select
   stable_hash: 51619eda
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 073252e2
+  symbol_path: []
+  type: function_call
+  value: _to_graph_read
+  stable_hash: 073252e2
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: 2f6f6eb3
   symbol_path: []
   type: return_statement
   stable_hash: 2f6f6eb3
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
-- id: 4806d5f0
+- id: 51619eda
   symbol_path: []
   type: function_call
-  value: ValueError
-  stable_hash: 4806d5f0
+  value: select
+  stable_hash: 51619eda
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
-- id: 588a8f2b
+- id: f74563fd
   symbol_path: []
   type: function_call
-  value: list
-  stable_hash: 588a8f2b
+  value: _to_filter_read
+  stable_hash: f74563fd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
-- id: c22d8585
+- id: 5d8dd172
   symbol_path: []
   type: function_call
-  value: str
-  stable_hash: c22d8585
+  value: AggregationService
+  stable_hash: 5d8dd172
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: d6516cac
   symbol_path: []
   type: function_call
   value: StorageManager
   stable_hash: d6516cac
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: cfde3df1
+  symbol_path: []
+  type: function_call
+  value: len
+  stable_hash: cfde3df1
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: d0fba401
+  symbol_path: []
+  type: function_call
+  value: DashboardFilterValuesRepository
+  stable_hash: d0fba401
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: cfde3df1
   symbol_path: []
@@ -8282,6 +8437,13 @@
   value: relationship
   stable_hash: f781c5be
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard.py
+- id: f781c5be
+  symbol_path:
+  - Dashboard
+  type: function_call
+  value: relationship
+  stable_hash: f781c5be
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard.py
 - id: 0dece296
   symbol_path:
   - Dashboard
@@ -8296,6 +8458,97 @@
   type: return_statement
   stable_hash: ddc00eed
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard.py
+- id: cebddab3
+  symbol_path:
+  - DashboardFilterValue
+  type: function_call
+  value: Index
+  stable_hash: cebddab3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard_filter_values.py
+- id: cebddab3
+  symbol_path:
+  - DashboardFilterValue
+  type: function_call
+  value: Index
+  stable_hash: cebddab3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard_filter_values.py
+- id: 1744fa10
+  symbol_path:
+  - DashboardFilterValue
+  type: function_call
+  value: mapped_column
+  stable_hash: 1744fa10
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard_filter_values.py
+- id: 1744fa10
+  symbol_path:
+  - DashboardFilterValue
+  type: function_call
+  value: mapped_column
+  stable_hash: 1744fa10
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard_filter_values.py
+- id: 05c14c59
+  symbol_path:
+  - DashboardFilterValue
+  type: function_call
+  value: PG_UUID
+  stable_hash: 05c14c59
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard_filter_values.py
+- id: 37c3ee66
+  symbol_path:
+  - DashboardFilterValue
+  type: function_call
+  value: ForeignKey
+  stable_hash: 37c3ee66
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard_filter_values.py
+- id: 1744fa10
+  symbol_path:
+  - DashboardFilterValue
+  type: function_call
+  value: mapped_column
+  stable_hash: 1744fa10
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard_filter_values.py
+- id: c4613f86
+  symbol_path:
+  - DashboardFilterValue
+  type: function_call
+  value: String
+  stable_hash: c4613f86
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard_filter_values.py
+- id: 1744fa10
+  symbol_path:
+  - DashboardFilterValue
+  type: function_call
+  value: mapped_column
+  stable_hash: 1744fa10
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard_filter_values.py
+- id: c4613f86
+  symbol_path:
+  - DashboardFilterValue
+  type: function_call
+  value: String
+  stable_hash: c4613f86
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard_filter_values.py
+- id: 7854e260
+  symbol_path:
+  - DashboardFilterValue
+  type: function_call
+  value: relationship
+  stable_hash: 7854e260
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard_filter_values.py
+- id: fd007d90
+  symbol_path:
+  - DashboardFilterValue
+  - __repr__
+  type: return_statement
+  stable_hash: fd007d90
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard_filter_values.py
+- id: 8e557a17
+  symbol_path:
+  - DashboardFilterValue
+  - __str__
+  type: return_statement
+  stable_hash: 8e557a17
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\dashboard_filter_values.py
 - id: 61438ef4
   symbol_path:
   - Filter
@@ -9645,6 +9898,86 @@
   type: return_statement
   stable_hash: 315bbe11
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_filter_repo.py
+- id: 583a1b34
+  symbol_path:
+  - DashboardFilterValuesRepository
+  type: function_call
+  value: select
+  stable_hash: 583a1b34
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_filter_values_repo.py
+- id: 0a4d8f1b
+  symbol_path:
+  - DashboardFilterValuesRepository
+  type: function_call
+  value: cast
+  stable_hash: 0a4d8f1b
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_filter_values_repo.py
+- id: 8826e00e
+  symbol_path:
+  - DashboardFilterValuesRepository
+  type: function_call
+  value: len
+  stable_hash: 8826e00e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_filter_values_repo.py
+- id: 676fcbcb
+  symbol_path:
+  - DashboardFilterValuesRepository
+  type: return_statement
+  stable_hash: 676fcbcb
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_filter_values_repo.py
+- id: b524f7fe
+  symbol_path:
+  - DashboardFilterValuesRepository
+  type: function_call
+  value: DashboardFilterValue
+  stable_hash: b524f7fe
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_filter_values_repo.py
+- id: 8826e00e
+  symbol_path:
+  - DashboardFilterValuesRepository
+  type: function_call
+  value: len
+  stable_hash: 8826e00e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_filter_values_repo.py
+- id: 676fcbcb
+  symbol_path:
+  - DashboardFilterValuesRepository
+  type: return_statement
+  stable_hash: 676fcbcb
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_filter_values_repo.py
+- id: 8826e00e
+  symbol_path:
+  - DashboardFilterValuesRepository
+  type: function_call
+  value: len
+  stable_hash: 8826e00e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_filter_values_repo.py
+- id: f9ca43d4
+  symbol_path:
+  - DashboardFilterValuesRepository
+  type: function_call
+  value: delete
+  stable_hash: f9ca43d4
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_filter_values_repo.py
+- id: 676fcbcb
+  symbol_path:
+  - DashboardFilterValuesRepository
+  type: return_statement
+  stable_hash: 676fcbcb
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_filter_values_repo.py
+- id: f9ca43d4
+  symbol_path:
+  - DashboardFilterValuesRepository
+  type: function_call
+  value: delete
+  stable_hash: f9ca43d4
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_filter_values_repo.py
+- id: 676fcbcb
+  symbol_path:
+  - DashboardFilterValuesRepository
+  type: return_statement
+  stable_hash: 676fcbcb
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\dashboard_filter_values_repo.py
 - id: 4c2d6981
   symbol_path: []
   type: function_call
@@ -14289,6 +14622,47 @@
   value: Depends
   stable_hash: c56416e2
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py
+- id: 939e1204
+  symbol_path: []
+  type: function_call
+  value: APIRouter
+  stable_hash: 939e1204
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\filter_values.py
+- id: 8faa0a00
+  symbol_path: []
+  type: function_call
+  value: Query
+  stable_hash: 8faa0a00
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\filter_values.py
+- id: 2798a8df
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: 2798a8df
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\filter_values.py
+- id: 2798a8df
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: 2798a8df
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\filter_values.py
+- id: 2798a8df
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: 2798a8df
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\filter_values.py
+- id: d84cf64e
+  symbol_path: []
+  type: return_statement
+  stable_hash: d84cf64e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\filter_values.py
+- id: 7714490c
+  symbol_path: []
+  type: function_call
+  value: HTTPException
+  stable_hash: 7714490c
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\filter_values.py
 - id: 3f9c06ad
   symbol_path: []
   type: function_call

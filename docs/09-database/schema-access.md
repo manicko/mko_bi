@@ -148,6 +148,8 @@ users (*) ──────── (*) dashboard_access (*) ──────�
   │                                                        │
   │                                                   filters
   │
+  │                                              dashboard_filter_values (*)
+  │
   │ (as reviewer)
   │
 registration_requests
