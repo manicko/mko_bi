@@ -22,7 +22,7 @@ from mkobi.interfaces.repository_interfaces import (
 )
 from mkobi.interfaces.service_interfaces import IDataService, IProcessingConfigService
 from mkobi.models.data import ProcessingResultData, ProcessingResult, ProcessingStatusResponse, UploadResponse
-from mkobi.models.enums import ProcessingStatus, UploadMode
+from mkobi.models.enums import ErrorCode, ProcessingStatus, UploadMode
 from mkobi.services.file_processing import (
     enqueue_processing_job,
     find_task_file,
@@ -111,9 +111,8 @@ class DataService(IDataService):
                     dashboard_id,
                 )
                 raise AppException(
-                    status_code=404,
+                    code=ErrorCode.DASHBOARD_NOT_FOUND,
                     detail="Dashboard not found",
-                    error_code="DASHBOARD_NOT_FOUND",
                 )
 
         if user_id:

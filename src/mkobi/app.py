@@ -10,19 +10,15 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from fastapi import FastAPI, Request
-from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse, Response
-from pydantic import ValidationError
 from sqlalchemy import text
-from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.base import BaseHTTPMiddleware
 
 from mkobi.api import routes
 from mkobi.config import get_config
 from mkobi.core.logging_config import setup_logging
-from mkobi.models.types import ErrorResponse
 from mkobi.models.enums import EnvironmentEnum
 from mkobi.db.session import get_session
 from mkobi.db.starter import (
@@ -304,83 +300,12 @@ def create_app() -> FastAPI:
         health_status["components"] = components
         return health_status
 
-    # Setup static files for React SPA (after all health endpoints)
-    _setup_static_files(application)
-
-    # Exception handlers
-    def _make_errors_serializable(errors: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Convert error context to JSON-serializable format.
-
-        Pydantic's errors() can contain non-serializable objects in ctx.
-        This function converts them to strings.
-
-        Args:
-            errors: List of error dictionaries from Pydantic.
-
-        Returns:
-            List of error dictionaries with serializable values.
-        """
-        serializable = []
-        for err in errors:
-            clean_err = dict(err)
-            if "ctx" in clean_err and "error" in clean_err["ctx"]:
-                clean_err["ctx"] = {"error": str(clean_err["ctx"]["error"])}
-            serializable.append(clean_err)
-        return serializable
-
-    @application.exception_handler(StarletteHTTPException)
-    async def http_exception_handler(
-        request: Request, exc: StarletteHTTPException,
-    ) -> JSONResponse:
-        """Handler for HTTP exceptions."""
-        response = ErrorResponse(
-            error=exc.detail or "Error",
-            code=f"HTTP_{exc.status_code}",
-        )
-        return JSONResponse(
-            status_code=exc.status_code,
-            content=response.model_dump(),
-        )
-
-    @application.exception_handler(RequestValidationError)
-    async def validation_exception_handler(
-        request: Request, exc: RequestValidationError,
-    ) -> JSONResponse:
-        """Handler for request validation errors."""
-        response = ErrorResponse(
-            error="Validation error",
-            detail="Request validation failed",
-            code="VALIDATION_ERROR",
-        )
-        return JSONResponse(
-            status_code=422,
-            content={
-                **response.model_dump(),
-                "errors": _make_errors_serializable(exc.errors()),
-            },
-        )
-
-    @application.exception_handler(ValidationError)
-    async def pydantic_validation_exception_handler(
-        request: Request, exc: ValidationError,
-    ) -> JSONResponse:
-        """Handler for Pydantic validation errors."""
-        response = ErrorResponse(
-            error="Validation error",
-            detail="Pydantic validation failed",
-            code="VALIDATION_ERROR",
-        )
-        return JSONResponse(
-            status_code=422,
-            content={
-                **response.model_dump(),
-                "errors": _make_errors_serializable(exc.errors()),
-            },
-        )
-
-    # Register custom exception handlers (AppException and global handler)
+    # Register exception handlers before static files
     from mkobi.utils.exceptions import add_exception_handlers
     add_exception_handlers(application)
+
+    # Setup static files for React SPA (after all health endpoints)
+    _setup_static_files(application)
 
     return application
 

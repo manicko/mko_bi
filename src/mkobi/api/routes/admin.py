@@ -4,7 +4,7 @@ import logging
 from typing import Any
 from uuid import UUID, uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
@@ -18,7 +18,8 @@ from mkobi.api.deps import (
     get_temp_password_store,
 )
 from mkobi.interfaces import IUserService
-from mkobi.models.enums import RegistrationStatus, UserRole
+from mkobi.models.enums import ErrorCode, RegistrationStatus, UserRole
+from mkobi.utils.exceptions import AppException
 from mkobi.models.user import UserRead, UserUpdateRequest, UserUpdateActiveRequest
 from mkobi.models.auth import RegistrationRequestItem
 from mkobi.services.auth_service import AuthService
@@ -51,8 +52,8 @@ async def get_users_admin_endpoint(
         return await user_service.get_all_users(db=db)
     except Exception as e:
         logger.error("Error getting users: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting users",
         ) from e
 
@@ -76,20 +77,21 @@ async def update_user_role_admin_endpoint(
     try:
         updated = await user_service.update_user_role(user_id=user_id, role=user_data.role, db=db)
         if updated is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.USER_NOT_FOUND,
                 detail="User not found",
+                details={"user_id": str(user_id)},
             )
         return updated
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
     except Exception as e:
         logger.error("Error updating user role: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error updating user role",
         ) from e
 
@@ -111,19 +113,20 @@ async def delete_user_admin_endpoint(
     try:
         result = await user_service.delete_user(user_id=user_id, db=db)
         if not result:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.USER_NOT_FOUND,
                 detail="User not found",
+                details={"user_id": str(user_id)},
             )
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.ACCESS_DENIED,
             detail=str(e),
         ) from e
     except Exception as e:
         logger.error("Error deleting user: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error deleting user",
         ) from e
 
@@ -157,9 +160,10 @@ async def update_user_active_admin_endpoint(
             user_id=user_id, is_active=user_data.is_active, db=db
         )
         if updated is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.USER_NOT_FOUND,
                 detail="User not found",
+                details={"user_id": str(user_id)},
             )
 
         # On deactivation, revoke all user tokens via Redis
@@ -174,13 +178,13 @@ async def update_user_active_admin_endpoint(
             logger.info("All tokens revoked for deactivated user: id=%s", user_id)
 
         return updated
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         await db.rollback()
         logger.error("Error updating user active status: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error updating user active status",
         ) from e
 
@@ -210,23 +214,24 @@ async def reset_user_password_admin_endpoint(
             db=db,
         )
         if result is None:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
+            raise AppException(
+                code=ErrorCode.USER_NOT_FOUND,
                 detail="User not found",
+                details={"user_id": str(user_id)},
             )
         return result
     except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(exc),
         ) from exc
-    except HTTPException:
+    except AppException:
         raise
     except Exception as exc:
         await db.rollback()
         logger.error("Error resetting user password: %s", exc)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error resetting user password",
         ) from exc
 
@@ -253,8 +258,8 @@ async def get_registration_requests_admin_endpoint(
         return [RegistrationRequestItem.model_validate(req) for req in requests]
     except Exception as e:
         logger.error("Error getting registration requests: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting registration requests",
         ) from e
 
@@ -280,14 +285,15 @@ async def approve_registration_request_admin_endpoint(
         # Get the request
         req = await repo.get_by_id(request_id, db)
         if not req:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.NOT_FOUND,
                 detail="Registration request not found",
+                details={"request_id": str(request_id)},
             )
 
         if req.status != RegistrationStatus.PENDING:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
+            raise AppException(
+                code=ErrorCode.DUPLICATE_RESOURCE,
                 detail=f"Request already {req.status}",
             )
 
@@ -323,13 +329,13 @@ async def approve_registration_request_admin_endpoint(
             "user_id": str(user.id),
             "retrieval_token": retrieval_token,
         }
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         await db.rollback()
         logger.error("Error approving registration request: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error approving registration request",
         ) from e
 
@@ -352,14 +358,15 @@ async def reject_registration_request_admin_endpoint(
     try:
         req = await repo.get_by_id(request_id, db)
         if not req:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.NOT_FOUND,
                 detail="Registration request not found",
+                details={"request_id": str(request_id)},
             )
 
         if req.status != RegistrationStatus.PENDING:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
+            raise AppException(
+                code=ErrorCode.DUPLICATE_RESOURCE,
                 detail=f"Request already {req.status}",
             )
 
@@ -373,13 +380,13 @@ async def reject_registration_request_admin_endpoint(
         await db.commit()
 
         return {"message": "Registration request rejected"}
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         await db.rollback()
         logger.error("Error rejecting registration request: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error rejecting registration request",
         ) from e
 
@@ -402,8 +409,8 @@ async def retrieve_temp_password_admin_endpoint(
     logger.info("Admin: retrieving temp password: token=%s...", retrieval_token[:8])
     password = await temp_password_store.retrieve(retrieval_token)
     if password is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+        raise AppException(
+            code=ErrorCode.NOT_FOUND,
             detail="Temporary password not found or already retrieved",
         )
     return {"temp_password": password}

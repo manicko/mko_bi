@@ -12,7 +12,7 @@ from typing import NoReturn
 from uuid import UUID, uuid4
 
 import aiofiles
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, UploadFile, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
@@ -30,7 +30,7 @@ from mkobi.models.data import (
     ProcessingStatusResponse,
     UploadResponse,
 )
-from mkobi.models.enums import UploadMode
+from mkobi.models.enums import ErrorCode, UploadMode
 from mkobi.services.data_service import DataService
 from mkobi.utils.exceptions import AppException
 
@@ -68,12 +68,12 @@ async def upload_file_endpoint(
     )
 
     def _handle_value_error(e: ValueError) -> NoReturn:
-        """Handle ValueError by mapping to appropriate HTTPException with generic messages."""
+        """Handle ValueError by mapping to appropriate AppException with ErrorCode."""
         logger.warning("Validation error during upload", exc_info=True)
         error_msg = str(e).lower()
         if "mime" in error_msg or "invalid mime" in error_msg:
-            raise HTTPException(
-                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            raise AppException(
+                code=ErrorCode.INVALID_FILE_TYPE,
                 detail="Invalid file type",
             ) from e
         elif (
@@ -81,23 +81,23 @@ async def upload_file_endpoint(
             or "invalid format" in error_msg
             or "extension" in error_msg
         ):
-            raise HTTPException(
-                status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            raise AppException(
+                code=ErrorCode.INVALID_FILE_TYPE,
                 detail="Invalid file format",
             ) from e
         elif "size" in error_msg or "exceeds" in error_msg or "max" in error_msg:
-            raise HTTPException(
-                status_code=status.HTTP_413_CONTENT_TOO_LARGE,
+            raise AppException(
+                code=ErrorCode.FILE_TOO_LARGE,
                 detail="File size exceeds limit",
             ) from e
         elif "limit" in error_msg or "rate limit" in error_msg:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            raise AppException(
+                code=ErrorCode.RATE_LIMIT_EXCEEDED,
                 detail="Rate limit exceeded",
             ) from e
         else:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            raise AppException(
+                code=ErrorCode.VALIDATION_ERROR,
                 detail="Validation error",
             ) from e
 
@@ -114,8 +114,8 @@ async def upload_file_endpoint(
                     "max_bytes": config.max_file_size,
                 },
             )
-            raise HTTPException(
-                status_code=status.HTTP_413_CONTENT_TOO_LARGE,  # Use new constant
+            raise AppException(
+                code=ErrorCode.FILE_TOO_LARGE,
                 detail=f"File size exceeds maximum limit of {config.upload.max_file_size_mb}MB",
             )
 
@@ -133,8 +133,8 @@ async def upload_file_endpoint(
                 "Upload rate limit exceeded",
                 extra={"user_id": str(current_user.id)},
             )
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            raise AppException(
+                code=ErrorCode.RATE_LIMIT_EXCEEDED,
                 detail="Rate limit exceeded for uploads",
             )
 
@@ -166,8 +166,8 @@ async def upload_file_endpoint(
                                 "max_bytes": config.max_file_size,
                             },
                         )
-                        raise HTTPException(
-                            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+                        raise AppException(
+                            code=ErrorCode.FILE_TOO_LARGE,
                             detail=f"File size exceeds maximum limit of {config.upload.max_file_size_mb}MB",
                         )
                     await f.write(chunk)
@@ -207,8 +207,6 @@ async def upload_file_endpoint(
                 logger.info("Cleaning up temp file after failed upload", extra={"path": str(temp_file_path)})
                 temp_file_path.unlink(missing_ok=True)
 
-    except HTTPException:
-        raise
     except AppException as e:
         # Re-raise AppException to let global handler format it with error_code
         raise e
@@ -216,14 +214,14 @@ async def upload_file_endpoint(
         _handle_value_error(e)
     except DashboardPermissionError as e:
         logger.warning("Permission denied for upload: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.PERMISSION_DENIED,
             detail=str(e),
         ) from e
     except Exception as e:
         logger.error("Error during file upload", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error during file upload",
         ) from e
 
@@ -266,20 +264,20 @@ async def get_status_endpoint(
 
     except ValueError as e:
         logger.warning("Task not found", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+        raise AppException(
+            code=ErrorCode.NOT_FOUND,
             detail="Task not found",
         ) from e
     except DashboardPermissionError as e:
         logger.warning("Permission denied for status check", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.PERMISSION_DENIED,
             detail="Access denied",
         ) from e
     except Exception as e:
         logger.error("Error getting status", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting status",
         ) from e
 
@@ -322,19 +320,19 @@ async def get_result_endpoint(
 
     except ValueError as e:
         logger.warning("Error getting result", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+        raise AppException(
+            code=ErrorCode.NOT_FOUND,
             detail="Result not found",
         ) from e
     except DashboardPermissionError as e:
         logger.warning("Permission denied for result", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.PERMISSION_DENIED,
             detail="Access denied",
         ) from e
     except Exception as e:
         logger.error("Error getting result", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting result",
         ) from e

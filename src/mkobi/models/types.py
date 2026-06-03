@@ -290,17 +290,4 @@ class ProcessingSettingsModel(BaseModel):
     model_config = {"extra": "allow"}
 
 
-# ==================== Error Response Types ====================
 
-
-class ErrorResponse(BaseModel):
-    """Standardized error response model for all API errors.
-
-    Provides a consistent JSON structure for error responses across all endpoints.
-    """
-
-    error: str
-    detail: str | None = None
-    code: str | None = None
-
-    model_config = {"extra": "allow"}

@@ -19,6 +19,7 @@ from starlette.status import HTTP_503_SERVICE_UNAVAILABLE
 from typing import Any
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -106,6 +107,7 @@ class AppException(Exception):
         details: dict[str, Any] | None = None,
         status_code: int | None = None,
         error_code: str | None = None,
+        headers: dict[str, str] | None = None,
     ) -> None:
         """Initialize AppException.
 
@@ -119,6 +121,7 @@ class AppException(Exception):
             status_code: Optional override for HTTP status code. If not provided,
                 derived from ErrorCode via _ERROR_CODE_STATUS_MAP.
             error_code: Legacy string error code (for backward compatibility).
+            headers: Optional HTTP headers to include in response.
         """
         # Handle backward compatibility: if error_code provided, convert to ErrorCode
         if code is None and error_code is not None:
@@ -133,6 +136,7 @@ class AppException(Exception):
         self.code = code
         self.detail = detail
         self.details = details
+        self.headers = headers
         self.status_code = (
             status_code if status_code is not None
             else _ERROR_CODE_STATUS_MAP.get(code, HTTP_500_INTERNAL_SERVER_ERROR)
@@ -269,6 +273,43 @@ def add_exception_handlers(app: FastAPI) -> None:
         return JSONResponse(
             status_code=exc.status_code,
             content=response.model_dump(),
+            headers=exc.headers,
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def request_validation_exception_handler(
+        request: Request, exc: RequestValidationError,
+    ) -> JSONResponse:
+        """Handler for FastAPI request validation errors.
+
+        Produces RFC 7807 format with additional 'errors' array containing
+        field-level validation details.
+        """
+        logger.error(
+            "RequestValidationError raised: %s",
+            exc.errors(),
+        )
+        response = ErrorResponse(
+            type="https://api.mkobi.com/errors/validation_error",
+            title="Validation error",
+            status=HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Request validation failed",
+            code=ErrorCode.VALIDATION_ERROR,
+            details=None,
+        )
+        # Convert errors to serializable format
+        serializable_errors = []
+        for err in exc.errors():
+            clean_err = dict(err)
+            if "ctx" in clean_err and "error" in clean_err["ctx"]:
+                clean_err["ctx"] = {"error": str(clean_err["ctx"]["error"])}
+            serializable_errors.append(clean_err)
+        return JSONResponse(
+            status_code=HTTP_422_UNPROCESSABLE_ENTITY,
+            content={
+                **response.model_dump(),
+                "errors": serializable_errors,
+            },
         )
 
     @app.exception_handler(StarletteHTTPException)

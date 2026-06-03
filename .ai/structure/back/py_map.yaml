@@ -5,18 +5,14 @@
   - contextlib
   - typing
   - fastapi
-  - fastapi.exceptions
   - fastapi.middleware.cors
   - fastapi.middleware.gzip
   - fastapi.responses
-  - pydantic
   - sqlalchemy
-  - starlette.exceptions
   - starlette.middleware.base
   - mkobi.api
   - mkobi.config
   - mkobi.core.logging_config
-  - mkobi.models.types
   - mkobi.models.enums
   - mkobi.db.session
   - mkobi.db.starter
@@ -32,7 +28,6 @@
   - SPAStaticFiles
   functions:
   - create_app
-  - _make_errors_serializable
   - _setup_static_files
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.config
@@ -667,7 +662,6 @@
   - GraphConfigModel
   - FilterConfigModel
   - ProcessingSettingsModel
-  - ErrorResponse
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\user.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.models.user
@@ -698,7 +692,6 @@
   - mkobi.models.graph
   - mkobi.models.processing_configs
   - mkobi.models.processing_logs
-  - mkobi.models.types
   - mkobi.models.user
   - mkobi.models.transformation_configs
   - mkobi.models.enums
@@ -978,6 +971,7 @@
   - starlette.status
   - typing
   - fastapi
+  - fastapi.exceptions
   - fastapi.responses
   - pydantic
   - mkobi.core.logging_config

@@ -14,7 +14,7 @@ from ipaddress import ip_address
 from typing import Annotated, Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from fastapi import APIRouter, Depends, Request, Response, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -52,8 +52,10 @@ from mkobi.models.auth import (
     Token,
     TokenWithUser,
 )
+from mkobi.models.enums import ErrorCode
 from mkobi.models.user import UserRead
 from mkobi.services.auth_service import AuthService
+from mkobi.utils.exceptions import AppException
 
 logger = get_logger(__name__)
 
@@ -77,8 +79,8 @@ async def _handle_login(
         f"login:{client_ip}", max_attempts=5, ttl=300
     ):
         logger.warning("Login rate limit exceeded", extra={"ip": client_ip})
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        raise AppException(
+            code=ErrorCode.RATE_LIMIT_EXCEEDED,
             detail="Too many login attempts. Try again later.",
         )
 
@@ -88,8 +90,8 @@ async def _handle_login(
 
     if token_data is None:
         logger.warning("Login failed", extra={"email": email})
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+        raise AppException(
+            code=ErrorCode.AUTHENTICATION_FAILED,
             detail="Invalid credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
@@ -192,9 +194,9 @@ async def register(
         Token: Model with access_token and token_type.
 
     Raises:
-        HTTPException 403: If user is not admin.
-        HTTPException 422: Data validation error.
-        HTTPException 500: Registration or token creation error.
+        AppException 403: If user is not admin.
+        AppException 422: Data validation error.
+        AppException 500: Registration or token creation error.
     """
     logger.warning(
         "Deprecated /auth/register endpoint called. Use /auth/register-request for public registration.",
@@ -213,8 +215,8 @@ async def register(
             "Validation error during registration",
             extra={"email": register_data.email, "error": str(e)},
         )
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
     except Exception as e:
@@ -222,8 +224,8 @@ async def register(
             "Registration error",
             extra={"email": register_data.email, "error": str(e)},
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Registration error",
         ) from e
 
@@ -234,8 +236,8 @@ async def register(
             "Token creation error after registration",
             extra={"email": register_data.email, "error": str(e)},
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Token creation error",
         ) from e
 
@@ -270,13 +272,13 @@ async def refresh(
         Token: Model with new access_token and token_type.
 
     Raises:
-        HTTPException 401: Invalid, expired, or revoked token.
+        AppException 401: Invalid, expired, or revoked token.
     """
     refresh_token_value = request.cookies.get(COOKIE_NAME)
     if not refresh_token_value:
         logger.warning("No refresh token in cookies")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+        raise AppException(
+            code=ErrorCode.AUTHENTICATION_FAILED,
             detail="Refresh token not found",
             headers={"WWW-Authenticate": "Bearer"},
         )
@@ -286,8 +288,8 @@ async def refresh(
     payload = validate_refresh_token(refresh_token_value)
     if payload is None:
         logger.warning("Invalid refresh token")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+        raise AppException(
+            code=ErrorCode.INVALID_TOKEN,
             detail="Invalid token",
             headers={"WWW-Authenticate": "Bearer"},
         )
@@ -297,8 +299,8 @@ async def refresh(
     if jti:
         if await is_refresh_token_revoked(redis_client, jti):
             logger.warning("Revoked refresh token used: jti=%s", jti)
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+            raise AppException(
+                code=ErrorCode.TOKEN_REVOKED,
                 detail="Refresh token has been revoked",
                 headers={"WWW-Authenticate": "Bearer"},
             )
@@ -306,8 +308,8 @@ async def refresh(
     user_id = payload.get("sub")
     if user_id is None:
         logger.warning("Token missing user_id")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+        raise AppException(
+            code=ErrorCode.INVALID_TOKEN,
             detail="Invalid token",
             headers={"WWW-Authenticate": "Bearer"},
         )
@@ -315,8 +317,8 @@ async def refresh(
     user = await UserRepository().get(UUID(user_id), session)
     if user is None:
         logger.warning("User not found during refresh", extra={"user_id": user_id})
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+        raise AppException(
+            code=ErrorCode.AUTHENTICATION_FAILED,
             detail="User not found",
             headers={"WWW-Authenticate": "Bearer"},
         )
@@ -325,8 +327,8 @@ async def refresh(
     if await is_user_tokens_revoked(redis_client, UUID(user_id)):
         logger.warning("User tokens revoked: user_id=%s", user_id)
         delete_secure_cookie(response, COOKIE_NAME)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+        raise AppException(
+            code=ErrorCode.TOKEN_REVOKED,
             detail="Token has been revoked",
             headers={"WWW-Authenticate": "Bearer"},
         )
@@ -358,9 +360,6 @@ async def get_current_user_info(
 
     Returns:
         UserRead: User model without password.
-
-    Raises:
-        HTTPException 401: Invalid or missing token.
     """
     logger.info("Current user data request", extra={"email": current_user.email})
     return current_user
@@ -446,8 +445,8 @@ async def change_password(
         dict: Success message.
 
     Raises:
-        HTTPException 422: If password confirmation does not match.
-        HTTPException 401: If current password is incorrect.
+        AppException 422: If password confirmation does not match.
+        AppException 401: If current password is incorrect.
     """
     try:
         await auth_service.change_password(
@@ -461,8 +460,8 @@ async def change_password(
             "Password change failed",
             extra={"user_id": str(current_user.id), "error": str(e)},
         )
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+        raise AppException(
+            code=ErrorCode.AUTHENTICATION_FAILED,
             detail=str(e),
         ) from e
     except Exception as e:
@@ -470,8 +469,8 @@ async def change_password(
             "Password change error",
             extra={"user_id": str(current_user.id), "error": str(e)},
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Password change error",
         ) from e
 
@@ -505,7 +504,7 @@ async def register_request(
         dict: Success message.
 
     Raises:
-        HTTPException 422: Request already exists.
+        AppException 422: Request already exists.
     """
     # Get client IP address
     client_ip: str | None = None
@@ -525,8 +524,8 @@ async def register_request(
             "Registration request rate limit exceeded",
             extra={"email": request_data.email, "ip": client_ip},
         )
-        raise HTTPException(
-            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        raise AppException(
+            code=ErrorCode.RATE_LIMIT_EXCEEDED,
             detail="Too many registration requests. Try again later.",
         )
 
@@ -546,8 +545,8 @@ async def register_request(
             "Validation error creating registration request",
             extra={"email": request_data.email, "error": str(e)},
         )
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
     except Exception as e:
@@ -555,8 +554,8 @@ async def register_request(
             "Error creating registration request",
             extra={"email": request_data.email, "error": str(e)},
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Registration request error",
         ) from e
 

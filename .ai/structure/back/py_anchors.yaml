@@ -161,116 +161,19 @@
   type: return_statement
   stable_hash: debbb177
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: 4fe459d7
-  symbol_path:
-  - create_app
-  type: function_call
-  value: _setup_static_files
-  stable_hash: 4fe459d7
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: 39a02d07
-  symbol_path:
-  - create_app
-  - _make_errors_serializable
-  type: function_call
-  value: dict
-  stable_hash: 39a02d07
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: 11120d64
-  symbol_path:
-  - create_app
-  - _make_errors_serializable
-  type: function_call
-  value: str
-  stable_hash: 11120d64
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: 6853ab97
-  symbol_path:
-  - create_app
-  - _make_errors_serializable
-  type: return_statement
-  stable_hash: 6853ab97
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: ff896589
-  symbol_path:
-  - create_app
-  type: function_call
-  value: ErrorResponse
-  stable_hash: ff896589
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: debbb177
-  symbol_path:
-  - create_app
-  type: return_statement
-  stable_hash: debbb177
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: af2251e1
-  symbol_path:
-  - create_app
-  type: function_call
-  value: JSONResponse
-  stable_hash: af2251e1
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: ff896589
-  symbol_path:
-  - create_app
-  type: function_call
-  value: ErrorResponse
-  stable_hash: ff896589
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: debbb177
-  symbol_path:
-  - create_app
-  type: return_statement
-  stable_hash: debbb177
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: af2251e1
-  symbol_path:
-  - create_app
-  type: function_call
-  value: JSONResponse
-  stable_hash: af2251e1
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: 52acb3b4
-  symbol_path:
-  - create_app
-  type: function_call
-  value: _make_errors_serializable
-  stable_hash: 52acb3b4
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: ff896589
-  symbol_path:
-  - create_app
-  type: function_call
-  value: ErrorResponse
-  stable_hash: ff896589
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: debbb177
-  symbol_path:
-  - create_app
-  type: return_statement
-  stable_hash: debbb177
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: af2251e1
-  symbol_path:
-  - create_app
-  type: function_call
-  value: JSONResponse
-  stable_hash: af2251e1
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
-- id: 52acb3b4
-  symbol_path:
-  - create_app
-  type: function_call
-  value: _make_errors_serializable
-  stable_hash: 52acb3b4
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
 - id: e3aeeae0
   symbol_path:
   - create_app
   type: function_call
   value: add_exception_handlers
   stable_hash: e3aeeae0
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
+- id: 4fe459d7
+  symbol_path:
+  - create_app
+  type: function_call
+  value: _setup_static_files
+  stable_hash: 4fe459d7
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
 - id: debbb177
   symbol_path:
@@ -7299,6 +7202,40 @@
   type: function_call
   value: get_error_title
   stable_hash: 0d65b8b8
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: c0dbe6d7
+  symbol_path:
+  - add_exception_handlers
+  type: return_statement
+  stable_hash: c0dbe6d7
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: f7d4b3a6
+  symbol_path:
+  - add_exception_handlers
+  type: function_call
+  value: JSONResponse
+  stable_hash: f7d4b3a6
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: ccd2cfee
+  symbol_path:
+  - add_exception_handlers
+  type: function_call
+  value: ErrorResponse
+  stable_hash: ccd2cfee
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: 18f2f5b8
+  symbol_path:
+  - add_exception_handlers
+  type: function_call
+  value: dict
+  stable_hash: 18f2f5b8
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: c23b222a
+  symbol_path:
+  - add_exception_handlers
+  type: function_call
+  value: str
+  stable_hash: c23b222a
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
 - id: c0dbe6d7
   symbol_path:
@@ -15522,40 +15459,40 @@
   value: str
   stable_hash: 1ba67589
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
-- id: 7c181d30
+- id: 9f362995
   symbol_path:
   - _handle_value_error
   type: function_call
-  value: HTTPException
-  stable_hash: 7c181d30
+  value: AppException
+  stable_hash: 9f362995
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
-- id: 7c181d30
+- id: 9f362995
   symbol_path:
   - _handle_value_error
   type: function_call
-  value: HTTPException
-  stable_hash: 7c181d30
+  value: AppException
+  stable_hash: 9f362995
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
-- id: 7c181d30
+- id: 9f362995
   symbol_path:
   - _handle_value_error
   type: function_call
-  value: HTTPException
-  stable_hash: 7c181d30
+  value: AppException
+  stable_hash: 9f362995
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
-- id: 7c181d30
+- id: 9f362995
   symbol_path:
   - _handle_value_error
   type: function_call
-  value: HTTPException
-  stable_hash: 7c181d30
+  value: AppException
+  stable_hash: 9f362995
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
-- id: 7c181d30
+- id: 9f362995
   symbol_path:
   - _handle_value_error
   type: function_call
-  value: HTTPException
-  stable_hash: 7c181d30
+  value: AppException
+  stable_hash: 9f362995
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
 - id: 2480815e
   symbol_path: []
@@ -15563,11 +15500,11 @@
   value: get_config
   stable_hash: 2480815e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
-- id: ea214b68
+- id: 159339e5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: ea214b68
+  value: AppException
+  stable_hash: 159339e5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
 - id: 86bdcf3c
   symbol_path: []
@@ -15581,11 +15518,11 @@
   value: str
   stable_hash: 832ab036
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
-- id: ea214b68
+- id: 159339e5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: ea214b68
+  value: AppException
+  stable_hash: 159339e5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
 - id: d5378398
   symbol_path: []
@@ -15617,11 +15554,11 @@
   value: len
   stable_hash: 2c366a56
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
-- id: ea214b68
+- id: 159339e5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: ea214b68
+  value: AppException
+  stable_hash: 159339e5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
 - id: 832ab036
   symbol_path: []
@@ -15652,11 +15589,11 @@
   value: _handle_value_error
   stable_hash: b7528da8
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
-- id: ea214b68
+- id: 159339e5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: ea214b68
+  value: AppException
+  stable_hash: 159339e5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
 - id: 832ab036
   symbol_path: []
@@ -15664,11 +15601,11 @@
   value: str
   stable_hash: 832ab036
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
-- id: ea214b68
+- id: 159339e5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: ea214b68
+  value: AppException
+  stable_hash: 159339e5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
 - id: a1ed73b7
   symbol_path: []
@@ -15705,23 +15642,23 @@
   type: return_statement
   stable_hash: 455d3e9c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
-- id: ea214b68
+- id: 159339e5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: ea214b68
+  value: AppException
+  stable_hash: 159339e5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
-- id: ea214b68
+- id: 159339e5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: ea214b68
+  value: AppException
+  stable_hash: 159339e5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
-- id: ea214b68
+- id: 159339e5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: ea214b68
+  value: AppException
+  stable_hash: 159339e5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
 - id: a1ed73b7
   symbol_path: []
@@ -15758,23 +15695,23 @@
   type: return_statement
   stable_hash: 455d3e9c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
-- id: ea214b68
+- id: 159339e5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: ea214b68
+  value: AppException
+  stable_hash: 159339e5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
-- id: ea214b68
+- id: 159339e5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: ea214b68
+  value: AppException
+  stable_hash: 159339e5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
-- id: ea214b68
+- id: 159339e5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: ea214b68
+  value: AppException
+  stable_hash: 159339e5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
 - id: bdc30e08
   symbol_path: []

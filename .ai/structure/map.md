@@ -109,6 +109,7 @@ C:\PY_DEV\MKOBI
 |   +---tasks
 |   |   +---done
 |   |   |       TASK_001_error_code_enum_DONE.yaml
+|   |   |       TASK_002_exception_handlers_DONE.yaml
 |   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
@@ -116,7 +117,6 @@ C:\PY_DEV\MKOBI
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
-|   |   |       TASK_002_exception_handlers.yaml
 |   |   |       TASK_003_upload_migration.yaml
 |   |   |       TASK_004_auth_migration.yaml
 |   |   |       TASK_005_admin_migration.yaml
@@ -18760,23 +18760,23 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           AdminPanel-TU2tF_Jw.js
-|   |           ChangePasswordPage-SPmlr291.js
-|   |           dashboardApi-CQAUXYP2.js
-|   |           DashboardList-DYMDFk0H.js
-|   |           DashboardView-BZm7bANB.js
+|   |           AdminPanel-Bcj2khcE.js
+|   |           ChangePasswordPage-DE7BZF4G.js
+|   |           dashboardApi-BnmMWHon.js
+|   |           DashboardList-QI164fST.js
+|   |           DashboardView-BXqeAxPK.js
 |   |           enums-C2UQ_cl5.js
 |   |           formSchemas-9t2fc2Ft.js
-|   |           index-tml5NGAj.js
-|   |           LoginForm-jSB0v300.js
+|   |           index-BJXpCCxY.js
+|   |           LoginForm-njb4KbFH.js
 |   |           mui-nuHIX8iL.js
 |   |           plotly-BNZeab9N.js
 |   |           react-BIoCyPHR.js
-|   |           RegisterForm-DpxDrgqs.js
+|   |           RegisterForm-BmZWVojo.js
 |   |           rolldown-runtime-S-ySWqyJ.js
 |   |           shortUuid-TYuFZJYs.js
-|   |           userApi-DOUaD7v1.js
-|   |           UserProfile-CAzNpBN_.js
+|   |           userApi-BmYONjg1.js
+|   |           UserProfile-C7exRxDD.js
 |   |           vendor-Bx3jSdF9.js
 |   |           
 |   +---node_modules

@@ -214,7 +214,7 @@ class TestRefreshToken:
         )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         data = response.json()
-        assert "User not found" in data["error"]
+        assert "User not found" in data["detail"]
 
 
 class TestDeactivatedUser:
@@ -257,7 +257,7 @@ class TestDeactivatedUser:
         response = await async_client.get("/auth/me")
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
         data = response.json()
-        assert "deactivated" in data["error"].lower()
+        assert "deactivated" in data["detail"].lower()
 
 
 class TestRateLimiting:

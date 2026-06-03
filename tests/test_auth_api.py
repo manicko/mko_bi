@@ -128,7 +128,7 @@ class TestCookieAuthFlow:
         """Test that refresh fails without refresh cookie."""
         response = await async_client.post("/auth/refresh")
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
-        assert response.json()["error"] == "Refresh token not found"
+        assert response.json()["detail"] == "Refresh token not found"
 
     async def test_refresh_fails_with_invalid_cookie(
         self, async_client: AsyncClient
@@ -139,7 +139,7 @@ class TestCookieAuthFlow:
             cookies={"mkobi_refresh_token": "invalid.token.here"},
         )
         assert response.status_code == status.HTTP_401_UNAUTHORIZED
-        assert response.json()["error"] == "Invalid token"
+        assert response.json()["detail"] == "Invalid token"
 
     async def test_refresh_returns_new_access_token(
         self, async_client: AsyncClient, test_user: dict
@@ -328,8 +328,8 @@ class TestAdminResetPasswordEndpoint:
             f"/admin/users/{admin_user.id}/reset-password",
             headers={"Authorization": f"Bearer {admin_token}"},
         )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "own password" in response.json()["error"].lower()
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert "own password" in response.json()["detail"].lower()
 
     async def test_admin_reset_password_nonexistent_user(
         self, async_client: AsyncClient, async_db_session
@@ -361,8 +361,8 @@ class TestAdminResetPasswordEndpoint:
             f"/admin/users/{fake_user_id}/reset-password",
             headers={"Authorization": f"Bearer {admin_token}"},
         )
-        assert response.status_code == status.HTTP_400_BAD_REQUEST
-        assert "not found" in response.json()["error"].lower()
+        assert response.status_code == status.HTTP_404_NOT_FOUND
+        assert "not found" in response.json()["detail"].lower()
 
     async def test_admin_reset_password_non_admin_forbidden(
         self, async_client: AsyncClient, async_db_session

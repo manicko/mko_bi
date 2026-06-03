@@ -293,7 +293,7 @@ N,South,Product12,999999.99,249999.99,2023-01-14,999
                     )
 
                 assert response.status_code == status.HTTP_413_CONTENT_TOO_LARGE
-                assert "exceeds" in response.json()["error"].lower()
+                assert "exceeds" in response.json()["detail"].lower()
             finally:
                 csv_path.unlink(missing_ok=True)
 
@@ -599,7 +599,7 @@ N,South,Product12,999999.99,249999.99,2023-01-14,999
             )
         assert response.status_code == status.HTTP_404_NOT_FOUND
         data = response.json()
-        assert "dashboard" in data.get("error", "").lower()
+        assert "dashboard" in data.get("detail", "").lower()
 
 
 class TestTempFileCleanup:
