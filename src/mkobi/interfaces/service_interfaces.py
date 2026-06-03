@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.models.dashboard import DashboardRead, DashboardSummary
 from mkobi.models.data import ProcessingResultData, ProcessingResult, ProcessingStatusResponse, UploadResponse
-from mkobi.models.enums import UploadMode, UserRole
+from mkobi.models.enums import UploadMode, UserRole, DashboardPermission
 from mkobi.models.filters import FilterRead, FilterUpdate
 from mkobi.models.graph import GraphRead
 from mkobi.models.layout import LayoutRead, LayoutUpdate
@@ -201,6 +201,7 @@ class IDashboardService(abc.ABC):
         db: AsyncSession,
         update_data: dict[str, Any] | None = None,
         config: dict[str, Any] | None = None,
+        permission: DashboardPermission | None = None,
     ) -> DashboardRead | None:
         """Update dashboard."""
         pass

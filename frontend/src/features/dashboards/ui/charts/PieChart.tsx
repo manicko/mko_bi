@@ -1,17 +1,17 @@
 import { PlotlyChart } from './PlotlyChart'
-import type { PlotlyData, PlotlyLayout } from '../../../../shared/types/api.types'
+import type { Data, Layout } from 'react-plotly.js'
 
 interface PieChartProps {
-  data: PlotlyData
-  layout?: PlotlyLayout
+  data: Data
+  layout?: Layout
   title?: string
 }
 
 export function PieChart({ data, layout, title }: PieChartProps) {
-  const chartLayout: Partial<PlotlyLayout> = {
+  const chartLayout: Partial<Layout> = {
     title: { text: title || '' },
     ...layout,
   }
 
-  return <PlotlyChart data={{ ...data, type: 'pie' } as PlotlyData} layout={chartLayout as PlotlyLayout} />
+  return <PlotlyChart data={[data]} layout={chartLayout} />
 }

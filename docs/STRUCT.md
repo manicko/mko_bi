@@ -64,23 +64,12 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
-|   |   |   ORDER_01.yaml
-|   |   |   PLAN_01.md
-|   |   |   TASK_001_guide_first_half.yaml
-|   |   |   TASK_002_guide_second_half.yaml
-|   |   |   TASK_003_verify_guide.yaml
-|   |   |   
 |   |   \---tasks
 |   +---problems
 |   |   |   CONTEXT_01.md
 |   |   |   
 |   |   \---decisions
-|   |           DECISION_01.md
-|   |           
 |   +---researches
-|   |       RESEARCH_01.md
-|   |       RESEARCH_02.md
-|   |       
 |   +---structure
 |   |   |   map.md
 |   |   |   
@@ -94,30 +83,14 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
-|   |   |       TASK_001_dashboard_filter_values_model_DONE.yaml
-|   |   |       TASK_002_dashboard_filter_values_repository_DONE.yaml
-|   |   |       TASK_003_aggregation_service_DONE.yaml
-|   |   |       TASK_004_wire_csv_parsing_config_DONE.yaml
-|   |   |       TASK_005_refactor_store_aggregates_DONE.yaml
-|   |   |       TASK_006_filter_values_api_endpoint_DONE.yaml
-|   |   |       TASK_007_frontend_filter_values_hook_DONE.yaml
-|   |   |       TASK_008_chart_renderer_component_DONE.yaml
-|   |   |       TASK_009_seed_test_media_dash_DONE.yaml
-|   |   |       TASK_010_verify_phase_02_DONE.yaml
-|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
-|   |   |       TASK_001_guide_first_half.yaml
-|   |   |       TASK_002_guide_second_half.yaml
-|   |   |       TASK_003_verify_guide.yaml
 |   |   |       
 |   |   \---validation
-|   |           implementation_audit_001.md
-|   |           
 |   \---templates
 |           decision.md
 |           ui-brand.md
@@ -18657,6 +18630,7 @@ C:\PY_DEV\MKOBI
 |   |       security-checklist.md
 |   |       
 |   +---11-guides
+|   |       create-dashboard.md
 |   |       docker.md
 |   |       task-queue-migration.md
 |   |       
@@ -18737,23 +18711,23 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           AdminPanel-BfL2uFeh.js
-|   |           ChangePasswordPage-DD1UKzwW.js
-|   |           dashboardApi-BbmQN08W.js
-|   |           DashboardList-CjvnQwF4.js
-|   |           DashboardView-D463q2H_.js
+|   |           AdminPanel-CULrQeeH.js
+|   |           ChangePasswordPage-BvnMSuzF.js
+|   |           dashboardApi-DxTeoro8.js
+|   |           DashboardList-Cizzg8fO.js
+|   |           DashboardView-z-_2yH2e.js
 |   |           enums-C2UQ_cl5.js
 |   |           formSchemas-9t2fc2Ft.js
-|   |           index-9ruWLRuD.js
-|   |           LoginForm-DR7N9Tmc.js
+|   |           index-CUWZZe07.js
+|   |           LoginForm-DMvvp3VG.js
 |   |           mui-nuHIX8iL.js
 |   |           plotly-BNZeab9N.js
 |   |           react-BIoCyPHR.js
-|   |           RegisterForm-Cp39-cB-.js
+|   |           RegisterForm-B70YwwfU.js
 |   |           rolldown-runtime-S-ySWqyJ.js
 |   |           shortUuid-TYuFZJYs.js
-|   |           userApi-k3JlPeid.js
-|   |           UserProfile-L9EEG-v9.js
+|   |           userApi-CZtFnUDS.js
+|   |           UserProfile-Dba0gtBq.js
 |   |           vendor-Bx3jSdF9.js
 |   |           
 |   +---node_modules
@@ -99756,6 +99730,7 @@ C:\PY_DEV\MKOBI
 |       |   |   \---__tests__
 |       |   |           authFlow.test.tsx
 |       |   |           
+|       |   +---charts
 |       |   +---dashboards
 |       |   |   |   index.ts
 |       |   |   |   

@@ -96,6 +96,7 @@ class DashboardRead(BaseModel):
     name: str
     description: str | None
     config: DashboardConfig
+    permission: DashboardPermission
     layout_id: UUID | None = None
     layout: LayoutRead | None = None
     created_at: datetime

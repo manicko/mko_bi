@@ -126,7 +126,7 @@ async def upload_file_endpoint(
         )
         if not await rate_limiter.check_rate_limit(
             f"upload:{current_user.id}",
-            max_attempts=10,
+            max_attempts=100,
             ttl=3600,
         ):
             logger.warning(

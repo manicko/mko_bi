@@ -5,7 +5,6 @@ including support for compressed .csv.gz files.
 """
 
 import asyncio
-import gzip
 import logging
 from pathlib import Path
 from typing import Any
@@ -206,10 +205,9 @@ class CSVLoader:
 
             if file_path.suffix == ".gz" or file_path.name.endswith(".csv.gz"):
                 logger.debug("Reading gzipped CSV file (lazy): %s", file_path)
-                return pl.scan_csv(file_path, **read_kwargs).collect()
             else:
                 logger.debug("Reading normal CSV file (lazy): %s", file_path)
-                return pl.scan_csv(file_path, **read_kwargs).collect()
+            return pl.scan_csv(file_path, **read_kwargs).collect()
         except Exception as e:
             logger.error("Error reading CSV file (lazy) %s: %s", file_path, e)
             raise
@@ -282,16 +280,16 @@ class CSVLoader:
                     read_kwargs["separator"] = config["separator"]
                 if "has_header" in config:
                     read_kwargs["has_header"] = config["has_header"]
+            if config and "encoding" in config:
+                read_kwargs["encoding"] = config["encoding"]
 
             if file_path.suffix == ".gz" or file_path.name.endswith(".csv.gz"):
                 logger.debug("Reading gzipped CSV file: %s", file_path)
-                encoding = config.get("encoding", "utf-8") if config else "utf-8"
-                with gzip.open(file_path, "rt", encoding=encoding) as f:
+                import gzip
+                with gzip.open(file_path, "rb") as f:
                     return pl.read_csv(f, **read_kwargs)
             else:
                 logger.debug("Reading normal CSV file: %s", file_path)
-                if config and "encoding" in config:
-                    read_kwargs["encoding"] = config["encoding"]
                 return pl.read_csv(file_path, **read_kwargs)
         except Exception as e:
             logger.error("Error reading CSV file %s: %s", file_path, e)

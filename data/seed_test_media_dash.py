@@ -51,8 +51,9 @@ async def seed_test_media_dash() -> dict[str, Any]:
             )
             db.add(dashboard)
 
-        # Set dashboard config with filters
+        # Set dashboard config with filters and graph types
         dashboard.config = {
+            "graph_types": ["bar"],
             "filters": [
                 {
                     "field": "targetaudience",

@@ -118,6 +118,7 @@ class ProcessingConfig(BaseModel):
     aggregations: list[AggregationConfig] | None = None
     sort_by: list[str] | None = None
     descending: bool = False
+    limit: int | None = None
     yoy_config: YoyConfig | None = None
     share_config: ShareConfig | None = None
     custom_metrics: list[CustomMetricConfig] | None = None

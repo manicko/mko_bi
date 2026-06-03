@@ -1,9 +1,9 @@
 import { PlotlyChart } from './PlotlyChart'
-import type { PlotlyData, PlotlyLayout } from '../../../../shared/types/api.types'
+import type { Data, Layout } from 'react-plotly.js'
 
 interface BarChartProps {
-  data: PlotlyData
-  layout?: PlotlyLayout
+  data: Data
+  layout?: Layout
   title?: string
   xAxisLabel?: string
   yAxisLabel?: string
@@ -16,7 +16,7 @@ export function BarChart({
   xAxisLabel,
   yAxisLabel,
 }: BarChartProps) {
-  const chartLayout: Partial<PlotlyLayout> = {
+  const chartLayout: Partial<Layout> = {
     title: { text: title || '' },
     xaxis: { title: { text: xAxisLabel || '' }, type: 'category' },
     yaxis: { title: { text: yAxisLabel || '' } },
@@ -24,5 +24,5 @@ export function BarChart({
     ...layout,
   }
 
-  return <PlotlyChart data={{ ...data, type: 'bar' } as PlotlyData} layout={chartLayout as PlotlyLayout} />
+  return <PlotlyChart data={[data]} layout={chartLayout} />
 }

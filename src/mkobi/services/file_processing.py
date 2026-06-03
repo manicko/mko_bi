@@ -347,10 +347,9 @@ async def enqueue_processing_job(
 
     await enqueue_job(
         process_csv_background,
-        file_path=file_path,
-        dashboard_id=str(dashboard_id),
+        file_path_str=file_path,
+        dashboard_id_str=str(dashboard_id),
         task_id=str(task_id),
-        log_id=str(task_id),
-        mode=mode,
+        mode=str(mode),
         processing_config_dict=processing_config,
     )

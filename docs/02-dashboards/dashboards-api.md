@@ -51,9 +51,8 @@ Retrieve all dashboards the current user has access to.
     "id": "550e8400-e29b-41d4-a716-446655440000",
     "name": "Sales Dashboard",
     "description": "Quarterly sales metrics",
-    "layout_id": "660e8400-e29b-41d4-a716-446655440001",
-    "created_at": "2026-04-24T16:02:46+03:00",
-    "updated_at": "2026-04-24T16:02:46+03:00"
+    "permission": "view",
+    "created_at": "2026-04-24T16:02:46+03:00"
   }
 ]
 ```
@@ -83,8 +82,15 @@ Retrieve a single dashboard by ID. Requires access to the dashboard.
   "id": "550e8400-e29b-41d4-a716-446655440000",
   "name": "Sales Dashboard",
   "description": "Quarterly sales metrics",
+  "config": {
+    "graph_types": ["bar", "line"],
+    "filters": [
+      {"field": "year", "type": "select"},
+      {"field": "category", "type": "multiselect"}
+    ]
+  },
+  "permission": "view",
   "layout_id": "660e8400-e29b-41d4-a716-446655440001",
-  "created_by": "770e8400-e29b-41d4-a716-446655440002",
   "created_at": "2026-04-24T16:02:46+03:00",
   "updated_at": "2026-04-24T16:02:46+03:00"
 }
@@ -134,13 +140,13 @@ Create a new dashboard. Admin only.
 
 ### 4. Update Dashboard
 
-Update an existing dashboard. Admin only.
+Update an existing dashboard. Requires edit permission on the dashboard.
 
 | Attribute      | Value                          |
 | -------------- | ------------------------------ |
 | **Method**     | `PUT`                          |
 | **Path**       | `/api/v1/dashboards/:id`       |
-| **Auth level** | Admin                          |
+| **Auth level** | Editor (or admin on dashboard)  |
 
 **Path parameters:**
 
@@ -162,23 +168,23 @@ Update an existing dashboard. Admin only.
 
 **Error responses:**
 
-| Status | Condition                    | Detail                       |
-| ------ | ---------------------------- | ---------------------------- |
-| `403`  | Caller is not admin          | Forbidden                    |
-| `404`  | Dashboard not found          | `Dashboard not found`        |
-| `422`  | Validation error             | Error message                |
+| Status | Condition                              | Detail                       |
+| ------ | -------------------------------------- | ---------------------------- |
+| `403`  | User lacks edit permission on dashboard  | `You don't have access to this dashboard` |
+| `404`  | Dashboard not found                    | `Dashboard not found`        |
+| `422`  | Validation error                       | Error message                |
 
 ---
 
 ### 5. Delete Dashboard
 
-Delete a dashboard and all associated data (graphs, aggregated data, access entries). Admin only.
+Delete a dashboard and all associated data (graphs, aggregated data, access entries). Requires admin permission on the dashboard.
 
-| Attribute      | Value                          |
-| -------------- | ------------------------------ |
+| Attribute      | Value                                      |
+| -------------- | ------------------------------------------ |
 | **Method**     | `DELETE`                       |
 | **Path**       | `/api/v1/dashboards/:id`       |
-| **Auth level** | Admin                          |
+| **Auth level** | Editor (admin permission on dashboard)    |
 
 **Path parameters:**
 
@@ -190,10 +196,10 @@ Delete a dashboard and all associated data (graphs, aggregated data, access entr
 
 **Error responses:**
 
-| Status | Condition                    | Detail                       |
-| ------ | ---------------------------- | ---------------------------- |
-| `403`  | Caller is not admin          | Forbidden                    |
-| `404`  | Dashboard not found          | `Dashboard not found`        |
+| Status | Condition                              | Detail                       |
+| ------ | -------------------------------------- | ---------------------------- |
+| `403`  | User lacks admin permission on dashboard | `You don't have access to this dashboard` |
+| `404`  | Dashboard not found                    | `Dashboard not found`        |
 
 **Cascading effects:** Deleting a dashboard removes all associated graphs, aggregated data, dashboard access entries, dashboard-filter links, and processing configs (via `ON DELETE CASCADE`).
 

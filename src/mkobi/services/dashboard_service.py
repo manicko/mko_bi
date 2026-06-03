@@ -25,7 +25,7 @@ from mkobi.models.dashboard import (
     DashboardRead,
     DashboardSummary,
 )
-from mkobi.models.enums import DashboardPermission, GraphType, UserRole
+from mkobi.models.enums import DashboardPermission, UserRole
 from mkobi.models.layout import LayoutRead
 from mkobi.utils.exceptions import PermissionDeniedException
 
@@ -115,7 +115,7 @@ class DashboardService(IDashboardService):
             )
 
             # Convert to Pydantic model with layout data
-            return await self._dashboard_to_read(dashboard_obj, db)
+            return await self._dashboard_to_read(dashboard_obj, db, DashboardPermission.ADMIN)
 
         except ValueError:
             # Validation errors don't require rollback (transaction not started)
@@ -166,7 +166,7 @@ class DashboardService(IDashboardService):
                 dashboard_id,
                 user_id,
             )
-            return await self._dashboard_to_read(dashboard_obj, db)
+            return await self._dashboard_to_read(dashboard_obj, db, DashboardPermission.ADMIN)
 
         # Check user access if access_repo is available
         permission = None
@@ -190,7 +190,9 @@ class DashboardService(IDashboardService):
 
         # Convert to Pydantic model with layout data
         try:
-            dashboard_read = await self._dashboard_to_read(dashboard_obj, db)
+            dashboard_read = await self._dashboard_to_read(
+                dashboard_obj, db, DashboardPermission(permission)
+            )
             return dashboard_read
         except Exception as e:
             logger.error(
@@ -218,7 +220,7 @@ class DashboardService(IDashboardService):
         dashboard = await self.dashboard_repo.get_by_name(name, db)
         if dashboard is None:
             return None
-        return await self._dashboard_to_read(dashboard, db)
+        return await self._dashboard_to_read(dashboard, db, DashboardPermission.VIEW)
 
     async def get_user_dashboards(
         self,
@@ -263,6 +265,7 @@ class DashboardService(IDashboardService):
         db: AsyncSession,
         update_data: dict[str, Any] | None = None,
         config: dict[str, Any] | None = None,
+        permission: DashboardPermission | None = None,
     ) -> DashboardRead | None:
         """Update dashboard.
 
@@ -271,6 +274,7 @@ class DashboardService(IDashboardService):
             db: Async database session.
             update_data: Data for update (config, layout_id, etc.).
             config: Configuration (optional, for backward compatibility).
+            permission: User's permission level for response (optional).
 
         Returns:
             DashboardRead or None if not found.
@@ -310,7 +314,8 @@ class DashboardService(IDashboardService):
             return None
         await db.commit()
 
-        return await self._dashboard_to_read(updated, db)
+        perm = permission if permission is not None else DashboardPermission.VIEW
+        return await self._dashboard_to_read(updated, db, perm)
 
     async def delete_dashboard(
         self,
@@ -345,7 +350,7 @@ class DashboardService(IDashboardService):
         dashboards = await self.dashboard_repo.get_all(db)
         result = []
         for dashboard in dashboards:
-            result.append(await self._dashboard_to_read(dashboard, db))
+            result.append(await self._dashboard_to_read(dashboard, db, DashboardPermission.VIEW))
         return result
 
     async def grant_access(
@@ -472,7 +477,7 @@ class DashboardService(IDashboardService):
             )
             raise
 
-    # --- Helper methods ---
+# --- Helper methods ---
 
     def _validate_permission(self, permission: str) -> None:
         """Validate that access level is allowed."""
@@ -503,18 +508,11 @@ class DashboardService(IDashboardService):
                 "Dashboard configuration must contain at least one graph type"
             )
 
-        for graph_type in config.graph_types:
-            try:
-                GraphType(graph_type)
-            except ValueError as err:
-                logger.error("Invalid graph type: '%s'", graph_type)
-                raise ValueError(
-                    f"Invalid graph type: '{graph_type}'. "
-                    f"Allowed values: {', '.join([e.value for e in GraphType])}"
-                ) from err
-
     async def _dashboard_to_read(
-        self, dashboard_obj: dashboard_model.Dashboard, db: AsyncSession
+        self,
+        dashboard_obj: dashboard_model.Dashboard,
+        db: AsyncSession,
+        permission: DashboardPermission | None = None,
     ) -> DashboardRead:
         """Convert dashboard model to Pydantic DashboardRead model."""
         # Handle config which might be None or empty dict
@@ -524,11 +522,15 @@ class DashboardService(IDashboardService):
         else:
             config = DashboardConfig(**config_data)
 
+        # Use default permission if not provided
+        perm_value = permission if permission is not None else DashboardPermission.VIEW
+
         dashboard_dict = {
             "id": dashboard_obj.id,
             "name": dashboard_obj.name,
             "description": dashboard_obj.description,
             "config": config,
+            "permission": perm_value,
             "layout_id": dashboard_obj.layout_id,
             "created_at": dashboard_obj.created_at,
             "updated_at": dashboard_obj.updated_at,

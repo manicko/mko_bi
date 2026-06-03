@@ -29,7 +29,7 @@ from mkobi.models.dashboard import (
 )
 from mkobi.services.dashboard_service import DashboardService
 from mkobi.utils.exceptions import PermissionDeniedException
-from mkobi.models.enums import UserRole
+from mkobi.models.enums import UserRole, DashboardPermission
 
 logger = logging.getLogger(__name__)
 
@@ -320,6 +320,7 @@ async def update_dashboard_endpoint(
 
     # Check resource-level access: admin role or edit permission on dashboard
     # Admin users bypass resource-level checks
+    has_edit_access = False
     if current_user.role != UserRole.ADMIN:
         has_edit_access = await check_dashboard_access(
             user_id=current_user.id,
@@ -339,10 +340,14 @@ async def update_dashboard_endpoint(
             )
 
     try:
+        # Determine user's permission for response
+        user_permission = DashboardPermission.EDIT if current_user.role == UserRole.ADMIN or has_edit_access else DashboardPermission.VIEW
+
         updated = await dashboard_service.update_dashboard(
             dashboard_id=dashboard_id,
             update_data=dashboard_update.model_dump(exclude_unset=True),
             db=db,
+            permission=user_permission,
         )
         if updated is None:
             logger.warning("Dashboard not found for update: id=%s", dashboard_id)
