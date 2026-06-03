@@ -1,0 +1,100 @@
+---
+id: TASK_07_01
+name: End-to-end verification of error handling
+wave: 7
+depends_on:
+  - TASK_02_01
+  - TASK_02_02
+  - TASK_03_01
+  - TASK_03_02
+  - TASK_04_01
+  - TASK_04_02
+  - TASK_04_03
+  - TASK_04_04
+  - TASK_04_05
+  - TASK_05_01
+  - TASK_05_02
+  - TASK_05_03
+  - TASK_06_01
+  - TASK_06_02
+  - TASK_06_03
+files_modified: []
+autonomous: true
+description: |
+  Comprehensive end-to-end verification of the entire error handling standardization.
+  This is a verification task that runs all checks and confirms correctness.
+
+  Steps:
+  1. Verify zero HTTPException raise sites remain in route files:
+     Get-ChildItem src/mkobi/api/routes/*.py src/mkobi/api/deps.py |
+       Select-String -Pattern "raise HTTPException" | Measure-Object → should be 0
+
+  2. Run backend lint and type checks:
+     - cd C:\py_dev\mkobi; uv run ruff check src/
+     - cd C:\py_dev\mkobi; uv run mypy src/
+
+  3. Run frontend lint and type checks:
+     - cd C:\py_dev\mkobi\frontend; npm run build
+     - cd C:\py_dev\mkobi\frontend; npm run lint
+
+  4. Run backend tests:
+     - cd C:\py_dev\mkobi; uv run pytest tests/ -v --no-header
+     - Check for test failures related to error response format changes
+
+  5. Run frontend tests:
+     - cd C:\py_dev\mkobi\frontend; npm run test
+
+  6. Verify OpenAPI spec generation:
+     - Check that ErrorCode enum appears in the OpenAPI spec
+     - Verify error response schemas reflect RFC 7807 format
+
+  7. Manual smoke checks (if services are running):
+     - POST /auth/login with bad credentials → verify RFC 7807 JSON response
+     - GET /dashboards/nonexistent → verify 404 with RFC 7807 format
+     - POST /upload/ with oversized file → verify error format
+     - Verify no HTTPException appears in any response
+
+  8. Verify documentation files exist:
+     - AGENTS.md has Error Handling section
+     - docs/08-security/error-format.md exists
+     - docs/99-reference/error-handling-guide.md exists
+
+  9. Verify frontend files:
+     - ApiError interface exists in api.types.ts
+     - extractApiError() exists in errorHandler.ts
+     - Per-feature error message maps exist
+     - Axios interceptor uses extractApiError()
+
+  10. If any checks fail, identify the specific task(s) that need rework and return them.
+acceptance_criteria:
+  - [ ] Zero HTTPException raise sites in any route/deps file
+  - [ ] Backend ruff check passes
+  - [ ] Backend mypy check passes
+  - [ ] Frontend build succeeds (TypeScript compilation)
+  - [ ] Frontend lint passes
+  - [ ] Backend tests pass (or failures are documented as known issues)
+  - [ ] Frontend tests pass (or failures are documented as known issues)
+  - [ ] ErrorCode enum appears in OpenAPI spec
+  - [ ] All documentation files created and valid
+  - [ ] All frontend error handling files created
+must_haves:
+  - Zero HTTPException raise sites remaining
+  - All lint and type checks pass
+  - RFC 7807 format verified in actual API responses
+  - Documentation complete
+validation:
+  - All acceptance criteria must pass
+  - Any failure must be traced to a specific implementation task for rework
+tests_to_run:
+  - uv run ruff check src/
+  - uv run mypy src/
+  - cd frontend; npm run build
+  - cd frontend; npm run lint
+  - uv run pytest tests/ -v
+  - cd frontend; npm run test
+risks:
+  - Tests referencing old error response format will fail and need updating
+  - Some HTTPException sites may have been missed in complex files
+  - OpenAPI spec changes may affect frontend type generation
+estimated_effort: medium
+risk_level: medium

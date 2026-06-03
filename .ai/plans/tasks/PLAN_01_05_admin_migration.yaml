@@ -1,0 +1,48 @@
+---
+id: TASK_03_01
+name: Migrate admin.py HTTPException sites to AppException
+wave: 3
+depends_on:
+  - TASK_01_01
+  - TASK_01_02
+files_modified:
+  - src/mkobi/api/routes/admin.py
+autonomous: true
+description: |
+  Migrate all 20 HTTPException raise sites in admin.py to use AppException with ErrorCode.
+
+  Mapping rules for admin.py:
+  - User not found → ErrorCode.USER_NOT_FOUND
+  - Dashboard not found → ErrorCode.DASHBOARD_NOT_FOUND
+  - Permission denied / insufficient permissions → ErrorCode.PERMISSION_DENIED
+  - Email already exists → ErrorCode.EMAIL_ALREADY_EXISTS
+  - Validation errors → ErrorCode.VALIDATION_ERROR
+  - Registration request not found → ErrorCode.NOT_FOUND
+  - Access denied → ErrorCode.ACCESS_DENIED
+
+  Steps:
+  1. Replace HTTPException import with AppException import
+  2. For each of the 20 raise sites, map to appropriate ErrorCode
+  3. Add details dict where useful context exists (e.g., {"user_id": user_id})
+  4. Verify admin role checks still function correctly
+  5. Verify no HTTPException imports remain
+acceptance_criteria:
+  - [ ] All 20 HTTPException raise sites replaced with AppException
+  - [ ] Each raise uses an ErrorCode enum value
+  - [ ] Admin role checks still function
+  - [ ] No HTTPException import remains
+  - [ ] All messages in English
+must_haves:
+  - Zero HTTPException raise sites remaining in admin.py
+  - Admin access control behavior unchanged
+validation:
+  - Run: uv run ruff check src/mkobi/api/routes/admin.py
+  - Run: uv run mypy src/mkobi/api/routes/admin.py
+  - Verify: Select-String -Path admin.py -Pattern "raise HTTPException" returns 0 results
+tests_to_run:
+  - uv run pytest tests/ -v -k "admin" --no-header 2>&1 | Select-Object -Last 20
+risks:
+  - Admin permission checks are security-critical — must not be weakened
+  - User management operations must maintain audit trail
+estimated_effort: medium
+risk_level: medium

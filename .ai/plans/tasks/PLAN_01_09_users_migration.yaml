@@ -1,0 +1,42 @@
+---
+id: TASK_04_03
+name: Migrate users.py HTTPException sites to AppException
+wave: 4
+depends_on:
+  - TASK_01_01
+  - TASK_01_02
+files_modified:
+  - src/mkobi/api/routes/users.py
+autonomous: true
+description: |
+  Migrate all 15 HTTPException raise sites in users.py to use AppException with ErrorCode.
+
+  Mapping rules for users.py:
+  - User not found → ErrorCode.USER_NOT_FOUND
+  - Email already exists → ErrorCode.EMAIL_ALREADY_EXISTS
+  - Validation errors → ErrorCode.VALIDATION_ERROR
+  - Permission denied → ErrorCode.PERMISSION_DENIED
+  - Invalid password → ErrorCode.INVALID_PASSWORD
+
+  Steps:
+  1. Replace HTTPException import with AppException import
+  2. For each of the 15 raise sites, map to appropriate ErrorCode
+  3. Add details dict where useful (e.g., {"user_id": user_id})
+  4. Verify no HTTPException imports remain
+acceptance_criteria:
+  - [ ] All 15 HTTPException raise sites replaced with AppException
+  - [ ] Each raise uses an ErrorCode enum value
+  - [ ] No HTTPException import remains
+  - [ ] All messages in English
+must_haves:
+  - Zero HTTPException raise sites remaining in users.py
+validation:
+  - Run: uv run ruff check src/mkobi/api/routes/users.py
+  - Run: uv run mypy src/mkobi/api/routes/users.py
+  - Verify: Select-String -Path users.py -Pattern "raise HTTPException" returns 0 results
+tests_to_run:
+  - uv run pytest tests/ -v -k "user" --no-header 2>&1 | Select-Object -Last 20
+risks:
+  - User management operations are security-sensitive
+estimated_effort: small
+risk_level: medium

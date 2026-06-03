@@ -1,0 +1,46 @@
+---
+id: TASK_03_02
+name: Migrate dashboards_crud.py HTTPException sites to AppException
+wave: 3
+depends_on:
+  - TASK_01_01
+  - TASK_01_02
+files_modified:
+  - src/mkobi/api/routes/dashboards_crud.py
+autonomous: true
+description: |
+  Migrate all 14 HTTPException raise sites in dashboards_crud.py to use AppException with ErrorCode.
+
+  Mapping rules for dashboards_crud.py:
+  - Dashboard not found → ErrorCode.DASHBOARD_NOT_FOUND
+  - Permission denied → ErrorCode.PERMISSION_DENIED
+  - Access denied → ErrorCode.ACCESS_DENIED
+  - Validation errors → ErrorCode.VALIDATION_ERROR
+  - Duplicate dashboard name → ErrorCode.DUPLICATE_RESOURCE
+
+  Steps:
+  1. Replace HTTPException import with AppException import
+  2. For each of the 14 raise sites, map to appropriate ErrorCode
+  3. Add details dict where useful (e.g., {"dashboard_id": dashboard_id})
+  4. Verify dashboard CRUD operations still function correctly
+  5. Verify no HTTPException imports remain
+acceptance_criteria:
+  - [ ] All 14 HTTPException raise sites replaced with AppException
+  - [ ] Each raise uses an ErrorCode enum value
+  - [ ] Dashboard CRUD operations unchanged
+  - [ ] No HTTPException import remains
+  - [ ] All messages in English
+must_haves:
+  - Zero HTTPException raise sites remaining in dashboards_crud.py
+  - Dashboard access control behavior unchanged
+validation:
+  - Run: uv run ruff check src/mkobi/api/routes/dashboards_crud.py
+  - Run: uv run mypy src/mkobi/api/routes/dashboards_crud.py
+  - Verify: Select-String -Path dashboards_crud.py -Pattern "raise HTTPException" returns 0 results
+tests_to_run:
+  - uv run pytest tests/ -v -k "dashboard" --no-header 2>&1 | Select-Object -Last 20
+risks:
+  - Dashboard access control is security-critical
+  - Nested raise sites (lines 249, 337, 354, 361, 424, 435) need careful attention
+estimated_effort: small
+risk_level: medium

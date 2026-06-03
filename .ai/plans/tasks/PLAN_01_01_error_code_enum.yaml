@@ -1,0 +1,93 @@
+---
+id: TASK_01_01
+name: Create ErrorCode StrEnum and restructure ErrorResponse/AppException
+wave: 1
+depends_on: []
+files_modified:
+  - src/mkobi/models/enums.py
+  - src/mkobi/utils/exceptions.py
+autonomous: true
+description: |
+  Foundation task: creates the centralized ErrorCode(StrEnum) and restructures
+  ErrorResponse and AppException to support RFC 7807 Problem Details format.
+
+  Steps:
+  1. Add ErrorCode(StrEnum) to src/mkobi/models/enums.py with all error codes:
+     - General: INTERNAL_ERROR, SERVICE_UNAVAILABLE, RATE_LIMIT_EXCEEDED
+     - Auth: AUTHENTICATION_FAILED, TOKEN_EXPIRED, TOKEN_REVOKED, INVALID_TOKEN
+     - Authorization: PERMISSION_DENIED, INSUFFICIENT_PERMISSIONS, ACCESS_DENIED
+     - Resource: NOT_FOUND, DASHBOARD_NOT_FOUND, USER_NOT_FOUND, GRAPH_NOT_FOUND,
+       FILTER_NOT_FOUND, LAYOUT_NOT_FOUND, PROCESSING_CONFIG_NOT_FOUND
+     - Validation: VALIDATION_ERROR, INVALID_EMAIL, INVALID_PASSWORD,
+       MISSING_REQUIRED_FIELD, INVALID_FIELD_VALUE
+     - File: FILE_UPLOAD_ERROR, FILE_TOO_LARGE, INVALID_FILE_TYPE, FILE_PROCESSING_ERROR
+     - Conflict: EMAIL_ALREADY_EXISTS, FILTER_ALREADY_BOUND, DUPLICATE_RESOURCE
+     - Processing: PROCESSING_FAILED, PROCESSING_IN_PROGRESS
+
+  2. Update ErrorResponse in src/mkobi/utils/exceptions.py to RFC 7807 shape:
+     - Fields: type (str), title (str), status (int), detail (str), code (ErrorCode),
+       details (dict | None)
+     - type always uses URI pattern: "https://api.mkobi.com/errors/{code}"
+     - title is a short human-readable summary
+     - status is the HTTP status code
+     - detail is the English dev-facing message
+     - code is the ErrorCode enum value
+     - details is optional structured context (e.g., {"field": "email"})
+
+  3. Update AppException constructor to accept:
+     - code: ErrorCode (required)
+     - detail: str (required)
+     - details: dict | None (optional, for structured context)
+     - status_code: int (derived from code mapping, with override support)
+     - Remove old error_code: str parameter
+
+   4. Update all 4 existing AppException subclasses to use ErrorCode:
+      - NotFoundException → code=ErrorCode.NOT_FOUND
+      - PermissionDeniedException → code=ErrorCode.PERMISSION_DENIED
+      - ValidationException → code=ErrorCode.VALIDATION_ERROR
+      - FileUploadException → code=ErrorCode.FILE_UPLOAD_ERROR
+      - Add new subclasses: AuthenticationException, ConflictException
+
+  5. Create a status_code mapping mechanism (class-level dict or method) on AppException
+     that maps ErrorCode → HTTP status code:
+     - NOT_FOUND → 404, DASHBOARD_NOT_FOUND → 404, etc.
+     - PERMISSION_DENIED → 403, ACCESS_DENIED → 403
+     - VALIDATION_ERROR → 422, INVALID_EMAIL → 422
+     - FILE_UPLOAD_ERROR → 400, FILE_TOO_LARGE → 413
+     - EMAIL_ALREADY_EXISTS → 409
+     - AUTHENTICATION_FAILED → 401, TOKEN_EXPIRED → 401
+     - INTERNAL_ERROR → 500, PROCESSING_FAILED → 500
+
+  6. Update add_exception_handlers() to produce RFC 7807 JSON:
+     - AppException handler: build ErrorResponse with type, title, status, detail, code, details
+     - Add StarletteHTTPException handler (for FastAPI's default 404/422) producing same format
+     - Global exception handler: same format with INTERNAL_ERROR code
+acceptance_criteria:
+  - [ ] ErrorCode(StrEnum) exists in src/mkobi/models/enums.py with all listed codes
+  - [ ] ErrorResponse model has RFC 7807 fields: type, title, status, detail, code, details
+  - [ ] AppException accepts code: ErrorCode and details: dict | None
+  - [ ] AppException subclasses use ErrorCode values
+  - [ ] Status code mapping correctly derives HTTP code from ErrorCode
+  - [ ] Exception handlers produce RFC 7807 JSON responses
+  - [ ] StarletteHTTPException handler produces same RFC 7807 format
+  - [ ] No print() statements added
+  - [ ] All type hints present
+  - [ ] All docstrings in English
+must_haves:
+  - ErrorCode(StrEnum) with UPPER_SNAKE_CASE convention, centralized in enums.py
+  - ErrorResponse model matching RFC 7807 with code and details extensions
+  - AppException as the SINGLE error-raising mechanism (no direct HTTPException)
+  - Exception handlers producing consistent RFC 7807 JSON shape
+validation:
+  - Run: uv run ruff check src/mkobi/models/enums.py src/mkobi/utils/exceptions.py
+  - Run: uv run mypy src/mkobi/models/enums.py src/mkobi/utils/exceptions.py
+  - Verify ErrorResponse.model_dump() produces correct RFC 7807 JSON structure
+tests_to_run:
+  - uv run pytest tests/ -v -k "exception or error" --no-header 2>&1 | Select-Object -Last 20
+risks:
+   - Status code mapping must be comprehensive — missing mappings cause 500 errors
+   - Existing tests referencing old ErrorResponse fields (error, code as str) will break
+   - StarletteHTTPException handler must not interfere with FastAPI's default validation errors
+   - ValidationException status code changes from 400 to 422 — existing tests checking for 400 will fail and need updating
+estimated_effort: medium
+risk_level: medium

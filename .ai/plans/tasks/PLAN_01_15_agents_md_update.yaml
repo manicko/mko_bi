@@ -1,0 +1,50 @@
+---
+id: TASK_06_01
+name: Update AGENTS.md with error handling section
+wave: 6
+depends_on:
+  - TASK_01_01
+  - TASK_01_02
+  - TASK_02_01
+  - TASK_02_02
+  - TASK_03_01
+  - TASK_03_02
+  - TASK_04_01
+  - TASK_04_02
+  - TASK_04_03
+  - TASK_04_04
+  - TASK_04_05
+files_modified:
+  - AGENTS.md
+autonomous: true
+description: |
+  Add a new "Error Handling" section to AGENTS.md documenting the standardized error system.
+
+  Steps:
+  1. Add "Error Handling" section after the existing "Security" section (or as a new subsection):
+     - Describe RFC 7807 Problem Details format with code and details extensions
+     - Document ErrorCode StrEnum location and naming convention (UPPER_SNAKE_CASE)
+     - Document AppException as the single error-raising mechanism
+     - Forbidden: raise HTTPException — use raise AppException(code=ErrorCode.XXX, detail="...")
+     - Forbidden: hardcoded error code strings — use ErrorCode enum values
+     - Document the status code mapping (ErrorCode → HTTP status)
+     - Document frontend error extraction chain and display strategy
+     - Document L1/L2/L3 error layers
+     - Reference docs/08-security/error-format.md and docs/99-reference/error-guide.md
+
+  2. Keep the section concise and actionable for future agents
+  3. All text in English
+acceptance_criteria:
+  - [ ] New "Error Handling" section added to AGENTS.md
+  - [ ] Section covers backend and frontend error handling
+  - [ ] Section includes "Forbidden" rules (no HTTPException, no hardcoded strings)
+  - [ ] Section references documentation files
+  - [ ] All text in English
+must_haves:
+  - AGENTS.md contains clear, actionable error handling rules for future agents
+validation:
+  - Manual review of AGENTS.md for completeness
+risks:
+  - None — documentation-only change
+estimated_effort: small
+risk_level: minimal

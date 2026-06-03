@@ -1,0 +1,41 @@
+---
+id: TASK_04_04
+name: Migrate layouts.py HTTPException sites to AppException
+wave: 4
+depends_on:
+  - TASK_01_01
+  - TASK_01_02
+files_modified:
+  - src/mkobi/api/routes/layouts.py
+autonomous: true
+description: |
+   Migrate all 15 HTTPException raise sites in layouts.py to use AppException with ErrorCode.
+
+  Mapping rules for layouts.py:
+  - Layout not found → ErrorCode.LAYOUT_NOT_FOUND
+  - Dashboard not found → ErrorCode.DASHBOARD_NOT_FOUND
+  - Permission denied → ErrorCode.PERMISSION_DENIED
+  - Validation errors → ErrorCode.VALIDATION_ERROR
+
+  Steps:
+  1. Replace HTTPException import with AppException import
+  2. For each raise site, map to appropriate ErrorCode
+  3. Add details dict where useful
+  4. Verify no HTTPException imports remain
+acceptance_criteria:
+  - [ ] All HTTPException raise sites replaced with AppException
+  - [ ] Each raise uses an ErrorCode enum value
+  - [ ] No HTTPException import remains
+  - [ ] All messages in English
+must_haves:
+  - Zero HTTPException raise sites remaining in layouts.py
+validation:
+  - Run: uv run ruff check src/mkobi/api/routes/layouts.py
+  - Run: uv run mypy src/mkobi/api/routes/layouts.py
+  - Verify: Select-String -Path layouts.py -Pattern "raise HTTPException" returns 0 results
+tests_to_run:
+  - uv run pytest tests/ -v -k "layout" --no-header 2>&1 | Select-Object -Last 20
+risks:
+  - Layout operations may have nested raise sites
+estimated_effort: small
+risk_level: low

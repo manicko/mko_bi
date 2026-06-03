@@ -1,0 +1,52 @@
+---
+id: TASK_05_02
+name: Update axios interceptor for RFC 7807 and localized toast errors
+wave: 5
+depends_on:
+  - TASK_05_01
+  - TASK_05_03
+files_modified:
+  - frontend/src/shared/api/axiosInstance.ts
+autonomous: true
+description: |
+  Update the axios response interceptor to handle RFC 7807 errors with localized toast messages.
+
+  Steps:
+  1. In the response interceptor error handler in axiosInstance.ts:
+     - Preserve existing 401 handling (token refresh queue, login skip, session expiry)
+     - Preserve existing 403 handling (toast.error('Access denied'))
+     - For all other error responses (non-401, non-403):
+       a. Call extractApiError(error) to get { code, message, details }
+       b. Look up localized message: check if message maps exist for the code
+       c. If details values exist, append them naturally to the message
+       d. Call toast.error(localizedMessage)
+       e. Reject the promise so callers can still handle the error
+
+  2. Import extractApiError from ./errorHandler
+  3. Import feature error message maps (created in TASK_05_03) — use dynamic lookup pattern:
+     - For now, import a combined error message map
+     - Resolution order: feature map → error.detail → generic fallback
+
+  4. Skip toast for login endpoint errors (same pattern as existing 401 skip for /auth/login)
+
+  5. Import localized messages: use hardcoded Russian strings (no i18n framework)
+acceptance_criteria:
+  - [ ] 401 handling preserved exactly (token refresh, queue, redirects)
+  - [ ] 403 handling preserved
+  - [ ] Non-401/403 errors trigger toast with localized message
+  - [ ] Login endpoint errors skipped (no toast)
+  - [ ] extractApiError() used for message extraction
+  - [ ] Promise still rejected after toast (callers can chain .catch)
+  - [ ] No `any` types
+must_haves:
+  - Existing 401/403/session handling unchanged
+  - Generic errors display localized Russian messages via toast
+  - Token refresh queue not broken
+validation:
+  - Run: npm run build (TypeScript compilation)
+  - Run: npm run lint
+risks:
+  - Must not break the token refresh queue — this is critical auth infrastructure
+  - Toast messages should be user-friendly, not technical
+estimated_effort: small
+risk_level: medium

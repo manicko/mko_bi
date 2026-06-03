@@ -1,0 +1,64 @@
+---
+id: TASK_05_03
+name: Create per-feature error message maps
+wave: 5
+depends_on:
+  - TASK_05_01
+files_modified:
+  - frontend/src/features/auth/model/errorMessages.ts
+  - frontend/src/features/upload/model/errorMessages.ts
+  - frontend/src/features/dashboards/model/errorMessages.ts
+  - frontend/src/features/admin/model/errorMessages.ts
+  - frontend/src/features/users/model/errorMessages.ts
+  - frontend/src/shared/api/errorMessages.ts
+autonomous: true
+description: |
+   Create per-feature localized error message maps (Record<ErrorCode, string>) in Russian.
+   Note: create the model/ directory if it doesn't exist in each feature folder.
+
+  Steps:
+  1. Create shared error message map in frontend/src/shared/api/errorMessages.ts:
+     - Contains general error codes: INTERNAL_ERROR, SERVICE_UNAVAILABLE, RATE_LIMIT_EXCEEDED
+     - Provides default fallback messages
+
+  2. Create per-feature error message maps:
+     - auth/model/errorMessages.ts: AUTHENTICATION_FAILED, TOKEN_EXPIRED, TOKEN_REVOKED,
+       INVALID_TOKEN, EMAIL_ALREADY_EXISTS, INVALID_EMAIL, INVALID_PASSWORD, RATE_LIMIT_EXCEEDED
+     - upload/model/errorMessages.ts: FILE_UPLOAD_ERROR, FILE_TOO_LARGE, INVALID_FILE_TYPE,
+       FILE_PROCESSING_ERROR, PROCESSING_FAILED, PROCESSING_IN_PROGRESS
+     - dashboards/model/errorMessages.ts: DASHBOARD_NOT_FOUND, PERMISSION_DENIED,
+       ACCESS_DENIED, VALIDATION_ERROR
+     - admin/model/errorMessages.ts: USER_NOT_FOUND, PERMISSION_DENIED, EMAIL_ALREADY_EXISTS,
+       VALIDATION_ERROR
+     - users/model/errorMessages.ts: USER_NOT_FOUND, INVALID_PASSWORD, VALIDATION_ERROR
+
+  3. Each map is `Record<string, string>` with Russian messages:
+     - AUTHENTICATION_FAILED → "Неверный email или пароль"
+     - TOKEN_EXPIRED → "Сессия истекла. Войдите заново."
+     - FILE_TOO_LARGE → "Файл слишком большой"
+     - DASHBOARD_NOT_FOUND → "Дашборд не найден"
+     - etc.
+
+  4. Create a combined lookup function in shared/api/errorMessages.ts that merges all maps
+     with per-feature override capability
+
+  5. Resolution order for display: feature map → shared map → error.detail → "Произошла ошибка"
+acceptance_criteria:
+  - [ ] Each feature has its own error message map file
+  - [ ] All messages are in Russian
+  - [ ] All ErrorCode values from backend have corresponding Russian messages
+  - [ ] Combined lookup function available for axios interceptor
+  - [ ] Fallback to "Произошла ошибка" for unknown codes
+  - [ ] No `any` types
+must_haves:
+  - Per-feature error message maps with Russian strings
+  - Resolution order: feature map → error.detail → generic fallback
+  - All backend ErrorCode values covered
+validation:
+  - Run: npm run build (TypeScript compilation)
+  - Run: npm run lint
+risks:
+  - Must keep in sync with backend ErrorCode enum — document this coupling
+  - Exact Russian text is at KiloCode's discretion per phase decisions
+estimated_effort: medium
+risk_level: low

@@ -1,0 +1,65 @@
+---
+id: TASK_01_02
+name: Update exception handlers for RFC 7807 format
+wave: 1
+depends_on:
+  - TASK_01_01
+files_modified:
+  - src/mkobi/utils/exceptions.py
+  - src/mkobi/api/app.py
+autonomous: true
+description: |
+  Refines exception handlers to fully produce RFC 7807 Problem Details responses.
+  Depends on TASK_01_01 for the updated ErrorResponse model and AppException.
+
+  Steps:
+  1. Update app_exception_handler in add_exception_handlers():
+     - Build ErrorResponse with all RFC 7807 fields
+     - type: f"https://api.mkobi.com/errors/{exc.code.value}"
+     - title: human-readable summary derived from code (e.g., "Not Found" for NOT_FOUND)
+     - status: exc.status_code
+     - detail: exc.detail
+     - code: exc.code.value
+     - details: exc.details (if present)
+
+  2. Add StarletteHTTPException handler to add_exception_handlers():
+     - Catches StarletteHTTPException (FastAPI's default for 404, 422, etc.)
+     - Maps to RFC 7807 format with appropriate ErrorCode:
+       - 404 → ErrorCode.NOT_FOUND
+       - 422 → ErrorCode.VALIDATION_ERROR
+       - 405 → ErrorCode.METHOD_NOT_ALLOWED (add to enum if needed)
+       - Others → ErrorCode.INTERNAL_ERROR for 5xx, ErrorCode.VALIDATION_ERROR for 4xx
+     - Preserves detail message from the original exception
+
+  3. Update global_exception_handler:
+     - Returns RFC 7807 format with ErrorCode.INTERNAL_ERROR
+     - Logs the full exception traceback
+     - Never exposes internal details in the response
+
+  4. Verify add_exception_handlers is called in app.py during FastAPI initialization
+
+  5. Ensure handlers are registered in correct order: AppException → StarletteHTTPException → Exception
+acceptance_criteria:
+  - [ ] AppException handler produces RFC 7807 JSON with all fields
+  - [ ] StarletteHTTPException handler produces same RFC 7807 format
+  - [ ] Global exception handler returns INTERNAL_ERROR without leaking internals
+  - [ ] Handlers registered in correct order in add_exception_handlers()
+  - [ ] type field uses URI format: "https://api.mkobi.com/errors/{code}"
+  - [ ] No print() statements
+  - [ ] All type hints present
+must_haves:
+  - All exception handlers produce consistent RFC 7807 shape
+  - StarletteHTTPException handler ensures even FastAPI default errors use the new format
+  - Global handler never leaks internal exception details
+validation:
+  - Run: uv run ruff check src/mkobi/utils/exceptions.py src/mkobi/api/app.py
+  - Run: uv run mypy src/mkobi/utils/exceptions.py src/mkobi/api/app.py
+  - Manual: raise AppException in a test endpoint and verify JSON response shape
+tests_to_run:
+  - uv run pytest tests/ -v -k "exception or error or handler" --no-header 2>&1 | Select-Object -Last 20
+risks:
+  - Handler registration order matters — wrong order causes incorrect responses
+  - StarletteHTTPException handler may conflict with FastAPI's built-in validation error responses
+  - Existing tests checking old response shape will need updates
+estimated_effort: small
+risk_level: low

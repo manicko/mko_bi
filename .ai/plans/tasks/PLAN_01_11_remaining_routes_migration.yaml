@@ -1,0 +1,63 @@
+---
+id: TASK_04_05
+name: Migrate remaining route files HTTPException sites to AppException
+wave: 4
+depends_on:
+  - TASK_01_01
+  - TASK_01_02
+files_modified:
+  - src/mkobi/api/routes/dashboards_access.py
+  - src/mkobi/api/routes/processing_configs.py
+  - src/mkobi/api/routes/dashboards_graphs.py
+  - src/mkobi/api/routes/processing_logs.py
+  - src/mkobi/api/routes/filter_values.py
+  - src/mkobi/api/routes/data.py
+  - src/mkobi/api/routes/dashboards_filters.py
+  - src/mkobi/api/routes/dashboards.py
+  - src/mkobi/api/routes/filters.py
+  - src/mkobi/api/routes/client_errors.py
+autonomous: true
+description: |
+  Migrate all remaining HTTPException raise sites across multiple route files to AppException.
+  These files have fewer sites each and can be processed in a single pass.
+
+  Files and site counts:
+  - dashboards_access.py: 7 sites
+  - processing_configs.py: 7 sites
+  - dashboards_graphs.py: 4 sites
+  - processing_logs.py: 3 sites
+  - filter_values.py: 1 site
+  - data.py: 6 sites
+  - dashboards_filters.py: 9 sites
+  - dashboards.py: check for any sites
+  - filters.py: check for any sites
+  - client_errors.py: check for any sites
+
+  Common mapping rules:
+  - Resource not found → appropriate NOT_FOUND variant (DASHBOARD_NOT_FOUND, USER_NOT_FOUND, etc.)
+  - Permission denied → ErrorCode.PERMISSION_DENIED
+  - Validation errors → ErrorCode.VALIDATION_ERROR
+  - Processing errors → ErrorCode.PROCESSING_FAILED
+  - Conflict → ErrorCode.DUPLICATE_RESOURCE or FILTER_ALREADY_BOUND
+
+  Steps:
+  1. For each file, replace HTTPException import with AppException import
+  2. For each raise site, map to appropriate ErrorCode
+  3. Add details dict where useful
+  4. Verify no HTTPException imports remain in any of the files
+acceptance_criteria:
+  - [ ] All HTTPException raise sites in all listed files replaced with AppException
+  - [ ] Each raise uses an ErrorCode enum value
+  - [ ] No HTTPException imports remain in any listed file
+  - [ ] All messages in English
+must_haves:
+  - Zero HTTPException raise sites remaining across all listed files
+validation:
+  - Run: uv run ruff check src/mkobi/api/routes/
+  - Run: uv run mypy src/mkobi/api/routes/
+  - Verify: Get-ChildItem src/mkobi/api/routes/*.py | Select-String -Pattern "raise HTTPException" | Measure-Object
+risks:
+  - Many files to process — risk of missing a site
+  - Some files may have HTTPException in imports but not in raise statements (verify)
+estimated_effort: medium
+risk_level: low

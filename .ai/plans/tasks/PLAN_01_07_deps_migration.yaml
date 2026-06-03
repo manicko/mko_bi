@@ -1,0 +1,55 @@
+---
+id: TASK_04_01
+name: Migrate deps.py HTTPException sites to AppException
+wave: 4
+depends_on:
+  - TASK_01_01
+  - TASK_01_02
+files_modified:
+  - src/mkobi/api/deps.py
+autonomous: true
+description: |
+  Migrate all 16 HTTPException raise sites in deps.py to use AppException with ErrorCode.
+  This is a HIGH-PRIORITY task because deps.py is imported by nearly every route file.
+
+  Mapping rules for deps.py:
+  - Authentication failures → ErrorCode.AUTHENTICATION_FAILED
+  - Token expired → ErrorCode.TOKEN_EXPIRED
+  - Token revoked → ErrorCode.TOKEN_REVOKED
+  - Invalid token → ErrorCode.INVALID_TOKEN
+  - Permission denied → ErrorCode.PERMISSION_DENIED
+  - Insufficient permissions → ErrorCode.INSUFFICIENT_PERMISSIONS
+  - Dashboard not found → ErrorCode.DASHBOARD_NOT_FOUND
+  - User not found → ErrorCode.USER_NOT_FOUND
+
+  Steps:
+  1. Replace HTTPException import with AppException import
+  2. For each of the 16 raise sites in dependency functions:
+     - Map to appropriate ErrorCode
+     - Replace raise statement
+     - Preserve detail messages
+  3. CRITICAL: Verify that dependency functions still work correctly with FastAPI's DI system.
+     AppException must be caught by the global exception handler, not by FastAPI's default handler.
+  4. Verify no HTTPException imports remain
+acceptance_criteria:
+  - [ ] All 16 HTTPException raise sites replaced with AppException
+  - [ ] Each raise uses an ErrorCode enum value
+  - [ ] FastAPI dependency injection still works correctly
+  - [ ] No HTTPException import remains
+  - [ ] All messages in English
+must_haves:
+  - Zero HTTPException raise sites remaining in deps.py
+  - FastAPI DI system compatibility preserved
+  - Auth dependencies still return 401 for unauthenticated requests
+validation:
+  - Run: uv run ruff check src/mkobi/api/deps.py
+  - Run: uv run mypy src/mkobi/api/deps.py
+  - Verify: Select-String -Path deps.py -Pattern "raise HTTPException" returns 0 results
+tests_to_run:
+  - uv run pytest tests/ -v --no-header 2>&1 | Select-Object -Last 30
+risks:
+  - deps.py is used by ALL endpoints — breaking it breaks the entire API
+  - AppException raised in dependencies must be caught by the registered exception handler
+  - Must verify that FastAPI's DI system correctly propagates AppException to the handler
+estimated_effort: medium
+risk_level: high
