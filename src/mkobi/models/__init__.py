@@ -62,6 +62,7 @@ from mkobi.models.enums import (
     ButtonVariant,
     ComponentSize,
     DashboardPermission,
+    ErrorCode,
     EnvironmentEnum,
     FileExtensionEnum,
     FilterType,
@@ -76,6 +77,7 @@ from mkobi.models.enums import (
 )
 
 __all__ = [
+    "ErrorCode",
     # Auth
     "LoginRequest",
     "RegisterRequest",

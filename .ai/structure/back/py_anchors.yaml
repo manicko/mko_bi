@@ -47,6 +47,18 @@
   value: start_stale_processing_cleanup_task
   stable_hash: fa441590
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
+- id: dde1b166
+  symbol_path: []
+  type: function_call
+  value: get_task_queue
+  stable_hash: dde1b166
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
+- id: 9436fd70
+  symbol_path: []
+  type: function_call
+  value: queue_worker
+  stable_hash: 9436fd70
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
 - id: 471a4919
   symbol_path:
   - create_app
@@ -4778,6 +4790,13 @@
   value: PermissionDeniedException
   stable_hash: f7225794
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
+- id: d07082f5
+  symbol_path:
+  - DashboardService
+  type: function_call
+  value: DashboardPermission
+  stable_hash: d07082f5
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
 - id: 858a2405
   symbol_path:
   - DashboardService
@@ -4986,22 +5005,6 @@
   type: function_call
   value: sorted
   stable_hash: 7d9da064
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
-- id: 0ea4cfcc
-  symbol_path:
-  - DashboardService
-  - _validate_config
-  type: function_call
-  value: ValueError
-  stable_hash: 0ea4cfcc
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
-- id: 67d79aa0
-  symbol_path:
-  - DashboardService
-  - _validate_config
-  type: function_call
-  value: GraphType
-  stable_hash: 67d79aa0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\dashboard_service.py
 - id: 0ea4cfcc
   symbol_path:
@@ -7198,6 +7201,14 @@
   value: get_logger
   stable_hash: 9011a051
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: d90571f0
+  symbol_path:
+  - AppException
+  - __init__
+  type: function_call
+  value: ErrorCode
+  stable_hash: d90571f0
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
 - id: f7f7c7db
   symbol_path:
   - AppException
@@ -7205,6 +7216,21 @@
   type: function_call
   value: super
   stable_hash: f7f7c7db
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: f0b5f6fc
+  symbol_path:
+  - AppException
+  - error_code
+  type: return_statement
+  stable_hash: f0b5f6fc
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: 3d85d2b7
+  symbol_path:
+  - AppException
+  - error_code
+  type: function_call
+  value: str
+  stable_hash: 3d85d2b7
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
 - id: f26a0e01
   symbol_path:
@@ -7238,6 +7264,96 @@
   value: super
   stable_hash: dee06e1e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: a303b44e
+  symbol_path:
+  - AuthenticationException
+  - __init__
+  type: function_call
+  value: super
+  stable_hash: a303b44e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: 03b38d5a
+  symbol_path:
+  - ConflictException
+  - __init__
+  type: function_call
+  value: super
+  stable_hash: 03b38d5a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: 3bfca106
+  symbol_path:
+  - get_error_title
+  type: return_statement
+  stable_hash: 3bfca106
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: ccd2cfee
+  symbol_path:
+  - add_exception_handlers
+  type: function_call
+  value: ErrorResponse
+  stable_hash: ccd2cfee
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: 0d65b8b8
+  symbol_path:
+  - add_exception_handlers
+  type: function_call
+  value: get_error_title
+  stable_hash: 0d65b8b8
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: c0dbe6d7
+  symbol_path:
+  - add_exception_handlers
+  type: return_statement
+  stable_hash: c0dbe6d7
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: f7d4b3a6
+  symbol_path:
+  - add_exception_handlers
+  type: function_call
+  value: JSONResponse
+  stable_hash: f7d4b3a6
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: ccd2cfee
+  symbol_path:
+  - add_exception_handlers
+  type: function_call
+  value: ErrorResponse
+  stable_hash: ccd2cfee
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: 0d65b8b8
+  symbol_path:
+  - add_exception_handlers
+  type: function_call
+  value: get_error_title
+  stable_hash: 0d65b8b8
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: c23b222a
+  symbol_path:
+  - add_exception_handlers
+  type: function_call
+  value: str
+  stable_hash: c23b222a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: 0d65b8b8
+  symbol_path:
+  - add_exception_handlers
+  type: function_call
+  value: get_error_title
+  stable_hash: 0d65b8b8
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: c0dbe6d7
+  symbol_path:
+  - add_exception_handlers
+  type: return_statement
+  stable_hash: c0dbe6d7
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
+- id: f7d4b3a6
+  symbol_path:
+  - add_exception_handlers
+  type: function_call
+  value: JSONResponse
+  stable_hash: f7d4b3a6
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
 - id: ccd2cfee
   symbol_path:
   - add_exception_handlers
@@ -7257,26 +7373,6 @@
   type: function_call
   value: JSONResponse
   stable_hash: f7d4b3a6
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
-- id: c0dbe6d7
-  symbol_path:
-  - add_exception_handlers
-  type: return_statement
-  stable_hash: c0dbe6d7
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
-- id: f7d4b3a6
-  symbol_path:
-  - add_exception_handlers
-  type: function_call
-  value: JSONResponse
-  stable_hash: f7d4b3a6
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
-- id: ccd2cfee
-  symbol_path:
-  - add_exception_handlers
-  type: function_call
-  value: ErrorResponse
-  stable_hash: ccd2cfee
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
 - id: f066f414
   symbol_path:
@@ -11716,13 +11812,6 @@
   type: return_statement
   stable_hash: af3556a5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\loaders\loader.py
-- id: af3556a5
-  symbol_path:
-  - CSVLoader
-  - _read_csv_lazy
-  type: return_statement
-  stable_hash: af3556a5
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\loaders\loader.py
 - id: a214e204
   symbol_path:
   - CSVLoader
@@ -12181,6 +12270,13 @@
   - _apply_filters
   type: return_statement
   stable_hash: '56395124'
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\filter_transforms.py
+- id: 4d697b20
+  symbol_path:
+  - _add_computed_fields
+  type: function_call
+  value: eval
+  stable_hash: 4d697b20
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\filter_transforms.py
 - id: 77b9b93b
   symbol_path:

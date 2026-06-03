@@ -26,8 +26,8 @@ class TestErrorResponseFormat:
         )
         assert response.status_code == 422
         body = response.json()
-        # Verify standard fields exist (validation errors include 'errors' list plus error/code)
-        assert "error" in body or "detail" in body
+        # Verify standard fields exist (RFC 7807 format)
+        assert "detail" in body or "error" in body
         assert "code" in body
 
     async def test_401_unauthenticated_format(self, async_client: AsyncClient) -> None:
@@ -37,7 +37,7 @@ class TestErrorResponseFormat:
         assert response.status_code == 401
         body = response.json()
         # Verify standard fields exist
-        assert "error" in body
+        assert "detail" in body or "error" in body
         assert "code" in body
 
     async def test_404_not_found_format(
@@ -65,7 +65,7 @@ class TestErrorResponseFormat:
         assert response.status_code == 404
         body = response.json()
         # Verify standard fields exist
-        assert "error" in body
+        assert "detail" in body or "error" in body
         assert "code" in body
 
     async def test_403_permission_error_format(
@@ -96,7 +96,7 @@ class TestErrorResponseFormat:
         assert response.status_code == 403
         body = response.json()
         # Verify standard fields exist
-        assert "error" in body
+        assert "detail" in body or "error" in body
         assert "code" in body
 
     async def test_500_internal_error_format_no_stack_trace(
@@ -134,7 +134,7 @@ class TestErrorResponseFormat:
     async def test_error_response_has_error_field(
         self, async_client: AsyncClient, async_db_session
     ) -> None:
-        """Error responses should have 'error' field with message."""
+        """Error responses should have 'detail' field with message (RFC 7807 format)."""
         repo = UserRepository()
         user = await repo.create(
             db=async_db_session,
@@ -153,9 +153,9 @@ class TestErrorResponseFormat:
         )
         body = response.json()
 
-        assert "error" in body
-        assert isinstance(body["error"], str)
-        assert len(body["error"]) > 0
+        assert "detail" in body
+        assert isinstance(body["detail"], str)
+        assert len(body["detail"]) > 0
 
     async def test_error_response_has_code_field(
         self, async_client: AsyncClient, async_db_session

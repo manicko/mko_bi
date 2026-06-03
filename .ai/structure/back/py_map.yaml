@@ -16,11 +16,12 @@
   - mkobi.api
   - mkobi.config
   - mkobi.core.logging_config
+  - mkobi.models.types
+  - mkobi.models.enums
   - mkobi.db.session
   - mkobi.db.starter
-  - mkobi.models.enums
-  - mkobi.models.types
   - mkobi.workers.data_worker
+  - mkobi.core.task_queue
   - mkobi.utils.exceptions
   - pathlib
   - starlette.staticfiles
@@ -533,6 +534,7 @@
   - YoyModeEnum
   - AggregationFunctionEnum
   - FilterOperatorEnum
+  - ErrorCode
   functions:
   - allowed_values
   - allowed_values
@@ -962,10 +964,24 @@
   module: C:_dev.mkobi..ai.builders.......src.mkobi.utils.exceptions
   layer: unknown
   imports:
+  - starlette.exceptions
+  - starlette.status
+  - starlette.status
+  - starlette.status
+  - starlette.status
+  - starlette.status
+  - starlette.status
+  - starlette.status
+  - starlette.status
+  - starlette.status
+  - starlette.status
+  - starlette.status
+  - typing
   - fastapi
   - fastapi.responses
   - pydantic
   - mkobi.core.logging_config
+  - mkobi.models.enums
   classes:
   - ErrorResponse
   - AppException
@@ -973,12 +989,18 @@
   - PermissionDeniedException
   - ValidationException
   - FileUploadException
+  - AuthenticationException
+  - ConflictException
   functions:
   - __init__
+  - error_code
   - __init__
   - __init__
   - __init__
   - __init__
+  - __init__
+  - __init__
+  - get_error_title
   - add_exception_handlers
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\file_utils.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.utils.file_utils

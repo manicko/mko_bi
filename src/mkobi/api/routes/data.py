@@ -150,6 +150,7 @@ async def get_aggregated_data_endpoint(
                         type=single_graph.type,
                         name=single_graph.name,
                         data=single_data_points,
+                        config=single_graph.config,
                     )
                 ]
             )
@@ -185,6 +186,7 @@ async def get_aggregated_data_endpoint(
                     type=graph_item.type,
                     name=graph_item.name,
                     data=item_data_points,
+                    config=graph_item.config,
                 )
             )
 

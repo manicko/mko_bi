@@ -1,0 +1,56 @@
+---
+id: TASK_016_error_format_docs
+
+title: Create error format security documentation
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_001_error_code_enum
+  - TASK_002_exception_handlers
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 6 — TASK_06_02 — Create error format security documentation
+source_file: C:\py_dev\mkobi\.ai\plans\tasks\PLAN_01_16_error_format_docs.yaml
+
+description: >
+  Create new documentation file describing the RFC 7807 error format for security context.
+
+goals:
+  - RFC 7807 format fully documented with security implications
+  - Complete ErrorCode reference table
+  - Example JSON responses for common scenarios
+
+files:
+  - path: docs/08-security/error-format.md
+    targets:
+      - type: document
+        name: error-format
+    changes:
+      - action: add_code
+        description: >
+          Create docs/08-security/error-format.md with: RFC 7807 Problem Details standard
+          overview, extended fields (code, details), complete ErrorCode enum reference table
+          (code → HTTP status → description), example JSON responses (401, 403, 404, 422, 500),
+          security considerations (no sensitive data leakage, detail for dev only,
+          code for programmatic handling, global handler catches all), frontend integration
+          notes, migration notes (HTTPException → AppException).
+
+acceptance_criteria:
+  - [ ] docs/08-security/error-format.md created
+  - [ ] Complete ErrorCode reference table included
+  - [ ] Example JSON responses provided
+  - [ ] Security considerations documented
+  - [ ] All text in English
+
+tests_to_run:
+  - Manual review for completeness and accuracy
+
+risks:
+  - None — documentation-only change
+
+estimated_effort: small
+risk_level: minimal
+wave: 6

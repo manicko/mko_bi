@@ -22,6 +22,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from mkobi.api import routes
 from mkobi.config import get_config
 from mkobi.core.logging_config import setup_logging
+from mkobi.models.types import ErrorResponse
+from mkobi.models.enums import EnvironmentEnum
 from mkobi.db.session import get_session
 from mkobi.db.starter import (
     DatabaseStarter,
@@ -29,8 +31,6 @@ from mkobi.db.starter import (
     DatabaseNotFoundError,
     SchemaNotFoundError,
 )
-from mkobi.models.enums import EnvironmentEnum
-from mkobi.models.types import ErrorResponse
 from mkobi.workers.data_worker import start_stale_processing_cleanup_task
 from mkobi.core.task_queue import get_task_queue
 

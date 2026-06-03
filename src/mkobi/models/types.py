@@ -4,7 +4,7 @@ Contains TypedDict and Pydantic models for typing structures
 that previously used dict[str, Any] or Any.
 """
 
-from typing import TypedDict
+from typing import Any, TypedDict
 
 from pydantic import BaseModel, Field
 
@@ -167,6 +167,17 @@ class ProcessingSettingsDict(TypedDict, total=False):
     timezone: str  # "UTC", "Europe/Moscow", etc.
     encoding: str | None  # "UTF-8", etc.
     separator: str | None  # "," for CSV
+    renames: dict[str, str] | None  # column renaming map
+    column_types: dict[str, str] | None  # column type casting
+    date_format: str | None  # date format string
+    decimal_separator: str | None  # "," for EU format
+    computed_fields: list[dict[str, str]] | None  # computed column expressions
+    filters: list[dict[str, Any]] | None  # row filters
+    groupby: list[str] | None  # GROUP BY columns
+    aggregations: list[dict[str, str]] | None  # aggregation config
+    yoy_config: dict[str, Any] | None  # year-over-year config
+    share_config: dict[str, Any] | None  # share calculation config
+    custom_metrics: list[dict[str, Any]] | None  # custom metric formulas
 
 
 # ==================== Auth Token Types ====================

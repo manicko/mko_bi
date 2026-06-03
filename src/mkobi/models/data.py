@@ -429,6 +429,7 @@ class GraphDataResponse(BaseModel):
     name: str
     data: list[dict[str, int | float | str]]
     layout: ChartLayoutConfig | None = None
+    config: dict[str, Any] | None = None
 
     model_config = ConfigDict(
         from_attributes=True,

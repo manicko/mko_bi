@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.data.loaders.loader import CSVLoader
 from mkobi.data.processing.transformations import (
+    _add_computed_fields,
     apply_transformations,
     calculate_aggregations,
 )
@@ -210,10 +211,47 @@ async def _process_csv_file_async(
         if settings and settings.get("decimal_separator") == ",":
             for col_name, col_type in column_types.items():
                 if col_type == "float" and col_name in df.columns:
-                    df = df.with_columns(
-                        pl.col(col_name).str.replace(",", ".").cast(pl.Float64).alias(col_name)
-                    )
-                    logger.debug("Applied decimal separator transformation to column: %s", col_name)
+                    # Only apply if column is still a string (not already parsed as float)
+                    if df[col_name].dtype == pl.Utf8:
+                        df = df.with_columns(
+                            pl.col(col_name).str.replace(",", ".").cast(pl.Float64).alias(col_name)
+                        )
+                        logger.debug("Applied decimal separator transformation to column: %s", col_name)
+
+        # Apply column type casting from processing config
+        if column_types:
+            date_format = settings.get("date_format") if settings else None
+            for col_name, col_type in column_types.items():
+                if col_name in df.columns and col_type != "float":
+                    try:
+                        if col_type == "date" and date_format:
+                            # Parse date string with explicit format
+                            df = df.with_columns(
+                                pl.col(col_name).str.strptime(pl.Date, date_format).alias(col_name)
+                            )
+                            logger.debug("Cast column '%s' to Date with format '%s'", col_name, date_format)
+                        elif col_type == "int":
+                            df = df.with_columns(pl.col(col_name).cast(pl.Int64))
+                        elif col_type == "str":
+                            df = df.with_columns(pl.col(col_name).cast(pl.Utf8))
+                        elif col_type == "bool":
+                            df = df.with_columns(pl.col(col_name).cast(pl.Boolean))
+                    except Exception as e:
+                        logger.warning("Failed to cast column '%s' to %s: %s", col_name, col_type, e)
+
+        # Apply column renames from processing config
+        if settings and settings.get("renames"):
+            rename_map = settings["renames"]
+            logger.debug("Applying column renames: %s", rename_map)
+            df = df.rename(rename_map)
+
+        # Apply computed fields from processing config
+        if settings and settings.get("computed_fields"):
+            computed_fields = settings["computed_fields"]
+            logger.debug("Applying computed fields: %s", computed_fields)
+            df = await asyncio.to_thread(
+                _add_computed_fields, df, computed_fields
+            )
 
         # Apply processing config if provided
         if processing_config_dict:

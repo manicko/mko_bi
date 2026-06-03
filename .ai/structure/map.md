@@ -64,12 +64,37 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
+|   |   |   PLAN_01.md
+|   |   |   
 |   |   \---tasks
+|   |           PLAN_01_01_error_code_enum.yaml
+|   |           PLAN_01_02_exception_handlers.yaml
+|   |           PLAN_01_03_upload_migration.yaml
+|   |           PLAN_01_04_auth_migration.yaml
+|   |           PLAN_01_05_admin_migration.yaml
+|   |           PLAN_01_06_dashboards_crud_migration.yaml
+|   |           PLAN_01_07_deps_migration.yaml
+|   |           PLAN_01_08_graphs_migration.yaml
+|   |           PLAN_01_09_users_migration.yaml
+|   |           PLAN_01_10_layouts_migration.yaml
+|   |           PLAN_01_11_remaining_routes_migration.yaml
+|   |           PLAN_01_12_frontend_error_types.yaml
+|   |           PLAN_01_13_axios_interceptor_update.yaml
+|   |           PLAN_01_14_error_message_maps.yaml
+|   |           PLAN_01_15_agents_md_update.yaml
+|   |           PLAN_01_16_error_format_docs.yaml
+|   |           PLAN_01_17_error_handling_guide.yaml
+|   |           PLAN_01_18_verification.yaml
+|   |           
 |   +---problems
 |   |   |   CONTEXT_01.md
 |   |   |   
 |   |   \---decisions
+|   |           DECISION_01.md
+|   |           
 |   +---researches
+|   |       RESEARCH_01.md
+|   |       
 |   +---structure
 |   |   |   map.md
 |   |   |   
@@ -83,14 +108,35 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
+|   |   |       TASK_001_error_code_enum_DONE.yaml
+|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
+|   |   |       TASK_002_exception_handlers.yaml
+|   |   |       TASK_003_upload_migration.yaml
+|   |   |       TASK_004_auth_migration.yaml
+|   |   |       TASK_005_admin_migration.yaml
+|   |   |       TASK_006_dashboards_crud_migration.yaml
+|   |   |       TASK_007_deps_migration.yaml
+|   |   |       TASK_008_graphs_migration.yaml
+|   |   |       TASK_009_users_migration.yaml
+|   |   |       TASK_010_layouts_migration.yaml
+|   |   |       TASK_011_remaining_routes_migration.yaml
+|   |   |       TASK_012_frontend_error_types.yaml
+|   |   |       TASK_013_axios_interceptor_update.yaml
+|   |   |       TASK_014_error_message_maps.yaml
+|   |   |       TASK_015_agents_md_update.yaml
+|   |   |       TASK_016_error_format_docs.yaml
+|   |   |       TASK_017_error_handling_guide.yaml
+|   |   |       TASK_018_verification.yaml
 |   |   |       
 |   |   \---validation
+|   |           p1.md
+|   |           
 |   \---templates
 |           decision.md
 |           ui-brand.md
@@ -4068,6 +4114,8 @@ C:\PY_DEV\MKOBI
 |   |               package.json
 |   |               
 |   +---plans
+|   |       PLAN_01.md
+|   |       
 |   +---rules
 |   |       commands.md
 |   |       project.md
@@ -18632,6 +18680,7 @@ C:\PY_DEV\MKOBI
 |   +---11-guides
 |   |       create-dashboard.md
 |   |       docker.md
+|   |       extend-graphs-filters.md
 |   |       task-queue-migration.md
 |   |       
 |   +---90-adr
@@ -18711,23 +18760,23 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           AdminPanel-CULrQeeH.js
-|   |           ChangePasswordPage-BvnMSuzF.js
-|   |           dashboardApi-DxTeoro8.js
-|   |           DashboardList-Cizzg8fO.js
-|   |           DashboardView-z-_2yH2e.js
+|   |           AdminPanel-TU2tF_Jw.js
+|   |           ChangePasswordPage-SPmlr291.js
+|   |           dashboardApi-CQAUXYP2.js
+|   |           DashboardList-DYMDFk0H.js
+|   |           DashboardView-BZm7bANB.js
 |   |           enums-C2UQ_cl5.js
 |   |           formSchemas-9t2fc2Ft.js
-|   |           index-CUWZZe07.js
-|   |           LoginForm-DMvvp3VG.js
+|   |           index-tml5NGAj.js
+|   |           LoginForm-jSB0v300.js
 |   |           mui-nuHIX8iL.js
 |   |           plotly-BNZeab9N.js
 |   |           react-BIoCyPHR.js
-|   |           RegisterForm-B70YwwfU.js
+|   |           RegisterForm-DpxDrgqs.js
 |   |           rolldown-runtime-S-ySWqyJ.js
 |   |           shortUuid-TYuFZJYs.js
-|   |           userApi-CZtFnUDS.js
-|   |           UserProfile-Dba0gtBq.js
+|   |           userApi-DOUaD7v1.js
+|   |           UserProfile-CAzNpBN_.js
 |   |           vendor-Bx3jSdF9.js
 |   |           
 |   +---node_modules
@@ -99793,6 +99842,7 @@ C:\PY_DEV\MKOBI
 |       |   |   |   index.ts
 |       |   |   |   NotFound.tsx
 |       |   |   |   PlaceholderPage.tsx
+|       |   |   |   PlotlyComponent.tsx
 |       |   |   |   ProtectedRoute.test.tsx
 |       |   |   |   ProtectedRoute.tsx
 |       |   |   |   RoleBasedAccess.test.tsx
@@ -101008,7 +101058,6 @@ C:\PY_DEV\MKOBI
 |   |   |   |           dashboards_crud.cpython-314.pyc
 |   |   |   |           dashboards_filters.cpython-314.pyc
 |   |   |   |           dashboards_graphs.cpython-314.pyc
-|   |   |   |           data.cpython-314.pyc
 |   |   |   |           filters.cpython-314.pyc
 |   |   |   |           filter_values.cpython-314.pyc
 |   |   |   |           graphs.cpython-314.pyc
@@ -101052,7 +101101,6 @@ C:\PY_DEV\MKOBI
 |   |   |   |   |   __init__.py
 |   |   |   |   |   
 |   |   |   |   \---__pycache__
-|   |   |   |           loader.cpython-314.pyc
 |   |   |   |           validator.cpython-314.pyc
 |   |   |   |           __init__.cpython-314.pyc
 |   |   |   |           
@@ -101066,7 +101114,6 @@ C:\PY_DEV\MKOBI
 |   |   |   |   |   
 |   |   |   |   \---__pycache__
 |   |   |   |           aggregate_transforms.cpython-314.pyc
-|   |   |   |           filter_transforms.cpython-314.pyc
 |   |   |   |           formula_parser.cpython-314.pyc
 |   |   |   |           registry.cpython-314.pyc
 |   |   |   |           transformations.cpython-314.pyc
@@ -101184,7 +101231,6 @@ C:\PY_DEV\MKOBI
 |   |   |           access.cpython-314.pyc
 |   |   |           auth.cpython-314.pyc
 |   |   |           dashboard.cpython-314.pyc
-|   |   |           data.cpython-314.pyc
 |   |   |           enums.cpython-314.pyc
 |   |   |           filters.cpython-314.pyc
 |   |   |           graph.cpython-314.pyc
@@ -101192,7 +101238,6 @@ C:\PY_DEV\MKOBI
 |   |   |           processing_configs.cpython-314.pyc
 |   |   |           processing_logs.cpython-314.pyc
 |   |   |           transformation_configs.cpython-314.pyc
-|   |   |           types.cpython-314.pyc
 |   |   |           user.cpython-314.pyc
 |   |   |           user_roles.cpython-314.pyc
 |   |   |           __init__.cpython-314.pyc
@@ -101251,8 +101296,6 @@ C:\PY_DEV\MKOBI
 |   |   |   |   data_worker.py
 |   |   |   |   
 |   |   |   \---__pycache__
-|   |   |           data_worker.cpython-314.pyc
-|   |   |           
 |   |   \---__pycache__
 |   |           app.cpython-314.pyc
 |   |           config.cpython-314.pyc

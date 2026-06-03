@@ -1,0 +1,67 @@
+---
+id: TASK_004_auth_migration
+
+title: Migrate auth.py HTTPException sites to AppException
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_error_code_enum
+  - TASK_002_exception_handlers
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 2 — TASK_02_02 — Migrate auth.py
+source_file: C:\py_dev\mkobi\.ai\plans\tasks\PLAN_01_04_auth_migration.yaml
+
+description: >
+  Migrate all 16 HTTPException raise sites in auth.py to use AppException with ErrorCode.
+  HIGH RISK: token refresh flow must not break.
+
+goals:
+  - Replace all raise HTTPException with raise AppException(code=ErrorCode.X, detail="...")
+  - Preserve token refresh flow exactly
+  - Preserve cookie handling unchanged
+  - Preserve rate limiting behavior
+
+files:
+  - path: src/mkobi/api/routes/auth.py
+    targets:
+      - type: module
+        name: auth
+    semantic_anchors:
+      insert_after:
+        type: import_block
+    changes:
+      - action: replace_code
+        description: >
+          Replace HTTPException import with AppException import.
+          For each of the 16 raise sites: map to appropriate ErrorCode
+          (AUTHENTICATION_FAILED, TOKEN_EXPIRED, TOKEN_REVOKED, INVALID_TOKEN,
+          RATE_LIMIT_EXCEEDED, EMAIL_ALREADY_EXISTS, VALIDATION_ERROR, INVALID_EMAIL,
+          INVALID_PASSWORD). Preserve exact English detail messages.
+          Add details dict where useful (e.g., {"email": email}).
+
+acceptance_criteria:
+  - [ ] All 16 HTTPException raise sites replaced with AppException
+  - [ ] Each raise uses an ErrorCode enum value
+  - [ ] Token refresh flow preserved (no behavioral changes)
+  - [ ] Rate limiting responses still functional
+  - [ ] Cookie handling unchanged
+  - [ ] No HTTPException import remains
+  - [ ] All messages in English
+
+tests_to_run:
+  - uv run ruff check src/mkobi/api/routes/auth.py
+  - uv run mypy src/mkobi/api/routes/auth.py
+  - uv run pytest tests/ -v -k "auth" --no-header 2>&1 | Select-Object -Last 20
+
+risks:
+  - Token refresh flow is critical — breaking it locks users out
+  - Rate limiting headers may need to be preserved in the response
+  - Auth errors must return correct 401 status for the axios interceptor to handle them
+
+estimated_effort: medium
+risk_level: high
+wave: 2

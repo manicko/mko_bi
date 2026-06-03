@@ -85,9 +85,6 @@ def _add_computed_fields(
     Returns:
         pl.DataFrame: DataFrame with added computed fields.
     """
-    # Import here to avoid circular import
-    from mkobi.data.processing.formula_parser import _parse_formula
-
     result = df
     for field in fields:
         name = field.get("name")
@@ -95,7 +92,16 @@ def _add_computed_fields(
         if not name or not expr_str:
             continue
         try:
-            expr = _parse_formula(expr_str)
+            # Check if expr is a Polars expression (starts with pl.)
+            if expr_str.strip().startswith("pl."):
+                # Evaluate Polars expression directly
+                # Provide pl and polars namespace for evaluation
+                polars_ns = {"pl": pl, "polars": pl, "col": pl.col}
+                expr = eval(expr_str.strip(), {"__builtins__": {}}, polars_ns)
+            else:
+                # Use formula parser for simple arithmetic expressions
+                from mkobi.data.processing.formula_parser import _parse_formula
+                expr = _parse_formula(expr_str)
             result = result.with_columns(expr.alias(name))
             logger.debug("Added computed field '%s'", name)
         except Exception as e:

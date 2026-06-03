@@ -147,6 +147,13 @@ export interface GraphDataWithConfig {
   name: string
   data: Data[]
   layout?: Layout
+  config?: {
+    x?: string
+    color?: string
+    metrics?: string[]
+    orientation?: string
+    barmode?: string
+  }
 }
 
 // Upload types

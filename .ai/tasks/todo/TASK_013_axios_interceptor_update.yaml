@@ -1,0 +1,65 @@
+---
+id: TASK_013_axios_interceptor_update
+
+title: Update axios interceptor for RFC 7807 and localized toast errors
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_012_frontend_error_types
+  - TASK_014_error_message_maps
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 5 — TASK_05_02 — Update axios interceptor
+source_file: C:\py_dev\mkobi\.ai\plans\tasks\PLAN_01_13_axios_interceptor_update.yaml
+
+description: >
+  Update the axios response interceptor to handle RFC 7807 errors with localized toast messages.
+  Depends on TASK_012 (extractApiError) and TASK_014 (error message maps).
+
+goals:
+  - Preserve existing 401/403/session handling exactly
+  - Non-401/403 errors trigger toast with localized Russian message
+  - Login endpoint errors skipped (no toast)
+  - Token refresh queue not broken
+
+files:
+  - path: frontend/src/shared/api/axiosInstance.ts
+    targets:
+      - type: function
+        name: response interceptor error handler
+    semantic_anchors:
+      insert_after:
+        type: function
+        name: response interceptor
+    changes:
+      - action: modify_function
+        description: >
+          In the response interceptor error handler: preserve existing 401 handling
+          (token refresh queue, login skip, session expiry) and 403 handling exactly.
+          For all other errors: call extractApiError(error), look up localized message
+          from combined error message map, append details naturally, call toast.error().
+          Reject promise so callers can still handle errors. Skip toast for login endpoint.
+
+acceptance_criteria:
+  - [ ] 401 handling preserved exactly (token refresh, queue, redirects)
+  - [ ] 403 handling preserved
+  - [ ] Non-401/403 errors trigger toast with localized message
+  - [ ] Login endpoint errors skipped (no toast)
+  - [ ] extractApiError() used for message extraction
+  - [ ] Promise still rejected after toast (callers can chain .catch)
+  - [ ] No any types
+
+tests_to_run:
+  - cd frontend; npm run build
+  - cd frontend; npm run lint
+
+risks:
+  - Must not break the token refresh queue — this is critical auth infrastructure
+  - Toast messages should be user-friendly, not technical
+
+estimated_effort: small
+risk_level: medium
+wave: 5

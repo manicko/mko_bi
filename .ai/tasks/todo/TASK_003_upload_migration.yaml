@@ -1,0 +1,66 @@
+---
+id: TASK_003_upload_migration
+
+title: Migrate upload.py HTTPException sites to AppException
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_error_code_enum
+  - TASK_002_exception_handlers
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 2 — TASK_02_01 — Migrate upload.py
+source_file: C:\py_dev\mkobi\.ai\plans\tasks\PLAN_01_03_upload_migration.yaml
+
+description: >
+  Migrate all 16 HTTPException raise sites in upload.py to use AppException with ErrorCode.
+
+goals:
+  - Replace all raise HTTPException with raise AppException(code=ErrorCode.X, detail="...")
+  - Preserve temp file cleanup in finally blocks unchanged
+  - Add details dict where useful context exists
+
+files:
+  - path: src/mkobi/api/routes/upload.py
+    targets:
+      - type: module
+        name: upload
+    semantic_anchors:
+      insert_after:
+        type: import_block
+    changes:
+      - action: replace_code
+        description: >
+          Replace `from fastapi import HTTPException` with AppException import.
+          For each of the 16 raise sites: map HTTP status code and detail to appropriate
+          ErrorCode (INVALID_FILE_TYPE, FILE_TOO_LARGE, FILE_PROCESSING_ERROR,
+          DASHBOARD_NOT_FOUND, PERMISSION_DENIED, PROCESSING_IN_PROGRESS, INTERNAL_ERROR,
+          PROCESSING_FAILED). Add details dict where useful (filename, dashboard_id).
+          Ensure ValueError from Polars/file processing is caught and re-raised as
+          AppException with FILE_PROCESSING_ERROR. Preserve finally blocks unchanged.
+
+acceptance_criteria:
+  - [ ] All 16 HTTPException raise sites replaced with AppException
+  - [ ] Each raise uses an ErrorCode enum value (no hardcoded strings)
+  - [ ] details dict added where useful context is available
+  - [ ] No HTTPException import remains
+  - [ ] Temp file cleanup logic unchanged
+  - [ ] All type hints present
+  - [ ] All messages in English
+
+tests_to_run:
+  - uv run ruff check src/mkobi/api/routes/upload.py
+  - uv run mypy src/mkobi/api/routes/upload.py
+  - uv run pytest tests/ -v -k "upload" --no-header 2>&1 | Select-Object -Last 20
+
+risks:
+  - ValueError mapping from Polars exceptions must be careful not to swallow unexpected errors
+  - File cleanup in finally blocks must not be disrupted
+  - Complex conditional raise sites need careful mapping
+
+estimated_effort: medium
+risk_level: medium
+wave: 2

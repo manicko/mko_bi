@@ -1,0 +1,105 @@
+---
+id: TASK_014_error_message_maps
+
+title: Create per-feature error message maps
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_012_frontend_error_types
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 5 — TASK_05_03 — Create per-feature error message maps
+source_file: C:\py_dev\mkobi\.ai\plans\tasks\PLAN_01_14_error_message_maps.yaml
+
+description: >
+  Create per-feature localized error message maps (Record<ErrorCode, string>) in Russian.
+  Depends on TASK_012 for the ApiError types foundation.
+
+goals:
+  - Per-feature error message maps with Russian strings for all backend ErrorCode values
+  - Combined lookup function for axios interceptor
+  - Resolution order: feature map → shared map → error.detail → "Произошла ошибка"
+
+files:
+  - path: frontend/src/shared/api/errorMessages.ts
+    targets:
+      - type: export
+        name: sharedErrorMessages
+    changes:
+      - action: add_code
+        description: >
+          Create shared error message map with general codes (INTERNAL_ERROR,
+          SERVICE_UNAVAILABLE, RATE_LIMIT_EXCEEDED) and default fallback messages.
+          Create a combined lookup function merging all maps with per-feature override.
+
+  - path: frontend/src/features/auth/model/errorMessages.ts
+    targets:
+      - type: export
+        name: authErrorMessages
+    changes:
+      - action: add_code
+        description: >
+          Auth error codes: AUTHENTICATION_FAILED, TOKEN_EXPIRED, TOKEN_REVOKED,
+          INVALID_TOKEN, EMAIL_ALREADY_EXISTS, INVALID_EMAIL, INVALID_PASSWORD,
+          RATE_LIMIT_EXCEEDED. Russian messages.
+
+  - path: frontend/src/features/upload/model/errorMessages.ts
+    targets:
+      - type: export
+        name: uploadErrorMessages
+    changes:
+      - action: add_code
+        description: >
+          Upload error codes: FILE_UPLOAD_ERROR, FILE_TOO_LARGE, INVALID_FILE_TYPE,
+          FILE_PROCESSING_ERROR, PROCESSING_FAILED, PROCESSING_IN_PROGRESS. Russian messages.
+
+  - path: frontend/src/features/dashboards/model/errorMessages.ts
+    targets:
+      - type: export
+        name: dashboardErrorMessages
+    changes:
+      - action: add_code
+        description: >
+          Dashboard error codes: DASHBOARD_NOT_FOUND, PERMISSION_DENIED, ACCESS_DENIED,
+          VALIDATION_ERROR. Russian messages.
+
+  - path: frontend/src/features/admin/model/errorMessages.ts
+    targets:
+      - type: export
+        name: adminErrorMessages
+    changes:
+      - action: add_code
+        description: >
+          Admin error codes: USER_NOT_FOUND, PERMISSION_DENIED, EMAIL_ALREADY_EXISTS,
+          VALIDATION_ERROR. Russian messages.
+
+  - path: frontend/src/features/users/model/errorMessages.ts
+    targets:
+      - type: export
+        name: userErrorMessages
+    changes:
+      - action: add_code
+        description: >
+          User error codes: USER_NOT_FOUND, INVALID_PASSWORD, VALIDATION_ERROR. Russian messages.
+
+acceptance_criteria:
+  - [ ] Each feature has its own error message map file
+  - [ ] All messages are in Russian
+  - [ ] All ErrorCode values from backend have corresponding Russian messages
+  - [ ] Combined lookup function available for axios interceptor
+  - [ ] Fallback to "Произошла ошибка" for unknown codes
+  - [ ] No any types
+
+tests_to_run:
+  - cd frontend; npm run build
+  - cd frontend; npm run lint
+
+risks:
+  - Must keep in sync with backend ErrorCode enum — document this coupling
+
+estimated_effort: medium
+risk_level: low
+wave: 5

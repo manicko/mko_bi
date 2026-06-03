@@ -1,0 +1,56 @@
+---
+id: TASK_008_graphs_migration
+
+title: Migrate graphs.py HTTPException sites to AppException
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_001_error_code_enum
+  - TASK_002_exception_handlers
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 4 — TASK_04_02 — Migrate graphs.py
+source_file: C:\py_dev\mkobi\.ai\plans\tasks\PLAN_01_08_graphs_migration.yaml
+
+description: >
+  Migrate all 16 HTTPException raise sites in graphs.py to use AppException with ErrorCode.
+
+goals:
+  - Replace all raise HTTPException with raise AppException(code=ErrorCode.X, detail="...")
+
+files:
+  - path: src/mkobi/api/routes/graphs.py
+    targets:
+      - type: module
+        name: graphs
+    semantic_anchors:
+      insert_after:
+        type: import_block
+    changes:
+      - action: replace_code
+        description: >
+          Replace HTTPException import with AppException import.
+          For each of the 16 raise sites: map to appropriate ErrorCode
+          (GRAPH_NOT_FOUND, DASHBOARD_NOT_FOUND, PERMISSION_DENIED, VALIDATION_ERROR).
+          Add details dict where useful (e.g., {"graph_id": graph_id}).
+
+acceptance_criteria:
+  - [ ] All 16 HTTPException raise sites replaced with AppException
+  - [ ] Each raise uses an ErrorCode enum value
+  - [ ] No HTTPException import remains
+  - [ ] All messages in English
+
+tests_to_run:
+  - uv run ruff check src/mkobi/api/routes/graphs.py
+  - uv run mypy src/mkobi/api/routes/graphs.py
+  - uv run pytest tests/ -v -k "graph" --no-header 2>&1 | Select-Object -Last 20
+
+risks:
+  - Graph operations may have nested raise sites that need careful mapping
+
+estimated_effort: small
+risk_level: low
+wave: 4

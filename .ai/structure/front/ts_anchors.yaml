@@ -61,6 +61,13 @@
   type: component
   value: PlaceholderPage
   stable_hash: d3058edd
+- id: 1b328f33
+  file: C:/py_dev/mkobi/frontend/src/shared/components/PlotlyComponent.tsx
+  symbol_path:
+    - PlotlyChart
+  type: component
+  value: PlotlyChart
+  stable_hash: 1b328f33
 - id: 733d7c37
   file: C:/py_dev/mkobi/frontend/src/shared/components/ProtectedRoute.tsx
   symbol_path:
@@ -313,13 +320,14 @@
   type: component
   value: PieChart
   stable_hash: 1e5443ba
-- id: 8f9521f0
-  file: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/PlotlyChart.tsx
+- id: 8fedc7fc
+  file: >-
+    C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/PlotlyChart.test.tsx
   symbol_path:
-    - PlotlyChart
+    - MockPlot
   type: component
-  value: PlotlyChart
-  stable_hash: 8f9521f0
+  value: MockPlot
+  stable_hash: 8fedc7fc
 - id: 1e6e2b62
   file: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/TableChart.tsx
   symbol_path:

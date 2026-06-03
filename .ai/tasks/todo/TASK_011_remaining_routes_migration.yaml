@@ -1,0 +1,125 @@
+---
+id: TASK_011_remaining_routes_migration
+
+title: Migrate remaining route files HTTPException sites to AppException
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_001_error_code_enum
+  - TASK_002_exception_handlers
+
+source_reference: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+source_section: Wave 4 — TASK_04_05 — Migrate remaining route files
+source_file: C:\py_dev\mkobi\.ai\plans\tasks\PLAN_01_11_remaining_routes_migration.yaml
+
+description: >
+  Migrate all remaining HTTPException raise sites across 10 route files to AppException.
+  These files have fewer sites each and can be processed in a single pass.
+
+goals:
+  - Replace all raise HTTPException with raise AppException(code=ErrorCode.X, detail="...")
+    across all 10 remaining route files
+  - Zero HTTPException raise sites remaining in any route file
+
+files:
+  - path: src/mkobi/api/routes/dashboards_access.py
+    targets:
+      - type: module
+        name: dashboards_access
+    changes:
+      - action: replace_code
+        description: Migrate ~7 HTTPException raise sites to AppException with ErrorCode.
+
+  - path: src/mkobi/api/routes/processing_configs.py
+    targets:
+      - type: module
+        name: processing_configs
+    changes:
+      - action: replace_code
+        description: Migrate ~7 HTTPException raise sites to AppException with ErrorCode.
+
+  - path: src/mkobi/api/routes/dashboards_graphs.py
+    targets:
+      - type: module
+        name: dashboards_graphs
+    changes:
+      - action: replace_code
+        description: Migrate ~4 HTTPException raise sites to AppException with ErrorCode.
+
+  - path: src/mkobi/api/routes/processing_logs.py
+    targets:
+      - type: module
+        name: processing_logs
+    changes:
+      - action: replace_code
+        description: Migrate ~3 HTTPException raise sites to AppException with ErrorCode.
+
+  - path: src/mkobi/api/routes/filter_values.py
+    targets:
+      - type: module
+        name: filter_values
+    changes:
+      - action: replace_code
+        description: Migrate ~1 HTTPException raise site to AppException with ErrorCode.
+
+  - path: src/mkobi/api/routes/data.py
+    targets:
+      - type: module
+        name: data
+    changes:
+      - action: replace_code
+        description: Migrate ~6 HTTPException raise sites to AppException with ErrorCode.
+
+  - path: src/mkobi/api/routes/dashboards_filters.py
+    targets:
+      - type: module
+        name: dashboards_filters
+    changes:
+      - action: replace_code
+        description: Migrate ~9 HTTPException raise sites to AppException with ErrorCode.
+
+  - path: src/mkobi/api/routes/dashboards.py
+    targets:
+      - type: module
+        name: dashboards
+    changes:
+      - action: replace_code
+        description: Check and migrate any HTTPException raise sites to AppException.
+
+  - path: src/mkobi/api/routes/filters.py
+    targets:
+      - type: module
+        name: filters
+    changes:
+      - action: replace_code
+        description: Check and migrate any HTTPException raise sites to AppException.
+
+  - path: src/mkobi/api/routes/client_errors.py
+    targets:
+      - type: module
+        name: client_errors
+    changes:
+      - action: replace_code
+        description: Check and migrate any HTTPException raise sites to AppException.
+
+acceptance_criteria:
+  - [ ] All HTTPException raise sites in all listed files replaced with AppException
+  - [ ] Each raise uses an ErrorCode enum value
+  - [ ] No HTTPException imports remain in any listed file
+  - [ ] All messages in English
+
+tests_to_run:
+  - uv run ruff check src/mkobi/api/routes/
+  - uv run mypy src/mkobi/api/routes/
+  - uv run pytest tests/ -v --no-header 2>&1 | Select-Object -Last 30
+
+risks:
+  - Many files to process — risk of missing a site
+  - Some files may have HTTPException in imports but not in raise statements
+
+estimated_effort: medium
+risk_level: low
+wave: 4
