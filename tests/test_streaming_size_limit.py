@@ -69,6 +69,7 @@ class TestStreamingSizeLimit:
         async_db_session,
         test_user_for_streaming: dict,
         test_dashboard: Dashboard,
+        tmp_path: Path,
     ) -> None:
         """File under max size without Content-Length should succeed.
 
@@ -91,7 +92,6 @@ class TestStreamingSizeLimit:
         assert len(csv_content) < config.max_file_size
 
         # Mock config to use the actual max file size (file should pass validation)
-        temp_dir = Path(tempfile.gettempdir()) / "mkobi_streaming_test"
         mock_config = type(
             "MockConfig",
             (),
@@ -100,7 +100,7 @@ class TestStreamingSizeLimit:
                 "upload": type(
                     "MockUpload", (), {"max_file_size_mb": config.upload.max_file_size_mb}
                 )(),
-                "upload_temp_dir": str(temp_dir),
+                "upload_temp_dir": str(tmp_path),
                 "rate_limiter_fail_closed": False,
             },
         )()
@@ -130,6 +130,7 @@ class TestStreamingSizeLimit:
         async_db_session,
         test_user_for_streaming: dict,
         test_dashboard: Dashboard,
+        tmp_path: Path,
     ) -> None:
         """File exceeding max_file_size should return 413.
 
@@ -147,14 +148,13 @@ class TestStreamingSizeLimit:
         await async_db_session.commit()
 
         # Set max_file_size to 1 byte to trigger limit during streaming
-        temp_dir = Path(tempfile.gettempdir()) / "mkobi_streaming_test"
         mock_config = type(
             "MockConfig",
             (),
             {
                 "max_file_size": 1,  # Very small limit to trigger during streaming
                 "upload": type("MockUpload", (), {"max_file_size_mb": 100})(),
-                "upload_temp_dir": str(temp_dir),
+                "upload_temp_dir": str(tmp_path),
                 "rate_limiter_fail_closed": False,
             },
         )()
@@ -185,6 +185,7 @@ class TestStreamingSizeLimit:
         async_db_session,
         test_user_for_streaming: dict,
         test_dashboard: Dashboard,
+        tmp_path: Path,
     ) -> None:
         """Temp file should be deleted after size limit rejection.
 
@@ -201,25 +202,19 @@ class TestStreamingSizeLimit:
         )
         await async_db_session.commit()
 
-        # Use small limit and isolated temp dir for this test
-        temp_dir = Path(tempfile.gettempdir()) / "mkobi_streaming_cleanup_test"
-        temp_dir.mkdir(parents=True, exist_ok=True)
-
+        # Use small limit and isolated temp dir for this test (tmp_path is auto-cleaned)
         mock_config = type(
             "MockConfig",
             (),
             {
                 "max_file_size": 1,  # Very small limit
                 "upload": type("MockUpload", (), {"max_file_size_mb": 100})(),
-                "upload_temp_dir": str(temp_dir),
+                "upload_temp_dir": str(tmp_path),
                 "rate_limiter_fail_closed": False,
             },
         )()
 
         csv_content = b"category,sales\nA,100\nB,200\n"
-
-        # Get initial state of temp dir
-        initial_files = set(temp_dir.glob("*.csv*"))
 
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False) as f:
             f.write(csv_content)
@@ -238,9 +233,8 @@ class TestStreamingSizeLimit:
             assert response.status_code == status.HTTP_413_CONTENT_TOO_LARGE
 
             # Verify temp files were cleaned up - no new files should remain
-            final_files = set(temp_dir.glob("*.csv*"))
-            new_files = final_files - initial_files
-            assert len(new_files) == 0, f"Lingering temp files after rejection: {new_files}"
+            temp_files = list(tmp_path.glob("*.csv*"))
+            assert len(temp_files) == 0, f"Lingering temp files after rejection: {temp_files}"
         finally:
             csv_path.unlink(missing_ok=True)
 
@@ -251,6 +245,7 @@ class TestStreamingSizeLimit:
         async_db_session,
         test_user_for_streaming: dict,
         test_dashboard: Dashboard,
+        tmp_path: Path,
     ) -> None:
         """file.size=None triggers the cumulative check path.
 
@@ -268,16 +263,13 @@ class TestStreamingSizeLimit:
         )
         await async_db_session.commit()
 
-        temp_dir = Path(tempfile.gettempdir()) / "mkobi_size_none_test"
-        temp_dir.mkdir(parents=True, exist_ok=True)
-
         mock_config = type(
             "MockConfig",
             (),
             {
                 "max_file_size": 1,  # Very small limit to trigger during streaming
                 "upload": type("MockUpload", (), {"max_file_size_mb": 100})(),
-                "upload_temp_dir": str(temp_dir),
+                "upload_temp_dir": str(tmp_path),
                 "rate_limiter_fail_closed": False,
             },
         )()
@@ -301,7 +293,7 @@ class TestStreamingSizeLimit:
             assert response.status_code == status.HTTP_413_CONTENT_TOO_LARGE
 
             # Verify temp files cleaned up
-            temp_files = list(temp_dir.glob("*.csv*"))
+            temp_files = list(tmp_path.glob("*.csv*"))
             assert len(temp_files) == 0, f"Temp files not cleaned up: {temp_files}"
         finally:
             csv_path.unlink(missing_ok=True)
@@ -313,6 +305,7 @@ class TestStreamingSizeLimit:
         async_db_session,
         test_user_for_streaming: dict,
         test_dashboard: Dashboard,
+        tmp_path: Path,
     ) -> None:
         """file.size provided by client still works correctly.
 
@@ -330,16 +323,13 @@ class TestStreamingSizeLimit:
         )
         await async_db_session.commit()
 
-        temp_dir = Path(tempfile.gettempdir()) / "mkobi_size_provided_test"
-        temp_dir.mkdir(parents=True, exist_ok=True)
-
         mock_config = type(
             "MockConfig",
             (),
             {
                 "max_file_size": 1,  # Very small limit
                 "upload": type("MockUpload", (), {"max_file_size_mb": 100})(),
-                "upload_temp_dir": str(temp_dir),
+                "upload_temp_dir": str(tmp_path),
                 "rate_limiter_fail_closed": False,
             },
         )()
