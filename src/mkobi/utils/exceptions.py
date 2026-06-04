@@ -10,9 +10,9 @@ from starlette.status import HTTP_401_UNAUTHORIZED
 from starlette.status import HTTP_403_FORBIDDEN
 from starlette.status import HTTP_404_NOT_FOUND
 from starlette.status import HTTP_409_CONFLICT
-from starlette.status import HTTP_413_REQUEST_ENTITY_TOO_LARGE
+from starlette.status import HTTP_413_CONTENT_TOO_LARGE
 from starlette.status import HTTP_415_UNSUPPORTED_MEDIA_TYPE
-from starlette.status import HTTP_422_UNPROCESSABLE_ENTITY
+from starlette.status import HTTP_422_UNPROCESSABLE_CONTENT
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 from starlette.status import HTTP_500_INTERNAL_SERVER_ERROR
 from starlette.status import HTTP_503_SERVICE_UNAVAILABLE
@@ -53,14 +53,14 @@ _ERROR_CODE_STATUS_MAP: dict[ErrorCode, int] = {
     ErrorCode.LAYOUT_NOT_FOUND: HTTP_404_NOT_FOUND,
     ErrorCode.PROCESSING_CONFIG_NOT_FOUND: HTTP_404_NOT_FOUND,
     # Validation errors
-    ErrorCode.VALIDATION_ERROR: HTTP_422_UNPROCESSABLE_ENTITY,
-    ErrorCode.INVALID_EMAIL: HTTP_422_UNPROCESSABLE_ENTITY,
-    ErrorCode.INVALID_PASSWORD: HTTP_422_UNPROCESSABLE_ENTITY,
-    ErrorCode.MISSING_REQUIRED_FIELD: HTTP_422_UNPROCESSABLE_ENTITY,
-    ErrorCode.INVALID_FIELD_VALUE: HTTP_422_UNPROCESSABLE_ENTITY,
+    ErrorCode.VALIDATION_ERROR: HTTP_422_UNPROCESSABLE_CONTENT,
+    ErrorCode.INVALID_EMAIL: HTTP_422_UNPROCESSABLE_CONTENT,
+    ErrorCode.INVALID_PASSWORD: HTTP_422_UNPROCESSABLE_CONTENT,
+    ErrorCode.MISSING_REQUIRED_FIELD: HTTP_422_UNPROCESSABLE_CONTENT,
+    ErrorCode.INVALID_FIELD_VALUE: HTTP_422_UNPROCESSABLE_CONTENT,
     # File errors
     ErrorCode.FILE_UPLOAD_ERROR: HTTP_400_BAD_REQUEST,
-    ErrorCode.FILE_TOO_LARGE: HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+    ErrorCode.FILE_TOO_LARGE: HTTP_413_CONTENT_TOO_LARGE,
     ErrorCode.INVALID_FILE_TYPE: HTTP_415_UNSUPPORTED_MEDIA_TYPE,
     ErrorCode.FILE_PROCESSING_ERROR: HTTP_500_INTERNAL_SERVER_ERROR,
     # Conflict errors
@@ -292,7 +292,7 @@ def add_exception_handlers(app: FastAPI) -> None:
         response = ErrorResponse(
             type="https://api.mkobi.com/errors/validation_error",
             title="Validation error",
-            status=HTTP_422_UNPROCESSABLE_ENTITY,
+            status=HTTP_422_UNPROCESSABLE_CONTENT,
             detail="Request validation failed",
             code=ErrorCode.VALIDATION_ERROR,
             details=None,
@@ -305,7 +305,7 @@ def add_exception_handlers(app: FastAPI) -> None:
                 clean_err["ctx"] = {"error": str(clean_err["ctx"]["error"])}
             serializable_errors.append(clean_err)
         return JSONResponse(
-            status_code=HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=HTTP_422_UNPROCESSABLE_CONTENT,
             content={
                 **response.model_dump(),
                 "errors": serializable_errors,
@@ -327,7 +327,7 @@ def add_exception_handlers(app: FastAPI) -> None:
             HTTP_401_UNAUTHORIZED: ErrorCode.AUTHENTICATION_FAILED,
             HTTP_403_FORBIDDEN: ErrorCode.PERMISSION_DENIED,
             HTTP_400_BAD_REQUEST: ErrorCode.VALIDATION_ERROR,
-            HTTP_422_UNPROCESSABLE_ENTITY: ErrorCode.VALIDATION_ERROR,
+            HTTP_422_UNPROCESSABLE_CONTENT: ErrorCode.VALIDATION_ERROR,
         }
         code = status_to_code.get(exc.status_code, ErrorCode.INTERNAL_ERROR)
         response = ErrorResponse(

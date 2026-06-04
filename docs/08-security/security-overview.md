@@ -15,6 +15,7 @@ tags:
 related:
   - access-control
   - auth-api
+  - error-format
   - configuration
   - frontend-security
   - processing-api
@@ -350,6 +351,8 @@ The FastAPI application includes a `SecurityHeadersMiddleware` that sets defense
 
 All API error responses follow a consistent format with a machine-readable `error_code` field. This enables programmatic error handling on the frontend and simplifies monitoring/alerting on the backend.
 
+For detailed specification including complete ErrorCode reference table and example responses, see [Error Format](error-format.md).
+
 ### Standard Error Fields
 
 ```json
@@ -371,14 +374,13 @@ All API error responses follow a consistent format with a machine-readable `erro
 | Server Error | `500` | `INTERNAL_ERROR`, `HTTP_500` |
 | File Upload | `400`/`422` | `FILE_UPLOAD_ERROR` |
 
-> The `AppException` class in `src/mkobi/utils/exceptions.py` is the primary vehicle for raising structured errors. Custom exception handlers are registered in `create_app()` to ensure consistent formatting across all error paths.
-
 ---
 
 ## Cross-References
 
 - [Authentication API](../01-auth/auth-api.md) — Auth endpoint security, rate limiting details
 - [Access Control](access-control.md) — Dashboard-level permission enforcement model
+- [Error Format](error-format.md) — RFC 7807 error response format and ErrorCode reference
 - [Frontend Security](../07-frontend/frontend-security.md) — JWT handling, CORS, file upload security
 - [Configuration](../06-backend/configuration.md) — Secrets management, environment variables
 - [Processing API](../03-processing/processing-api.md) — Upload security constraints and rate limiting

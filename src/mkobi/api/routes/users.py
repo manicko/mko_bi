@@ -8,7 +8,7 @@ Delete and list all users operations are admin-only.
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
@@ -17,9 +17,10 @@ from mkobi.api.deps import (
     get_user_service,
     require_admin_role,
 )
-from mkobi.models.enums import UserRole
+from mkobi.models.enums import ErrorCode, UserRole
 from mkobi.models.user import UserCreateRequest, UserRead, UserUpdateRequest
 from mkobi.services.user_service import UserService
+from mkobi.utils.exceptions import AppException
 
 logger = logging.getLogger(__name__)
 
@@ -51,9 +52,9 @@ async def create_user_endpoint(
         UserRead: Model of the created user without password.
 
     Raises:
-        HTTPException 403: If role is invalid or email already taken.
-        HTTPException 422: If data validation failed.
-        HTTPException 500: On database error.
+        AppException 409: If email already taken.
+        AppException 422: If data validation failed.
+        AppException 500: On database error.
     """
     logger.info("Creating user: email=%s, role=%s", user_data.email, user_data.role)
 
@@ -64,14 +65,14 @@ async def create_user_endpoint(
         return user
     except ValueError as e:
         logger.warning("Validation error creating user: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
     except Exception as e:
         logger.error("Error creating user %s: %s", user_data.email, e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error creating user",
         ) from e
 
@@ -99,7 +100,7 @@ async def get_users_endpoint(
         list[UserRead]: List of all users.
 
     Raises:
-        HTTPException 500: On database error.
+        AppException 500: On database error.
     """
     logger.info("Getting all users")
 
@@ -108,8 +109,8 @@ async def get_users_endpoint(
         return users_data  # Already returns list[UserRead]
     except Exception as e:
         logger.error("Error getting user list: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting user list",
         ) from e
 
@@ -142,9 +143,9 @@ async def get_user_endpoint(
         UserRead: User model.
 
     Raises:
-        HTTPException 403: If user tries to get another user's data.
-        HTTPException 404: If user not found.
-        HTTPException 500: On database error.
+        AppException 403: If user tries to get another user's data.
+        AppException 404: If user not found.
+        AppException 500: On database error.
     """
     logger.info("Getting user: id=%s, requester_id=%s", user_id, current_user.id)
 
@@ -155,8 +156,8 @@ async def get_user_endpoint(
             current_user.id,
             user_id,
         )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.PERMISSION_DENIED,
             detail="Insufficient permissions to access this user's data",
         )
 
@@ -164,17 +165,18 @@ async def get_user_endpoint(
         user_data = await user_service.get_user_by_id(user_id=user_id, db=db)
         if user_data is None:
             logger.warning("User not found: id=%s", user_id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.USER_NOT_FOUND,
                 detail="User not found",
+                details={"user_id": str(user_id)},
             )
         return user_data  # Already returns UserRead | None
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         logger.error("Error getting user id=%s: %s", user_id, e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting user",
         ) from e
 
@@ -207,9 +209,9 @@ async def update_user_endpoint(
         UserRead: Model of the updated user.
 
     Raises:
-        HTTPException 404: If user not found.
-        HTTPException 422: If role is invalid.
-        HTTPException 500: On database error.
+        AppException 404: If user not found.
+        AppException 422: If role is invalid.
+        AppException 500: On database error.
     """
     logger.info("Updating user: id=%s, new_role=%s", user_id, user_data.role)
 
@@ -219,23 +221,24 @@ async def update_user_endpoint(
         )
         if updated is None:
             logger.warning("User not found for update: id=%s", user_id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.USER_NOT_FOUND,
                 detail="User not found",
+                details={"user_id": str(user_id)},
             )
         return updated
     except ValueError as e:
         logger.warning("Validation error updating user: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         logger.error("Error updating user id=%s: %s", user_id, e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error updating user",
         ) from e
 
@@ -262,8 +265,9 @@ async def delete_me_endpoint(
         None: Returns empty response with 204 code.
 
     Raises:
-        HTTPException 403: If trying to delete admin account.
-        HTTPException 500: On database error.
+        AppException 403: If trying to delete admin account.
+        AppException 404: If user not found.
+        AppException 500: On database error.
     """
     logger.info("Deleting own account: id=%s", current_user.id)
 
@@ -271,20 +275,21 @@ async def delete_me_endpoint(
         result = await user_service.delete_user(user_id=current_user.id, db=db)
         if not result:
             logger.warning("User not found for deletion: id=%s", current_user.id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.USER_NOT_FOUND,
                 detail="User not found",
+                details={"user_id": str(current_user.id)},
             )
     except ValueError as e:
         logger.warning("Error deleting account: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.ACCESS_DENIED,
             detail=str(e),
         ) from e
     except Exception as e:
         logger.error("Error deleting account id=%s: %s", current_user.id, e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error deleting account",
         ) from e
 
@@ -313,9 +318,9 @@ async def delete_user_endpoint(
         None: Returns empty response with 204 code.
 
     Raises:
-        HTTPException 404: If user not found.
-        HTTPException 403: If trying to delete admin with other users present.
-        HTTPException 500: On database error.
+        AppException 404: If user not found.
+        AppException 403: If trying to delete admin with other users present.
+        AppException 500: On database error.
     """
     logger.info("Deleting user: id=%s", user_id)
 
@@ -323,21 +328,22 @@ async def delete_user_endpoint(
         result = await user_service.delete_user(user_id=user_id, db=db)
         if not result:
             logger.warning("User not found for deletion: id=%s", user_id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.USER_NOT_FOUND,
                 detail="User not found",
+                details={"user_id": str(user_id)},
             )
     except ValueError as e:
         logger.warning("Error deleting user: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.ACCESS_DENIED,
             detail=str(e),
         ) from e
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         logger.error("Error deleting user id=%s: %s", user_id, e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error deleting user",
         ) from e

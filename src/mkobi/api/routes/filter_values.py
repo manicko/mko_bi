@@ -8,7 +8,7 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
@@ -16,8 +16,10 @@ from mkobi.api.deps import (
     require_dashboard_read_access,
     get_filter_values_service,
 )
+from mkobi.models.enums import ErrorCode
 from mkobi.models.user import UserRead
 from mkobi.services.filter_values_service import FilterValuesService
+from mkobi.utils.exceptions import AppException
 
 logger = logging.getLogger(__name__)
 
@@ -51,7 +53,7 @@ async def get_filter_values_endpoint(
         dict with filter_name and values list.
 
     Raises:
-        HTTPException 500: On database error.
+        AppException 500: On database error.
     """
     logger.info(
         "Getting filter values for dashboard: dashboard_id=%s, filter_name=%s",
@@ -70,7 +72,7 @@ async def get_filter_values_endpoint(
             filter_name,
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting filter values",
         ) from None

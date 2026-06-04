@@ -33,14 +33,31 @@ Set variables:
 - {AUDIT-EXECUTOR} - model from `C:\py_dev\mkobi\.ai\models\lookup_table.md`
 - {VALIDATOR} -  model from `C:\py_dev\mkobi\.ai\models\lookup_table.md`
 
-# 1.1 DO NOT
+*DO NOT*
 - Read executor role or executor tasks and templates, just provide links
 - Read production code, full documentation content
 
 
-## 2. Execute Phase Loop 
+## 1.5 Select Phases
 
-For each phase file in `{TASK_FILES}` (sorted by phase number) follow steps 2.1-2.6:
+From `{TASK_FILES}`, filter out `99-audit-validate.md`. Parse each remaining filename (`NN-audit-name.md`) to extract phase number and name.
+
+Present the list to the user as a numbered table:
+
+| # | Phase | File |
+|---|-------|------|
+| {N} | {name} | `{filename}` |
+...
+
+**Ask the user:** which phases to execute? Options:
+- `all` — run all listed phases
+- comma-separated numbers (e.g. `1,3,4`) — run selected phases only
+
+Store the result as `{SELECTED_PHASES}`.
+
+## 2. Execute Phase Loop
+
+For each phase file in `{SELECTED_PHASES}` (sorted by phase number) follow steps 2.1-2.6:
 
 IMPORTANT: 
 - do not read task files or findings templates just pass file paths to agent to read them 

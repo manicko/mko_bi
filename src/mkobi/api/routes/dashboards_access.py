@@ -8,7 +8,7 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
@@ -18,7 +18,9 @@ from mkobi.api.deps import (
     get_dashboard_service,
 )
 from mkobi.models.access import AccessGrant
+from mkobi.models.enums import ErrorCode
 from mkobi.services.dashboard_service import DashboardService
+from mkobi.utils.exceptions import AppException
 
 logger = logging.getLogger(__name__)
 
@@ -55,10 +57,10 @@ async def grant_dashboard_access_endpoint(
         dict: Success message.
 
     Raises:
-        HTTPException 403: If user has no access management rights.
-        HTTPException 404: If dashboard not found.
-        HTTPException 422: If data validation failed.
-        HTTPException 500: On database error.
+        AppException 403: If user has no access management rights.
+        AppException 404: If dashboard not found.
+        AppException 422: If data validation failed.
+        AppException 500: On database error.
     """
     logger.info(
         "Granting access: dashboard_id=%s, user_id=%s, permission=%s",
@@ -75,8 +77,8 @@ async def grant_dashboard_access_endpoint(
                 dashboard_id,
                 access_grant.dashboard_id,
             )
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            raise AppException(
+                code=ErrorCode.VALIDATION_ERROR,
                 detail="dashboard_id in body doesn't match URL",
             )
 
@@ -101,17 +103,17 @@ async def grant_dashboard_access_endpoint(
                 "permission": access_grant.permission,
             }
         else:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.DASHBOARD_NOT_FOUND,
                 detail="Dashboard not found",
             )
     except ValueError as e:
         logger.warning("Validation error granting access: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         logger.error(
@@ -119,8 +121,8 @@ async def grant_dashboard_access_endpoint(
             dashboard_id,
             e,
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Access grant error",
         ) from e
 
@@ -163,8 +165,8 @@ async def get_dashboard_access_endpoint(
             e,
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting dashboard access",
         ) from e
 
@@ -204,8 +206,11 @@ async def revoke_dashboard_access_endpoint(
         if result:
             return {"message": "Access revoked successfully"}
         else:
-            raise HTTPException(status_code=404, detail="Access record not found")
-    except HTTPException:
+            raise AppException(
+                code=ErrorCode.NOT_FOUND,
+                detail="Access record not found",
+            )
+    except AppException:
         raise
     except Exception as e:
         await db.rollback()
@@ -216,7 +221,7 @@ async def revoke_dashboard_access_endpoint(
             e,
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error revoking access",
         ) from e

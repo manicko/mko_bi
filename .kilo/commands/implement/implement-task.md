@@ -151,6 +151,32 @@ Do NOT fix unrelated problems during current task execution unless:
 - they create correctness or safety risks for current task
 
 ---
+
+## Step 9 — Commit Changes
+
+1. `git add -A`
+2. Check `git status --porcelain` — if empty, skip commit
+3. Determine commit type from task content: `feat` (new feature), `fix` (bug fix), `refactor` (restructure), `test` (tests only), `chore` (other)
+4. Determine scope from affected module (e.g. `auth`, `api`, `frontend`, `db`)
+5. `git commit -m "{type}({scope}): {short_description}" -m "Task: {TASK_FILE_NAME}"`
+
+1. Check `C:\py_dev\mkobi\.ai\audit\problems\`
+2. If matching problem exists extend/update existing problem description if needed
+3. If problem does NOT exist create a new detailed problem report
+
+Include:
+- description
+- affected modules
+- risk
+- root cause
+- architectural impact
+- suggested direction
+
+Do NOT fix unrelated problems during current task execution unless:
+- they directly block task execution
+- they create correctness or safety risks for current task
+
+---
 # Expected Result
 
 Result must include:
@@ -162,6 +188,7 @@ Result must include:
 - Mark task file name as done (`*_DONE.yaml`)
 - Ensure file task in `C:\py_dev\mkobi\.ai\tasks\done`
 - Ensure the file is no more presented in `C:\py_dev\mkobi\.ai\tasks\todo`
+- Git commit created (conventional commit format)
 
 Result must NOT include:
 - unrelated refactors

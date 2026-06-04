@@ -791,7 +791,7 @@ class TestTempFileCleanup:
             permission=DashboardPermission.EDIT,
         )
         # Create a graph with dimensions that don't match CSV columns
-        # This will cause ValueError when processing tries to validate dimensions
+        # This will cause the graph to be skipped during aggregation (not an error)
         graph_repo = GraphRepository()
         _ = await graph_repo.create(
             db=async_db_session,
@@ -824,7 +824,7 @@ class TestTempFileCleanup:
             task_file = upload_dir / f"{task_id}.csv"
             task_file.write_bytes(csv_content)
 
-            # Processing will fail due to invalid dimensions
+            # Processing will succeed but graph will be skipped due to invalid dimensions
             result = await _process_csv_file_async(
                 file_path_str=str(task_file),
                 task_id=str(task_id),
@@ -834,13 +834,13 @@ class TestTempFileCleanup:
                 db_session=async_db_session,
             )
 
-            # Processing should have failed
-            assert result["success"] is False
+            # Processing succeeds but skipped graph warning was logged
+            assert result["success"] is True
 
-            # Temp file should still be cleaned up on error
+            # Temp file should still be cleaned up
             task_files = list(upload_dir.glob(f"*{task_id}*.csv*"))
             assert len(task_files) == 0, (
-                f"Expected no task files after error, found: {task_files}"
+                f"Expected no task files after processing, found: {task_files}"
             )
         finally:
             csv_path.unlink(missing_ok=True)

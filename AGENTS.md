@@ -87,6 +87,34 @@ alwaysApply: true
 - Rate limiting + MIME-type + размер файла на upload
 - Secrets только через окружение (поддержка `_FILE`)
 
+### Error Handling
+- **RFC 7807 Problem Details format**: All API errors return standardized responses with `type`, `title`, `status`, `detail`, `code`, and optional `details` fields
+- **ErrorCode StrEnum**: All error codes defined in `src/mkobi/models/enums.py` using `UPPER_SNAKE_CASE` convention
+- **AppException**: Single error-raising mechanism in `src/mkobi/utils/exceptions.py`
+- **Status code mapping**: ErrorCode values map to HTTP status codes automatically (e.g., `NOT_FOUND` → 404, `PERMISSION_DENIED` → 403)
+- **Exception handlers**: Register via `add_exception_handlers(app)` in `src/mkobi/utils/exceptions.py`
+
+**Forbidden:**
+- Do NOT raise `HTTPException` directly
+- Do NOT use hardcoded error code strings — always use `ErrorCode` enum
+- Do NOT return non-RFC 7807 error responses
+
+**Frontend error extraction chain** (see `frontend/src/shared/api/errorHandler.ts`):
+1. Legacy FastAPI validation format (422 with errors array, no code field)
+2. RFC 7807 format (with code field)
+3. Validation field-level errors extraction
+4. AxiosError → error.message fallback
+5. Generic fallback message
+
+**Error Layer Architecture:**
+- L1: `src/mkobi/models/enums.py` — ErrorCode enum definition
+- L2: `src/mkobi/utils/exceptions.py` — AppException and handlers
+- L3: API routes — raise AppException with appropriate ErrorCode
+
+**Documentation:**
+- Error format specification: `docs/08-security/error-format.md`
+- Error handling guide: `docs/99-reference/error-handling-guide.md`
+
 ## 5. Основной Data Flow
 
 1. Upload (`POST /upload/{dashboard_id}`)

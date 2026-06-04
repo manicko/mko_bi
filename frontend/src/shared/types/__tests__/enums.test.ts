@@ -8,6 +8,7 @@ import {
   UploadMode,
   ProcessingStatus,
   FileUploadStatus,
+  ErrorCode,
 } from '../enums'
 
 describe('UserRole', () => {
@@ -97,5 +98,56 @@ describe('FileUploadStatus', () => {
     expect(FileUploadStatus.UPLOADING).toBe('uploading')
     expect(FileUploadStatus.SUCCESS).toBe('success')
     expect(FileUploadStatus.ERROR).toBe('error')
+  })
+})
+
+describe('ErrorCode', () => {
+  it('has correct values for general errors', () => {
+    expect(ErrorCode.INTERNAL_ERROR).toBe('INTERNAL_ERROR')
+    expect(ErrorCode.SERVICE_UNAVAILABLE).toBe('SERVICE_UNAVAILABLE')
+    expect(ErrorCode.RATE_LIMIT_EXCEEDED).toBe('RATE_LIMIT_EXCEEDED')
+  })
+
+  it('has correct values for authentication errors', () => {
+    expect(ErrorCode.AUTHENTICATION_FAILED).toBe('AUTHENTICATION_FAILED')
+    expect(ErrorCode.TOKEN_EXPIRED).toBe('TOKEN_EXPIRED')
+    expect(ErrorCode.TOKEN_REVOKED).toBe('TOKEN_REVOKED')
+    expect(ErrorCode.INVALID_TOKEN).toBe('INVALID_TOKEN')
+  })
+
+  it('has correct values for authorization errors', () => {
+    expect(ErrorCode.PERMISSION_DENIED).toBe('PERMISSION_DENIED')
+    expect(ErrorCode.INSUFFICIENT_PERMISSIONS).toBe('INSUFFICIENT_PERMISSIONS')
+    expect(ErrorCode.ACCESS_DENIED).toBe('ACCESS_DENIED')
+  })
+
+  it('has correct values for resource errors', () => {
+    expect(ErrorCode.NOT_FOUND).toBe('NOT_FOUND')
+    expect(ErrorCode.DASHBOARD_NOT_FOUND).toBe('DASHBOARD_NOT_FOUND')
+    expect(ErrorCode.USER_NOT_FOUND).toBe('USER_NOT_FOUND')
+  })
+
+  it('has correct values for validation errors', () => {
+    expect(ErrorCode.VALIDATION_ERROR).toBe('VALIDATION_ERROR')
+    expect(ErrorCode.INVALID_EMAIL).toBe('INVALID_EMAIL')
+    expect(ErrorCode.INVALID_PASSWORD).toBe('INVALID_PASSWORD')
+  })
+
+  it('has correct values for file errors', () => {
+    expect(ErrorCode.FILE_UPLOAD_ERROR).toBe('FILE_UPLOAD_ERROR')
+    expect(ErrorCode.FILE_TOO_LARGE).toBe('FILE_TOO_LARGE')
+    expect(ErrorCode.INVALID_FILE_TYPE).toBe('INVALID_FILE_TYPE')
+    expect(ErrorCode.FILE_PROCESSING_ERROR).toBe('FILE_PROCESSING_ERROR')
+  })
+
+  it('has correct values for conflict errors', () => {
+    expect(ErrorCode.EMAIL_ALREADY_EXISTS).toBe('EMAIL_ALREADY_EXISTS')
+    expect(ErrorCode.FILTER_ALREADY_BOUND).toBe('FILTER_ALREADY_BOUND')
+    expect(ErrorCode.DUPLICATE_RESOURCE).toBe('DUPLICATE_RESOURCE')
+  })
+
+  it('has correct values for processing errors', () => {
+    expect(ErrorCode.PROCESSING_FAILED).toBe('PROCESSING_FAILED')
+    expect(ErrorCode.PROCESSING_IN_PROGRESS).toBe('PROCESSING_IN_PROGRESS')
   })
 })

@@ -99,7 +99,7 @@ Don't read task files content, just pass file names.
 
 ## 3.2 Spawn Implementor Subagent
 
-IMPORTANT: Only 2 subagent allowed simultaneously. Do not parallel more than 2 agents.
+IMPORTANT: Only 1 subagent allowed simultaneously. Do not parallel more than 1 agents.
 
 Display banner:
 
@@ -209,24 +209,7 @@ Do NOT degrade architecture for outdated tests.
 
 ---
 
-## 5. If unrelated issues discovered:
-
-Create or extend reports:`C:\py_dev\mkobi\.ai\audit\problems\`
-If problem does NOT exist create a new detailed problem report
-
-Include:
-- description
-- affected modules
-- risk
-- root cause
-- architectural impact
-- suggested direction
-
-Do NOT fix unrelated problems unless blocking.
-
----
-
-## 6. Finalize Task
+## 5. Finalize Task
 
 REQUIRED:
 
@@ -234,7 +217,12 @@ REQUIRED:
 2. Move task file to:`C:\py_dev\mkobi\.ai\tasks\done`
 3. Verify  {TASK_FILE_ABS_PATH} absent from`C:\py_dev\mkobi\.ai\tasks\todo`
 4. Verify ALL completion conditions
-5. Unrelated issues reported to C:\py_dev\mkobi\.ai\audit\problems\
+5. Commit changes:
+   - `git add -A`
+   - Check `git status --porcelain` — if empty, skip commit
+   - Determine commit type from task content: `feat` (new feature), `fix` (bug fix), `refactor` (restructure), `test` (tests only), `chore` (other)
+   - Determine scope from affected module (e.g. `auth`, `api`, `frontend`, `db`)
+   - `git commit -m "{type}({scope}): {short_description}" -m "Task: {TASK_FILE_NAME}"`
 
 </required_workflow>
 
@@ -395,6 +383,7 @@ Status:
 * [ ] Task renamed to *_DONE.yaml
 * [ ] Task moved to done/
 * [ ] Task removed from todo/
+* [ ] Git commit created per task (conventional commit format)
 * [ ] Failed finalization triggers corrective implementor
 * [ ] No context leakage between tasks
 * [ ] Execution stops at user-defined limit

@@ -2,6 +2,8 @@ import axios, { AxiosError } from 'axios'
 import { toast } from 'react-hot-toast'
 import { getTokenWithExpirationCheck, removeToken, setToken } from '../../features/auth/model/authToken'
 import { getRefreshHandler } from './refreshHandler'
+import { extractApiError } from './errorHandler'
+import { getErrorMessage } from './errorMessages'
 
 export const axiosInstance = axios.create({
   baseURL: '/api/v1',
@@ -109,8 +111,17 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    if (error.response?.status === 403) {
-      toast.error('Access denied')
+    // Handle 403 and other non-401 errors with localized toast
+    const status = error.response?.status
+    if (status && status !== 401) {
+      // Skip toast for login endpoint - let inline form error handle it
+      if (error.config?.url?.includes('/auth/login')) {
+        return Promise.reject(error)
+      }
+      const { code, message } = extractApiError(error)
+      const localizedMessage = getErrorMessage(code)
+      const finalMessage = message ? `${localizedMessage}: ${message}` : localizedMessage
+      toast.error(finalMessage)
     }
     return Promise.reject(error)
   }

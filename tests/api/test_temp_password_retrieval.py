@@ -81,9 +81,9 @@ class TestTempPasswordRetrievalEndpoint:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
         body = response.json()
-        # Standard error format uses "error" field
-        assert "error" in body
-        assert "not found" in body["error"].lower()
+        # RFC 7807 format: check detail field, not error
+        assert "detail" in body
+        assert "not found" in body["detail"].lower()
 
     async def test_retrieve_temp_password_single_use(
         self, async_client: AsyncClient, async_db_session
@@ -132,8 +132,8 @@ class TestTempPasswordRetrievalEndpoint:
         )
         assert response2.status_code == status.HTTP_404_NOT_FOUND
         body = response2.json()
-        assert "error" in body
-        assert "not found" in body["error"].lower()
+        assert "detail" in body
+        assert "not found" in body["detail"].lower()
 
     async def test_retrieve_temp_password_non_admin_forbidden(
         self, async_client: AsyncClient, async_db_session
@@ -206,5 +206,5 @@ class TestTempPasswordRetrievalEndpoint:
         )
         assert response.status_code == status.HTTP_404_NOT_FOUND
         body = response.json()
-        assert "error" in body
-        assert "not found" in body["error"].lower()
+        assert "detail" in body
+        assert "not found" in body["detail"].lower()

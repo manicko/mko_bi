@@ -8,7 +8,7 @@ import logging
 from typing import Any, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,8 +19,10 @@ from mkobi.api.deps import (
     require_admin_role,
     require_dashboard_read_access,
 )
+from mkobi.models.enums import ErrorCode
 from mkobi.models.graph import GraphCreate, GraphRead
 from mkobi.models.user import UserRead
+from mkobi.utils.exceptions import AppException
 
 logger = logging.getLogger(__name__)
 
@@ -55,9 +57,9 @@ async def create_dashboard_graph_endpoint(
         GraphRead: Model of the created graph.
 
     Raises:
-        HTTPException 404: If dashboard not found.
-        HTTPException 422: If data validation failed.
-        HTTPException 500: On database error.
+        AppException 404: If dashboard not found.
+        AppException 422: If data validation failed.
+        AppException 500: On database error.
     """
     logger.info(
         "Creating graph for dashboard: name=%s, dashboard_id=%s, user_id=%s",
@@ -80,11 +82,11 @@ async def create_dashboard_graph_endpoint(
         return cast(GraphRead, GraphRead.model_validate(result))
     except ValueError as e:
         logger.warning("Validation error creating graph: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
-    except HTTPException:
+    except AppException:
         raise
     except IntegrityError:
         await db.rollback()
@@ -94,8 +96,8 @@ async def create_dashboard_graph_endpoint(
             dashboard_id,
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
+        raise AppException(
+            code=ErrorCode.DUPLICATE_RESOURCE,
             detail="Conflict: graph creation failed",
         ) from None
     except Exception:
@@ -106,8 +108,8 @@ async def create_dashboard_graph_endpoint(
             dashboard_id,
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Internal server error",
         ) from None
 
@@ -136,8 +138,8 @@ async def get_dashboard_graphs_endpoint(
         list[GraphRead]: List of graph models.
 
     Raises:
-        HTTPException 403: If user has no access to dashboard.
-        HTTPException 500: On database error.
+        AppException 403: If user has no access to dashboard.
+        AppException 500: On database error.
     """
     logger.info("Getting graphs for dashboard: dashboard_id=%s", dashboard_id)
 
@@ -148,7 +150,7 @@ async def get_dashboard_graphs_endpoint(
         return [GraphRead.model_validate(g) for g in graphs]
     except Exception as e:
         logger.error("Error getting graphs for dashboard %s: %s", dashboard_id, e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting graphs",
         ) from e

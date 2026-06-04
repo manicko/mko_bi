@@ -1,3 +1,7 @@
-export type { AuthResponse, Dashboard, DashboardSummary, Filter, GraphData, LoginRequest, UploadResponse, UserProfile } from '../types/api.types'
+export type { AuthResponse, Dashboard, DashboardSummary, Filter, GraphData, LoginRequest, UploadResponse, UserProfile, ApiError, ValidationFieldError } from '../types/api.types'
+export { ErrorCode } from '../types/enums'
 export { axiosInstance } from './axiosInstance'
+export { extractApiError } from './errorHandler'
+export { sharedErrorMessages, getErrorMessage, DEFAULT_ERROR_MESSAGE } from './errorMessages'
+export type { PartialErrorMessages } from './errorMessages'
 

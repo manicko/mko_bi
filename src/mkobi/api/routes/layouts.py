@@ -7,7 +7,7 @@ Access is restricted and requires authentication.
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
@@ -17,13 +17,14 @@ from mkobi.api.deps import (
 )
 from mkobi.core.permissions import check_dashboard_access
 from mkobi.db.repositories.access_repo import AccessRepository
+from mkobi.models.enums import ErrorCode, UserRole
 from mkobi.models.layout import (
     LayoutRead,
     LayoutUpdate,
     LayoutCreate,
 )
-from mkobi.models.enums import UserRole
 from mkobi.services.layout_service import LayoutService
+from mkobi.utils.exceptions import AppException
 
 logger = logging.getLogger(__name__)
 
@@ -55,9 +56,9 @@ async def create_layout_endpoint(
         LayoutRead: Model of the created layout.
 
     Raises:
-        HTTPException 403: If user is not an admin.
-        HTTPException 422: If data validation failed.
-        HTTPException 500: On database error.
+        AppException 403: If user is not an admin.
+        AppException 422: If data validation failed.
+        AppException 500: On database error.
     """
     # Check admin permissions
     if current_user.role != UserRole.ADMIN:
@@ -66,8 +67,8 @@ async def create_layout_endpoint(
             current_user.id,
             current_user.role,
         )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.PERMISSION_DENIED,
             detail="Only admins can create layouts",
         )
 
@@ -86,8 +87,8 @@ async def create_layout_endpoint(
         return result
     except ValueError as e:
         logger.warning("Validation error creating layout: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
     except Exception as e:
@@ -96,8 +97,8 @@ async def create_layout_endpoint(
             layout.name,
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error creating layout",
         ) from e
 
@@ -128,7 +129,7 @@ async def get_layouts_endpoint(
         list[LayoutRead]: List of layout models.
 
     Raises:
-        HTTPException 500: On database error.
+        AppException 500: On database error.
     """
     logger.info("Getting layout list for user_id=%s", current_user.id)
 
@@ -150,8 +151,8 @@ async def get_layouts_endpoint(
         return layouts
     except Exception as e:
         logger.error("Error getting layout list", exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting layout list",
         ) from e
 
@@ -185,9 +186,9 @@ async def get_layout_endpoint(
         LayoutRead: Layout model.
 
     Raises:
-        HTTPException 404: If layout not found or no associated dashboard.
-        HTTPException 403: If user has no read access to the dashboard.
-        HTTPException 500: On database error.
+        AppException 404: If layout not found or no associated dashboard.
+        AppException 403: If user has no read access to the dashboard.
+        AppException 500: On database error.
     """
     logger.info("Layout request: layout_id=%s, user_id=%s", layout_id, current_user.id)
 
@@ -195,8 +196,8 @@ async def get_layout_endpoint(
         layout = await layout_service.get_layout(layout_id=layout_id, db=db)
         if layout is None:
             logger.warning("Layout not found: id=%s", layout_id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.LAYOUT_NOT_FOUND,
                 detail="Layout not found",
             )
 
@@ -207,8 +208,8 @@ async def get_layout_endpoint(
             if dashboard_id is None:
                 # Orphaned layout - return 404 to prevent enumeration
                 logger.warning("Orphaned layout (no dashboard) accessed: id=%s", layout_id)
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                raise AppException(
+                    code=ErrorCode.LAYOUT_NOT_FOUND,
                     detail="Layout not found",
                 )
 
@@ -226,18 +227,18 @@ async def get_layout_endpoint(
                     layout_id,
                     dashboard_id,
                 )
-                raise HTTPException(
-                    status_code=status.HTTP_403_FORBIDDEN,
+                raise AppException(
+                    code=ErrorCode.PERMISSION_DENIED,
                     detail="You do not have read access to this layout",
                 )
 
         return layout
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         logger.error("Error getting layout id=%s", layout_id, exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting layout",
         ) from e
 
@@ -271,10 +272,10 @@ async def update_layout_endpoint(
         LayoutRead: Model of the updated layout.
 
     Raises:
-        HTTPException 403: If user is not an admin.
-        HTTPException 404: If layout not found.
-        HTTPException 422: If data validation failed.
-        HTTPException 500: On database error.
+        AppException 403: If user is not an admin.
+        AppException 404: If layout not found.
+        AppException 422: If data validation failed.
+        AppException 500: On database error.
     """
     # Check admin permissions
     if current_user.role != UserRole.ADMIN:
@@ -283,8 +284,8 @@ async def update_layout_endpoint(
             current_user.id,
             current_user.role,
         )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.PERMISSION_DENIED,
             detail="Only admins can update layouts",
         )
 
@@ -302,23 +303,23 @@ async def update_layout_endpoint(
         )
         if updated is None:
             logger.warning("Layout not found for update: id=%s", layout_id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.LAYOUT_NOT_FOUND,
                 detail="Layout not found",
             )
         return updated
     except ValueError as e:
         logger.warning("Validation error updating layout: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         logger.error("Error updating layout id=%s", layout_id, exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error updating layout",
         ) from e
 
@@ -346,9 +347,9 @@ async def delete_layout_endpoint(
         layout_service: Injected layout service.
 
     Raises:
-        HTTPException 403: If user is not an admin.
-        HTTPException 404: If layout not found.
-        HTTPException 500: On database error.
+        AppException 403: If user is not an admin.
+        AppException 404: If layout not found.
+        AppException 500: On database error.
     """
     # Check admin permissions
     if current_user.role != UserRole.ADMIN:
@@ -357,8 +358,8 @@ async def delete_layout_endpoint(
             current_user.id,
             current_user.role,
         )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.PERMISSION_DENIED,
             detail="Only admins can delete layouts",
         )
 
@@ -372,15 +373,15 @@ async def delete_layout_endpoint(
         result = await layout_service.delete_layout(layout_id=layout_id, db=db)
         if not result:
             logger.warning("Layout not found for deletion: id=%s", layout_id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.LAYOUT_NOT_FOUND,
                 detail="Layout not found",
             )
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         logger.error("Error deleting layout id=%s", layout_id, exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error deleting layout",
         ) from e

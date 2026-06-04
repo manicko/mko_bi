@@ -188,6 +188,7 @@ class TestDashboardModels:
             name="Sales Dashboard",
             description="Test description",
             config=DashboardConfig(graph_types=[GraphType.BAR]),
+            permission=DashboardPermission.VIEW,
             created_at="2026-04-24T16:02:46+03:00",
             updated_at="2026-04-24T16:02:46+03:00",
         )

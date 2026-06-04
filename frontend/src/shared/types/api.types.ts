@@ -1,5 +1,32 @@
 import type { UserRole, DashboardPermission, GraphType, FilterType, ProcessingStatus, RegistrationStatus } from './enums'
 import type { Data, Layout } from 'react-plotly.js'
+import { ErrorCode } from './enums'
+
+// Re-export ErrorCode type for external use
+export type { ErrorCode }
+
+/**
+ * ApiError interface matching backend RFC 7807 Problem Details format.
+ * All fields are required per the specification.
+ */
+export interface ApiError {
+  type: string
+  title: string
+  status: number
+  detail: string
+  code: ErrorCode
+  details?: Record<string, unknown>
+}
+
+/**
+ * Legacy FastAPI validation error format structure.
+ */
+export interface ValidationFieldError {
+  loc: string[]
+  msg: string
+  type: string
+  input?: string
+}
 
 export interface UserProfile {
   id: string

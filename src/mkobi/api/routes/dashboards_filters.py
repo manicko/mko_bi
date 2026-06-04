@@ -8,7 +8,7 @@ import logging
 from typing import Any
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -20,7 +20,9 @@ from mkobi.api.deps import (
     require_admin_role,
     require_dashboard_read_access,
 )
+from mkobi.models.enums import ErrorCode
 from mkobi.models.user import UserRead
+from mkobi.utils.exceptions import AppException
 
 logger = logging.getLogger(__name__)
 
@@ -52,14 +54,17 @@ async def bind_filter_endpoint(
     try:
         filter_obj = await filter_repo.get(filter_id, db)
         if not filter_obj:
-            raise HTTPException(status_code=404, detail="Filter not found")
+            raise AppException(
+                code=ErrorCode.FILTER_NOT_FOUND,
+                detail="Filter not found",
+            )
 
         result = await dashboard_filter_repo.bind_filter(
             dashboard_id=dashboard_id, filter_id=filter_id, db=db
         )
         await db.commit()
         return {"message": "Filter bound to dashboard", "bound": result}
-    except HTTPException:
+    except AppException:
         raise
     except IntegrityError:
         await db.rollback()
@@ -69,8 +74,8 @@ async def bind_filter_endpoint(
             filter_id,
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
+        raise AppException(
+            code=ErrorCode.FILTER_ALREADY_BOUND,
             detail="Conflict: filter binding failed",
         ) from None
     except ValueError as e:
@@ -82,8 +87,8 @@ async def bind_filter_endpoint(
             e,
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
     except Exception:
@@ -94,8 +99,8 @@ async def bind_filter_endpoint(
             filter_id,
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Internal server error",
         ) from None
 
@@ -128,10 +133,11 @@ async def unbind_filter_endpoint(
         if result:
             return {"message": "Filter unbound from dashboard"}
         else:
-            raise HTTPException(
-                status_code=404, detail="Filter not bound to this dashboard"
+            raise AppException(
+                code=ErrorCode.FILTER_NOT_FOUND,
+                detail="Filter not bound to this dashboard",
             )
-    except HTTPException:
+    except AppException:
         raise
     except IntegrityError:
         await db.rollback()
@@ -141,8 +147,8 @@ async def unbind_filter_endpoint(
             filter_id,
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
+        raise AppException(
+            code=ErrorCode.DUPLICATE_RESOURCE,
             detail="Conflict: filter unbinding failed",
         ) from None
     except ValueError as e:
@@ -154,8 +160,8 @@ async def unbind_filter_endpoint(
             e,
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
     except Exception:
@@ -166,8 +172,8 @@ async def unbind_filter_endpoint(
             filter_id,
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Internal server error",
         ) from None
 
@@ -199,7 +205,7 @@ async def get_dashboard_filters_endpoint(
             e,
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting dashboard filters",
         ) from e

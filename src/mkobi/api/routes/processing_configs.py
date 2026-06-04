@@ -3,7 +3,7 @@
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
@@ -18,6 +18,8 @@ from mkobi.models.processing_configs import (
     ProcessingConfigUpdate,
 )
 from mkobi.services.processing_config_service import ProcessingConfigService
+from mkobi.models.enums import ErrorCode
+from mkobi.utils.exceptions import AppException
 
 logger = logging.getLogger(__name__)
 
@@ -39,17 +41,17 @@ async def get_config_endpoint(
     try:
         config = await processing_config_service.get_by_dashboard_id(dashboard_id, db=db)
         if config is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.PROCESSING_CONFIG_NOT_FOUND,
                 detail="Processing config not found",
             )
         return config
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         logger.error("Error getting processing config: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting processing config",
         ) from e
 
@@ -69,8 +71,8 @@ async def upsert_config_endpoint(
 ) -> ProcessingConfigRead:
     try:
         if config_update.settings is None:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            raise AppException(
+                code=ErrorCode.MISSING_REQUIRED_FIELD,
                 detail="Settings cannot be empty",
             )
         config = await processing_config_service.upsert(
@@ -80,14 +82,14 @@ async def upsert_config_endpoint(
         )
         return config
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
     except Exception as e:
         logger.error("Error updating processing config: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error updating processing config",
         ) from e
 
@@ -106,13 +108,13 @@ async def delete_config_endpoint(
     try:
         await processing_config_service.delete(dashboard_id, db=db)
     except ValueError as e:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+        raise AppException(
+            code=ErrorCode.PROCESSING_CONFIG_NOT_FOUND,
             detail=str(e),
         ) from e
     except Exception as e:
         logger.error("Error deleting processing config: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error deleting processing config",
         ) from e

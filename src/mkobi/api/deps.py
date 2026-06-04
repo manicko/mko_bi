@@ -15,7 +15,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Annotated, Any, cast
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import ExpiredSignatureError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -43,9 +43,10 @@ from mkobi.interfaces.repository_interfaces import IDashboardFilterValuesReposit
 from mkobi.core.temp_password_store import TempPasswordStore
 from mkobi.db.session import get_db, get_session  # noqa: F401
 from mkobi.db.repositories.user_repo import UserRepository
-from mkobi.models.enums import UserRole
+from mkobi.models.enums import ErrorCode, UserRole
 from mkobi.models.user import UserRead
 from mkobi.services.auth_service import AuthService
+from mkobi.utils.exceptions import AppException
 
 logger = logging.getLogger(__name__)
 
@@ -456,12 +457,12 @@ def get_token_from_header(
         str: JWT token.
 
     Raises:
-        HTTPException: If header is missing or incorrect.
+        AppException: If header is missing or incorrect.
     """
     if credentials.scheme.lower() != "bearer":
         logger.warning("Invalid authentication scheme: %s", credentials.scheme)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+        raise AppException(
+            code=ErrorCode.AUTHENTICATION_FAILED,
             detail="Invalid authentication scheme",
             headers={"WWW-Authenticate": "Bearer"},
         )
@@ -487,14 +488,14 @@ async def get_current_user_dependency(
         UserRead: Current user data.
 
     Raises:
-        HTTPException: If token is invalid, revoked, or user not found.
+        AppException: If token is invalid, revoked, or user not found.
     """
     try:
         payload = decode_token(token)
         if payload is None:
             logger.warning("Invalid token")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+            raise AppException(
+                code=ErrorCode.INVALID_TOKEN,
                 detail="Invalid token",
                 headers={"WWW-Authenticate": "Bearer"},
             )
@@ -504,8 +505,8 @@ async def get_current_user_dependency(
         if jti:
             if await is_token_revoked(redis_client, jti):
                 logger.warning("Revoked token used: jti=%s", jti)
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED,
+                raise AppException(
+                    code=ErrorCode.TOKEN_REVOKED,
                     detail="Token has been revoked",
                     headers={"WWW-Authenticate": "Bearer"},
                 )
@@ -513,8 +514,8 @@ async def get_current_user_dependency(
         user_id_raw = payload.get("user_id")
         if user_id_raw is None:
             logger.warning("Token missing user_id")
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+            raise AppException(
+                code=ErrorCode.INVALID_TOKEN,
                 detail="Invalid token",
                 headers={"WWW-Authenticate": "Bearer"},
             )
@@ -524,8 +525,8 @@ async def get_current_user_dependency(
         # Check if user's tokens are revoked (user-level revocation for deactivation)
         if await is_user_tokens_revoked(redis_client, user_id):
             logger.warning("User tokens revoked: user_id=%s", user_id)
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+            raise AppException(
+                code=ErrorCode.TOKEN_REVOKED,
                 detail="Token has been revoked",
                 headers={"WWW-Authenticate": "Bearer"},
             )
@@ -534,42 +535,42 @@ async def get_current_user_dependency(
         user = await repo.get(id=user_id, db=db)
         if user is None:
             logger.warning("User not found: user_id=%s", user_id)
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+            raise AppException(
+                code=ErrorCode.USER_NOT_FOUND,
                 detail="User not found",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
         if not user.is_active:
             logger.warning("User account deactivated: user_id=%s", user_id)
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
+            raise AppException(
+                code=ErrorCode.AUTHENTICATION_FAILED,
                 detail="User account is deactivated",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
         logger.info("User authenticated: user_id=%s", user_id)
         return cast(UserRead, UserRead.model_validate(user))
-    except HTTPException:
+    except AppException:
         raise
     except ExpiredSignatureError as e:
         logger.warning("Token expired")
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+        raise AppException(
+            code=ErrorCode.TOKEN_EXPIRED,
             detail="Token expired",
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
     except AuthenticationError as e:
         logger.warning("Authentication error: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+        raise AppException(
+            code=ErrorCode.AUTHENTICATION_FAILED,
             detail=str(e),
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
     except Exception as e:
         logger.error("Error getting current user: %s", e, exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+        raise AppException(
+            code=ErrorCode.AUTHENTICATION_FAILED,
             detail="Authentication failed",
             headers={"WWW-Authenticate": "Bearer"},
         ) from e
@@ -590,7 +591,7 @@ def require_admin_role(
         UserRead: User if has admin role.
 
     Raises:
-        HTTPException: If user is not admin.
+        AppException: If user is not admin.
     """
     if not check_role(user.role, UserRole.ADMIN):
         logger.warning(
@@ -598,8 +599,8 @@ def require_admin_role(
             user.id,
             user.role,
         )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.INSUFFICIENT_PERMISSIONS,
             detail="Admin access required",
         )
     return user
@@ -617,7 +618,7 @@ def require_editor_role(
         UserRead: User if has editor role or higher.
 
     Raises:
-        HTTPException: If user has insufficient permissions.
+        AppException: If user has insufficient permissions.
     """
     if not check_role(user.role, UserRole.EDITOR):
         logger.warning(
@@ -625,8 +626,8 @@ def require_editor_role(
             user.id,
             user.role,
         )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.INSUFFICIENT_PERMISSIONS,
             detail="Editor access required",
         )
     return user
@@ -644,7 +645,7 @@ def require_viewer_role(
         UserRead: User if authenticated.
 
     Raises:
-        HTTPException: If user is not authenticated.
+        AppException: If user is not authenticated.
     """
     # All authenticated users have at least viewer role
     return user
@@ -664,7 +665,7 @@ def require_role_dependency(
         Callable: FastAPI dependency function.
 
     Raises:
-        HTTPException: If user has insufficient permissions.
+        AppException: If user has insufficient permissions.
 
     Example:
         @app.get("/admin-only")
@@ -684,8 +685,8 @@ def require_role_dependency(
                 user.role,
                 required_role,
             )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+            raise AppException(
+                code=ErrorCode.INSUFFICIENT_PERMISSIONS,
                 detail=f"Role {required_role} or higher required",
             )
         return user
@@ -712,7 +713,7 @@ async def require_dashboard_read_access(
         UserRead: User if has access.
 
     Raises:
-        HTTPException: If user has no read access.
+        AppException: If user has no read access.
 
     Example:
         @app.get("/dashboards/{dashboard_id}")
@@ -733,8 +734,8 @@ async def require_dashboard_read_access(
             user.id,
             dashboard_id,
         )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.PERMISSION_DENIED,
             detail="You do not have read access to this dashboard",
         )
     return user
@@ -756,7 +757,7 @@ async def require_dashboard_write_access(
         UserRead: User if has write access.
 
     Raises:
-        HTTPException: If user has no write access.
+        AppException: If user has no write access.
 
     Example:
         @app.put("/dashboards/{dashboard_id}")
@@ -777,8 +778,8 @@ async def require_dashboard_write_access(
             user.id,
             dashboard_id,
         )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.PERMISSION_DENIED,
             detail="You do not have write access to this dashboard",
         )
     return user
@@ -800,7 +801,7 @@ async def require_dashboard_admin_access(
         UserRead: User if has admin access.
 
     Raises:
-        HTTPException: If user has no admin access.
+        AppException: If user has no admin access.
 
     Example:
         @app.delete("/dashboards/{dashboard_id}")
@@ -821,8 +822,8 @@ async def require_dashboard_admin_access(
             user.id,
             dashboard_id,
         )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.PERMISSION_DENIED,
             detail="You do not have admin access to this dashboard",
         )
     return user

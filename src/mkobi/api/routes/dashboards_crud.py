@@ -8,7 +8,7 @@ Create, update and delete operations are available only to owners.
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
@@ -27,9 +27,9 @@ from mkobi.models.dashboard import (
     DashboardUpdate,
     DashboardSummary,
 )
+from mkobi.models.enums import ErrorCode, UserRole, DashboardPermission
 from mkobi.services.dashboard_service import DashboardService
-from mkobi.utils.exceptions import PermissionDeniedException
-from mkobi.models.enums import UserRole, DashboardPermission
+from mkobi.utils.exceptions import AppException, PermissionDeniedException
 
 logger = logging.getLogger(__name__)
 
@@ -73,8 +73,8 @@ async def get_dashboards_admin_endpoint(
         ]
     except Exception as e:
         logger.error("Error getting all dashboards: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting dashboards",
         ) from e
 
@@ -108,8 +108,8 @@ async def create_dashboard_endpoint(
         DashboardRead: Model of the created dashboard.
 
     Raises:
-        HTTPException 422: If data validation failed.
-        HTTPException 500: On database error.
+        AppException 422: If data validation failed.
+        AppException 500: On database error.
     """
     logger.info(
         "Creating dashboard: name=%s, owner_id=%s",
@@ -136,8 +136,8 @@ async def create_dashboard_endpoint(
         return result
     except ValueError as e:
         logger.warning("Validation error creating dashboard: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
     except Exception as e:
@@ -146,8 +146,8 @@ async def create_dashboard_endpoint(
             dashboard_data.name,
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error creating dashboard",
         ) from e
 
@@ -175,7 +175,7 @@ async def get_my_dashboards_endpoint(
         list[DashboardSummary]: List of dashboards available to user with permission.
 
     Raises:
-        HTTPException 500: On database error.
+        AppException 500: On database error.
     """
     logger.info("Getting user dashboards: user_id=%s", current_user.id)
 
@@ -195,8 +195,8 @@ async def get_my_dashboards_endpoint(
             current_user.id,
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting user dashboards",
         ) from e
 
@@ -227,9 +227,9 @@ async def get_dashboard_endpoint(
         DashboardRead: Dashboard model.
 
     Raises:
-        HTTPException 403: If user has no access.
-        HTTPException 404: If dashboard not found.
-        HTTPException 500: On database error.
+        AppException 403: If user has no access.
+        AppException 404: If dashboard not found.
+        AppException 500: On database error.
     """
     logger.info(
         "Dashboard request: dashboard_id=%s, user_id=%s",
@@ -246,9 +246,10 @@ async def get_dashboard_endpoint(
                 "Dashboard not found: dashboard_id=%s",
                 dashboard_id,
             )
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.DASHBOARD_NOT_FOUND,
                 detail="Dashboard not found",
+                details={"dashboard_id": str(dashboard_id)},
             )
 
         logger.info(
@@ -258,11 +259,11 @@ async def get_dashboard_endpoint(
         )
         return dashboard
     except PermissionDeniedException:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.ACCESS_DENIED,
             detail="Access denied",
         ) from None
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         logger.error(
@@ -271,8 +272,8 @@ async def get_dashboard_endpoint(
             e,
             exc_info=True,
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting dashboard",
         ) from e
 
@@ -307,10 +308,10 @@ async def update_dashboard_endpoint(
         DashboardRead: Updated dashboard model.
 
     Raises:
-        HTTPException 403: If user has no update rights.
-        HTTPException 404: If dashboard not found.
-        HTTPException 422: If data validation failed.
-        HTTPException 500: On database error.
+        AppException 403: If user has no update rights.
+        AppException 404: If dashboard not found.
+        AppException 422: If data validation failed.
+        AppException 500: On database error.
     """
     logger.info(
         "Updating dashboard: dashboard_id=%s, user_id=%s",
@@ -334,8 +335,8 @@ async def update_dashboard_endpoint(
                 current_user.id,
                 dashboard_id,
             )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+            raise AppException(
+                code=ErrorCode.PERMISSION_DENIED,
                 detail="You don't have access to this dashboard",
             )
 
@@ -351,23 +352,24 @@ async def update_dashboard_endpoint(
         )
         if updated is None:
             logger.warning("Dashboard not found for update: id=%s", dashboard_id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.DASHBOARD_NOT_FOUND,
                 detail="Dashboard not found",
+                details={"dashboard_id": str(dashboard_id)},
             )
         return updated
     except ValueError as e:
         logger.warning("Validation error updating dashboard: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         logger.error("Error updating dashboard id=%s: %s", dashboard_id, e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Dashboard update error",
         ) from e
 
@@ -396,9 +398,9 @@ async def delete_dashboard_endpoint(
         dashboard_service: Injected dashboard service.
 
     Raises:
-        HTTPException 403: If user has no deletion rights.
-        HTTPException 404: If dashboard not found.
-        HTTPException 500: On database error.
+        AppException 403: If user has no deletion rights.
+        AppException 404: If dashboard not found.
+        AppException 500: On database error.
     """
     logger.info(
         "Deleting dashboard: dashboard_id=%s, user_id=%s",
@@ -421,9 +423,9 @@ async def delete_dashboard_endpoint(
                 current_user.id,
                 dashboard_id,
             )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have access to this dashboard",
+            raise AppException(
+                code=ErrorCode.ACCESS_DENIED,
+                detail="Access denied",
             )
 
     try:
@@ -432,15 +434,16 @@ async def delete_dashboard_endpoint(
         )
         if not result:
             logger.warning("Dashboard not found for deletion: id=%s", dashboard_id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.DASHBOARD_NOT_FOUND,
                 detail="Dashboard not found",
+                details={"dashboard_id": str(dashboard_id)},
             )
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         logger.error("Error deleting dashboard id=%s: %s", dashboard_id, e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Dashboard deletion error",
         ) from e

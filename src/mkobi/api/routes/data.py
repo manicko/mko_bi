@@ -13,7 +13,7 @@ import logging
 from typing import Any, cast
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
@@ -25,7 +25,9 @@ from mkobi.api.deps import (
 )
 from mkobi.core.permissions import check_dashboard_access, DashboardPermissionError
 from mkobi.models.data import ProcessingResultData, AggregatedDataResponse, GraphDataResponse
+from mkobi.models.enums import ErrorCode
 from mkobi.services.data_service import DataService
+from mkobi.utils.exceptions import AppException
 
 logger = logging.getLogger(__name__)
 
@@ -69,9 +71,9 @@ async def get_aggregated_data_endpoint(
         AggregatedDataResponse: Data for charts in React (Plotly.js) format.
 
     Raises:
-        HTTPException 403: If user has no read access to dashboard.
-        HTTPException 404: If dashboard or graph not found.
-        HTTPException 500: On server error.
+        AppException 403: If user has no read access to dashboard.
+        AppException 404: If dashboard or graph not found.
+        AppException 500: On server error.
     """
     logger.info(
         "Aggregated data request: dashboard_id=%s, user_id=%s, filters=%s",
@@ -92,8 +94,8 @@ async def get_aggregated_data_endpoint(
             dashboard_id,
             current_user.id,
         )
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.ACCESS_DENIED,
             detail="You do not have access to this dashboard",
         )
 
@@ -105,8 +107,8 @@ async def get_aggregated_data_endpoint(
                 parsed_filters = json.loads(filters)
             except json.JSONDecodeError as e:
                 logger.warning("Invalid JSON in filters")
-                raise HTTPException(
-                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                raise AppException(
+                    code=ErrorCode.VALIDATION_ERROR,
                     detail="Invalid JSON in filters",
                 ) from e
 
@@ -117,8 +119,8 @@ async def get_aggregated_data_endpoint(
 
             if single_graph is None:
                 logger.warning("Graph not found: graph_id=%s", graph_id)
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
+                raise AppException(
+                    code=ErrorCode.GRAPH_NOT_FOUND,
                     detail="Graph not found",
                 )
 
@@ -194,14 +196,14 @@ async def get_aggregated_data_endpoint(
 
     except ValueError as e:
         logger.warning("Error getting data: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+        raise AppException(
+            code=ErrorCode.NOT_FOUND,
             detail=str(e),
         ) from e
     except DashboardPermissionError as e:
         logger.warning("Access denied: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+        raise AppException(
+            code=ErrorCode.ACCESS_DENIED,
             detail=str(e),
         ) from e
     except Exception as e:
@@ -210,7 +212,7 @@ async def get_aggregated_data_endpoint(
             dashboard_id,
             e,
         )
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting data",
         ) from e

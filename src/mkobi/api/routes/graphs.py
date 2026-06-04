@@ -10,7 +10,7 @@ from typing import Any, cast
 import logging
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
@@ -25,7 +25,8 @@ from mkobi.models.graph import (
     GraphRead,
     GraphUpdate,
 )
-from mkobi.models.enums import UserRole
+from mkobi.models.enums import ErrorCode, UserRole
+from mkobi.utils.exceptions import AppException
 
 logger = logging.getLogger(__name__)
 
@@ -62,9 +63,9 @@ async def create_graph_endpoint(
         GraphRead: Model of the created graph.
 
     Raises:
-        HTTPException 403: If user has no admin access to the dashboard.
-        HTTPException 422: If data validation failed.
-        HTTPException 500: On database error.
+        AppException 403: If user has no admin access to the dashboard.
+        AppException 422: If data validation failed.
+        AppException 500: On database error.
     """
     logger.info(
         "Creating graph: name=%s, dashboard_id=%s, user_id=%s",
@@ -86,8 +87,8 @@ async def create_graph_endpoint(
                 current_user.id,
                 graph.dashboard_id,
             )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+            raise AppException(
+                code=ErrorCode.PERMISSION_DENIED,
                 detail="You do not have admin access to this dashboard",
             )
 
@@ -103,20 +104,20 @@ async def create_graph_endpoint(
         )
         await db.commit()
         return cast(GraphRead, GraphRead.model_validate(result))
-    except HTTPException:
+    except AppException:
         raise
     except ValueError as e:
         await db.rollback()
         logger.warning("Validation error creating graph: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
     except Exception as e:
         await db.rollback()
         logger.error("Error creating graph name=%s: %s", graph.name, e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error creating graph",
         ) from e
 
@@ -145,7 +146,7 @@ async def get_graphs_endpoint(
         list[GraphRead]: List of graph models.
 
     Raises:
-        HTTPException 500: On database error.
+        AppException 500: On database error.
     """
     logger.info("Getting graphs for user_id=%s", current_user.id)
 
@@ -167,8 +168,8 @@ async def get_graphs_endpoint(
         return [GraphRead.model_validate(g) for g in graphs]
     except Exception as e:
         logger.error("Error getting graphs: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting graphs",
         ) from e
 
@@ -198,9 +199,9 @@ async def get_graph_endpoint(
         GraphRead: Graph model.
 
     Raises:
-        HTTPException 404: If graph not found.
-        HTTPException 403: If user has no read access to the dashboard.
-        HTTPException 500: On database error.
+        AppException 404: If graph not found.
+        AppException 403: If user has no read access to the dashboard.
+        AppException 500: On database error.
     """
     logger.info("Requesting graph: graph_id=%s, user_id=%s", graph_id, current_user.id)
 
@@ -209,8 +210,8 @@ async def get_graph_endpoint(
         graph = await graph_repo.get(id=graph_id, db=db)
         if graph is None:
             logger.warning("Graph not found: id=%s", graph_id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.GRAPH_NOT_FOUND,
                 detail="Graph not found",
             )
 
@@ -227,18 +228,18 @@ async def get_graph_endpoint(
                 graph_id,
                 graph.dashboard_id,
             )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+            raise AppException(
+                code=ErrorCode.PERMISSION_DENIED,
                 detail="You do not have read access to this graph",
             )
 
         return cast(GraphRead, GraphRead.model_validate(graph))
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         logger.error("Error getting graph id=%s: %s", graph_id, e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting graph",
         ) from e
 
@@ -272,10 +273,10 @@ async def update_graph_endpoint(
         GraphRead: Updated graph model.
 
     Raises:
-        HTTPException 404: If graph not found.
-        HTTPException 403: If user has no admin access to the dashboard.
-        HTTPException 422: If data validation failed.
-        HTTPException 500: On database error.
+        AppException 404: If graph not found.
+        AppException 403: If user has no admin access to the dashboard.
+        AppException 422: If data validation failed.
+        AppException 500: On database error.
     """
     logger.info(
         "Updating graph: graph_id=%s, user_id=%s",
@@ -289,8 +290,8 @@ async def update_graph_endpoint(
         existing_graph = await graph_repo.get(id=graph_id, db=db)
         if existing_graph is None:
             logger.warning("Graph not found for update: id=%s", graph_id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.GRAPH_NOT_FOUND,
                 detail="Graph not found",
             )
 
@@ -307,8 +308,8 @@ async def update_graph_endpoint(
                 graph_id,
                 existing_graph.dashboard_id,
             )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+            raise AppException(
+                code=ErrorCode.PERMISSION_DENIED,
                 detail="You do not have admin access to this graph",
             )
 
@@ -330,25 +331,25 @@ async def update_graph_endpoint(
         )
         if result is None:
             logger.warning("Graph not found for update: id=%s", graph_id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.GRAPH_NOT_FOUND,
                 detail="Graph not found",
             )
         await db.commit()
         return cast(GraphRead, GraphRead.model_validate(result))
     except ValueError as e:
         logger.warning("Validation error updating graph: %s", e)
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        raise AppException(
+            code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         await db.rollback()
         logger.error("Error updating graph id=%s: %s", graph_id, e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error updating graph",
         ) from e
 
@@ -376,9 +377,9 @@ async def delete_graph_endpoint(
         db: Database session.
 
     Raises:
-        HTTPException 404: If graph not found.
-        HTTPException 403: If user has no admin access to the dashboard.
-        HTTPException 500: On database error.
+        AppException 404: If graph not found.
+        AppException 403: If user has no admin access to the dashboard.
+        AppException 500: On database error.
     """
     logger.info(
         "Deleting graph: graph_id=%s, user_id=%s",
@@ -392,8 +393,8 @@ async def delete_graph_endpoint(
         existing_graph = await graph_repo.get(id=graph_id, db=db)
         if existing_graph is None:
             logger.warning("Graph not found for deletion: id=%s", graph_id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.GRAPH_NOT_FOUND,
                 detail="Graph not found",
             )
 
@@ -410,25 +411,25 @@ async def delete_graph_endpoint(
                 graph_id,
                 existing_graph.dashboard_id,
             )
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
+            raise AppException(
+                code=ErrorCode.PERMISSION_DENIED,
                 detail="You do not have admin access to this graph",
             )
 
         result = await graph_repo.delete(graph_id, db)
         if not result:
             logger.warning("Graph not found for deletion: id=%s", graph_id)
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.GRAPH_NOT_FOUND,
                 detail="Graph not found",
             )
         await db.commit()
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         await db.rollback()
         logger.error("Error deleting graph id=%s: %s", graph_id, e)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error deleting graph",
         ) from e

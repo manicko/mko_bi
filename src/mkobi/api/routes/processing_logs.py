@@ -8,7 +8,7 @@ from datetime import datetime
 from uuid import UUID
 from typing import cast
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
@@ -18,10 +18,11 @@ from mkobi.api.deps import (
     require_admin_role,
 )
 from mkobi.core.logging_config import get_logger
-from mkobi.models.enums import ProcessingStatus
+from mkobi.models.enums import ErrorCode, ProcessingStatus
 from mkobi.models.processing_logs import ProcessingLogFilter, ProcessingLogRead
 from mkobi.models.user import UserRead
 from mkobi.services.processing_log_service import ProcessingLogService
+from mkobi.utils.exceptions import AppException
 
 router = APIRouter(prefix="/admin/logs", tags=["admin", "processing_logs"], redirect_slashes=False)
 
@@ -87,8 +88,8 @@ async def get_logs_endpoint(
         return logs
     except Exception as e:
         logger.error("Error getting log list: %s", e, exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting log list",
         ) from e
 
@@ -112,16 +113,16 @@ async def get_log_endpoint(
         repo = get_processing_log_repository()
         log = await repo.get_by_id(log_id, db)
         if log is None:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
+            raise AppException(
+                code=ErrorCode.NOT_FOUND,
                 detail="Processing log not found",
             )
         return cast(ProcessingLogRead, ProcessingLogRead.model_validate(log))
-    except HTTPException:
+    except AppException:
         raise
     except Exception as e:
         logger.error("Error getting log id=%s: %s", log_id, e, exc_info=True)
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        raise AppException(
+            code=ErrorCode.INTERNAL_ERROR,
             detail="Error getting log",
         ) from e

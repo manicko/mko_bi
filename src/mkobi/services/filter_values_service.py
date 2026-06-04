@@ -5,7 +5,6 @@ All operations are performed through injected repository.
 """
 
 import logging
-from typing import cast
 from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -49,5 +48,4 @@ class FilterValuesService:
             filter_name,
         )
         values = await self._repo.get_filter_values(dashboard_id, filter_name, db)
-        # mypy infers Any from interface due to SQLAlchemy model ignore rules
-        return cast(list[str], values)
+        return values
