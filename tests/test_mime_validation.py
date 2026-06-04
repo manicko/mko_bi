@@ -311,12 +311,12 @@ class TestMimeTypeDetectionFunction:
 class TestValidateMimeType:
     """Unit tests for validate_mime_type function."""
 
-    def test_validate_csv_mime_passes(self, tmp_path: Path) -> None:
+    def test_validate_csv_mime_passes(self, tmp_path: Path, valid_csv_content: bytes) -> None:
         """validate_mime_type should pass for valid CSV MIME type."""
         from mkobi.services.file_processing import validate_mime_type
 
         csv_file = tmp_path / "test.csv"
-        csv_file.write_bytes(b"name,value\nfoo,1\n")
+        csv_file.write_bytes(valid_csv_content)
 
         # Should not raise
         validate_mime_type(csv_file)
