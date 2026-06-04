@@ -130,6 +130,7 @@
   - mkobi.models.enums
   - mkobi.models.user
   - mkobi.services.auth_service
+  - mkobi.utils.exceptions
   - mkobi.config
   - mkobi.db.repositories.user_repo
   - mkobi.db.repositories.dashboard_repo
@@ -834,7 +835,6 @@
   module: C:_dev.mkobi..ai.builders.......src.mkobi.services.filter_values_service
   layer: unknown
   imports:
-  - typing
   - uuid
   - sqlalchemy.ext.asyncio
   - mkobi.interfaces.repository_interfaces
@@ -1664,6 +1664,7 @@
   - mkobi.api.deps
   - mkobi.interfaces
   - mkobi.models.enums
+  - mkobi.utils.exceptions
   - mkobi.models.user
   - mkobi.models.auth
   - mkobi.services.auth_service
@@ -1689,8 +1690,10 @@
   - mkobi.core
   - mkobi.core.security
   - mkobi.models.auth
+  - mkobi.models.enums
   - mkobi.models.user
   - mkobi.services.auth_service
+  - mkobi.utils.exceptions
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\client_errors.py
@@ -1725,7 +1728,9 @@
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
   - mkobi.models.access
+  - mkobi.models.enums
   - mkobi.services.dashboard_service
+  - mkobi.utils.exceptions
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
@@ -1737,9 +1742,9 @@
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
   - mkobi.models.dashboard
+  - mkobi.models.enums
   - mkobi.services.dashboard_service
   - mkobi.utils.exceptions
-  - mkobi.models.enums
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
@@ -1752,7 +1757,9 @@
   - sqlalchemy.exc
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.models.enums
   - mkobi.models.user
+  - mkobi.utils.exceptions
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_graphs.py
@@ -1765,8 +1772,10 @@
   - sqlalchemy.exc
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.models.enums
   - mkobi.models.graph
   - mkobi.models.user
+  - mkobi.utils.exceptions
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py
@@ -1780,7 +1789,9 @@
   - mkobi.api.deps
   - mkobi.core.permissions
   - mkobi.models.data
+  - mkobi.models.enums
   - mkobi.services.data_service
+  - mkobi.utils.exceptions
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\filters.py
@@ -1798,8 +1809,10 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.models.enums
   - mkobi.models.user
   - mkobi.services.filter_values_service
+  - mkobi.utils.exceptions
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
@@ -1813,6 +1826,7 @@
   - mkobi.api.deps
   - mkobi.models.graph
   - mkobi.models.enums
+  - mkobi.utils.exceptions
   - mkobi.db.repositories.access_repo
   classes: []
   functions: []
@@ -1826,9 +1840,10 @@
   - mkobi.api.deps
   - mkobi.core.permissions
   - mkobi.db.repositories.access_repo
-  - mkobi.models.layout
   - mkobi.models.enums
+  - mkobi.models.layout
   - mkobi.services.layout_service
+  - mkobi.utils.exceptions
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
@@ -1841,6 +1856,8 @@
   - mkobi.api.deps
   - mkobi.models.processing_configs
   - mkobi.services.processing_config_service
+  - mkobi.models.enums
+  - mkobi.utils.exceptions
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_logs.py
@@ -1858,6 +1875,7 @@
   - mkobi.models.processing_logs
   - mkobi.models.user
   - mkobi.services.processing_log_service
+  - mkobi.utils.exceptions
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\upload.py
@@ -1893,6 +1911,7 @@
   - mkobi.models.enums
   - mkobi.models.user
   - mkobi.services.user_service
+  - mkobi.utils.exceptions
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\__init__.py

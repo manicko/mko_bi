@@ -1,0 +1,48 @@
+id: TASK_011_AR008_add_display_name_test
+
+title: Add unit test for display_name email prefix computation
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\06-tests-validated.md
+source_section: AR-008 — display_name Computation Test
+
+description: >
+  `display_name` is computed from email prefix (text before `@`). While login tests
+  check for the field's presence, there's no dedicated test for the computation logic.
+  Add unit tests that verify the extraction logic including edge cases.
+
+goals:
+  - Add dedicated unit tests for display_name computation
+  - Cover standard case, no-@ case, and edge cases
+  - All tests pass with current production code
+
+files:
+  - path: tests/test_auth_api.py
+    targets:
+      - type: module
+        name: test_auth_api
+    semantic_anchors:
+      insert_after:
+        type: file_end
+        value: end of test_auth_api.py
+    changes:
+      - action: add_code
+        description: >
+          Add unit tests for display_name computation:
+          - "user@example.com" -> "user"
+          - "admin" -> "admin" (no @ prefix)
+          - Edge cases: empty string, multiple @, etc.
+
+acceptance_criteria:
+  - Tests verify display_name extraction from email
+  - Edge cases are covered
+  - All tests pass with current production code
+  - No production code is modified
+
+tests_to_run:
+  - pytest tests/test_auth_api.py -v -k "display_name"

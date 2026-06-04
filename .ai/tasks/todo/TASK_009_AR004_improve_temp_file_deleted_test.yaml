@@ -1,0 +1,50 @@
+id: TASK_009_AR004_improve_temp_file_deleted_test
+
+title: Improve test_temp_file_deleted_after_successful_upload to exercise full pipeline
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\06-tests-validated.md
+source_section: AR-004 — test_temp_file_deleted_after_successful_upload Exercises No-Op Path
+
+description: >
+  `test_temp_file_deleted_after_successful_upload` calls `process_csv_background` directly
+  without creating any graphs for the dashboard. The `_store_aggregates` function returns
+  early at `data_worker.py:402-404` when no graphs exist. The test passes because the
+  worker's cleanup runs regardless, but it doesn't verify the full processing pipeline.
+  Create a minimal graph in the test setup so the full pipeline is exercised.
+
+goals:
+  - Make the test exercise the full processing pipeline including aggregation
+  - Create a minimal graph in the test setup
+  - Test still verifies temp file cleanup
+
+files:
+  - path: tests/test_upload_api.py
+    targets:
+      - type: function
+        name: test_temp_file_deleted_after_successful_upload
+    semantic_anchors:
+      insert_after:
+        type: function_definition
+        value: test_temp_file_deleted_after_successful_upload
+    changes:
+      - action: modify_code
+        description: >
+          Add graph creation in the test setup so _store_aggregates does not
+          return early. The test should exercise the full processing pipeline
+          while still verifying temp file cleanup.
+
+acceptance_criteria:
+  - test_temp_file_deleted_after_successful_upload creates a graph before processing
+  - The full processing pipeline (including aggregation) is exercised
+  - Test still verifies temp file cleanup
+  - Test passes
+  - No production code is modified
+
+tests_to_run:
+  - pytest tests/test_upload_api.py::test_temp_file_deleted_after_successful_upload -v

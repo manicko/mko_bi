@@ -1,0 +1,56 @@
+id: TASK_006_AR005_delete_bak_file
+
+title: Delete outdated test_upload_api.py.bak file
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\06-tests-validated.md
+source_section: AR-005 — Delete .bak File
+
+description: >
+  `tests/test_upload_api.py.bak` (29KB, 757 lines) is an outdated backup file superseded
+  by the current `test_upload_api.py`. It should not be in the repository. Additionally,
+  ensure `.gitignore` excludes `*.bak` files.
+
+goals:
+  - Remove the .bak file from the repository
+  - Ensure .gitignore excludes *.bak files
+
+files:
+  - path: tests/test_upload_api.py.bak
+    targets:
+      - type: file
+        name: test_upload_api.py.bak
+    semantic_anchors:
+      insert_after:
+        type: file_delete
+        value: delete entire file
+    changes:
+      - action: delete_file
+        description: Delete the outdated backup file.
+
+  - path: .gitignore
+    targets:
+      - type: file
+        name: .gitignore
+    semantic_anchors:
+      insert_after:
+        type: file_end
+        value: end of .gitignore
+    changes:
+      - action: add_code
+        description: Add `*.bak` to .gitignore if not already present.
+        code_hint: |
+          *.bak
+
+acceptance_criteria:
+  - test_upload_api.py.bak no longer exists in the repository
+  - .gitignore contains `*.bak` entry
+  - No other files are affected
+
+tests_to_run:
+  - python -c "import os; assert not os.path.exists('tests/test_upload_api.py.bak'), '.bak file still exists'"

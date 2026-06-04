@@ -121,6 +121,25 @@
     - react-hot-toast
     - ../../features/auth/model/authToken
     - ./refreshHandler
+    - ./errorHandler
+    - ./errorMessages
+  components: []
+  hooks: []
+  jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/shared/api/errorHandler.ts
+  module: C:.py_dev.mkobi.frontend.src.shared.api.errorHandler
+  layer: api
+  imports:
+    - ../types/enums
+    - ../types/api.types
+  components: []
+  hooks: []
+  jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/shared/api/errorMessages.ts
+  module: C:.py_dev.mkobi.frontend.src.shared.api.errorMessages
+  layer: api
+  imports:
+    - ../types/enums
   components: []
   hooks: []
   jsx_tags: []
@@ -393,6 +412,7 @@
   imports:
     - ./enums
     - react-plotly.js
+    - ./enums
   components: []
   hooks: []
   jsx_tags: []
@@ -424,6 +444,14 @@
   imports:
     - ../../../shared/api/axiosInstance
     - ../../../shared/types/api.types
+  components: []
+  hooks: []
+  jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/features/admin/model/errorMessages.ts
+  module: C:.py_dev.mkobi.frontend.src.features.admin.model.errorMessages
+  layer: unknown
+  imports:
+    - ../../../shared/types/enums
   components: []
   hooks: []
   jsx_tags: []
@@ -681,6 +709,14 @@
   hooks:
     - useAuthToken
   jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/features/auth/model/errorMessages.ts
+  module: C:.py_dev.mkobi.frontend.src.features.auth.model.errorMessages
+  layer: unknown
+  imports:
+    - ../../../shared/types/enums
+  components: []
+  hooks: []
+  jsx_tags: []
 - path: C:/py_dev/mkobi/frontend/src/features/auth/model/useAuth.ts
   module: C:.py_dev.mkobi.frontend.src.features.auth.model.useAuth
   layer: unknown
@@ -783,6 +819,14 @@
     - useAggregatedData
     - useInvalidateDashboard
     - useFilterValues
+  jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/features/dashboards/model/errorMessages.ts
+  module: C:.py_dev.mkobi.frontend.src.features.dashboards.model.errorMessages
+  layer: unknown
+  imports:
+    - ../../../shared/types/enums
+  components: []
+  hooks: []
   jsx_tags: []
 - path: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/DashboardFilters.tsx
   module: C:.py_dev.mkobi.frontend.src.features.dashboards.ui.DashboardFilters
@@ -910,6 +954,14 @@
   hooks:
     - useProcessingStatus
   jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/features/upload/model/errorMessages.ts
+  module: C:.py_dev.mkobi.frontend.src.features.upload.model.errorMessages
+  layer: unknown
+  imports:
+    - ../../../shared/types/enums
+  components: []
+  hooks: []
+  jsx_tags: []
 - path: C:/py_dev/mkobi/frontend/src/features/upload/ui/FileDropzone.tsx
   module: C:.py_dev.mkobi.frontend.src.features.upload.ui.FileDropzone
   layer: unknown
@@ -1001,6 +1053,14 @@
   imports:
     - ../../../shared/api/axiosInstance
     - ../../../shared/types/api.types
+  components: []
+  hooks: []
+  jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/features/users/model/errorMessages.ts
+  module: C:.py_dev.mkobi.frontend.src.features.users.model.errorMessages
+  layer: unknown
+  imports:
+    - ../../../shared/types/enums
   components: []
   hooks: []
   jsx_tags: []
@@ -1103,6 +1163,31 @@
     - >-
       <Button onClick={() => void handleDeleteConfirm()} color="error"
       autoFocus>
+- path: C:/py_dev/mkobi/frontend/src/shared/api/__tests__/errorHandler.test.ts
+  module: C:.py_dev.mkobi.frontend.src.shared.api.__tests__.errorHandler.test
+  layer: api
+  imports:
+    - vitest
+    - ../errorHandler
+    - ../../types/enums
+  components: []
+  hooks: []
+  jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/shared/api/__tests__/errorMessages.test.ts
+  module: C:.py_dev.mkobi.frontend.src.shared.api.__tests__.errorMessages.test
+  layer: api
+  imports:
+    - vitest
+    - ../errorMessages
+    - ../../types/enums
+    - ../../../features/auth/model/errorMessages
+    - ../../../features/upload/model/errorMessages
+    - ../../../features/dashboards/model/errorMessages
+    - ../../../features/admin/model/errorMessages
+    - ../../../features/users/model/errorMessages
+  components: []
+  hooks: []
+  jsx_tags: []
 - path: C:/py_dev/mkobi/frontend/src/shared/components/Layout/AppLayout.tsx
   module: C:.py_dev.mkobi.frontend.src.shared.components.Layout.AppLayout
   layer: component

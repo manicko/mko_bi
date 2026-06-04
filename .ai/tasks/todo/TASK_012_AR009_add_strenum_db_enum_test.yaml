@@ -1,0 +1,50 @@
+id: TASK_012_AR009_add_strenum_db_enum_test
+
+title: Add StrEnum vs PostgreSQL ENUM consistency test
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\06-tests-validated.md
+source_section: AR-009 — StrEnum vs PostgreSQL ENUM Consistency Test
+
+description: >
+  The codebase uses StrEnum for roles, statuses, and permissions. No tests verify
+  that the Python enum values match the PostgreSQL ENUM types defined in migrations.
+  A mismatch would cause runtime errors on insert. Add a test that reads database
+  ENUM values via pg_type/pg_enum and compares them with the Python StrEnum values.
+
+goals:
+  - Add a test that verifies StrEnum values match PostgreSQL ENUM types
+  - Cover at least UserRole, DashboardPermission, ProcessingStatus
+  - Test detects mismatches that would cause runtime insert errors
+
+files:
+  - path: tests/test_enum_db_consistency.py
+    targets:
+      - type: module
+        name: test_enum_db_consistency
+    semantic_anchors:
+      insert_after:
+        type: file_new
+        value: new test file
+    changes:
+      - action: add_code
+        description: >
+          Create a new test file that:
+          1. Queries PostgreSQL for ENUM values via pg_type/pg_enum
+          2. Compares with Python StrEnum values from mkobi.models.enums
+          3. Asserts all enum values are consistent
+
+acceptance_criteria:
+  - Test file is created and discoverable by pytest
+  - Test queries actual database ENUM values
+  - Test compares with Python StrEnum values
+  - Test passes (confirming consistency)
+  - No production code is modified
+
+tests_to_run:
+  - pytest tests/test_enum_db_consistency.py -v

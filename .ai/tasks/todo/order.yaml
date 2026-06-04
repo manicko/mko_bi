@@ -1,0 +1,45 @@
+tasks:
+  # Batch 1 — Prerequisite: Shared fixture (must come before MF-001 fixes)
+  - id: TASK_001_AR006_shared_csv_fixture
+    depends_on: []
+
+  # Batch 1 — Mandatory fixes (independent except MF-001 depends on fixture)
+  - id: TASK_002_MF001_fix_libmagic_tests
+    depends_on:
+      - TASK_001_AR006_shared_csv_fixture
+
+  - id: TASK_003_MF002_fix_log_level_test
+    depends_on: []
+
+  - id: TASK_004_MF003_verify_layout_test
+    depends_on: []
+
+  - id: TASK_005_MF004_verify_pydantic_model_test
+    depends_on: []
+
+  - id: TASK_006_AR005_delete_bak_file
+    depends_on: []
+
+  # Batch 2 — Test quality improvements (independent)
+  - id: TASK_007_AR001_fix_csv_loader_temp_cleanup
+    depends_on: []
+
+  - id: TASK_008_AR002_fix_streaming_temp_cleanup
+    depends_on: []
+
+  - id: TASK_009_AR004_improve_temp_file_deleted_test
+    depends_on: []
+
+  # Batch 3 — New tests (independent)
+  - id: TASK_010_AR007_add_jsonb_key_normalization_test
+    depends_on: []
+
+  - id: TASK_011_AR008_add_display_name_test
+    depends_on: []
+
+  - id: TASK_012_AR009_add_strenum_db_enum_test
+    depends_on: []
+
+  # Batch 4 — Documentation (independent)
+  - id: TASK_013_DOC001_document_cleanup_architecture
+    depends_on: []

@@ -1428,12 +1428,12 @@
   value: Depends
   stable_hash: 1da12226
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
-- id: 819b5aeb
+- id: 7170b36b
   symbol_path:
   - get_token_from_header
   type: function_call
-  value: HTTPException
-  stable_hash: 819b5aeb
+  value: AppException
+  stable_hash: 7170b36b
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: e8ba2be7
   symbol_path:
@@ -1472,11 +1472,11 @@
   value: decode_token
   stable_hash: 1dab137b
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
-- id: de62d709
+- id: c2765436
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: de62d709
+  value: AppException
+  stable_hash: c2765436
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: cab2b746
   symbol_path: []
@@ -1484,17 +1484,17 @@
   value: is_token_revoked
   stable_hash: cab2b746
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
-- id: de62d709
+- id: c2765436
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: de62d709
+  value: AppException
+  stable_hash: c2765436
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
-- id: de62d709
+- id: c2765436
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: de62d709
+  value: AppException
+  stable_hash: c2765436
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: 5d6d4b3b
   symbol_path: []
@@ -1514,11 +1514,11 @@
   value: is_user_tokens_revoked
   stable_hash: 20d66352
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
-- id: de62d709
+- id: c2765436
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: de62d709
+  value: AppException
+  stable_hash: c2765436
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: '72553493'
   symbol_path: []
@@ -1526,17 +1526,17 @@
   value: UserRepository
   stable_hash: '72553493'
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
-- id: de62d709
+- id: c2765436
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: de62d709
+  value: AppException
+  stable_hash: c2765436
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
-- id: de62d709
+- id: c2765436
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: de62d709
+  value: AppException
+  stable_hash: c2765436
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: f05ac3c5
   symbol_path: []
@@ -1549,17 +1549,17 @@
   value: cast
   stable_hash: ba1e3133
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
-- id: de62d709
+- id: c2765436
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: de62d709
+  value: AppException
+  stable_hash: c2765436
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
-- id: de62d709
+- id: c2765436
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: de62d709
+  value: AppException
+  stable_hash: c2765436
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: 791baac4
   symbol_path: []
@@ -1567,11 +1567,11 @@
   value: str
   stable_hash: 791baac4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
-- id: de62d709
+- id: c2765436
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: de62d709
+  value: AppException
+  stable_hash: c2765436
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: 17f00151
   symbol_path:
@@ -1587,12 +1587,12 @@
   value: check_role
   stable_hash: 2f9a8cfc
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
-- id: 3e14a679
+- id: 1baab02d
   symbol_path:
   - require_admin_role
   type: function_call
-  value: HTTPException
-  stable_hash: 3e14a679
+  value: AppException
+  stable_hash: 1baab02d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: 405b0752
   symbol_path:
@@ -1614,12 +1614,12 @@
   value: check_role
   stable_hash: 0299175c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
-- id: 198adac1
+- id: 73e24396
   symbol_path:
   - require_editor_role
   type: function_call
-  value: HTTPException
-  stable_hash: 198adac1
+  value: AppException
+  stable_hash: 73e24396
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: fbe4af32
   symbol_path:
@@ -1654,12 +1654,12 @@
   value: check_role
   stable_hash: c6581c05
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
-- id: 7725b51f
+- id: 7c519c55
   symbol_path:
   - require_role_dependency
   type: function_call
-  value: HTTPException
-  stable_hash: 7725b51f
+  value: AppException
+  stable_hash: 7c519c55
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: 094cd2d5
   symbol_path:
@@ -1691,11 +1691,11 @@
   value: check_dashboard_access
   stable_hash: 24d5a12e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
-- id: de62d709
+- id: c2765436
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: de62d709
+  value: AppException
+  stable_hash: c2765436
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: f05ac3c5
   symbol_path: []
@@ -1720,11 +1720,11 @@
   value: check_dashboard_access
   stable_hash: 24d5a12e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
-- id: de62d709
+- id: c2765436
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: de62d709
+  value: AppException
+  stable_hash: c2765436
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: f05ac3c5
   symbol_path: []
@@ -1749,11 +1749,11 @@
   value: check_dashboard_access
   stable_hash: 24d5a12e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
-- id: de62d709
+- id: c2765436
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: de62d709
+  value: AppException
+  stable_hash: c2765436
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
 - id: f05ac3c5
   symbol_path: []
@@ -5806,13 +5806,6 @@
   - FilterValuesService
   type: return_statement
   stable_hash: aaa16fde
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\filter_values_service.py
-- id: 81a24d20
-  symbol_path:
-  - FilterValuesService
-  type: function_call
-  value: cast
-  stable_hash: 81a24d20
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\filter_values_service.py
 - id: a15cb034
   symbol_path:
@@ -12940,11 +12933,11 @@
   type: return_statement
   stable_hash: 8b3acff2
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: c4094219
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: AppException
+  stable_hash: c4094219
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 303cb73d
   symbol_path: []
@@ -12964,22 +12957,28 @@
   value: Depends
   stable_hash: 303cb73d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: c4094219
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: AppException
+  stable_hash: c4094219
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+- id: 86b2b28e
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: 86b2b28e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 8b3acff2
   symbol_path: []
   type: return_statement
   stable_hash: 8b3acff2
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: c4094219
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: AppException
+  stable_hash: c4094219
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 86b2b28e
   symbol_path: []
@@ -12987,11 +12986,11 @@
   value: str
   stable_hash: 86b2b28e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: c4094219
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: AppException
+  stable_hash: c4094219
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 303cb73d
   symbol_path: []
@@ -13011,17 +13010,11 @@
   value: Depends
   stable_hash: 303cb73d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: c4094219
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
-  symbol_path: []
-  type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: AppException
+  stable_hash: c4094219
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 86b2b28e
   symbol_path: []
@@ -13029,11 +13022,23 @@
   value: str
   stable_hash: 86b2b28e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: c4094219
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: AppException
+  stable_hash: c4094219
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+- id: 86b2b28e
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: 86b2b28e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+- id: c4094219
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: c4094219
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 303cb73d
   symbol_path: []
@@ -13059,11 +13064,17 @@
   value: Depends
   stable_hash: 303cb73d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: c4094219
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: AppException
+  stable_hash: c4094219
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+- id: 86b2b28e
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: 86b2b28e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: f445503d
   symbol_path: []
@@ -13082,11 +13093,11 @@
   type: return_statement
   stable_hash: 8b3acff2
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: c4094219
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: AppException
+  stable_hash: c4094219
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 303cb73d
   symbol_path: []
@@ -13106,22 +13117,11 @@
   value: Depends
   stable_hash: 303cb73d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: c4094219
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 8b3acff2
-  symbol_path: []
-  type: return_statement
-  stable_hash: 8b3acff2
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
-  symbol_path: []
-  type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: AppException
+  stable_hash: c4094219
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 86b2b28e
   symbol_path: []
@@ -13129,11 +13129,28 @@
   value: str
   stable_hash: 86b2b28e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: 8b3acff2
+  symbol_path: []
+  type: return_statement
+  stable_hash: 8b3acff2
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+- id: c4094219
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: AppException
+  stable_hash: c4094219
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+- id: 86b2b28e
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: 86b2b28e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+- id: c4094219
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: c4094219
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 303cb73d
   symbol_path: []
@@ -13158,11 +13175,11 @@
   type: return_statement
   stable_hash: 8b3acff2
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: c4094219
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: AppException
+  stable_hash: c4094219
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 303cb73d
   symbol_path: []
@@ -13194,17 +13211,23 @@
   value: Depends
   stable_hash: 303cb73d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: c4094219
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: AppException
+  stable_hash: c4094219
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: 86b2b28e
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: str
+  stable_hash: 86b2b28e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+- id: c4094219
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: c4094219
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 86b2b28e
   symbol_path: []
@@ -13229,11 +13252,11 @@
   value: str
   stable_hash: 86b2b28e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: c4094219
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: AppException
+  stable_hash: c4094219
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 303cb73d
   symbol_path: []
@@ -13253,28 +13276,34 @@
   value: Depends
   stable_hash: 303cb73d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: c4094219
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: AppException
+  stable_hash: c4094219
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: 86b2b28e
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: str
+  stable_hash: 86b2b28e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
+- id: c4094219
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: c4094219
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 8b3acff2
   symbol_path: []
   type: return_statement
   stable_hash: 8b3acff2
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: c4094219
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: AppException
+  stable_hash: c4094219
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 303cb73d
   symbol_path: []
@@ -13288,11 +13317,11 @@
   value: Depends
   stable_hash: 303cb73d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
-- id: 9965ca0f
+- id: c4094219
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9965ca0f
+  value: AppException
+  stable_hash: c4094219
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\admin.py
 - id: 8b3acff2
   symbol_path: []
@@ -13317,17 +13346,17 @@
   value: APIRouter
   stable_hash: d823c73c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: fe3d563a
+- id: 51f866ea
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: fe3d563a
+  value: AppException
+  stable_hash: 51f866ea
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: fe3d563a
+- id: 51f866ea
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: fe3d563a
+  value: AppException
+  stable_hash: 51f866ea
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
 - id: dc8ee9e0
   symbol_path: []
@@ -13440,11 +13469,11 @@
   value: str
   stable_hash: 6c8510dd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: fe3d563a
+- id: 51f866ea
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: fe3d563a
+  value: AppException
+  stable_hash: 51f866ea
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
 - id: 6c8510dd
   symbol_path: []
@@ -13458,11 +13487,11 @@
   value: str
   stable_hash: 6c8510dd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: fe3d563a
+- id: 51f866ea
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: fe3d563a
+  value: AppException
+  stable_hash: 51f866ea
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
 - id: 6c8510dd
   symbol_path: []
@@ -13470,11 +13499,11 @@
   value: str
   stable_hash: 6c8510dd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: fe3d563a
+- id: 51f866ea
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: fe3d563a
+  value: AppException
+  stable_hash: 51f866ea
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
 - id: 57af749b
   symbol_path: []
@@ -13499,11 +13528,11 @@
   value: Depends
   stable_hash: fbcfa73b
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: fe3d563a
+- id: 51f866ea
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: fe3d563a
+  value: AppException
+  stable_hash: 51f866ea
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
 - id: 03fe3e0b
   symbol_path: []
@@ -13511,11 +13540,11 @@
   value: validate_refresh_token
   stable_hash: 03fe3e0b
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: fe3d563a
+- id: 51f866ea
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: fe3d563a
+  value: AppException
+  stable_hash: 51f866ea
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
 - id: 0cc3abf8
   symbol_path: []
@@ -13523,17 +13552,17 @@
   value: is_refresh_token_revoked
   stable_hash: 0cc3abf8
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: fe3d563a
+- id: 51f866ea
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: fe3d563a
+  value: AppException
+  stable_hash: 51f866ea
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: fe3d563a
+- id: 51f866ea
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: fe3d563a
+  value: AppException
+  stable_hash: 51f866ea
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
 - id: 886f2fc9
   symbol_path: []
@@ -13547,11 +13576,11 @@
   value: UUID
   stable_hash: 505f3256
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: fe3d563a
+- id: 51f866ea
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: fe3d563a
+  value: AppException
+  stable_hash: 51f866ea
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
 - id: c43d10c8
   symbol_path: []
@@ -13571,11 +13600,11 @@
   value: delete_secure_cookie
   stable_hash: a6386ab1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: fe3d563a
+- id: 51f866ea
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: fe3d563a
+  value: AppException
+  stable_hash: 51f866ea
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
 - id: d7da7666
   symbol_path: []
@@ -13706,11 +13735,11 @@
   value: str
   stable_hash: 6c8510dd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: fe3d563a
+- id: 51f866ea
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: fe3d563a
+  value: AppException
+  stable_hash: 51f866ea
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
 - id: 6c8510dd
   symbol_path: []
@@ -13730,11 +13759,11 @@
   value: str
   stable_hash: 6c8510dd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: fe3d563a
+- id: 51f866ea
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: fe3d563a
+  value: AppException
+  stable_hash: 51f866ea
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
 - id: 6c8510dd
   symbol_path: []
@@ -13783,11 +13812,11 @@
   value: get_config
   stable_hash: 760677d9
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: fe3d563a
+- id: 51f866ea
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: fe3d563a
+  value: AppException
+  stable_hash: 51f866ea
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
 - id: 6c8510dd
   symbol_path: []
@@ -13795,11 +13824,11 @@
   value: str
   stable_hash: 6c8510dd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: fe3d563a
+- id: 51f866ea
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: fe3d563a
+  value: AppException
+  stable_hash: 51f866ea
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
 - id: 6c8510dd
   symbol_path: []
@@ -13813,11 +13842,11 @@
   value: str
   stable_hash: 6c8510dd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
-- id: fe3d563a
+- id: 51f866ea
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: fe3d563a
+  value: AppException
+  stable_hash: 51f866ea
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\auth.py
 - id: 6c8510dd
   symbol_path: []
@@ -13872,11 +13901,11 @@
   value: str
   stable_hash: fc367824
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
-- id: d579159b
+- id: 2d416a45
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: d579159b
+  value: AppException
+  stable_hash: 2d416a45
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
 - id: f6380ebe
   symbol_path: []
@@ -13895,17 +13924,17 @@
   value: str
   stable_hash: fc367824
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
-- id: d579159b
+- id: 2d416a45
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: d579159b
+  value: AppException
+  stable_hash: 2d416a45
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
-- id: d579159b
+- id: 2d416a45
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: d579159b
+  value: AppException
+  stable_hash: 2d416a45
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
 - id: fc367824
   symbol_path: []
@@ -13913,40 +13942,11 @@
   value: str
   stable_hash: fc367824
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
-- id: d579159b
+- id: 2d416a45
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: d579159b
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
-- id: 5053584a
-  symbol_path: []
-  type: function_call
-  value: Depends
-  stable_hash: 5053584a
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
-- id: 5053584a
-  symbol_path: []
-  type: function_call
-  value: Depends
-  stable_hash: 5053584a
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
-- id: 5053584a
-  symbol_path: []
-  type: function_call
-  value: Depends
-  stable_hash: 5053584a
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
-- id: f6380ebe
-  symbol_path: []
-  type: return_statement
-  stable_hash: f6380ebe
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
-- id: d579159b
-  symbol_path: []
-  type: function_call
-  value: HTTPException
-  stable_hash: d579159b
+  value: AppException
+  stable_hash: 2d416a45
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
 - id: 5053584a
   symbol_path: []
@@ -13971,17 +13971,46 @@
   type: return_statement
   stable_hash: f6380ebe
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
-- id: d579159b
+- id: 2d416a45
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: d579159b
+  value: AppException
+  stable_hash: 2d416a45
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
-- id: d579159b
+- id: 5053584a
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: d579159b
+  value: Depends
+  stable_hash: 5053584a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
+- id: 5053584a
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: 5053584a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
+- id: 5053584a
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: 5053584a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
+- id: f6380ebe
+  symbol_path: []
+  type: return_statement
+  stable_hash: f6380ebe
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
+- id: 2d416a45
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: 2d416a45
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
+- id: 2d416a45
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: 2d416a45
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_access.py
 - id: 5053584a
   symbol_path: []
@@ -14018,11 +14047,11 @@
   value: DashboardAdmin
   stable_hash: a615c45c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: 348a77b4
+- id: 0efc83cd
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 348a77b4
+  value: AppException
+  stable_hash: 0efc83cd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
 - id: c9f308d9
   symbol_path: []
@@ -14047,11 +14076,11 @@
   type: return_statement
   stable_hash: deb02f82
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: 348a77b4
+- id: 0efc83cd
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 348a77b4
+  value: AppException
+  stable_hash: 0efc83cd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
 - id: 939f4b30
   symbol_path: []
@@ -14059,11 +14088,11 @@
   value: str
   stable_hash: 939f4b30
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: 348a77b4
+- id: 0efc83cd
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 348a77b4
+  value: AppException
+  stable_hash: 0efc83cd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
 - id: c9f308d9
   symbol_path: []
@@ -14094,11 +14123,11 @@
   type: return_statement
   stable_hash: deb02f82
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: 348a77b4
+- id: 0efc83cd
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 348a77b4
+  value: AppException
+  stable_hash: 0efc83cd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
 - id: c9f308d9
   symbol_path: []
@@ -14112,75 +14141,11 @@
   value: Depends
   stable_hash: c9f308d9
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: 348a77b4
+- id: 0efc83cd
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 348a77b4
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: deb02f82
-  symbol_path: []
-  type: return_statement
-  stable_hash: deb02f82
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: 348a77b4
-  symbol_path: []
-  type: function_call
-  value: HTTPException
-  stable_hash: 348a77b4
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: 348a77b4
-  symbol_path: []
-  type: function_call
-  value: HTTPException
-  stable_hash: 348a77b4
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: c9f308d9
-  symbol_path: []
-  type: function_call
-  value: Depends
-  stable_hash: c9f308d9
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: c9f308d9
-  symbol_path: []
-  type: function_call
-  value: Depends
-  stable_hash: c9f308d9
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: c9f308d9
-  symbol_path: []
-  type: function_call
-  value: Depends
-  stable_hash: c9f308d9
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: 27d6d013
-  symbol_path: []
-  type: function_call
-  value: check_dashboard_access
-  stable_hash: 27d6d013
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: 348a77b4
-  symbol_path: []
-  type: function_call
-  value: HTTPException
-  stable_hash: 348a77b4
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: 348a77b4
-  symbol_path: []
-  type: function_call
-  value: HTTPException
-  stable_hash: 348a77b4
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: deb02f82
-  symbol_path: []
-  type: return_statement
-  stable_hash: deb02f82
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: 348a77b4
-  symbol_path: []
-  type: function_call
-  value: HTTPException
-  stable_hash: 348a77b4
+  value: AppException
+  stable_hash: 0efc83cd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
 - id: 939f4b30
   symbol_path: []
@@ -14188,11 +14153,22 @@
   value: str
   stable_hash: 939f4b30
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: 348a77b4
+- id: deb02f82
+  symbol_path: []
+  type: return_statement
+  stable_hash: deb02f82
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
+- id: 0efc83cd
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 348a77b4
+  value: AppException
+  stable_hash: 0efc83cd
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
+- id: 0efc83cd
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: 0efc83cd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
 - id: c9f308d9
   symbol_path: []
@@ -14218,23 +14194,94 @@
   value: check_dashboard_access
   stable_hash: 27d6d013
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: 348a77b4
+- id: 0efc83cd
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 348a77b4
+  value: AppException
+  stable_hash: 0efc83cd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: 348a77b4
+- id: 0efc83cd
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 348a77b4
+  value: AppException
+  stable_hash: 0efc83cd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
-- id: 348a77b4
+- id: 939f4b30
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 348a77b4
+  value: str
+  stable_hash: 939f4b30
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
+- id: deb02f82
+  symbol_path: []
+  type: return_statement
+  stable_hash: deb02f82
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
+- id: 0efc83cd
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: 0efc83cd
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
+- id: 939f4b30
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: 939f4b30
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
+- id: 0efc83cd
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: 0efc83cd
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
+- id: c9f308d9
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: c9f308d9
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
+- id: c9f308d9
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: c9f308d9
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
+- id: c9f308d9
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: c9f308d9
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
+- id: 27d6d013
+  symbol_path: []
+  type: function_call
+  value: check_dashboard_access
+  stable_hash: 27d6d013
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
+- id: 0efc83cd
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: 0efc83cd
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
+- id: 0efc83cd
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: 0efc83cd
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
+- id: 939f4b30
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: 939f4b30
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
+- id: 0efc83cd
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: 0efc83cd
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_crud.py
 - id: c9f308d9
   symbol_path: []
@@ -14266,28 +14313,28 @@
   value: Depends
   stable_hash: c4d0cdd9
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
-- id: 94d2af46
+- id: e1b91401
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 94d2af46
+  value: AppException
+  stable_hash: e1b91401
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
 - id: c9af4dd4
   symbol_path: []
   type: return_statement
   stable_hash: c9af4dd4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
-- id: 94d2af46
+- id: e1b91401
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 94d2af46
+  value: AppException
+  stable_hash: e1b91401
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
-- id: 94d2af46
+- id: e1b91401
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 94d2af46
+  value: AppException
+  stable_hash: e1b91401
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
 - id: e7fb9510
   symbol_path: []
@@ -14295,70 +14342,11 @@
   value: str
   stable_hash: e7fb9510
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
-- id: 94d2af46
+- id: e1b91401
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 94d2af46
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
-- id: c4d0cdd9
-  symbol_path: []
-  type: function_call
-  value: Depends
-  stable_hash: c4d0cdd9
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
-- id: c4d0cdd9
-  symbol_path: []
-  type: function_call
-  value: Depends
-  stable_hash: c4d0cdd9
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
-- id: c4d0cdd9
-  symbol_path: []
-  type: function_call
-  value: Depends
-  stable_hash: c4d0cdd9
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
-- id: c9af4dd4
-  symbol_path: []
-  type: return_statement
-  stable_hash: c9af4dd4
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
-- id: 94d2af46
-  symbol_path: []
-  type: function_call
-  value: HTTPException
-  stable_hash: 94d2af46
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
-- id: 94d2af46
-  symbol_path: []
-  type: function_call
-  value: HTTPException
-  stable_hash: 94d2af46
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
-- id: 94d2af46
-  symbol_path: []
-  type: function_call
-  value: HTTPException
-  stable_hash: 94d2af46
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
-- id: e7fb9510
-  symbol_path: []
-  type: function_call
-  value: str
-  stable_hash: e7fb9510
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
-- id: 94d2af46
-  symbol_path: []
-  type: function_call
-  value: HTTPException
-  stable_hash: 94d2af46
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
-- id: c4d0cdd9
-  symbol_path: []
-  type: function_call
-  value: Depends
-  stable_hash: c4d0cdd9
+  value: AppException
+  stable_hash: e1b91401
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
 - id: c4d0cdd9
   symbol_path: []
@@ -14383,17 +14371,76 @@
   type: return_statement
   stable_hash: c9af4dd4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
+- id: e1b91401
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: e1b91401
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
+- id: e1b91401
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: e1b91401
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
+- id: e1b91401
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: e1b91401
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
 - id: e7fb9510
   symbol_path: []
   type: function_call
   value: str
   stable_hash: e7fb9510
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
-- id: 94d2af46
+- id: e1b91401
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 94d2af46
+  value: AppException
+  stable_hash: e1b91401
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
+- id: c4d0cdd9
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: c4d0cdd9
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
+- id: c4d0cdd9
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: c4d0cdd9
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
+- id: c4d0cdd9
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: c4d0cdd9
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
+- id: c4d0cdd9
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: c4d0cdd9
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
+- id: c9af4dd4
+  symbol_path: []
+  type: return_statement
+  stable_hash: c9af4dd4
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
+- id: e7fb9510
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: e7fb9510
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
+- id: e1b91401
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: e1b91401
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_filters.py
 - id: e013400a
   symbol_path: []
@@ -14424,11 +14471,11 @@
   value: cast
   stable_hash: 8b8951d2
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_graphs.py
-- id: 852255f8
+- id: d44020b4
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 852255f8
+  value: AppException
+  stable_hash: d44020b4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_graphs.py
 - id: f8f8c7e4
   symbol_path: []
@@ -14436,17 +14483,17 @@
   value: str
   stable_hash: f8f8c7e4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_graphs.py
-- id: 852255f8
+- id: d44020b4
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 852255f8
+  value: AppException
+  stable_hash: d44020b4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_graphs.py
-- id: 852255f8
+- id: d44020b4
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 852255f8
+  value: AppException
+  stable_hash: d44020b4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_graphs.py
 - id: 490590c7
   symbol_path: []
@@ -14477,11 +14524,11 @@
   type: return_statement
   stable_hash: d710d980
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_graphs.py
-- id: 852255f8
+- id: d44020b4
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 852255f8
+  value: AppException
+  stable_hash: d44020b4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards_graphs.py
 - id: 22eea90d
   symbol_path: []
@@ -14531,23 +14578,23 @@
   value: check_dashboard_access
   stable_hash: 384b0c8d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py
-- id: c89cee31
+- id: 56a78e39
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: c89cee31
+  value: AppException
+  stable_hash: 56a78e39
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py
-- id: c89cee31
+- id: 56a78e39
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: c89cee31
+  value: AppException
+  stable_hash: 56a78e39
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py
-- id: c89cee31
+- id: 56a78e39
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: c89cee31
+  value: AppException
+  stable_hash: 56a78e39
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py
 - id: 0f98a34e
   symbol_path: []
@@ -14619,11 +14666,11 @@
   value: AggregatedDataResponse
   stable_hash: f48dd9e5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py
-- id: c89cee31
+- id: 56a78e39
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: c89cee31
+  value: AppException
+  stable_hash: 56a78e39
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py
 - id: cb3f1c84
   symbol_path: []
@@ -14631,11 +14678,11 @@
   value: str
   stable_hash: cb3f1c84
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py
-- id: c89cee31
+- id: 56a78e39
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: c89cee31
+  value: AppException
+  stable_hash: 56a78e39
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py
 - id: cb3f1c84
   symbol_path: []
@@ -14643,11 +14690,11 @@
   value: str
   stable_hash: cb3f1c84
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py
-- id: c89cee31
+- id: 56a78e39
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: c89cee31
+  value: AppException
+  stable_hash: 56a78e39
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\data.py
 - id: c56416e2
   symbol_path: []
@@ -14690,11 +14737,11 @@
   type: return_statement
   stable_hash: d84cf64e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\filter_values.py
-- id: 7714490c
+- id: 989eef07
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 7714490c
+  value: AppException
+  stable_hash: 989eef07
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\filter_values.py
 - id: 3f9c06ad
   symbol_path: []
@@ -14714,11 +14761,11 @@
   value: check_dashboard_access
   stable_hash: fb42b132
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
-- id: 09dadbed
+- id: dd01f1b1
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 09dadbed
+  value: AppException
+  stable_hash: dd01f1b1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
 - id: 1037b7db
   symbol_path: []
@@ -14737,11 +14784,11 @@
   value: cast
   stable_hash: 9b0bd460
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
-- id: 09dadbed
+- id: dd01f1b1
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 09dadbed
+  value: AppException
+  stable_hash: dd01f1b1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
 - id: 71a6da9a
   symbol_path: []
@@ -14749,11 +14796,11 @@
   value: str
   stable_hash: 71a6da9a
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
-- id: 09dadbed
+- id: dd01f1b1
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 09dadbed
+  value: AppException
+  stable_hash: dd01f1b1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
 - id: f1b891e5
   symbol_path: []
@@ -14784,11 +14831,11 @@
   type: return_statement
   stable_hash: 416dc621
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
-- id: 09dadbed
+- id: dd01f1b1
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 09dadbed
+  value: AppException
+  stable_hash: dd01f1b1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
 - id: f1b891e5
   symbol_path: []
@@ -14802,11 +14849,11 @@
   value: get_graph_repository
   stable_hash: 1037b7db
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
-- id: 09dadbed
+- id: dd01f1b1
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 09dadbed
+  value: AppException
+  stable_hash: dd01f1b1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
 - id: fb42b132
   symbol_path: []
@@ -14814,11 +14861,11 @@
   value: check_dashboard_access
   stable_hash: fb42b132
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
-- id: 09dadbed
+- id: dd01f1b1
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 09dadbed
+  value: AppException
+  stable_hash: dd01f1b1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
 - id: 416dc621
   symbol_path: []
@@ -14831,11 +14878,11 @@
   value: cast
   stable_hash: 9b0bd460
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
-- id: 09dadbed
+- id: dd01f1b1
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 09dadbed
+  value: AppException
+  stable_hash: dd01f1b1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
 - id: f1b891e5
   symbol_path: []
@@ -14849,11 +14896,11 @@
   value: get_graph_repository
   stable_hash: 1037b7db
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
-- id: 09dadbed
+- id: dd01f1b1
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 09dadbed
+  value: AppException
+  stable_hash: dd01f1b1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
 - id: fb42b132
   symbol_path: []
@@ -14861,17 +14908,17 @@
   value: check_dashboard_access
   stable_hash: fb42b132
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
-- id: 09dadbed
+- id: dd01f1b1
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 09dadbed
+  value: AppException
+  stable_hash: dd01f1b1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
-- id: 09dadbed
+- id: dd01f1b1
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 09dadbed
+  value: AppException
+  stable_hash: dd01f1b1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
 - id: 416dc621
   symbol_path: []
@@ -14884,11 +14931,11 @@
   value: cast
   stable_hash: 9b0bd460
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
-- id: 09dadbed
+- id: dd01f1b1
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 09dadbed
+  value: AppException
+  stable_hash: dd01f1b1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
 - id: 71a6da9a
   symbol_path: []
@@ -14896,11 +14943,11 @@
   value: str
   stable_hash: 71a6da9a
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
-- id: 09dadbed
+- id: dd01f1b1
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 09dadbed
+  value: AppException
+  stable_hash: dd01f1b1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
 - id: f1b891e5
   symbol_path: []
@@ -14920,11 +14967,11 @@
   value: get_graph_repository
   stable_hash: 1037b7db
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
-- id: 09dadbed
+- id: dd01f1b1
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 09dadbed
+  value: AppException
+  stable_hash: dd01f1b1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
 - id: fb42b132
   symbol_path: []
@@ -14932,23 +14979,23 @@
   value: check_dashboard_access
   stable_hash: fb42b132
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
-- id: 09dadbed
+- id: dd01f1b1
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 09dadbed
+  value: AppException
+  stable_hash: dd01f1b1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
-- id: 09dadbed
+- id: dd01f1b1
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 09dadbed
+  value: AppException
+  stable_hash: dd01f1b1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
-- id: 09dadbed
+- id: dd01f1b1
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 09dadbed
+  value: AppException
+  stable_hash: dd01f1b1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\graphs.py
 - id: f1b891e5
   symbol_path: []
@@ -14974,22 +15021,22 @@
   value: Depends
   stable_hash: f8fe1eb1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
-- id: 512839d1
+- id: 8c17f1c5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 512839d1
+  value: AppException
+  stable_hash: 8c17f1c5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
 - id: 3a886e5e
   symbol_path: []
   type: return_statement
   stable_hash: 3a886e5e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
-- id: 512839d1
+- id: 8c17f1c5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 512839d1
+  value: AppException
+  stable_hash: 8c17f1c5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
 - id: 3b9accef
   symbol_path: []
@@ -14997,11 +15044,11 @@
   value: str
   stable_hash: 3b9accef
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
-- id: 512839d1
+- id: 8c17f1c5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 512839d1
+  value: AppException
+  stable_hash: 8c17f1c5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
 - id: f8fe1eb1
   symbol_path: []
@@ -15032,11 +15079,11 @@
   type: return_statement
   stable_hash: 3a886e5e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
-- id: 512839d1
+- id: 8c17f1c5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 512839d1
+  value: AppException
+  stable_hash: 8c17f1c5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
 - id: f8fe1eb1
   symbol_path: []
@@ -15050,17 +15097,17 @@
   value: Depends
   stable_hash: f8fe1eb1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
-- id: 512839d1
+- id: 8c17f1c5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 512839d1
+  value: AppException
+  stable_hash: 8c17f1c5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
-- id: 512839d1
+- id: 8c17f1c5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 512839d1
+  value: AppException
+  stable_hash: 8c17f1c5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
 - id: c93867d4
   symbol_path: []
@@ -15068,22 +15115,22 @@
   value: check_dashboard_access
   stable_hash: c93867d4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
-- id: 512839d1
+- id: 8c17f1c5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 512839d1
+  value: AppException
+  stable_hash: 8c17f1c5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
 - id: 3a886e5e
   symbol_path: []
   type: return_statement
   stable_hash: 3a886e5e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
-- id: 512839d1
+- id: 8c17f1c5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 512839d1
+  value: AppException
+  stable_hash: 8c17f1c5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
 - id: f8fe1eb1
   symbol_path: []
@@ -15097,28 +15144,28 @@
   value: Depends
   stable_hash: f8fe1eb1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
-- id: 512839d1
+- id: 8c17f1c5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 512839d1
+  value: AppException
+  stable_hash: 8c17f1c5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
-- id: 512839d1
+- id: 8c17f1c5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 512839d1
+  value: AppException
+  stable_hash: 8c17f1c5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
 - id: 3a886e5e
   symbol_path: []
   type: return_statement
   stable_hash: 3a886e5e
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
-- id: 512839d1
+- id: 8c17f1c5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 512839d1
+  value: AppException
+  stable_hash: 8c17f1c5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
 - id: 3b9accef
   symbol_path: []
@@ -15126,11 +15173,11 @@
   value: str
   stable_hash: 3b9accef
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
-- id: 512839d1
+- id: 8c17f1c5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 512839d1
+  value: AppException
+  stable_hash: 8c17f1c5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
 - id: f8fe1eb1
   symbol_path: []
@@ -15144,23 +15191,23 @@
   value: Depends
   stable_hash: f8fe1eb1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
-- id: 512839d1
+- id: 8c17f1c5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 512839d1
+  value: AppException
+  stable_hash: 8c17f1c5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
-- id: 512839d1
+- id: 8c17f1c5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 512839d1
+  value: AppException
+  stable_hash: 8c17f1c5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
-- id: 512839d1
+- id: 8c17f1c5
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 512839d1
+  value: AppException
+  stable_hash: 8c17f1c5
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\layouts.py
 - id: 2ea18da9
   symbol_path: []
@@ -15180,22 +15227,22 @@
   value: Depends
   stable_hash: a0b26860
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
-- id: e89d2c1d
+- id: '21421814'
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: e89d2c1d
+  value: AppException
+  stable_hash: '21421814'
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
 - id: 84cc86df
   symbol_path: []
   type: return_statement
   stable_hash: 84cc86df
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
-- id: e89d2c1d
+- id: '21421814'
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: e89d2c1d
+  value: AppException
+  stable_hash: '21421814'
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
 - id: a0b26860
   symbol_path: []
@@ -15215,22 +15262,22 @@
   value: Depends
   stable_hash: a0b26860
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
-- id: e89d2c1d
+- id: '21421814'
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: e89d2c1d
+  value: AppException
+  stable_hash: '21421814'
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
 - id: 84cc86df
   symbol_path: []
   type: return_statement
   stable_hash: 84cc86df
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
-- id: e89d2c1d
+- id: '21421814'
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: e89d2c1d
+  value: AppException
+  stable_hash: '21421814'
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
 - id: b757cff0
   symbol_path: []
@@ -15238,11 +15285,11 @@
   value: str
   stable_hash: b757cff0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
-- id: e89d2c1d
+- id: '21421814'
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: e89d2c1d
+  value: AppException
+  stable_hash: '21421814'
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
 - id: a0b26860
   symbol_path: []
@@ -15262,11 +15309,11 @@
   value: Depends
   stable_hash: a0b26860
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
-- id: e89d2c1d
+- id: '21421814'
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: e89d2c1d
+  value: AppException
+  stable_hash: '21421814'
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
 - id: b757cff0
   symbol_path: []
@@ -15274,11 +15321,11 @@
   value: str
   stable_hash: b757cff0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
-- id: e89d2c1d
+- id: '21421814'
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: e89d2c1d
+  value: AppException
+  stable_hash: '21421814'
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
 - id: a0b26860
   symbol_path: []
@@ -15363,11 +15410,11 @@
   type: return_statement
   stable_hash: '32054806'
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_logs.py
-- id: 9e14e04c
+- id: fba03d40
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9e14e04c
+  value: AppException
+  stable_hash: fba03d40
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_logs.py
 - id: e50f48b4
   symbol_path: []
@@ -15387,11 +15434,11 @@
   value: get_processing_log_repository
   stable_hash: 6ad1ad3c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_logs.py
-- id: 9e14e04c
+- id: fba03d40
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9e14e04c
+  value: AppException
+  stable_hash: fba03d40
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_logs.py
 - id: '32054806'
   symbol_path: []
@@ -15404,11 +15451,11 @@
   value: cast
   stable_hash: 196c87bf
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_logs.py
-- id: 9e14e04c
+- id: fba03d40
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 9e14e04c
+  value: AppException
+  stable_hash: fba03d40
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_logs.py
 - id: b373580f
   symbol_path: []
@@ -15736,11 +15783,11 @@
   type: return_statement
   stable_hash: 609e2ce0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 32002d94
+- id: 734ad1a4
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 32002d94
+  value: AppException
+  stable_hash: 734ad1a4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
 - id: 521e0e5c
   symbol_path: []
@@ -15748,11 +15795,11 @@
   value: str
   stable_hash: 521e0e5c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 32002d94
+- id: 734ad1a4
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 32002d94
+  value: AppException
+  stable_hash: 734ad1a4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
 - id: 15093e2c
   symbol_path: []
@@ -15777,11 +15824,11 @@
   type: return_statement
   stable_hash: 609e2ce0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 32002d94
+- id: 734ad1a4
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 32002d94
+  value: AppException
+  stable_hash: 734ad1a4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
 - id: 15093e2c
   symbol_path: []
@@ -15813,28 +15860,34 @@
   value: str
   stable_hash: 521e0e5c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 32002d94
+- id: 734ad1a4
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 32002d94
+  value: AppException
+  stable_hash: 734ad1a4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 32002d94
+- id: 734ad1a4
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 32002d94
+  value: AppException
+  stable_hash: 734ad1a4
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
+- id: 521e0e5c
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: 521e0e5c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
 - id: 609e2ce0
   symbol_path: []
   type: return_statement
   stable_hash: 609e2ce0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 32002d94
+- id: 734ad1a4
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 32002d94
+  value: AppException
+  stable_hash: 734ad1a4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
 - id: 15093e2c
   symbol_path: []
@@ -15848,22 +15901,28 @@
   value: Depends
   stable_hash: 15093e2c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 32002d94
+- id: 734ad1a4
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 32002d94
+  value: AppException
+  stable_hash: 734ad1a4
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
+- id: 521e0e5c
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: 521e0e5c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
 - id: 609e2ce0
   symbol_path: []
   type: return_statement
   stable_hash: 609e2ce0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 32002d94
+- id: 734ad1a4
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 32002d94
+  value: AppException
+  stable_hash: 734ad1a4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
 - id: 521e0e5c
   symbol_path: []
@@ -15871,11 +15930,11 @@
   value: str
   stable_hash: 521e0e5c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 32002d94
+- id: 734ad1a4
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 32002d94
+  value: AppException
+  stable_hash: 734ad1a4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
 - id: 15093e2c
   symbol_path: []
@@ -15895,17 +15954,11 @@
   value: Depends
   stable_hash: 15093e2c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 32002d94
+- id: 734ad1a4
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 32002d94
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 32002d94
-  symbol_path: []
-  type: function_call
-  value: HTTPException
-  stable_hash: 32002d94
+  value: AppException
+  stable_hash: 734ad1a4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
 - id: 521e0e5c
   symbol_path: []
@@ -15913,35 +15966,11 @@
   value: str
   stable_hash: 521e0e5c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 32002d94
+- id: 734ad1a4
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 32002d94
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 15093e2c
-  symbol_path: []
-  type: function_call
-  value: Depends
-  stable_hash: 15093e2c
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 15093e2c
-  symbol_path: []
-  type: function_call
-  value: Depends
-  stable_hash: 15093e2c
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 32002d94
-  symbol_path: []
-  type: function_call
-  value: HTTPException
-  stable_hash: 32002d94
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 32002d94
-  symbol_path: []
-  type: function_call
-  value: HTTPException
-  stable_hash: 32002d94
+  value: AppException
+  stable_hash: 734ad1a4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
 - id: 521e0e5c
   symbol_path: []
@@ -15949,11 +15978,53 @@
   value: str
   stable_hash: 521e0e5c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
-- id: 32002d94
+- id: 734ad1a4
   symbol_path: []
   type: function_call
-  value: HTTPException
-  stable_hash: 32002d94
+  value: AppException
+  stable_hash: 734ad1a4
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
+- id: 15093e2c
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: 15093e2c
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
+- id: 15093e2c
+  symbol_path: []
+  type: function_call
+  value: Depends
+  stable_hash: 15093e2c
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
+- id: 734ad1a4
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: 734ad1a4
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
+- id: 521e0e5c
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: 521e0e5c
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
+- id: 734ad1a4
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: 734ad1a4
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
+- id: 521e0e5c
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: 521e0e5c
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
+- id: 734ad1a4
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: 734ad1a4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\users.py
 - id: 15093e2c
   symbol_path: []

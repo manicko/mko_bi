@@ -1,0 +1,44 @@
+id: TASK_003_MF002_fix_log_level_test
+
+title: Fix test_log_level_property config environment drift
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\06-tests-validated.md
+source_section: MF-002 — Config Environment Drift
+
+description: >
+  `test_config.py:222` (`test_log_level_property`) asserts `settings.log_level == "INFO"`
+  but the Docker test environment has `LOGGING__LEVEL=WARNING` set. The test assumes
+  a default that doesn't match the test environment.
+
+goals:
+  - Make the test independent of environment configuration
+  - Test passes regardless of LOGGING__LEVEL env setting
+
+files:
+  - path: tests/test_config.py
+    targets:
+      - type: function
+        name: test_log_level_property
+    semantic_anchors:
+      insert_after:
+        type: function_definition
+        value: test_log_level_property
+    changes:
+      - action: modify_code
+        description: >
+          Use `monkeypatch` to explicitly set `LOGGING__LEVEL=INFO` in the test,
+          or read the actual env value and assert dynamically.
+
+acceptance_criteria:
+  - test_log_level_property passes in the Docker test environment
+  - Test is deterministic regardless of external LOGGING__LEVEL setting
+  - No production code is modified
+
+tests_to_run:
+  - pytest tests/test_config.py::test_log_level_property -v
