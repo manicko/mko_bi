@@ -95,6 +95,21 @@ C:\PY_DEV\MKOBI
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
+|   |   |       order.yaml
+|   |   |       TASK_001_AR006_shared_csv_fixture.yaml
+|   |   |       TASK_002_MF001_fix_libmagic_tests.yaml
+|   |   |       TASK_003_MF002_fix_log_level_test.yaml
+|   |   |       TASK_004_MF003_verify_layout_test.yaml
+|   |   |       TASK_005_MF004_verify_pydantic_model_test.yaml
+|   |   |       TASK_006_AR005_delete_bak_file.yaml
+|   |   |       TASK_007_AR001_fix_csv_loader_temp_cleanup.yaml
+|   |   |       TASK_008_AR002_fix_streaming_temp_cleanup.yaml
+|   |   |       TASK_009_AR004_improve_temp_file_deleted_test.yaml
+|   |   |       TASK_010_AR007_add_jsonb_key_normalization_test.yaml
+|   |   |       TASK_011_AR008_add_display_name_test.yaml
+|   |   |       TASK_012_AR009_add_strenum_db_enum_test.yaml
+|   |   |       TASK_013_DOC001_document_cleanup_architecture.yaml
+|   |   |       
 |   |   \---validation
 |   |           p1.md
 |   |           

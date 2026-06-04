@@ -217,8 +217,9 @@ class TestSettingsProperties(TestSettingsBase):
         # 100 MB = 100 * 1024 * 1024 bytes
         assert settings.max_file_size == 100 * 1024 * 1024
 
-    def test_log_level_property(self):
+    def test_log_level_property(self, monkeypatch):
         """Test log_level property."""
+        monkeypatch.setenv("LOGGING__LEVEL", "INFO")
         settings = Settings()
         assert settings.log_level == "INFO"
 
