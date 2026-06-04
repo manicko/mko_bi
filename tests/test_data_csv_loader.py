@@ -10,7 +10,6 @@ Tests:
 """
 
 from pathlib import Path
-import tempfile
 
 import polars as pl
 import pytest
@@ -82,15 +81,14 @@ class TestCSVLoaderInit:
 class TestCSVLoaderLoadCSV:
     """Tests for CSVLoader.load_csv method."""
 
-    def test_load_csv_basic(self):
+    def test_load_csv_basic(self, tmp_path: Path) -> None:
         """Test loading basic CSV file."""
         csv_content = b"name,age,city\nAlice,30,NYC\nBob,25,LA\n"
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            tmp.write(csv_content)
-            tmp_path = Path(tmp.name)
+        csv_file = tmp_path / "test.csv"
+        csv_file.write_bytes(csv_content)
 
         loader = CSVLoader()
-        df = loader.load_csv(tmp_path)
+        df = loader.load_csv(csv_file)
 
         assert df.shape[0] == 2
         assert df.shape[1] == 3
@@ -98,31 +96,29 @@ class TestCSVLoaderLoadCSV:
         assert "age" in df.columns
         assert "city" in df.columns
 
-    def test_load_csv_with_required_columns(self):
+    def test_load_csv_with_required_columns(self, tmp_path: Path) -> None:
         """Test loading CSV with required columns validation."""
         csv_content = b"id,name,value\n1,Item1,100\n2,Item2,200\n"
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            tmp.write(csv_content)
-            tmp_path = Path(tmp.name)
+        csv_file = tmp_path / "test.csv"
+        csv_file.write_bytes(csv_content)
 
         config = LoaderConfig(required_columns=["id", "name"])
         loader = CSVLoader(config=config)
-        df = loader.load_csv(tmp_path)
+        df = loader.load_csv(csv_file)
 
         assert df.shape[0] == 2
 
-    def test_load_csv_missing_required_columns(self):
+    def test_load_csv_missing_required_columns(self, tmp_path: Path) -> None:
         """Test loading CSV raises error when required columns missing."""
         csv_content = b"name,value\nItem1,100\n"
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            tmp.write(csv_content)
-            tmp_path = Path(tmp.name)
+        csv_file = tmp_path / "test.csv"
+        csv_file.write_bytes(csv_content)
 
         config = LoaderConfig(required_columns=["id", "name"])
         loader = CSVLoader(config=config)
 
         with pytest.raises(ValueError, match="Missing required columns"):
-            loader.load_csv(tmp_path)
+            loader.load_csv(csv_file)
 
     def test_load_csv_file_not_found(self):
         """Test loading CSV raises error for non-existent file."""
@@ -130,31 +126,29 @@ class TestCSVLoaderLoadCSV:
         with pytest.raises(FileNotFoundError, match="File not found"):
             loader.load_csv(Path("/nonexistent/file.csv"))
 
-    def test_load_csv_with_separator(self):
+    def test_load_csv_with_separator(self, tmp_path: Path) -> None:
         """Test loading CSV with custom separator."""
         csv_content = b"name;age;city\nAlice;30;NYC\n"
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            tmp.write(csv_content)
-            tmp_path = Path(tmp.name)
+        csv_file = tmp_path / "test.csv"
+        csv_file.write_bytes(csv_content)
 
         loader = CSVLoader()
-        df = loader.load_csv(tmp_path, config={"separator": ";"})
+        df = loader.load_csv(csv_file, config={"separator": ";"})
 
         assert df.shape[0] == 1
         assert "name" in df.columns
 
-    def test_load_csv_lazy_threshold_respected(self):
+    def test_load_csv_lazy_threshold_respected(self, tmp_path: Path) -> None:
         """Test that lazy loading threshold is used for large files."""
         # Create small CSV content
         csv_content = b"name,value\n" + b"Item1,100\n" * 100
 
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            tmp.write(csv_content)
-            tmp_path = Path(tmp.name)
+        csv_file = tmp_path / "test.csv"
+        csv_file.write_bytes(csv_content)
 
         loader = CSVLoader()
         # Use very small threshold to force lazy loading
-        df = loader.load_csv(tmp_path, lazy_threshold_mb=0.000001)
+        df = loader.load_csv(csv_file, lazy_threshold_mb=0.000001)
 
         assert df.shape[0] >= 100
 
@@ -248,39 +242,36 @@ class TestCSVLoaderTypeTransformations:
 class TestCSVLoaderFileValidation:
     """Tests for CSVLoader file validation methods."""
 
-    def test_validate_file_size_within_limit(self):
+    def test_validate_file_size_within_limit(self, tmp_path: Path) -> None:
         """Test file size validation passes for small file."""
         csv_content = b"data\n"
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            tmp.write(csv_content)
-            tmp_path = Path(tmp.name)
+        csv_file = tmp_path / "test.csv"
+        csv_file.write_bytes(csv_content)
 
         loader = CSVLoader()
-        size = loader._validate_file_size(tmp_path, max_size_mb=1)
+        size = loader._validate_file_size(csv_file, max_size_mb=1)
         assert size >= 0
 
-    def test_validate_file_size_exceeds_limit(self):
+    def test_validate_file_size_exceeds_limit(self, tmp_path: Path) -> None:
         """Test file size validation fails for large file."""
         csv_content = b"d" * 100  # 100 bytes
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            tmp.write(csv_content)
-            tmp_path = Path(tmp.name)
+        csv_file = tmp_path / "test.csv"
+        csv_file.write_bytes(csv_content)
 
         config = LoaderConfig(max_file_size=50)  # 50 bytes limit
         loader = CSVLoader(config=config)
 
         with pytest.raises(ValueError, match="File too large"):
-            loader._validate_file_size(tmp_path)
+            loader._validate_file_size(csv_file)
 
-    def test_get_file_size_mb(self):
+    def test_get_file_size_mb(self, tmp_path: Path) -> None:
         """Test _get_file_size_mb returns correct size."""
         csv_content = b"d" * 1024 * 1024  # 1 MB
-        with tempfile.NamedTemporaryFile(suffix=".csv", delete=False) as tmp:
-            tmp.write(csv_content)
-            tmp_path = Path(tmp.name)
+        csv_file = tmp_path / "test.csv"
+        csv_file.write_bytes(csv_content)
 
         loader = CSVLoader()
-        size_mb = loader._get_file_size_mb(tmp_path)
+        size_mb = loader._get_file_size_mb(csv_file)
         assert size_mb >= 1.0
 
 
