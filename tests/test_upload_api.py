@@ -652,6 +652,8 @@ class TestTempFileCleanup:
         """
         from mkobi.config import get_config
         from mkobi.workers.data_worker import process_csv_background
+        from mkobi.models.enums import GraphType
+        from mkobi.db.repositories.graph_repo import GraphRepository
 
         config = get_config()
         upload_dir = Path(config.upload_temp_dir)
@@ -664,6 +666,18 @@ class TestTempFileCleanup:
             user_id=test_user["id"],
             dashboard_id=test_dashboard_for_cleanup.id,
             permission=DashboardPermission.EDIT,
+        )
+        await async_db_session.commit()
+
+        # Create a minimal graph so the full pipeline is exercised
+        graph_repo = GraphRepository()
+        _ = await graph_repo.create(
+            db=async_db_session,
+            dashboard_id=test_dashboard_for_cleanup.id,
+            name="cleanup_test_graph",
+            type=GraphType.TABLE,
+            dimensions=["category"],
+            metrics=["sales"],
         )
         await async_db_session.commit()
 
