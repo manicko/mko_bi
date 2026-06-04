@@ -35,6 +35,10 @@ Before performing audit checks, discover the project's configuration architectur
 
 **Before evaluating any checklist item, you MUST complete these steps. Use the commands provided in the project's commands file. Skip only if a step is impossible — document why.**
 
+### Step R0 — Ensure Docker Environment is Running
+
+Start Docker services in **development or test mode** (never production) before verifying startup or shutdown behavior. Follow the setup instructions in `docs/11-guides/docker.md`. Confirm all required containers are in `running` or `healthy` state before proceeding. If the environment cannot be started, document why and skip dependent steps.
+
 ### Step R1 — Startup Sequence Verification
 
 Start the application (or read the startup code if runtime is unavailable):

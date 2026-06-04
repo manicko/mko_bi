@@ -8,6 +8,10 @@ problems-only: true
 
 # Audit Findings Validation Workflow
 
+## Step 0 — Ensure Docker Environment is Running
+
+Start Docker services in **development or test mode** (never production) before re-verifying any runtime evidence from previous phases. Follow the setup instructions in `docs/11-guides/docker.md`. Confirm all required containers are in `running` or `healthy` state before proceeding. If the environment cannot be started, document why and skip dependent steps.
+
 ## Output Mode
 
 `problems-only: true` — **the validator reports only rejected, merged, or reclassified findings, and cross-phase conflicts.**

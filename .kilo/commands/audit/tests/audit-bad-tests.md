@@ -7,7 +7,9 @@ alwaysApply: false
 
 # Test Quality Audit — mkobi BI Dashboard
 
-> **Prerequisite:** Docker services must be running before executing any test commands. See: `docs/11-guides/docker.md`
+## Step 0 — Ensure Docker Environment is Running
+
+Start Docker services in **development or test mode** (never production) before executing any test commands. Follow the setup instructions in `docs/11-guides/docker.md`. Confirm all required containers are in `running` or `healthy` state before proceeding. If the environment cannot be started, document why and skip dependent steps.
 
 ## Objective
 

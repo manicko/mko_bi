@@ -7,7 +7,9 @@ alwaysApply: false
 
 # Task Execution Workflow
 
-> **Prerequisite:** Docker services must be running before executing tests, lint, or type checks. See: `docs/11-guides/docker.md`
+## Step 0 — Ensure Docker Environment is Running
+
+Start Docker services in **development or test mode** (never production) before executing tests, lint, or type checks. Follow the setup instructions in `docs/11-guides/docker.md`. Confirm all required containers are in `running` or `healthy` state before proceeding. If the environment cannot be started, document why and skip dependent steps.
 
 ## Objective
 
