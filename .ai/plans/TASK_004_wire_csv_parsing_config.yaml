@@ -1,0 +1,83 @@
+id: TASK_004_wire_csv_parsing_config
+
+title: "Wire CSV parsing config from processing_config into data_worker → CSVLoader"
+
+wave: 2
+
+depends_on: []
+
+files_modified:
+  - src/mkobi/workers/data_worker.py
+
+autonomous: true
+
+priority: high
+
+role: implementor
+
+status: pending
+
+description: >
+  The data_worker's _process_csv_file_async() currently creates CSVLoader() with no config
+  and calls loader.load_csv(file_path) using defaults. The processing_config_dict contains
+  settings (separator, encoding, decimal_separator, column_types, etc.) that need to be
+  extracted and applied. The CSVLoader._read_csv() and _read_csv_lazy() already accept a config
+  dict with separator, has_header, encoding keys. Wire this config from processing_config_dict
+  to the loader. Additionally, handle decimal_separator via post-read Polars transformation
+  since CSVLoader does not natively support it.
+
+targets:
+  - type: function
+    name: _process_csv_file_async
+    file: src/mkobi/workers/data_worker.py
+
+changes:
+  - action: modify_function
+    path: src/mkobi/workers/data_worker.py
+    function: _process_csv_file_async
+    description: |
+      After "if processing_config_dict:" block, extract CSV parsing config and column metadata from settings:
+
+      Current code (line ~182):
+        loader = CSVLoader()
+        df = await asyncio.to_thread(loader.load_csv, file_path)
+
+      Change to:
+        csv_parse_config = {}
+        column_types = {}
+        if processing_config_dict:
+            settings = processing_config_dict.get("settings", processing_config_dict)
+            if settings.get("separator"):
+                csv_parse_config["separator"] = settings["separator"]
+            if settings.get("encoding"):
+                csv_parse_config["encoding"] = settings["encoding"]
+            if settings.get("column_types"):
+                column_types = settings["column_types"]
+
+        loader = CSVLoader()
+        df = await asyncio.to_thread(loader.load_csv, file_path, csv_parse_config if csv_parse_config else None)
+
+      CRITICAL: CSVLoader._read_csv() does NOT handle decimal_separator. After loading,
+      apply post-read transformation for float columns with comma decimal separator:
+        if "decimal_separator" in settings and settings["decimal_separator"] == ",":
+            for col_name, col_type in column_types.items():
+                if col_type == "float" and col_name in df.columns:
+                    df = df.with_columns(
+                        pl.col(col_name).str.replace(",", ".").cast(pl.Float64).alias(col_name)
+                    )
+
+      This handles the test_media_dash CSV format which uses comma as decimal separator (e.g., "0,187805177").
+      The column_types dict from processing_config settings identifies which columns need decimal conversion.
+
+acceptance_criteria:
+  - CSV parsing config (separator, encoding) extracted and passed to loader.load_csv()
+  - column_types extracted from processing_config settings
+  - Post-read transformation applied: float columns have comma replaced with period and cast to Float64
+  - Existing behavior unchanged when no processing_config_dict provided
+  - ruff + mypy pass on data_worker.py
+
+tests_to_run:
+  - ruff check src/mkobi/workers/data_worker.py
+  - mypy src/mkobi/workers/data_worker.py
+
+risk: low

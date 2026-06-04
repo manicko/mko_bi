@@ -23,6 +23,10 @@ import { ConfirmDialog } from '../../../shared/components/ConfirmDialog'
 import { shortUuid } from '../../../shared/utils/shortUuid'
 import { toast } from 'react-hot-toast'
 import type { DashboardAdmin } from '../../../shared/types/api.types'
+import { extractApiError } from '../../../shared/api/errorHandler'
+import { ErrorCode } from '../../../shared/types/enums'
+import { getErrorMessage } from '../../../shared/api/errorMessages'
+import { adminErrorMessages } from '../model/errorMessages'
 
 export function DashboardManagement() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
@@ -47,8 +51,14 @@ export function DashboardManagement() {
       setFormData({ name: '', description: '', layout: '' })
       setError(null)
     },
-    onError: (err: Error) => {
-      setError(err.message || 'Failed to create dashboard')
+    onError: (error: unknown) => {
+      const extracted = extractApiError(error)
+      const userMessage = getErrorMessage(
+        extracted.code === ErrorCode.VALIDATION_ERROR ? ErrorCode.VALIDATION_ERROR : ErrorCode.INTERNAL_ERROR,
+        adminErrorMessages,
+        extracted.message,
+      )
+      setError(userMessage)
     },
   })
 
@@ -60,8 +70,14 @@ export function DashboardManagement() {
       setEditDialogOpen(false)
       toast.success('Dashboard updated successfully')
     },
-    onError: () => {
-      toast.error('Failed to update dashboard')
+    onError: (error: unknown) => {
+      const extracted = extractApiError(error)
+      const userMessage = getErrorMessage(
+        extracted.code === ErrorCode.VALIDATION_ERROR ? ErrorCode.VALIDATION_ERROR : ErrorCode.INTERNAL_ERROR,
+        adminErrorMessages,
+        extracted.message,
+      )
+      toast.error(userMessage)
     },
   })
 
@@ -71,8 +87,10 @@ export function DashboardManagement() {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'dashboards'] })
       toast.success('Dashboard deleted successfully')
     },
-    onError: () => {
-      toast.error('Failed to delete dashboard')
+    onError: (error: unknown) => {
+      const extracted = extractApiError(error)
+      const userMessage = getErrorMessage(extracted.code, adminErrorMessages, extracted.message)
+      toast.error(userMessage)
     },
   })
 

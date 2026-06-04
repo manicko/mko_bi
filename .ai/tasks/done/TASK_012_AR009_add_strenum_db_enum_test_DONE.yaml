@@ -2,7 +2,7 @@ id: TASK_012_AR009_add_strenum_db_enum_test
 
 title: Add StrEnum vs PostgreSQL ENUM consistency test
 
-status: pending
+status: done
 
 priority: medium
 

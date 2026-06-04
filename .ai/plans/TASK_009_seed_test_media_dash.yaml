@@ -1,0 +1,104 @@
+id: TASK_009_seed_test_media_dash
+
+title: "Seed test_media_dash DB records (dashboard, graphs, filters, processing_config)"
+
+wave: 3
+
+depends_on:
+  - TASK_005_refactor_store_aggregates
+  - TASK_006_filter_values_api_endpoint
+
+files_modified:
+  - data/seed_test_media_dash.py
+
+autonomous: true
+
+priority: high
+
+role: implementor
+
+status: pending
+
+description: >
+  Create a seed script that creates the test_media_dash dashboard with all required DB records:
+  1 dashboard, 2 graphs, 2 filters, 2 dashboard_filter bindings, 1 processing_config.
+  This script will be run manually to set up the test dashboard in the database.
+
+targets:
+  - type: script
+    name: seed_test_media_dash
+    file: data/seed_test_media_dash.py
+
+changes:
+  - action: create_file
+    path: data/seed_test_media_dash.py
+    description: |
+      Create an async seed script using the application's DI/session system.
+      Uses get_session() + AsyncSession for DB operations.
+
+      Steps:
+      1. Check if dashboard "test_media_dash" already exists (by name). If yes, skip or update.
+      2. Create Dashboard: name="test_media_dash", description="Test media dashboard for Phase 02"
+         with config JSONB containing:
+         {
+           "filters": [
+             {"field": "targetaudience", "type": "multiselect", "source": "data", "multi": true},
+             {"field": "category", "type": "multiselect", "source": "data", "multi": true}
+           ]
+         }
+      3. Create Graph 1: name="Monthly TVR by Brand", type=GraphType.BAR,
+         dimensions=["year", "month", "month_label", "brand"],
+         metrics=["tvr"],
+         config={"x": "month_label", "color": "brand", "metrics": ["tvr_sum"], "orientation": "v", "barmode": "group"}
+      4. Create Graph 2: name="Monthly TVR by Advertiser", type=GraphType.BAR,
+         dimensions=["year", "month", "month_label", "advertiser"],
+         metrics=["tvr"],
+         config={"x": "month_label", "color": "advertiser", "metrics": ["tvr_sum"], "orientation": "v", "barmode": "group"}
+      5. Create Filter 1: name="targetaudience", type=FilterType.MULTISELECT, config={"source": "data"}
+      6. Create Filter 2: name="category", type=FilterType.MULTISELECT, config={"source": "data"}
+      7. Bind filters to dashboard via dashboard_filters table
+      8. Create ProcessingConfig for dashboard with settings:
+         {
+           "separator": ";",
+           "encoding": "utf-8-sig",
+           "date_format": "%d/%m/%Y",
+           "decimal_separator": ",",
+           "column_types": {"date": "date", "TVR": "float", "advertiser": "str", "brand": "str",
+                           "targetaudience": "str", "category": "str"},
+           "date_column": "date",
+           "computed_fields": [
+             {"name": "year", "expr": "pl.col('date').dt.year()"},
+             {"name": "month", "expr": "pl.col('date').dt.month()"},
+             {"name": "month_label", "expr": "pl.col('date').dt.strftime('%b %Y')"}
+           ],
+           "renames": {"TVR": "tvr"}
+         }
+         Note: computed_fields use Polars expressions and are processed by _add_computed_fields.
+         The date parsing requires special handling for DD/MM/YYYY with comma decimal —
+         the seed config documents the expected settings.
+      9. Commit all or none in a single transaction.
+      10. Print summary of created records with their IDs.
+
+      Important: The computed_fields and column_types in processing_config are reference
+      documentation for Pipeline processing. The actual DD/MM/YYYY date parsing and comma
+      decimal handling may need additional transformation logic in apply_transformations
+      if the formula_parser doesn't support .dt.year() syntax — this is noted as a known
+      limitation. The primary GROUP BY aggregation works regardless.
+
+acceptance_criteria:
+  - Script creates test_media_dash dashboard with ID printed
+  - Two graphs created with correct dimensions/metrics
+      - Graph 1: dimensions=["year","month","month_label","brand"], metrics=["tvr"]
+      - Graph 2: dimensions=["year","month","month_label","advertiser"], metrics=["tvr"]
+  - Two filters created and bound to dashboard (targetaudience, category)
+  - ProcessingConfig created with CSV settings (separator, encoding, dates, decimals)
+  - All created in single transaction (all-or-nothing)
+  - Script is idempotent (can re-run without duplicates)
+  - ruff + mypy pass
+
+tests_to_run:
+  - ruff check data/seed_test_media_dash.py
+  - mypy data/seed_test_media_dash.py
+  - Run the script and verify DB records in PostgreSQL
+
+risk: low

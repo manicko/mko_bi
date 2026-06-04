@@ -1,0 +1,71 @@
+id: TASK_010_verify_phase_02
+
+title: "Verify — Phase 02 Test Dashboard end-to-end"
+
+wave: 5
+
+depends_on:
+  - TASK_001_dashboard_filter_values_model
+  - TASK_002_dashboard_filter_values_repository
+  - TASK_003_aggregation_service
+  - TASK_004_wire_csv_parsing_config
+  - TASK_005_refactor_store_aggregates
+  - TASK_006_filter_values_api_endpoint
+  - TASK_007_frontend_filter_values_hook
+  - TASK_008_chart_renderer_component
+  - TASK_009_seed_test_media_dash
+
+type: verification
+
+autonomous: false
+
+priority: high
+
+role: validator
+
+status: pending
+
+description: >
+  Full verification of Phase 02: Test Dashboard implementation. Confirms all backend, frontend,
+  database, and integration requirements are satisfied. This is a cross-module verification
+  task that must pass before Phase 02 is considered complete.
+
+verifies:
+  - TASK_001_dashboard_filter_values_model
+  - TASK_002_dashboard_filter_values_repository
+  - TASK_003_aggregation_service
+  - TASK_004_wire_csv_parsing_config
+  - TASK_005_refactor_store_aggregates
+  - TASK_006_filter_values_api_endpoint
+  - TASK_007_frontend_filter_values_hook
+  - TASK_008_chart_renderer_component
+  - TASK_009_seed_test_media_dash
+
+verification_steps:
+  - build: docker compose build
+  - lint: ruff check src/mkobi/
+  - typecheck: mypy src/mkobi/
+  - frontend_typecheck: cd frontend && npx tsc --noEmit
+  - migration_check: alembic upgrade head
+  - seed_check: python data/seed_test_media_dash.py
+  - api_smoke: Start backend, hit GET /dashboards/{id}/filter-values?filter_name=targetaudience — returns 200 with {filter_name, values}
+  - pipeline_smoke: Upload data/test/test_data.csv.gz via POST /upload/{dashboard_id} → verify COMPLETED status → verify aggregated_data rows exist → verify dashboard_filter_values populated
+  - frontend_smoke: Load dashboard page → charts render with data → filter checkboxes show targetaudience/category values
+
+pass_criteria:
+  - Docker build succeeds without errors
+  - ruff check passes with zero errors
+  - mypy passes with zero errors on all backend files
+  - Frontend tsc --noEmit passes
+  - All migrations apply cleanly (alembic upgrade head)
+  - Seed script creates test_media_dash without errors
+  - Filter-values API endpoint returns 200 with correct format
+  - CSV upload → aggregation → data retrieval pipeline works end-to-end
+  - Aggregated data rows in DB have dims as strings with year, month, month_label, brand/advertiser, targetaudience, category
+  - dashboard_filter_values table populated after upload
+  - Frontend dashboard page renders charts and filter checkboxes
+  - All must_haves from PLAN_02.md satisfied
+
+failure_action: Return relevant implementation task(s) to rework with specific failure details
+
+risk: low

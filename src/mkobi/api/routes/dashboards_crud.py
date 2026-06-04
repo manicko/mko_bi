@@ -34,7 +34,7 @@ from mkobi.utils.exceptions import AppException, PermissionDeniedException
 logger = logging.getLogger(__name__)
 
 # No prefix - this router is mounted under /dashboards
-router = APIRouter(tags=["dashboards"])
+router = APIRouter(tags=["dashboards"], redirect_slashes=False)
 
 
 @router.get(

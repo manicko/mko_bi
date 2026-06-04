@@ -103,22 +103,22 @@ export async function getDashboardsAdmin(): Promise<DashboardAdmin[]> {
 }
 
 export async function createDashboard(data: CreateDashboardRequest): Promise<DashboardAdmin> {
-  const payload: Record<string, unknown> = { name: data.name }
-  if (data.description) {
-    payload.description = data.description
-  }
-  // Fetch layout by name dynamically instead of using hardcoded UUID mapping
-  if (data.layout) {
-    const layout = await getLayoutByName(data.layout)
-    if (layout) {
-      payload.layout_id = layout.id
-    }
-    // Graceful fallback: layout_id is optional, backend will use default if not provided
-  }
-  // config is optional - will use backend default if not provided
-  const response = await axiosInstance.post<DashboardAdmin>('/dashboards', payload)
-  return response.data
-}
+   const payload: Record<string, unknown> = { name: data.name }
+   if (data.description) {
+     payload.description = data.description
+   }
+   // Fetch layout by name dynamically instead of using hardcoded UUID mapping
+   if (data.layout) {
+     const layout = await getLayoutByName(data.layout)
+     if (layout) {
+       payload.layout_id = layout.id
+     }
+     // Graceful fallback: layout_id is optional, backend will use default if not provided
+   }
+   // config is optional - will use backend default if not provided
+   const response = await axiosInstance.post<DashboardAdmin>('/dashboards/', payload)
+   return response.data
+ }
 
 export async function updateDashboard(dashboardId: string, data: UpdateDashboardRequest): Promise<DashboardAdmin> {
   const response = await axiosInstance.put<DashboardAdmin>(`/dashboards/${dashboardId}`, data)

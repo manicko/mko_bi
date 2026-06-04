@@ -1,0 +1,94 @@
+id: TASK_003_aggregation_service
+
+title: "Create AggregationService for per-chart Polars GROUP BY"
+
+wave: 2
+
+depends_on:
+  - TASK_001_dashboard_filter_values_model
+  - TASK_002_dashboard_filter_values_repository
+
+files_modified:
+  - src/mkobi/services/aggregation_service.py
+
+autonomous: true
+
+priority: high
+
+role: implementor
+
+status: pending
+
+description: >
+  Create a new AggregationService that performs per-chart Polars GROUP BY aggregation.
+  Given a Polars DataFrame, a list of Graph objects, and a list of dashboard Filter objects,
+  the service produces one aggregated DataFrame per graph with GROUP BY columns =
+  graph.dimensions + dashboard.filters.dimensions. Each unique combination becomes one row
+  with aggregated metric values. All dim values converted to strings. Results returned as
+  list of dicts {dashboard_id, graph_id, dims: {str}, metrics: {}} ready for StorageManager.
+
+targets:
+  - type: class
+    name: AggregationService
+    file: src/mkobi/services/aggregation_service.py
+
+changes:
+  - action: create_file
+    path: src/mkobi/services/aggregation_service.py
+    description: |
+      Create AggregationService with logger = logging.getLogger(__name__).
+
+      Method: async def aggregate_for_dashboard(
+          df: pl.DataFrame,
+          graphs: list[Graph],
+          dashboard_filters: list[Filter],
+          metric_agg: str = "sum",
+      ) -> list[dict]:
+      """
+      For each graph, GROUP BY graph.dimensions + dashboard.filters.dims, aggregate metrics.
+      Returns list of {dashboard_id, graph_id, dims: {all str}, metrics: {}} dicts.
+      """
+      Logic:
+      1. Compute dashboard_filter_dim_names = [f.name for f in dashboard_filters]
+      2. For each graph:
+         a. groupby_cols = [d for d in (graph.dimensions + dashboard_filter_dim_names) if d in df.columns]
+         b. metric_cols = [m for m in graph.metrics if m in df.columns]
+         c. If no groupby_cols or metric_cols, skip (log warning)
+         d. Build agg expressions using AGG_FUNC_MAP from aggregate_transforms.py
+            (import AggregationFunctionEnum and use pl.col(m).sum().alias(f"{m}_sum") for each metric)
+         e. result = df.group_by(groupby_cols).agg(agg_exprs)
+         f. For each row in result.to_dicts():
+            - dims = {col: str(row[col]) for col in groupby_cols}  # ALL dims as strings (LOCKED)
+            - metrics = {k: v for k, v in row.items() if k not in groupby_cols}
+            - Append {"dashboard_id": graph.dashboard_id, "graph_id": str(graph.id), "dims": dims, "metrics": metrics}
+      3. Return the full list of record dicts.
+
+      Method: async def extract_filter_values(
+          aggregated_records: list[dict],
+          dashboard_filter_names: list[str],
+      ) -> dict[str, list[str]]:
+      """
+      From aggregated records, extract distinct values for each dashboard filter dimension.
+      Returns {filter_name: [sorted unique string values]}.
+      Useful for populating dashboard_filter_values table.
+      """
+      Logic:
+      1. Initialize {name: set() for name in dashboard_filter_names}
+      2. For each record, for each filter_name in dashboard_filter_names:
+         if filter_name in record["dims"], add record["dims"][filter_name] to the set
+      3. Return {name: sorted(list(values)) for name, values in sets.items()}
+
+acceptance_criteria:
+  - AggregationService.aggregate_for_dashboard produces per-chart aggregated records
+  - GROUP BY includes both graph dimensions AND dashboard filter dimensions
+  - All dim values stored as strings (str() conversion)
+  - extract_filter_values returns sorted unique values per filter name
+  - Proper logging using module logger
+  - No pandas usage — Polars only
+  - ruff + mypy pass
+
+tests_to_run:
+  - ruff check src/mkobi/services/aggregation_service.py
+  - mypy src/mkobi/services/aggregation_service.py
+
+risk: medium

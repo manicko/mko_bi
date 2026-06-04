@@ -1,16 +1,16 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from uuid import UUID, uuid4
 
 from sqlalchemy import (
     DateTime,
     ForeignKey,
+    Index,
     String,
     Text,
     text,
-    Index,
 )
 from sqlalchemy.dialects.postgresql import JSONB, UUID as PG_UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -22,7 +22,7 @@ if TYPE_CHECKING:
     from mkobi.db.models.aggregated_data import AggregatedData
     from mkobi.db.models.dashboard_filter_values import DashboardFilterValue
     from mkobi.db.models.filters import Filter
-    from mkobi.db.models.graph import Graph
+    from mkobi.db.models.graphs import Graph
     from mkobi.db.models.layout import Layout
     from mkobi.db.models.processing_configs import ProcessingConfig
     from mkobi.db.models.processing_logs import ProcessingLog
