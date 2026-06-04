@@ -2,7 +2,7 @@ id: TASK_010_AR007_add_jsonb_key_normalization_test
 
 title: Add test for JSONB dims key normalization (sorted keys)
 
-status: pending
+status: done
 
 priority: low
 

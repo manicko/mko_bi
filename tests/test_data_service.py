@@ -650,3 +650,168 @@ class TestFileValidation:
                 )
         finally:
             tmp_path.unlink(missing_ok=True)
+
+
+# --- _normalize_json_keys tests ---
+
+@pytest.mark.asyncio
+class TestJsonbKeyNormalization:
+    """Tests for JSONB dims key normalization (sorted keys)."""
+
+    @pytest.fixture
+    async def owner_user(self, async_db_session):
+        """Create an owner user for dashboard tests."""
+        user = await UserRepository().create(
+            db=async_db_session,
+            email=f"owner_{uuid4().hex[:8]}@example.com",
+            password_hash=hash_password("TestPass123!"),
+            role="admin",
+        )
+        await async_db_session.commit()
+        return user
+
+    @pytest.fixture
+    async def dashboard_service_for_test(self):
+        """Create DashboardService for test setup."""
+        return DashboardService(DashboardRepository(), AccessRepository())
+
+    @pytest.fixture
+    async def test_dashboard(self, async_db_session, owner_user, dashboard_service_for_test):
+        """Create a test dashboard."""
+        dashboard = await dashboard_service_for_test.create_dashboard(
+            name=f"Test Dashboard {uuid4().hex[:8]}",
+            config={"graph_types": ["bar"]},
+            owner_id=owner_user.id,
+            db=async_db_session,
+        )
+        return dashboard
+
+    @pytest.fixture
+    def storage_manager(self, async_db_session):
+        """Create StorageManager instance."""
+        from mkobi.data.storage.manager import StorageManager
+        return StorageManager(db=async_db_session)
+
+    async def test_save_aggregates_dims_keys_are_sorted(
+        self, storage_manager, async_db_session, test_dashboard
+    ):
+        """Test that dims keys are sorted when saving aggregates to database.
+
+        This ensures deterministic UPSERT conflict detection on JSONB columns
+        by verifying that unsorted input keys are stored in sorted order.
+        """
+        # Create a graph for the dashboard
+        graph_service = GraphService(GraphRepository())
+        graph = await graph_service.create(
+            GraphCreate(
+                name="Test Graph",
+                type="bar",
+                dashboard_id=test_dashboard.id,
+                config={},
+                dimensions=["category"],
+                metrics=["revenue"],
+            ),
+            db=async_db_session,
+        )
+
+        # Create aggregates with explicitly unsorted dim keys
+        # Using keys in reverse alphabetical order to ensure sorting happens
+        unsorted_dims = {"z_category": "Electronics", "a_region": "North"}
+        aggregates = [
+            {
+                "graph_id": graph.id,
+                "dims": unsorted_dims,
+                "metrics": {"revenue": 100},
+            },
+        ]
+
+        saved = await storage_manager.save_aggregates(
+            dashboard_id=test_dashboard.id,
+            aggregates=aggregates,
+            clear_old=True,
+        )
+
+        assert saved == 1
+
+        # Retrieve the stored data and verify keys are sorted
+        from mkobi.db.models.aggregated_data import AggregatedData
+        from sqlalchemy import select
+
+        result = await async_db_session.execute(
+            select(AggregatedData.dims).where(
+                AggregatedData.dashboard_id == test_dashboard.id,
+                AggregatedData.graph_id == graph.id,
+            )
+        )
+        stored_dims = result.scalar_one()
+
+        # Verify keys are sorted alphabetically
+        key_list = list(stored_dims.keys())
+        assert key_list == sorted(key_list)
+        assert key_list == ["a_region", "z_category"]
+
+    async def test_save_aggregates_nested_dims_keys_are_sorted(
+        self, storage_manager, async_db_session, test_dashboard
+    ):
+        """Test that nested dims keys are recursively sorted.
+
+        Verifies the normalization handles nested dictionaries correctly.
+        """
+        # Create a graph for the dashboard
+        graph_service = GraphService(GraphRepository())
+        graph = await graph_service.create(
+            GraphCreate(
+                name="Test Graph Nested",
+                type="bar",
+                dashboard_id=test_dashboard.id,
+                config={},
+                dimensions=["category"],
+                metrics=["revenue"],
+            ),
+            db=async_db_session,
+        )
+
+        # Create aggregates with nested unsorted dim keys
+        unsorted_dims = {
+            "z_outer": {
+                "z_inner": "value1",
+                "a_inner": "value2",
+            },
+            "a_outer": "simple_value",
+        }
+        aggregates = [
+            {
+                "graph_id": graph.id,
+                "dims": unsorted_dims,
+                "metrics": {"revenue": 200},
+            },
+        ]
+
+        saved = await storage_manager.save_aggregates(
+            dashboard_id=test_dashboard.id,
+            aggregates=aggregates,
+            clear_old=True,
+        )
+
+        assert saved == 1
+
+        # Retrieve the stored data and verify keys are sorted at all levels
+        from mkobi.db.models.aggregated_data import AggregatedData
+        from sqlalchemy import select
+
+        result = await async_db_session.execute(
+            select(AggregatedData.dims).where(
+                AggregatedData.dashboard_id == test_dashboard.id,
+                AggregatedData.graph_id == graph.id,
+            )
+        )
+        stored_dims = result.scalar_one()
+
+        # Verify top-level keys are sorted
+        top_keys = list(stored_dims.keys())
+        assert top_keys == sorted(top_keys)
+
+        # Verify nested keys are also sorted
+        if "z_outer" in stored_dims:
+            nested_keys = list(stored_dims["z_outer"].keys())
+            assert nested_keys == sorted(nested_keys)

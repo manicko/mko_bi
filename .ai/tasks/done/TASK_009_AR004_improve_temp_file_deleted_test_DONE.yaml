@@ -2,7 +2,7 @@ id: TASK_009_AR004_improve_temp_file_deleted_test
 
 title: Improve test_temp_file_deleted_after_successful_upload to exercise full pipeline
 
-status: pending
+status: complete
 
 priority: low
 
