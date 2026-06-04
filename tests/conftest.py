@@ -523,3 +523,14 @@ async def test_user(async_db_session) -> dict[str, str | object]:
 def auth_headers(test_user) -> dict[str, str]:
     """Returns authorization headers with JWT token."""
     return {"Authorization": f"Bearer {test_user['token']}"}
+
+
+@pytest.fixture
+def valid_csv_content() -> bytes:
+    """CSV content large enough for libmagic to detect as text/csv."""
+    header = "category,region,sales,profit,date,qty\n"
+    rows = "\n".join(
+        f"{chr(65+i)},Region{i},{100+i*10},{25+i*5},2023-01-{i+1:02d},{10+i}"
+        for i in range(10)
+    )
+    return (header + rows).encode("utf-8")
