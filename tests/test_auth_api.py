@@ -558,3 +558,115 @@ class TestRegistrationApprovalForcePasswordChange:
         # Check that error message is in the errors list
         errors_str = str(data.get("errors", []))
         assert "do not match" in errors_str.lower() or "mismatch" in errors_str.lower()
+
+
+class TestDisplayNameComputation:
+    """Tests for display_name computed field extraction from email."""
+
+    def test_display_name_standard_email(self) -> None:
+        """Test display_name extraction from standard email address.
+
+        Given: user@example.com
+        Expected: user
+        """
+        from mkobi.models.user import UserRead
+        from mkobi.models.enums import UserRole
+
+        user = UserRead(
+            id="550e8400-e29b-41d4-a716-446655440000",
+            email="user@example.com",
+            role=UserRole.VIEWER,
+            is_active=True,
+            created_at="2026-04-24T16:02:46+03:00",
+        )
+        assert user.display_name == "user"
+
+    def test_display_name_with_dots_and_numbers(self) -> None:
+        """Test display_name with complex email prefix containing dots and numbers.
+
+        Given: john.smith123@company.org
+        Expected: john.smith123
+        """
+        from mkobi.models.user import UserRead
+        from mkobi.models.enums import UserRole
+
+        user = UserRead(
+            id="550e8400-e29b-41d4-a716-446655440000",
+            email="john.smith123@company.org",
+            role=UserRole.EDITOR,
+            is_active=True,
+            created_at="2026-04-24T16:02:46+03:00",
+        )
+        assert user.display_name == "john.smith123"
+
+    def test_display_name_plus_addressing(self) -> None:
+        """Test display_name with plus addressing in email.
+
+        Given: user+tag@example.com
+        Expected: user+tag
+        """
+        from mkobi.models.user import UserRead
+        from mkobi.models.enums import UserRole
+
+        user = UserRead(
+            id="550e8400-e29b-41d4-a716-446655440000",
+            email="user+tag@example.com",
+            role=UserRole.VIEWER,
+            is_active=True,
+            created_at="2026-04-24T16:02:46+03:00",
+        )
+        assert user.display_name == "user+tag"
+
+    def test_display_name_with_numbers(self) -> None:
+        """Test display_name with numeric prefix.
+
+        Given: user123@company.org
+        Expected: user123
+        """
+        from mkobi.models.user import UserRead
+        from mkobi.models.enums import UserRole
+
+        user = UserRead(
+            id="550e8400-e29b-41d4-a716-446655440000",
+            email="user123@company.org",
+            role=UserRole.VIEWER,
+            is_active=True,
+            created_at="2026-04-24T16:02:46+03:00",
+        )
+        assert user.display_name == "user123"
+
+    def test_display_name_subdomain_email(self) -> None:
+        """Test display_name with subdomain email.
+
+        Given: user@sub.domain.com
+        Expected: user (subdomain does not affect prefix extraction)
+        """
+        from mkobi.models.user import UserRead
+        from mkobi.models.enums import UserRole
+
+        user = UserRead(
+            id="550e8400-e29b-41d4-a716-446655440000",
+            email="user@sub.domain.com",
+            role=UserRole.VIEWER,
+            is_active=True,
+            created_at="2026-04-24T16:02:46+03:00",
+        )
+        assert user.display_name == "user"
+
+    def test_display_name_serialization(self) -> None:
+        """Test that display_name is included in model serialization."""
+        from mkobi.models.user import UserRead
+        from mkobi.models.enums import UserRole
+
+        user = UserRead(
+            id="550e8400-e29b-41d4-a716-446655440000",
+            email="jane.doe@example.com",
+            role=UserRole.VIEWER,
+            is_active=True,
+            created_at="2026-04-24T16:02:46+03:00",
+        )
+
+        # Test JSON serialization includes display_name
+        json_data = user.model_dump(mode="json")
+        assert "display_name" in json_data
+        assert json_data["display_name"] == "jane.doe"
