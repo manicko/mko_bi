@@ -17,7 +17,7 @@ function convertToPlotlyData(
 
   // If data is already in Plotly format (has x/y fields), return as-is
   if (graph.data.length > 0 && 'x' in graph.data[0] && 'y' in graph.data[0]) {
-    return graph.data as Data[]
+    return graph.data
   }
 
   // Convert flat dicts to Plotly Data format
@@ -33,15 +33,21 @@ function convertToPlotlyData(
     if (graph.type === 'bar') {
       trace.orientation = orientation
     }
-    return trace as unknown as Data
+    return trace
   }
 
   if (colorCol) {
     // Group by color column for grouped bar chart
     const groups: Record<string, { x: (string | number)[]; y: (string | number)[] }> = {}
     for (const row of graph.data as unknown as Record<string, unknown>[]) {
-      const color = String(row[colorCol] ?? 'unknown')
-      const x = row[xCol] !== undefined && row[xCol] !== null ? String(row[xCol]) : ''
+      const colorVal = row[colorCol]
+      const color = colorVal !== undefined && colorVal !== null
+        ? (typeof colorVal === 'string' || typeof colorVal === 'number' ? String(colorVal) : 'unknown')
+        : 'unknown'
+      const xVal = row[xCol]
+      const x = xVal !== undefined && xVal !== null
+        ? (typeof xVal === 'string' || typeof xVal === 'number' ? xVal : '')
+        : ''
       const y = Number(row[metricCol] ?? 0)
       if (!groups[color]) {
         groups[color] = { x: [], y: [] }
