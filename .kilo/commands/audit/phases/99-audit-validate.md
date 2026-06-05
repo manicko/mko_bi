@@ -80,9 +80,26 @@ For each finding, verify:
 
 - Relevance to current architecture.
 - Technical correctness (is the problem real?).
-- Architectural consistency (does the fix fit?).
+- Architectural consistency (does the fit?).
 - Operational value (is the fix worth doing?).
 - Current applicability (is the codebase still in this state?).
+
+#### Step 3-SPEC — Specification Cross-Reference Check
+
+**For every finding flagged as "dead code" or "unused component," you MUST verify the finding against the specification before accepting it:**
+
+1. Read `docs/SPEC.md` and identify all documented features related to the finding.
+2. Check `src/mkobi/models/enums.py` — do any enum values correspond to the "dead" component types? (e.g., `GraphType.BAR`, `GraphType.LINE`, `GraphType.PIE`, `GraphType.TABLE`)
+3. Check `src/mkobi/models/` — do any Pydantic models reference the feature as a configured/supported type?
+
+**Rejection rule:** If ANY of the following are true, the "dead code" finding is **invalid** as filed:
+- The component type matches a `GraphType` (or similar feature enum) value.
+- The specification explicitly lists the feature as supported.
+- Backend models accept/return the type as a valid configuration value.
+
+**Correct reclassification:** The finding should be reclassified as `[SPEC-DEVIATION]` — "Frontend has implementation for spec-required feature X but it is not wired into the renderer. The feature is non-functional." This is a **missing integration**, not dead code.
+
+**REJECT or RECLASSIFY** findings that dead-code-flag spec-required features. Document which spec section and enum/model proved the finding wrong.
 
 Mark findings as invalid if:
 

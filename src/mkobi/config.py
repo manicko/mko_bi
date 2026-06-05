@@ -15,7 +15,7 @@ from mkobi.models.enums import EnvironmentEnum, FileExtensionEnum, MimeTypeEnum
 logger = logging.getLogger(__name__)
 
 WEAK_USERNAMES = {"admin", "administrator", "root", "test", "user", "admin@example.com"}
-WEAK_PASSWORDS = {"password", "123456", "admin", "secret", "test", "admin@example.com"}
+WEAK_PASSWORDS = {"password", "123456", "admin", "secret", "test", "admin@example.com", "change_me_admin_password"}
 
 
 def _set_nested_value(data: dict[str, Any], key: str, value: Any) -> None:
@@ -294,7 +294,7 @@ class Settings(BaseSettings):
 
     # --- Admin ---
     admin_username: str = Field(default="admin", alias="ADMIN_USERNAME")
-    admin_password: str = Field(default="admin", alias="ADMIN_PASSWORD")
+    admin_password: str = Field(default="CHANGE_ME_ADMIN_PASSWORD", alias="ADMIN_PASSWORD")
 
     # --- Cleanup Settings ---
     logs_retention_days: int = Field(default=30, alias="LOGS_RETENTION_DAYS")
@@ -330,7 +330,7 @@ class Settings(BaseSettings):
     def validate_admin_credentials(self) -> "Settings":
         """Validate admin credentials are explicitly set in production.
 
-        In production, default credentials (admin/admin) are a security risk.
+        In production, default credentials are a security risk.
         This validator ensures they are explicitly set via environment variables.
         """
         if self.environment == EnvironmentEnum.PRODUCTION:
@@ -349,6 +349,12 @@ class Settings(BaseSettings):
                 logger.warning(
                     "Using default admin username in %s environment - "
                     "set ADMIN_USERNAME for production use",
+                    self.environment.value,
+                )
+            if self.admin_password.lower() in WEAK_PASSWORDS:
+                logger.warning(
+                    "Using default admin password in %s environment - "
+                    "set ADMIN_PASSWORD for production use",
                     self.environment.value,
                 )
         return self

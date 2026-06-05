@@ -332,7 +332,7 @@ class TestWeakCredentialDetection(TestSettingsBase):
             Settings()
 
     @pytest.mark.parametrize("weak_password", [
-        "password", "123456", "admin", "secret", "test", "admin@example.com"
+        "password", "123456", "admin", "secret", "test", "admin@example.com", "CHANGE_ME_ADMIN_PASSWORD"
     ])
     def test_weak_password_rejected(self, monkeypatch, weak_password):
         """Verify known-weak passwords are rejected in production."""

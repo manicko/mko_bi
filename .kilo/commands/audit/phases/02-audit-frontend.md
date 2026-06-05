@@ -74,11 +74,27 @@ Run the project's frontend test suite.
 Identify components, pages, and API clients that exist in the codebase but are never rendered:
 
 - Find all page/route components. Check which are registered in the router config.
-- Components imported nowhere = dead code.
+- Components imported nowhere = dead code **only after Step R5-CROSSCHECK**.
 - API client functions called nowhere = dead endpoints or dead client code.
 - Routes in the router with no corresponding backend endpoint = broken navigation.
 
 For each finding, provide file path, line number, and evidence of non-use.
+
+#### Step R5-CROSSCHECK — Verify "Dead" Code Against Specification
+
+**Before filing any "dead code" finding, you MUST cross-reference the item against the specification:**
+
+1. Read `docs/SPEC.md` and applicable docs under `docs/07-frontend/`, `docs/02-dashboards/`, `docs/03-processing/`.
+2. Check `src/mkobi/models/enums.py` for enum values (e.g., `GraphType`, `FilterType`) that define required features.
+3. Check `src/mkobi/models/` for Pydantic models that reference the component type (e.g., `DashboardConfig.graph_types`).
+4. For each "dead" component, answer: **Is this component type listed in the specification as a supported feature?**
+
+**Decision logic:**
+- **If the spec requires it but the component exists and is unwired** → This is NOT dead code. File as `[SPEC-DEVIATION]`: "Component X implements spec-required feature Y but is never imported/rendered — the feature is missing from the UI."
+- **If the spec requires it and no component exists at all** → File as `[SPEC-DEVIATION]`: "Feature Y is specified but has no frontend implementation."
+- **Only if the spec does NOT mention the feature AND the component is unwired** → File as dead code.
+
+**Flagging rule:** If you find unwired components whose types match enum values in `GraphType`, `FilterType`, or similar spec enums, this is a **missing implementation finding**, not a dead code finding.
 
 ### Step R6 — API Contract Alignment
 
