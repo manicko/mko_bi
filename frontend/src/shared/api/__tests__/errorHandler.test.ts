@@ -116,7 +116,7 @@ describe('extractApiError', () => {
     expect(result.message).toBe('Network timeout')
   })
 
-it('handles generic Error objects', () => {
+  it('handles generic Error objects', () => {
     const error = new Error('Something went wrong')
 
     const result = extractApiError(error)

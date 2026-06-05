@@ -1,6 +1,6 @@
 id: TASK_010_FE001_russian_fallback_message
 title: Replace Russian fallback message with English
-status: pending
+status: done
 priority: medium
 depends_on: []
 source_reference: C:\py_dev\mkobi\.ai\audit\99-validation\02-frontend-validated.md
