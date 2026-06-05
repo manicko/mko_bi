@@ -375,10 +375,11 @@ class TestJWTSecretValidation(TestSettingsBase):
             Settings()
 
     def test_none_jwt_secret_accepted(self, monkeypatch):
-        """Verify None JWT secret is accepted (optional in development)."""
+        """Verify .env fallback is applied when JWT__SECRET_KEY env var is deleted."""
         monkeypatch.delenv("JWT__SECRET_KEY", raising=False)
         settings = Settings()
-        assert settings.jwt.secret_key is None
+        # .env file provides the fallback value
+        assert settings.jwt.secret_key == "dev-secret-key-for-security-testing-do-not-use-in-prod-32chars"
 
     def test_strong_jwt_secret_accepted(self, monkeypatch):
         """Verify strong JWT secret passes validation."""
