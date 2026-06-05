@@ -3,8 +3,7 @@
 Verifies that Python StrEnum values match PostgreSQL ENUM types defined in migrations.
 This prevents runtime errors when inserting enum values.
 
-Note: The test verifies that all Python enum values exist in the database.
-Extra values in the database (unused by Python) are allowed but reported.
+After DB-001 migration, there should be zero extra values in the database.
 """
 
 from enum import Enum
@@ -170,8 +169,7 @@ class TestProcessingStatusEnumConsistency:
     async def test_processing_status_values_match(self, async_db_session):
         """Verify ProcessingStatus enum values match PostgreSQL processing_status type.
 
-        Note: Extra values in PostgreSQL (like 'success') that are not used
-        by Python are allowed. Only missing values in DB cause runtime errors.
+        After migration DB-001, there should be zero extra values in the database.
         """
         python_values = get_str_enum_values(ProcessingStatus)
         db_values = await async_db_session.run_sync(
@@ -185,15 +183,12 @@ class TestProcessingStatusEnumConsistency:
             f"Values in ProcessingStatus but not in PostgreSQL: {missing_in_db}"
         )
 
-        # Report extra values in DB as informational (they won't cause runtime errors)
+        # Extra values in DB indicate schema drift - should be zero after cleanup
         extra_in_db = db_values - python_values
-        if extra_in_db:
-            import logging
-            logging.getLogger(__name__).info(
-                "PostgreSQL processing_status has extra values not in Python: %s. "
-                "These are allowed but may indicate schema drift.",
-                extra_in_db,
-            )
+        assert not extra_in_db, (
+            f"PostgreSQL processing_status has extra values not in Python: {extra_in_db}. "
+            "This indicates schema drift that should be resolved."
+        )
 
     @pytest.mark.asyncio
     async def test_processing_status_can_insert(self, async_db_session):
@@ -235,9 +230,9 @@ class TestAllMappedEnumsConsistency:
     async def test_all_enums_consistent(self, async_db_session):
         """Verify all StrEnums mapped to DB columns exist in PostgreSQL.
 
-        This test failures only if Python enum values are missing from DB,
-        which would cause runtime insert errors. Extra values in DB are
-        allowed (they may be deprecated aliases or future planning).
+        This test fails if Python enum values are missing from DB (would cause insert errors)
+        or if DB has extra values (indicates schema drift). After DB-001 migration,
+        processing_status should have zero extra values.
         """
         python_values_missing_in_db: dict[str, set[str]] = {}
 

@@ -1,5 +1,6 @@
 """Database schema reproduction module.
 
+Asynchronous database initialization and migration management.
 Automatically checks database state on FastAPI startup
 and applies Alembic migrations according to the environment.
 """
@@ -21,7 +22,7 @@ from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from mkobi.config import get_config
 from mkobi.core.security import hash_password
-from mkobi.models.enums import EnvironmentEnum, UserRole
+from mkobi.models.enums import EnvironmentEnum, ProcessingStatus, UserRole
 from mkobi.services.file_cleanup import cleanup_stale_temp_files
 
 logger = logging.getLogger(__name__)
@@ -350,9 +351,9 @@ class DatabaseStarter:
             result = await conn.execute(
                 text(
                     "DELETE FROM processing_logs "
-                    "WHERE started_at < :cutoff AND status IN ('success', 'failed')"
+                    "WHERE started_at < :cutoff AND status IN (:completed_status, 'failed')"
                 ),
-                {"cutoff": cutoff_date},
+                {"cutoff": cutoff_date, "completed_status": ProcessingStatus.COMPLETED.value},
             )
             await conn.commit()
 

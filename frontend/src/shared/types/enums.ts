@@ -59,8 +59,6 @@ export const ProcessingStatus = {
     PROCESSING: 'processing',
     COMPLETED: 'completed',
     FAILED: 'failed',
-    // Deprecated: Use COMPLETED instead. Kept for backward compatibility.
-    SUCCESS: 'completed',
 } as const
 
 export type ProcessingStatus = (typeof ProcessingStatus)[keyof typeof ProcessingStatus]

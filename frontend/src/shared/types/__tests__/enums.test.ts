@@ -83,12 +83,10 @@ describe('ProcessingStatus', () => {
     expect(ProcessingStatus.PROCESSING).toBe('processing')
     expect(ProcessingStatus.COMPLETED).toBe('completed')
     expect(ProcessingStatus.FAILED).toBe('failed')
-    // SUCCESS is deprecated but should equal 'completed' for backward compatibility
-    expect(ProcessingStatus.SUCCESS).toBe('completed')
   })
 
-  it('has exactly 6 statuses', () => {
-    expect(Object.keys(ProcessingStatus)).toHaveLength(6)
+  it('has exactly 5 statuses', () => {
+    expect(Object.keys(ProcessingStatus)).toHaveLength(5)
   })
 })
 
