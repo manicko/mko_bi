@@ -31,6 +31,7 @@ permission:
     "ruff*": allow
     "mypy*": allow
     "alembic*": allow
+    "docker*": allow
     "docker compose*": allow
     "docker ps*": allow
     "docker logs*": allow

@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import axiosInstance from '../../../shared/api/axiosInstance'
 import type { UploadResponse, ProcessingStatusResponse, ProcessingResult } from '../../../shared/types/api.types'
-import { UploadMode } from '../../../shared/types/enums'
+import { UploadMode, ProcessingStatus } from '../../../shared/types/enums'
 
 export const uploadApi = {
   uploadFile: async (
@@ -50,7 +50,7 @@ export function useProcessingStatus(logId: string | null, enabled: boolean = tru
     refetchInterval: (query) => {
       // Stop polling when processing is complete or failed
       const data = query.state.data
-      if (data?.status === 'completed' || data?.status === 'failed') {
+      if (data?.status === ProcessingStatus.COMPLETED || data?.status === ProcessingStatus.FAILED) {
         return false
       }
       return 2000 // Poll every 2 seconds
