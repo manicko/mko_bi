@@ -7,6 +7,7 @@ Tests:
 - _calculate_share
 - _parse_formula (formula parser)
 - _validate_formula_tokens
+- _parse_polars_dt_expr (safe Polars expression parser)
 """
 
 import polars as pl
@@ -20,6 +21,7 @@ from mkobi.data.processing.transformations import (
     _calculate_yoy,
     _is_numeric_literal,
     _parse_formula,
+    _parse_polars_dt_expr,
     _validate_formula_tokens,
     aggregate_data,
     apply_transformations,
@@ -169,6 +171,89 @@ class TestParseFormula:
         """Test unsupported operator raises error."""
         with pytest.raises(ValueError, match="Invalid operand"):
             _parse_formula("a & b")
+
+
+class TestParsePolarsDtExpr:
+    """Tests for _parse_polars_dt_expr function (safe Polars expression parser)."""
+
+    def test_year_extraction(self):
+        """Test pl.col('date').dt.year() parsing."""
+        df = pl.DataFrame({
+            "date": ["2023-06-15", "2024-01-20"],
+        }).with_columns(pl.col("date").str.to_date("%Y-%m-%d"))
+        expr = _parse_polars_dt_expr("pl.col('date').dt.year()")
+        result = df.select(expr.alias("year"))
+        assert result["year"][0] == 2023
+        assert result["year"][1] == 2024
+
+    def test_month_extraction(self):
+        """Test pl.col('date').dt.month() parsing."""
+        df = pl.DataFrame({
+            "date": ["2023-06-15", "2024-01-20"],
+        }).with_columns(pl.col("date").str.to_date("%Y-%m-%d"))
+        expr = _parse_polars_dt_expr("pl.col('date').dt.month()")
+        result = df.select(expr.alias("month"))
+        assert result["month"][0] == 6
+        assert result["month"][1] == 1
+
+    def test_strftime_extraction(self):
+        """Test pl.col('date').dt.strftime() parsing."""
+        df = pl.DataFrame({
+            "date": ["2023-06-15", "2024-01-20"],
+        }).with_columns(pl.col("date").str.to_date("%Y-%m-%d"))
+        expr = _parse_polars_dt_expr("pl.col('date').dt.strftime('%b %Y')")
+        result = df.select(expr.alias("label"))
+        assert "Jun 2023" in str(result["label"][0]) or "Jun" in str(result["label"][0])
+
+    def test_day_extraction(self):
+        """Test pl.col('date').dt.day() parsing."""
+        df = pl.DataFrame({
+            "date": ["2023-06-15"],
+        }).with_columns(pl.col("date").str.to_date("%Y-%m-%d"))
+        expr = _parse_polars_dt_expr("pl.col('date').dt.day()")
+        result = df.select(expr.alias("day"))
+        assert result["day"][0] == 15
+
+    def test_disallowed_method_raises(self):
+        """Test disallowed method raises error."""
+        with pytest.raises(ValueError, match="Disallowed datetime method"):
+            _parse_polars_dt_expr("pl.col('date').dt.map_elements()")
+
+    def test_invalid_syntax_raises(self):
+        """Test invalid syntax raises error."""
+        with pytest.raises(ValueError, match="Invalid Polars expression"):
+            _parse_polars_dt_expr("pl.filter()")
+
+    def test_strftime_missing_arg_raises(self):
+        """Test strftime without argument raises error."""
+        with pytest.raises(ValueError, match="strftime requires"):
+            _parse_polars_dt_expr("pl.col('date').dt.strftime()")
+
+    def test_double_quote_syntax(self):
+        """Test double quote syntax works for column names."""
+        df = pl.DataFrame({
+            "date": ["2023-06-15"],
+        }).with_columns(pl.col("date").str.to_date("%Y-%m-%d"))
+        expr = _parse_polars_dt_expr('pl.col("date").dt.year()')
+        result = df.select(expr.alias("year"))
+        assert result["year"][0] == 2023
+
+    def test_add_computed_dt_fields(self):
+        """Test _add_computed_fields with datetime expressions."""
+        df = pl.DataFrame({
+            "date": ["2023-06-15", "2024-01-20"],
+            "value": [100, 200],
+        }).with_columns(pl.col("date").str.to_date("%Y-%m-%d"))
+
+        result = _add_computed_fields(df, [
+            {"name": "year", "expr": "pl.col('date').dt.year()"},
+            {"name": "month", "expr": "pl.col('date').dt.month()"},
+        ])
+
+        assert "year" in result.columns
+        assert "month" in result.columns
+        assert result["year"][0] == 2023
+        assert result["month"][0] == 6
 
 
 class TestApplyFilters:

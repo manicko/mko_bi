@@ -11,6 +11,27 @@ import polars as pl
 
 logger = logging.getLogger(__name__)
 
+# Allowed Polars datetime methods for safe expression parsing
+_ALLOWED_DT_METHODS: set[str] = {
+    "year",
+    "month",
+    "day",
+    "hour",
+    "minute",
+    "second",
+    "date",
+    "strftime",
+    "quarter",
+    "week",
+    "ordinal_day",
+}
+
+# Allowed Polars methods on column expressions
+_ALLOWED_COL_METHODS: set[str] = {
+    "cast",
+    "alias",
+}
+
 
 def _is_numeric_literal(token: str) -> bool:
     """Check if token is a numeric literal (int or float, including negative).
@@ -177,3 +198,88 @@ def _validate_formula_tokens(tokens: list[str]) -> None:
             "Malformed formula: formula must end with an operand, "
             "not an operator"
         )
+
+
+def _parse_polars_dt_expr(expr_str: str) -> pl.Expr:
+    """Parse safe Polars datetime expressions for computed fields.
+
+    This function safely parses expressions like:
+    - pl.col('date').dt.year()
+    - pl.col('date').dt.strftime('%b %Y')
+    - pl.col('date').dt.month()
+
+    Only allowed datetime methods are permitted. No arbitrary code execution.
+
+    Args:
+        expr_str: Polars expression string starting with 'pl.'.
+
+    Returns:
+        pl.Expr: Polars expression.
+
+    Raises:
+        ValueError: If the expression is invalid or uses disallowed methods.
+    """
+    expr_str = expr_str.strip()
+
+    # Pattern: pl.col('column_name').dt.method() or pl.col('column_name').dt.method('arg')
+    # Using regex to safely extract components
+    _DT_PATTERN = re.compile(
+        r"^pl\.col\s*\(\s*(['\"])([a-zA-Z_][a-zA-Z0-9_]*)\1\s*\)\s*\.\s*dt\s*\.\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*(?:\(\s*(.*)\s*\))?$"
+    )
+
+    match = _DT_PATTERN.match(expr_str)
+    if not match:
+        raise ValueError(
+            f"Invalid Polars expression: {expr_str!r}. "
+            "Only pl.col('column').dt.method() syntax is supported."
+        )
+
+    col_name = match.group(2)
+    method_name = match.group(3)
+    arg_str = match.group(4)
+
+    # Validate method is in allowlist
+    if method_name not in _ALLOWED_DT_METHODS:
+        raise ValueError(
+            f"Disallowed datetime method: {method_name!r}. "
+            f"Allowed methods: {sorted(_ALLOWED_DT_METHODS)}"
+        )
+
+    base_expr = pl.col(col_name)
+
+    # Build the expression safely based on method
+    if method_name == "year":
+        return base_expr.dt.year()
+    elif method_name == "month":
+        return base_expr.dt.month()
+    elif method_name == "day":
+        return base_expr.dt.day()
+    elif method_name == "hour":
+        return base_expr.dt.hour()
+    elif method_name == "minute":
+        return base_expr.dt.minute()
+    elif method_name == "second":
+        return base_expr.dt.second()
+    elif method_name == "date":
+        return base_expr.dt.date()
+    elif method_name == "quarter":
+        return base_expr.dt.quarter()
+    elif method_name == "week":
+        return base_expr.dt.week()
+    elif method_name == "ordinal_day":
+        return base_expr.dt.ordinal_day()
+    elif method_name == "strftime":
+        if not arg_str:
+            raise ValueError("strftime requires a format string argument")
+        # Safely extract the format string
+        _FORMAT_PATTERN = re.compile(r"^['\"](.+)['\"]$")
+        format_match = _FORMAT_PATTERN.match(arg_str.strip())
+        if not format_match:
+            raise ValueError(
+                f"Invalid format string for strftime: {arg_str!r}. "
+                "Expected quoted string like '%b %Y'."
+            )
+        return base_expr.dt.strftime(format_match.group(1))
+
+    # Should not reach here
+    raise ValueError(f"Unsupported datetime method: {method_name!r}")

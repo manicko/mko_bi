@@ -92,15 +92,17 @@ def _add_computed_fields(
         if not name or not expr_str:
             continue
         try:
-            # Check if expr is a Polars expression (starts with pl.)
-            if expr_str.strip().startswith("pl."):
-                # Evaluate Polars expression directly
-                # Provide pl and polars namespace for evaluation
-                polars_ns = {"pl": pl, "polars": pl, "col": pl.col}
-                expr = eval(expr_str.strip(), {"__builtins__": {}}, polars_ns)
+            # Use safe parser for all expressions - no eval()
+            from mkobi.data.processing.formula_parser import (
+                _parse_formula,
+                _parse_polars_dt_expr,
+            )
+
+            # Check if expr is a Polars datetime expression (starts with pl.col('...').dt.)
+            if expr_str.strip().startswith("pl.col("):
+                expr = _parse_polars_dt_expr(expr_str)
             else:
-                # Use formula parser for simple arithmetic expressions
-                from mkobi.data.processing.formula_parser import _parse_formula
+                # Parse simple arithmetic formulas
                 expr = _parse_formula(expr_str)
             result = result.with_columns(expr.alias(name))
             logger.debug("Added computed field '%s'", name)

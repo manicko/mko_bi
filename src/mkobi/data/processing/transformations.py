@@ -27,6 +27,7 @@ from mkobi.data.processing.filter_transforms import (
 from mkobi.data.processing.formula_parser import (
     _is_numeric_literal,
     _parse_formula,
+    _parse_polars_dt_expr,
     _validate_formula_tokens,
 )
 
@@ -44,6 +45,7 @@ __all__ = [
     "_calculate_share",
     "_is_numeric_literal",
     "_parse_formula",
+    "_parse_polars_dt_expr",
     "_validate_formula_tokens",
 ]
 
