@@ -71,7 +71,10 @@ async def _update_processing_log_status(
             .values(**values)
         )
         if session is not None:
-            # Test mode - use provided session (already in transaction)
+            # Test mode - use provided session (SAVEPOINT pattern in async_db_session fixture).
+            # Commit explicitly on COMPLETED/FAILED to persist changes within the SAVEPOINT.
+            # Other functions (e.g., _store_aggregates) rely on caller transaction management,
+            # but this function needs explicit commit to update the processing log status.
             await session.execute(stmt)
             if status in (ProcessingStatus.COMPLETED, ProcessingStatus.FAILED):
                 await session.commit()
@@ -111,7 +114,7 @@ async def cleanup_stale_processing_logs(
     """
     cutoff = datetime.now(UTC) - timedelta(minutes=timeout_minutes)
 
-    if session is not None:  # Test mode - use provided session (already in transaction)
+    if session is not None:  # Test mode - use provided session (SAVEPOINT pattern)
         stmt = (
             update(ProcessingLog)
             .where(
@@ -392,8 +395,9 @@ async def _store_aggregates(
         )
 
     if db_session is not None:
-        # Test mode - use provided session without creating nested transaction
-        # Caller manages the transaction
+        # Test mode - use provided session without creating nested transaction.
+        # Caller manages the transaction (SAVEPOINT pattern in async_db_session fixture).
+        # StorageManager does not commit/rollback - transaction is managed externally.
         result = await db_session.execute(
             select(Graph).where(Graph.dashboard_id == dashboard_id)
         )
