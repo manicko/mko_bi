@@ -26,10 +26,6 @@ tasks:
     depends_on: []
     rationale: "Test-only fix. Platform-dependent test correction."
 
-  - id: TASK_007_BE001_filter_values_response_model
-    depends_on: []
-    rationale: "Advisory - type safety improvement. Independent change."
-
   # Phase 4: Frontend Fixes
   - id: TASK_008_FE003_chart_renderer_lint_fix
     depends_on: []

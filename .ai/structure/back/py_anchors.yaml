@@ -639,6 +639,29 @@
   value: model_validator
   stable_hash: 165ced25
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: 9ba4052e
+  symbol_path:
+  - Settings
+  - validate_debug_mode
+  type: function_call
+  value: ValueError
+  stable_hash: 9ba4052e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: 0eab7a0b
+  symbol_path:
+  - Settings
+  - validate_debug_mode
+  type: return_statement
+  stable_hash: 0eab7a0b
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: d08799a7
+  symbol_path:
+  - Settings
+  - validate_debug_mode
+  type: function_call
+  value: model_validator
+  stable_hash: d08799a7
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
 - id: f526a929
   symbol_path:
   - Settings
@@ -3711,6 +3734,13 @@
   type: function_call
   value: ConfigDict
   stable_hash: 28268df6
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\data.py
+- id: 7779de68
+  symbol_path:
+  - FilterValuesResponse
+  type: function_call
+  value: ConfigDict
+  stable_hash: 7779de68
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\data.py
 - id: bd574e99
   symbol_path:
@@ -12344,12 +12374,12 @@
   type: return_statement
   stable_hash: '56395124'
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\filter_transforms.py
-- id: 4d697b20
+- id: a15f4561
   symbol_path:
   - _add_computed_fields
   type: function_call
-  value: eval
-  stable_hash: 4d697b20
+  value: _parse_polars_dt_expr
+  stable_hash: a15f4561
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\filter_transforms.py
 - id: 77b9b93b
   symbol_path:
@@ -12596,6 +12626,114 @@
   type: function_call
   value: ValueError
   stable_hash: a71f7066
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: c528cd19
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: function_call
+  value: ValueError
+  stable_hash: c528cd19
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: c528cd19
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: function_call
+  value: ValueError
+  stable_hash: c528cd19
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: 85c7056a
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: function_call
+  value: sorted
+  stable_hash: 85c7056a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: 09bb6e77
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: return_statement
+  stable_hash: 09bb6e77
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: 09bb6e77
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: return_statement
+  stable_hash: 09bb6e77
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: 09bb6e77
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: return_statement
+  stable_hash: 09bb6e77
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: 09bb6e77
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: return_statement
+  stable_hash: 09bb6e77
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: 09bb6e77
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: return_statement
+  stable_hash: 09bb6e77
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: 09bb6e77
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: return_statement
+  stable_hash: 09bb6e77
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: 09bb6e77
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: return_statement
+  stable_hash: 09bb6e77
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: 09bb6e77
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: return_statement
+  stable_hash: 09bb6e77
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: 09bb6e77
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: return_statement
+  stable_hash: 09bb6e77
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: 09bb6e77
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: return_statement
+  stable_hash: 09bb6e77
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: c528cd19
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: function_call
+  value: ValueError
+  stable_hash: c528cd19
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: c528cd19
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: function_call
+  value: ValueError
+  stable_hash: c528cd19
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: 09bb6e77
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: return_statement
+  stable_hash: 09bb6e77
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
+- id: c528cd19
+  symbol_path:
+  - _parse_polars_dt_expr
+  type: function_call
+  value: ValueError
+  stable_hash: c528cd19
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
 - id: 15882f49
   symbol_path:
@@ -14879,6 +15017,12 @@
   symbol_path: []
   type: return_statement
   stable_hash: d84cf64e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\filter_values.py
+- id: 28a28093
+  symbol_path: []
+  type: function_call
+  value: FilterValuesResponse
+  stable_hash: 28a28093
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\filter_values.py
 - id: 989eef07
   symbol_path: []

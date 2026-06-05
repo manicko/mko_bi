@@ -21,37 +21,15 @@ C:\PY_DEV\MKOBI
 |   |   
 |   +---audit
 |   |   +---01-backend
-|   |   |       findings.md
-|   |   |       
 |   |   +---02-frontend
-|   |   |       findings.md
-|   |   |       
 |   |   +---03-database
-|   |   |       findings.md
-|   |   |       
 |   |   +---04-security
 |   |   +---05-docker
 |   |   +---06-tests
-|   |   |       findings.md
-|   |   |       
 |   |   +---07-data-processing
-|   |   |       findings.md
-|   |   |       
 |   |   +---08-deployment-config
-|   |   |       findings.md
-|   |   |       
 |   |   +---90-integration
-|   |   |       findings.md
-|   |   |       
 |   |   +---99-validation
-|   |   |       01-backend-validated.md
-|   |   |       02-frontend-validated.md
-|   |   |       03-database-validated.md
-|   |   |       06-tests-validated.md
-|   |   |       07-data-processing-validated.md
-|   |   |       08-deployment-config-validated.md
-|   |   |       90-integration-validated.md
-|   |   |       
 |   |   +---db
 |   |   +---problems
 |   |   +---templates
@@ -59,8 +37,6 @@ C:\PY_DEV\MKOBI
 |   |   |       audit-findings.md
 |   |   |       
 |   |   \---validated
-|   |           final-report.md
-|   |           
 |   +---builders
 |   |   |   build.bat
 |   |   |   
@@ -109,19 +85,13 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
-|   |   |       TASK_001_AR006_shared_csv_fixture_DONE.yaml
-|   |   |       TASK_002_MF001_fix_libmagic_tests_DONE.yaml
-|   |   |       TASK_003_MF002_fix_log_level_test_DONE.yaml
-|   |   |       TASK_004_MF003_verify_layout_test_DONE.yaml
-|   |   |       TASK_005_MF004_verify_pydantic_model_test_DONE.yaml
-|   |   |       TASK_006_AR005_delete_bak_file_DONE.yaml
-|   |   |       TASK_007_AR001_fix_csv_loader_temp_cleanup_DONE.yaml
-|   |   |       TASK_008_AR002_fix_streaming_temp_cleanup_DONE.yaml
-|   |   |       TASK_009_AR004_improve_temp_file_deleted_test_DONE.yaml
-|   |   |       TASK_010_AR007_add_jsonb_key_normalization_test_DONE.yaml
-|   |   |       TASK_011_AR008_add_display_name_test_DONE.yaml
-|   |   |       TASK_012_AR009_add_strenum_db_enum_test_DONE.yaml
-|   |   |       TASK_013_DOC001_document_cleanup_architecture_DONE.yaml
+|   |   |       TASK_001_DP008_unsafe_eval_security_DONE.yaml
+|   |   |       TASK_002_DC002_admin_password_default_DONE.yaml
+|   |   |       TASK_003_DC003_debug_mode_validation_DONE.yaml
+|   |   |       TASK_004_DB001_processing_status_enum_drift_DONE.yaml
+|   |   |       TASK_005_BE002_fix_jwt_secret_test_DONE.yaml
+|   |   |       TASK_006_BE003_fix_mime_test_DONE.yaml
+|   |   |       TASK_007_BE001_filter_values_response_model_DONE.yaml
 |   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
@@ -129,10 +99,14 @@ C:\PY_DEV\MKOBI
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
+|   |   |       TASK_008_FE003_chart_renderer_lint_fix.yaml
+|   |   |       TASK_009_FE005_hardcoded_status_enum.yaml
+|   |   |       TASK_010_FE001_russian_fallback_message.yaml
+|   |   |       TASK_011_TST003_tautological_test.yaml
+|   |   |       TASK_012_TST008_low_test_coverage.yaml
+|   |   |       TASK_013_DP001_transaction_consistency_test_mode.yaml
 |   |   |       
 |   |   \---validation
-|   |           p1.md
-|   |           
 |   \---templates
 |           decision.md
 |           ui-brand.md
@@ -4282,6 +4256,7 @@ C:\PY_DEV\MKOBI
 |           7283139603309816298
 |           7757781752673505822
 |           7858831275428853260
+|           7967026381743137253
 |           8030558945267085120
 |           8081801220538038106
 |           8252212323481120275
@@ -18397,11 +18372,13 @@ C:\PY_DEV\MKOBI
 |   |   |   000000000000_initial_migration.py
 |   |   |   000000000001_add_missing_fk_indexes.py
 |   |   |   000000000002_add_dashboard_filter_values_table.py
+|   |   |   4479eb53fd4e_remove_unused_success_value_from_.py
 |   |   |   
 |   |   \---__pycache__
 |   |           000000000000_initial_migration.cpython-314.pyc
 |   |           000000000001_add_missing_fk_indexes.cpython-314.pyc
 |   |           000000000002_add_dashboard_filter_values_table.cpython-314.pyc
+|   |           4479eb53fd4e_remove_unused_success_value_from_.cpython-314.pyc
 |   |           
 |   \---__pycache__
 |           env.cpython-314.pyc
