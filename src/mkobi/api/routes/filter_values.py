@@ -5,7 +5,6 @@ Read operations use dashboard access control (require_dashboard_read_access).
 """
 
 import logging
-from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, status
@@ -16,6 +15,7 @@ from mkobi.api.deps import (
     require_dashboard_read_access,
     get_filter_values_service,
 )
+from mkobi.models.data import FilterValuesResponse
 from mkobi.models.enums import ErrorCode
 from mkobi.models.user import UserRead
 from mkobi.services.filter_values_service import FilterValuesService
@@ -39,7 +39,7 @@ async def get_filter_values_endpoint(
     current_user: UserRead = Depends(require_dashboard_read_access),
     db: AsyncSession = Depends(get_db_dependency),
     filter_values_service: FilterValuesService = Depends(get_filter_values_service),
-) -> dict[str, Any]:
+) -> FilterValuesResponse:
     """Get filter values for a dashboard.
 
     Args:

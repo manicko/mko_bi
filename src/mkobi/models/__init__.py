@@ -14,6 +14,7 @@ from mkobi.models.data import (
     DataFilter,
     DataUpload,
     FilterState,
+    FilterValuesResponse,
     GraphDataResponse,
     LoaderConfig,
     ProcessingConfig,

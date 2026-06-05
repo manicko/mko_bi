@@ -35,6 +35,7 @@ __all__ = [
     "ProcessingResultData",
     "GraphDataResponse",
     "AggregatedDataResponse",
+    "FilterValuesResponse",
 ]
 
 
@@ -471,6 +472,27 @@ class AggregatedDataResponse(BaseModel):
                         ],
                     }
                 ]
+            }
+        },
+    )
+
+
+class FilterValuesResponse(BaseModel):
+    """Model for filter values response.
+
+    Returned by the filter-values endpoint with distinct values
+    for a specified dashboard filter.
+    """
+
+    filter_name: str
+    values: list[str]
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "filter_name": "category",
+                "values": ["Electronics", "Clothing", "Food"],
             }
         },
     )

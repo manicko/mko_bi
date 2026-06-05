@@ -552,20 +552,21 @@ class TestFileValidation:
     async def test_validate_file_invalid_extension(self, data_service, valid_csv_content):
         """Test validation rejects .txt extension.
 
-        Note: With MIME detection from content, small CSV content is detected as
-        text/plain, which comes before extension check. We verify the MIME error
-        is raised before the extension check.
+        Note: With MIME detection from content, CSV content (containing commas and newlines)
+        is detected as text/csv by the fallback detector, which is allowed. The extension
+        check fails first because .txt is not in the allowed extensions.
         """
         from mkobi.services.file_processing import validate_file
 
-        # Create a file with .txt extension and small CSV content
-        # Small CSV content is detected as text/plain by libmagic
+        # Create a file with .txt extension and CSV content
+        # CSV content with commas/newlines is detected as text/csv (allowed), so extension
+        # check fails first with Invalid file format error
         with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as tmp:
             tmp.write(b"col1,col2\nval1,val2\n")
             tmp_path = Path(tmp.name)
 
         try:
-            with pytest.raises(ValueError, match="Detected MIME type text/plain not allowed"):
+            with pytest.raises(ValueError, match="Invalid file format.*test.txt"):
                 validate_file(
                     file_path=tmp_path,
                     filename="test.txt",

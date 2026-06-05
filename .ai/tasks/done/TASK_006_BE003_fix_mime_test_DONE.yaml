@@ -1,6 +1,6 @@
 id: TASK_006_BE003_fix_mime_test
 title: Fix MIME type validation test expectation order
-status: pending
+status: completed
 priority: medium
 depends_on: []
 source_reference: C:\py_dev\mkobi\.ai\audit\99-validation\01-backend-validated.md
