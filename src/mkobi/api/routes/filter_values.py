@@ -50,7 +50,7 @@ async def get_filter_values_endpoint(
         filter_values_service: Injected filter values service.
 
     Returns:
-        dict with filter_name and values list.
+        FilterValuesResponse with filter_name and values list.
 
     Raises:
         AppException 500: On database error.
@@ -64,7 +64,7 @@ async def get_filter_values_endpoint(
         values = await filter_values_service.get_filter_values(
             dashboard_id=dashboard_id, filter_name=filter_name, db=db
         )
-        return {"filter_name": filter_name, "values": values}
+        return FilterValuesResponse(filter_name=filter_name, values=values)
     except Exception:
         logger.error(
             "Error getting filter values: dashboard_id=%s, filter_name=%s",

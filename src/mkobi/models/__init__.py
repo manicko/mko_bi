@@ -96,6 +96,7 @@ __all__ = [
     "DataFilter",
     "DataUpload",
     "FilterState",
+    "FilterValuesResponse",
     "GraphDataResponse",
     "LoaderConfig",
     "ProcessingConfig",
