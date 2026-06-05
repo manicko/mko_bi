@@ -125,17 +125,17 @@ describe('extractApiError', () => {
     expect(result.message).toBe('Something went wrong')
   })
 
-  it('returns Russian fallback message for unknown error types', () => {
-    const result = extractApiError({ unknown: 'object' })
+it('returns English fallback message for unknown error types', () => {
+     const result = extractApiError({ unknown: 'object' })
 
-    expect(result.code).toBe(ErrorCode.INTERNAL_ERROR)
-    expect(result.message).toBe('Произошла ошибка')
-  })
+     expect(result.code).toBe(ErrorCode.INTERNAL_ERROR)
+     expect(result.message).toBe('An error occurred')
+   })
 
-  it('returns Russian fallback message for null/undefined', () => {
-    expect(extractApiError(null).message).toBe('Произошла ошибка')
-    expect(extractApiError(undefined).message).toBe('Произошла ошибка')
-  })
+   it('returns English fallback message for null/undefined', () => {
+     expect(extractApiError(null).message).toBe('An error occurred')
+     expect(extractApiError(undefined).message).toBe('An error occurred')
+   })
 
   it('maps unknown error codes to INTERNAL_ERROR', () => {
     const axiosError = {

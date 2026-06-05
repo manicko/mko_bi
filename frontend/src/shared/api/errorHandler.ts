@@ -94,10 +94,10 @@ export function extractApiError(error: unknown): ErrorExtractionResult {
     }
   }
 
-  // Generic fallback with Russian message as specified
+  // Generic fallback message
   return {
     code: ErrorCode.INTERNAL_ERROR,
-    message: 'Произошла ошибка',
+    message: 'An error occurred',
   }
 }
 
