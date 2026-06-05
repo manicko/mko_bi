@@ -116,7 +116,7 @@ describe('extractApiError', () => {
     expect(result.message).toBe('Network timeout')
   })
 
-  it('handles generic Error objects', () => {
+it('handles generic Error objects', () => {
     const error = new Error('Something went wrong')
 
     const result = extractApiError(error)
@@ -125,7 +125,7 @@ describe('extractApiError', () => {
     expect(result.message).toBe('Something went wrong')
   })
 
-it('returns English fallback message for unknown error types', () => {
+  it('returns English fallback message for unknown error types', () => {
     const result = extractApiError({ unknown: 'object' })
 
     expect(result.code).toBe(ErrorCode.INTERNAL_ERROR)
