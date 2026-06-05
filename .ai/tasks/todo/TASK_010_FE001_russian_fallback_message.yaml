@@ -1,0 +1,31 @@
+id: TASK_010_FE001_russian_fallback_message
+title: Replace Russian fallback message with English
+status: pending
+priority: medium
+depends_on: []
+source_reference: C:\py_dev\mkobi\.ai\audit\99-validation\02-frontend-validated.md
+source_section: Advisory FE-001 (merged with INT-005)
+description: >
+  Replace Russian fallback message 'Произошла ошибка' in errorHandler.ts:100
+  with English equivalent 'An error occurred' to comply with AGENTS.md rule.
+type: implementation
+goals:
+  - Replace Russian fallback with English message
+  - Maintain error handling behavior
+affected_files:
+  - path: frontend/src/shared/api/errorHandler.ts
+    targets:
+      - type: function
+        name: handleApiError
+    semantic_anchors:
+      - type: string_literal
+        value: "'Произошла ошибка'"
+changes:
+  - action: replace_string
+    description: Replace Russian fallback message with English
+    code_hint: |
+      # Change: 'Произошла ошибка' -> 'An error occurred'
+acceptance_criteria:
+  - npm run lint passes
+  - TypeScript compilation passes
+  - Error handling behavior unchanged

@@ -1,0 +1,62 @@
+id: TASK_004_DB001_processing_status_enum_drift
+title: Remove unused 'success' value from processing_status ENUM
+status: pending
+priority: high
+depends_on: []
+source_reference: C:\py_dev\mkobi\.ai\audit\99-validation\03-database-validated.md
+source_section: Advisory DB-001
+description: >
+  PostgreSQL processing_status ENUM contains unused 'success' value that
+  doesn't exist in Python ProcessingStatus StrEnum. Requires data verification,
+  migration, and code updates.
+type: implementation
+goals:
+  - Verify no rows exist with status='success' in processing_logs
+  - Create Alembic migration to remove 'success' from ENUM
+  - Update db/starter.py to use ProcessingStatus.COMPLETED.value
+  - Remove deprecated SUCCESS alias from frontend enums.ts
+affected_files:
+  - path: alembic/versions/000000000000_initial_migration.py
+    targets:
+      - type: sql_block
+        name: processing_status_enum
+    semantic_anchors:
+      - type: enum_definition
+        value: "success"
+  - path: src/mkobi/db/starter.py
+    targets:
+      - type: function
+        name: cleanup_stale_processing_logs
+    semantic_anchors:
+      - type: string_literal
+        value: "'success'"
+  - path: frontend/src/shared/types/enums.ts
+    targets:
+      - type: enum
+        name: ProcessingStatus
+      - type: alias
+        name: SUCCESS
+  - path: tests/test_enum_db_consistency.py
+    targets:
+      - type: test_function
+        name: test_processing_status_enum_consistency
+    semantic_anchors:
+      - type: validation_block
+changes:
+  - action: verify_data
+    description: Check if any rows have status='success', require update if found
+  - action: create_migration
+    description: Create Alembic migration to drop ENUM value using ALTER TYPE
+  - action: update_code
+    description: Replace hardcoded 'success' with ProcessingStatus.COMPLETED.value
+    code_hint: |
+      # Change: status IN ('success', 'failed')
+      # To: status IN (:completed_status, 'failed')
+  - action: remove_deprecated
+    description: Remove SUCCESS alias from frontend enums
+acceptance_criteria:
+  - Alembic migration created and valid
+  - starter.py uses enum value instead of hardcoded string
+  - frontend enum cleaned up
+  - test_enum_db_consistency updated to assert zero extra values
+  - Migration tested with dry-run

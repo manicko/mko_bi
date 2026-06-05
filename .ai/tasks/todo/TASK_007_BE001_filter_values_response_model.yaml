@@ -1,0 +1,40 @@
+id: TASK_007_BE001_filter_values_response_model
+title: Add Pydantic response model for filter values endpoint
+status: pending
+priority: medium
+depends_on: []
+source_reference: C:\py_dev\mkobi\.ai\audit\99-validation\01-backend-validated.md
+source_section: Advisory BE-001
+description: >
+  Add FilterValuesResponse Pydantic model to replace dict[str, Any] return type
+  in filter_values.py:42. Frontend already has typed FilterValuesResponse interface.
+type: implementation
+goals:
+  - Create Pydantic model for filter values response
+  - Update return type annotation in filter_values endpoint
+  - Maintain backward compatibility with existing frontend interface
+affected_files:
+  - path: src/mkobi/api/routes/filter_values.py
+    targets:
+      - type: function
+        name: get_filter_values
+    semantic_anchors:
+      - type: return_statement
+        context: return type annotation
+  - path: src/mkobi/models/
+    targets:
+      - type: class
+        name: FilterValuesResponse
+    semantic_anchors:
+      - type: class_definition
+changes:
+  - action: add_code
+    description: Create FilterValuesResponse model with dims and metrics fields
+    code_hint: |
+      class FilterValuesResponse(BaseModel):
+          dims: dict[str, list[str]]
+          metrics: dict[str, Any]  # Keep Any for now, refine in follow-up
+acceptance_criteria:
+  - mypy type checking passes
+  - ruff linting passes
+  - API response unchanged for frontend compatibility

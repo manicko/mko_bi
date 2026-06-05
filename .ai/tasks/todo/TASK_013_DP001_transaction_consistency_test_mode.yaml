@@ -1,0 +1,32 @@
+id: TASK_013_DP001_transaction_consistency_test_mode
+title: Ensure consistent transaction handling in test mode
+status: pending
+priority: low
+depends_on: []
+source_reference: C:\py_dev\mkobi\.ai\audit\99-validation\07-data-processing-validated.md
+source_section: Advisory DP-001 merged
+description: >
+  Recommendation to add transaction wrapper in data_worker.py test mode
+  for _store_aggregates (lines 394-455). Currently test mode relies on
+  caller to manage transactions. Optional improvement for consistency.
+type: implementation
+goals:
+  - Evaluate whether test mode needs explicit transaction wrapper
+  - Maintain current design choice or improve for consistency
+affected_files:
+  - path: src/mkobi/workers/data_worker.py
+    targets:
+      - type: function
+        name: _store_aggregates
+    semantic_anchors:
+      - type: conditional_block
+        context: "test mode"
+changes:
+  - action: evaluate_or_fix
+    description: >
+      Either add async with session.begin() for test mode or document design
+      choice. Currently low priority per validation analysis.
+acceptance_criteria:
+  - Decision documented in code comments
+  - Tests pass if changes made
+  - Low risk change - does not block other work

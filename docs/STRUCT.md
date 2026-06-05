@@ -2,6 +2,7 @@ Folder PATH listing for volume Windows
 Volume serial number is F012-D5D6
 C:\PY_DEV\MKOBI
 |   $null
+|   .coverage
 |   .dockerignore
 |   .env
 |   .env.example
@@ -20,27 +21,45 @@ C:\PY_DEV\MKOBI
 |   |   
 |   +---audit
 |   |   +---01-backend
+|   |   |       findings.md
+|   |   |       
 |   |   +---02-frontend
+|   |   |       findings.md
+|   |   |       
 |   |   +---03-database
+|   |   |       findings.md
+|   |   |       
 |   |   +---04-security
 |   |   +---05-docker
 |   |   +---06-tests
-|   |   |       audit_report_01.md
-|   |   |       TMP-UPLOADS-001-temp-file-cleanup-gaps.md
+|   |   |       findings.md
 |   |   |       
 |   |   +---07-data-processing
-|   |   +---08-deployment-config
-|   |   +---90-integration
-|   |   +---99-validation
-|   |   |       06-tests-validated.md
+|   |   |       findings.md
 |   |   |       
+|   |   +---08-deployment-config
+|   |   |       findings.md
+|   |   |       
+|   |   +---90-integration
+|   |   |       findings.md
+|   |   |       
+|   |   +---99-validation
+|   |   |       01-backend-validated.md
+|   |   |       02-frontend-validated.md
+|   |   |       03-database-validated.md
+|   |   |       06-tests-validated.md
+|   |   |       07-data-processing-validated.md
+|   |   |       08-deployment-config-validated.md
+|   |   |       90-integration-validated.md
+|   |   |       
+|   |   +---db
 |   |   +---problems
 |   |   +---templates
 |   |   |       audit-final-report.md
 |   |   |       audit-findings.md
 |   |   |       
 |   |   \---validated
-|   |           06-tests-validated.md
+|   |           final-report.md
 |   |           
 |   +---builders
 |   |   |   build.bat
@@ -97,6 +116,12 @@ C:\PY_DEV\MKOBI
 |   |   |       TASK_005_MF004_verify_pydantic_model_test_DONE.yaml
 |   |   |       TASK_006_AR005_delete_bak_file_DONE.yaml
 |   |   |       TASK_007_AR001_fix_csv_loader_temp_cleanup_DONE.yaml
+|   |   |       TASK_008_AR002_fix_streaming_temp_cleanup_DONE.yaml
+|   |   |       TASK_009_AR004_improve_temp_file_deleted_test_DONE.yaml
+|   |   |       TASK_010_AR007_add_jsonb_key_normalization_test_DONE.yaml
+|   |   |       TASK_011_AR008_add_display_name_test_DONE.yaml
+|   |   |       TASK_012_AR009_add_strenum_db_enum_test_DONE.yaml
+|   |   |       TASK_013_DOC001_document_cleanup_architecture_DONE.yaml
 |   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
@@ -104,12 +129,6 @@ C:\PY_DEV\MKOBI
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
-|   |   |       TASK_008_AR002_fix_streaming_temp_cleanup.yaml
-|   |   |       TASK_009_AR004_improve_temp_file_deleted_test.yaml
-|   |   |       TASK_010_AR007_add_jsonb_key_normalization_test.yaml
-|   |   |       TASK_011_AR008_add_display_name_test.yaml
-|   |   |       TASK_012_AR009_add_strenum_db_enum_test.yaml
-|   |   |       TASK_013_DOC001_document_cleanup_architecture.yaml
 |   |   |       
 |   |   \---validation
 |   |           p1.md
@@ -4090,8 +4109,6 @@ C:\PY_DEV\MKOBI
 |   |               package.json
 |   |               
 |   +---plans
-|   |       PLAN_01.md
-|   |       
 |   +---rules
 |   |       commands.md
 |   |       project.md
@@ -5280,14 +5297,56 @@ C:\PY_DEV\MKOBI
 |   |       |   |   __init__.py
 |   |       |   |   __main__.py
 |   |       |   |   
-|   |       |   \---htmlfiles
-|   |       |           coverage_html.js
-|   |       |           favicon_32.png
-|   |       |           index.html
-|   |       |           keybd_closed.png
-|   |       |           pyfile.html
-|   |       |           style.css
-|   |       |           style.scss
+|   |       |   +---htmlfiles
+|   |       |   |       coverage_html.js
+|   |       |   |       favicon_32.png
+|   |       |   |       index.html
+|   |       |   |       keybd_closed.png
+|   |       |   |       pyfile.html
+|   |       |   |       style.css
+|   |       |   |       style.scss
+|   |       |   |       
+|   |       |   \---__pycache__
+|   |       |           annotate.cpython-314.pyc
+|   |       |           bytecode.cpython-314.pyc
+|   |       |           collector.cpython-314.pyc
+|   |       |           config.cpython-314.pyc
+|   |       |           context.cpython-314.pyc
+|   |       |           control.cpython-314.pyc
+|   |       |           core.cpython-314.pyc
+|   |       |           data.cpython-314.pyc
+|   |       |           debug.cpython-314.pyc
+|   |       |           disposition.cpython-314.pyc
+|   |       |           env.cpython-314.pyc
+|   |       |           exceptions.cpython-314.pyc
+|   |       |           files.cpython-314.pyc
+|   |       |           html.cpython-314.pyc
+|   |       |           inorout.cpython-314.pyc
+|   |       |           jsonreport.cpython-314.pyc
+|   |       |           lcovreport.cpython-314.pyc
+|   |       |           misc.cpython-314.pyc
+|   |       |           multiproc.cpython-314.pyc
+|   |       |           numbits.cpython-314.pyc
+|   |       |           parser.cpython-314.pyc
+|   |       |           patch.cpython-314.pyc
+|   |       |           phystokens.cpython-314.pyc
+|   |       |           plugin.cpython-314.pyc
+|   |       |           plugin_support.cpython-314.pyc
+|   |       |           python.cpython-314.pyc
+|   |       |           pytracer.cpython-314.pyc
+|   |       |           regions.cpython-314.pyc
+|   |       |           report.cpython-314.pyc
+|   |       |           report_core.cpython-314.pyc
+|   |       |           results.cpython-314.pyc
+|   |       |           sqldata.cpython-314.pyc
+|   |       |           sqlitedb.cpython-314.pyc
+|   |       |           sysmon.cpython-314.pyc
+|   |       |           templite.cpython-314.pyc
+|   |       |           tomlconfig.cpython-314.pyc
+|   |       |           types.cpython-314.pyc
+|   |       |           version.cpython-314.pyc
+|   |       |           xmlreport.cpython-314.pyc
+|   |       |           __init__.cpython-314.pyc
 |   |       |           
 |   |       +---coverage-7.13.5.dist-info
 |   |       |   |   entry_points.txt
@@ -15211,6 +15270,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |   __init__.py
 |   |       |   |   
 |   |       |   \---__pycache__
+|   |       |           engine.cpython-314-pytest-9.0.3.pyc
 |   |       |           plugin.cpython-314-pytest-9.0.3.pyc
 |   |       |           __init__.cpython-314-pytest-9.0.3.pyc
 |   |       |           
@@ -18361,6 +18421,105 @@ C:\PY_DEV\MKOBI
 |   |       
 |   \---tmp_uploads
 |           .gitkeep
+|           0265a90f-5a0f-4d6a-a452-90d2819e3c0d.csv
+|           02f87cf0-13d7-4489-8c5f-2c5dce225299.csv
+|           0485f0c2-50ca-4e7c-a373-fa8df5c129bf.csv
+|           06113f1a-da81-4542-b0ff-3eab7302bcf7.csv
+|           064bdd2c-fdff-48e4-93e4-c90e37714a57.csv
+|           0823e09b-c46d-4e13-86ec-0eb305d724e3.csv.gz
+|           09dbb432-6255-4eaa-883d-7bed420b84a4.csv
+|           0aa01205-b332-4eef-bc28-f04f9df09a28.csv
+|           0ef130f1-dc24-4b22-a5e0-9cabf1035ce0.csv.gz
+|           131986a1-2736-4944-817f-683c1db0e5fc.csv
+|           146cadb3-3ff0-409d-bdc4-fe9fbd614df9.csv
+|           149dc1e8-015c-4577-8740-923ed264cdcb.csv
+|           1516299e-3a07-49d5-b9a4-e4b1211286f1.csv
+|           16498b7c-7cc1-468d-a731-5a56447b5444.csv
+|           16af42f8-f507-4e68-8afb-9257756ceb4b.csv
+|           18f65387-0996-403c-9924-e1a3900a767b.csv
+|           1b02670b-77b3-4363-9b9b-829265cda038.csv
+|           1d31ad5f-e88b-45cc-9691-20e5b7137416.csv.gz
+|           2012b065-197f-418a-a264-b14888073ac1.csv
+|           216608b0-32a6-4986-8fa2-f5deab55295d.csv
+|           26010381-af82-419e-9eed-9d73bbc77a7c.csv
+|           297c048d-1888-4b4c-9ee3-53361241655a.csv
+|           2b4fc6c3-3f6d-4d5d-b57d-1714b40d29a0.csv
+|           2e27e374-cbcf-4082-8f5c-1d5f5821452c.csv.gz
+|           38176e24-a6e6-4cfe-80ed-54502f6e94d2.csv
+|           3879a969-4847-4f4d-8113-af4adc5b06e1.csv.gz
+|           3b5c29a7-04ee-405a-b978-33fe9c4a1493.csv.gz
+|           4a1b86bf-70a3-4a99-8420-dda7bfe42e60.csv
+|           4c1928fe-330c-4443-bd0f-54cc7cde03c9.csv.gz
+|           4c76195a-b97c-4190-a9bc-28cfeb77dbba.csv
+|           501ef858-fa9f-44f0-8478-cb0f7c56694e.csv.gz
+|           505d9b72-180e-4f90-b1db-a4ea813478d6.csv
+|           52f7fd3f-cc58-4a31-8382-416e9ebda669.csv.gz
+|           5416ffbe-97e6-4994-8eee-372c3b16a223.csv.gz
+|           5a8eb3a8-55df-4d6c-b7a4-87bbd4b473fa.csv
+|           5c971389-7baf-489c-9d2f-6f616dc48e73.csv
+|           64328d3d-2c76-4761-ae0a-a464d8e2dd8f.csv.gz
+|           648666dd-6dfe-4ad8-96b0-4c90398989ec.csv
+|           697fd383-153f-4da6-b245-6bc0716f284c.csv
+|           6a41ac3d-edfd-478f-bb1d-d871e1826830.csv
+|           6ff6d47d-947d-4660-9388-c61e2f38df31.csv.gz
+|           704d44ec-40a0-4dd6-a1fb-c58677df85f9.csv
+|           7054b490-037a-4c18-8257-df4dbf342295.csv
+|           739a8c85-af84-4bea-939a-bc806f344caf.csv
+|           780ff2a6-15b0-41e6-b8a9-5a8347fd809a.csv
+|           788fc81d-0069-461e-8531-dc383d62224f.csv.gz
+|           7929a2ce-2fbc-4e9d-9d0b-1a160a14aef1.csv
+|           81f3ddbc-2c09-4dc9-9309-736afabc3206.csv
+|           8289f419-e6e2-44cb-bc19-403b289adcb0.csv
+|           828f19d4-6e16-417b-8e4a-2992fe5c3855.csv
+|           8491380e-ed18-4cc7-9853-80a9db27957c.csv
+|           850bdfac-4164-4df4-8004-be3b852b10f8.csv
+|           87bba4c0-1f1a-4cd8-ba81-a5fce1a02d00.csv
+|           8940a14f-9d36-41d9-b1ba-f5af11d67a23.csv
+|           8ca5b546-2f4c-43ef-8ad2-b7c54c62e95b.csv
+|           96c2cb9b-1e10-4a8d-82a3-f5a4329d8c56.csv
+|           97ab8995-493b-4f43-9830-11bbfa695996.csv
+|           9ce23c41-a011-4f7b-a898-2b6bb7daab42.csv
+|           9ee07a49-6fa9-4008-88e3-81ff2984810b.csv
+|           9f08b423-beb1-4dd5-adff-76b07f5ed504.csv
+|           a1196596-e8f8-4f33-a98f-f641c6f0c06f.csv.gz
+|           a1756338-c996-444b-9561-05409f81c681.csv
+|           a5e87985-8d75-41c4-83c9-0285a91a0dca.csv.gz
+|           a5e9894a-dc64-4e68-8dd2-f00eaf54841c.csv.gz
+|           a68d24d3-250b-491d-92f7-9ca5cbc52546.csv.gz
+|           a8b34c02-040a-48ce-ad36-dbed946abd20.csv
+|           a970732a-ac2e-4466-8603-0aa8b33633a5.csv
+|           aaec0579-21f6-4a6a-9814-a384080e72a4.csv
+|           abc0bff6-6963-41bb-8a4b-47d75217769b.csv
+|           abe77df5-1a59-42d4-9f84-717a66e116f6.csv.gz
+|           b3790414-47bc-4cbb-a7b0-fb9e3e1ad86a.csv
+|           b5d6cc8b-ae01-4af6-ab93-880fae42a54d.csv
+|           b6bb3bd6-26bb-496f-90f6-ab8a932ea20f.csv
+|           bb124c9e-cf2c-4b2e-b2e1-5a98df16c6e2.csv
+|           bc3d6dc3-db4f-422b-b615-512f023d0efc.csv
+|           bce20522-ef57-470f-a644-0aa7cc137cea.csv
+|           c08574af-9b98-4f87-a692-b5464748eec2.csv.gz
+|           c48e911e-75f5-458a-9541-dc37d8785f12.csv
+|           c8f22b18-4c82-4bd4-9adc-0397b43ffdc1.csv
+|           cc24416c-c74d-459a-9d52-46db4325a78b.csv.gz
+|           cf25c64d-a177-436b-8f9e-e47b5b04fc18.csv
+|           d1082da1-b134-4b26-9531-cc5f402e57b9.csv
+|           d62189c8-8dc9-410d-b8da-38324e920b30.csv.gz
+|           d7a6ccf7-7c58-4c30-8a31-a59cf378ab59.csv.gz
+|           d8b7ca7c-ca34-43e7-ad4b-a89f07ad3f70.csv
+|           dd526223-1bf0-48e8-a7b4-b23f9aabacdf.csv
+|           e5481d7c-dddc-43d4-8653-410e1d813965.csv
+|           e5998ce6-1110-49bb-aaae-ac042d9fa57d.csv
+|           e8dbfead-4abe-4129-8eeb-b28657c63d96.csv
+|           ecf92a98-09d1-4a25-ae79-de8321371727.csv
+|           ed852c93-01e5-455a-abf0-dd6d317664b7.csv.gz
+|           f7f5876c-064e-4dac-a1af-0f9b8882bd62.csv
+|           fa3afdf4-5f80-47d8-aaea-58ed16fa4e6e.csv
+|           fc07c688-855d-46f5-986f-f918824efc2c.csv
+|           fd0a9bd9-7a78-41b4-a7a7-1c46867f460a.csv
+|           fdd11d57-a874-45d5-999a-bf6fec61e402.csv
+|           fe51ff5f-846a-4337-a056-25696cc231c0.csv
+|           fee2a57d-4b33-4892-b18c-f63f07a559d7.csv.gz
+|           fff7f9cb-e378-44ad-b15e-496ca9672437.csv
 |           
 +---docker
 |   |   .env.development
@@ -18437,7 +18596,8 @@ C:\PY_DEV\MKOBI
 |   +---11-guides
 |   |       create-dashboard.md
 |   |       docker.md
-|   |       extend-graphs-filters.md
+|   |       extend-filters.md
+|   |       extend-graphs.md
 |   |       task-queue-migration.md
 |   |       
 |   +---90-adr
@@ -18472,12 +18632,18 @@ C:\PY_DEV\MKOBI
 |   |   |   sorter.js
 |   |   |   
 |   |   +---features
+|   |   |   +---admin
+|   |   |   |   \---model
+|   |   |   |           errorMessages.ts.html
+|   |   |   |           index.html
+|   |   |   |           
 |   |   |   +---auth
 |   |   |   |   |   index.html
 |   |   |   |   |   index.ts.html
 |   |   |   |   |   
 |   |   |   |   +---model
 |   |   |   |   |       authToken.ts.html
+|   |   |   |   |       errorMessages.ts.html
 |   |   |   |   |       index.html
 |   |   |   |   |       useAuth.ts.html
 |   |   |   |   |       
@@ -18487,23 +18653,42 @@ C:\PY_DEV\MKOBI
 |   |   |   |           RegisterForm.tsx.html
 |   |   |   |           
 |   |   |   +---dashboards
+|   |   |   |   +---model
+|   |   |   |   |       errorMessages.ts.html
+|   |   |   |   |       index.html
+|   |   |   |   |       
 |   |   |   |   \---ui
 |   |   |   |       |   DashboardView.tsx.html
 |   |   |   |       |   index.html
 |   |   |   |       |   
 |   |   |   |       \---charts
+|   |   |   |               ChartRenderer.tsx.html
 |   |   |   |               index.html
-|   |   |   |               index.ts.html
 |   |   |   |               PlotlyChart.tsx.html
 |   |   |   |               
-|   |   |   \---upload
-|   |   |       \---ui
-|   |   |               FileDropzone.tsx.html
+|   |   |   +---upload
+|   |   |   |   +---model
+|   |   |   |   |       errorMessages.ts.html
+|   |   |   |   |       index.html
+|   |   |   |   |       
+|   |   |   |   \---ui
+|   |   |   |           FileDropzone.tsx.html
+|   |   |   |           index.html
+|   |   |   |           
+|   |   |   \---users
+|   |   |       \---model
+|   |   |               errorMessages.ts.html
 |   |   |               index.html
 |   |   |               
 |   |   \---shared
+|   |       +---api
+|   |       |       errorHandler.ts.html
+|   |       |       errorMessages.ts.html
+|   |       |       index.html
+|   |       |       
 |   |       +---components
 |   |       |       index.html
+|   |       |       PlotlyComponent.tsx.html
 |   |       |       ProtectedRoute.tsx.html
 |   |       |       RoleBasedAccess.tsx.html
 |   |       |       
@@ -18518,22 +18703,22 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           AdminPanel-B1HN-VMG.js
-|   |           ChangePasswordPage-COINXpKf.js
-|   |           dashboardApi-CvcuSN93.js
-|   |           DashboardList-BrGmRl1x.js
-|   |           DashboardView-BZ6ByjLl.js
+|   |           AdminPanel-BzL8ErKC.js
+|   |           ChangePasswordPage-BpCDPhVH.js
+|   |           dashboardApi-DV6KFQQC.js
+|   |           DashboardList-DxgKpX-H.js
+|   |           DashboardView-C6afjANd.js
 |   |           formSchemas-ClqIoYHL.js
-|   |           index-DFIEJCFV.js
-|   |           LoginForm-Di0-L3Vt.js
+|   |           index-C4dLiVhM.js
+|   |           LoginForm-DXfM5tbV.js
 |   |           mui-nuHIX8iL.js
 |   |           plotly-BxTkdUEp.js
 |   |           react-CuvdHX7R.js
-|   |           RegisterForm-fp5dxWkN.js
+|   |           RegisterForm-DRu9Xn_D.js
 |   |           rolldown-runtime-S-ySWqyJ.js
 |   |           shortUuid-TYuFZJYs.js
-|   |           userApi-X6xXrbiy.js
-|   |           UserProfile-C_PGqTCS.js
+|   |           userApi-Buvb0mOd.js
+|   |           UserProfile-D6kzKU_6.js
 |   |           vendor-Bx3jSdF9.js
 |   |           
 |   +---node_modules
@@ -100910,6 +101095,7 @@ C:\PY_DEV\MKOBI
 |       |           
 |       +---db
 |       |   |   base.py
+|       |   |   dev_seeders.py
 |       |   |   session.py
 |       |   |   starter.py
 |       |   |   __init__.py
@@ -100972,8 +101158,18 @@ C:\PY_DEV\MKOBI
 |       |   |           user_repo.cpython-314.pyc
 |       |   |           __init__.cpython-314.pyc
 |       |   |           
+|       |   +---seeders
+|       |   |   |   test_media_dash.py
+|       |   |   |   __init__.py
+|       |   |   |   
+|       |   |   \---__pycache__
+|       |   |           test_media_dash.cpython-314-pytest-9.0.3.pyc
+|       |   |           test_media_dash.cpython-314.pyc
+|       |   |           __init__.cpython-314.pyc
+|       |   |           
 |       |   \---__pycache__
 |       |           base.cpython-314.pyc
+|       |           dev_seeders.cpython-314.pyc
 |       |           session.cpython-314.pyc
 |       |           starter.cpython-314.pyc
 |       |           __init__.cpython-314.pyc
@@ -101098,6 +101294,8 @@ C:\PY_DEV\MKOBI
     |   test_data_transformations.py
     |   test_data_validator.py
     |   test_deps.py
+    |   test_dev_seeders.py
+    |   test_enum_db_consistency.py
     |   test_error_response_format.py
     |   test_force_password_change_backend.py
     |   test_graphs.py
@@ -101147,6 +101345,8 @@ C:\PY_DEV\MKOBI
             test_data_validator.cpython-314-pytest-9.0.3.pyc
             test_deps.cpython-314-pytest-9.0.3.pyc
             test_deps.cpython-314.pyc
+            test_dev_seeders.cpython-314-pytest-9.0.3.pyc
+            test_enum_db_consistency.cpython-314-pytest-9.0.3.pyc
             test_error_response_format.cpython-314-pytest-9.0.3.pyc
             test_filters.cpython-314-pytest-9.0.3.pyc
             test_force_password_change_backend.cpython-314-pytest-9.0.3.pyc

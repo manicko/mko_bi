@@ -1,0 +1,42 @@
+id: TASK_001_DP008_unsafe_eval_security
+title: Replace eval() with safe formula parser for computed fields
+status: pending
+priority: high
+depends_on: []
+source_reference: C:\py_dev\mkobi\.ai\audit\99-validation\07-data-processing-validated.md
+source_section: Mandatory DP-008
+description: >
+  Security vulnerability: eval() in filter_transforms.py:96-100 allows arbitrary
+  code execution via computed_fields expressions starting with pl.. Replace with
+  existing safe _parse_formula() parser or implement strict allowlist.
+type: implementation
+goals:
+  - Remove eval() usage for computed fields
+  - Use safe formula parser for all expressions
+  - Implement allowlist if pl. expressions are needed
+affected_files:
+  - path: src/mkobi/data/filter_transforms.py
+    targets:
+      - type: function
+        name: _add_computed_fields
+    semantic_anchors:
+      - type: function_call
+        value: "eval"
+  - path: src/mkobi/data/formula_parser.py
+    targets:
+      - type: function
+        name: _parse_formula
+    semantic_anchors:
+      - type: function_definition
+changes:
+  - action: replace_eval
+    description: Replace eval() with _parse_formula() or strict allowlist validation
+    code_hint: |
+      # Remove eval() path, use _parse_formula() for all expressions
+      # If pl. expressions required, implement allowlist validation
+acceptance_criteria:
+  - mypy type checking passes
+  - ruff linting passes
+  - No eval() calls in filter_transforms.py
+  - Security scan shows no code execution vectors
+  - Existing computed field functionality preserved

@@ -2763,6 +2763,23 @@
   type: return_statement
   stable_hash: 2c176485
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\core\temp_password_store.py
+- id: 644b2a0e
+  symbol_path: []
+  type: function_call
+  value: ensure_test_media_dash
+  stable_hash: 644b2a0e
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\dev_seeders.py
+- id: ea6a6ecd
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: ea6a6ecd
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\dev_seeders.py
+- id: d29f6726
+  symbol_path: []
+  type: return_statement
+  stable_hash: d29f6726
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\dev_seeders.py
 - id: ec12389b
   symbol_path: []
   type: function_call
@@ -2940,6 +2957,13 @@
   type: function_call
   value: SchemaNotFoundError
   stable_hash: 292bf348
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: 9b75acb1
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: run_dev_seeders
+  stable_hash: 9b75acb1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
 - id: 9d942f14
   symbol_path:
@@ -11653,6 +11677,125 @@
   type: return_statement
   stable_hash: 45d1bd45
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\repositories\user_repo.py
+- id: 70cfc41a
+  symbol_path: []
+  type: function_call
+  value: get_async_sessionlocal
+  stable_hash: 70cfc41a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: 6d571bcf
+  symbol_path: []
+  type: function_call
+  value: SessionLocal
+  stable_hash: 6d571bcf
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: e7428f46
+  symbol_path: []
+  type: function_call
+  value: select
+  stable_hash: e7428f46
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: a5be5300
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: a5be5300
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: 1a18d138
+  symbol_path: []
+  type: function_call
+  value: list
+  stable_hash: 1a18d138
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: fc75dfca
+  symbol_path: []
+  type: function_call
+  value: delete
+  stable_hash: fc75dfca
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: d894556f
+  symbol_path: []
+  type: function_call
+  value: Dashboard
+  stable_hash: d894556f
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: e7428f46
+  symbol_path: []
+  type: function_call
+  value: select
+  stable_hash: e7428f46
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: 52acf3a0
+  symbol_path: []
+  type: function_call
+  value: Filter
+  stable_hash: 52acf3a0
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: e7428f46
+  symbol_path: []
+  type: function_call
+  value: select
+  stable_hash: e7428f46
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: 52acf3a0
+  symbol_path: []
+  type: function_call
+  value: Filter
+  stable_hash: 52acf3a0
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: '49833333'
+  symbol_path: []
+  type: function_call
+  value: Graph
+  stable_hash: '49833333'
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: '49833333'
+  symbol_path: []
+  type: function_call
+  value: Graph
+  stable_hash: '49833333'
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: d35c5128
+  symbol_path: []
+  type: function_call
+  value: ProcessingConfig
+  stable_hash: d35c5128
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: a5be5300
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: a5be5300
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: a5be5300
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: a5be5300
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: a5be5300
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: a5be5300
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: a5be5300
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: a5be5300
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: a5be5300
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: a5be5300
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: f2222225
+  symbol_path: []
+  type: return_statement
+  stable_hash: f2222225
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
 - id: caeb8ff2
   symbol_path: []
   type: function_call

@@ -163,6 +163,11 @@ class DatabaseStarter:
         # Ensure admin user exists (after migrations, before test DB handling)
         await self.ensure_admin_user()
 
+        # Run development seeders (creates test_media_dash dashboard in dev)
+        if self._config.env == EnvironmentEnum.DEVELOPMENT:
+            from mkobi.db.dev_seeders import run_dev_seeders
+            await run_dev_seeders()
+
         # Clean up orphaned temp files from previous runs
         deleted_count = cleanup_stale_temp_files()
         if deleted_count > 0:

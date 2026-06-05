@@ -1,45 +1,61 @@
 tasks:
-  # Batch 1 — Prerequisite: Shared fixture (must come before MF-001 fixes)
-  - id: TASK_001_AR006_shared_csv_fixture
+  # Phase 1: Security Fix (Highest Priority)
+  - id: TASK_001_DP008_unsafe_eval_security
     depends_on: []
+    rationale: "HIGH severity security vulnerability - eval() allows arbitrary code execution. Independent change."
 
-  # Batch 1 — Mandatory fixes (independent except MF-001 depends on fixture)
-  - id: TASK_002_MF001_fix_libmagic_tests
-    depends_on:
-      - TASK_001_AR006_shared_csv_fixture
-
-  - id: TASK_003_MF002_fix_log_level_test
+  # Phase 2: Configuration & Schema Fixes
+  - id: TASK_002_DC002_admin_password_default
     depends_on: []
+    rationale: "Mandatory fix - weak default password. Independent change."
 
-  - id: TASK_004_MF003_verify_layout_test
+  - id: TASK_003_DC003_debug_mode_validation
     depends_on: []
+    rationale: "Mandatory fix - debug mode security. Independent change."
 
-  - id: TASK_005_MF004_verify_pydantic_model_test
+  - id: TASK_004_DB001_processing_status_enum_drift
     depends_on: []
+    rationale: "Advisory but requires careful migration. Independent change."
 
-  - id: TASK_006_AR005_delete_bak_file
+  # Phase 3: Backend Test Fixes
+  - id: TASK_005_BE002_fix_jwt_secret_test
     depends_on: []
+    rationale: "Mandatory test fix. Test-only change, no production impact."
 
-  # Batch 2 — Test quality improvements (independent)
-  - id: TASK_007_AR001_fix_csv_loader_temp_cleanup
+  - id: TASK_006_BE003_fix_mime_test
     depends_on: []
+    rationale: "Test-only fix. Platform-dependent test correction."
 
-  - id: TASK_008_AR002_fix_streaming_temp_cleanup
+  - id: TASK_007_BE001_filter_values_response_model
     depends_on: []
+    rationale: "Advisory - type safety improvement. Independent change."
 
-  - id: TASK_009_AR004_improve_temp_file_deleted_test
+  # Phase 4: Frontend Fixes
+  - id: TASK_008_FE003_chart_renderer_lint_fix
     depends_on: []
+    rationale: "Mandatory lint fix. Independent change."
 
-  # Batch 3 — New tests (independent)
-  - id: TASK_010_AR007_add_jsonb_key_normalization_test
+  - id: TASK_009_FE005_hardcoded_status_enum
     depends_on: []
+    rationale: "Mandatory type safety fix. Independent change."
 
-  - id: TASK_011_AR008_add_display_name_test
+  # Phase 5: Advisory Quality Improvements
+  - id: TASK_010_FE001_russian_fallback_message
     depends_on: []
+    rationale: "Advisory - English language compliance. Independent change."
 
-  - id: TASK_012_AR009_add_strenum_db_enum_test
+  - id: TASK_011_TST003_tautological_test
     depends_on: []
+    rationale: "Advisory - test quality. Can be done anytime."
 
-  # Batch 4 — Documentation (independent)
-  - id: TASK_013_DOC001_document_cleanup_architecture
+  - id: TASK_012_TST008_low_test_coverage
     depends_on: []
+    rationale: "Advisory - coverage improvement. Strategic task, spans multiple modules."
+
+  - id: TASK_013_DP001_transaction_consistency_test_mode
+    depends_on: []
+    rationale: "Advisory - test mode consistency. Low priority, can defer."
+
+  - id: TASK_014_FE004_remove_unused_charts
+    depends_on: []
+    rationale: "Advisory - dead code removal. Safe to defer."

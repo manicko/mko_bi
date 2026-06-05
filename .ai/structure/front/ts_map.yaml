@@ -490,6 +490,10 @@
     - ../../../shared/utils/shortUuid
     - react-hot-toast
     - ../../../shared/types/api.types
+    - ../../../shared/api/errorHandler
+    - ../../../shared/types/enums
+    - ../../../shared/api/errorMessages
+    - ../model/errorMessages
   components:
     - DashboardManagement
   hooks: []

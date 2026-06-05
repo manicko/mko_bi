@@ -316,6 +316,14 @@
   classes:
   - Base
   functions: []
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\dev_seeders.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.dev_seeders
+  layer: unknown
+  imports:
+  - typing
+  - mkobi.db.seeders.test_media_dash
+  classes: []
+  functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\session.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.db.session
   layer: unknown
@@ -345,6 +353,7 @@
   - mkobi.models.enums
   - mkobi.services.file_cleanup
   - sqlalchemy
+  - mkobi.db.dev_seeders
   - mkobi.db.session
   classes:
   - DatabaseNotFoundError
@@ -359,7 +368,10 @@
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\__init__.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.db.__init__
   layer: unknown
-  imports: []
+  imports:
+  - mkobi.db.dev_seeders
+  - mkobi.db.session
+  - mkobi.db.starter
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\interfaces\repository_interfaces.py
@@ -1134,7 +1146,7 @@
   - mkobi.db.models.aggregated_data
   - mkobi.db.models.dashboard_filter_values
   - mkobi.db.models.filters
-  - mkobi.db.models.graph
+  - mkobi.db.models.graphs
   - mkobi.db.models.layout
   - mkobi.db.models.processing_configs
   - mkobi.db.models.processing_logs
@@ -1498,6 +1510,25 @@
   - mkobi.db.repositories.processing_config_repo
   - mkobi.db.repositories.processing_log_repo
   - mkobi.db.repositories.user_repo
+  classes: []
+  functions: []
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.seeders.test_media_dash
+  layer: unknown
+  imports:
+  - typing
+  - sqlalchemy
+  - mkobi.db.models
+  - mkobi.db.models.filters
+  - mkobi.db.session
+  - mkobi.models.enums
+  classes: []
+  functions: []
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\__init__.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.db.seeders.__init__
+  layer: unknown
+  imports:
+  - mkobi.db.seeders.test_media_dash
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\loaders\loader.py

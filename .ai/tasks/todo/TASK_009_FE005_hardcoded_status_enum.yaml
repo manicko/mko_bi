@@ -1,0 +1,34 @@
+id: TASK_009_FE005_hardcoded_status_enum
+title: Replace hardcoded status strings with ProcessingStatus enum
+status: pending
+priority: high
+depends_on: []
+source_reference: C:\py_dev\mkobi\.ai\audit\99-validation\02-frontend-validated.md
+source_section: Mandatory FE-005
+description: >
+  Replace hardcoded 'completed' and 'failed' strings in uploadApi.ts with
+  ProcessingStatus.COMPLETED and ProcessingStatus.FAILED enum values.
+type: implementation
+goals:
+  - Replace hardcoded status strings with enum references
+  - Maintain type consistency with backend ProcessingStatus
+affected_files:
+  - path: frontend/src/features/upload/api/uploadApi.ts
+    targets:
+      - type: function
+        name: getProcessingResult
+    semantic_anchors:
+      - type: string_literal
+        value: "'completed'"
+      - type: string_literal
+        value: "'failed'"
+changes:
+  - action: update_code
+    description: Replace string literals with ProcessingStatus enum values
+    code_hint: |
+      # Change from: return { status: "completed", ... }
+      # To: return { status: ProcessingStatus.COMPLETED, ... }
+acceptance_criteria:
+  - no hardcoded status strings in uploadApi.ts
+  - TypeScript compilation passes
+  - npm run lint passes
