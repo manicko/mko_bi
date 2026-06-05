@@ -359,6 +359,17 @@ class Settings(BaseSettings):
                 )
         return self
 
+    @model_validator(mode="after")
+    def validate_debug_mode(self) -> "Settings":
+        """Validate debug mode is disabled in production.
+
+        Debug mode exposes sensitive information and should never be enabled
+        in production environments for security reasons.
+        """
+        if self.debug and self.environment == EnvironmentEnum.PRODUCTION:
+            raise ValueError("debug=True is not allowed in production environment")
+        return self
+
     @field_validator("cors_origins")
     @classmethod
     def validate_cors_origins(cls, value: list[str]) -> list[str]:

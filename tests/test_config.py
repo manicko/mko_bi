@@ -482,3 +482,59 @@ class TestDatabaseUrlPasswordValidation(TestSettingsBase):
         url = settings.DATABASE_URL
         assert url is not None
         assert "postgresql" in url or "postgresql+asyncpg" in url
+
+
+class TestDebugModeValidation(TestSettingsBase):
+    """Tests for debug mode validation in production."""
+
+    def test_debug_true_rejected_in_production(self, monkeypatch):
+        """Verify debug=True is rejected in production environment."""
+        monkeypatch.setenv("ENV", "production")
+        monkeypatch.setenv("DEBUG", "true")
+        monkeypatch.setenv("ADMIN_USERNAME", "prodadmin")
+        monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
+        from mkobi.config import clear_config_cache
+        clear_config_cache()
+        with pytest.raises(ValueError, match="debug=True is not allowed in production"):
+            Settings()
+
+    def test_debug_false_accepted_in_production(self, monkeypatch):
+        """Verify debug=False is accepted in production environment."""
+        monkeypatch.setenv("ENV", "production")
+        monkeypatch.setenv("DEBUG", "false")
+        monkeypatch.setenv("ADMIN_USERNAME", "prodadmin")
+        monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
+        from mkobi.config import clear_config_cache
+        clear_config_cache()
+        # Should not raise
+        settings = Settings()
+        assert settings.debug is False
+
+    def test_debug_true_accepted_in_development(self, monkeypatch):
+        """Verify debug=True is allowed in development environment."""
+        monkeypatch.setenv("ENV", "development")
+        monkeypatch.setenv("DEBUG", "true")
+        from mkobi.config import clear_config_cache
+        clear_config_cache()
+        # Should not raise
+        settings = Settings()
+        assert settings.debug is True
+
+    def test_debug_true_accepted_in_staging(self, monkeypatch):
+        """Verify debug=True is allowed in staging environment."""
+        monkeypatch.setenv("ENV", "staging")
+        monkeypatch.setenv("DEBUG", "true")
+        from mkobi.config import clear_config_cache
+        clear_config_cache()
+        # Should not raise
+        settings = Settings()
+        assert settings.debug is True
+
+    def test_debug_default_false_in_development(self, monkeypatch):
+        """Verify debug defaults to False in development environment."""
+        monkeypatch.setenv("ENV", "development")
+        # DEBUG not set, should use default
+        from mkobi.config import clear_config_cache
+        clear_config_cache()
+        settings = Settings()
+        assert settings.debug is False
