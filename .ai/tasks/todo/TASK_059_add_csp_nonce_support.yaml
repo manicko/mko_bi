@@ -1,0 +1,55 @@
+id: TASK_059_add_csp_nonce_support
+
+title: Add CSP nonce support for inline scripts (SEC-008)
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  The nginx Content-Security-Policy header uses a static 'self' directive.
+  For enhanced security, add nonce-based CSP for inline scripts to prevent
+  XSS attacks while allowing legitimate inline scripts.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: SEC-008
+
+goals:
+  - Add nonce-based CSP directive
+  - Configure nginx to generate nonces
+  - Update CSP header in nginx config
+
+files:
+  - path: docker/nginx/nginx.conf
+    targets:
+      - type: directive
+        name: Content-Security-Policy
+    semantic_anchors:
+      - enhance_directive:
+          value: "Content-Security-Policy"
+          description: Add nonce support
+
+changes:
+  - action: modify
+    description: >
+      Enhance the CSP header to use nonce-based script-src directive.
+
+    code_hint: |
+      # BEFORE (line 22):
+      add_header Content-Security-Policy "default-src 'self'" always;
+
+      # AFTER:
+      add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'nonce-$request_id'; style-src 'self' 'unsafe-inline'" always;
+
+acceptance_criteria:
+  - CSP header includes nonce-based script-src
+  - Application loads correctly with new CSP
+  - No console errors about blocked scripts
+
+risk: low
+
+tests_to_run:
+  - "docker compose -f docker/docker-compose.yml exec nginx nginx -t"

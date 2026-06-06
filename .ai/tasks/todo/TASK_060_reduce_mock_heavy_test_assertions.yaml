@@ -1,0 +1,48 @@
+id: TASK_060_reduce_mock_heavy_test_assertions
+
+title: Reduce mock-heavy assertions in tests (TST-008)
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Some tests rely heavily on mock assertions (assert_called_with, etc.) rather
+  than testing actual behavior. Refactor these tests to test real user-visible
+  behavior where possible, reducing brittleness and improving regression detection.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: TST-008
+
+goals:
+  - Identify tests with excessive mock assertions
+  - Refactor to test behavior over implementation
+  - Reduce test brittleness
+
+files:
+  - path: tests/
+    targets:
+      - type: test_files
+        name: "*.py"
+    semantic_anchors:
+      - refactor_tests:
+          description: Replace mock assertions with behavior tests
+
+changes:
+  - action: modify
+    description: >
+      Refactor mock-heavy tests to test actual behavior. Focus on tests that
+      verify internal implementation details rather than user-visible outcomes.
+
+acceptance_criteria:
+  - Reduced mock assertion count in refactored tests
+  - Tests still pass
+  - Tests are more resilient to internal refactoring
+
+risk: low
+
+tests_to_run:
+  - "pytest tests/ -v"

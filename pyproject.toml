@@ -173,10 +173,6 @@ module = ["mkobi.*"]
 ignore_missing_imports = false
 
 [[tool.mypy.overrides]]
-module = ["mkobi.utils.decorators"]
-ignore_errors = true
-
-[[tool.mypy.overrides]]
 module = ["mkobi.db.models.*"]
 ignore_errors = true
 

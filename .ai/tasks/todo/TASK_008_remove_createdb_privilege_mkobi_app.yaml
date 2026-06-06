@@ -1,0 +1,143 @@
+id: TASK_008_remove_createdb_privilege_mkobi_app
+
+title: Remove CREATEDB privilege from mkobi_app role (DC-002 + DC-004 co-fix)
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  Remove CREATEDB privilege from mkobi_app role per PLAN_01.md. This is a multi-step
+  change: (1) fix the dangerous fallback in starter.py that caused previous rollbacks,
+  (2) remove CREATEDB from init script, (3) apply dollar-quoting for password (DC-004 co-fix),
+  (4) add defense-in-depth role-privilege verification.
+
+  Root cause of previous rollbacks: `admin_url or test_url` fallback in recreate_test_database()
+  silently switches to mkobi_app credentials when admin credentials are missing. Without CREATEDB,
+  this fails with a confusing InsufficientPrivilegeError. The fix eliminates the fallback so
+  missing admin credentials produce a clear ValueError instead.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: DC-002 (HIGH), DC-004 (MEDIUM)
+  - related_plan: C:\py_dev\mkobi\.ai\plans\PLAN_01.md
+
+goals:
+  - Fix dangerous `admin_url or test_url` fallback in starter.py (root cause of rollbacks)
+  - Remove ALTER ROLE mkobi_app CREATEDB from init script
+  - Apply dollar-quoting for password in init script (DC-004 SQL injection co-fix)
+  - Add _verify_role_privileges() defense-in-depth check in starter.py
+  - Fix misleading comment about CREATEDB in starter.py
+
+files:
+  - path: src/mkobi/db/starter.py
+    targets:
+      - type: function
+        name: recreate_test_database
+      - type: variable
+        name: base_url
+      - type: class
+        name: DatabaseStarter
+    semantic_anchors:
+      - replace_fallback:
+          value: "admin_url or test_url"
+          description: Replace with explicit admin_url check raising ValueError
+      - add_method:
+          value: "_verify_role_privileges"
+          description: Add defense-in-depth privilege verification method
+      - fix_comment:
+          value: "requires CREATEDB privilege"
+          description: Change to "requires superuser privileges"
+
+  - path: docker/init-scripts/01-create-app-role.sh
+    targets:
+      - type: sql_statement
+        name: ALTER ROLE CREATEDB
+      - type: sql_statement
+        name: CREATE ROLE
+    semantic_anchors:
+      - remove_sql:
+          value: "ALTER ROLE mkobi_app CREATEDB;"
+          description: Remove CREATEDB grant
+      - modify_password_quoting:
+          value: "PASSWORD '${MKOBI_APP_PASSWORD}'"
+          description: Use dollar-quoting for SQL injection protection (DC-004)
+
+changes:
+  - action: modify
+    description: |
+      Step 1 (PLAN_01): Fix fallback logic in recreate_test_database().
+      Replace `base_url = admin_url or test_url` with explicit check that raises
+      ValueError when admin_url is None. Also fix the misleading comment.
+
+    code_hint: |
+      # BEFORE (around line 206):
+      # Use admin URL for database creation (requires CREATEDB privilege)
+      # Fall back to test_url if admin_url not configured (for backwards compatibility)
+      base_url = admin_url or test_url
+
+      # AFTER:
+      # Use admin URL for database creation (requires superuser privileges)
+      if not admin_url:
+          raise ValueError(
+              "Admin database URL is required for test database recreation. "
+              "Set DATABASE__ADMIN_USER and DATABASE__ADMIN_PASSWORD environment variables."
+          )
+      base_url = admin_url
+
+  - action: modify
+    description: |
+      Step 2 (PLAN_01): Remove CREATEDB from init script and apply dollar-quoting.
+
+    code_hint: |
+      # BEFORE:
+      CREATE ROLE mkobi_app WITH LOGIN PASSWORD '${MKOBI_APP_PASSWORD}';
+      -- Grant CREATEDB privilege for test database recreation
+      ALTER ROLE mkobi_app CREATEDB;
+
+      # AFTER:
+      CREATE ROLE mkobi_app WITH LOGIN PASSWORD $${MKOBI_APP_PASSWORD}$;
+      -- CREATEDB privilege NOT granted - admin credentials (postgres superuser)
+      -- are used for CREATE/DROP DATABASE operations in recreate_test_database()
+
+  - action: add
+    description: |
+      Step 3 (PLAN_01): Add _verify_role_privileges() to DatabaseStarter.
+      Call it in startup() after connectivity check, before migrations.
+
+    code_hint: |
+      async def _verify_role_privileges(self) -> None:
+          """Verify mkobi_app does not have excessive privileges (defense-in-depth)."""
+          assert self._main_engine is not None
+          try:
+              async with self._main_engine.connect() as conn:
+                  result = await conn.execute(
+                      text("SELECT rolcreatedb FROM pg_roles WHERE rolname = 'mkobi_app'")
+                  )
+                  row = result.fetchone()
+                  if row and row[0]:
+                      logger.warning(
+                          "mkobi_app has CREATEDB privilege - violates least-privilege. "
+                          "Run: ALTER ROLE mkobi_app NOCREATEDB;"
+                      )
+          except Exception as e:
+              logger.debug("Could not verify role privileges: %s", e)
+
+acceptance_criteria:
+  - Fallback `admin_url or test_url` replaced with explicit ValueError
+  - CREATEDB removed from mkobi_app role in init script
+  - Dollar-quoting applied for password in init script (DC-004)
+  - _verify_role_privileges() method added and called in startup()
+  - Misleading comment about CREATEDB fixed
+  - recreate_test_database() raises clear ValueError when admin_url is None
+  - Full test suite passes with CREATEDB revoked
+  - All three Docker environments (dev/test/prod) verified working
+
+risk: medium
+
+tests_to_run:
+  - "docker compose -f docker/docker-compose.test.yml up -d --build"
+  - "docker compose -f docker/docker-compose.yml --env-file .env exec db psql -U postgres -c \"ALTER ROLE mkobi_app NOCREATEDB;\""
+  - "pytest tests/ -v"

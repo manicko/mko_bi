@@ -1,0 +1,76 @@
+id: TASK_011_translate_error_messages_to_english
+
+title: Translate all error messages to English
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  Translate all Russian error messages in frontend error handling to English.
+  The project specification requires English-only for all user-facing strings.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: FE-001
+
+goals:
+  - Translate all error messages in shared/api/errorMessages.ts
+  - Translate error messages in all feature modules
+  - Maintain consistent error message mapping
+
+files:
+  - path: frontend/src/shared/api/errorMessages.ts
+    targets:
+      - type: constant
+        name: sharedErrorMessages
+    semantic_anchors:
+      - translate_all_strings:
+          description: Replace all Russian strings with English
+
+  - path: frontend/src/shared/api/errorMessages.ts
+    targets:
+      - type: constant
+        name: DEFAULT_ERROR_MESSAGE
+    semantic_anchors:
+      - translate_constant:
+          value: "Произошла ошибка"
+          description: Change to "An error occurred"
+
+changes:
+  - action: modify
+    description: >
+      Translate all Russian error messages to English in shared/api/errorMessages.ts.
+
+    code_hint: |
+      # BEFORE (lines 13-58):
+      export const sharedErrorMessages: Record<ErrorCode, string> = {
+        [ErrorCode.INTERNAL_ERROR]: 'Внутренняя ошибка сервера',
+        [ErrorCode.SERVICE_UNAVAILABLE]: 'Сервис временно недоступен',
+        [ErrorCode.RATE_LIMIT_EXCEEDED]: 'Превышен лимит запросов. Попробуйте позже.',
+        ...
+        [ErrorCode.PROCESSING_IN_PROGRESS]: 'Обработка данных уже выполняется',
+      }
+      export const DEFAULT_ERROR_MESSAGE = 'Произошла ошибка'
+
+      # AFTER:
+      export const sharedErrorMessages: Record<ErrorCode, string> = {
+        [ErrorCode.INTERNAL_ERROR]: 'Internal server error',
+        [ErrorCode.SERVICE_UNAVAILABLE]: 'Service temporarily unavailable',
+        [ErrorCode.RATE_LIMIT_EXCEEDED]: 'Rate limit exceeded. Please try again later.',
+        ...
+        [ErrorCode.PROCESSING_IN_PROGRESS]: 'Data processing already in progress',
+      }
+      export const DEFAULT_ERROR_MESSAGE = 'An error occurred'
+
+acceptance_criteria:
+  - All Russian error messages translated to English
+  - Error messages follow English-only policy
+  - Tests pass (update test expectations accordingly)
+
+risk: low
+
+tests_to_run:
+  - "cd frontend && npm test -- --testPathPattern=errorMessages"

@@ -1,0 +1,82 @@
+id: TASK_020_validate_cors_origins_urls
+
+title: Validate CORS origins as proper URLs (DC-005)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  The validate_cors_origins validator in config.py only checks that the value is a list
+  of strings, but does not validate that each origin is a proper URL. Invalid origins
+  like "not-a-url" or "*" would be accepted, potentially creating security issues or
+  runtime errors in the CORS middleware.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: DC-005
+
+goals:
+  - Add URL format validation to validate_cors_origins
+  - Reject origins that are not valid http:// or https:// URLs
+  - Log a warning for invalid entries instead of silently accepting them
+
+files:
+  - path: src/mkobi/config.py
+    targets:
+      - type: function
+        name: validate_cors_origins
+    semantic_anchors:
+      - enhance_validator:
+          value: "return [str(origin) for origin in value]"
+          description: Add URL format validation
+
+changes:
+  - action: modify
+    description: >
+      Enhance validate_cors_origins to validate each origin as a proper URL.
+      Accept only http:// or https:// schemes with a valid netloc.
+
+    code_hint: |
+      # BEFORE (lines 373-386):
+      @field_validator("cors_origins")
+      @classmethod
+      def validate_cors_origins(cls, value: list[str]) -> list[str]:
+          """Validate CORS origins."""
+          if not isinstance(value, list):
+              return []
+          return [str(origin) for origin in value]
+
+      # AFTER:
+      from urllib.parse import urlparse
+
+      @field_validator("cors_origins")
+      @classmethod
+      def validate_cors_origins(cls, value: list[str]) -> list[str]:
+          """Validate CORS origins are proper http(s) URLs."""
+          if not isinstance(value, list):
+              return []
+          validated: list[str] = []
+          for origin in value:
+              parsed = urlparse(str(origin))
+              if parsed.scheme in ("http", "https") and parsed.netloc:
+                  validated.append(str(origin))
+              else:
+                  logger.warning(
+                      "Invalid CORS origin rejected: %r (must be http:// or https:// URL)",
+                      origin,
+                  )
+          return validated
+
+acceptance_criteria:
+  - Invalid CORS origins (not http/https URLs) are rejected with a warning
+  - Valid CORS origins are accepted normally
+  - Empty list is still valid (no CORS in production without explicit config)
+  - Tests pass for config loading
+
+risk: low
+
+tests_to_run:
+  - "pytest tests/ -v -k 'config or cors'"

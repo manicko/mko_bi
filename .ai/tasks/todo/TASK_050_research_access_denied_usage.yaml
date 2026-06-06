@@ -1,0 +1,118 @@
+id: TASK_050_research_access_denied_usage
+
+title: Research AccessDenied component usage and document recommendations (FE-007)
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  The AccessDenied component in shared/components/ is not currently used anywhere
+  in the application. Before removing it, research its intended purpose and document
+  where it could be valuable. This is a research + documentation task, not a deletion task.
+
+  The component renders a centered "No access — contact your administrator" message.
+  This is useful for: (1) RoleBasedAccess fallback when a user lacks required roles,
+  (2) dashboard access denied pages when a user has no permission for a specific dashboard,
+  (3) API-level 403 responses that need a user-friendly page.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: FE-007
+
+goals:
+  - Research the original intent of AccessDenied component
+  - Identify where it should be integrated (RoleBasedAccess fallback, 403 handler, dashboard access)
+  - Document recommendations in PLAN_02.md
+  - Update component documentation (JSDoc) to clarify intended usage
+  - Decide whether to keep (with documentation and integration) or remove based on findings
+
+files:
+  - path: frontend/src/shared/components/AccessDenied.tsx
+    targets:
+      - type: component
+        name: AccessDenied
+    semantic_anchors:
+      - add_jsdoc:
+          description: Add JSDoc documenting intended usage patterns
+
+  - path: frontend/src/shared/components/RoleBasedAccess.tsx
+    targets:
+      - type: component
+        name: RoleBasedAccess
+    semantic_anchors:
+      - evaluate_integration:
+          description: Evaluate using AccessDenied as default fallback prop
+
+  - path: .ai/plans/PLAN_02.md
+    targets:
+      - type: document
+        name: PLAN_02.md
+    semantic_anchors:
+      - update:
+          description: Add AccessDenied recommendations to PLAN_02.md
+
+changes:
+  - action: research
+    description: |
+      Investigate the following:
+      1. Check git history for AccessDenied to understand original intent
+      2. Review RoleBasedAccess — it currently renders `null` as default fallback.
+         AccessDenied would be a better default fallback for unauthorized users.
+      3. Review the 403 error handling in axiosInstance.ts — when API returns 403,
+         the user gets a toast but no dedicated page. AccessDenied could be shown.
+      4. Review dashboard access control — when a user tries to access a dashboard
+         they don't have permission for, AccessDenied could be the response page.
+      5. Determine if the component should be: (a) integrated into the access control
+         flow, (b) kept as a utility, or (c) removed.
+
+  - action: modify
+    description: |
+      Add JSDoc to AccessDenied documenting its intended usage patterns.
+
+    code_hint: |
+      # ADD JSDoc to AccessDenied.tsx:
+      /**
+       * Access denied page displayed when a user lacks required permissions.
+       *
+       * Intended usage:
+       * - As the fallback for RoleBasedAccess when user lacks required roles
+       * - As a dedicated route for 403 Forbidden responses
+       * - As an inline component when dashboard access is denied
+       *
+       * @example
+       * // In RoleBasedAccess:
+       * <RoleBasedAccess roles={['admin']} fallback={<AccessDenied />}>
+       *   <AdminPanel />
+       * </RoleBasedAccess>
+       *
+       * @see PLAN_02.md for access control integration recommendations.
+       */
+
+  - action: modify
+    description: |
+      If research determines AccessDenied should be the default RoleBasedAccess fallback,
+      update RoleBasedAccess to use it.
+
+    code_hint: |
+      # BEFORE (RoleBasedAccess.tsx):
+      export function RoleBasedAccess({ roles, children, fallback = null }: RoleBasedAccessProps) {
+
+      # AFTER (if integration recommended):
+      import { AccessDenied } from './AccessDenied'
+
+      export function RoleBasedAccess({ roles, children, fallback = <AccessDenied /> }: RoleBasedAccessProps) {
+
+acceptance_criteria:
+  - PLAN_02.md updated with AccessDenied research findings and recommendations
+  - AccessDenied has JSDoc documentation explaining intended usage
+  - RoleBasedAccess integration evaluated and decision documented
+  - If integrated: RoleBasedAccess uses AccessDenied as default fallback
+  - If not integrated: justification documented in PLAN_02.md
+
+risk: minimal
+
+tests_to_run:
+  - "cd frontend && npm test -- --testPathPattern=RoleBasedAccess or AccessDenied"

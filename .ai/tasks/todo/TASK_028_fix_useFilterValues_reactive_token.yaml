@@ -1,0 +1,58 @@
+id: TASK_028_fix_useFilterValues_reactive_token
+
+title: Fix non-reactive getToken() in useFilterValues hook (FE-003)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  The useFilterValues hook uses getToken() (a plain function) instead of useAuthToken()
+  (a React hook). This means the token value is captured once at hook invocation time
+  and does not react to token changes (e.g., after login or token refresh). Other hooks
+  in the same file correctly use useAuthToken().
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: FE-003
+
+goals:
+  - Replace getToken() with useAuthToken() in useFilterValues
+  - Ensure filter values query reacts to token changes
+  - Align with the pattern used by all other hooks in dashboardApi.ts
+
+files:
+  - path: frontend/src/features/dashboards/api/dashboardApi.ts
+    targets:
+      - type: function
+        name: useFilterValues
+    semantic_anchors:
+      - replace_call:
+          value: "getToken()"
+          description: Replace with useAuthToken() hook
+
+changes:
+  - action: modify
+    description: >
+      Replace getToken() with useAuthToken() in useFilterValues hook, matching
+      the pattern used by all other hooks in the file.
+
+    code_hint: |
+      # BEFORE (line 87):
+      const accessToken = getToken()
+
+      # AFTER:
+      const accessToken = useAuthToken()
+
+acceptance_criteria:
+  - useFilterValues uses useAuthToken() instead of getToken()
+  - Filter values query reacts to token changes
+  - No regression in dashboard filter functionality
+  - Tests pass
+
+risk: low
+
+tests_to_run:
+  - "cd frontend && npm test -- --testPathPattern=dashboardApi"

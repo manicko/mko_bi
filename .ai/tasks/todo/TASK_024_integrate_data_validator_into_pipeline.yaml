@@ -1,0 +1,72 @@
+id: TASK_024_integrate_data_validator_into_pipeline
+
+title: Integrate DataValidator into the data processing pipeline (DP-007)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  The DataValidator class in data/loaders/validator.py is fully implemented but never
+  called in the data processing pipeline. The validate_dataframe() function exists as
+  a standalone but is not invoked from file_processing.py or data_worker.py. Integrate
+  validation into the pipeline after CSV loading and before transformations.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: DP-007
+
+goals:
+  - Call DataValidator after CSV loading in the processing pipeline
+  - Validate data structure, column types, and quality before transformations
+  - Fail processing with clear error message if validation fails
+
+files:
+  - path: src/mkobi/workers/data_worker.py
+    targets:
+      - type: function
+        name: _process_csv_file_async
+    semantic_anchors:
+      - add_validation_after:
+          value: "loader.load_csv"
+          description: Add DataValidator call after CSV load, before transformations
+
+changes:
+  - action: modify
+    description: >
+      Add DataValidator call after CSV loading in _process_csv_file_async.
+      If validation fails, update processing log to FAILED and raise.
+
+    code_hint: |
+      # AFTER the CSV load (after line ~211):
+      logger.info("File loaded: %d rows, %d columns", df.shape[0], df.shape[1])
+
+      # ADD: Validate loaded data
+      from mkobi.data.loaders.validator import DataValidator
+      validator = DataValidator()
+      validation_result = validator.validate(df)
+      if not validation_result.is_valid:
+          error_msg = f"Data validation failed: {'; '.join(validation_result.errors)}"
+          logger.error(error_msg)
+          await _update_processing_log_status(
+              task_id=task_id,
+              status=ProcessingStatus.FAILED,
+              message=error_msg,
+              finished_at=datetime.now(UTC),
+              session=db_session,
+          )
+          raise ValueError(error_msg)
+
+acceptance_criteria:
+  - DataValidator is called after CSV loading in the pipeline
+  - Invalid data causes processing to fail with clear error message
+  - Processing log reflects validation failure
+  - Valid data passes through without changes to existing behavior
+  - Tests pass
+
+risk: medium
+
+tests_to_run:
+  - "pytest tests/ -v -k 'data_worker or validation or processing'"

@@ -29,6 +29,8 @@ Quick check (dev environment):
 docker compose -f docker/docker-compose.yml --env-file .env ps
 ```
 
+
+IMPORTANT: USE Get-Content to read .env files. 
 ---
 
 ## Python (backend) — use `uv run` for all commands

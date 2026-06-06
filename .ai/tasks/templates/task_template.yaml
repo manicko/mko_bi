@@ -4,6 +4,16 @@ title: Add audit logging for user creation
 
 status: pending
 
+# ── Risk assessment (for potentially disruptive tasks) ──
+# If the task is capable of breaking existing behavior, set status to blocked
+# and create a prerequisite research task (Step 7.5 in plan-tasks.md):
+#   status: blocked
+#   blocked_by: TASK_XXX_research_<topic>
+# The implementation task depends on the research task:
+#   depends_on:
+#     - TASK_XXX_research_<topic>
+# The research task produces go/no-go/go-with-changes recommendation.
+
 priority: high
 
 depends_on:

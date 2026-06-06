@@ -1,0 +1,68 @@
+id: TASK_027_fix_test_mode_transaction_boundary
+
+title: Add transaction boundary for test-mode path in data_worker (DP-004)
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_014_consolidate_data_worker_transactions
+
+description: >
+  The _update_processing_log_status function has a test-mode path (when session
+  is provided) that commits explicitly on COMPLETED/FAILED, but the _store_aggregates
+  test-mode path does not commit — it relies on caller transaction management.
+  This inconsistency means test-mode operations may not persist correctly.
+  Align the test-mode transaction handling.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: DP-004
+
+goals:
+  - Align test-mode transaction handling between _update_processing_log_status and _store_aggregates
+  - Ensure test-mode operations persist correctly within the SAVEPOINT pattern
+  - Document the expected transaction behavior for test mode
+
+files:
+  - path: src/mkobi/workers/data_worker.py
+    targets:
+      - type: function
+        name: _update_processing_log_status
+      - type: function
+        name: _store_aggregates
+    semantic_anchors:
+      - align_transaction_handling:
+          description: Make test-mode commit behavior consistent across functions
+
+changes:
+  - action: modify
+    description: >
+      Remove the explicit session.commit() from _update_processing_log_status test-mode
+      path. Both test-mode paths should rely on caller transaction management
+      (the SAVEPOINT pattern in async_db_session fixture). Add a comment explaining this.
+
+    code_hint: |
+      # BEFORE (lines 73-80):
+      if session is not None:
+          await session.execute(stmt)
+          if status in (ProcessingStatus.COMPLETED, ProcessingStatus.FAILED):
+              await session.commit()
+
+      # AFTER:
+      if session is not None:
+          # Test mode: caller manages transaction (SAVEPOINT pattern).
+          # Do NOT commit here — the async_db_session fixture handles it.
+          await session.execute(stmt)
+
+acceptance_criteria:
+  - Test-mode _update_processing_log_status no longer commits independently
+  - Both test-mode paths rely on caller transaction management
+  - Tests pass with the SAVEPOINT pattern
+  - Processing log status is correctly persisted in tests
+
+risk: medium
+
+tests_to_run:
+  - "pytest tests/ -v -k 'data_worker or processing'"

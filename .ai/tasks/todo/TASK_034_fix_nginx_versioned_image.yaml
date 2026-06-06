@@ -1,0 +1,56 @@
+id: TASK_034_fix_nginx_versioned_image
+
+title: Pin nginx image to specific version tag (INF-001)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  The nginx service in docker-compose.yml uses the unversioned `nginx:alpine` tag.
+  This means the image can change unpredictably between builds. Pin to a specific
+  version for reproducible builds.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: INF-001
+
+goals:
+  - Pin nginx image to a specific version tag
+  - Use the latest stable nginx alpine version
+  - Ensure reproducible builds
+
+files:
+  - path: docker/docker-compose.yml
+    targets:
+      - type: service
+        name: nginx
+    semantic_anchors:
+      - modify_image:
+          value: "nginx:alpine"
+          description: Change to specific version tag
+
+changes:
+  - action: modify
+    description: >
+      Change the nginx image from unversioned `nginx:alpine` to a specific
+      version tag for reproducible builds.
+
+    code_hint: |
+      # BEFORE (line 178):
+      image: nginx:alpine
+
+      # AFTER:
+      image: nginx:1.27-alpine
+
+acceptance_criteria:
+  - nginx image uses specific version tag
+  - nginx service starts correctly
+  - Docker compose validates successfully
+
+risk: low
+
+tests_to_run:
+  - "cd docker && docker compose config"

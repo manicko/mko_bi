@@ -1,0 +1,60 @@
+id: TASK_045_add_worker_utility_test_coverage
+
+title: Add test coverage for workers and utility modules (TST-005)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  The workers/ and utils/ modules have minimal test coverage. Add tests for
+  critical paths in data_worker.py (status updates, aggregate storage) and
+  utility modules (time_utils, validators, file_utils).
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: TST-005
+
+goals:
+  - Add tests for data_worker._update_processing_log_status
+  - Add tests for data_worker._store_aggregates
+  - Add tests for time_utils.parse and parse_iso error paths
+  - Add tests for validators (email, password, role)
+
+files:
+  - path: tests/
+    targets:
+      - type: test_file
+        name: test_data_worker
+      - type: test_file
+        name: test_time_utils
+      - type: test_file
+        name: test_validators
+    semantic_anchors:
+      - create_test_files:
+          description: Add test files for worker and utility modules
+
+changes:
+  - action: add
+    description: >
+      Create test files for worker and utility modules. Focus on critical
+      business logic paths, not trivial getters/setters.
+
+    code_hint: |
+      # tests/test_data_worker.py - test status update paths
+      # tests/test_time_utils.py - test parse error handling
+      # tests/test_validators.py - test email/password/role validation
+
+acceptance_criteria:
+  - Tests exist for data_worker status update functions
+  - Tests exist for time_utils error paths
+  - Tests exist for validator functions
+  - All new tests pass
+  - Coverage increases for workers/ and utils/ modules
+
+risk: low
+
+tests_to_run:
+  - "pytest tests/ -v -k 'data_worker or time_utils or validators' --cov --cov-report=term-missing"

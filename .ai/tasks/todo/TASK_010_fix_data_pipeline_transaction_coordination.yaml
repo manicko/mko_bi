@@ -1,0 +1,82 @@
+id: TASK_010_fix_data_pipeline_transaction_coordination
+
+title: Fix commit-before-enqueue coordination in data processing pipeline
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_fix_enqueue_job_failure_silent_none
+
+description: >
+  Fix the transaction coordination in the data processing pipeline where the
+  processing log is committed BEFORE the job is enqueued. On enqueue failure,
+  there is no rollback, leaving tasks permanently stuck.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: DB-006
+  - related_to: DP-001
+
+goals:
+  - Move enqueue before commit to ensure atomicity
+  - Handle enqueue failure with proper transaction rollback
+  - Update processing log status on failure
+
+files:
+  - path: src/mkobi/services/file_processing.py
+    targets:
+      - type: function
+        name: process_upload_with_session
+    semantic_anchors:
+      - reorder_operations:
+          before: "await db.commit()"
+          after: "await enqueue_processing_job"
+          description: Enqueue before commit
+
+changes:
+  - action: modify
+    description: >
+      Move enqueue_processing_job call before db.commit() and add proper
+      error handling. If enqueue fails, rollback the transaction.
+
+    code_hint: |
+      # BEFORE (lines 224-257):
+      # Update status to UPLOADED after validation
+      await log_repo.update_status(...)
+      await db.commit()
+
+      # Move file to final location...
+      # Enqueue job...
+
+      # AFTER:
+      # Move file to final location (before commit for cleanup on failure)
+      final_file_path = upload_dir / f"{log.id}{file_ext}"
+      try:
+          file_path.replace(final_file_path)
+      except Exception:
+          logger.error("Failed to move file to final path, rolling back")
+          raise
+
+      # Enqueue job BEFORE commit for proper error handling
+      try:
+          await enqueue_processing_job(...)
+      except Exception as e:
+          logger.error("Enqueue failed, rolling back")
+          await db.rollback()
+          raise
+
+      # Now commit after successful enqueue
+      await db.commit()
+
+acceptance_criteria:
+  - Enqueue happens before database commit
+  - Transaction rolls back on enqueue failure
+  - Processing log properly reflects actual state
+  - Tests pass
+
+risk: high
+
+tests_to_run:
+  - "pytest tests/ -v -k 'file_processing or upload'"

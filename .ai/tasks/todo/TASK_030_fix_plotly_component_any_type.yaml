@@ -1,0 +1,65 @@
+id: TASK_030_fix_plotly_component_any_type
+
+title: Replace any type escape with proper type in PlotlyComponent (FE-005)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  PlotlyComponent.tsx uses `as any` to access the Plotly component from the CJS module.
+  While the eslint-disable comments acknowledge this, a safer type assertion pattern
+  should be used. The component type can be properly resolved without `as any`.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: FE-005
+
+goals:
+  - Replace `as any` with a properly typed resolution pattern
+  - Maintain CJS/ESM interop compatibility
+  - Remove eslint-disable comments for any
+
+files:
+  - path: frontend/src/shared/components/PlotlyComponent.tsx
+    targets:
+      - type: variable
+        name: raw
+      - type: variable
+        name: PlotComponent
+    semantic_anchors:
+      - replace_type:
+          value: "PlotlyDefault as any"
+          description: Use proper type assertion
+
+changes:
+  - action: modify
+    description: >
+      Replace the `as any` cast with a properly typed resolution that handles
+      both CJS and ESM interop patterns without losing type safety.
+
+    code_hint: |
+      # BEFORE (line 20):
+      const raw = PlotlyDefault as any
+
+      # AFTER:
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+      const raw: unknown = PlotlyDefault
+      const PlotComponent: ComponentType<PlotlyChartProps> | null =
+        typeof raw === "object" && raw !== null
+          ? ((raw as { default?: unknown }).default as ComponentType<PlotlyChartProps>) ??
+            (raw as ComponentType<PlotlyChartProps>)
+          : null
+
+acceptance_criteria:
+  - No `as any` in PlotlyComponent.tsx
+  - Plotly chart renders correctly in both dev and production
+  - Type safety maintained with unknown + type guards
+  - Tests pass
+
+risk: low
+
+tests_to_run:
+  - "cd frontend && npm test -- --testPathPattern=PlotlyComponent"

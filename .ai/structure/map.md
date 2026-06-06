@@ -20,16 +20,46 @@ C:\PY_DEV\MKOBI
 |   |   config.json
 |   |   
 |   +---audit
+|   |   |   final-report.md
+|   |   |   
 |   |   +---01-backend
+|   |   |       findings.md
+|   |   |       
 |   |   +---02-frontend
+|   |   |       findings.md
+|   |   |       
 |   |   +---03-database
+|   |   |       findings.md
+|   |   |       
 |   |   +---04-security
+|   |   |       findings.md
+|   |   |       
 |   |   +---05-docker
+|   |   |       findings.md
+|   |   |       
 |   |   +---06-tests
+|   |   |       findings.md
+|   |   |       
 |   |   +---07-data-processing
+|   |   |       findings.md
+|   |   |       
 |   |   +---08-deployment-config
+|   |   |       findings.md
+|   |   |       
 |   |   +---90-integration
+|   |   |       findings.md
+|   |   |       
 |   |   +---99-validation
+|   |   |       01-backend-validated.md
+|   |   |       02-frontend-validated.md
+|   |   |       03-database-validated.md
+|   |   |       04-security-validated.md
+|   |   |       05-docker-validated.md
+|   |   |       06-tests-validated.md
+|   |   |       07-data-processing-validated-findings.md
+|   |   |       08-deployment-config-validated.md
+|   |   |       90-integration-validated.md
+|   |   |       
 |   |   +---db
 |   |   +---problems
 |   |   +---templates
@@ -37,6 +67,8 @@ C:\PY_DEV\MKOBI
 |   |   |       audit-findings.md
 |   |   |       
 |   |   \---validated
+|   |           final-report.md
+|   |           
 |   +---builders
 |   |   |   build.bat
 |   |   |   
@@ -66,6 +98,8 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
+|   |   |   PLAN_01.md
+|   |   |   
 |   |   \---tasks
 |   +---problems
 |   |   \---decisions
@@ -85,26 +119,74 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
-|   |   |       TASK_001_DP008_unsafe_eval_security_DONE.yaml
-|   |   |       TASK_002_DC002_admin_password_default_DONE.yaml
-|   |   |       TASK_003_DC003_debug_mode_validation_DONE.yaml
-|   |   |       TASK_004_DB001_processing_status_enum_drift_DONE.yaml
-|   |   |       TASK_005_BE002_fix_jwt_secret_test_DONE.yaml
-|   |   |       TASK_006_BE003_fix_mime_test_DONE.yaml
-|   |   |       TASK_007_BE001_filter_values_response_model_DONE.yaml
-|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
-|   |   |       TASK_008_FE003_chart_renderer_lint_fix.yaml
-|   |   |       TASK_009_FE005_hardcoded_status_enum.yaml
-|   |   |       TASK_010_FE001_russian_fallback_message.yaml
-|   |   |       TASK_011_TST003_tautological_test.yaml
-|   |   |       TASK_012_TST008_low_test_coverage.yaml
-|   |   |       TASK_013_DP001_transaction_consistency_test_mode.yaml
+|   |   |       TASK_001_fix_enqueue_job_failure_silent_none.yaml
+|   |   |       TASK_002_fix_registration_response_field_name_mismatch.yaml
+|   |   |       TASK_003_fix_token_cache_bypass_revocation.yaml
+|   |   |       TASK_004_add_rate_limiting_client_errors.yaml
+|   |   |       TASK_005_add_rate_limiting_refresh_endpoint.yaml
+|   |   |       TASK_006_fix_rate_limiter_fail_closed_default.yaml
+|   |   |       TASK_007_fix_http_exception_rfc7807_compliance.yaml
+|   |   |       TASK_008_remove_createdb_privilege_mkobi_app.yaml
+|   |   |       TASK_009_fix_port_8000_exposed_production.yaml
+|   |   |       TASK_010_fix_data_pipeline_transaction_coordination.yaml
+|   |   |       TASK_011_translate_error_messages_to_english.yaml
+|   |   |       TASK_012_implement_missing_chart_renderers.yaml
+|   |   |       TASK_013_run_pending_migrations.yaml
+|   |   |       TASK_014_consolidate_data_worker_transactions.yaml
+|   |   |       TASK_015_add_docker_resource_limits.yaml
+|   |   |       TASK_016_verify_infrastructure_changes.yaml
+|   |   |       TASK_017_fix_private_rate_limiter_access.yaml
+|   |   |       TASK_018_fix_filter_values_bulk_insert.yaml
+|   |   |       TASK_019_add_processing_logs_archival.yaml
+|   |   |       TASK_020_validate_cors_origins_urls.yaml
+|   |   |       TASK_021_fix_nginx_hsts_over_http.yaml
+|   |   |       TASK_022_add_nginx_client_max_body_size.yaml
+|   |   |       TASK_023_fix_aggregation_service_hardcoded_sum.yaml
+|   |   |       TASK_024_integrate_data_validator_into_pipeline.yaml
+|   |   |       TASK_025_add_processing_status_state_machine.yaml
+|   |   |       TASK_026_fix_file_move_before_enqueue.yaml
+|   |   |       TASK_027_fix_test_mode_transaction_boundary.yaml
+|   |   |       TASK_028_fix_useFilterValues_reactive_token.yaml
+|   |   |       TASK_029_remove_console_error_from_production.yaml
+|   |   |       TASK_030_fix_plotly_component_any_type.yaml
+|   |   |       TASK_031_remove_alert_from_dashboard_management.yaml
+|   |   |       TASK_032_add_zod_validation_dashboard_form.yaml
+|   |   |       TASK_033_fix_force_password_hard_navigation.yaml
+|   |   |       TASK_034_fix_nginx_versioned_image.yaml
+|   |   |       TASK_035_remove_auto_migrate_contradiction.yaml
+|   |   |       TASK_036_fix_rq_worker_health_check.yaml
+|   |   |       TASK_037_fix_processing_result_type_mismatch.yaml
+|   |   |       TASK_038_fix_dashboard_detail_type_mismatch.yaml
+|   |   |       TASK_039_fix_graph_data_type_mismatch.yaml
+|   |   |       TASK_040_fix_layout_type_mismatch.yaml
+|   |   |       TASK_041_validate_db_password_not_placeholder.yaml
+|   |   |       TASK_042_reject_placeholder_db_password_production.yaml
+|   |   |       TASK_043_add_weak_password_validation.yaml
+|   |   |       TASK_044_add_test_coverage_threshold.yaml
+|   |   |       TASK_045_add_worker_utility_test_coverage.yaml
+|   |   |       TASK_046_remove_mypy_tests_exclude.yaml
+|   |   |       TASK_047_add_e2e_upload_test.yaml
+|   |   |       TASK_048_optimize_slow_test_execution.yaml
+|   |   |       TASK_049_research_placeholder_page_usage.yaml
+|   |   |       TASK_050_research_access_denied_usage.yaml
+|   |   |       TASK_051_fix_act_warnings_in_tests.yaml
+|   |   |       TASK_052_research_charts_directory_usage.yaml
+|   |   |       TASK_053_add_rollback_procedure_docs.yaml
+|   |   |       TASK_054_pin_docker_image_versions.yaml
+|   |   |       TASK_055_assess_test_ports_removal_impact.yaml
+|   |   |       TASK_056_remove_test_ports_exposure.yaml
+|   |   |       TASK_057_fix_create_dashboard_return_type.yaml
+|   |   |       TASK_058_fix_update_dashboard_request_type.yaml
+|   |   |       TASK_059_add_csp_nonce_support.yaml
+|   |   |       TASK_060_reduce_mock_heavy_test_assertions.yaml
+|   |   |       TASK_061_fix_client_error_payload_inline.yaml
+|   |   |       TASK_062_verify_all_new_changes.yaml
 |   |   |       
 |   |   \---validation
 |   \---templates
@@ -5284,6 +5366,7 @@ C:\PY_DEV\MKOBI
 |   |       |   \---__pycache__
 |   |       |           annotate.cpython-314.pyc
 |   |       |           bytecode.cpython-314.pyc
+|   |       |           cmdline.cpython-314.pyc
 |   |       |           collector.cpython-314.pyc
 |   |       |           config.cpython-314.pyc
 |   |       |           context.cpython-314.pyc
@@ -5294,6 +5377,7 @@ C:\PY_DEV\MKOBI
 |   |       |           disposition.cpython-314.pyc
 |   |       |           env.cpython-314.pyc
 |   |       |           exceptions.cpython-314.pyc
+|   |       |           execfile.cpython-314.pyc
 |   |       |           files.cpython-314.pyc
 |   |       |           html.cpython-314.pyc
 |   |       |           inorout.cpython-314.pyc
@@ -18398,105 +18482,121 @@ C:\PY_DEV\MKOBI
 |   |       
 |   \---tmp_uploads
 |           .gitkeep
-|           0265a90f-5a0f-4d6a-a452-90d2819e3c0d.csv
-|           02f87cf0-13d7-4489-8c5f-2c5dce225299.csv
-|           0485f0c2-50ca-4e7c-a373-fa8df5c129bf.csv
-|           06113f1a-da81-4542-b0ff-3eab7302bcf7.csv
-|           064bdd2c-fdff-48e4-93e4-c90e37714a57.csv
-|           0823e09b-c46d-4e13-86ec-0eb305d724e3.csv.gz
-|           09dbb432-6255-4eaa-883d-7bed420b84a4.csv
-|           0aa01205-b332-4eef-bc28-f04f9df09a28.csv
-|           0ef130f1-dc24-4b22-a5e0-9cabf1035ce0.csv.gz
-|           131986a1-2736-4944-817f-683c1db0e5fc.csv
-|           146cadb3-3ff0-409d-bdc4-fe9fbd614df9.csv
-|           149dc1e8-015c-4577-8740-923ed264cdcb.csv
-|           1516299e-3a07-49d5-b9a4-e4b1211286f1.csv
-|           16498b7c-7cc1-468d-a731-5a56447b5444.csv
-|           16af42f8-f507-4e68-8afb-9257756ceb4b.csv
-|           18f65387-0996-403c-9924-e1a3900a767b.csv
-|           1b02670b-77b3-4363-9b9b-829265cda038.csv
-|           1d31ad5f-e88b-45cc-9691-20e5b7137416.csv.gz
-|           2012b065-197f-418a-a264-b14888073ac1.csv
-|           216608b0-32a6-4986-8fa2-f5deab55295d.csv
-|           26010381-af82-419e-9eed-9d73bbc77a7c.csv
-|           297c048d-1888-4b4c-9ee3-53361241655a.csv
-|           2b4fc6c3-3f6d-4d5d-b57d-1714b40d29a0.csv
-|           2e27e374-cbcf-4082-8f5c-1d5f5821452c.csv.gz
-|           38176e24-a6e6-4cfe-80ed-54502f6e94d2.csv
-|           3879a969-4847-4f4d-8113-af4adc5b06e1.csv.gz
-|           3b5c29a7-04ee-405a-b978-33fe9c4a1493.csv.gz
-|           4a1b86bf-70a3-4a99-8420-dda7bfe42e60.csv
-|           4c1928fe-330c-4443-bd0f-54cc7cde03c9.csv.gz
-|           4c76195a-b97c-4190-a9bc-28cfeb77dbba.csv
-|           501ef858-fa9f-44f0-8478-cb0f7c56694e.csv.gz
-|           505d9b72-180e-4f90-b1db-a4ea813478d6.csv
-|           52f7fd3f-cc58-4a31-8382-416e9ebda669.csv.gz
-|           5416ffbe-97e6-4994-8eee-372c3b16a223.csv.gz
-|           5a8eb3a8-55df-4d6c-b7a4-87bbd4b473fa.csv
-|           5c971389-7baf-489c-9d2f-6f616dc48e73.csv
-|           64328d3d-2c76-4761-ae0a-a464d8e2dd8f.csv.gz
-|           648666dd-6dfe-4ad8-96b0-4c90398989ec.csv
-|           697fd383-153f-4da6-b245-6bc0716f284c.csv
-|           6a41ac3d-edfd-478f-bb1d-d871e1826830.csv
-|           6ff6d47d-947d-4660-9388-c61e2f38df31.csv.gz
-|           704d44ec-40a0-4dd6-a1fb-c58677df85f9.csv
-|           7054b490-037a-4c18-8257-df4dbf342295.csv
-|           739a8c85-af84-4bea-939a-bc806f344caf.csv
-|           780ff2a6-15b0-41e6-b8a9-5a8347fd809a.csv
-|           788fc81d-0069-461e-8531-dc383d62224f.csv.gz
-|           7929a2ce-2fbc-4e9d-9d0b-1a160a14aef1.csv
-|           81f3ddbc-2c09-4dc9-9309-736afabc3206.csv
-|           8289f419-e6e2-44cb-bc19-403b289adcb0.csv
-|           828f19d4-6e16-417b-8e4a-2992fe5c3855.csv
-|           8491380e-ed18-4cc7-9853-80a9db27957c.csv
-|           850bdfac-4164-4df4-8004-be3b852b10f8.csv
-|           87bba4c0-1f1a-4cd8-ba81-a5fce1a02d00.csv
-|           8940a14f-9d36-41d9-b1ba-f5af11d67a23.csv
-|           8ca5b546-2f4c-43ef-8ad2-b7c54c62e95b.csv
-|           96c2cb9b-1e10-4a8d-82a3-f5a4329d8c56.csv
-|           97ab8995-493b-4f43-9830-11bbfa695996.csv
-|           9ce23c41-a011-4f7b-a898-2b6bb7daab42.csv
-|           9ee07a49-6fa9-4008-88e3-81ff2984810b.csv
-|           9f08b423-beb1-4dd5-adff-76b07f5ed504.csv
-|           a1196596-e8f8-4f33-a98f-f641c6f0c06f.csv.gz
-|           a1756338-c996-444b-9561-05409f81c681.csv
-|           a5e87985-8d75-41c4-83c9-0285a91a0dca.csv.gz
-|           a5e9894a-dc64-4e68-8dd2-f00eaf54841c.csv.gz
-|           a68d24d3-250b-491d-92f7-9ca5cbc52546.csv.gz
-|           a8b34c02-040a-48ce-ad36-dbed946abd20.csv
-|           a970732a-ac2e-4466-8603-0aa8b33633a5.csv
-|           aaec0579-21f6-4a6a-9814-a384080e72a4.csv
-|           abc0bff6-6963-41bb-8a4b-47d75217769b.csv
-|           abe77df5-1a59-42d4-9f84-717a66e116f6.csv.gz
-|           b3790414-47bc-4cbb-a7b0-fb9e3e1ad86a.csv
-|           b5d6cc8b-ae01-4af6-ab93-880fae42a54d.csv
-|           b6bb3bd6-26bb-496f-90f6-ab8a932ea20f.csv
-|           bb124c9e-cf2c-4b2e-b2e1-5a98df16c6e2.csv
-|           bc3d6dc3-db4f-422b-b615-512f023d0efc.csv
-|           bce20522-ef57-470f-a644-0aa7cc137cea.csv
-|           c08574af-9b98-4f87-a692-b5464748eec2.csv.gz
-|           c48e911e-75f5-458a-9541-dc37d8785f12.csv
-|           c8f22b18-4c82-4bd4-9adc-0397b43ffdc1.csv
-|           cc24416c-c74d-459a-9d52-46db4325a78b.csv.gz
-|           cf25c64d-a177-436b-8f9e-e47b5b04fc18.csv
-|           d1082da1-b134-4b26-9531-cc5f402e57b9.csv
-|           d62189c8-8dc9-410d-b8da-38324e920b30.csv.gz
-|           d7a6ccf7-7c58-4c30-8a31-a59cf378ab59.csv.gz
-|           d8b7ca7c-ca34-43e7-ad4b-a89f07ad3f70.csv
-|           dd526223-1bf0-48e8-a7b4-b23f9aabacdf.csv
-|           e5481d7c-dddc-43d4-8653-410e1d813965.csv
-|           e5998ce6-1110-49bb-aaae-ac042d9fa57d.csv
-|           e8dbfead-4abe-4129-8eeb-b28657c63d96.csv
-|           ecf92a98-09d1-4a25-ae79-de8321371727.csv
-|           ed852c93-01e5-455a-abf0-dd6d317664b7.csv.gz
-|           f7f5876c-064e-4dac-a1af-0f9b8882bd62.csv
-|           fa3afdf4-5f80-47d8-aaea-58ed16fa4e6e.csv
-|           fc07c688-855d-46f5-986f-f918824efc2c.csv
-|           fd0a9bd9-7a78-41b4-a7a7-1c46867f460a.csv
-|           fdd11d57-a874-45d5-999a-bf6fec61e402.csv
-|           fe51ff5f-846a-4337-a056-25696cc231c0.csv
-|           fee2a57d-4b33-4892-b18c-f63f07a559d7.csv.gz
-|           fff7f9cb-e378-44ad-b15e-496ca9672437.csv
+|           00e1baf7-8dc1-4b38-8c2c-513512c94983.csv.gz
+|           041b09d9-bd86-41f1-9129-34ea07820311.csv
+|           0ce8bd3c-8f85-4a6f-9f75-817b5493ad50.csv
+|           129f6f8a-03e8-464a-aebe-41d063104b88.csv.gz
+|           133abbb7-371c-4109-b935-6ec8e8c59b3b.csv
+|           13d372fe-faa7-4ddb-9ae8-53fbefe7121b.csv
+|           15c10ad6-1596-4e8d-9f87-4dd845ed6f2b.csv
+|           1973e72a-0f6f-4771-8d3d-a09dd15876e5.csv
+|           1f64b06e-7a30-46c6-852a-b3aafad542d6.csv.gz
+|           2134ab9f-c38b-4f25-b87e-f74758025da3.csv.gz
+|           22857f0a-18bc-41f2-bda6-c0f3c4a26094.csv
+|           244b4d9d-7f78-49dd-83c9-af4f94995936.csv
+|           26324c77-1c45-45e1-aa5a-611159c3de7b.csv.gz
+|           2711556b-e25a-4f4d-b34c-ef03f41b1415.csv.gz
+|           2818fffe-dd77-4681-b065-de540a71cc98.csv
+|           286e7a32-15af-458f-b0ef-138613bf957f.csv
+|           2af67e6d-8793-4b21-b093-9e2d4aae11af.csv
+|           2b00f60e-c369-4c0f-b328-ba55446a494f.csv
+|           2fe79523-7a40-485f-9b69-b6de12343ea6.csv
+|           301e5581-a6f1-46d0-991e-6f7c7a224511.csv
+|           31791880-926f-4f3e-9722-624e34881ccb.csv.gz
+|           347b0b97-3089-4670-b1d7-b154dce29323.csv
+|           34d00f53-1315-4410-8eb2-1223c8584724.csv
+|           3a8b3695-14eb-4f94-b127-f7fd497c4684.csv
+|           3f17682b-546b-40ca-95cc-4a0692cff510.csv.gz
+|           3f7e1937-a152-4409-bc6b-c09e33e26cd1.csv
+|           42766fcc-c38f-422d-bfb2-c8c6dfa83ea9.csv
+|           459d1e1e-a0d2-4111-ab5f-150bde14cd9d.csv
+|           471d1ff8-1f88-4f35-9464-286a8fe2125f.csv
+|           4749c73d-2a58-45e0-b977-61d97062466c.csv.gz
+|           480a1bb6-bb32-4db2-9152-352f2b615281.csv.gz
+|           48130391-5f98-464f-a4e8-9650fa45b287.csv
+|           48929df7-d341-485b-a526-5dd9ef4c6ea3.csv.gz
+|           4b5a13aa-cb25-414c-9944-c130b58738a0.csv
+|           4b6991f3-2485-447e-a667-8e8f0cd43c2e.csv
+|           58e1590e-f146-495b-bad6-0769b370176a.csv.gz
+|           58e8cbf9-b97f-46e5-ac25-5974b05a4242.csv
+|           5a83c8ba-ae69-43b6-8ee3-3edcdb0df21c.csv
+|           5c2941ff-9bf7-4ab7-82ab-ddcc89041b8c.csv
+|           5df0e7dd-acca-4d22-b608-2c5c39579903.csv.gz
+|           5e66e030-114f-4f8d-8a6a-cff88fd14d13.csv
+|           63e72d29-8963-469c-9eb5-9fcb9258eabc.csv
+|           64054434-e5a7-4532-981d-06dd2befd5ee.csv
+|           6c69a6ad-9ada-4b25-8577-b7466272438e.csv
+|           6c9a6712-ded7-4a21-9e6d-b47c84ca1902.csv
+|           6d31fd10-df95-43bd-8920-b61fdcbe495d.csv
+|           6df64479-1fae-4b91-b3dc-dcca98ef498c.csv
+|           6fb01cb7-f3bc-4990-971b-2053655cefb1.csv
+|           73df4ea0-881e-4d47-a610-0ae6b6237dc3.csv
+|           74636864-87b3-49bb-af4e-7ab28aa27c7c.csv
+|           77e2abe5-4b3c-4285-871b-356fbc0ef1fc.csv
+|           7a1dc9dc-071a-4dbe-96df-0e92745a2749.csv
+|           7d6218d5-b232-4dbe-a90e-1a26ff3bda95.csv
+|           81f99d4c-e36a-449d-9198-d41cbecd42ab.csv
+|           821b5a43-5a0e-44f3-b323-a87ca20e10cd.csv
+|           82367fde-207f-4ce1-bdd4-8ef3e733989a.csv.gz
+|           8316fa9a-c546-4813-a4b7-9d3ce6334347.csv.gz
+|           8372819b-46b2-4e30-8d0b-0097bf93788b.csv
+|           83ce6334-c7c3-4b05-8275-19b072b853f5.csv
+|           849fd3b5-d3c8-4c08-82ce-e584494f4d2e.csv
+|           85a02085-1f06-4a8d-91d7-8227ccd497fe.csv.gz
+|           864b41b0-181c-4c85-9214-3b5097616627.csv
+|           8aa27ad5-983e-427c-af22-efa5ffc8563b.csv
+|           8b431eea-a0ec-41e9-983b-2621646bcf8a.csv
+|           93884909-0d37-4181-a8de-18e38b8f20e1.csv.gz
+|           96a466a1-04cb-4d2c-a6f3-e6f618d292e6.csv
+|           96b8a1d7-59aa-4f02-abce-fa390639206d.csv.gz
+|           9a8d4e4b-2454-4dd7-94d7-7ce05865bb42.csv
+|           9c8b9f70-5f0b-4f21-a83d-f54cbfd232ed.csv
+|           9c8e1f53-0907-4fe5-9143-71b6b755ff45.csv
+|           a04cd707-f336-4b78-85ba-13cc1963f92a.csv.gz
+|           a05ae869-e976-4614-87bf-cad58a35b6d6.csv.gz
+|           a312f4ba-61d5-4bbd-b051-262ac2ff35dd.csv
+|           a7aebc73-6030-4092-bbd4-99bc8a2a5468.csv
+|           ab46250e-9285-4fc1-8a90-1849366576c9.csv
+|           ab4a608c-e1de-4d9c-b133-bc3e78b347e6.csv
+|           b0110b44-0af8-4e2a-b91e-e185f09f4999.csv
+|           b2ec0140-aeb2-419b-ad64-cf9cc626dc44.csv
+|           b41fdae9-8af0-43f2-a503-c1e696654401.csv
+|           b7335979-9047-48c2-8747-f6092f3688be.csv
+|           b7408d9f-cb60-40ca-b786-9143cf7d3628.csv.gz
+|           b7773531-ae14-4265-a16a-924daeaa8d24.csv
+|           b786f98b-cb3b-4261-8ad1-73c74fdb7815.csv
+|           b97cf866-e41c-4e2c-96c2-89f9939ca59c.csv
+|           bf9ff411-e9f3-4e23-b754-d0d16f79c8cc.csv
+|           c01c1a3e-32c5-4139-a012-fffe3bbba1d4.csv
+|           c01f2dbc-9020-4ac0-9e0b-319e3b8ee8ef.csv.gz
+|           c4e99280-11bd-414b-997b-abf849f48d7c.csv
+|           c5e7549b-2410-42d7-a7ef-f0168dea0067.csv.gz
+|           c99c655a-7560-41d9-838b-77851ea4907e.csv.gz
+|           cae42e08-1693-4ef2-9939-fc05619f73c5.csv
+|           d22fb843-ae7e-4734-881a-05e0ffd792cb.csv
+|           d37caa77-8b97-47e3-8a41-a8b07c9f3411.csv
+|           d646af1c-d2c6-4d30-85c4-e7a72466ab95.csv
+|           d69aab59-5405-4432-be5a-e0254a8f77b4.csv
+|           d6e474dd-5dc7-4a37-8a35-10b32094d090.csv
+|           da562d42-c020-4a7d-ad1b-badcde333011.csv
+|           da94b7da-2ebc-4a3f-9e6c-75e24bf154d1.csv
+|           e0b66df0-e0f4-4afb-b370-bb47f72ad85f.csv
+|           e610dcac-2467-4329-8c7d-61a5aa17372e.csv
+|           e72090c4-309c-417e-9f67-ed97b6cc53ef.csv.gz
+|           e725d023-5704-49aa-b34f-8d932cca89ef.csv
+|           e7e60076-620f-4405-bc7a-72d60c991d64.csv
+|           e9ec5d59-1ce8-4771-821a-1dd2b3b93196.csv
+|           ec30e837-0cc7-4c09-bf53-efb8f38ead9e.csv
+|           ed9271ae-cf30-4621-ac70-5e9c0a55b216.csv.gz
+|           eeab1495-f902-426b-ae79-1d692c2ebe35.csv
+|           ef406f41-dde7-4536-bb43-0a86664e7425.csv
+|           f1e071ed-41ee-4d06-8926-72fe21c6a1ac.csv
+|           f39d5a55-c81b-4fc1-864f-f724cc2d92ec.csv.gz
+|           f4496f87-7928-4750-85c0-db31bec78781.csv
+|           f6cb1181-6f13-4b35-93a7-dbbe7284275f.csv
+|           fed5897c-da13-48ea-b285-d41efd834336.csv.gz
+|           ff921bab-1441-42cd-a9cc-cc1c9fe32e00.csv
+|           ffc1d0b7-5821-4279-946d-238de6f87dff.csv.gz
 |           
 +---docker
 |   |   .env.development
@@ -18680,22 +18780,22 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           AdminPanel-BzL8ErKC.js
-|   |           ChangePasswordPage-BpCDPhVH.js
-|   |           dashboardApi-DV6KFQQC.js
-|   |           DashboardList-DxgKpX-H.js
-|   |           DashboardView-C6afjANd.js
+|   |           AdminPanel-Cu1HzpEN.js
+|   |           ChangePasswordPage-B04xvl_b.js
+|   |           dashboardApi-BrQiFrY0.js
+|   |           DashboardList-BoDLpTsr.js
+|   |           DashboardView-IoOa-MfR.js
 |   |           formSchemas-ClqIoYHL.js
-|   |           index-C4dLiVhM.js
-|   |           LoginForm-DXfM5tbV.js
+|   |           index-pOZpbZbq.js
+|   |           LoginForm-BvqH6sWh.js
 |   |           mui-nuHIX8iL.js
 |   |           plotly-BxTkdUEp.js
 |   |           react-CuvdHX7R.js
-|   |           RegisterForm-DRu9Xn_D.js
+|   |           RegisterForm-DE2xY8yX.js
 |   |           rolldown-runtime-S-ySWqyJ.js
 |   |           shortUuid-TYuFZJYs.js
-|   |           userApi-Buvb0mOd.js
-|   |           UserProfile-D6kzKU_6.js
+|   |           userApi-mGOXKI0-.js
+|   |           UserProfile-B8vul4rG.js
 |   |           vendor-Bx3jSdF9.js
 |   |           
 |   +---node_modules
@@ -100956,310 +101056,317 @@ C:\PY_DEV\MKOBI
 |           readme.md
 |           
 +---src
-|   \---mkobi
-|       |   app.py
-|       |   config.py
-|       |   main.py
-|       |   py.typed
-|       |   
-|       +---api
-|       |   |   deps.py
-|       |   |   __init__.py
-|       |   |   
-|       |   +---routes
-|       |   |   |   admin.py
-|       |   |   |   auth.py
-|       |   |   |   client_errors.py
-|       |   |   |   dashboards.py
-|       |   |   |   dashboards_access.py
-|       |   |   |   dashboards_crud.py
-|       |   |   |   dashboards_filters.py
-|       |   |   |   dashboards_graphs.py
-|       |   |   |   data.py
-|       |   |   |   filters.py
-|       |   |   |   filter_values.py
-|       |   |   |   graphs.py
-|       |   |   |   layouts.py
-|       |   |   |   processing_configs.py
-|       |   |   |   processing_logs.py
-|       |   |   |   upload.py
-|       |   |   |   users.py
-|       |   |   |   __init__.py
-|       |   |   |   
-|       |   |   \---__pycache__
-|       |   |           admin.cpython-314.pyc
-|       |   |           auth.cpython-314.pyc
-|       |   |           client_errors.cpython-314.pyc
-|       |   |           dashboards.cpython-314.pyc
-|       |   |           dashboards_access.cpython-314.pyc
-|       |   |           dashboards_crud.cpython-314.pyc
-|       |   |           dashboards_filters.cpython-314.pyc
-|       |   |           dashboards_graphs.cpython-314.pyc
-|       |   |           data.cpython-314.pyc
-|       |   |           filters.cpython-314.pyc
-|       |   |           filter_values.cpython-314.pyc
-|       |   |           graphs.cpython-314.pyc
-|       |   |           layouts.cpython-314.pyc
-|       |   |           processing_configs.cpython-314.pyc
-|       |   |           processing_logs.cpython-314.pyc
-|       |   |           upload.cpython-314.pyc
-|       |   |           users.cpython-314.pyc
-|       |   |           __init__.cpython-314.pyc
-|       |   |           
-|       |   \---__pycache__
-|       |           deps.cpython-314.pyc
-|       |           __init__.cpython-314.pyc
-|       |           
-|       +---core
-|       |   |   base_repository.py
-|       |   |   logging_config.py
-|       |   |   permissions.py
-|       |   |   redis_client.py
-|       |   |   security.py
-|       |   |   task_queue.py
-|       |   |   temp_password_store.py
-|       |   |   __init__.py
-|       |   |   
-|       |   \---__pycache__
-|       |           base_repository.cpython-314.pyc
-|       |           logging_config.cpython-314.pyc
-|       |           permissions.cpython-314.pyc
-|       |           redis_client.cpython-314.pyc
-|       |           security.cpython-314.pyc
-|       |           task_queue.cpython-314.pyc
-|       |           temp_password_store.cpython-314.pyc
-|       |           __init__.cpython-314.pyc
-|       |           
-|       +---data
-|       |   |   __init__.py
-|       |   |   
-|       |   +---loaders
-|       |   |   |   loader.py
-|       |   |   |   validator.py
-|       |   |   |   __init__.py
-|       |   |   |   
-|       |   |   \---__pycache__
-|       |   |           loader.cpython-314.pyc
-|       |   |           validator.cpython-314.pyc
-|       |   |           __init__.cpython-314.pyc
-|       |   |           
-|       |   +---processing
-|       |   |   |   aggregate_transforms.py
-|       |   |   |   filter_transforms.py
-|       |   |   |   formula_parser.py
-|       |   |   |   registry.py
-|       |   |   |   transformations.py
-|       |   |   |   __init__.py
-|       |   |   |   
-|       |   |   \---__pycache__
-|       |   |           aggregate_transforms.cpython-314.pyc
-|       |   |           filter_transforms.cpython-314.pyc
-|       |   |           formula_parser.cpython-314.pyc
-|       |   |           registry.cpython-314.pyc
-|       |   |           transformations.cpython-314.pyc
-|       |   |           __init__.cpython-314.pyc
-|       |   |           
-|       |   +---storage
-|       |   |   |   manager.py
-|       |   |   |   __init__.py
-|       |   |   |   
-|       |   |   \---__pycache__
-|       |   |           manager.cpython-314.pyc
-|       |   |           __init__.cpython-314.pyc
-|       |   |           
-|       |   \---__pycache__
-|       |           __init__.cpython-314.pyc
-|       |           
-|       +---db
-|       |   |   base.py
-|       |   |   dev_seeders.py
-|       |   |   session.py
-|       |   |   starter.py
-|       |   |   __init__.py
-|       |   |   
-|       |   +---models
-|       |   |   |   access.py
-|       |   |   |   aggregated_data.py
-|       |   |   |   dashboard.py
-|       |   |   |   dashboard_filter_values.py
-|       |   |   |   filters.py
-|       |   |   |   graphs.py
-|       |   |   |   layout.py
-|       |   |   |   processing_configs.py
-|       |   |   |   processing_logs.py
-|       |   |   |   registration_request.py
-|       |   |   |   user.py
-|       |   |   |   __init__.py
-|       |   |   |   
-|       |   |   \---__pycache__
-|       |   |           access.cpython-314.pyc
-|       |   |           aggregated_data.cpython-314.pyc
-|       |   |           dashboard.cpython-314.pyc
-|       |   |           dashboard_filter_values.cpython-314.pyc
-|       |   |           filters.cpython-314.pyc
-|       |   |           graphs.cpython-314.pyc
-|       |   |           layout.cpython-314.pyc
-|       |   |           processing_configs.cpython-314.pyc
-|       |   |           processing_logs.cpython-314.pyc
-|       |   |           registration_request.cpython-314.pyc
-|       |   |           user.cpython-314.pyc
-|       |   |           __init__.cpython-314.pyc
-|       |   |           
-|       |   +---repositories
-|       |   |   |   access_repo.py
-|       |   |   |   aggregated_data_repo.py
-|       |   |   |   dashboard_filter_repo.py
-|       |   |   |   dashboard_filter_values_repo.py
-|       |   |   |   dashboard_repo.py
-|       |   |   |   filter_repo.py
-|       |   |   |   graph_repo.py
-|       |   |   |   layout_repo.py
-|       |   |   |   processing_config_repo.py
-|       |   |   |   processing_log_repo.py
-|       |   |   |   registration_request_repo.py
-|       |   |   |   user_repo.py
-|       |   |   |   __init__.py
-|       |   |   |   
-|       |   |   \---__pycache__
-|       |   |           access_repo.cpython-314.pyc
-|       |   |           aggregated_data_repo.cpython-314.pyc
-|       |   |           dashboard_filter_repo.cpython-314.pyc
-|       |   |           dashboard_filter_values_repo.cpython-314.pyc
-|       |   |           dashboard_repo.cpython-314.pyc
-|       |   |           filter_repo.cpython-314.pyc
-|       |   |           graph_repo.cpython-314.pyc
-|       |   |           layout_repo.cpython-314.pyc
-|       |   |           processing_config_repo.cpython-314.pyc
-|       |   |           processing_log_repo.cpython-314.pyc
-|       |   |           registration_request_repo.cpython-314.pyc
-|       |   |           user_repo.cpython-314.pyc
-|       |   |           __init__.cpython-314.pyc
-|       |   |           
-|       |   +---seeders
-|       |   |   |   test_media_dash.py
-|       |   |   |   __init__.py
-|       |   |   |   
-|       |   |   \---__pycache__
-|       |   |           test_media_dash.cpython-314-pytest-9.0.3.pyc
-|       |   |           test_media_dash.cpython-314.pyc
-|       |   |           __init__.cpython-314.pyc
-|       |   |           
-|       |   \---__pycache__
-|       |           base.cpython-314.pyc
-|       |           dev_seeders.cpython-314.pyc
-|       |           session.cpython-314.pyc
-|       |           starter.cpython-314.pyc
-|       |           __init__.cpython-314.pyc
-|       |           
-|       +---interfaces
-|       |   |   repository_interfaces.py
-|       |   |   service_interfaces.py
-|       |   |   __init__.py
-|       |   |   
-|       |   \---__pycache__
-|       |           repository_interfaces.cpython-314.pyc
-|       |           service_interfaces.cpython-314.pyc
-|       |           __init__.cpython-314.pyc
-|       |           
-|       +---models
-|       |   |   access.py
-|       |   |   auth.py
-|       |   |   dashboard.py
-|       |   |   data.py
-|       |   |   enums.py
-|       |   |   filters.py
-|       |   |   graph.py
-|       |   |   layout.py
-|       |   |   processing_configs.py
-|       |   |   processing_logs.py
-|       |   |   style.py
-|       |   |   transformation_configs.py
-|       |   |   types.py
-|       |   |   user.py
-|       |   |   __init__.py
-|       |   |   
-|       |   \---__pycache__
-|       |           access.cpython-314.pyc
-|       |           auth.cpython-314.pyc
-|       |           dashboard.cpython-314.pyc
-|       |           data.cpython-314.pyc
-|       |           enums.cpython-314.pyc
-|       |           filters.cpython-314.pyc
-|       |           graph.cpython-314.pyc
-|       |           layout.cpython-314.pyc
-|       |           processing_configs.cpython-314.pyc
-|       |           processing_logs.cpython-314.pyc
-|       |           transformation_configs.cpython-314.pyc
-|       |           types.cpython-314.pyc
-|       |           user.cpython-314.pyc
-|       |           user_roles.cpython-314.pyc
-|       |           __init__.cpython-314.pyc
-|       |           
-|       +---services
-|       |   |   aggregation_service.py
-|       |   |   auth_service.py
-|       |   |   dashboard_service.py
-|       |   |   data_service.py
-|       |   |   file_cleanup.py
-|       |   |   file_processing.py
-|       |   |   filter_service.py
-|       |   |   filter_values_service.py
-|       |   |   graph_service.py
-|       |   |   layout_service.py
-|       |   |   processing_config_service.py
-|       |   |   processing_log_service.py
-|       |   |   user_service.py
-|       |   |   __init__.py
-|       |   |   
-|       |   \---__pycache__
-|       |           aggregation_service.cpython-314.pyc
-|       |           auth_service.cpython-314.pyc
-|       |           dashboard_service.cpython-314.pyc
-|       |           data_service.cpython-314.pyc
-|       |           file_cleanup.cpython-314.pyc
-|       |           file_processing.cpython-314.pyc
-|       |           filter_service.cpython-314.pyc
-|       |           filter_values_service.cpython-314.pyc
-|       |           graph_service.cpython-314.pyc
-|       |           layout_service.cpython-314.pyc
-|       |           processing_config_service.cpython-314.pyc
-|       |           processing_log_service.cpython-314.pyc
-|       |           user_service.cpython-314.pyc
-|       |           __init__.cpython-314.pyc
-|       |           
-|       +---settings
-|       |       app.yaml
-|       |       README.md
-|       |       
-|       +---utils
-|       |   |   decorators.py
-|       |   |   exceptions.py
-|       |   |   file_utils.py
-|       |   |   time_utils.py
-|       |   |   validators.py
-|       |   |   __init__.py
-|       |   |   
-|       |   \---__pycache__
-|       |           exceptions.cpython-314.pyc
-|       |           file_utils.cpython-314.pyc
-|       |           time_utils.cpython-314.pyc
-|       |           validators.cpython-314.pyc
-|       |           __init__.cpython-314.pyc
-|       |           
-|       +---workers
-|       |   |   data_worker.py
-|       |   |   
-|       |   \---__pycache__
-|       |           data_worker.cpython-314.pyc
-|       |           
-|       \---__pycache__
-|               app.cpython-314.pyc
-|               config.cpython-314.pyc
-|               dash_app.cpython-314.pyc
-|               main.cpython-314.pyc
-|               
+|   +---mkobi
+|   |   |   app.py
+|   |   |   config.py
+|   |   |   main.py
+|   |   |   py.typed
+|   |   |   
+|   |   +---api
+|   |   |   |   deps.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   +---routes
+|   |   |   |   |   admin.py
+|   |   |   |   |   auth.py
+|   |   |   |   |   client_errors.py
+|   |   |   |   |   dashboards.py
+|   |   |   |   |   dashboards_access.py
+|   |   |   |   |   dashboards_crud.py
+|   |   |   |   |   dashboards_filters.py
+|   |   |   |   |   dashboards_graphs.py
+|   |   |   |   |   data.py
+|   |   |   |   |   filters.py
+|   |   |   |   |   filter_values.py
+|   |   |   |   |   graphs.py
+|   |   |   |   |   layouts.py
+|   |   |   |   |   processing_configs.py
+|   |   |   |   |   processing_logs.py
+|   |   |   |   |   upload.py
+|   |   |   |   |   users.py
+|   |   |   |   |   __init__.py
+|   |   |   |   |   
+|   |   |   |   \---__pycache__
+|   |   |   |           admin.cpython-314.pyc
+|   |   |   |           auth.cpython-314.pyc
+|   |   |   |           client_errors.cpython-314.pyc
+|   |   |   |           dashboards.cpython-314.pyc
+|   |   |   |           dashboards_access.cpython-314.pyc
+|   |   |   |           dashboards_crud.cpython-314.pyc
+|   |   |   |           dashboards_filters.cpython-314.pyc
+|   |   |   |           dashboards_graphs.cpython-314.pyc
+|   |   |   |           data.cpython-314.pyc
+|   |   |   |           filters.cpython-314.pyc
+|   |   |   |           filter_values.cpython-314.pyc
+|   |   |   |           graphs.cpython-314.pyc
+|   |   |   |           layouts.cpython-314.pyc
+|   |   |   |           processing_configs.cpython-314.pyc
+|   |   |   |           processing_logs.cpython-314.pyc
+|   |   |   |           upload.cpython-314.pyc
+|   |   |   |           users.cpython-314.pyc
+|   |   |   |           __init__.cpython-314.pyc
+|   |   |   |           
+|   |   |   \---__pycache__
+|   |   |           deps.cpython-314.pyc
+|   |   |           __init__.cpython-314.pyc
+|   |   |           
+|   |   +---core
+|   |   |   |   base_repository.py
+|   |   |   |   logging_config.py
+|   |   |   |   permissions.py
+|   |   |   |   redis_client.py
+|   |   |   |   security.py
+|   |   |   |   task_queue.py
+|   |   |   |   temp_password_store.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           base_repository.cpython-314.pyc
+|   |   |           logging_config.cpython-314.pyc
+|   |   |           permissions.cpython-314.pyc
+|   |   |           redis_client.cpython-314.pyc
+|   |   |           security.cpython-314.pyc
+|   |   |           task_queue.cpython-314.pyc
+|   |   |           temp_password_store.cpython-314.pyc
+|   |   |           __init__.cpython-314.pyc
+|   |   |           
+|   |   +---data
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   +---loaders
+|   |   |   |   |   loader.py
+|   |   |   |   |   validator.py
+|   |   |   |   |   __init__.py
+|   |   |   |   |   
+|   |   |   |   \---__pycache__
+|   |   |   |           loader.cpython-314.pyc
+|   |   |   |           validator.cpython-314.pyc
+|   |   |   |           __init__.cpython-314.pyc
+|   |   |   |           
+|   |   |   +---processing
+|   |   |   |   |   aggregate_transforms.py
+|   |   |   |   |   filter_transforms.py
+|   |   |   |   |   formula_parser.py
+|   |   |   |   |   registry.py
+|   |   |   |   |   transformations.py
+|   |   |   |   |   __init__.py
+|   |   |   |   |   
+|   |   |   |   \---__pycache__
+|   |   |   |           aggregate_transforms.cpython-314.pyc
+|   |   |   |           filter_transforms.cpython-314.pyc
+|   |   |   |           formula_parser.cpython-314.pyc
+|   |   |   |           registry.cpython-314.pyc
+|   |   |   |           transformations.cpython-314.pyc
+|   |   |   |           __init__.cpython-314.pyc
+|   |   |   |           
+|   |   |   +---storage
+|   |   |   |   |   manager.py
+|   |   |   |   |   __init__.py
+|   |   |   |   |   
+|   |   |   |   \---__pycache__
+|   |   |   |           manager.cpython-314.pyc
+|   |   |   |           __init__.cpython-314.pyc
+|   |   |   |           
+|   |   |   \---__pycache__
+|   |   |           __init__.cpython-314.pyc
+|   |   |           
+|   |   +---db
+|   |   |   |   base.py
+|   |   |   |   dev_seeders.py
+|   |   |   |   session.py
+|   |   |   |   starter.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   +---models
+|   |   |   |   |   access.py
+|   |   |   |   |   aggregated_data.py
+|   |   |   |   |   dashboard.py
+|   |   |   |   |   dashboard_filter_values.py
+|   |   |   |   |   filters.py
+|   |   |   |   |   graphs.py
+|   |   |   |   |   layout.py
+|   |   |   |   |   processing_configs.py
+|   |   |   |   |   processing_logs.py
+|   |   |   |   |   registration_request.py
+|   |   |   |   |   user.py
+|   |   |   |   |   __init__.py
+|   |   |   |   |   
+|   |   |   |   \---__pycache__
+|   |   |   |           access.cpython-314.pyc
+|   |   |   |           aggregated_data.cpython-314.pyc
+|   |   |   |           dashboard.cpython-314.pyc
+|   |   |   |           dashboard_filter_values.cpython-314.pyc
+|   |   |   |           filters.cpython-314.pyc
+|   |   |   |           graphs.cpython-314.pyc
+|   |   |   |           layout.cpython-314.pyc
+|   |   |   |           processing_configs.cpython-314.pyc
+|   |   |   |           processing_logs.cpython-314.pyc
+|   |   |   |           registration_request.cpython-314.pyc
+|   |   |   |           user.cpython-314.pyc
+|   |   |   |           __init__.cpython-314.pyc
+|   |   |   |           
+|   |   |   +---repositories
+|   |   |   |   |   access_repo.py
+|   |   |   |   |   aggregated_data_repo.py
+|   |   |   |   |   dashboard_filter_repo.py
+|   |   |   |   |   dashboard_filter_values_repo.py
+|   |   |   |   |   dashboard_repo.py
+|   |   |   |   |   filter_repo.py
+|   |   |   |   |   graph_repo.py
+|   |   |   |   |   layout_repo.py
+|   |   |   |   |   processing_config_repo.py
+|   |   |   |   |   processing_log_repo.py
+|   |   |   |   |   registration_request_repo.py
+|   |   |   |   |   user_repo.py
+|   |   |   |   |   __init__.py
+|   |   |   |   |   
+|   |   |   |   \---__pycache__
+|   |   |   |           access_repo.cpython-314.pyc
+|   |   |   |           aggregated_data_repo.cpython-314.pyc
+|   |   |   |           dashboard_filter_repo.cpython-314.pyc
+|   |   |   |           dashboard_filter_values_repo.cpython-314.pyc
+|   |   |   |           dashboard_repo.cpython-314.pyc
+|   |   |   |           filter_repo.cpython-314.pyc
+|   |   |   |           graph_repo.cpython-314.pyc
+|   |   |   |           layout_repo.cpython-314.pyc
+|   |   |   |           processing_config_repo.cpython-314.pyc
+|   |   |   |           processing_log_repo.cpython-314.pyc
+|   |   |   |           registration_request_repo.cpython-314.pyc
+|   |   |   |           user_repo.cpython-314.pyc
+|   |   |   |           __init__.cpython-314.pyc
+|   |   |   |           
+|   |   |   +---seeders
+|   |   |   |   |   test_media_dash.py
+|   |   |   |   |   __init__.py
+|   |   |   |   |   
+|   |   |   |   \---__pycache__
+|   |   |   |           test_media_dash.cpython-314-pytest-9.0.3.pyc
+|   |   |   |           test_media_dash.cpython-314.pyc
+|   |   |   |           __init__.cpython-314.pyc
+|   |   |   |           
+|   |   |   \---__pycache__
+|   |   |           base.cpython-314.pyc
+|   |   |           dev_seeders.cpython-314.pyc
+|   |   |           session.cpython-314.pyc
+|   |   |           starter.cpython-314.pyc
+|   |   |           __init__.cpython-314.pyc
+|   |   |           
+|   |   +---interfaces
+|   |   |   |   repository_interfaces.py
+|   |   |   |   service_interfaces.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           repository_interfaces.cpython-314.pyc
+|   |   |           service_interfaces.cpython-314.pyc
+|   |   |           __init__.cpython-314.pyc
+|   |   |           
+|   |   +---models
+|   |   |   |   access.py
+|   |   |   |   auth.py
+|   |   |   |   dashboard.py
+|   |   |   |   data.py
+|   |   |   |   enums.py
+|   |   |   |   filters.py
+|   |   |   |   graph.py
+|   |   |   |   layout.py
+|   |   |   |   processing_configs.py
+|   |   |   |   processing_logs.py
+|   |   |   |   transformation_configs.py
+|   |   |   |   types.py
+|   |   |   |   user.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           access.cpython-314.pyc
+|   |   |           auth.cpython-314.pyc
+|   |   |           dashboard.cpython-314.pyc
+|   |   |           data.cpython-314.pyc
+|   |   |           enums.cpython-314.pyc
+|   |   |           filters.cpython-314.pyc
+|   |   |           graph.cpython-314.pyc
+|   |   |           layout.cpython-314.pyc
+|   |   |           processing_configs.cpython-314.pyc
+|   |   |           processing_logs.cpython-314.pyc
+|   |   |           transformation_configs.cpython-314.pyc
+|   |   |           types.cpython-314.pyc
+|   |   |           user.cpython-314.pyc
+|   |   |           user_roles.cpython-314.pyc
+|   |   |           __init__.cpython-314.pyc
+|   |   |           
+|   |   +---services
+|   |   |   |   aggregation_service.py
+|   |   |   |   auth_service.py
+|   |   |   |   dashboard_service.py
+|   |   |   |   data_service.py
+|   |   |   |   file_cleanup.py
+|   |   |   |   file_processing.py
+|   |   |   |   filter_service.py
+|   |   |   |   filter_values_service.py
+|   |   |   |   graph_service.py
+|   |   |   |   layout_service.py
+|   |   |   |   processing_config_service.py
+|   |   |   |   processing_log_service.py
+|   |   |   |   user_service.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           aggregation_service.cpython-314.pyc
+|   |   |           auth_service.cpython-314.pyc
+|   |   |           dashboard_service.cpython-314.pyc
+|   |   |           data_service.cpython-314.pyc
+|   |   |           file_cleanup.cpython-314.pyc
+|   |   |           file_processing.cpython-314.pyc
+|   |   |           filter_service.cpython-314.pyc
+|   |   |           filter_values_service.cpython-314.pyc
+|   |   |           graph_service.cpython-314.pyc
+|   |   |           layout_service.cpython-314.pyc
+|   |   |           processing_config_service.cpython-314.pyc
+|   |   |           processing_log_service.cpython-314.pyc
+|   |   |           user_service.cpython-314.pyc
+|   |   |           __init__.cpython-314.pyc
+|   |   |           
+|   |   +---settings
+|   |   |       app.yaml
+|   |   |       README.md
+|   |   |       
+|   |   +---utils
+|   |   |   |   exceptions.py
+|   |   |   |   file_utils.py
+|   |   |   |   time_utils.py
+|   |   |   |   validators.py
+|   |   |   |   __init__.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           exceptions.cpython-314.pyc
+|   |   |           file_utils.cpython-314.pyc
+|   |   |           time_utils.cpython-314.pyc
+|   |   |           validators.cpython-314.pyc
+|   |   |           __init__.cpython-314.pyc
+|   |   |           
+|   |   +---workers
+|   |   |   |   data_worker.py
+|   |   |   |   
+|   |   |   \---__pycache__
+|   |   |           data_worker.cpython-314.pyc
+|   |   |           
+|   |   \---__pycache__
+|   |           app.cpython-314.pyc
+|   |           config.cpython-314.pyc
+|   |           dash_app.cpython-314.pyc
+|   |           main.cpython-314.pyc
+|   |           
+|   \---mkobi.egg-info
+|           dependency_links.txt
+|           entry_points.txt
+|           PKG-INFO
+|           requires.txt
+|           SOURCES.txt
+|           top_level.txt
+|           
 \---tests
     |   conftest.py
+    |   test_aggregation_service.py
     |   test_auth.py
     |   test_auth_api.py
     |   test_auth_service.py
@@ -101270,10 +101377,12 @@ C:\PY_DEV\MKOBI
     |   test_data_service.py
     |   test_data_transformations.py
     |   test_data_validator.py
+    |   test_data_worker.py
     |   test_deps.py
     |   test_dev_seeders.py
     |   test_enum_db_consistency.py
     |   test_error_response_format.py
+    |   test_file_cleanup.py
     |   test_force_password_change_backend.py
     |   test_graphs.py
     |   test_graph_service.py
@@ -101307,6 +101416,7 @@ C:\PY_DEV\MKOBI
     \---__pycache__
             conftest.cpython-314-pytest-9.0.3.pyc
             conftest.cpython-314.pyc
+            test_aggregation_service.cpython-314-pytest-9.0.3.pyc
             test_auth.cpython-314-pytest-9.0.3.pyc
             test_auth_api.cpython-314-pytest-9.0.3.pyc
             test_auth_service.cpython-314-pytest-9.0.3.pyc
@@ -101320,11 +101430,13 @@ C:\PY_DEV\MKOBI
             test_data_service.cpython-314.pyc
             test_data_transformations.cpython-314-pytest-9.0.3.pyc
             test_data_validator.cpython-314-pytest-9.0.3.pyc
+            test_data_worker.cpython-314-pytest-9.0.3.pyc
             test_deps.cpython-314-pytest-9.0.3.pyc
             test_deps.cpython-314.pyc
             test_dev_seeders.cpython-314-pytest-9.0.3.pyc
             test_enum_db_consistency.cpython-314-pytest-9.0.3.pyc
             test_error_response_format.cpython-314-pytest-9.0.3.pyc
+            test_file_cleanup.cpython-314-pytest-9.0.3.pyc
             test_filters.cpython-314-pytest-9.0.3.pyc
             test_force_password_change_backend.cpython-314-pytest-9.0.3.pyc
             test_graphs.cpython-314-pytest-9.0.3.pyc

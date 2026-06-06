@@ -1,0 +1,81 @@
+id: TASK_062_verify_all_new_changes
+
+title: Verify all new changes integrate correctly
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_017_fix_private_rate_limiter_access
+  - TASK_018_fix_filter_values_bulk_insert
+  - TASK_019_add_processing_logs_archival
+  - TASK_020_validate_cors_origins_urls
+  - TASK_021_fix_nginx_hsts_over_http
+  - TASK_022_add_nginx_client_max_body_size
+  - TASK_023_fix_aggregation_service_hardcoded_sum
+  - TASK_024_integrate_data_validator_into_pipeline
+  - TASK_025_add_processing_status_state_machine
+  - TASK_026_fix_file_move_before_enqueue
+  - TASK_027_fix_test_mode_transaction_boundary
+  - TASK_028_fix_useFilterValues_reactive_token
+  - TASK_029_remove_console_error_from_production
+  - TASK_030_fix_plotly_component_any_type
+  - TASK_031_remove_alert_from_dashboard_management
+  - TASK_032_add_zod_validation_dashboard_form
+  - TASK_033_fix_force_password_hard_navigation
+  - TASK_034_fix_nginx_versioned_image
+  - TASK_035_remove_auto_migrate_contradiction
+  - TASK_036_fix_rq_worker_health_check
+  - TASK_037_fix_processing_result_type_mismatch
+  - TASK_038_fix_dashboard_detail_type_mismatch
+  - TASK_039_fix_graph_data_type_mismatch
+  - TASK_040_fix_layout_type_mismatch
+  - TASK_041_validate_db_password_not_placeholder
+  - TASK_042_reject_placeholder_db_password_production
+  - TASK_043_add_weak_password_validation
+  - TASK_044_add_test_coverage_threshold
+  - TASK_045_add_worker_utility_test_coverage
+  - TASK_046_remove_mypy_tests_exclude
+  - TASK_047_add_e2e_upload_test
+  - TASK_048_optimize_slow_test_execution
+  - TASK_049_research_placeholder_page_usage
+  - TASK_050_research_access_denied_usage
+  - TASK_051_fix_act_warnings_in_tests
+  - TASK_052_research_charts_directory_usage
+  - TASK_053_add_rollback_procedure_docs
+  - TASK_054_pin_docker_image_versions
+  - TASK_055_assess_test_ports_removal_impact
+  - TASK_056_remove_test_ports_exposure
+  - TASK_057_fix_create_dashboard_return_type
+  - TASK_058_fix_update_dashboard_request_type
+  - TASK_059_add_csp_nonce_support
+  - TASK_060_reduce_mock_heavy_test_assertions
+  - TASK_061_fix_client_error_payload_inline
+
+verifies:
+  - All new implementation tasks (TASK_017 through TASK_061)
+
+verification_steps:
+  - build: "cd docker && docker compose config"
+  - build: "cd frontend && npm run build"
+  - test: "pytest tests/ -v --cov --cov-report=term-missing"
+  - test: "cd frontend && npm test"
+  - smoke_check: >
+      Verify all services start correctly, health endpoints respond,
+      and the application is functional end-to-end.
+
+pass_criteria:
+  - Docker compose configuration validates
+  - Frontend build succeeds
+  - Backend tests pass with coverage threshold
+  - Frontend tests pass
+  - All services start and health checks pass
+  - No ruff or mypy errors
+
+failure_action: return relevant implementation task(s) to rework
+
+notes: >
+  This is the final verification task that covers all new changes from
+  TASK_017 through TASK_061. If any task's changes cause failures, return
+  that specific task to rework.

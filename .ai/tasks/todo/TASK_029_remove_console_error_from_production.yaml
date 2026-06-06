@@ -1,0 +1,59 @@
+id: TASK_029_remove_console_error_from_production
+
+title: Replace console.error with proper error handling in UserManagement (FE-004)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  UserManagement.tsx uses console.error for row update errors in production code.
+  Per project rules, print() statements and console.error should not be used in
+  production. Replace with proper user-facing error feedback via toast notification.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: FE-004
+
+goals:
+  - Remove console.error from UserManagement production code
+  - Replace with toast.error for user-facing error feedback
+  - Align with project's no-print policy
+
+files:
+  - path: frontend/src/features/admin/ui/UserManagement.tsx
+    targets:
+      - type: callback
+        name: onProcessRowUpdateError
+    semantic_anchors:
+      - replace_call:
+          value: "console.error('Row update error:', error)"
+          description: Replace with toast.error
+
+changes:
+  - action: modify
+    description: >
+      Replace console.error with toast.error for row update failures.
+
+    code_hint: |
+      # BEFORE (line 253-255):
+      onProcessRowUpdateError={(error) => {
+        console.error('Row update error:', error)
+      }}
+
+      # AFTER:
+      onProcessRowUpdateError={(error) => {
+        toast.error(`Failed to update role: ${error.message}`)
+      }}
+
+acceptance_criteria:
+  - No console.error in UserManagement.tsx
+  - Row update errors show user-facing toast notification
+  - Tests pass
+
+risk: low
+
+tests_to_run:
+  - "cd frontend && npm test -- --testPathPattern=UserManagement"

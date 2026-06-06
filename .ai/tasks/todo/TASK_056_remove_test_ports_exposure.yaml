@@ -1,0 +1,155 @@
+id: TASK_056_remove_test_ports_exposure
+
+title: Remove test port exposure from host (INF-011 implementation)
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_055_assess_test_ports_removal_impact
+
+description: >
+  Remove port exposure from the test docker-compose configuration. This task should
+  ONLY be executed if TASK_055_assess_test_ports_removal_impact produced a "go"
+  recommendation. If the assessment recommended "no-go", this task should be cancelled.
+
+  The test docker-compose file exposes database (5433), redis (6380), and app (8001)
+  ports to the host. Removing them eliminates the security surface of having internal
+  test infrastructure accessible from the host network, and prevents port conflicts
+  in CI/CD environments or shared developer machines.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: INF-011
+
+goals:
+  - Remove port mappings from test-db, test-redis, and test-app services
+  - Update tests/conftest.py to use Docker network service names instead of localhost ports
+  - Update tests/test_dev_seeders.py similarly
+  - Update documentation (docker.md, SPEC.md, commands.md) to reflect the change
+  - Ensure tests still pass via docker exec (container-side execution)
+
+files:
+  - path: docker/docker-compose.test.yml
+    targets:
+      - type: ports_mapping
+        name: test_db_ports
+      - type: ports_mapping
+        name: test_redis_ports
+      - type: ports_mapping
+        name: test_app_ports
+    semantic_anchors:
+      - remove_ports:
+          description: Remove port exposure from test services
+
+  - path: tests/conftest.py
+    targets:
+      - type: env_default
+        name: DATABASE__PORT
+      - type: env_default
+        name: REDIS__PORT
+    semantic_anchors:
+      - update_defaults:
+          description: Remove host port defaults; tests run inside container via docker exec
+
+  - path: tests/test_dev_seeders.py
+    targets:
+      - type: env_default
+        name: DATABASE__PORT
+    semantic_anchors:
+      - update_default:
+          description: Remove host port default
+
+  - path: docs/11-guides/docker.md
+    targets:
+      - type: documentation
+        name: test compose ports section
+    semantic_anchors:
+      - update_docs:
+          description: Update documentation to reflect port removal
+
+  - path: docs/SPEC.md
+    targets:
+      - type: documentation
+        name: standalone test compose section
+    semantic_anchors:
+      - update_docs:
+          description: Update documentation to reflect port removal
+
+  - path: .ai/context/commands.md
+    targets:
+      - type: documentation
+        name: test database CLI commands
+    semantic_anchors:
+      - update_docs:
+          description: Update CLI commands to use docker exec instead of localhost ports
+
+changes:
+  - action: modify
+    description: >
+      Remove port mappings from all test services. Tests should be run from inside
+      the container via `docker compose exec test-app uv run pytest tests/ -v`.
+
+    code_hint: |
+      # BEFORE (test-db service):
+      ports:
+        - "5433:5432"
+
+      # AFTER: ports section removed entirely
+
+      # BEFORE (test-redis service):
+      ports:
+        - "6380:6379"
+
+      # AFTER: ports section removed entirely
+
+      # BEFORE (test-app service):
+      ports:
+        - "8001:8000"
+
+      # AFTER: ports section removed entirely
+
+  - action: modify
+    description: >
+      Update conftest.py to remove host port defaults. Tests are expected to run
+      inside the Docker container where service names resolve via Docker network.
+
+    code_hint: |
+      # BEFORE (conftest.py lines 18, 40):
+      os.environ.setdefault("DATABASE__PORT", "5433")
+
+      # AFTER:
+      # No host port default — tests run inside container via Docker network.
+      # Use `docker compose -f docker/docker-compose.test.yml exec test-app uv run pytest tests/ -v`
+
+  - action: modify
+    description: >
+      Update test_dev_seeders.py similarly.
+
+    code_hint: |
+      # BEFORE (test_dev_seeders.py line 12):
+      os.environ.setdefault("DATABASE__PORT", "5433")
+
+      # AFTER:
+      # No host port default — see conftest.py
+
+acceptance_criteria:
+  - TASK_055 produced a "go" recommendation (this task is skipped if "no-go")
+  - No port mappings in docker-compose.test.yml for test-db, test-redis, test-app
+  - conftest.py does not default to host port 5433
+  - test_dev_seeders.py does not default to host port 5433
+  - Tests pass when run via `docker compose exec test-app uv run pytest tests/ -v`
+  - Documentation updated to reflect the change
+  - CLI commands in commands.md updated to use docker exec pattern
+
+risk: medium
+
+tests_to_run:
+  - "docker compose -f docker/docker-compose.test.yml up -d --build"
+  - "docker compose -f docker/docker-compose.test.yml exec test-app uv run pytest tests/ -v"
+
+notes: >
+  This task is BLOCKED on TASK_055_assess_test_ports_removal_impact.
+  Do not execute until the assessment is complete and recommends "go".
+  If assessment recommends "no-go", cancel this task and document the rationale.

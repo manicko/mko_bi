@@ -1,0 +1,63 @@
+id: TASK_006_fix_rate_limiter_fail_closed_default
+
+title: Change RATE_LIMITER_FAIL_CLOSED default to True
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  Change the default value of rate_limiter_fail_closed from False to True in config.py.
+  During Redis outages, rate limiting should fail-closed (block requests) for security,
+  not fail-open (allow requests).
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: SEC-004
+
+goals:
+  - Change rate_limiter_fail_closed default from False to True
+  - Ensure security-first behavior during Redis outages
+  - Update docker-compose.yml to remove redundant override
+
+files:
+  - path: src/mkobi/config.py
+    targets:
+      - type: field
+        name: rate_limiter_fail_closed
+    semantic_anchors:
+      - modify_field:
+          value: "rate_limiter_fail_closed"
+          description: Change default from False to True
+
+  - path: docker/docker-compose.yml
+    targets:
+      - type: environment_variable
+        name: RATE_LIMITER_FAIL_CLOSED
+    semantic_anchors:
+      - remove_duplication:
+          description: Remove redundant override since True is now the default
+
+changes:
+  - action: modify
+    description: >
+      Change rate_limiter_fail_closed default from False to True in config.py.
+
+    code_hint: |
+      # BEFORE (line 306):
+      rate_limiter_fail_closed: bool = Field(default=False, alias="RATE_LIMITER_FAIL_CLOSED")
+
+      # AFTER:
+      rate_limiter_fail_closed: bool = Field(default=True, alias="RATE_LIMITER_FAIL_CLOSED")
+
+acceptance_criteria:
+  - rate_limiter_fail_closed defaults to True
+  - Rate limiter blocks requests during Redis outages
+  - No regression in normal operation
+
+risk: low
+
+tests_to_run:
+  - "pytest tests/ -v -k 'rate_limit'"

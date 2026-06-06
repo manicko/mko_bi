@@ -206,6 +206,67 @@ depends_on: []
 
 ---
 
+## Step 7.5 — Assess Risky Tasks and Insert Research Gates
+
+For every task, evaluate whether it is **potentially disruptive** — i.e., capable of
+breaking existing system behavior, disrupting tests, or causing regressions in
+production workflows.
+
+A task is considered **risky** if any of the following apply:
+- It modifies configuration files that affect multiple services (Docker Compose, nginx, CI/CD)
+- It changes test infrastructure (conftest.py, test fixtures, test compose)
+- It removes or renames code that may have hidden consumers (exports, shared components)
+- It modifies database schema, migrations, or connection settings
+- It changes build, deployment, or startup behavior
+- The planner cannot confidently determine all downstream impacts from static analysis
+
+### Rules for Risky Tasks
+
+1. **Mark the risky task as blocked** by adding to its YAML:
+   ```yaml
+   status: blocked
+   blocked_by: TASK_XXX_research_<topic>
+   ```
+
+2. **Create a prerequisite research task** with:
+   ```yaml
+   id: TASK_XXX_research_<topic>
+   type: research
+   status: pending
+   depends_on: []
+   ```
+
+3. The research task must:
+   - Identify all code, docs, configs, and workflows that depend on the affected component
+   - Assess the actual impact of the proposed change
+   - Evaluate alternatives that achieve the same goal with less risk
+   - Produce a clear **go / no-go / go-with-changes** recommendation with documented rationale
+   - Document findings in a plan file (e.g., `C:\py_dev\mkobi\.ai\plans\PLAN_NN.md`)
+
+4. The blocked implementation task depends on the research task:
+   ```yaml
+   depends_on:
+     - TASK_XXX_research_<topic>
+   ```
+
+5. **Execution rule**: The implementation task must NOT be executed until the
+   research task is complete and recommends "go" or "go-with-changes".
+   If the research recommends "no-go", the implementation task must be cancelled.
+
+### Examples from this planning session
+
+- `TASK_056_remove_test_ports_exposure` — blocked by `TASK_055_assess_test_ports_removal_impact`
+  because removing test ports could break native test execution, CI/CD, and developer workflows.
+
+- `TASK_049_research_placeholder_page_usage` — research task created instead of
+  deletion because the component's intended purpose was unclear and it had integration
+  potential (shared component export).
+
+- `TASK_050_research_access_denied_usage` — research task created instead of
+  deletion because the component could be valuable as a RoleBasedAccess fallback.
+
+---
+
 ## Step 8 — Insert Test Tasks
 
 For every feature, first decide whether it requires testing. Do not create tests for trivial code, simple data mappings, or implementation details.

@@ -1,0 +1,75 @@
+id: TASK_007_fix_http_exception_rfc7807_compliance
+
+title: Replace HTTPException with AppException in time_utils.py
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  Replace direct HTTPException usage in time_utils.py with AppException to comply
+  with RFC 7807 error handling standard.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: BE-001
+
+goals:
+  - Remove HTTPException import and usage
+  - Replace with AppException for RFC 7807 compliance
+  - Use appropriate ErrorCode enum values
+
+files:
+  - path: src/mkobi/utils/time_utils.py
+    targets:
+      - type: import
+        name: HTTPException
+      - type: function
+        name: parse
+      - type: function
+        name: parse_iso
+    semantic_anchors:
+      - replace_import:
+          value: "from fastapi import HTTPException"
+          description: Replace with AppException import
+      - replace_raise:
+          value: "raise HTTPException"
+          description: Replace with AppException
+
+changes:
+  - action: modify
+    description: >
+      Replace HTTPException with AppException in time_utils.py.
+
+    code_hint: |
+      # BEFORE (lines 9-11):
+      from fastapi import HTTPException
+
+      # AFTER:
+      from mkobi.models.enums import ErrorCode
+      from mkobi.utils.exceptions import AppException
+
+      # BEFORE (lines 107-111):
+      raise HTTPException(
+          status_code=400,
+          detail=f"Invalid date format: {date_string}",
+      ) from e
+
+      # AFTER:
+      raise AppException(
+          code=ErrorCode.VALIDATION_ERROR,
+          detail=f"Invalid date format: {date_string}",
+      ) from e
+
+acceptance_criteria:
+  - HTTPException removed from time_utils.py
+  - AppException used for all error handling
+  - RFC 7807 compliance maintained
+  - Tests pass
+
+risk: low
+
+tests_to_run:
+  - "pytest tests/ -v -k 'time_utils'"

@@ -1,0 +1,70 @@
+id: TASK_031_remove_alert_from_dashboard_management
+
+title: Replace alert() with proper UI in DashboardManagement (FE-009)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  DashboardManagement.tsx uses alert() for the unimplemented access management feature.
+  This is a poor UX pattern for a production application. Replace with a proper
+  UI indication (disabled button with tooltip, or a snackbar message).
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: FE-009
+
+goals:
+  - Remove alert() call from DashboardManagement
+  - Replace with disabled button + tooltip or snackbar
+  - Maintain the TODO indication that feature is not yet implemented
+
+files:
+  - path: frontend/src/features/admin/ui/DashboardManagement.tsx
+    targets:
+      - type: JSX
+        name: Access button onClick
+    semantic_anchors:
+      - replace_call:
+          value: "alert('Access management not yet implemented')"
+          description: Replace with proper UI feedback
+
+changes:
+  - action: modify
+    description: >
+      Replace the alert() call with a disabled Access button that shows a tooltip
+      explaining the feature is not yet implemented. This provides better UX while
+      clearly indicating the feature status.
+
+    code_hint: |
+      # BEFORE (lines 162-169):
+      <GridActionsCellItem
+        icon={<AccessIcon />}
+        label="Access"
+        onClick={() => {
+          // TODO: Implement access management dialog
+          alert('Access management not yet implemented')
+        }}
+      />
+
+      # AFTER:
+      <GridActionsCellItem
+        icon={<AccessIcon />}
+        label="Access (coming soon)"
+        disabled
+        tooltip="Access management is not yet implemented"
+      />
+
+acceptance_criteria:
+  - No alert() calls in DashboardManagement.tsx
+  - Access button is disabled with clear indication
+  - No regression in other dashboard management features
+  - Tests pass
+
+risk: low
+
+tests_to_run:
+  - "cd frontend && npm test -- --testPathPattern=DashboardManagement"

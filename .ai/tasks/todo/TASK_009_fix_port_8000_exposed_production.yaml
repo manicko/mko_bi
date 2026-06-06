@@ -1,0 +1,61 @@
+id: TASK_009_fix_port_8000_exposed_production
+
+title: Remove port 8000 binding from app service in docker-compose.yml
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  Remove direct port 8000 binding from app service in docker-compose.yml.
+  Production should only expose ports through nginx reverse proxy.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: DC-001
+
+goals:
+  - Remove or restrict port 8000 binding on app service
+  - Ensure nginx is the only entry point in production
+  - Maintain localhost binding for health checks if needed
+
+files:
+  - path: docker/docker-compose.yml
+    targets:
+      - type: ports_mapping
+        name: app_ports
+    semantic_anchors:
+      - modify_port_binding:
+          value: '"8000:8000"'
+          description: Change to localhost-only or remove
+
+changes:
+  - action: modify
+    description: >
+      Change port binding from "8000:8000" to localhost-only "127.0.0.1:8000:8000"
+      or remove entirely for production (nginx handles external access).
+
+    code_hint: |
+      # BEFORE (lines 103-104):
+      ports:
+        - "8000:8000"
+
+      # AFTER (option 1 - localhost only):
+      ports:
+        - "127.0.0.1:8000:8000"
+
+      # AFTER (option 2 - remove for production):
+      # ports removed - nginx reverse proxy handles external access
+
+acceptance_criteria:
+  - Port 8000 not directly exposed to host network
+  - nginx remains the entry point for all external traffic
+  - Health checks still work through nginx or internal network
+
+risk: low
+
+tests_to_run:
+  - "cd docker && docker compose config"
+  - "npm run test:e2e" (existing e2e tests)

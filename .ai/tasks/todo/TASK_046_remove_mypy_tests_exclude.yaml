@@ -1,0 +1,56 @@
+id: TASK_046_remove_mypy_tests_exclude
+
+title: Remove mypy exclusion for tests directory (TST-006)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  The mypy configuration excludes the tests/ directory from type checking.
+  This means type errors in tests go undetected. Remove the exclusion and
+  fix any existing type errors in test files.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: TST-006
+
+goals:
+  - Remove tests/ from mypy exclude list
+  - Fix any existing type errors in test files
+  - Ensure mypy passes on the entire codebase including tests
+
+files:
+  - path: pyproject.toml
+    targets:
+      - type: section
+        name: tool.mypy
+    semantic_anchors:
+      - remove_exclude:
+          value: "tests"
+          description: Remove tests directory from mypy exclude
+
+changes:
+  - action: modify
+    description: >
+      Remove the tests/ directory from mypy's exclude list and fix any
+      resulting type errors.
+
+    code_hint: |
+      # BEFORE (in mypy config):
+      exclude = ["tests"]
+
+      # AFTER:
+      # tests/ no longer excluded from type checking
+
+acceptance_criteria:
+  - mypy runs on tests/ directory
+  - All type errors in test files are fixed
+  - mypy passes on entire codebase
+
+risk: low
+
+tests_to_run:
+  - "mypy src/ tests/"

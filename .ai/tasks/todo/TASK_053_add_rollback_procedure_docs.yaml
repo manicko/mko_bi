@@ -1,0 +1,75 @@
+id: TASK_053_add_rollback_procedure_docs
+
+title: Add rollback procedure documentation (INF-009)
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  There is no documented rollback procedure for deployments. Add a rollback
+  guide to the deployment documentation that covers: Docker image rollback,
+  database migration rollback, and configuration rollback.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: INF-009
+
+goals:
+  - Document Docker image rollback procedure
+  - Document database migration rollback (alembic downgrade)
+  - Document configuration rollback
+  - Add to deployment documentation
+
+files:
+  - path: docs/10-deployment/deployment.md
+    targets:
+      - type: section
+        name: Rollback Procedures
+    semantic_anchors:
+      - add_section:
+          value: "Rollback Procedures"
+          description: Add rollback procedures section
+
+changes:
+  - action: add
+    description: >
+      Add a "Rollback Procedures" section to the deployment documentation.
+
+    code_hint: |
+      ## Rollback Procedures
+
+      ### Docker Image Rollback
+      ```bash
+      # Revert to previous image tag
+      docker compose -f docker/docker-compose.yml pull app:<previous-tag>
+      docker compose -f docker/docker-compose.yml up -d
+      ```
+
+      ### Database Migration Rollback
+      ```bash
+      # Revert last migration
+      docker compose -f docker/docker-compose.yml exec app alembic downgrade -1
+
+      # Revert to specific revision
+      docker compose -f docker/docker-compose.yml exec app alembic downgrade <revision>
+      ```
+
+      ### Configuration Rollback
+      ```bash
+      # Restore previous .env from backup
+      cp .env.backup .env
+      docker compose -f docker/docker-compose.yml restart app
+      ```
+
+acceptance_criteria:
+  - Rollback procedures documented
+  - Covers image, migration, and config rollback
+  - Procedures are tested and verified
+
+risk: low
+
+tests_to_run:
+  - "cd docs && markdownlint **/*.md"

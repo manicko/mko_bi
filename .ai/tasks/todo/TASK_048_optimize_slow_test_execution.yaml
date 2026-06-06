@@ -1,0 +1,72 @@
+id: TASK_048_optimize_slow_test_execution
+
+title: Optimize slow test execution (TST-007)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Some tests take 5+ minutes to execute, likely due to database setup/teardown
+  on every test. Optimize by using session-scoped fixtures for database setup,
+  reducing redundant test data creation, and parallelizing independent tests.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: TST-007
+
+goals:
+  - Identify tests taking >60s to execute
+  - Optimize database fixture scoping
+  - Add pytest-xdist for parallel test execution
+  - Reduce total test suite execution time
+
+files:
+  - path: tests/conftest.py
+    targets:
+      - type: fixture
+        name: db_session
+    semantic_anchors:
+      - optimize_fixture:
+          value: "db_session"
+          description: Use session-scoped fixtures for DB setup
+
+  - path: pyproject.toml
+    targets:
+      - type: section
+        name: tool.pytest.ini_options
+    semantic_anchors:
+      - add_option:
+          value: "addopts"
+          description: Add -n auto for parallel execution
+
+changes:
+  - action: modify
+    description: >
+      Optimize test execution by using session-scoped database fixtures
+      and enabling parallel test execution with pytest-xdist.
+
+    code_hint: |
+      # In conftest.py, change db_session fixture scope:
+      # BEFORE:
+      @pytest.fixture
+      async def db_session():
+
+      # AFTER:
+      @pytest.fixture(scope="session")
+      async def db_session():
+
+      # In pyproject.toml, add to pytest options:
+      addopts = "-n auto --cov-fail-under=70"
+
+acceptance_criteria:
+  - Test suite execution time reduced by at least 30%
+  - All tests still pass
+  - No test isolation issues from parallel execution
+
+risk: medium
+
+tests_to_run:
+  - "pytest tests/ -v -n auto --timeout=300"

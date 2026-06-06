@@ -1,0 +1,62 @@
+id: TASK_058_fix_update_dashboard_request_type
+
+title: Fix UpdateDashboardRequest missing fields (INT-007)
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  The UpdateDashboardRequest interface only has name and description, but the
+  backend also accepts layout_id and config fields for updates. Add the missing
+  fields to match the backend's DashboardUpdate model.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: INT-007
+
+goals:
+  - Add missing fields to UpdateDashboardRequest
+  - Align with backend DashboardUpdate model
+
+files:
+  - path: frontend/src/shared/types/api.types.ts
+    targets:
+      - type: interface
+        name: UpdateDashboardRequest
+    semantic_anchors:
+      - add_fields:
+          value: "UpdateDashboardRequest"
+          description: Add missing optional fields
+
+changes:
+  - action: modify
+    description: >
+      Add missing optional fields to UpdateDashboardRequest.
+
+    code_hint: |
+      # BEFORE (lines 249-252):
+      export interface UpdateDashboardRequest {
+        name?: string
+        description?: string
+      }
+
+      # AFTER:
+      export interface UpdateDashboardRequest {
+        name?: string
+        description?: string
+        layout_id?: string
+        config?: DashboardConfig
+      }
+
+acceptance_criteria:
+  - UpdateDashboardRequest matches backend model
+  - Dashboard edit form can send all supported fields
+  - Tests pass
+
+risk: low
+
+tests_to_run:
+  - "cd frontend && npm test -- --testPathPattern=DashboardManagement"

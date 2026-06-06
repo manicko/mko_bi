@@ -1,0 +1,48 @@
+id: TASK_051_fix_act_warnings_in_tests
+
+title: Fix act() warnings in frontend tests (FE-010)
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Frontend tests produce act() warnings due to state updates happening outside
+  of React Testing Library's act() wrapper. Fix by wrapping state updates in
+  act() or using waitFor() for async assertions.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: FE-010
+
+goals:
+  - Eliminate act() warnings in frontend tests
+  - Use proper async testing patterns with waitFor()
+  - Improve test reliability
+
+files:
+  - path: frontend/src/
+    targets:
+      - type: test_files
+        name: "*.test.tsx"
+    semantic_anchors:
+      - fix_warnings:
+          description: Wrap async state updates properly
+
+changes:
+  - action: modify
+    description: >
+      Fix act() warnings by wrapping state updates in act() or using
+      waitFor() for async assertions. Focus on the tests that produce warnings.
+
+acceptance_criteria:
+  - No act() warnings in test output
+  - All tests still pass
+  - Test output is clean
+
+risk: low
+
+tests_to_run:
+  - "cd frontend && npm test -- --reporter=verbose 2>&1 | grep -i 'act' || echo 'No act warnings'"

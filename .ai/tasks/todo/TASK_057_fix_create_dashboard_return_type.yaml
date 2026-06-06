@@ -1,0 +1,47 @@
+id: TASK_057_fix_create_dashboard_return_type
+
+title: Fix createDashboard return type mismatch (INT-006)
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  The createDashboard function in adminApi.ts returns Promise<DashboardAdmin>
+  but the backend may return additional fields. Verify the return type matches
+  the actual backend response and update if needed.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: INT-006
+
+goals:
+  - Verify createDashboard return type matches backend
+  - Update type if needed
+
+files:
+  - path: frontend/src/features/admin/api/adminApi.ts
+    targets:
+      - type: function
+        name: createDashboard
+    semantic_anchors:
+      - verify_return_type:
+          description: Verify and fix return type
+
+changes:
+  - action: modify
+    description: >
+      Verify the createDashboard return type matches the backend DashboardAdmin
+      model. The backend returns { id, name, description, created_at, updated_at }
+      which matches the current type. No change needed if types align.
+
+acceptance_criteria:
+  - createDashboard return type matches backend
+  - No type errors in dashboard creation flow
+
+risk: low
+
+tests_to_run:
+  - "cd frontend && npm test -- --testPathPattern=DashboardManagement"

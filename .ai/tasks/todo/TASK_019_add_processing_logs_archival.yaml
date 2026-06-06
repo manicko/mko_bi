@@ -1,0 +1,91 @@
+id: TASK_019_add_processing_logs_archival
+
+title: Add archival policy for processing_logs table (DB-004)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  The processing_logs table has no archival or cleanup policy. Over time, this table
+  will grow unbounded as every file upload creates log entries. Add a periodic cleanup
+  mechanism that archives or deletes old completed/failed log entries based on the
+  existing logs_retention_days configuration (default: 30 days).
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: DB-004
+
+goals:
+  - Add cleanup function to delete old terminal-state processing logs
+  - Use existing logs_retention_days config for retention period
+  - Integrate with existing cleanup infrastructure (file_cleanup.py pattern)
+
+files:
+  - path: src/mkobi/services/file_cleanup.py
+    targets:
+      - type: function
+        name: cleanup_stale_temp_files
+    semantic_anchors:
+      - add_function_after:
+          value: "cleanup_stale_temp_files"
+          description: Add cleanup_old_processing_logs function
+
+  - path: src/mkobi/services/processing_log_service.py
+    targets:
+      - type: class
+        name: ProcessingLogService
+    semantic_anchors:
+      - add_method:
+          value: "delete_old_logs"
+          description: Add method to delete logs older than retention period
+
+changes:
+  - action: add
+    description: >
+      Add cleanup_old_processing_logs function in file_cleanup.py that deletes
+      processing logs in terminal states (COMPLETED, FAILED) older than
+      logs_retention_days. Follow the same pattern as cleanup_stale_temp_files.
+
+    code_hint: |
+      async def cleanup_old_processing_logs() -> int:
+          """Delete processing logs older than the retention period.
+
+          Returns:
+              int: Number of deleted log entries.
+          """
+          config = get_config()
+          retention_days = config.logs_retention_days
+          cutoff = datetime.now(UTC) - timedelta(days=retention_days)
+
+          async with get_session() as db:
+              async with db.begin():
+                  stmt = (
+                      delete(ProcessingLog)
+                      .where(
+                          ProcessingLog.status.in_([
+                              ProcessingStatus.COMPLETED,
+                              ProcessingStatus.FAILED,
+                          ]),
+                          ProcessingLog.finished_at < cutoff,
+                      )
+                  )
+                  result = await db.execute(stmt)
+                  count = result.rowcount or 0
+
+          if count > 0:
+              logger.info("Cleaned up %d old processing logs (retention=%dd)", count, retention_days)
+          return count
+
+acceptance_criteria:
+  - Old terminal-state logs are deleted based on retention period
+  - Non-terminal states (STARTED, UPLOADED, PROCESSING) are never deleted by this function
+  - Uses existing logs_retention_days configuration
+  - Tests pass
+
+risk: low
+
+tests_to_run:
+  - "pytest tests/ -v -k 'processing_log or cleanup'"

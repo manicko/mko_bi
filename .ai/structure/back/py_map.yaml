@@ -620,17 +620,6 @@
   - ProcessingLogUpdate
   - ProcessingLogRead
   functions: []
-- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\style.py
-  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.style
-  layer: unknown
-  imports:
-  - pydantic
-  classes:
-  - ComponentStyle
-  - ButtonStyle
-  - FilterStyle
-  - ChartStyle
-  functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\transformation_configs.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.models.transformation_configs
   layer: unknown
@@ -943,30 +932,6 @@
   - mkobi.services.user_service
   classes: []
   functions: []
-- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\decorators.py
-  module: C:_dev.mkobi..ai.builders.......src.mkobi.utils.decorators
-  layer: unknown
-  imports:
-  - collections.abc
-  - typing
-  - mkobi.core.permissions
-  - mkobi.models.enums
-  classes: []
-  functions:
-  - timing
-  - sync_wrapper
-  - retry
-  - decorator
-  - sync_wrapper
-  - log_execution
-  - decorator
-  - sync_wrapper
-  - require_role
-  - decorator
-  - sync_wrapper
-  - error_handler
-  - decorator
-  - sync_wrapper
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\exceptions.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.utils.exceptions
   layer: unknown

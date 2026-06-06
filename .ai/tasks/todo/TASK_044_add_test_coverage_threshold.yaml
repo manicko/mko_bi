@@ -1,0 +1,52 @@
+id: TASK_044_add_test_coverage_threshold
+
+title: Add test coverage threshold enforcement (TST-002)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Test coverage is below the project threshold. Add coverage threshold enforcement
+  to pytest configuration so that CI/CD fails when coverage drops below the minimum.
+  Set the threshold to the current coverage level initially, then gradually increase it.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: TST-002
+
+goals:
+  - Add coverage threshold to pytest configuration
+  - Set initial threshold to current coverage level
+  - Fail CI/CD when coverage drops below threshold
+
+files:
+  - path: pyproject.toml
+    targets:
+      - type: section
+        name: tool.pytest.ini_options
+    semantic_anchors:
+      - add_option:
+          value: "addopts"
+          description: Add --cov-fail-under threshold
+
+changes:
+  - action: modify
+    description: >
+      Add coverage threshold to pytest configuration in pyproject.toml.
+
+    code_hint: |
+      # ADD to [tool.pytest.ini_options] section:
+      addopts = "--cov-fail-under=70"
+
+acceptance_criteria:
+  - pytest fails when coverage drops below threshold
+  - Current test suite passes with threshold enabled
+  - Coverage report generated on test run
+
+risk: low
+
+tests_to_run:
+  - "pytest tests/ -v --cov --cov-report=term-missing"

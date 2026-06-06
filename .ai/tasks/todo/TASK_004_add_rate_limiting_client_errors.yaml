@@ -1,0 +1,78 @@
+id: TASK_004_add_rate_limiting_client_errors
+
+title: Add rate limiting to /client-errors endpoint
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  Add rate limiting to the /client-errors endpoint to prevent DoS flooding attacks.
+  This public endpoint currently has no protection against request flooding.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: SEC-002
+
+goals:
+  - Add rate limiting to the report_client_error endpoint
+  - Use a sensible limit (e.g., 100 requests per hour per IP)
+  - Ensure rate limiting respects fail-closed configuration
+
+files:
+  - path: src/mkobi/api/routes/client_errors.py
+    targets:
+      - type: function
+        name: report_client_error
+    semantic_anchors:
+      - add_function_call_before:
+          value: "logger.error"
+          description: Add rate limiting check before logging
+
+changes:
+  - action: modify
+    description: >
+      Add rate limiting dependency and check to report_client_error endpoint.
+      Use AsyncRateLimiter with a reasonable limit.
+
+    code_hint: |
+      # BEFORE:
+      async def report_client_error(payload: ClientErrorPayload) -> None:
+          error_message = payload.error.get("message", "Unknown error")
+          logger.error(...)
+
+      # AFTER:
+      from mkobi.core.security import AsyncRateLimiter
+      from mkobi.config import get_config
+
+      async def report_client_error(
+          payload: ClientErrorPayload,
+          request: Request,
+          redis_client=Depends(get_async_redis_client),
+      ) -> None:
+          # Rate limiting check
+          client_ip = request.client.host if request.client else "unknown"
+          rate_limiter = AsyncRateLimiter(
+              redis_client,
+              fail_closed=get_config().rate_limiter_fail_closed,
+          )
+          rate_limit_key = f"client-errors:{client_ip}"
+          if not await rate_limiter.check_rate_limit(rate_limit_key, max_attempts=100, ttl=3600):
+              logger.warning("Rate limit exceeded for client-errors endpoint", extra={"ip": client_ip})
+              # Still accept but could also return 429 Too Many Requests
+              return
+          error_message = payload.error.get("message", "Unknown error")
+          logger.error(...)
+
+acceptance_criteria:
+  - Rate limiting added to /client-errors endpoint
+  - Default limit of ~100 requests per hour per IP
+  - Respects RATE_LIMITER_FAIL_CLOSED configuration
+  - Tests pass
+
+risk: medium
+
+tests_to_run:
+  - "pytest tests/ -v -k 'client_errors'"

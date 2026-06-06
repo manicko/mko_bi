@@ -1,0 +1,69 @@
+id: TASK_003_fix_token_cache_bypass_revocation
+
+title: Remove lru_cache on _decode_token_cached to prevent token revocation bypass
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  Remove the @lru_cache decorator from _decode_token_cached function in permissions.py.
+  The cache bypasses token revocation checks by returning cached results without
+  verifying against the Redis blacklist.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: SEC-001
+
+goals:
+  - Remove @lru_cache decorator from _decode_token_cached
+  - Ensure token revocation checks are always performed
+  - Consider alternative caching strategy that respects revocation
+
+files:
+  - path: src/mkobi/core/permissions.py
+    targets:
+      - type: decorator
+        name: lru_cache
+      - type: function
+        name: _decode_token_cached
+    semantic_anchors:
+      - remove_decorator:
+          value: "@lru_cache(maxsize=1000)"
+          description: Remove lru_cache decorator to prevent revocation bypass
+
+changes:
+  - action: modify
+    description: >
+      Remove the @lru_cache decorator from _decode_token_cached function.
+      The function should call decode_token directly without caching to ensure
+      revocation checks are always performed.
+
+    code_hint: |
+      # BEFORE:
+      @lru_cache(maxsize=1000)
+      def _decode_token_cached(token: str) -> dict[str, Any] | None:
+          result: dict[str, Any] | None = decode_token(token)
+          return result
+
+      # AFTER:
+      # Token caching removed to ensure revocation checks always run
+      def _decode_token_cached(token: str) -> dict[str, Any] | None:
+          return decode_token(token)
+
+  - action: modify
+    description: >
+      Add a cached decode with explicit cache invalidation on token revocation.
+      This requires a separate implementation that integrates with the revocation system.
+
+acceptance_criteria:
+  - @lru_cache decorator removed from _decode_token_cached
+  - Token revocation is checked on every request
+  - Tests pass for authentication/authorization
+
+risk: high
+
+tests_to_run:
+  - "pytest tests/ -v -k 'auth or permission'"

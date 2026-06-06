@@ -16,8 +16,7 @@ permission:
     "*.yml": allow
     "*": deny
 
-  bash:
-    "*": deny
+  bash: allow
 ---
 
 You are a multi-agent audit pipeline orchestrator.

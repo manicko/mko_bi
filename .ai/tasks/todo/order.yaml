@@ -1,57 +1,427 @@
+# Execution order for validated audit findings tasks
+# Generated from final-report.md with dependency analysis
+# Updated: 2026-06-06 with all uncovered findings
+
 tasks:
-  # Phase 1: Security Fix (Highest Priority)
-  - id: TASK_001_DP008_unsafe_eval_security
+  # =============================================================================
+  # CRITICAL - Phase 1 (no dependencies, fix first)
+  # =============================================================================
+  - id: TASK_001_fix_enqueue_job_failure_silent_none
     depends_on: []
-    rationale: "HIGH severity security vulnerability - eval() allows arbitrary code execution. Independent change."
+    phase: critical
+    notes: Fixes silent None return that causes permanent task stalls
 
-  # Phase 2: Configuration & Schema Fixes
-  - id: TASK_002_DC002_admin_password_default
+  - id: TASK_002_fix_registration_response_field_name_mismatch
     depends_on: []
-    rationale: "Mandatory fix - weak default password. Independent change."
+    phase: critical
+    notes: Backend/frontend field name mismatch causes runtime undefined
 
-  - id: TASK_003_DC003_debug_mode_validation
+  # =============================================================================
+  # HIGH - Phase 2 (can run in parallel after CRITICAL)
+  # =============================================================================
+  - id: TASK_003_fix_token_cache_bypass_revocation
     depends_on: []
-    rationale: "Mandatory fix - debug mode security. Independent change."
+    phase: security
+    notes: Must be done early - security vulnerability
 
-  - id: TASK_004_DB001_processing_status_enum_drift
+  - id: TASK_004_add_rate_limiting_client_errors
     depends_on: []
-    rationale: "Advisory but requires careful migration. Independent change."
+    phase: security
+    notes: Public endpoint vulnerable to DoS without rate limiting
 
-  # Phase 3: Backend Test Fixes
-  - id: TASK_005_BE002_fix_jwt_secret_test
+  - id: TASK_005_add_rate_limiting_refresh_endpoint
     depends_on: []
-    rationale: "Mandatory test fix. Test-only change, no production impact."
+    phase: security
+    notes: Token refresh endpoint needs rate limiting like login
 
-  - id: TASK_006_BE003_fix_mime_test
+  - id: TASK_006_fix_rate_limiter_fail_closed_default
     depends_on: []
-    rationale: "Test-only fix. Platform-dependent test correction."
+    phase: security
+    notes: Fail-open during Redis outage is a security risk
 
-  # Phase 4: Frontend Fixes
-  - id: TASK_008_FE003_chart_renderer_lint_fix
+  - id: TASK_007_fix_http_exception_rfc7807_compliance
     depends_on: []
-    rationale: "Mandatory lint fix. Independent change."
+    phase: backend
+    notes: Error handling consistency fix
 
-  - id: TASK_009_FE005_hardcoded_status_enum
+  - id: TASK_008_remove_createdb_privilege_mkobi_app
     depends_on: []
-    rationale: "Mandatory type safety fix. Independent change."
+    phase: infrastructure
+    notes: Least-privilege violation fix (DC-002 + DC-004 co-fix). Updated per PLAN_01.md.
 
-  # Phase 5: Advisory Quality Improvements
-  - id: TASK_010_FE001_russian_fallback_message
+  - id: TASK_009_fix_port_8000_exposed_production
     depends_on: []
-    rationale: "Advisory - English language compliance. Independent change."
+    phase: infrastructure
+    notes: Security - port directly exposed to host
 
-  - id: TASK_011_TST003_tautological_test
+  - id: TASK_013_run_pending_migrations
     depends_on: []
-    rationale: "Advisory - test quality. Can be done anytime."
+    phase: database
+    notes: Apply pending enum drift migration
 
-  - id: TASK_012_TST008_low_test_coverage
+  - id: TASK_015_add_docker_resource_limits
     depends_on: []
-    rationale: "Advisory - coverage improvement. Strategic task, spans multiple modules."
+    phase: infrastructure
+    notes: Stability and resource exhaustion prevention
 
-  - id: TASK_013_DP001_transaction_consistency_test_mode
-    depends_on: []
-    rationale: "Advisory - test mode consistency. Low priority, can defer."
+  # =============================================================================
+  # HIGH - Phase 3 (depends on Phase 1)
+  # =============================================================================
+  - id: TASK_010_fix_data_pipeline_transaction_coordination
+    depends_on:
+      - TASK_001_fix_enqueue_job_failure_silent_none
+    phase: data_pipeline
+    notes: Must coordinate with enqueue_job fix
 
-  - id: TASK_014_FE004_remove_unused_charts
+  - id: TASK_014_consolidate_data_worker_transactions
+    depends_on:
+      - TASK_001_fix_enqueue_job_failure_silent_none
+      - TASK_010_fix_data_pipeline_transaction_coordination
+    phase: data_pipeline
+    notes: Depends on upstream pipeline fixes
+
+  # =============================================================================
+  # HIGH - Phase 3 (frontend, no dependencies)
+  # =============================================================================
+  - id: TASK_011_translate_error_messages_to_english
     depends_on: []
-    rationale: "Advisory - dead code removal. Safe to defer."
+    phase: frontend
+    notes: English-only policy compliance
+
+  - id: TASK_012_implement_missing_chart_renderers
+    depends_on: []
+    phase: frontend
+    notes: Chart type support enhancement
+
+  # =============================================================================
+  # VERIFICATION - Phase 4 (infrastructure)
+  # =============================================================================
+  - id: TASK_016_verify_infrastructure_changes
+    depends_on:
+      - TASK_008_remove_createdb_privilege_mkobi_app
+      - TASK_009_fix_port_8000_exposed_production
+      - TASK_013_run_pending_migrations
+      - TASK_015_add_docker_resource_limits
+    phase: verification
+    notes: Verify all infrastructure changes together
+
+  # =============================================================================
+  # MEDIUM - Phase 5 (backend fixes, no dependencies)
+  # =============================================================================
+  - id: TASK_017_fix_private_rate_limiter_access
+    depends_on: []
+    phase: backend
+    notes: BE-003 - Fix private _rate_limiter access across layer boundary
+
+  - id: TASK_020_validate_cors_origins_urls
+    depends_on: []
+    phase: backend
+    notes: DC-005 - Validate CORS origins as proper URLs
+
+  - id: TASK_041_validate_db_password_not_placeholder
+    depends_on: []
+    phase: security
+    notes: SEC-005 - Validate DB password is not placeholder
+
+  - id: TASK_043_add_weak_password_validation
+    depends_on: []
+    phase: security
+    notes: SEC-007 - Add weak password validation for admin_password
+
+  # =============================================================================
+  # MEDIUM - Phase 6 (database fixes)
+  # =============================================================================
+  - id: TASK_018_fix_filter_values_bulk_insert
+    depends_on: []
+    phase: database
+    notes: DB-003 - Replace row-by-row insert with bulk insert
+
+  - id: TASK_019_add_processing_logs_archival
+    depends_on: []
+    phase: database
+    notes: DB-004 - Add archival policy for processing_logs
+
+  # =============================================================================
+  # MEDIUM - Phase 7 (deployment/nginx fixes)
+  # =============================================================================
+  - id: TASK_021_fix_nginx_hsts_over_http
+    depends_on: []
+    phase: deployment
+    notes: DC-006 - Remove HSTS header from HTTP server block
+
+  - id: TASK_022_add_nginx_client_max_body_size
+    depends_on: []
+    phase: deployment
+    notes: DC-007 - Add client_max_body_size to nginx config
+
+  # =============================================================================
+  # MEDIUM - Phase 8 (data processing fixes, some depend on Phase 3)
+  # =============================================================================
+  - id: TASK_023_fix_aggregation_service_hardcoded_sum
+    depends_on: []
+    phase: data_processing
+    notes: DP-005 - Use metric_agg parameter instead of hardcoding sum
+
+  - id: TASK_024_integrate_data_validator_into_pipeline
+    depends_on: []
+    phase: data_processing
+    notes: DP-007 - Integrate DataValidator into processing pipeline
+
+  - id: TASK_025_add_processing_status_state_machine
+    depends_on: []
+    phase: data_processing
+    notes: DP-008 - Add valid state transition enforcement
+
+  - id: TASK_026_fix_file_move_before_enqueue
+    depends_on:
+      - TASK_001_fix_enqueue_job_failure_silent_none
+      - TASK_010_fix_data_pipeline_transaction_coordination
+    phase: data_processing
+    notes: DP-009 - Move file after successful enqueue
+
+  - id: TASK_027_fix_test_mode_transaction_boundary
+    depends_on:
+      - TASK_014_consolidate_data_worker_transactions
+    phase: data_processing
+    notes: DP-004 - Align test-mode transaction handling
+
+  # =============================================================================
+  # MEDIUM - Phase 9 (frontend fixes, no dependencies)
+  # =============================================================================
+  - id: TASK_028_fix_useFilterValues_reactive_token
+    depends_on: []
+    phase: frontend
+    notes: FE-003 - Fix non-reactive getToken() in useFilterValues
+
+  - id: TASK_029_remove_console_error_from_production
+    depends_on: []
+    phase: frontend
+    notes: FE-004 - Replace console.error with toast in UserManagement
+
+  - id: TASK_030_fix_plotly_component_any_type
+    depends_on: []
+    phase: frontend
+    notes: FE-005 - Replace any type escape in PlotlyComponent
+
+  - id: TASK_031_remove_alert_from_dashboard_management
+    depends_on: []
+    phase: frontend
+    notes: FE-009 - Replace alert() with proper UI in DashboardManagement
+
+  - id: TASK_032_add_zod_validation_dashboard_form
+    depends_on: []
+    phase: frontend
+    notes: FE-011 - Add Zod validation to dashboard create/edit forms
+
+  - id: TASK_033_fix_force_password_hard_navigation
+    depends_on: []
+    phase: frontend
+    notes: FE-013 - Replace window.location.href with React Router navigation
+
+  # =============================================================================
+  # MEDIUM - Phase 10 (infrastructure fixes, no dependencies)
+  # =============================================================================
+  - id: TASK_034_fix_nginx_versioned_image
+    depends_on: []
+    phase: infrastructure
+    notes: INF-001 - Pin nginx image to specific version tag
+
+  - id: TASK_035_remove_auto_migrate_contradiction
+    depends_on: []
+    phase: infrastructure
+    notes: INF-003 - Remove AUTO_MIGRATE=true from app service
+
+  - id: TASK_036_fix_rq_worker_health_check
+    depends_on: []
+    phase: infrastructure
+    notes: INF-004 - Fix rq-worker health check
+
+  # =============================================================================
+  # MEDIUM - Phase 11 (integration/type fixes, no dependencies)
+  # =============================================================================
+  - id: TASK_037_fix_processing_result_type_mismatch
+    depends_on: []
+    phase: integration
+    notes: INT-002 - Fix ProcessingResult type mismatch
+
+  - id: TASK_038_fix_dashboard_detail_type_mismatch
+    depends_on: []
+    phase: integration
+    notes: INT-003 - Fix DashboardDetail type mismatch
+
+  - id: TASK_039_fix_graph_data_type_mismatch
+    depends_on: []
+    phase: integration
+    notes: INT-004 - Fix GraphData type mismatch
+
+  - id: TASK_040_fix_layout_type_mismatch
+    depends_on: []
+    phase: integration
+    notes: INT-005 - Fix LayoutRead type mismatch
+
+  # =============================================================================
+  # MEDIUM - Phase 12 (security fixes, some depend on Phase 5)
+  # =============================================================================
+  - id: TASK_042_reject_placeholder_db_password_production
+    depends_on:
+      - TASK_041_validate_db_password_not_placeholder
+    phase: security
+    notes: SEC-006 - Reject placeholder DB password at startup
+
+  # =============================================================================
+  # MEDIUM - Phase 13 (testing improvements)
+  # =============================================================================
+  - id: TASK_044_add_test_coverage_threshold
+    depends_on: []
+    phase: testing
+    notes: TST-002 - Add test coverage threshold enforcement
+
+  - id: TASK_045_add_worker_utility_test_coverage
+    depends_on: []
+    phase: testing
+    notes: TST-005 - Add test coverage for workers and utilities
+
+  - id: TASK_046_remove_mypy_tests_exclude
+    depends_on: []
+    phase: testing
+    notes: TST-006 - Remove mypy exclusion for tests directory
+
+  - id: TASK_047_add_e2e_upload_test
+    depends_on:
+      - TASK_001_fix_enqueue_job_failure_silent_none
+      - TASK_010_fix_data_pipeline_transaction_coordination
+    phase: testing
+    notes: TST-003 - Add E2E test for file upload workflow
+
+  - id: TASK_048_optimize_slow_test_execution
+    depends_on: []
+    phase: testing
+    notes: TST-007 - Optimize slow test execution
+
+  # =============================================================================
+  # LOW - Phase 14 (research tasks - preserve potential)
+  # =============================================================================
+  - id: TASK_049_research_placeholder_page_usage
+    depends_on: []
+    phase: research
+    notes: FE-006 - Research PlaceholderPage usage and document in PLAN_02.md
+
+  - id: TASK_050_research_access_denied_usage
+    depends_on: []
+    phase: research
+    notes: FE-007 - Research AccessDenied usage and document in PLAN_02.md
+
+  - id: TASK_052_research_charts_directory_usage
+    depends_on: []
+    phase: research
+    notes: FE-012 - Research charts directory purpose and document in PLAN_02.md
+
+  # =============================================================================
+  # LOW - Phase 15 (cleanup and minor fixes)
+  # =============================================================================
+  - id: TASK_051_fix_act_warnings_in_tests
+    depends_on: []
+    phase: cleanup
+    notes: FE-010 - Fix act() warnings in frontend tests
+
+  - id: TASK_053_add_rollback_procedure_docs
+    depends_on: []
+    phase: documentation
+    notes: INF-009 - Add rollback procedure documentation
+
+  - id: TASK_054_pin_docker_image_versions
+    depends_on: []
+    phase: infrastructure
+    notes: INF-010 - Pin floating major-version Docker image tags
+
+  - id: TASK_057_fix_create_dashboard_return_type
+    depends_on: []
+    phase: integration
+    notes: INT-006 - Fix createDashboard return type mismatch
+
+  - id: TASK_058_fix_update_dashboard_request_type
+    depends_on: []
+    phase: integration
+    notes: INT-007 - Fix UpdateDashboardRequest missing fields
+
+  - id: TASK_059_add_csp_nonce_support
+    depends_on: []
+    phase: security
+    notes: SEC-008 - Add CSP nonce support for inline scripts
+
+  - id: TASK_060_reduce_mock_heavy_test_assertions
+    depends_on: []
+    phase: testing
+    notes: TST-008 - Reduce mock-heavy assertions in tests
+
+  - id: TASK_061_fix_client_error_payload_inline
+    depends_on: []
+    phase: backend
+    notes: BE-005 - Extract ClientErrorPayload to shared models
+
+  # =============================================================================
+  # LOW - Phase 16 (test ports - assessment then conditional removal)
+  # =============================================================================
+  - id: TASK_055_assess_test_ports_removal_impact
+    depends_on: []
+    phase: research
+    notes: INF-011 - Assess impact of removing test port exposure (RESEARCH FIRST)
+
+  - id: TASK_056_remove_test_ports_exposure
+    depends_on:
+      - TASK_055_assess_test_ports_removal_impact
+    phase: infrastructure
+    notes: INF-011 - Remove test port exposure (ONLY if TASK_055 recommends "go")
+
+  # =============================================================================
+  # FINAL VERIFICATION - Phase 17
+  # =============================================================================
+  - id: TASK_062_verify_all_new_changes
+    depends_on:
+      - TASK_017_fix_private_rate_limiter_access
+      - TASK_018_fix_filter_values_bulk_insert
+      - TASK_019_add_processing_logs_archival
+      - TASK_020_validate_cors_origins_urls
+      - TASK_021_fix_nginx_hsts_over_http
+      - TASK_022_add_nginx_client_max_body_size
+      - TASK_023_fix_aggregation_service_hardcoded_sum
+      - TASK_024_integrate_data_validator_into_pipeline
+      - TASK_025_add_processing_status_state_machine
+      - TASK_026_fix_file_move_before_enqueue
+      - TASK_027_fix_test_mode_transaction_boundary
+      - TASK_028_fix_useFilterValues_reactive_token
+      - TASK_029_remove_console_error_from_production
+      - TASK_030_fix_plotly_component_any_type
+      - TASK_031_remove_alert_from_dashboard_management
+      - TASK_032_add_zod_validation_dashboard_form
+      - TASK_033_fix_force_password_hard_navigation
+      - TASK_034_fix_nginx_versioned_image
+      - TASK_035_remove_auto_migrate_contradiction
+      - TASK_036_fix_rq_worker_health_check
+      - TASK_037_fix_processing_result_type_mismatch
+      - TASK_038_fix_dashboard_detail_type_mismatch
+      - TASK_039_fix_graph_data_type_mismatch
+      - TASK_040_fix_layout_type_mismatch
+      - TASK_041_validate_db_password_not_placeholder
+      - TASK_042_reject_placeholder_db_password_production
+      - TASK_043_add_weak_password_validation
+      - TASK_044_add_test_coverage_threshold
+      - TASK_045_add_worker_utility_test_coverage
+      - TASK_046_remove_mypy_tests_exclude
+      - TASK_047_add_e2e_upload_test
+      - TASK_048_optimize_slow_test_execution
+      - TASK_049_research_placeholder_page_usage
+      - TASK_050_research_access_denied_usage
+      - TASK_051_fix_act_warnings_in_tests
+      - TASK_052_research_charts_directory_usage
+      - TASK_053_add_rollback_procedure_docs
+      - TASK_054_pin_docker_image_versions
+      - TASK_055_assess_test_ports_removal_impact
+      - TASK_056_remove_test_ports_exposure
+      - TASK_057_fix_create_dashboard_return_type
+      - TASK_058_fix_update_dashboard_request_type
+      - TASK_059_add_csp_nonce_support
+      - TASK_060_reduce_mock_heavy_test_assertions
+      - TASK_061_fix_client_error_payload_inline
+    phase: verification
+    notes: Final verification of all new changes (TASK_017 through TASK_061)

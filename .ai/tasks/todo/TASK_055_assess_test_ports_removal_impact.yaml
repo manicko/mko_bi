@@ -1,0 +1,135 @@
+id: TASK_055_assess_test_ports_removal_impact
+
+title: Assess impact of removing test port exposure from host (INF-011)
+
+type: research
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  The test docker-compose file exposes database (5433), redis (6380), and app (8001)
+  ports to the host. The audit finding (INF-011) recommends removing these as a security
+  measure. However, these ports are actively used by:
+    - tests/conftest.py (DATABASE__PORT=5433 default for native test execution)
+    - tests/test_dev_seeders.py (DATABASE__PORT=5433)
+    - docs/11-guides/docker.md (documents shifted ports for parallel dev+test)
+    - docs/SPEC.md (documents standalone test compose with shifted ports)
+    - .ai/context/commands.md (CLI commands using localhost:5433)
+
+  This task MUST assess the full impact before any removal is attempted. Removal
+  should only proceed if the assessment confirms it is safe.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: INF-011
+
+goals:
+  - Identify all code, docs, and workflows that depend on exposed test ports
+  - Determine if removing ports would break native (host-side) test execution
+  - Determine if removing ports would break any CI/CD pipelines
+  - Evaluate security risk level of keeping ports exposed
+  - Produce a go/no-go recommendation with documented rationale
+  - If go: produce a migration plan for affected code and docs
+
+files:
+  - path: docker/docker-compose.test.yml
+    targets:
+      - type: ports_mapping
+        name: test_db_ports
+      - type: ports_mapping
+        name: test_redis_ports
+      - type: ports_mapping
+        name: test_app_ports
+
+  - path: tests/conftest.py
+    targets:
+      - type: env_default
+        name: DATABASE__PORT
+
+  - path: tests/test_dev_seeders.py
+    targets:
+      - type: env_default
+        name: DATABASE__PORT
+
+  - path: docs/11-guides/docker.md
+    targets:
+      - type: documentation
+        name: test compose ports section
+
+  - path: docs/SPEC.md
+    targets:
+      - type: documentation
+        name: standalone test compose section
+
+  - path: .ai/context/commands.md
+    targets:
+      - type: documentation
+        name: test database CLI commands
+
+changes:
+  - action: research
+    description: |
+      Perform the following analysis:
+
+      1. **Dependency inventory**: List every file, script, CI config, and documentation
+         page that references ports 5433, 6380, or 8001. Check:
+         - All test files for DATABASE__PORT, REDIS__PORT env defaults
+         - CI/CD pipeline configs (.github/workflows, .gitlab-ci.yml, etc.)
+         - Makefile, scripts/, or other automation
+         - All documentation files
+         - IDE run configurations (.vscode/launch.json, etc.)
+
+      2. **Workflow impact**: Determine which developer workflows depend on host port access:
+         - Running pytest directly from host terminal (not via docker exec)
+         - Database GUI tools connecting to test-db
+         - Debugging test database state during development
+         - Running dev and test environments in parallel
+
+      3. **Security assessment**: Evaluate the actual risk:
+         - Are test ports bound to 0.0.0.0 or 127.0.0.1?
+         - Does the test database use a known/default password?
+         - Is this a shared developer machine or personal?
+         - What is the actual attack surface?
+
+      4. **Alternatives evaluation**: Consider alternatives to full removal:
+         - Bind to 127.0.0.1 instead of 0.0.0.0 (already the case via Docker defaults)
+         - Use Docker network-only access and update conftest.py to use service names
+         - Add a docker-compose.test.override.yml for developers who need host access
+         - Document the security trade-off and let developers decide
+
+      5. **Recommendation**: Produce a clear go/no-go recommendation with rationale.
+
+  - action: document
+    description: |
+      Write the assessment results and recommendation to a comment block in
+      docker/docker-compose.test.yml above the ports sections, so future
+      maintainers understand the trade-off.
+
+    code_hint: |
+      # Add above ports sections in docker-compose.test.yml:
+      # SECURITY NOTE (INF-011): These ports are intentionally exposed to the host.
+      # They enable native test execution (pytest from host terminal) and debugging.
+      # The test database uses a default password and contains no production data.
+      # To restrict access, consider binding to 127.0.0.1:
+      #   ports:
+      #     - "127.0.0.1:5433:5432"
+      # See TASK_055_assess_test_ports_removal_impact for full assessment.
+
+acceptance_criteria:
+  - All files referencing ports 5433/6380/8001 are identified and listed
+  - Impact on native test execution is clearly documented
+  - Impact on CI/CD pipelines is assessed
+  - Security risk level is evaluated with specific rationale
+  - Go/no-go recommendation produced with documented reasoning
+  - If go: migration plan includes updated conftest.py, docs, and commands.md
+  - If no-go: security note added to docker-compose.test.yml explaining the trade-off
+  - PLAN_02.md updated with findings (create if not exists)
+
+risk: minimal
+
+tests_to_run:
+  - "docker compose -f docker/docker-compose.test.yml config"

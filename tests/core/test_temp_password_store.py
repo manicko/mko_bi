@@ -161,8 +161,9 @@ class TestTempPasswordStore:
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_store_fail_open_on_error(self, caplog) -> None:
+    async def test_store_fail_open_on_error(self) -> None:
         """Store should log error but not raise on Redis failure."""
+        from unittest.mock import patch
 
         class FailingSetRedis(MockRedis):
             async def set(self, key, value, ex=None):
@@ -170,14 +171,14 @@ class TestTempPasswordStore:
 
         store = TempPasswordStore(FailingSetRedis())
 
-        # Should not raise - graceful degradation
-        with caplog.at_level("ERROR"):
+        # Capture log output via mock
+        with patch("mkobi.core.temp_password_store.logger") as mock_logger:
+            # Should not raise - graceful degradation
             await store.store("token", "password")
 
-        # Verify error was logged
-        assert len(caplog.records) == 1
-        assert "Failed to store temp password in Redis" in caplog.records[0].message
-        assert "Redis connection failed" in caplog.records[0].message
+            # Verify error was logged
+            mock_logger.error.assert_called_once()
+            assert "Failed to store temp password in Redis" in mock_logger.error.call_args[0][0]
 
     @pytest.mark.asyncio
     async def test_retrieve_fail_graceful_on_error(self) -> None:

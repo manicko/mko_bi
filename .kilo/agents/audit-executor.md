@@ -8,6 +8,8 @@ permission:
   read: 
     "*": allow
     "*.env": allow
+    "docker\\.env.production": allow
+    "docker\\.env.development": allow
     "C:\\py_dev\\mkobi\\.env": allow
     "C:\\py_dev\\mkobi\\docker\\.env": allow
     "C:\\py_dev\\mkobi\\docker\\.env*": allow
@@ -25,20 +27,8 @@ permission:
     "*.yml": allow
     "*": deny
 
-  bash:
-    "uv*": allow
-    "pytest*": allow
-    "ruff*": allow
-    "mypy*": allow
-    "alembic*": allow
-    "docker*": allow
-    "docker compose*": allow
-    "docker ps*": allow
-    "docker logs*": allow
-    "curl*": allow
-    "psql*": allow
-    "redis-cli*": allow
-    "*": allow
+  bash: allow
+   
 ---
 
 You are a generic parameterized audit executor agent. Your responsibility is to execute a single audit phase by first discovering the current architecture, then analyzing code against the phase task checklist, identifying risks and deviations, and producing evidence-based findings.

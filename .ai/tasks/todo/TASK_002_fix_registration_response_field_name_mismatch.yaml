@@ -1,0 +1,60 @@
+id: TASK_002_fix_registration_response_field_name_mismatch
+
+title: Fix RegistrationResponse field name mismatch between backend and frontend
+
+status: pending
+
+priority: critical
+
+depends_on: []
+
+description: >
+  Fix the field name mismatch where backend returns `id` but frontend expects `request_id`
+  in the RegistrationResponse. Both backend and frontend need to be aligned.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: INT-001
+
+goals:
+  - Align frontend RegistrationResponse field with backend response
+  - Ensure consistent naming for registration request handling
+
+files:
+  - path: frontend/src/shared/types/api.types.ts
+    targets:
+      - type: interface
+        name: RegistrationResponse
+    semantic_anchors:
+      - replace_field:
+          value: "request_id"
+          description: Change to match backend field name "id"
+
+changes:
+  - action: modify
+    description: >
+      Change RegistrationResponse interface field from `request_id` to `id` to match backend.
+
+    code_hint: |
+      # BEFORE:
+      export interface RegistrationResponse {
+        message: string
+        request_id: string
+      }
+
+      # AFTER:
+      export interface RegistrationResponse {
+        message: string
+        id: string
+      }
+
+acceptance_criteria:
+  - Frontend RegistrationResponse.id field matches backend response
+  - Registration request flow works end-to-end
+  - Tests pass for auth flows
+
+risk: medium
+
+tests_to_run:
+  - "pytest tests/ -v -k 'auth'"
+  - "cd frontend && npm test -- --testPathPattern=auth"
