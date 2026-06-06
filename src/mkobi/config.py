@@ -302,8 +302,8 @@ class Settings(BaseSettings):
     stale_processing_timeout_minutes: int = Field(default=30, alias="STALE_PROCESSING_TIMEOUT_MINUTES")
     stale_processing_cleanup_interval_seconds: int = Field(default=300, alias="STALE_PROCESSING_CLEANUP_INTERVAL_SECONDS")
 
-    # --- Rate Limiter ---
-    rate_limiter_fail_closed: bool = Field(default=False, alias="RATE_LIMITER_FAIL_CLOSED")
+# --- Rate Limiter ---
+    rate_limiter_fail_closed: bool = Field(default=True, alias="RATE_LIMITER_FAIL_CLOSED")
 
     # --- Temp Password ---
     temp_password_ttl_seconds: int = Field(default=86400, alias="TEMP_PASSWORD_TTL_SECONDS")

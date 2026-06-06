@@ -98,9 +98,7 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000"]}
       LOGGING__LEVEL: ${LOG_LEVEL:-INFO}
       AUTO_MIGRATE: "true"
-      # SECURITY: Fail-closed rate limiting prevents rate limit bypass during Redis outages
-      RATE_LIMITER_FAIL_CLOSED: ${RATE_LIMITER_FAIL_CLOSED:-true}
-    ports:
+      ports:
       - "8000:8000"
     volumes:
       - app_data:/app/data
