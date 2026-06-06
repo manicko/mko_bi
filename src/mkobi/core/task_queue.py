@@ -11,6 +11,7 @@ from collections.abc import Callable
 from typing import Any
 
 from mkobi.models.enums import ProcessingStatus
+from mkobi.utils.exceptions import AppException, ErrorCode
 
 logger = logging.getLogger(__name__)
 
@@ -162,7 +163,7 @@ async def enqueue_job(
     func: Callable[..., Any],
     *args: Any,
     **kwargs: Any,
-) -> str | None:
+) -> str:
     """Compatibility function for enqueueing jobs.
 
     Args:
@@ -171,13 +172,19 @@ async def enqueue_job(
         **kwargs: Keyword arguments.
 
     Returns:
-        str | None: Task ID if enqueued, None otherwise.
+        str: Task ID if enqueued.
+
+    Raises:
+        AppException: If enqueue fails.
     """
     try:
         return await default_queue.enqueue(func, *args, **kwargs)
     except Exception as e:
         logger.error("Failed to enqueue job: %s", e)
-        return None
+        raise AppException(
+            code=ErrorCode.FILE_PROCESSING_ERROR,
+            detail=f"Failed to enqueue processing job: {e}",
+        ) from e
 
 
 def get_task_queue() -> TaskQueue:

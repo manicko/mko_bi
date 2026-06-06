@@ -248,13 +248,24 @@ async def process_upload_with_session(
     )
 
     # Enqueue job with processing config - use log.id as the identifier
-    await enqueue_processing_job(
-        file_path=str(final_file_path),
-        dashboard_id=dashboard_id,
-        task_id=log.id,
-        mode=str(mode),
-        processing_config=processing_config,
-    )
+    try:
+        await enqueue_processing_job(
+            file_path=str(final_file_path),
+            dashboard_id=dashboard_id,
+            task_id=log.id,
+            mode=str(mode),
+            processing_config=processing_config,
+        )
+    except Exception as exc:
+        logger.error("Failed to enqueue processing job: %s", exc)
+        await log_repo.update_status(
+            log_id=log.id,
+            status=ProcessingStatus.FAILED,
+            message=f"Failed to enqueue processing job: {exc}",
+            db=db,
+        )
+        await db.commit()
+        raise
 
     logger.info(
         "Task enqueued: task_id=%s, dashboard_id=%s, mode=%s, config=%s",

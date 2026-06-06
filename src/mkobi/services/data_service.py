@@ -282,11 +282,20 @@ class DataService(IDataService):
             message="Processing triggered manually", db=db,
         )
         await db.commit()
-        await enqueue_processing_job(
-            file_path=file_path, dashboard_id=dashboard_id,
-            task_id=task_id, mode="overwrite",
-            processing_config=processing_config,
-        )
+        try:
+            await enqueue_processing_job(
+                file_path=file_path, dashboard_id=dashboard_id,
+                task_id=task_id, mode="overwrite",
+                processing_config=processing_config,
+            )
+        except Exception as exc:
+            logger.error("Failed to enqueue processing job: %s", exc)
+            await self.log_repo.update_status(
+                log_id=task_id, status=ProcessingStatus.FAILED,
+                message=f"Failed to enqueue processing job: {exc}", db=db,
+            )
+            await db.commit()
+            raise
         logger.info(
             "Processing triggered: task_id=%s, dashboard_id=%s, config=%s",
             task_id, dashboard_id,
