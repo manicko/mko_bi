@@ -2,7 +2,7 @@ id: TASK_003_fix_token_cache_bypass_revocation
 
 title: Remove lru_cache on _decode_token_cached to prevent token revocation bypass
 
-status: pending
+status: done
 
 priority: high
 
