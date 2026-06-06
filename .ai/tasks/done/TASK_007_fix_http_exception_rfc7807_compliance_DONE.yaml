@@ -2,7 +2,7 @@ id: TASK_007_fix_http_exception_rfc7807_compliance
 
 title: Replace HTTPException with AppException in time_utils.py
 
-status: pending
+status: done
 
 priority: high
 
