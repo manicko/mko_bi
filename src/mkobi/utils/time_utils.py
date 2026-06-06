@@ -6,7 +6,8 @@ Provides time operations using datetime for consistent time handling.
 import logging
 from datetime import datetime, timezone as tz, UTC
 
-from fastapi import HTTPException
+from mkobi.models.enums import ErrorCode
+from mkobi.utils.exceptions import AppException
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +92,7 @@ class TimeUtils:
             datetime: Parsed datetime with timezone info.
 
         Raises:
-            HTTPException: If parsing fails.
+            AppException: If parsing fails.
 
         Example:
             >>> utils = TimeUtils()
@@ -105,8 +106,8 @@ class TimeUtils:
             return dt
         except ValueError as e:
             logger.error("Failed to parse date string '%s': %s", date_string, e)
-            raise HTTPException(
-                status_code=400,
+            raise AppException(
+                code=ErrorCode.VALIDATION_ERROR,
                 detail=f"Invalid date format: {date_string}",
             ) from e
 
@@ -136,7 +137,7 @@ class TimeUtils:
             datetime: Parsed datetime with timezone info.
 
         Raises:
-            HTTPException: If parsing fails.
+            AppException: If parsing fails.
 
         Example:
             >>> utils = TimeUtils()
@@ -146,7 +147,7 @@ class TimeUtils:
             return datetime.fromisoformat(date_string)
         except ValueError as e:
             logger.error("Failed to parse ISO date string '%s': %s", date_string, e)
-            raise HTTPException(
-                status_code=400,
+            raise AppException(
+                code=ErrorCode.VALIDATION_ERROR,
                 detail=f"Invalid ISO date format: {date_string}",
             ) from e
