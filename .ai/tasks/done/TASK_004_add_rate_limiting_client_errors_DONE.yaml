@@ -2,7 +2,7 @@ id: TASK_004_add_rate_limiting_client_errors
 
 title: Add rate limiting to /client-errors endpoint
 
-status: pending
+status: completed
 
 priority: high
 
