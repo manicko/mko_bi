@@ -153,6 +153,9 @@ class DatabaseStarter:
         if self._config.auto_migrate:
             await self._apply_migrations(main_url)
 
+        # Verify role privileges (defense-in-depth for least-privilege)
+        await self._verify_role_privileges()
+
         # Check if schema is properly initialized via alembic
         current_rev = await self._get_alembic_revision()
         if not current_rev:
@@ -201,9 +204,13 @@ class DatabaseStarter:
         if not db_name or not re.match(r"^[a-zA-Z0-9_]+$", db_name):
             raise ValueError(f"Invalid database name: {db_name}")
 
-        # Use admin URL for database creation (requires CREATEDB privilege)
-        # Fall back to test_url if admin_url not configured (for backwards compatibility)
-        base_url = admin_url or test_url
+        # Use admin URL for database creation (requires superuser privileges)
+        if not admin_url:
+            raise ValueError(
+                "Admin database URL is required for test database recreation. "
+                "Set DATABASE__ADMIN_USER and DATABASE__ADMIN_PASSWORD environment variables."
+            )
+        base_url = admin_url
         # Reconstruct URL pointing to postgres database for admin operations
         parsed_admin = urlparse(base_url)
         admin_base_url = urlunparse((
@@ -339,6 +346,23 @@ class DatabaseStarter:
                     },
                 )
             logger.info("Admin user ensured: %s", admin_email)
+
+    async def _verify_role_privileges(self) -> None:
+        """Verify mkobi_app does not have excessive privileges (defense-in-depth)."""
+        assert self._main_engine is not None
+        try:
+            async with self._main_engine.connect() as conn:
+                result = await conn.execute(
+                    text("SELECT rolcreatedb FROM pg_roles WHERE rolname = 'mkobi_app'")
+                )
+                row = result.fetchone()
+                if row and row[0]:
+                    logger.warning(
+                        "mkobi_app has CREATEDB privilege - violates least-privilege. "
+                        "Run: ALTER ROLE mkobi_app NOCREATEDB;"
+                    )
+        except Exception as e:
+            logger.debug("Could not verify role privileges: %s", e)
 
     async def cleanup_old_logs(self) -> None:
         """Clean up old processing logs based on retention policy."""
