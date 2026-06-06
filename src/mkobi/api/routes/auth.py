@@ -283,6 +283,21 @@ async def refresh(
             headers={"WWW-Authenticate": "Bearer"},
         )
 
+    # Apply rate limiting for refresh attempts based on client IP
+    client_ip = request.client.host if request.client else "unknown"
+    rate_limiter = AsyncRateLimiter(
+        redis_client,
+        fail_closed=get_config().rate_limiter_fail_closed,
+    )
+    rate_limit_key = f"refresh:{client_ip}" if client_ip else "refresh:unknown"
+    if not await rate_limiter.check_rate_limit(rate_limit_key, max_attempts=10, ttl=300):
+        logger.warning("Refresh rate limit exceeded", extra={"ip": client_ip})
+        raise AppException(
+            code=ErrorCode.RATE_LIMIT_EXCEEDED,
+            detail="Too many refresh attempts. Try again later.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
     logger.info("Token refresh attempt")
 
     payload = validate_refresh_token(refresh_token_value)
