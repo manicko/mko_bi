@@ -263,7 +263,7 @@ describe('useAuth', () => {
       vi.mocked(getToken).mockReturnValue(null)
       vi.mocked(registerRequest).mockResolvedValue({
         message: 'Registration request submitted',
-        request_id: 'req-123',
+        id: 'req-123',
       })
 
       const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() })

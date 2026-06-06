@@ -147,7 +147,7 @@ export interface RegistrationRequest {
 
 export interface RegistrationResponse {
   message: string
-  request_id: string
+  id: string
 }
 
 export interface DashboardDetail {
