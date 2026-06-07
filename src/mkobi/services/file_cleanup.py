@@ -1,14 +1,21 @@
 """Temporary file cleanup utilities.
 
 Provides functions for cleaning up task-specific and stale temporary files
-from the upload directory.
+from the upload directory. Also provides cleanup for old processing logs.
 """
 
 import uuid
+from datetime import datetime, UTC, timedelta
 from pathlib import Path
+from typing import Any
+
+from sqlalchemy import delete
 
 from mkobi.config import get_config
 from mkobi.core.logging_config import get_logger
+from mkobi.db.models.processing_logs import ProcessingLog
+from mkobi.db.session import get_session
+from mkobi.models.enums import ProcessingStatus
 
 logger = get_logger(__name__)
 
@@ -94,3 +101,41 @@ def cleanup_stale_temp_files(max_age_hours: int | None = None) -> int:
         logger.info("Cleaned up %d stale temp files", deleted_count)
 
     return deleted_count
+
+
+async def cleanup_old_processing_logs(retention_days: int | None = None) -> int:
+    """Delete processing logs in terminal states older than the retention period.
+
+    This function is designed to be called periodically (e.g., via a background task)
+    to clean up completed and failed processing logs that are no longer needed for
+    display or monitoring.
+
+    Args:
+        retention_days: Number of days to keep logs. If None, uses the configured
+            logs_retention_days setting (default 30 days).
+
+    Returns:
+        int: Number of deleted log entries.
+    """
+    config = get_config()
+    days = retention_days if retention_days is not None else config.logs_retention_days
+    cutoff = datetime.now(UTC) - timedelta(days=days)
+
+    async with get_session() as db:
+        async with db.begin():
+            stmt = (
+                delete(ProcessingLog)
+                .where(
+                    ProcessingLog.status.in_(
+                        [ProcessingStatus.COMPLETED, ProcessingStatus.FAILED]
+                    ),
+                    ProcessingLog.finished_at < cutoff,
+                )
+            )
+            result = await db.execute(stmt)
+            count = result.rowcount or 0
+
+    if count > 0:
+        logger.info("Cleaned up %d old processing logs (retention=%dd)", count, days)
+
+    return count

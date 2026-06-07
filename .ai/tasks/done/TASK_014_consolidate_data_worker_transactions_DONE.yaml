@@ -2,7 +2,7 @@ id: TASK_014_consolidate_data_worker_transactions
 
 title: Consolidate multiple transactions in data_worker to single atomic transaction
 
-status: pending
+status: done
 
 priority: high
 

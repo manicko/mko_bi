@@ -2,6 +2,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Any, ClassVar
+from urllib.parse import urlparse
 
 import yaml
 from pydantic import BaseModel, Field, PostgresDsn, field_validator, model_validator
@@ -373,17 +374,28 @@ class Settings(BaseSettings):
     @field_validator("cors_origins")
     @classmethod
     def validate_cors_origins(cls, value: list[str]) -> list[str]:
-        """Validate CORS origins.
+        """Validate CORS origins are proper http(s) URLs.
 
         Args:
             value: List of CORS origins (already parsed by pydantic-settings).
 
         Returns:
-            list[str]: Validated list of CORS origins.
+            list[str]: Validated list of CORS origins. Invalid origins are filtered out
+                and a warning is logged.
         """
         if not isinstance(value, list):
             return []
-        return [str(origin) for origin in value]
+        validated: list[str] = []
+        for origin in value:
+            parsed = urlparse(str(origin))
+            if parsed.scheme in ("http", "https") and parsed.netloc:
+                validated.append(str(origin))
+            else:
+                logger.warning(
+                    "Invalid CORS origin rejected: %r (must be http:// or https:// URL)",
+                    origin,
+                )
+        return validated
 
     # --- Database Migrations ---
     auto_migrate: bool = False

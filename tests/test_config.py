@@ -539,3 +539,82 @@ class TestDebugModeValidation(TestSettingsBase):
         clear_config_cache()
         settings = Settings()
         assert settings.debug is False
+
+
+class TestCORsOriginUrlValidation(TestSettingsBase):
+    """Tests for CORS origin URL format validation."""
+
+    def test_valid_http_origin_accepted(self, monkeypatch):
+        """Test that valid http:// origins are accepted."""
+        monkeypatch.setenv("CORS_ORIGINS", '["http://localhost:3000", "http://example.com"]')
+        settings = Settings()
+        assert "http://localhost:3000" in settings.cors_origins
+        assert "http://example.com" in settings.cors_origins
+
+    def test_valid_https_origin_accepted(self, monkeypatch):
+        """Test that valid https:// origins are accepted."""
+        monkeypatch.setenv("CORS_ORIGINS", '["https://app.example.com", "https://secure.app.com"]')
+        settings = Settings()
+        assert "https://app.example.com" in settings.cors_origins
+        assert "https://secure.app.com" in settings.cors_origins
+
+    def test_invalid_origin_rejected(self, monkeypatch, caplog):
+        """Test that invalid origins (not http/https URLs) are rejected and logged."""
+        monkeypatch.setenv("CORS_ORIGINS", '["not-a-url", "http://localhost:3000"]')
+        with caplog.at_level("WARNING"):
+            settings = Settings()
+        # Valid origin should be accepted
+        assert "http://localhost:3000" in settings.cors_origins
+        # Invalid origin should be rejected
+        assert "not-a-url" not in settings.cors_origins
+        # Warning should be logged
+        assert "Invalid CORS origin" in caplog.text
+
+    def test_wildcard_origin_rejected(self, monkeypatch, caplog):
+        """Test that wildcard '*' origin is rejected."""
+        monkeypatch.setenv("CORS_ORIGINS", '["*", "http://localhost:3000"]')
+        with caplog.at_level("WARNING"):
+            settings = Settings()
+        # Valid origin should be accepted
+        assert "http://localhost:3000" in settings.cors_origins
+        # Wildcard should be rejected
+        assert "*" not in settings.cors_origins
+        # Warning should be logged
+        assert "Invalid CORS origin" in caplog.text
+
+    def test_origin_without_scheme_rejected(self, monkeypatch, caplog):
+        """Test that origins without scheme are rejected."""
+        monkeypatch.setenv("CORS_ORIGINS", '["localhost:3000", "http://localhost:3000"]')
+        with caplog.at_level("WARNING"):
+            settings = Settings()
+        # Valid origin should be accepted
+        assert "http://localhost:3000" in settings.cors_origins
+        # Invalid origin (no scheme) should be rejected
+        assert "localhost:3000" not in settings.cors_origins
+        # Warning should be logged
+        assert "Invalid CORS origin" in caplog.text
+
+    def test_all_invalid_origins_returns_empty(self, monkeypatch, caplog):
+        """Test that all invalid origins result in empty list."""
+        monkeypatch.setenv("CORS_ORIGINS", '["*", "not-a-url", "ftp://files.example.com"]')
+        with caplog.at_level("WARNING"):
+            settings = Settings()
+        assert settings.cors_origins == []
+        # Multiple warnings should be logged
+        assert "Invalid CORS origin" in caplog.text
+
+    def test_empty_cors_origins_accepted(self, monkeypatch):
+        """Test that empty CORS origins list is valid."""
+        monkeypatch.setenv("CORS_ORIGINS", "[]")
+        settings = Settings()
+        assert settings.cors_origins == []
+
+    def test_non_http_scheme_rejected(self, monkeypatch, caplog):
+        """Test that non-http schemes like ftp, file, ws are rejected."""
+        monkeypatch.setenv("CORS_ORIGINS", '["ftp://files.example.com", "ws://socket.example.com", "http://valid.com"]')
+        with caplog.at_level("WARNING"):
+            settings = Settings()
+        # Only http:// should be accepted
+        assert "http://valid.com" in settings.cors_origins
+        assert "ftp://files.example.com" not in settings.cors_origins
+        assert "ws://socket.example.com" not in settings.cors_origins
