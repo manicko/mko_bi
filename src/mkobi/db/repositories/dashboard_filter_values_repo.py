@@ -8,7 +8,7 @@ import logging
 from typing import cast
 from uuid import UUID
 
-from sqlalchemy import delete, select
+from sqlalchemy import delete, insert, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -86,17 +86,21 @@ class DashboardFilterValuesRepository(IDashboardFilterValuesRepository):
                 dashboard_id, filter_name, db
             )
 
-            # Bulk insert new values
-            for value in values:
-                db.add(
-                    DashboardFilterValue(
-                        dashboard_id=dashboard_id,
-                        filter_name=filter_name,
-                        filter_value=value,
-                    )
+            # Bulk insert new values using SQLAlchemy Core
+            if values:
+                insert_data = [
+                    {
+                        "dashboard_id": dashboard_id,
+                        "filter_name": filter_name,
+                        "filter_value": value,
+                    }
+                    for value in values
+                ]
+                await db.execute(
+                    insert(DashboardFilterValue),
+                    insert_data,
                 )
 
-            await db.flush()
             logger.info(
                 "Filter values saved: dashboard_id=%s, filter_name=%s, count=%s",
                 dashboard_id,

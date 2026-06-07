@@ -69,12 +69,16 @@ async def _handle_login(
     request: Request,
     response: Response,
     db: AsyncSession,
+    redis_client: Any,
 ) -> TokenWithUser:
     """Common login logic and error handling."""
     # Apply rate limiting for login attempts based on client IP
     # IP-based rate limiting prevents email enumeration via rate limit side-channel
     client_ip = request.client.host if request.client else "unknown"
-    rate_limiter = auth_service._rate_limiter
+    rate_limiter = AsyncRateLimiter(
+        redis_client,
+        fail_closed=get_config().rate_limiter_fail_closed,
+    )
     if not await rate_limiter.check_rate_limit(
         f"login:{client_ip}", max_attempts=5, ttl=300
     ):
@@ -130,6 +134,7 @@ async def login(
     login_data: LoginRequest,
     auth_service: AuthService = Depends(get_auth_service),
     db: AsyncSession = Depends(get_db_dependency),
+    redis_client: Any = Depends(get_redis_client_dependency),
 ) -> TokenWithUser:
     """User login endpoint."""
     return await _handle_login(
@@ -139,6 +144,7 @@ async def login(
         request=request,
         response=response,
         db=db,
+        redis_client=redis_client,
     )
 
 
@@ -155,6 +161,7 @@ async def login_form(
     form_data: OAuth2PasswordRequestForm = Depends(),
     auth_service: AuthService = Depends(get_auth_service),
     db: AsyncSession = Depends(get_db_dependency),
+    redis_client: Any = Depends(get_redis_client_dependency),
 ) -> TokenWithUser:
     """Login endpoint via OAuth2 form."""
     return await _handle_login(
@@ -164,6 +171,7 @@ async def login_form(
         request=request,
         response=response,
         db=db,
+        redis_client=redis_client,
     )
 
 

@@ -43,6 +43,7 @@ async def _update_processing_log_status(
     started_at: datetime | None = None,
     finished_at: datetime | None = None,
     session: AsyncSession | None = None,
+    commit: bool = True,
 ) -> None:
     """Update processing log status.
 
@@ -53,6 +54,7 @@ async def _update_processing_log_status(
         started_at: Processing start time (only set if not already set).
         finished_at: Processing finish time.
         session: Optional database session for testing. If None, creates a new session.
+        commit: If True (default), commits on COMPLETED/FAILED. If False, caller manages transaction.
     """
     try:
         values: dict[str, Any] = {
@@ -71,15 +73,12 @@ async def _update_processing_log_status(
             .values(**values)
         )
         if session is not None:
-            # Test mode - use provided session (SAVEPOINT pattern in async_db_session fixture).
-            # Commit explicitly on COMPLETED/FAILED to persist changes within the SAVEPOINT.
-            # Other functions (e.g., _store_aggregates) rely on caller transaction management,
-            # but this function needs explicit commit to update the processing log status.
+            # Test mode or transaction-managed mode - use provided session
             await session.execute(stmt)
-            if status in (ProcessingStatus.COMPLETED, ProcessingStatus.FAILED):
+            if commit and status in (ProcessingStatus.COMPLETED, ProcessingStatus.FAILED):
                 await session.commit()
         else:
-            # Production mode - create new session
+            # Production mode - create new session with transaction
             async with get_session() as db:
                 async with db.begin():
                     await db.execute(stmt)
@@ -88,7 +87,7 @@ async def _update_processing_log_status(
         )
     except SQLAlchemyError as e:
         logger.error("Failed to update processing log status: %s", e)
-        if session is not None:
+        if session is not None and commit:
             await session.rollback()
     except Exception as e:
         logger.exception("Unexpected error updating processing log status: %s", e)
@@ -166,6 +165,9 @@ async def _process_csv_file_async(
 ) -> dict[str, Any]:
     """Async CSV processing implementation.
 
+    Uses a single atomic transaction for all database operations. If any step
+    fails (processing, storage, or status updates), the entire transaction rolls back.
+
     Args:
         file_path_str: Path to CSV file as string.
         task_id: Task ID (UUID string).
@@ -180,13 +182,19 @@ async def _process_csv_file_async(
     file_path = Path(file_path_str)
     dashboard_id = UUID(dashboard_id_str)
 
-    try:
-        # Update status to processing
+    # Helper to run processing with a managed session
+    async def _run_with_transaction(
+        session: AsyncSession,
+    ) -> dict[str, Any]:
+        """Execute all processing and DB operations within a single transaction."""
+        # Update status to processing (within transaction)
         await _update_processing_log_status(
             task_id=task_id,
             status=ProcessingStatus.PROCESSING,
             message="Processing started (background task)",
-            session=db_session,
+            started_at=datetime.now(UTC),
+            session=session,
+            commit=False,
         )
 
         # Extract CSV parsing config from processing_config
@@ -295,22 +303,23 @@ async def _process_csv_file_async(
             "preview": df.head(10).to_dicts(),
         }
 
-        # Store aggregates in database with mode
-        await _store_aggregates(df, dashboard_id, task_id, mode, db_session=db_session)
-
-        # Update status to completed
-        await _update_processing_log_status(
-            task_id=task_id,
-            status=ProcessingStatus.COMPLETED,
-            message=f"Processing completed successfully: {result_data['rows']} rows processed",
-            finished_at=datetime.now(UTC),
-            session=db_session,
-        )
+        # Store aggregates in database with mode (within same transaction)
+        await _store_aggregates(df, dashboard_id, task_id, mode, db_session=session)
 
         # Clean up temp file
         if file_path.exists():
             await asyncio.to_thread(file_path.unlink)
             logger.info("Temp file deleted: %s", file_path)
+
+        # Update status to completed (within same transaction)
+        await _update_processing_log_status(
+            task_id=task_id,
+            status=ProcessingStatus.COMPLETED,
+            message=f"Processing completed successfully: {result_data['rows']} rows processed",
+            finished_at=datetime.now(UTC),
+            session=session,
+            commit=False,
+        )
 
         return {
             "success": True,
@@ -318,34 +327,67 @@ async def _process_csv_file_async(
             "message": "Processing completed",
         }
 
-    except Exception as e:
-        error_msg = str(e)
-        logger.exception("Processing failed: task_id=%s, error=%s", task_id, error_msg)
+    # Execute with appropriate session management
+    if db_session is not None:
+        # Test mode - use provided session (caller manages transaction)
+        try:
+            return await _run_with_transaction(db_session)
+        except Exception as e:
+            error_msg = str(e)
+            logger.exception("Processing failed: task_id=%s, error=%s", task_id, error_msg)
 
-        # Update status to failed
-        await _update_processing_log_status(
-            task_id=task_id,
-            status=ProcessingStatus.FAILED,
-            message=f"Processing failed: {error_msg}",
-            finished_at=datetime.now(UTC),
-            session=db_session,
-        )
+            # Clean up temp file on error
+            if file_path.exists():
+                try:
+                    await asyncio.to_thread(file_path.unlink)
+                except Exception:
+                    logger.warning(
+                        "Failed to clean up temp file: %s",
+                        file_path,
+                        exc_info=True,
+                    )
 
-        # Clean up temp file on error
-        if file_path.exists():
-            try:
-                await asyncio.to_thread(file_path.unlink)
-            except Exception:
-                logger.warning(
-                    "Failed to clean up temp file: %s",
-                    file_path,
-                    exc_info=True,
-                )
+            # Update status to failed within the same transaction
+            await _update_processing_log_status(
+                task_id=task_id,
+                status=ProcessingStatus.FAILED,
+                message=f"Processing failed: {error_msg}",
+                finished_at=datetime.now(UTC),
+                session=db_session,
+                commit=False,
+            )
+            raise
+    else:
+        # Production mode - create new session with single transaction
+        async with get_session() as session:
+            async with session.begin():
+                try:
+                    return await _run_with_transaction(session)
+                except Exception as e:
+                    error_msg = str(e)
+                    logger.exception("Processing failed: task_id=%s, error=%s", task_id, error_msg)
 
-        return {
-            "success": False,
-            "error": error_msg,
-        }
+                    # Clean up temp file on error
+                    if file_path.exists():
+                        try:
+                            await asyncio.to_thread(file_path.unlink)
+                        except Exception:
+                            logger.warning(
+                                "Failed to clean up temp file: %s",
+                                file_path,
+                                exc_info=True,
+                            )
+
+                    # Update status to failed within the same transaction
+                    await _update_processing_log_status(
+                        task_id=task_id,
+                        status=ProcessingStatus.FAILED,
+                        message=f"Processing failed: {error_msg}",
+                        finished_at=datetime.now(UTC),
+                        session=session,
+                        commit=False,
+                    )
+                    raise
 
 
 async def _store_aggregates(
