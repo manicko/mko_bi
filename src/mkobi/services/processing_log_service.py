@@ -14,9 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.interfaces.repository_interfaces import IProcessingLogRepository
 from mkobi.interfaces.service_interfaces import IProcessingLogService
-from mkobi.models.enums import ProcessingStatus
+from mkobi.models.enums import ErrorCode, ProcessingStatus
 from mkobi.models.processing_logs import ProcessingLogFilter, ProcessingLogRead
-from mkobi.utils.exceptions import AppException, ErrorCode
+from mkobi.utils.exceptions import AppException
 
 logger = logging.getLogger(__name__)
 
@@ -150,6 +150,9 @@ class ProcessingLogService(IProcessingLogService):
     ) -> ProcessingLogRead | None:
         """Update log status to UPLOADED."""
         logger.info("Updating log to UPLOADED: log_id=%s", log_id)
+        current_log = await self.log_repo.get_by_id(log_id, db)
+        if current_log is not None:
+            _validate_transition(current_log.status, ProcessingStatus.UPLOADED)
         await self.log_repo.update_status(
             log_id, ProcessingStatus.UPLOADED, "File uploaded successfully", db
         )
@@ -161,6 +164,9 @@ class ProcessingLogService(IProcessingLogService):
     ) -> ProcessingLogRead | None:
         """Update log status to PROCESSING."""
         logger.info("Updating log to PROCESSING: log_id=%s", log_id)
+        current_log = await self.log_repo.get_by_id(log_id, db)
+        if current_log is not None:
+            _validate_transition(current_log.status, ProcessingStatus.PROCESSING)
         await self.log_repo.update_status(
             log_id, ProcessingStatus.PROCESSING, "Processing data", db
         )
@@ -172,6 +178,9 @@ class ProcessingLogService(IProcessingLogService):
     ) -> ProcessingLogRead | None:
         """Update log status to COMPLETED."""
         logger.info("Updating log to COMPLETED: log_id=%s", log_id)
+        current_log = await self.log_repo.get_by_id(log_id, db)
+        if current_log is not None:
+            _validate_transition(current_log.status, ProcessingStatus.COMPLETED)
         await self.log_repo.update_status(
             log_id,
             ProcessingStatus.COMPLETED,
@@ -193,6 +202,9 @@ class ProcessingLogService(IProcessingLogService):
     ) -> ProcessingLogRead | None:
         """Update log status to FAILED."""
         logger.error("Updating log to FAILED: log_id=%s, error=%s", log_id, error)
+        current_log = await self.log_repo.get_by_id(log_id, db)
+        if current_log is not None:
+            _validate_transition(current_log.status, ProcessingStatus.FAILED)
         await self.log_repo.update_status(log_id, ProcessingStatus.FAILED, error, db)
         log = await self.log_repo.get_by_id(log_id, db)
         return log

@@ -7,9 +7,10 @@ from uuid import uuid4
 from mkobi.models.enums import ProcessingStatus
 from mkobi.models.processing_logs import ProcessingLogFilter, ProcessingLogRead, ProcessingLogCreate
 from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
-from mkobi.services.processing_log_service import ProcessingLogService
+from mkobi.services.processing_log_service import ProcessingLogService, _validate_transition
 from mkobi.workers.data_worker import cleanup_stale_processing_logs
 from mkobi.db.models.processing_logs import ProcessingLog
+from mkobi.utils.exceptions import AppException, ErrorCode
 
 
 class TestProcessingLogFilter:
@@ -183,9 +184,13 @@ class TestProcessingLogService:
 
     @pytest.mark.asyncio
     async def test_update_to_completed(self, service, async_db_session):
-        """Test updating log to completed."""
-        # First create a log
+        """Test updating log to completed via valid state transitions."""
+        # Create a log and follow proper state transitions
         log = await service.create_started_log(None, async_db_session)
+
+        # Follow proper flow: STARTED -> UPLOADED -> PROCESSING -> COMPLETED
+        await service.update_to_uploaded(log.id, async_db_session)
+        await service.update_to_processing(log.id, async_db_session)
 
         # Update to completed
         result = await service.update_to_completed(
@@ -216,6 +221,8 @@ class TestProcessingLogService:
         """Test getting filtered logs via service."""
         # Create logs
         log1 = await service.create_started_log(None, async_db_session)
+        await service.update_to_uploaded(log1.id, async_db_session)
+        await service.update_to_processing(log1.id, async_db_session)
         await service.update_to_completed(
             log1.id,
             "Done",
@@ -234,8 +241,10 @@ class TestProcessingLogService:
     @pytest.mark.asyncio
     async def test_update_processing_log_with_finished_at(self, service, async_db_session):
         """Test update_processing_log with custom finished_at timestamp."""
-        # Create a log first
+        # Create a log and set to PROCESSING status for valid transition to COMPLETED
         log = await service.create_started_log(None, async_db_session)
+        await service.update_to_uploaded(log.id, async_db_session)
+        await service.update_to_processing(log.id, async_db_session)
 
         # Update with custom finished_at (UTC-aware for consistency)
         custom_finished = (datetime.now(UTC) - timedelta(hours=1)).isoformat()
@@ -259,8 +268,10 @@ class TestProcessingLogService:
     @pytest.mark.asyncio
     async def test_update_processing_log_invalid_finished_at(self, service, async_db_session):
         """Test update_processing_log with invalid finished_at format."""
-        # Create a log first
+        # Create a log and set to PROCESSING status for valid transition to COMPLETED
         log = await service.create_started_log(None, async_db_session)
+        await service.update_to_uploaded(log.id, async_db_session)
+        await service.update_to_processing(log.id, async_db_session)
 
         # Update with invalid finished_at - should fall back to None/default behavior
         result = await service.update_processing_log(
@@ -364,3 +375,105 @@ class TestStaleProcessingCleanup:
         count = await cleanup_stale_processing_logs(timeout_minutes=30, session=async_db_session)
 
         assert count == 0, "Should have marked 0 entries as FAILED"
+
+
+class TestStateTransitionValidation:
+    """Tests for processing status state machine validation."""
+
+    def test_valid_transition_started_to_uploaded(self):
+        """Test valid transition from STARTED to UPLOADED."""
+        _validate_transition(
+            ProcessingStatus.STARTED, ProcessingStatus.UPLOADED
+        )
+
+    def test_valid_transition_started_to_failed(self):
+        """Test valid transition from STARTED to FAILED."""
+        _validate_transition(
+            ProcessingStatus.STARTED, ProcessingStatus.FAILED
+        )
+
+    def test_valid_transition_uploaded_to_processing(self):
+        """Test valid transition from UPLOADED to PROCESSING."""
+        _validate_transition(
+            ProcessingStatus.UPLOADED, ProcessingStatus.PROCESSING
+        )
+
+    def test_valid_transition_uploaded_to_failed(self):
+        """Test valid transition from UPLOADED to FAILED."""
+        _validate_transition(
+            ProcessingStatus.UPLOADED, ProcessingStatus.FAILED
+        )
+
+    def test_valid_transition_processing_to_completed(self):
+        """Test valid transition from PROCESSING to COMPLETED."""
+        _validate_transition(
+            ProcessingStatus.PROCESSING, ProcessingStatus.COMPLETED
+        )
+
+    def test_valid_transition_processing_to_failed(self):
+        """Test valid transition from PROCESSING to FAILED."""
+        _validate_transition(
+            ProcessingStatus.PROCESSING, ProcessingStatus.FAILED
+        )
+
+    def test_same_status_transition_allowed(self):
+        """Test that same status transition is allowed (no-op)."""
+        _validate_transition(
+            ProcessingStatus.STARTED, ProcessingStatus.STARTED
+        )
+
+    def test_invalid_transition_completed_to_processing(self):
+        """Test that COMPLETED -> PROCESSING is blocked."""
+        with pytest.raises(AppException) as exc_info:
+            _validate_transition(
+                ProcessingStatus.COMPLETED, ProcessingStatus.PROCESSING
+            )
+        assert exc_info.value.code == ErrorCode.INVALID_TRANSITION
+        assert "completed -> processing" in exc_info.value.detail
+
+    def test_invalid_transition_completed_to_failed(self):
+        """Test that COMPLETED -> FAILED is blocked."""
+        with pytest.raises(AppException) as exc_info:
+            _validate_transition(
+                ProcessingStatus.COMPLETED, ProcessingStatus.FAILED
+            )
+        assert exc_info.value.code == ErrorCode.INVALID_TRANSITION
+
+    def test_invalid_transition_failed_to_completed(self):
+        """Test that FAILED -> COMPLETED is blocked."""
+        with pytest.raises(AppException) as exc_info:
+            _validate_transition(
+                ProcessingStatus.FAILED, ProcessingStatus.COMPLETED
+            )
+        assert exc_info.value.code == ErrorCode.INVALID_TRANSITION
+
+    def test_invalid_transition_started_to_processing(self):
+        """Test that STARTED -> PROCESSING is blocked (must go through UPLOADED)."""
+        with pytest.raises(AppException) as exc_info:
+            _validate_transition(
+                ProcessingStatus.STARTED, ProcessingStatus.PROCESSING
+            )
+        assert exc_info.value.code == ErrorCode.INVALID_TRANSITION
+
+    def test_invalid_transition_started_to_completed(self):
+        """Test that STARTED -> COMPLETED is blocked (must go through PROCESSING)."""
+        with pytest.raises(AppException) as exc_info:
+            _validate_transition(
+                ProcessingStatus.STARTED, ProcessingStatus.COMPLETED
+            )
+        assert exc_info.value.code == ErrorCode.INVALID_TRANSITION
+
+    @pytest.mark.asyncio
+    async def test_service_invalid_transition_raises_error(self, async_db_session):
+        """Test that service method raises error for invalid transitions."""
+        service = ProcessingLogService(ProcessingLogRepository())
+        # Create log in COMPLETED state
+        log = await service.create_started_log(None, async_db_session)
+        await service.update_to_uploaded(log.id, async_db_session)
+        await service.update_to_processing(log.id, async_db_session)
+        await service.update_to_completed(log.id, "Done", async_db_session)
+
+        # Try to transition from COMPLETED to PROCESSING (invalid)
+        with pytest.raises(AppException) as exc_info:
+            await service.update_to_processing(log.id, async_db_session)
+        assert exc_info.value.code == ErrorCode.INVALID_TRANSITION
