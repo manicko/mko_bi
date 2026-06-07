@@ -8,8 +8,9 @@ from unittest.mock import MagicMock
 from uuid import uuid4
 
 import pytest
+from datetime import datetime, UTC, timedelta
 
-from mkobi.services.file_cleanup import cleanup_stale_temp_files, cleanup_task_files
+from mkobi.services.file_cleanup import cleanup_stale_temp_files, cleanup_task_files, cleanup_old_processing_logs
 
 
 @pytest.fixture(autouse=True)
@@ -148,3 +149,133 @@ class TestFileCleanup:
         
         # Cleanup
         shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+class TestCleanupOldProcessingLogs:
+    """Tests for cleanup_old_processing_logs functionality."""
+
+    @pytest.mark.asyncio
+    async def test_cleanup_old_processing_logs_deletes_terminal_states(self, async_db_session):
+        """Test that cleanup_old_processing_logs deletes COMPLETED and FAILED logs older than cutoff."""
+        from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
+
+        repo = ProcessingLogRepository()
+
+        # Create old COMPLETED log (35 days ago)
+        old_completed_time = datetime.now(UTC) - timedelta(days=35)
+        from sqlalchemy import update as sa_update
+        from mkobi.db.models.processing_logs import ProcessingLog
+
+        old_completed = await repo.create_log(
+            dashboard_id=None,
+            status="completed",
+            message="Old completed log",
+            db=async_db_session,
+        )
+        # Manually set finished_at to simulate old entry
+        stmt = sa_update(ProcessingLog).where(ProcessingLog.id == old_completed.id).values({
+            "finished_at": old_completed_time,
+            "started_at": old_completed_time,
+        })
+        await async_db_session.execute(stmt)
+        await async_db_session.commit()
+
+        # Create old FAILED log (40 days ago)
+        old_failed_time = datetime.now(UTC) - timedelta(days=40)
+        old_failed = await repo.create_log(
+            dashboard_id=None,
+            status="failed",
+            message="Old failed log",
+            db=async_db_session,
+        )
+        stmt = sa_update(ProcessingLog).where(ProcessingLog.id == old_failed.id).values({
+            "finished_at": old_failed_time,
+            "started_at": old_failed_time,
+        })
+        await async_db_session.execute(stmt)
+        await async_db_session.commit()
+
+        # Create a RECENT COMPLETED log (5 days ago) - should NOT be deleted
+        recent_completed_time = datetime.now(UTC) - timedelta(days=5)
+        recent_completed = await repo.create_log(
+            dashboard_id=None,
+            status="completed",
+            message="Recent completed log",
+            db=async_db_session,
+        )
+        stmt = sa_update(ProcessingLog).where(ProcessingLog.id == recent_completed.id).values({
+            "finished_at": recent_completed_time,
+            "started_at": recent_completed_time,
+        })
+        await async_db_session.execute(stmt)
+        await async_db_session.commit()
+
+        # Create a STARTED log - should NOT be deleted (non-terminal state)
+        started_log = await repo.create_log(
+            dashboard_id=None,
+            status="started",
+            message="Started log",
+            db=async_db_session,
+        )
+
+        # Run cleanup with 30 day retention
+        deleted_count = await cleanup_old_processing_logs(retention_days=30)
+
+        assert deleted_count == 2, "Should have deleted 2 old logs (COMPLETED and FAILED)"
+
+        # Verify old logs are deleted
+        deleted_completed = await repo.get_by_id(old_completed.id, db=async_db_session)
+        assert deleted_completed is None
+
+        deleted_failed = await repo.get_by_id(old_failed.id, db=async_db_session)
+        assert deleted_failed is None
+
+        # Verify recent COMPLETED log still exists
+        existing_completed = await repo.get_by_id(recent_completed.id, db=async_db_session)
+        assert existing_completed is not None
+        assert existing_completed.status == "completed"
+
+        # Verify STARTED log still exists (non-terminal state never deleted)
+        existing_started = await repo.get_by_id(started_log.id, db=async_db_session)
+        assert existing_started is not None
+        assert existing_started.status == "started"
+
+    @pytest.mark.asyncio
+    async def test_cleanup_old_processing_logs_respects_non_terminal_states(
+        self, async_db_session
+    ):
+        """Test that non-terminal states (STARTED, UPLOADED, PROCESSING) are never deleted."""
+        from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
+
+        repo = ProcessingLogRepository()
+
+        # Create old logs in non-terminal states
+        old_time = datetime.now(UTC) - timedelta(days=40)
+        from sqlalchemy import update as sa_update
+        from mkobi.db.models.processing_logs import ProcessingLog
+
+        created_log_ids = []
+        for status in ["started", "uploaded", "processing"]:
+            log = await repo.create_log(
+                dashboard_id=None,
+                status=status,
+                message=f"Old {status} log",
+                db=async_db_session,
+            )
+            created_log_ids.append(log.id)
+            # Manually set started_at to simulate old entry
+            stmt = sa_update(ProcessingLog).where(ProcessingLog.id == log.id).values({
+                "started_at": old_time,
+            })
+            await async_db_session.execute(stmt)
+            await async_db_session.commit()
+
+        # Run cleanup with 30 day retention
+        deleted_count = await cleanup_old_processing_logs(retention_days=30)
+
+        assert deleted_count == 0, "Non-terminal states should never be deleted"
+
+        # Verify all created logs still exist
+        for log_id in created_log_ids:
+            log = await repo.get_by_id(log_id, db=async_db_session)
+            assert log is not None, f"Log {log_id} should still exist"

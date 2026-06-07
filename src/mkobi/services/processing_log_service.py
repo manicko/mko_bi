@@ -6,7 +6,7 @@ All methods are async and comply with task 011_processing_logs.md requirements.
 """
 
 import logging
-from datetime import datetime
+from datetime import datetime, UTC, timedelta
 from typing import cast
 from uuid import UUID
 
@@ -171,6 +171,37 @@ class ProcessingLogService(IProcessingLogService):
         """Get filtered processing logs."""
         logger.info("Getting filtered logs: filters=%s", filters)
         return await self.log_repo.get_filtered(filters, db)
+
+    async def delete_old_logs(
+        self, retention_days: int | None = None, db: AsyncSession | None = None
+    ) -> int:
+        """Delete processing logs in terminal states older than retention period.
+
+        Args:
+            retention_days: Number of days to keep logs. If None, uses the configured
+                logs_retention_days setting (default 30 days).
+            db: Optional database session. If None, creates a new session.
+
+        Returns:
+            int: Number of deleted log entries.
+        """
+        from mkobi.config import get_config
+        from mkobi.db.session import get_session
+
+        config = get_config()
+        days = retention_days if retention_days is not None else config.logs_retention_days
+        cutoff = datetime.now(UTC) - timedelta(days=days)
+
+        if db is not None:
+            # Use provided session (test mode)
+            count = await self.log_repo.delete_old_logs(cutoff, db)
+            return cast(int, count)
+
+        # Production mode - create new session
+        async with get_session() as session:
+            async with session.begin():
+                count = await self.log_repo.delete_old_logs(cutoff, session)
+                return cast(int, count)
 
 
 

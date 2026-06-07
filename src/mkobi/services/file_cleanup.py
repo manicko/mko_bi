@@ -7,7 +7,6 @@ from the upload directory. Also provides cleanup for old processing logs.
 import uuid
 from datetime import datetime, UTC, timedelta
 from pathlib import Path
-from typing import Any
 
 from sqlalchemy import delete
 

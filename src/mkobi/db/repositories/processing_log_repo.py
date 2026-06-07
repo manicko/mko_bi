@@ -9,7 +9,7 @@ from datetime import datetime, UTC, time
 from uuid import UUID
 from typing import cast
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -312,8 +312,6 @@ class ProcessingLogRepository(IProcessingLogRepository):
             True if logs were deleted, False if none found.
         """
         try:
-            from sqlalchemy import delete
-
             stmt = delete(processing_log_model.ProcessingLog).where(
                 processing_log_model.ProcessingLog.dashboard_id == dashboard_id
             )
@@ -328,4 +326,38 @@ class ProcessingLogRepository(IProcessingLogRepository):
             return deleted
         except SQLAlchemyError as e:
             logger.error("Error deleting logs dashboard_id=%s: %s", dashboard_id, e)
+            raise
+
+    async def delete_old_logs(
+        self,
+        cutoff: datetime,
+        db: AsyncSession,
+    ) -> int:
+        """Delete processing logs in terminal states older than cutoff.
+
+        Args:
+            cutoff: Datetime cutoff - logs with finished_at before this are deleted.
+            db: Async database session.
+
+        Returns:
+            int: Number of deleted log entries.
+        """
+        try:
+            stmt = (
+                delete(processing_log_model.ProcessingLog)
+                .where(
+                    processing_log_model.ProcessingLog.status.in_(
+                        [ProcessingStatus.COMPLETED, ProcessingStatus.FAILED]
+                    ),
+                    processing_log_model.ProcessingLog.finished_at < cutoff,
+                )
+            )
+            result = await db.execute(stmt)
+            count = result.rowcount or 0
+            await db.flush()
+            if count > 0:
+                logger.info("Deleted %d old processing logs (cutoff=%s)", count, cutoff)
+            return count
+        except SQLAlchemyError as e:
+            logger.error("Error deleting old logs: %s", e)
             raise
