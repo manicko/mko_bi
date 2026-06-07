@@ -506,15 +506,21 @@ class Settings(BaseSettings):
         """Build PostgreSQL connection URL.
 
         Returns None in non-production if password is missing.
-        Raises ValueError in production if password is missing.
+        Raises ValueError in production if password is missing or is a placeholder.
         """
         if not self.database.password:
             if self.environment == EnvironmentEnum.PRODUCTION:
                 raise ValueError(
                     "DATABASE__PASSWORD is required in production. "
-                    "Set MKOBI_APP_PASSWORD environment variable."
+                    "Set DATABASE__PASSWORD environment variable."
                 )
             return None
+        if self.environment == EnvironmentEnum.PRODUCTION:
+            if self.database.password.lower() in {p.lower() for p in WEAK_PASSWORDS}:
+                raise ValueError(
+                    f"DATABASE__PASSWORD is a known placeholder: '{self.database.password}'. "
+                    "Set a strong password for production."
+                )
         return str(self.database.database_url)
 
     @property
