@@ -2,7 +2,7 @@ id: TASK_023_fix_aggregation_service_hardcoded_sum
 
 title: Use metric_agg parameter in AggregationService instead of hardcoding sum (DP-005)
 
-status: pending
+status: completed
 
 priority: medium
 

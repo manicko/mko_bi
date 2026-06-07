@@ -2,7 +2,7 @@ id: TASK_022_add_nginx_client_max_body_size
 
 title: Add client_max_body_size to nginx config (DC-007)
 
-status: pending
+status: completed
 
 priority: medium
 
