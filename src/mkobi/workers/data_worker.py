@@ -18,6 +18,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.data.loaders.loader import CSVLoader
+from mkobi.data.loaders.validator import DataValidator
 from mkobi.data.processing.transformations import (
     _add_computed_fields,
     apply_transformations,
@@ -27,7 +28,7 @@ from mkobi.db.models.graphs import Graph
 from mkobi.db.models.processing_logs import ProcessingLog
 from mkobi.db.models.filters import Filter, dashboard_filters
 from mkobi.db.session import get_session
-from mkobi.models.data import ProcessingConfig
+from mkobi.models.data import LoaderConfig, ProcessingConfig
 from mkobi.models.enums import ProcessingStatus
 
 logger = logging.getLogger(__name__)
@@ -217,6 +218,26 @@ async def _process_csv_file_async(
             loader.load_csv, file_path, csv_parse_config if csv_parse_config else None
         )
         logger.info("File loaded: %d rows, %d columns", df.shape[0], df.shape[1])
+
+        # Validate loaded data using DataValidator
+        loader_config = LoaderConfig(
+            required_columns=settings.get("required_columns", []) if settings else [],
+            column_types=column_types,
+        )
+        validator = DataValidator(config=loader_config)
+        validation_result = validator.validate(df)
+        if not validation_result.is_valid:
+            error_msg = f"Data validation failed: {'; '.join(validation_result.errors)}"
+            logger.error(error_msg)
+            await _update_processing_log_status(
+                task_id=task_id,
+                status=ProcessingStatus.FAILED,
+                message=error_msg,
+                finished_at=datetime.now(UTC),
+                session=session,
+                commit=False,
+            )
+            raise ValueError(error_msg)
 
         # Apply decimal separator transformation for float columns with comma decimal
         if settings and settings.get("decimal_separator") == ",":

@@ -64,8 +64,16 @@ class AggregationService:
                 )
                 continue
 
-            # Build aggregation expressions for metrics
-            agg_exprs = [pl.col(m).sum().alias(f"{m}_sum") for m in metric_cols]
+            # Build aggregation expressions for metrics using metric_agg parameter
+            _agg_fn_map: dict[str, Any] = {
+                "sum": lambda c: c.sum(),
+                "mean": lambda c: c.mean(),
+                "min": lambda c: c.min(),
+                "max": lambda c: c.max(),
+                "count": lambda c: c.count(),
+            }
+            agg_fn = _agg_fn_map.get(metric_agg, lambda c: c.sum())
+            agg_exprs = [agg_fn(pl.col(m)).alias(f"{m}_{metric_agg}") for m in metric_cols]
 
             # Perform GROUP BY aggregation
             result = df.group_by(groupby_cols).agg(agg_exprs)

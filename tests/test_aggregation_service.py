@@ -273,6 +273,7 @@ class TestAggregationService:
             df=df,
             graphs=[graph],
             dashboard_filters=[],
+            metric_agg="sum",
         )
 
         assert len(records) == 2  # Two products
@@ -281,3 +282,124 @@ class TestAggregationService:
         record_a = next(r for r in records if r["dims"]["product"] == "A")
         assert record_a["metrics"]["sales_sum"] == 300
         assert record_a["metrics"]["quantity_sum"] == 30
+
+    async def test_aggregate_for_dashboard_mean_aggregation(
+        self, aggregation_service, sample_dataframe
+    ):
+        """Test mean aggregation type."""
+        dashboard_id = uuid4()
+        graph = self._make_graph_read(
+            graph_id=uuid4(),
+            dashboard_id=dashboard_id,
+            dimensions=["category"],
+            metrics=["sales"],
+        )
+
+        results = await aggregation_service.aggregate_for_dashboard(
+            df=sample_dataframe,
+            graphs=[graph],
+            dashboard_filters=[],
+            metric_agg="mean",
+        )
+
+        assert len(results) > 0
+        for r in results:
+            # Check that metric key uses "mean" suffix
+            assert any(k.endswith("_mean") for k in r["metrics"].keys())
+
+    async def test_aggregate_for_dashboard_min_aggregation(
+        self, aggregation_service, sample_dataframe
+    ):
+        """Test min aggregation type."""
+        dashboard_id = uuid4()
+        graph = self._make_graph_read(
+            graph_id=uuid4(),
+            dashboard_id=dashboard_id,
+            dimensions=["category"],
+            metrics=["sales"],
+        )
+
+        results = await aggregation_service.aggregate_for_dashboard(
+            df=sample_dataframe,
+            graphs=[graph],
+            dashboard_filters=[],
+            metric_agg="min",
+        )
+
+        assert len(results) > 0
+        for r in results:
+            # Check that metric key uses "min" suffix
+            assert any(k.endswith("_min") for k in r["metrics"].keys())
+
+    async def test_aggregate_for_dashboard_max_aggregation(
+        self, aggregation_service, sample_dataframe
+    ):
+        """Test max aggregation type."""
+        dashboard_id = uuid4()
+        graph = self._make_graph_read(
+            graph_id=uuid4(),
+            dashboard_id=dashboard_id,
+            dimensions=["category"],
+            metrics=["sales"],
+        )
+
+        results = await aggregation_service.aggregate_for_dashboard(
+            df=sample_dataframe,
+            graphs=[graph],
+            dashboard_filters=[],
+            metric_agg="max",
+        )
+
+        assert len(results) > 0
+        for r in results:
+            # Check that metric key uses "max" suffix
+            assert any(k.endswith("_max") for k in r["metrics"].keys())
+
+    async def test_aggregate_for_dashboard_count_aggregation(
+        self, aggregation_service, sample_dataframe
+    ):
+        """Test count aggregation type."""
+        dashboard_id = uuid4()
+        graph = self._make_graph_read(
+            graph_id=uuid4(),
+            dashboard_id=dashboard_id,
+            dimensions=["category"],
+            metrics=["sales"],
+        )
+
+        results = await aggregation_service.aggregate_for_dashboard(
+            df=sample_dataframe,
+            graphs=[graph],
+            dashboard_filters=[],
+            metric_agg="count",
+        )
+
+        assert len(results) > 0
+        for r in results:
+            # Check that metric key uses "count" suffix and values are counts
+            metric_key = next(k for k in r["metrics"].keys() if k.endswith("_count"))
+            assert r["metrics"][metric_key] == 2  # Two rows per category in sample data
+
+    async def test_aggregate_for_dashboard_unknown_agg_falls_back_to_sum(
+        self, aggregation_service, sample_dataframe
+    ):
+        """Test that unknown aggregation type falls back to sum."""
+        dashboard_id = uuid4()
+        graph = self._make_graph_read(
+            graph_id=uuid4(),
+            dashboard_id=dashboard_id,
+            dimensions=["category"],
+            metrics=["sales"],
+        )
+
+        results = await aggregation_service.aggregate_for_dashboard(
+            df=sample_dataframe,
+            graphs=[graph],
+            dashboard_filters=[],
+            metric_agg="unknown_func",
+        )
+
+        assert len(results) > 0
+        for r in results:
+            # Check that metric key uses "unknown_func" suffix (falling back to sum behavior)
+            assert any(k.endswith("_unknown_func") for k in r["metrics"].keys())
