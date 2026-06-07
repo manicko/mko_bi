@@ -1,4 +1,6 @@
 import { PlotlyChart } from './PlotlyChart'
+import { LineChart } from './LineChart'
+import { TableChart } from './TableChart'
 import type { GraphDataWithConfig } from '../../../../shared/types/api.types'
 import type { Data } from 'react-plotly.js'
 
@@ -27,11 +29,15 @@ function convertToPlotlyData(
     const trace: Record<string, unknown> = {
       x: xVals,
       y: yVals,
-      type: graph.type === 'pie' ? 'pie' : 'bar',
+      type: graph.type === 'pie' ? 'pie' :
+            graph.type === 'line' ? 'scatter' : 'bar',
     }
     if (name) trace.name = name
     if (graph.type === 'bar') {
       trace.orientation = orientation
+    }
+    if (graph.type === 'line') {
+      trace.mode = 'lines'
     }
     return trace
   }
@@ -69,6 +75,17 @@ function convertToPlotlyData(
 }
 
 export function ChartRenderer({ graph }: ChartRendererProps) {
+  // Table charts render as native HTML tables (no Plotly conversion)
+  if (graph.type === 'table') {
+    return <TableChart data={{ rows: graph.data }} />
+  }
+
+  // Line charts use LineChart component with scatter type
+  if (graph.type === 'line') {
+    return <LineChart data={convertToPlotlyData(graph)[0]} layout={graph.layout} />
+  }
+
+  // Bar and pie charts use PlotlyChart
   const plotlyData = convertToPlotlyData(graph)
   return <PlotlyChart data={plotlyData} layout={graph.layout} />
 }
