@@ -45,11 +45,6 @@ export interface DashboardSummary {
   created_at: string
 }
 
-export interface GraphData {
-  graph_id: string
-  data: Data[] // Plotly data format
-}
-
 export interface LoginRequest {
   email: string
   password: string
