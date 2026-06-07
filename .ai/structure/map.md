@@ -60,8 +60,6 @@ C:\PY_DEV\MKOBI
 |   |   |       08-deployment-config-validated.md
 |   |   |       90-integration-validated.md
 |   |   |       
-|   |   +---db
-|   |   +---problems
 |   |   +---templates
 |   |   |       audit-final-report.md
 |   |   |       audit-findings.md
@@ -98,11 +96,8 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
-|   |   |   PLAN_01.md
-|   |   |   
-|   |   \---tasks
-|   +---problems
-|   |   \---decisions
+|   |       PLAN_01.md
+|   |       
 |   +---researches
 |   |       RESEARCH_01.md
 |   |       
@@ -143,52 +138,55 @@ C:\PY_DEV\MKOBI
 |   |   |       TASK_022_add_nginx_client_max_body_size_DONE.yaml
 |   |   |       TASK_023_fix_aggregation_service_hardcoded_sum_DONE.yaml
 |   |   |       TASK_024_integrate_data_validator_into_pipeline_DONE.yaml
+|   |   |       TASK_025_add_processing_status_state_machine_DONE.yaml
+|   |   |       TASK_026_fix_file_move_before_enqueue_DONE.yaml
 |   |   |       TASK_027_fix_test_mode_transaction_boundary_DONE.yaml
+|   |   |       TASK_028_fix_useFilterValues_reactive_token_DONE.yaml
+|   |   |       TASK_029_remove_console_error_from_production_DONE.yaml
+|   |   |       TASK_030_fix_plotly_component_any_type_DONE.yaml
 |   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
-|   |   \---todo
-|   |           order.yaml
-|   |           TASK_021_fix_nginx_hsts_over_http.yaml
-|   |           TASK_025_add_processing_status_state_machine.yaml
-|   |           TASK_026_fix_file_move_before_enqueue.yaml
-|   |           TASK_028_fix_useFilterValues_reactive_token.yaml
-|   |           TASK_029_remove_console_error_from_production.yaml
-|   |           TASK_030_fix_plotly_component_any_type.yaml
-|   |           TASK_031_remove_alert_from_dashboard_management.yaml
-|   |           TASK_032_add_zod_validation_dashboard_form.yaml
-|   |           TASK_033_fix_force_password_hard_navigation.yaml
-|   |           TASK_034_fix_nginx_versioned_image.yaml
-|   |           TASK_035_remove_auto_migrate_contradiction.yaml
-|   |           TASK_036_fix_rq_worker_health_check.yaml
-|   |           TASK_037_fix_processing_result_type_mismatch.yaml
-|   |           TASK_038_fix_dashboard_detail_type_mismatch.yaml
-|   |           TASK_039_fix_graph_data_type_mismatch.yaml
-|   |           TASK_040_fix_layout_type_mismatch.yaml
-|   |           TASK_041_validate_db_password_not_placeholder.yaml
-|   |           TASK_042_reject_placeholder_db_password_production.yaml
-|   |           TASK_043_add_weak_password_validation.yaml
-|   |           TASK_044_add_test_coverage_threshold.yaml
-|   |           TASK_045_add_worker_utility_test_coverage.yaml
-|   |           TASK_046_remove_mypy_tests_exclude.yaml
-|   |           TASK_047_add_e2e_upload_test.yaml
-|   |           TASK_048_optimize_slow_test_execution.yaml
-|   |           TASK_049_research_placeholder_page_usage.yaml
-|   |           TASK_050_research_access_denied_usage.yaml
-|   |           TASK_051_fix_act_warnings_in_tests.yaml
-|   |           TASK_052_research_charts_directory_usage.yaml
-|   |           TASK_053_add_rollback_procedure_docs.yaml
-|   |           TASK_054_pin_docker_image_versions.yaml
-|   |           TASK_055_assess_test_ports_removal_impact.yaml
-|   |           TASK_056_remove_test_ports_exposure.yaml
-|   |           TASK_057_fix_create_dashboard_return_type.yaml
-|   |           TASK_058_fix_update_dashboard_request_type.yaml
-|   |           TASK_059_add_csp_nonce_support.yaml
-|   |           TASK_060_reduce_mock_heavy_test_assertions.yaml
-|   |           TASK_061_fix_client_error_payload_inline.yaml
-|   |           TASK_062_verify_all_new_changes.yaml
+|   |   +---todo
+|   |   |       order.yaml
+|   |   |       TASK_025_add_processing_status_state_machine.yaml
+|   |   |       TASK_031_remove_alert_from_dashboard_management.yaml
+|   |   |       TASK_032_add_zod_validation_dashboard_form.yaml
+|   |   |       TASK_033_fix_force_password_hard_navigation.yaml
+|   |   |       TASK_034_fix_nginx_versioned_image.yaml
+|   |   |       TASK_035_remove_auto_migrate_contradiction.yaml
+|   |   |       TASK_036_fix_rq_worker_health_check.yaml
+|   |   |       TASK_037_fix_processing_result_type_mismatch.yaml
+|   |   |       TASK_038_fix_dashboard_detail_type_mismatch.yaml
+|   |   |       TASK_039_fix_graph_data_type_mismatch.yaml
+|   |   |       TASK_040_fix_layout_type_mismatch.yaml
+|   |   |       TASK_041_validate_db_password_not_placeholder.yaml
+|   |   |       TASK_042_reject_placeholder_db_password_production.yaml
+|   |   |       TASK_043_add_weak_password_validation.yaml
+|   |   |       TASK_044_add_test_coverage_threshold.yaml
+|   |   |       TASK_045_add_worker_utility_test_coverage.yaml
+|   |   |       TASK_046_remove_mypy_tests_exclude.yaml
+|   |   |       TASK_047_add_e2e_upload_test.yaml
+|   |   |       TASK_048_optimize_slow_test_execution.yaml
+|   |   |       TASK_049_research_placeholder_page_usage.yaml
+|   |   |       TASK_050_research_access_denied_usage.yaml
+|   |   |       TASK_051_fix_act_warnings_in_tests.yaml
+|   |   |       TASK_052_research_charts_directory_usage.yaml
+|   |   |       TASK_053_add_rollback_procedure_docs.yaml
+|   |   |       TASK_054_pin_docker_image_versions.yaml
+|   |   |       TASK_055_assess_test_ports_removal_impact.yaml
+|   |   |       TASK_056_remove_test_ports_exposure.yaml
+|   |   |       TASK_057_fix_create_dashboard_return_type.yaml
+|   |   |       TASK_058_fix_update_dashboard_request_type.yaml
+|   |   |       TASK_059_add_csp_nonce_support.yaml
+|   |   |       TASK_060_reduce_mock_heavy_test_assertions.yaml
+|   |   |       TASK_061_fix_client_error_payload_inline.yaml
+|   |   |       TASK_062_verify_all_new_changes.yaml
+|   |   |       
+|   |   \---validation
+|   |           implementation_audit_001.md
 |   |           
 |   \---templates
 |           decision.md
@@ -4166,6 +4164,8 @@ C:\PY_DEV\MKOBI
 |   |               package.json
 |   |               
 |   +---plans
+|   |       PLAN_RECOVERY.md
+|   |       
 |   +---rules
 |   |       commands.md
 |   |       project.md
@@ -18788,22 +18788,23 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           AdminPanel-CbliOrJc.js
-|   |           ChangePasswordPage-Dm-YziJd.js
-|   |           dashboardApi-N3y9hdRZ.js
-|   |           DashboardList-Bnr7oNkq.js
-|   |           DashboardView-KjXVlfG-.js
-|   |           formSchemas-ClqIoYHL.js
-|   |           index-BwczcJyn.js
-|   |           LoginForm-B2I4z0s0.js
+|   |           AdminPanel-BMi6m5Yr.js
+|   |           ChangePasswordPage-9E15VIOG.js
+|   |           dashboardApi-B-Ho1sXU.js
+|   |           DashboardList-CQPe2dyk.js
+|   |           DashboardView-CYEzAaqp.js
+|   |           enums-C2UQ_cl5.js
+|   |           formSchemas-9t2fc2Ft.js
+|   |           index-BYZTaCYI.js
+|   |           LoginForm-BQB8X4Zk.js
 |   |           mui-nuHIX8iL.js
-|   |           plotly-BxTkdUEp.js
-|   |           react-CuvdHX7R.js
-|   |           RegisterForm-BfoICVVm.js
+|   |           plotly-BNZeab9N.js
+|   |           react-BIoCyPHR.js
+|   |           RegisterForm-DFS3F7W8.js
 |   |           rolldown-runtime-S-ySWqyJ.js
 |   |           shortUuid-TYuFZJYs.js
-|   |           userApi-CqRZ5BtG.js
-|   |           UserProfile-B3up8Nbu.js
+|   |           userApi-C4Bq-uq5.js
+|   |           UserProfile-CC71l8OB.js
 |   |           vendor-Bx3jSdF9.js
 |   |           
 |   +---node_modules
@@ -99810,7 +99811,6 @@ C:\PY_DEV\MKOBI
 |       |   |   \---__tests__
 |       |   |           authFlow.test.tsx
 |       |   |           
-|       |   +---charts
 |       |   +---dashboards
 |       |   |   |   index.ts
 |       |   |   |   

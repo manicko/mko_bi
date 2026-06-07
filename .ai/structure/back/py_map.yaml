@@ -547,6 +547,7 @@
   - FilterOperatorEnum
   - ErrorCode
   functions:
+  - valid_transitions
   - allowed_values
   - allowed_values
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\filters.py
@@ -908,11 +909,13 @@
   - mkobi.interfaces.service_interfaces
   - mkobi.models.enums
   - mkobi.models.processing_logs
+  - mkobi.utils.exceptions
   - mkobi.config
   - mkobi.db.session
   classes:
   - ProcessingLogService
   functions:
+  - _validate_transition
   - __init__
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\user_service.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.services.user_service

@@ -1,4 +1,6 @@
 import { useState, useMemo, useCallback } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { DataGrid, GridActionsCellItem, type GridRenderCellParams } from '@mui/x-data-grid'
 import type { GridColDef } from '@mui/x-data-grid'
 import {
@@ -27,6 +29,7 @@ import { extractApiError } from '../../../shared/api/errorHandler'
 import { ErrorCode } from '../../../shared/types/enums'
 import { getErrorMessage } from '../../../shared/api/errorMessages'
 import { adminErrorMessages } from '../model/errorMessages'
+import { createDashboardSchema, updateDashboardSchema, type CreateDashboardFormData, type UpdateDashboardFormData } from '../../../shared/types/formSchemas'
 
 export function DashboardManagement() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)

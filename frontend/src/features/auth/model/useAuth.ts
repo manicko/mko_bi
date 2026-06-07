@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import type { AuthResponse, UserProfile } from '../../../shared/types/api.types'
 import { login as apiLogin, registerRequest as apiRegisterRequest, getProfile as apiGetProfile, logout as apiLogout, logoutClient, refreshToken as apiRefreshToken } from '../api/authApi'
 import { getToken, setToken, removeToken } from './authToken'
@@ -6,6 +7,7 @@ import { getToken, setToken, removeToken } from './authToken'
 export function useAuth() {
   const [user, setUser] = useState<UserProfile | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const navigate = useNavigate()
 
   const getProfile = useCallback(async () => {
     try {
@@ -29,7 +31,7 @@ export function useAuth() {
       setUser(response.user)
       // Security: Redirect to password change if flag is set after admin password reset
       if (response.user.force_password_change) {
-        window.location.href = '/profile/change-password?force=true'
+        navigate('/profile/change-password?force=true')
       }
       return response
     } catch (error) {
@@ -67,7 +69,7 @@ export function useAuth() {
           const profile = await apiGetProfile()
           setUser(profile)
           if (profile.force_password_change) {
-            window.location.href = '/profile/change-password?force=true'
+            navigate('/profile/change-password?force=true')
           }
         } catch {
           // Refresh failed or no refresh cookie - user needs to login
@@ -86,7 +88,7 @@ export function useAuth() {
         const profile = await apiGetProfile()
         setUser(profile)
         if (profile.force_password_change) {
-          window.location.href = '/profile/change-password?force=true'
+          navigate('/profile/change-password?force=true')
         }
       } catch {
         removeToken()

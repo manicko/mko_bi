@@ -90,6 +90,7 @@ permission:
     "psql*": allow
     "redis-cli*": allow
 
+    
     "curl*": allow
 
     "*": ask

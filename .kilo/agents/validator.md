@@ -72,7 +72,7 @@ permission:
 
     "psql*": allow
     "redis-cli*": allow
-
+    "Get-ChildItem*": allow
     "curl*": allow
 
     "*": ask

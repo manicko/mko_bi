@@ -3790,6 +3790,29 @@
   value: ConfigDict
   stable_hash: 7779de68
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\data.py
+- id: 2aabeef8
+  symbol_path:
+  - ProcessingStatus
+  - valid_transitions
+  type: return_statement
+  stable_hash: 2aabeef8
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\enums.py
+- id: 6b0b1978
+  symbol_path:
+  - ProcessingStatus
+  - valid_transitions
+  type: function_call
+  value: set
+  stable_hash: 6b0b1978
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\enums.py
+- id: 6b0b1978
+  symbol_path:
+  - ProcessingStatus
+  - valid_transitions
+  type: function_call
+  value: set
+  stable_hash: 6b0b1978
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\enums.py
 - id: bd574e99
   symbol_path:
   - MimeTypeEnum
@@ -6358,6 +6381,26 @@
   type: return_statement
   stable_hash: f4303b23
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_config_service.py
+- id: 7df9b37f
+  symbol_path:
+  - _validate_transition
+  type: return_statement
+  stable_hash: 7df9b37f
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
+- id: f9068448
+  symbol_path:
+  - _validate_transition
+  type: function_call
+  value: set
+  stable_hash: f9068448
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
+- id: c03ef429
+  symbol_path:
+  - _validate_transition
+  type: function_call
+  value: AppException
+  stable_hash: c03ef429
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
 - id: 3c0a6b87
   symbol_path:
   - ProcessingLogService
@@ -6404,12 +6447,25 @@
   type: return_statement
   stable_hash: 18b500a0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
+- id: 18b500a0
+  symbol_path:
+  - ProcessingLogService
+  type: return_statement
+  stable_hash: 18b500a0
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
 - id: 3c0a6b87
   symbol_path:
   - ProcessingLogService
   type: function_call
   value: ProcessingStatus
   stable_hash: 3c0a6b87
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
+- id: 6bffd1b4
+  symbol_path:
+  - ProcessingLogService
+  type: function_call
+  value: _validate_transition
+  stable_hash: 6bffd1b4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
 - id: 18b500a0
   symbol_path:
@@ -6442,11 +6498,38 @@
   value: cast
   stable_hash: 38d5a6c0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
+- id: 6bffd1b4
+  symbol_path:
+  - ProcessingLogService
+  type: function_call
+  value: _validate_transition
+  stable_hash: 6bffd1b4
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
 - id: 18b500a0
   symbol_path:
   - ProcessingLogService
   type: return_statement
   stable_hash: 18b500a0
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
+- id: 6bffd1b4
+  symbol_path:
+  - ProcessingLogService
+  type: function_call
+  value: _validate_transition
+  stable_hash: 6bffd1b4
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
+- id: 18b500a0
+  symbol_path:
+  - ProcessingLogService
+  type: return_statement
+  stable_hash: 18b500a0
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
+- id: 6bffd1b4
+  symbol_path:
+  - ProcessingLogService
+  type: function_call
+  value: _validate_transition
+  stable_hash: 6bffd1b4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
 - id: 18b500a0
   symbol_path:
@@ -6460,11 +6543,12 @@
   type: return_statement
   stable_hash: 18b500a0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
-- id: 18b500a0
+- id: 6bffd1b4
   symbol_path:
   - ProcessingLogService
-  type: return_statement
-  stable_hash: 18b500a0
+  type: function_call
+  value: _validate_transition
+  stable_hash: 6bffd1b4
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
 - id: 18b500a0
   symbol_path:
