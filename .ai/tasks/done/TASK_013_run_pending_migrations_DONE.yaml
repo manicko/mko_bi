@@ -2,7 +2,7 @@ id: TASK_013_run_pending_migrations
 
 title: Run pending database migrations for processing_status enum drift
 
-status: pending
+status: done
 
 priority: high
 
