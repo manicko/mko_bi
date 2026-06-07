@@ -16,7 +16,19 @@ from mkobi.models.enums import EnvironmentEnum, FileExtensionEnum, MimeTypeEnum
 logger = logging.getLogger(__name__)
 
 WEAK_USERNAMES = {"admin", "administrator", "root", "test", "user", "admin@example.com"}
-WEAK_PASSWORDS = {"password", "123456", "admin", "secret", "test", "admin@example.com", "change_me_admin_password"}
+WEAK_PASSWORDS = {
+    "password",
+    "123456",
+    "admin",
+    "secret",
+    "test",
+    "admin@example.com",
+    "change_me_admin_password",
+    "CHANGE_ME",
+    "change_me",
+    "placeholder",
+    "postgres",
+}
 
 
 def _set_nested_value(data: dict[str, Any], key: str, value: Any) -> None:
@@ -120,6 +132,27 @@ class DatabaseSettings(BaseModel):
                 path=self.dbname,
             )
         )
+
+    @field_validator("password")
+    @classmethod
+    def validate_password_not_placeholder(cls, v: str | None) -> str | None:
+        """Reject placeholder passwords in all environments.
+
+        Args:
+            v: The password value to validate.
+
+        Returns:
+            str | None: The validated password value.
+
+        Raises:
+            ValueError: If password is a known placeholder value.
+        """
+        if v is not None and v.lower() in {p.lower() for p in WEAK_PASSWORDS}:
+            raise ValueError(
+                f"Database password '{v}' is a known placeholder. "
+                "Set a strong password via DATABASE__PASSWORD environment variable."
+            )
+        return v
 
 
 class JWTSettings(BaseModel):
