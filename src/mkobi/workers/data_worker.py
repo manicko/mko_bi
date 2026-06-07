@@ -55,7 +55,10 @@ async def _update_processing_log_status(
         started_at: Processing start time (only set if not already set).
         finished_at: Processing finish time.
         session: Optional database session for testing. If None, creates a new session.
-        commit: If True (default), commits on COMPLETED/FAILED. If False, caller manages transaction.
+            When provided, caller manages transaction (SAVEPOINT pattern).
+        commit: Deprecated. When session is provided, this parameter is ignored and
+            no commit occurs - caller manages transaction. When session is None,
+            production mode handles transactions internally.
     """
     try:
         values: dict[str, Any] = {
@@ -74,10 +77,9 @@ async def _update_processing_log_status(
             .values(**values)
         )
         if session is not None:
-            # Test mode or transaction-managed mode - use provided session
+            # Test mode - caller manages transaction (SAVEPOINT pattern in async_db_session).
+            # Do NOT commit here - the caller's transaction boundary handles persistence.
             await session.execute(stmt)
-            if commit and status in (ProcessingStatus.COMPLETED, ProcessingStatus.FAILED):
-                await session.commit()
         else:
             # Production mode - create new session with transaction
             async with get_session() as db:
@@ -88,8 +90,7 @@ async def _update_processing_log_status(
         )
     except SQLAlchemyError as e:
         logger.error("Failed to update processing log status: %s", e)
-        if session is not None and commit:
-            await session.rollback()
+        # No rollback in test mode - caller (SAVEPOINT) manages transaction
     except Exception as e:
         logger.exception("Unexpected error updating processing log status: %s", e)
         raise

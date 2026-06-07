@@ -119,76 +119,77 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
+|   |   |       TASK_001_fix_enqueue_job_failure_silent_none_DONE.yaml
+|   |   |       TASK_002_fix_registration_response_field_name_mismatch_DONE.yaml
+|   |   |       TASK_003_fix_token_cache_bypass_revocation_DONE.yaml
+|   |   |       TASK_004_add_rate_limiting_client_errors_DONE.yaml
+|   |   |       TASK_005_add_rate_limiting_refresh_endpoint_DONE.yaml
+|   |   |       TASK_006_fix_rate_limiter_fail_closed_default_DONE.yaml
+|   |   |       TASK_007_fix_http_exception_rfc7807_compliance_DONE.yaml
+|   |   |       TASK_008_remove_createdb_privilege_mkobi_app_DONE.yaml
+|   |   |       TASK_009_fix_port_8000_exposed_production_DONE.yaml
+|   |   |       TASK_010_fix_data_pipeline_transaction_coordination_DONE.yaml
+|   |   |       TASK_011_translate_error_messages_to_english_DONE.yaml
+|   |   |       TASK_012_implement_missing_chart_renderers_DONE.yaml
+|   |   |       TASK_013_run_pending_migrations_DONE.yaml
+|   |   |       TASK_014_consolidate_data_worker_transactions_DONE.yaml
+|   |   |       TASK_015_add_docker_resource_limits_DONE.yaml
+|   |   |       TASK_016_verify_infrastructure_changes_DONE.yaml
+|   |   |       TASK_017_fix_private_rate_limiter_access_DONE.yaml
+|   |   |       TASK_018_fix_filter_values_bulk_insert_DONE.yaml
+|   |   |       TASK_019_add_processing_logs_archival_DONE.yaml
+|   |   |       TASK_020_validate_cors_origins_urls_DONE.yaml
+|   |   |       TASK_021_fix_nginx_hsts_over_http_DONE.yaml
+|   |   |       TASK_022_add_nginx_client_max_body_size_DONE.yaml
+|   |   |       TASK_023_fix_aggregation_service_hardcoded_sum_DONE.yaml
+|   |   |       TASK_024_integrate_data_validator_into_pipeline_DONE.yaml
+|   |   |       TASK_027_fix_test_mode_transaction_boundary_DONE.yaml
+|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
-|   |   +---todo
-|   |   |       order.yaml
-|   |   |       TASK_001_fix_enqueue_job_failure_silent_none.yaml
-|   |   |       TASK_002_fix_registration_response_field_name_mismatch.yaml
-|   |   |       TASK_003_fix_token_cache_bypass_revocation.yaml
-|   |   |       TASK_004_add_rate_limiting_client_errors.yaml
-|   |   |       TASK_005_add_rate_limiting_refresh_endpoint.yaml
-|   |   |       TASK_006_fix_rate_limiter_fail_closed_default.yaml
-|   |   |       TASK_007_fix_http_exception_rfc7807_compliance.yaml
-|   |   |       TASK_008_remove_createdb_privilege_mkobi_app.yaml
-|   |   |       TASK_009_fix_port_8000_exposed_production.yaml
-|   |   |       TASK_010_fix_data_pipeline_transaction_coordination.yaml
-|   |   |       TASK_011_translate_error_messages_to_english.yaml
-|   |   |       TASK_012_implement_missing_chart_renderers.yaml
-|   |   |       TASK_013_run_pending_migrations.yaml
-|   |   |       TASK_014_consolidate_data_worker_transactions.yaml
-|   |   |       TASK_015_add_docker_resource_limits.yaml
-|   |   |       TASK_016_verify_infrastructure_changes.yaml
-|   |   |       TASK_017_fix_private_rate_limiter_access.yaml
-|   |   |       TASK_018_fix_filter_values_bulk_insert.yaml
-|   |   |       TASK_019_add_processing_logs_archival.yaml
-|   |   |       TASK_020_validate_cors_origins_urls.yaml
-|   |   |       TASK_021_fix_nginx_hsts_over_http.yaml
-|   |   |       TASK_022_add_nginx_client_max_body_size.yaml
-|   |   |       TASK_023_fix_aggregation_service_hardcoded_sum.yaml
-|   |   |       TASK_024_integrate_data_validator_into_pipeline.yaml
-|   |   |       TASK_025_add_processing_status_state_machine.yaml
-|   |   |       TASK_026_fix_file_move_before_enqueue.yaml
-|   |   |       TASK_027_fix_test_mode_transaction_boundary.yaml
-|   |   |       TASK_028_fix_useFilterValues_reactive_token.yaml
-|   |   |       TASK_029_remove_console_error_from_production.yaml
-|   |   |       TASK_030_fix_plotly_component_any_type.yaml
-|   |   |       TASK_031_remove_alert_from_dashboard_management.yaml
-|   |   |       TASK_032_add_zod_validation_dashboard_form.yaml
-|   |   |       TASK_033_fix_force_password_hard_navigation.yaml
-|   |   |       TASK_034_fix_nginx_versioned_image.yaml
-|   |   |       TASK_035_remove_auto_migrate_contradiction.yaml
-|   |   |       TASK_036_fix_rq_worker_health_check.yaml
-|   |   |       TASK_037_fix_processing_result_type_mismatch.yaml
-|   |   |       TASK_038_fix_dashboard_detail_type_mismatch.yaml
-|   |   |       TASK_039_fix_graph_data_type_mismatch.yaml
-|   |   |       TASK_040_fix_layout_type_mismatch.yaml
-|   |   |       TASK_041_validate_db_password_not_placeholder.yaml
-|   |   |       TASK_042_reject_placeholder_db_password_production.yaml
-|   |   |       TASK_043_add_weak_password_validation.yaml
-|   |   |       TASK_044_add_test_coverage_threshold.yaml
-|   |   |       TASK_045_add_worker_utility_test_coverage.yaml
-|   |   |       TASK_046_remove_mypy_tests_exclude.yaml
-|   |   |       TASK_047_add_e2e_upload_test.yaml
-|   |   |       TASK_048_optimize_slow_test_execution.yaml
-|   |   |       TASK_049_research_placeholder_page_usage.yaml
-|   |   |       TASK_050_research_access_denied_usage.yaml
-|   |   |       TASK_051_fix_act_warnings_in_tests.yaml
-|   |   |       TASK_052_research_charts_directory_usage.yaml
-|   |   |       TASK_053_add_rollback_procedure_docs.yaml
-|   |   |       TASK_054_pin_docker_image_versions.yaml
-|   |   |       TASK_055_assess_test_ports_removal_impact.yaml
-|   |   |       TASK_056_remove_test_ports_exposure.yaml
-|   |   |       TASK_057_fix_create_dashboard_return_type.yaml
-|   |   |       TASK_058_fix_update_dashboard_request_type.yaml
-|   |   |       TASK_059_add_csp_nonce_support.yaml
-|   |   |       TASK_060_reduce_mock_heavy_test_assertions.yaml
-|   |   |       TASK_061_fix_client_error_payload_inline.yaml
-|   |   |       TASK_062_verify_all_new_changes.yaml
-|   |   |       
-|   |   \---validation
+|   |   \---todo
+|   |           order.yaml
+|   |           TASK_021_fix_nginx_hsts_over_http.yaml
+|   |           TASK_025_add_processing_status_state_machine.yaml
+|   |           TASK_026_fix_file_move_before_enqueue.yaml
+|   |           TASK_028_fix_useFilterValues_reactive_token.yaml
+|   |           TASK_029_remove_console_error_from_production.yaml
+|   |           TASK_030_fix_plotly_component_any_type.yaml
+|   |           TASK_031_remove_alert_from_dashboard_management.yaml
+|   |           TASK_032_add_zod_validation_dashboard_form.yaml
+|   |           TASK_033_fix_force_password_hard_navigation.yaml
+|   |           TASK_034_fix_nginx_versioned_image.yaml
+|   |           TASK_035_remove_auto_migrate_contradiction.yaml
+|   |           TASK_036_fix_rq_worker_health_check.yaml
+|   |           TASK_037_fix_processing_result_type_mismatch.yaml
+|   |           TASK_038_fix_dashboard_detail_type_mismatch.yaml
+|   |           TASK_039_fix_graph_data_type_mismatch.yaml
+|   |           TASK_040_fix_layout_type_mismatch.yaml
+|   |           TASK_041_validate_db_password_not_placeholder.yaml
+|   |           TASK_042_reject_placeholder_db_password_production.yaml
+|   |           TASK_043_add_weak_password_validation.yaml
+|   |           TASK_044_add_test_coverage_threshold.yaml
+|   |           TASK_045_add_worker_utility_test_coverage.yaml
+|   |           TASK_046_remove_mypy_tests_exclude.yaml
+|   |           TASK_047_add_e2e_upload_test.yaml
+|   |           TASK_048_optimize_slow_test_execution.yaml
+|   |           TASK_049_research_placeholder_page_usage.yaml
+|   |           TASK_050_research_access_denied_usage.yaml
+|   |           TASK_051_fix_act_warnings_in_tests.yaml
+|   |           TASK_052_research_charts_directory_usage.yaml
+|   |           TASK_053_add_rollback_procedure_docs.yaml
+|   |           TASK_054_pin_docker_image_versions.yaml
+|   |           TASK_055_assess_test_ports_removal_impact.yaml
+|   |           TASK_056_remove_test_ports_exposure.yaml
+|   |           TASK_057_fix_create_dashboard_return_type.yaml
+|   |           TASK_058_fix_update_dashboard_request_type.yaml
+|   |           TASK_059_add_csp_nonce_support.yaml
+|   |           TASK_060_reduce_mock_heavy_test_assertions.yaml
+|   |           TASK_061_fix_client_error_payload_inline.yaml
+|   |           TASK_062_verify_all_new_changes.yaml
+|   |           
 |   \---templates
 |           decision.md
 |           ui-brand.md
@@ -18485,12 +18486,14 @@ C:\PY_DEV\MKOBI
 |           00e1baf7-8dc1-4b38-8c2c-513512c94983.csv.gz
 |           041b09d9-bd86-41f1-9129-34ea07820311.csv
 |           0ce8bd3c-8f85-4a6f-9f75-817b5493ad50.csv
+|           0e8d579b-e1f7-457f-a876-9eb8a06081da.csv
 |           129f6f8a-03e8-464a-aebe-41d063104b88.csv.gz
 |           133abbb7-371c-4109-b935-6ec8e8c59b3b.csv
 |           13d372fe-faa7-4ddb-9ae8-53fbefe7121b.csv
 |           15c10ad6-1596-4e8d-9f87-4dd845ed6f2b.csv
 |           1973e72a-0f6f-4771-8d3d-a09dd15876e5.csv
 |           1f64b06e-7a30-46c6-852a-b3aafad542d6.csv.gz
+|           1fc10ac3-a31e-4cc6-aad9-c38454473f5d.csv
 |           2134ab9f-c38b-4f25-b87e-f74758025da3.csv.gz
 |           22857f0a-18bc-41f2-bda6-c0f3c4a26094.csv
 |           244b4d9d-7f78-49dd-83c9-af4f94995936.csv
@@ -18517,6 +18520,7 @@ C:\PY_DEV\MKOBI
 |           48929df7-d341-485b-a526-5dd9ef4c6ea3.csv.gz
 |           4b5a13aa-cb25-414c-9944-c130b58738a0.csv
 |           4b6991f3-2485-447e-a667-8e8f0cd43c2e.csv
+|           50179b5c-19f1-49aa-944b-43f0be58e83f.csv
 |           58e1590e-f146-495b-bad6-0769b370176a.csv.gz
 |           58e8cbf9-b97f-46e5-ac25-5974b05a4242.csv
 |           5a83c8ba-ae69-43b6-8ee3-3edcdb0df21c.csv
@@ -18525,6 +18529,7 @@ C:\PY_DEV\MKOBI
 |           5e66e030-114f-4f8d-8a6a-cff88fd14d13.csv
 |           63e72d29-8963-469c-9eb5-9fcb9258eabc.csv
 |           64054434-e5a7-4532-981d-06dd2befd5ee.csv
+|           65f71d8d-30bf-404d-b323-a9809cc7d8a5.csv
 |           6c69a6ad-9ada-4b25-8577-b7466272438e.csv
 |           6c9a6712-ded7-4a21-9e6d-b47c84ca1902.csv
 |           6d31fd10-df95-43bd-8920-b61fdcbe495d.csv
@@ -18556,6 +18561,7 @@ C:\PY_DEV\MKOBI
 |           a05ae869-e976-4614-87bf-cad58a35b6d6.csv.gz
 |           a312f4ba-61d5-4bbd-b051-262ac2ff35dd.csv
 |           a7aebc73-6030-4092-bbd4-99bc8a2a5468.csv
+|           a7f34d82-4a48-400d-afbf-c3a8b222ecc0.csv
 |           ab46250e-9285-4fc1-8a90-1849366576c9.csv
 |           ab4a608c-e1de-4d9c-b133-bc3e78b347e6.csv
 |           b0110b44-0af8-4e2a-b91e-e185f09f4999.csv
@@ -18575,6 +18581,7 @@ C:\PY_DEV\MKOBI
 |           cae42e08-1693-4ef2-9939-fc05619f73c5.csv
 |           d22fb843-ae7e-4734-881a-05e0ffd792cb.csv
 |           d37caa77-8b97-47e3-8a41-a8b07c9f3411.csv
+|           d44bc66f-15f1-4a47-903e-49d533eb7a84.csv
 |           d646af1c-d2c6-4d30-85c4-e7a72466ab95.csv
 |           d69aab59-5405-4432-be5a-e0254a8f77b4.csv
 |           d6e474dd-5dc7-4a37-8a35-10b32094d090.csv
@@ -18590,6 +18597,7 @@ C:\PY_DEV\MKOBI
 |           ed9271ae-cf30-4621-ac70-5e9c0a55b216.csv.gz
 |           eeab1495-f902-426b-ae79-1d692c2ebe35.csv
 |           ef406f41-dde7-4536-bb43-0a86664e7425.csv
+|           ef475af7-a6ea-4f28-9c3d-bccf9185239a.csv
 |           f1e071ed-41ee-4d06-8926-72fe21c6a1ac.csv
 |           f39d5a55-c81b-4fc1-864f-f724cc2d92ec.csv.gz
 |           f4496f87-7928-4750-85c0-db31bec78781.csv
@@ -18780,22 +18788,22 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           AdminPanel-Cu1HzpEN.js
-|   |           ChangePasswordPage-B04xvl_b.js
-|   |           dashboardApi-BrQiFrY0.js
-|   |           DashboardList-BoDLpTsr.js
-|   |           DashboardView-IoOa-MfR.js
+|   |           AdminPanel-CbliOrJc.js
+|   |           ChangePasswordPage-Dm-YziJd.js
+|   |           dashboardApi-N3y9hdRZ.js
+|   |           DashboardList-Bnr7oNkq.js
+|   |           DashboardView-KjXVlfG-.js
 |   |           formSchemas-ClqIoYHL.js
-|   |           index-pOZpbZbq.js
-|   |           LoginForm-BvqH6sWh.js
+|   |           index-BwczcJyn.js
+|   |           LoginForm-B2I4z0s0.js
 |   |           mui-nuHIX8iL.js
 |   |           plotly-BxTkdUEp.js
 |   |           react-CuvdHX7R.js
-|   |           RegisterForm-DE2xY8yX.js
+|   |           RegisterForm-BfoICVVm.js
 |   |           rolldown-runtime-S-ySWqyJ.js
 |   |           shortUuid-TYuFZJYs.js
-|   |           userApi-mGOXKI0-.js
-|   |           UserProfile-B8vul4rG.js
+|   |           userApi-CqRZ5BtG.js
+|   |           UserProfile-B3up8Nbu.js
 |   |           vendor-Bx3jSdF9.js
 |   |           
 |   +---node_modules

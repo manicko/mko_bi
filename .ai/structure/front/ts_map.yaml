@@ -801,8 +801,12 @@
   hooks: []
   jsx_tags:
     - <div data-testid="plotly-chart">
+    - <div data-testid="line-chart">
+    - <div data-testid="table-chart">
     - <div data-testid="dashboard-filters">
     - <QueryClientProvider client={queryClient}>
+    - <Wrapper>
+    - <Wrapper>
     - <Wrapper>
     - <Wrapper>
     - <Wrapper>
@@ -1332,6 +1336,8 @@
   layer: unknown
   imports:
     - ./PlotlyChart
+    - ./LineChart
+    - ./TableChart
     - ../../../../shared/types/api.types
     - react-plotly.js
   components:

@@ -2,7 +2,19 @@ id: TASK_026_fix_file_move_before_enqueue
 
 title: Move file to final location after successful enqueue (DP-009)
 
-status: pending
+status: done
+
+outcome: |
+  Task already completed in TASK_010 (commit b459ef4). The implementation in
+  process_upload_with_session() correctly handles the file move with proper
+  transaction coordination:
+  
+  1. File is moved to final location BEFORE commit (within transaction)
+  2. Enqueue job uses the final file path
+  3. If enqueue fails, the moved file is cleaned up and transaction is rolled back
+  4. Commit happens AFTER successful enqueue
+  
+  All upload tests pass, confirming the implementation is correct.
 
 priority: medium
 

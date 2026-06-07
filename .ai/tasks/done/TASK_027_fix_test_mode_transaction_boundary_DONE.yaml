@@ -2,7 +2,7 @@ id: TASK_027_fix_test_mode_transaction_boundary
 
 title: Add transaction boundary for test-mode path in data_worker (DP-004)
 
-status: pending
+status: done
 
 priority: medium
 

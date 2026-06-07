@@ -49,7 +49,10 @@ class TestDataWorker:
     async def test_update_processing_log_status_completed(
         self, mock_session
     ):
-        """Test updating status to COMPLETED sets finished_at."""
+        """Test updating status to COMPLETED sets finished_at.
+
+        In test mode (session provided), no commit happens - caller manages transaction.
+        """
         task_id = str(uuid4())
         mock_result = MagicMock()
         mock_result.rowcount = 1
@@ -63,12 +66,16 @@ class TestDataWorker:
         )
 
         mock_session.execute.assert_called_once()
-        mock_session.commit.assert_called_once()
+        # No commit in test mode - caller (SAVEPOINT) manages transaction
+        mock_session.commit.assert_not_called()
 
     async def test_update_processing_log_status_failed(
         self, mock_session
     ):
-        """Test updating status to FAILED sets finished_at."""
+        """Test updating status to FAILED sets finished_at.
+
+        In test mode (session provided), no commit happens - caller manages transaction.
+        """
         task_id = str(uuid4())
         mock_result = MagicMock()
         mock_result.rowcount = 1
@@ -82,7 +89,8 @@ class TestDataWorker:
         )
 
         mock_session.execute.assert_called_once()
-        mock_session.commit.assert_called_once()
+        # No commit in test mode - caller (SAVEPOINT) manages transaction
+        mock_session.commit.assert_not_called()
 
     async def test_update_processing_log_status_with_provided_finished_at(
         self, mock_session
