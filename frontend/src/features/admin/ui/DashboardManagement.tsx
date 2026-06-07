@@ -161,11 +161,9 @@ export function DashboardManagement() {
             />
             <GridActionsCellItem
               icon={<AccessIcon />}
-              label="Access"
-              onClick={() => {
-                // TODO: Implement access management dialog
-                alert('Access management not yet implemented')
-              }}
+              label="Access (coming soon)"
+              disabled
+              title="Access management is not yet implemented"
             />
             <GridActionsCellItem
               icon={<DeleteIcon />}
