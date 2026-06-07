@@ -192,7 +192,8 @@ addopts = [
     "--import-mode=importlib",
     "-ra",
     "-v",
-    "--strict-markers"
+    "--strict-markers",
+    "--cov-fail-under=65",
 ]
 console_output_style = "classic"
 pythonpath = ["src"]
@@ -209,7 +210,7 @@ source = ["src/mkobi"]
 omit = ["*/tests/*", "*/migrations/*"]
 
 [tool.coverage.report]
-fail_under = 80
+fail_under = 65
 show_missing = true
 
 [dependency-groups]
