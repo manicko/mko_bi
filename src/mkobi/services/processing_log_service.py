@@ -16,8 +16,32 @@ from mkobi.interfaces.repository_interfaces import IProcessingLogRepository
 from mkobi.interfaces.service_interfaces import IProcessingLogService
 from mkobi.models.enums import ProcessingStatus
 from mkobi.models.processing_logs import ProcessingLogFilter, ProcessingLogRead
+from mkobi.utils.exceptions import AppException, ErrorCode
 
 logger = logging.getLogger(__name__)
+
+
+def _validate_transition(current: ProcessingStatus, new: ProcessingStatus) -> None:
+    """Validate that a status transition is allowed.
+
+    Args:
+        current: Current processing status.
+        new: Target processing status.
+
+    Raises:
+        AppException: If the transition is invalid.
+    """
+    if current == new:
+        return
+    allowed = ProcessingStatus.valid_transitions().get(current, set())
+    if new not in allowed:
+        raise AppException(
+            code=ErrorCode.INVALID_TRANSITION,
+            detail=(
+                f"Invalid status transition: {current.value} -> {new.value}. "
+                f"Allowed: {[s.value for s in allowed]}"
+            ),
+        )
 
 
 class ProcessingLogService(IProcessingLogService):
@@ -69,6 +93,14 @@ class ProcessingLogService(IProcessingLogService):
         db: AsyncSession,
     ) -> ProcessingLogRead | None:
         """Update processing log entry."""
+        # Get current log to validate transition
+        current_log = await self.log_repo.get_by_id(log_id, db)
+        if current_log is None:
+            return None
+
+        new_status = ProcessingStatus(status) if status else ProcessingStatus.STARTED
+        _validate_transition(current_log.status, new_status)
+
         parsed_finished_at = None
         if finished_at is not None:
             try:
@@ -80,7 +112,7 @@ class ProcessingLogService(IProcessingLogService):
 
         await self.log_repo.update_status(
             log_id,
-            ProcessingStatus(status) if status else ProcessingStatus.STARTED,
+            new_status,
             message,
             db,
             finished_at=parsed_finished_at,

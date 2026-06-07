@@ -251,7 +251,8 @@ export function UserManagement() {
         }}
         processRowUpdate={handleProcessRowUpdate}
         onProcessRowUpdateError={(error) => {
-          console.error('Row update error:', error)
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+          toast.error(`Failed to update role: ${errorMessage}`)
         }}
         getRowClassName={getRowClassName}
         sx={{

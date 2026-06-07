@@ -2,7 +2,7 @@ id: TASK_028_fix_useFilterValues_reactive_token
 
 title: Fix non-reactive getToken() in useFilterValues hook (FE-003)
 
-status: pending
+status: done
 
 priority: medium
 

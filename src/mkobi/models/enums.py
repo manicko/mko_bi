@@ -64,6 +64,21 @@ class ProcessingStatus(StrEnum):
     COMPLETED = "completed"
     FAILED = "failed"
 
+    @classmethod
+    def valid_transitions(cls) -> dict["ProcessingStatus", set["ProcessingStatus"]]:
+        """Return valid state transitions for processing status.
+
+        State machine: STARTED -> UPLOADED -> PROCESSING -> COMPLETED/FAILED.
+        Terminal states (COMPLETED, FAILED) cannot transition to any other state.
+        """
+        return {
+            cls.STARTED: {cls.UPLOADED, cls.FAILED},
+            cls.UPLOADED: {cls.PROCESSING, cls.FAILED},
+            cls.PROCESSING: {cls.COMPLETED, cls.FAILED},
+            cls.COMPLETED: set(),
+            cls.FAILED: set(),
+        }
+
 
 class EnvironmentEnum(StrEnum):
     """Application environments."""
@@ -223,3 +238,4 @@ class ErrorCode(StrEnum):
     # Processing errors
     PROCESSING_FAILED = "PROCESSING_FAILED"
     PROCESSING_IN_PROGRESS = "PROCESSING_IN_PROGRESS"
+    INVALID_TRANSITION = "INVALID_TRANSITION"

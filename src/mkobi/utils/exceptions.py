@@ -70,6 +70,7 @@ _ERROR_CODE_STATUS_MAP: dict[ErrorCode, int] = {
     # Processing errors
     ErrorCode.PROCESSING_FAILED: HTTP_500_INTERNAL_SERVER_ERROR,
     ErrorCode.PROCESSING_IN_PROGRESS: HTTP_500_INTERNAL_SERVER_ERROR,
+    ErrorCode.INVALID_TRANSITION: HTTP_400_BAD_REQUEST,
 }
 
 
@@ -240,6 +241,7 @@ def get_error_title(code: ErrorCode) -> str:
         # Processing errors
         ErrorCode.PROCESSING_FAILED: "Processing failed",
         ErrorCode.PROCESSING_IN_PROGRESS: "Processing in progress",
+        ErrorCode.INVALID_TRANSITION: "Invalid state transition",
     }
     return titles.get(code, "Error")
 

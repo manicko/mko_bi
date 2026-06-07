@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import axiosInstance from '../../../shared/api/axiosInstance'
-import { useAuthToken, getToken } from '../../../features/auth/model/authToken'
+import { useAuthToken } from '../../../features/auth/model/authToken'
 import type {
   DashboardSummary,
   DashboardDetail,
@@ -84,7 +84,7 @@ export function useInvalidateDashboard() {
 }
 
 export function useFilterValues(dashboardId: string, filterName: string) {
-  const accessToken = getToken()
+  const accessToken = useAuthToken()
   return useQuery({
     queryKey: ['filterValues', dashboardId, filterName],
     queryFn: () => dashboardApi.getFilterValues(dashboardId, filterName),
