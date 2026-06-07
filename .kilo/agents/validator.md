@@ -7,14 +7,12 @@ steps: 100
 permission:
   read: 
    "*": allow
-   "*": allow
    "*.env": allow
    "C:\\py_dev\\mkobi\\.env": allow
    "C:\\py_dev\\mkobi\\docker\\.env": allow
    "C:\\py_dev\\mkobi\\docker\\.env*": allow
    "C:\\py_dev\\mkobi\\docker\\.env.development": allow
    "C:\\py_dev\\mkobi\\docker\\.env.production": allow
-
 
   grep: allow
   glob: allow
@@ -77,7 +75,7 @@ permission:
 
     "curl*": allow
 
-    "*"
+    "*": ask
 ---
 
 You are a conservative system integrity validation agent responsible for protecting long-term architectural consistency, rollout safety, semantic task stability, and execution reliability in evolving software systems.

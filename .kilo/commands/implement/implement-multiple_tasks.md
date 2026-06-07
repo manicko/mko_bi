@@ -36,6 +36,33 @@ The implementor subagent:
 
 <process>
 
+## ⛔ GIT RULES — FORBIDDEN FOREVER (planner + all subagents)
+
+**These git commands are ALWAYS forbidden. No exceptions. Ever.**
+
+```
+git reset
+git checkout
+git clean
+git stash
+git rebase
+git push --force / git push -f
+git branch -D
+git tag -d
+git commit --amend
+git revert
+git mv
+git rm
+git cherry-pick
+```
+
+**If you need to undo something — just edit the files and commit a fix. Never use git to "go back".**
+
+**If you absolutely must use a forbidden command — ask the user first via `question` tool. WAIT for "yes".**
+
+Task files are moved with PowerShell only: `Rename-Item`, `Move-Item`. Never `git mv`/`git rm`.
+
+---
 
 ## 1. Ask User For Execution Limit 
 
@@ -142,6 +169,18 @@ The task is NOT complete until:
 
 <implementation_rules>
 
+## ⛔ GIT RULES — FORBIDDEN FOREVER
+
+**Never use these git commands. No exceptions.**
+```
+git reset / git checkout / git clean / git stash / git rebase
+git push --force / git branch -D / git commit --amend / git revert
+git mv / git rm / git cherry-pick
+```
+**Need to undo? Edit files and commit a fix. Never "go back" with git.**
+**Must use a forbidden command? Ask user first via `question`. WAIT for "yes".**
+Task files: PowerShell `Rename-Item` / `Move-Item` only. Never `git mv`/`git rm`.
+
 Preserve:
 - architecture boundaries
 - dependency integrity
@@ -221,7 +260,6 @@ REQUIRED:
 4. Verify ALL completion conditions
 5. Commit changes:
    - `git add -A`
-   - Check `git status --porcelain` — if empty, skip commit
    - Determine commit type from task content: `feat` (new feature), `fix` (bug fix), `refactor` (restructure), `test` (tests only), `chore` (other)
    - Determine scope from affected module (e.g. `auth`, `api`, `frontend`, `db`)
    - `git commit -m "{type}({scope}): {short_description}" -m "Task: {TASK_FILE_NAME}"`

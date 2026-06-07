@@ -23,7 +23,77 @@ permission:
     "C:\\py_dev\\mkobi\\docker\\.env*": allow
     "C:\\py_dev\\mkobi\\docker\\.env.development": allow
     "C:\\py_dev\\mkobi\\docker\\.env.production": allow
-  bash: allow
+  bash:
+    "git *": allow
+
+    "git status*": allow
+    "git add*": allow
+    "git reset *": ask
+    "git checkout *": ask
+    "git clean *": ask
+    "git stash *": ask
+    "git rebase *": ask
+    "git push *": ask
+    "git commit --amend*": ask
+    "git cherry-pick *": ask
+
+    "git reset --hard*": deny
+    "git clean -fd*": deny
+    "git clean -fdx*": deny
+    "git push --force*": deny
+    "git push --force-with-lease*": deny
+    "rm -rf": ask
+    "Remove-Item -Recurse -Force": ask
+    
+    "uv *": allow
+    "npm test*": allow
+    "pnpm test*": allow
+    "yarn test*": allow
+
+    "npm run lint*": allow
+    "pnpm lint*": allow
+    "yarn lint*": allow
+
+    "npm run typecheck*": allow
+    "pnpm typecheck*": allow
+    "yarn typecheck*": allow
+
+    "pytest*": allow
+    "ruff*": allow
+    "mypy*": allow
+    "alembic*": allow
+
+    "docker compose": allow
+    "docker compose config*": allow
+    "docker compose up*": allow
+    "docker compose down*": allow
+    "docker compose ps*": allow
+    "docker compose logs*": allow
+    "docker compose build*": allow
+    "docker compose restart*": allow
+    "docker compose exec*": allow
+    "docker compose run*": allow
+    "docker ps*": allow
+    "docker logs*": allow
+    "docker build*": allow
+    "docker run*": allow
+    "docker exec*": allow
+    "docker inspect*": allow
+    "docker network*": allow
+    "docker volume*": allow
+    "docker system*": allow
+
+    "kubectl get*": allow
+    "kubectl describe*": ask
+    "kubectl logs*": allow
+    "kubectl exec*": ask
+    "psql*": allow
+    "redis-cli*": allow
+
+    "curl*": allow
+
+    "*": ask
+
   todoread: allow
   todowrite: allow
   task: allow

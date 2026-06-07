@@ -154,29 +154,43 @@ Do NOT fix unrelated problems during current task execution unless:
 
 ---
 
+## ⛔ GIT RULES — FORBIDDEN FOREVER
+
+**These git commands are ALWAYS forbidden. No exceptions. Ever.**
+
+```
+git reset
+git checkout
+git clean
+git stash
+git rebase
+git push --force / git push -f
+git branch -D
+git tag -d
+git commit --amend
+git revert
+git mv
+git rm
+git cherry-pick
+```
+
+**If you need to undo something — just edit the files and commit a fix. Never use git to "go back".**
+
+**If you absolutely must use a forbidden command — ask the user first via `question` tool. WAIT for "yes".**
+
+Task files are moved with PowerShell only: `Rename-Item`, `Move-Item`. Never `git mv`/`git rm`.
+
+---
+
 ## Step 9 — Commit Changes
 
-1. `git add -A`
+1. `git add -A` (or `git add <specific-files>`)
 2. Check `git status --porcelain` — if empty, skip commit
 3. Determine commit type from task content: `feat` (new feature), `fix` (bug fix), `refactor` (restructure), `test` (tests only), `chore` (other)
 4. Determine scope from affected module (e.g. `auth`, `api`, `frontend`, `db`)
 5. `git commit -m "{type}({scope}): {short_description}" -m "Task: {TASK_FILE_NAME}"`
 
-1. Check `C:\py_dev\mkobi\.ai\audit\problems\`
-2. If matching problem exists extend/update existing problem description if needed
-3. If problem does NOT exist create a new detailed problem report
-
-Include:
-- description
-- affected modules
-- risk
-- root cause
-- architectural impact
-- suggested direction
-
-Do NOT fix unrelated problems during current task execution unless:
-- they directly block task execution
-- they create correctness or safety risks for current task
+**FORBIDDEN in this step:** `git reset`, `git commit --amend`, `git stash`, `git checkout --`, `git clean`
 
 ---
 # Expected Result

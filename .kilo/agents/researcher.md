@@ -28,7 +28,6 @@ permission:
   websearch: allow
   webfetch: allow
   bash: allow
-color: "#1359e5"
 ---
 
 <role>
