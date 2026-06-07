@@ -198,9 +198,11 @@ export interface ProcessingStatusResponse {
 }
 
 export interface ProcessingResult {
+  success: boolean
+  task_id: string
+  dashboard_id: string
   rows_processed: number
-  status: ProcessingStatus
-  message?: string
+  message: string
 }
 
 // Admin types
