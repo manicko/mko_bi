@@ -228,18 +228,18 @@ async def process_upload_with_session(
         message=f"File uploaded successfully, awaiting processing. mode={mode}",
         db=db,
     )
-    await db.commit()
 
-    # Move file to final location with log ID as filename AFTER successful commit
+    # Move file to final location with log ID as filename BEFORE commit
+    # This allows cleanup if enqueue fails
     final_file_path = upload_dir / f"{log.id}{file_ext}"
     try:
         file_path.replace(final_file_path)
     except Exception:
         logger.error(
-            "Failed to move file to final path after commit, log_id=%s",
-            log.id,
-            exc_info=True
+            "Failed to move file to final path, rolling back",
+            exc_info=True,
         )
+        await db.rollback()
         raise
 
     logger.info(
@@ -247,7 +247,8 @@ async def process_upload_with_session(
         final_file_path, file_size, mode
     )
 
-    # Enqueue job with processing config - use log.id as the identifier
+    # Enqueue job BEFORE commit for proper transaction atomicity
+    # If enqueue fails, we rollback and clean up the moved file
     try:
         await enqueue_processing_job(
             file_path=str(final_file_path),
@@ -257,15 +258,14 @@ async def process_upload_with_session(
             processing_config=processing_config,
         )
     except Exception as exc:
-        logger.error("Failed to enqueue processing job: %s", exc)
-        await log_repo.update_status(
-            log_id=log.id,
-            status=ProcessingStatus.FAILED,
-            message=f"Failed to enqueue processing job: {exc}",
-            db=db,
-        )
-        await db.commit()
+        logger.error("Enqueue failed, rolling back transaction: %s", exc)
+        # Clean up the moved file on enqueue failure
+        final_file_path.unlink(missing_ok=True)
+        await db.rollback()
         raise
+
+    # Now commit after successful enqueue
+    await db.commit()
 
     logger.info(
         "Task enqueued: task_id=%s, dashboard_id=%s, mode=%s, config=%s",
