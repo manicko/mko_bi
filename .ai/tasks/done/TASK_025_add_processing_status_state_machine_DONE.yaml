@@ -1,0 +1,92 @@
+id: TASK_025_add_processing_status_state_machine
+
+title: Add valid state transition enforcement to processing status updates (DP-008)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  The processing log status can be updated from any state to any other state without
+  validation. Invalid transitions like COMPLETED -> PROCESSING or FAILED -> COMPLETED
+  are possible. Add a state machine that enforces valid transitions:
+  STARTED -> UPLOADED -> PROCESSING -> COMPLETED/FAILED.
+
+source_reference:
+  - C:\py_dev\mkobi\.ai\audit\validated\final-report.md
+  - finding: DP-008
+
+goals:
+  - Define valid state transitions for ProcessingStatus
+  - Add transition validation to ProcessingLogService update methods
+  - Raise AppException on invalid transitions
+
+files:
+  - path: src/mkobi/services/processing_log_service.py
+    targets:
+      - type: class
+        name: ProcessingLogService
+      - type: function
+        name: update_processing_log
+    semantic_anchors:
+      - add_validation:
+          value: "_validate_transition"
+          description: Add state transition validation before status update
+
+  - path: src/mkobi/models/enums.py
+    targets:
+      - type: class
+        name: ProcessingStatus
+    semantic_anchors:
+      - add_class_variable:
+          value: "VALID_TRANSITIONS"
+          description: Add valid transitions mapping to enum or as module constant
+
+changes:
+  - action: add
+    description: >
+      Add VALID_TRANSITIONS constant and _validate_transition helper to enforce
+      valid processing status transitions.
+
+    code_hint: |
+      # Add near ProcessingStatus enum or at module level in processing_log_service.py:
+      VALID_TRANSITIONS: dict[ProcessingStatus, set[ProcessingStatus]] = {
+          ProcessingStatus.STARTED: {
+              ProcessingStatus.UPLOADED, ProcessingStatus.FAILED,
+          },
+          ProcessingStatus.UPLOADED: {
+              ProcessingStatus.PROCESSING, ProcessingStatus.FAILED,
+          },
+          ProcessingStatus.PROCESSING: {
+              ProcessingStatus.COMPLETED, ProcessingStatus.FAILED,
+          },
+          ProcessingStatus.COMPLETED: set(),  # Terminal state
+          ProcessingStatus.FAILED: set(),  # Terminal state
+      }
+
+      def _validate_transition(current: ProcessingStatus, new: ProcessingStatus) -> None:
+          """Validate that a status transition is allowed."""
+          if current == new:
+              return
+          allowed = VALID_TRANSITIONS.get(current, set())
+          if new not in allowed:
+              raise AppException(
+                  code=ErrorCode.INVALID_TRANSITION,
+                  detail=(
+                      f"Invalid status transition: {current.value} -> {new.value}. "
+                      f"Allowed: {[s.value for s in allowed]}"
+                  ),
+              )
+
+acceptance_criteria:
+  - Invalid transitions (e.g., COMPLETED -> PROCESSING) raise an error
+  - Valid transitions (STARTED -> UPLOADED -> PROCESSING -> COMPLETED) work normally
+  - Terminal states (COMPLETED, FAILED) cannot transition to any other state
+  - Tests pass for processing log service
+
+risk: medium
+
+tests_to_run:
+  - "pytest tests/ -v -k 'processing_log or processing_status'"
