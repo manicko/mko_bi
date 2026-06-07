@@ -36,31 +36,43 @@ The implementor subagent:
 
 <process>
 
-## ⛔ GIT RULES — FORBIDDEN FOREVER (planner + all subagents)
+## ⛔ GIT USAGE POLICY (planner + all subagents)
 
-**These git commands are ALWAYS forbidden. No exceptions. Ever.**
+Git is NOT a source of project knowledge.
 
-```
-git reset
-git checkout
-git clean
-git stash
-git rebase
-git push --force / git push -f
-git branch -D
-git tag -d
-git commit --amend
-git revert
-git mv
-git rm
-git cherry-pick
-```
+Never inspect commit history to understand architecture, requirements, previous behavior, ownership, or implementation intent.
+
+Never use:
+git log
+git reflog
+git show
+git blame
+git diff against historical commits
+
+for investigation purposes.
+
+The source of truth is:
+current files
+task file
+AGENTS.md
+project documentation
+
+If information is missing, ask the user instead of inspecting Git history.
 
 **If you need to undo something — just edit the files and commit a fix. Never use git to "go back".**
 
-**If you absolutely must use a forbidden command — ask the user first via `question` tool. WAIT for "yes".**
+FAILURE RECOVERY POLICY
 
-Task files are moved with PowerShell only: `Rename-Item`, `Move-Item`. Never `git mv`/`git rm`.
+If tests fail, lint fails, or implementation is incorrect:
+DO NOT attempt to restore previous repository states.
+DO NOT use Git as an undo mechanism for the whole repository.
+Fix the code directly.
+Git may only be used for:
+git status
+git add
+git commit
+
+No other Git operations are required for task execution.
 
 ---
 

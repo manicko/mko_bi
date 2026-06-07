@@ -11,7 +11,9 @@ set -e
 # This ensures password is always in sync with MKOBI_APP_PASSWORD environment variable
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<EOF
 DROP ROLE IF EXISTS mkobi_app;
-CREATE ROLE mkobi_app WITH LOGIN PASSWORD '${MKOBI_APP_PASSWORD}';
+CREATE ROLE mkobi_app WITH LOGIN PASSWORD $${MKOBI_APP_PASSWORD}$$;
+-- CREATEDB privilege NOT granted - admin credentials (postgres superuser)
+-- are used for CREATE/DROP DATABASE operations in recreate_test_database()
 
 -- Grant connection to the database
 GRANT CONNECT ON DATABASE ${POSTGRES_DB} TO mkobi_app;

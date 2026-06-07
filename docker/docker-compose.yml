@@ -104,7 +104,7 @@ services:
       LOGGING__LOG_FILE: /app/data/logs/app.log
       CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000"]}
       LOGGING__LEVEL: ${LOG_LEVEL:-INFO}
-      AUTO_MIGRATE: "true"
+      # AUTO_MIGRATE removed - migrations handled by dedicated migrate service
     volumes:
       - app_data:/app/data
     restart: unless-stopped
