@@ -31,9 +31,9 @@ describe('getErrorMessage', () => {
     expect(result).toBe(sharedErrorMessages[ErrorCode.GRAPH_NOT_FOUND])
   })
 
-  it('returns default Russian message when nothing else matches', () => {
-    // Create a code that doesn't have a message defined in shared maps
-    const unknownCode = ErrorCode.GRAPH_NOT_FOUND // Assume this has no custom message
+  it('returns shared message when nothing else matches', () => {
+    // Create a code that doesn't have a custom message defined in feature-specific maps
+    const unknownCode = ErrorCode.GRAPH_NOT_FOUND // Uses shared map message
 
     // When shared map has the message, it will return it
     // To test default, we need to pass an empty feature map and no detail
@@ -67,7 +67,7 @@ describe('getErrorMessage', () => {
 
   it('returns default message for unhandled error', () => {
     // Test that DEFAULT_ERROR_MESSAGE is used as fallback
-    expect(DEFAULT_ERROR_MESSAGE).toBe('Произошла ошибка')
+    expect(DEFAULT_ERROR_MESSAGE).toBe('An error occurred')
   })
 })
 
@@ -127,60 +127,60 @@ describe('sharedErrorMessages', () => {
     expect(sharedErrorMessages[ErrorCode.PROCESSING_IN_PROGRESS]).toBeDefined()
   })
 
-  it('all messages are in Russian', () => {
+  it('all messages are in English', () => {
     const cyrillicPattern = /[а-яё]/i
     Object.values(sharedErrorMessages).forEach((message) => {
-      expect(cyrillicPattern.test(message)).toBe(true)
+      expect(cyrillicPattern.test(message)).toBe(false)
     })
   })
 })
 
 describe('authErrorMessages', () => {
   it('contains all required auth error codes', () => {
-    expect(authErrorMessages[ErrorCode.AUTHENTICATION_FAILED]).toBe('Неверный email или пароль')
-    expect(authErrorMessages[ErrorCode.TOKEN_EXPIRED]).toBe('Сессия истёкла. Пожалуйста, войдите снова.')
-    expect(authErrorMessages[ErrorCode.TOKEN_REVOKED]).toBe('Ваша сессия была завершена. Пожалуйста, войдите снова.')
-    expect(authErrorMessages[ErrorCode.INVALID_TOKEN]).toBe('Неверный токен аутентификации')
-    expect(authErrorMessages[ErrorCode.EMAIL_ALREADY_EXISTS]).toBe('Пользователь с таким email уже зарегистрирован')
-    expect(authErrorMessages[ErrorCode.INVALID_EMAIL]).toBe('Введите корректный email адрес')
-    expect(authErrorMessages[ErrorCode.INVALID_PASSWORD]).toBe('Неверный пароль')
-    expect(authErrorMessages[ErrorCode.RATE_LIMIT_EXCEEDED]).toBe('Слишком много попыток входа. Попробуйте позже.')
+    expect(authErrorMessages[ErrorCode.AUTHENTICATION_FAILED]).toBe('Invalid email or password')
+    expect(authErrorMessages[ErrorCode.TOKEN_EXPIRED]).toBe('Session expired. Please log in again.')
+    expect(authErrorMessages[ErrorCode.TOKEN_REVOKED]).toBe('Your session was terminated. Please log in again.')
+    expect(authErrorMessages[ErrorCode.INVALID_TOKEN]).toBe('Invalid authentication token')
+    expect(authErrorMessages[ErrorCode.EMAIL_ALREADY_EXISTS]).toBe('A user with this email is already registered')
+    expect(authErrorMessages[ErrorCode.INVALID_EMAIL]).toBe('Please enter a valid email address')
+    expect(authErrorMessages[ErrorCode.INVALID_PASSWORD]).toBe('Invalid password')
+    expect(authErrorMessages[ErrorCode.RATE_LIMIT_EXCEEDED]).toBe('Too many login attempts. Please try again later.')
   })
 })
 
 describe('uploadErrorMessages', () => {
   it('contains all required upload error codes', () => {
-    expect(uploadErrorMessages[ErrorCode.FILE_UPLOAD_ERROR]).toBe('Не удалось загрузить файл. Попробуйте ещё раз.')
-    expect(uploadErrorMessages[ErrorCode.FILE_TOO_LARGE]).toBe('Размер файла превышает допустимый лимит (максимум 100 МБ)')
-    expect(uploadErrorMessages[ErrorCode.INVALID_FILE_TYPE]).toBe('Неверный тип файла. Разрешены только CSV и GZIP файлы.')
-    expect(uploadErrorMessages[ErrorCode.FILE_PROCESSING_ERROR]).toBe('Ошибка обработки файла. Проверьте формат данных.')
-    expect(uploadErrorMessages[ErrorCode.PROCESSING_FAILED]).toBe('Не удалось обработать файл. Обратитесь к администратору.')
-    expect(uploadErrorMessages[ErrorCode.PROCESSING_IN_PROGRESS]).toBe('Файл уже обрабатывается. Подождите завершения.')
+    expect(uploadErrorMessages[ErrorCode.FILE_UPLOAD_ERROR]).toBe('Failed to upload file. Please try again.')
+    expect(uploadErrorMessages[ErrorCode.FILE_TOO_LARGE]).toBe('File size exceeds the allowed limit (maximum 100 MB)')
+    expect(uploadErrorMessages[ErrorCode.INVALID_FILE_TYPE]).toBe('Invalid file type. Only CSV and GZIP files are allowed.')
+    expect(uploadErrorMessages[ErrorCode.FILE_PROCESSING_ERROR]).toBe('File processing error. Please check the data format.')
+    expect(uploadErrorMessages[ErrorCode.PROCESSING_FAILED]).toBe('Failed to process file. Please contact the administrator.')
+    expect(uploadErrorMessages[ErrorCode.PROCESSING_IN_PROGRESS]).toBe('File is already being processed. Please wait for completion.')
   })
 })
 
 describe('dashboardErrorMessages', () => {
   it('contains all required dashboard error codes', () => {
-    expect(dashboardErrorMessages[ErrorCode.DASHBOARD_NOT_FOUND]).toBe('Дашборд не найден или был удалён')
-    expect(dashboardErrorMessages[ErrorCode.PERMISSION_DENIED]).toBe('У вас нет прав для выполнения этого действия')
-    expect(dashboardErrorMessages[ErrorCode.ACCESS_DENIED]).toBe('Доступ к дашборду запрещён')
-    expect(dashboardErrorMessages[ErrorCode.VALIDATION_ERROR]).toBe('Ошибка валидации данных дашборда')
+    expect(dashboardErrorMessages[ErrorCode.DASHBOARD_NOT_FOUND]).toBe('Dashboard not found or has been deleted')
+    expect(dashboardErrorMessages[ErrorCode.PERMISSION_DENIED]).toBe('You do not have permission to perform this action')
+    expect(dashboardErrorMessages[ErrorCode.ACCESS_DENIED]).toBe('Access to dashboard denied')
+    expect(dashboardErrorMessages[ErrorCode.VALIDATION_ERROR]).toBe('Dashboard data validation error')
   })
 })
 
 describe('adminErrorMessages', () => {
   it('contains all required admin error codes', () => {
-    expect(adminErrorMessages[ErrorCode.USER_NOT_FOUND]).toBe('Пользователь не найден в системе')
-    expect(adminErrorMessages[ErrorCode.PERMISSION_DENIED]).toBe('Недостаточно прав для административной операции')
-    expect(adminErrorMessages[ErrorCode.EMAIL_ALREADY_EXISTS]).toBe('Пользователь с таким email уже существует')
-    expect(adminErrorMessages[ErrorCode.VALIDATION_ERROR]).toBe('Ошибка валидации административных данных')
+    expect(adminErrorMessages[ErrorCode.USER_NOT_FOUND]).toBe('User not found in system')
+    expect(adminErrorMessages[ErrorCode.PERMISSION_DENIED]).toBe('Insufficient permissions for administrative operation')
+    expect(adminErrorMessages[ErrorCode.EMAIL_ALREADY_EXISTS]).toBe('A user with this email already exists')
+    expect(adminErrorMessages[ErrorCode.VALIDATION_ERROR]).toBe('Administrative data validation error')
   })
 })
 
 describe('userErrorMessages', () => {
   it('contains all required user error codes', () => {
-    expect(userErrorMessages[ErrorCode.USER_NOT_FOUND]).toBe('Пользователь не найден')
-    expect(userErrorMessages[ErrorCode.INVALID_PASSWORD]).toBe('Текущий пароль неверен')
-    expect(userErrorMessages[ErrorCode.VALIDATION_ERROR]).toBe('Ошибка валидации данных профиля')
+    expect(userErrorMessages[ErrorCode.USER_NOT_FOUND]).toBe('User not found')
+    expect(userErrorMessages[ErrorCode.INVALID_PASSWORD]).toBe('Current password is incorrect')
+    expect(userErrorMessages[ErrorCode.VALIDATION_ERROR]).toBe('Profile data validation error')
   })
 })
