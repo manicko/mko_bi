@@ -1,6 +1,18 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { renderHook, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import React from 'react'
+import { MemoryRouter } from 'react-router-dom'
+
+// Mock react-router-dom
+const mockNavigate = vi.fn()
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom')
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  }
+})
 
 // Mock auth API - must be before other imports
 vi.mock('../../api/authApi', () => ({
@@ -29,15 +41,6 @@ import { useAuth } from '../useAuth'
 import { login, registerRequest, getProfile, logout, refreshToken } from '../../api/authApi'
 import { getToken, setToken, removeToken } from '../authToken'
 
-// Mock window.location
-const mockLocation = {
-  href: '',
-}
-Object.defineProperty(window, 'location', {
-  value: mockLocation,
-  writable: true,
-})
-
 // Mock session storage
 const sessionStorageMock = (() => {
   let store: Record<string, string> = {}
@@ -58,7 +61,7 @@ Object.defineProperty(window, 'sessionStorage', {
   value: sessionStorageMock,
 })
 
-// Helper to create wrapper with QueryClient
+// Helper to create wrapper with QueryClient and Router
 const createWrapper = () => {
   const queryClient = new QueryClient({
     defaultOptions: {
@@ -68,7 +71,9 @@ const createWrapper = () => {
     },
   })
   return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter>{children}</MemoryRouter>
+    </QueryClientProvider>
   )
 }
 
@@ -76,7 +81,7 @@ describe('useAuth', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     sessionStorageMock.clear()
-    mockLocation.href = ''
+    mockNavigate.mockClear()
   })
 
   afterEach(() => {
@@ -324,7 +329,7 @@ describe('useAuth', () => {
       renderHook(() => useAuth(), { wrapper: createWrapper() })
 
       await waitFor(() => {
-        expect(mockLocation.href).toBe('/profile/change-password?force=true')
+        expect(mockNavigate).toHaveBeenCalledWith('/profile/change-password?force=true')
       })
     })
 
@@ -346,7 +351,7 @@ describe('useAuth', () => {
       renderHook(() => useAuth(), { wrapper: createWrapper() })
 
       await waitFor(() => {
-        expect(mockLocation.href).toBe('/profile/change-password?force=true')
+        expect(mockNavigate).toHaveBeenCalledWith('/profile/change-password?force=true')
       })
     })
 
@@ -367,7 +372,7 @@ describe('useAuth', () => {
         expect(result.current.isLoading).toBe(false)
       })
 
-      expect(mockLocation.href).toBe('')
+      expect(mockNavigate).not.toHaveBeenCalled()
     })
   })
 })

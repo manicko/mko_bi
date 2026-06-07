@@ -31,7 +31,7 @@ export function useAuth() {
       setUser(response.user)
       // Security: Redirect to password change if flag is set after admin password reset
       if (response.user.force_password_change) {
-        navigate('/profile/change-password?force=true')
+        void navigate('/profile/change-password?force=true')
       }
       return response
     } catch (error) {
@@ -41,7 +41,7 @@ export function useAuth() {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [navigate])
 
   const registerRequest = useCallback(async (email: string) => {
     await apiRegisterRequest(email)
@@ -69,7 +69,7 @@ export function useAuth() {
           const profile = await apiGetProfile()
           setUser(profile)
           if (profile.force_password_change) {
-            navigate('/profile/change-password?force=true')
+            void navigate('/profile/change-password?force=true')
           }
         } catch {
           // Refresh failed or no refresh cookie - user needs to login
@@ -88,7 +88,7 @@ export function useAuth() {
         const profile = await apiGetProfile()
         setUser(profile)
         if (profile.force_password_change) {
-          navigate('/profile/change-password?force=true')
+          void navigate('/profile/change-password?force=true')
         }
       } catch {
         removeToken()
@@ -97,7 +97,7 @@ export function useAuth() {
         setIsLoading(false)
       }
     })()
-  }, [])
+  }, [navigate])
 
   return {
     user,
