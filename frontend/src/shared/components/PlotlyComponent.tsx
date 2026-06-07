@@ -16,12 +16,14 @@ interface PlotlyChartProps {
 // Resolve the actual Plotly component.
 // Vite dev interop returns { default: Component } for CJS with __esModule.
 // Production build returns Component directly.
-/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
-const raw = PlotlyDefault as any
-const PlotComponent: ComponentType<PlotlyChartProps> =
-  (typeof raw?.default === 'function' ? raw.default : null) ??
-  (typeof raw === 'function' ? raw : null)
-/* eslint-enable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
+const raw: unknown = PlotlyDefault
+const PlotComponent: ComponentType<PlotlyChartProps> | null =
+  typeof raw === "object" && raw !== null
+    ? ((raw as { default?: unknown }).default as ComponentType<PlotlyChartProps>) ??
+      (raw as ComponentType<PlotlyChartProps>)
+    : typeof raw === "function"
+      ? (raw as ComponentType<PlotlyChartProps>)
+      : null
 
 export function PlotlyChart({
   data,
