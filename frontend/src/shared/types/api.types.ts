@@ -156,6 +156,8 @@ export interface DashboardDetail {
   description: string | null
   config: DashboardConfig
   permission: DashboardPermission
+  created_at: string
+  updated_at: string
 }
 
 export interface AggregatedDataRequest {
