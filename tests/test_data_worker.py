@@ -1,14 +1,16 @@
 """Tests for data worker background functions."""
 from datetime import datetime, UTC
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
+import polars as pl
 
 from mkobi.models.enums import ProcessingStatus
 from mkobi.workers.data_worker import (
     _update_processing_log_status,
     cleanup_stale_processing_logs,
+    _store_aggregates,
 )
 
 
@@ -156,3 +158,247 @@ class TestDataWorker:
         )
 
         assert count == 5
+
+
+# --- _store_aggregates tests ---
+
+@pytest.mark.asyncio
+class TestStoreAggregates:
+    """Tests for _store_aggregates function."""
+
+    @pytest.fixture
+    def mock_session(self):
+        """Create a mock AsyncSession."""
+        session = AsyncMock()
+        session.execute = AsyncMock()
+        return session
+
+    async def test_store_aggregates_no_graphs(
+        self, mock_session
+    ):
+        """Test _store_aggregates returns early when no graphs found."""
+        df = pl.DataFrame({"a": [1, 2], "b": ["x", "y"]})
+        dashboard_id = uuid4()
+        task_id = str(uuid4())
+
+        # Mock result with no graphs
+        mock_result = MagicMock()
+        mock_result.scalars.return_value.all.return_value = []
+        mock_session.execute.return_value = mock_result
+
+        await _store_aggregates(
+            df=df,
+            dashboard_id=dashboard_id,
+            task_id=task_id,
+            mode="overwrite",
+            db_session=mock_session,
+        )
+
+        mock_session.execute.assert_called()
+
+    async def test_store_aggregates_with_graphs(
+        self, mock_session
+    ):
+        """Test _store_aggregates processes data when graphs exist."""
+        from mkobi.models.enums import GraphType, FilterType
+
+        df = pl.DataFrame({"a": [1, 2], "b": ["x", "y"]})
+        dashboard_id = uuid4()
+        task_id = str(uuid4())
+
+        # Create mock Graph with valid type
+        mock_graph = MagicMock()
+        mock_graph.id = uuid4()
+        mock_graph.name = "Test Graph"
+        mock_graph.type = GraphType.BAR
+        mock_graph.dashboard_id = dashboard_id
+        mock_graph.config = {}
+        mock_graph.dimensions = []
+        mock_graph.metrics = []
+
+        # Create mock Filter with valid type
+        mock_filter = MagicMock()
+        mock_filter.id = uuid4()
+        mock_filter.name = "Test Filter"
+        mock_filter.type = FilterType.SELECT
+        mock_filter.config = {}
+        mock_filter.created_at = datetime.now(UTC)
+
+        # Create two mock results for the two execute calls (graph query, filter query)
+        mock_graph_result = MagicMock()
+        mock_graph_result.scalars.return_value.all.return_value = [mock_graph]
+
+        mock_filter_result = MagicMock()
+        mock_filter_result.scalars.return_value.all.return_value = [mock_filter]
+
+        mock_session.execute.side_effect = [mock_graph_result, mock_filter_result]
+
+        # Patch the classes that are imported inside the function
+        with patch(
+            "mkobi.services.aggregation_service.AggregationService"
+        ) as mock_agg_service, patch(
+            "mkobi.data.storage.manager.StorageManager"
+        ) as mock_storage, patch(
+            "mkobi.db.repositories.dashboard_filter_values_repo.DashboardFilterValuesRepository"
+        ) as mock_repo:
+            mock_service_instance = AsyncMock()
+            mock_service_instance.aggregate_for_dashboard = AsyncMock(
+                return_value=[{"graph_id": mock_graph.id, "dims": {}, "metrics": {}}]
+            )
+            mock_service_instance.extract_filter_values = AsyncMock(return_value={})
+            mock_agg_service.return_value = mock_service_instance
+
+            mock_manager_instance = AsyncMock()
+            mock_manager_instance.save_aggregates = AsyncMock(return_value=5)
+            mock_storage.return_value = mock_manager_instance
+
+            mock_repo_instance = AsyncMock()
+            mock_repo_instance.save_filter_values = AsyncMock()
+            mock_repo.return_value = mock_repo_instance
+
+            await _store_aggregates(
+                df=df,
+                dashboard_id=dashboard_id,
+                task_id=task_id,
+                mode="overwrite",
+                db_session=mock_session,
+            )
+
+            assert mock_session.execute.call_count == 2
+            mock_manager_instance.save_aggregates.assert_called_once()
+
+    async def test_store_aggregates_append_mode(
+        self, mock_session
+    ):
+        """Test _store_aggregates uses append mode correctly (clear_old=False)."""
+        from mkobi.models.enums import GraphType, FilterType
+
+        df = pl.DataFrame({"a": [1, 2], "b": ["x", "y"]})
+        dashboard_id = uuid4()
+        task_id = str(uuid4())
+
+        mock_graph = MagicMock()
+        mock_graph.id = uuid4()
+        mock_graph.name = "Test Graph"
+        mock_graph.type = GraphType.BAR
+        mock_graph.dashboard_id = dashboard_id
+        mock_graph.config = {}
+        mock_graph.dimensions = []
+        mock_graph.metrics = []
+
+        mock_filter = MagicMock()
+        mock_filter.id = uuid4()
+        mock_filter.name = "Test Filter"
+        mock_filter.type = FilterType.SELECT
+        mock_filter.config = {}
+        mock_filter.created_at = datetime.now(UTC)
+
+        mock_graph_result = MagicMock()
+        mock_graph_result.scalars.return_value.all.return_value = [mock_graph]
+
+        mock_filter_result = MagicMock()
+        mock_filter_result.scalars.return_value.all.return_value = [mock_filter]
+
+        mock_session.execute.side_effect = [mock_graph_result, mock_filter_result]
+
+        with patch(
+            "mkobi.services.aggregation_service.AggregationService"
+        ) as mock_agg_service, patch(
+            "mkobi.data.storage.manager.StorageManager"
+        ) as mock_storage, patch(
+            "mkobi.db.repositories.dashboard_filter_values_repo.DashboardFilterValuesRepository"
+        ) as mock_repo:
+            mock_service_instance = AsyncMock()
+            mock_service_instance.aggregate_for_dashboard = AsyncMock(
+                return_value=[{"graph_id": mock_graph.id, "dims": {}, "metrics": {}}]
+            )
+            mock_service_instance.extract_filter_values = AsyncMock(return_value={})
+            mock_agg_service.return_value = mock_service_instance
+
+            mock_manager_instance = AsyncMock()
+            mock_manager_instance.save_aggregates = AsyncMock(return_value=3)
+            mock_storage.return_value = mock_manager_instance
+
+            mock_repo_instance = AsyncMock()
+            mock_repo_instance.save_filter_values = AsyncMock()
+            mock_repo.return_value = mock_repo_instance
+
+            await _store_aggregates(
+                df=df,
+                dashboard_id=dashboard_id,
+                task_id=task_id,
+                mode="append",
+                db_session=mock_session,
+            )
+
+            # Check that clear_old was False (append mode)
+            call_kwargs = mock_manager_instance.save_aggregates.call_args
+            assert call_kwargs[1]["clear_old"] is False
+
+    async def test_store_aggregates_logs_processed_count(
+        self, mock_session
+    ):
+        """Test _store_aggregates saves filter values when present."""
+        from mkobi.models.enums import GraphType, FilterType
+
+        df = pl.DataFrame({"a": [1, 2, 3], "b": ["x", "y", "z"]})
+        dashboard_id = uuid4()
+        task_id = str(uuid4())
+
+        mock_graph = MagicMock()
+        mock_graph.id = uuid4()
+        mock_graph.name = "Test Graph"
+        mock_graph.type = GraphType.BAR
+        mock_graph.dashboard_id = dashboard_id
+        mock_graph.config = {}
+        mock_graph.dimensions = []
+        mock_graph.metrics = []
+
+        mock_filter = MagicMock()
+        mock_filter.id = uuid4()
+        mock_filter.name = "Test Filter"
+        mock_filter.type = FilterType.SELECT
+        mock_filter.config = {}
+        mock_filter.created_at = datetime.now(UTC)
+
+        mock_graph_result = MagicMock()
+        mock_graph_result.scalars.return_value.all.return_value = [mock_graph]
+
+        mock_filter_result = MagicMock()
+        mock_filter_result.scalars.return_value.all.return_value = [mock_filter]
+
+        mock_session.execute.side_effect = [mock_graph_result, mock_filter_result]
+
+        with patch(
+            "mkobi.services.aggregation_service.AggregationService"
+        ) as mock_agg_service, patch(
+            "mkobi.data.storage.manager.StorageManager"
+        ) as mock_storage, patch(
+            "mkobi.db.repositories.dashboard_filter_values_repo.DashboardFilterValuesRepository"
+        ) as mock_repo:
+            mock_service_instance = AsyncMock()
+            mock_service_instance.aggregate_for_dashboard = AsyncMock(
+                return_value=[{"graph_id": mock_graph.id, "dims": {"a": [1]}, "metrics": {"b": 1}}]
+            )
+            mock_service_instance.extract_filter_values = AsyncMock(
+                return_value={"b": ["x", "y"]}
+            )
+            mock_agg_service.return_value = mock_service_instance
+
+            mock_manager_instance = AsyncMock()
+            mock_manager_instance.save_aggregates = AsyncMock(return_value=3)
+            mock_storage.return_value = mock_manager_instance
+
+            mock_repo_instance = AsyncMock()
+            mock_repo_instance.save_filter_values = AsyncMock()
+            mock_repo.return_value = mock_repo_instance
+
+            await _store_aggregates(
+                df=df,
+                dashboard_id=dashboard_id,
+                task_id=task_id,
+                mode="overwrite",
+                db_session=mock_session,
+            )
+
+            mock_repo_instance.save_filter_values.assert_called_once()
