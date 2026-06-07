@@ -154,6 +154,28 @@ class DatabaseSettings(BaseModel):
             )
         return v
 
+    @field_validator("admin_password")
+    @classmethod
+    def validate_admin_password_strength(cls, v: str | None) -> str | None:
+        """Validate admin password is not weak in production.
+
+        Ensures admin password is at least 8 characters for security.
+
+        Args:
+            v: The admin password value to validate.
+
+        Returns:
+            str | None: The validated admin password value.
+
+        Raises:
+            ValueError: If admin password is less than 8 characters.
+        """
+        if v is not None and len(v) < 8:
+            raise ValueError(
+                "Admin password must be at least 8 characters for security"
+            )
+        return v
+
 
 class JWTSettings(BaseModel):
     """JWT authentication settings."""
