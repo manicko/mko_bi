@@ -271,10 +271,21 @@ REQUIRED:
 3. Verify  {TASK_FILE_ABS_PATH} absent from`C:\py_dev\mkobi\.ai\tasks\todo`
 4. Verify ALL completion conditions
 5. Commit changes:
-   - `git add -A`
+   - `git add <modified files>`
    - Determine commit type from task content: `feat` (new feature), `fix` (bug fix), `refactor` (restructure), `test` (tests only), `chore` (other)
    - Determine scope from affected module (e.g. `auth`, `api`, `frontend`, `db`)
    - `git commit -m "{type}({scope}): {short_description}" -m "Task: {TASK_FILE_NAME}"`
+
+Never use:
+git add -A
+git add .
+Use explicit file paths only. git add frontend/src/features/admin/ui/DashboardManagement.tsx
+
+IMPORTANT: if you see changes not implemented by you it is ok.  You are working in parallel. Do not use git to restore to the previous state.
+You are working in a shared repository.
+Other agents, developers, automation tools, hooks, IDE plugins and CI-related processes may modify files while you work.This is normal. If you see files modified by others: ignore them. Only work with files required for the current task.
+The repository is NOT expected to be clean.
+Your responsibility is limited to the current task scope.
 
 </required_workflow>
 
