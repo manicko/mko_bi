@@ -24,7 +24,7 @@ permission:
     "C:\\py_dev\\mkobi\\docker\\.env.development": allow
     "C:\\py_dev\\mkobi\\docker\\.env.production": allow
   bash:
-    "git *": allow
+    "git *": ask
 
     "git status*": allow
     "git add*": allow

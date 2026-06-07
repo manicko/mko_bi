@@ -56,23 +56,27 @@ current files
 task file
 AGENTS.md
 project documentation
+You are working in a shared repository.
 
-If information is missing, ask the user instead of inspecting Git history.
+Other agents, developers, automation tools, hooks, IDE plugins and CI-related processes may modify files while you work.
 
-**If you need to undo something — just edit the files and commit a fix. Never use git to "go back".**
+This is normal.
 
-FAILURE RECOVERY POLICY
+If you see files modified by others:
 
-If tests fail, lint fails, or implementation is incorrect:
-DO NOT attempt to restore previous repository states.
-DO NOT use Git as an undo mechanism for the whole repository.
-Fix the code directly.
-Git may only be used for:
-git status
-git add
-git commit
+ignore them
+do not investigate them
+do not compare them against previous commits
+do not inspect git history
+do not attempt to clean the repository
+do not attempt to restore repository state
 
-No other Git operations are required for task execution.
+Only work with files required for the current task.
+
+The repository is NOT expected to be clean.
+
+Your responsibility is limited to the current task scope.
+
 
 ---
 
@@ -281,11 +285,14 @@ git add -A
 git add .
 Use explicit file paths only. git add frontend/src/features/admin/ui/DashboardManagement.tsx
 
-IMPORTANT: if you see changes not implemented by you it is ok.  You are working in parallel. Do not use git to restore to the previous state.
+IMPORTANT: if you see changes not implemented by you it is ok. You are working in parallel. Do not use git to restore to the previous state.
 You are working in a shared repository.
 Other agents, developers, automation tools, hooks, IDE plugins and CI-related processes may modify files while you work.This is normal. If you see files modified by others: ignore them. Only work with files required for the current task.
 The repository is NOT expected to be clean.
 Your responsibility is limited to the current task scope.
+GIT INVESTIGATION IS FORBIDDEN
+Git must not be used for repository analysis. 
+Check code instead.
 
 </required_workflow>
 
