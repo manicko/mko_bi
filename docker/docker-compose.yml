@@ -31,6 +31,13 @@ services:
       timeout: 5s
       retries: 5
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
 
   # Migration service - runs alembic migrations before app starts
   # This ensures database schema is up-to-date before the application starts
@@ -107,6 +114,13 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 512M
 
   # Redis for task queue (RQ workers)
   redis:
@@ -119,6 +133,13 @@ services:
       interval: 5s
       timeout: 3s
       retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+        reservations:
+          memory: 128M
 
   # RQ worker for background task processing (file uploads, data aggregation)
   rq-worker:
@@ -165,6 +186,13 @@ services:
       start_period: 40s
     profiles:
       - production
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+        reservations:
+          memory: 256M
 
   # NOTE: nginx requires a prior frontend build (npm run build in /frontend)
   # Frontend dist files are mounted from ../frontend/dist
@@ -187,6 +215,12 @@ services:
       retries: 3
     profiles:
       - production
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
 
 volumes:
   postgres_data:
