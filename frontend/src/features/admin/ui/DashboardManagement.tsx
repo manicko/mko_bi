@@ -35,11 +35,30 @@ export function DashboardManagement() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false)
   const [editDialogOpen, setEditDialogOpen] = useState(false)
   const [selectedDashboard, setSelectedDashboard] = useState<DashboardAdmin | null>(null)
-  const [formData, setFormData] = useState<{ name: string; description: string; layout: 'single-column' | 'two-columns' | 'grid' | '' }>({ name: '', description: '', layout: '' })
   const [error, setError] = useState<string | null>(null)
 
   const queryClient = useQueryClient()
   const confirmDialog = useConfirmDialog()
+
+  const {
+    register: createRegister,
+    handleSubmit: handleCreateSubmit,
+    reset: resetCreateForm,
+    formState: { errors: createErrors },
+  } = useForm<CreateDashboardFormData>({
+    resolver: zodResolver(createDashboardSchema),
+    defaultValues: { name: '', description: '', layout: undefined },
+  })
+
+  const {
+    register: editRegister,
+    handleSubmit: handleEditSubmit,
+    reset: resetEditForm,
+    formState: { errors: editErrors },
+  } = useForm<UpdateDashboardFormData>({
+    resolver: zodResolver(updateDashboardSchema),
+    defaultValues: { name: '', description: '' },
+  })
 
   const { data: dashboards = [], isLoading } = useQuery({
     queryKey: ['admin', 'dashboards'],
@@ -51,7 +70,7 @@ export function DashboardManagement() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'dashboards'] })
       setCreateDialogOpen(false)
-      setFormData({ name: '', description: '', layout: '' })
+      resetCreateForm()
       setError(null)
     },
     onError: (error: unknown) => {
@@ -71,6 +90,7 @@ export function DashboardManagement() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['admin', 'dashboards'] })
       setEditDialogOpen(false)
+      resetEditForm()
       toast.success('Dashboard updated successfully')
     },
     onError: (error: unknown) => {
@@ -97,19 +117,19 @@ export function DashboardManagement() {
     },
   })
 
-  const handleCreate = () => {
+  const handleCreate = (data: CreateDashboardFormData) => {
     createMutation.mutate({
-      name: formData.name,
-      description: formData.description,
-      layout: formData.layout || undefined,
+      name: data.name,
+      description: data.description,
+      layout: data.layout,
     })
   }
 
-  const handleEdit = () => {
+  const handleEdit = (data: UpdateDashboardFormData) => {
     if (selectedDashboard) {
       updateMutation.mutate({
         id: selectedDashboard.id,
-        data: formData,
+        data: { name: data.name, description: data.description },
       })
     }
   }
@@ -131,10 +151,10 @@ export function DashboardManagement() {
   const openEditDialog = useCallback(
     (dashboard: DashboardAdmin) => {
       setSelectedDashboard(dashboard)
-      setFormData({ name: dashboard.name, description: dashboard.description || '', layout: '' })
+      resetEditForm({ name: dashboard.name, description: dashboard.description || '' })
       setEditDialogOpen(true)
     },
-    [],
+    [resetEditForm],
   )
 
   const columns: GridColDef[] = useMemo(
@@ -195,7 +215,7 @@ export function DashboardManagement() {
           variant="contained"
           startIcon={<AddIcon />}
           onClick={() => {
-            setFormData({ name: '', description: '', layout: '' })
+            resetCreateForm()
             setError(null)
             setCreateDialogOpen(true)
           }}
@@ -222,8 +242,9 @@ export function DashboardManagement() {
           <TextField
             fullWidth
             label="Name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            {...createRegister('name')}
+            error={!!createErrors.name}
+            helperText={createErrors.name?.message}
             sx={{ mt: 2, mb: 2 }}
           />
           <TextField
@@ -231,16 +252,16 @@ export function DashboardManagement() {
             label="Description"
             multiline
             rows={3}
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value.slice(0, 200) })}
-            helperText={`${formData.description.length}/200`}
+            {...createRegister('description')}
+            error={!!createErrors.description}
+            helperText={createErrors.description?.message}
           />
           <FormControl fullWidth sx={{ mt: 2 }}>
             <InputLabel>Layout</InputLabel>
             <Select
-              value={formData.layout || ''}
               label="Layout"
-              onChange={(e) => setFormData({ ...formData, layout: e.target.value })}
+              {...createRegister('layout')}
+              error={!!createErrors.layout}
             >
               <MenuItem value="single-column">Single column</MenuItem>
               <MenuItem value="two-columns">Two columns</MenuItem>
@@ -251,7 +272,7 @@ export function DashboardManagement() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleCreate} disabled={createMutation.isPending || !formData.name}>
+          <Button onClick={(e) => void handleCreateSubmit(handleCreate)(e)} disabled={createMutation.isPending}>
             Create
           </Button>
         </DialogActions>
@@ -264,8 +285,9 @@ export function DashboardManagement() {
           <TextField
             fullWidth
             label="Name"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            {...editRegister('name')}
+            error={!!editErrors.name}
+            helperText={editErrors.name?.message}
             sx={{ mt: 2, mb: 2 }}
           />
           <TextField
@@ -273,13 +295,14 @@ export function DashboardManagement() {
             label="Description"
             multiline
             rows={3}
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            {...editRegister('description')}
+            error={!!editErrors.description}
+            helperText={editErrors.description?.message}
           />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEditDialogOpen(false)}>Cancel</Button>
-          <Button onClick={handleEdit} disabled={updateMutation.isPending || !formData.name}>
+          <Button onClick={(e) => void handleEditSubmit(handleEdit)(e)} disabled={updateMutation.isPending}>
             Save
           </Button>
         </DialogActions>
