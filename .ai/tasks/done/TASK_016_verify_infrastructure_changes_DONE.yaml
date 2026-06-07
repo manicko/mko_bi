@@ -1,0 +1,52 @@
+id: TASK_016_verify_infrastructure_changes
+
+title: Verify infrastructure changes (CREATEDB removal, port binding, migrations, resources)
+
+type: verification
+
+status: done
+
+depends_on:
+  - TASK_008_remove_createdb_privilege_mkobi_app
+  - TASK_009_fix_port_8000_exposed_production
+  - TASK_013_run_pending_migrations
+  - TASK_015_add_docker_resource_limits
+
+verifies:
+  - TASK_008_remove_createdb_privilege_mkobi_app
+  - TASK_009_fix_port_8000_exposed_production
+  - TASK_013_run_pending_migrations
+  - TASK_015_add_docker_resource_limits
+
+verification_steps:
+  - build: "cd docker && docker compose -f docker-compose.yml config"
+  - test: "pytest tests/ -v -k 'database or docker'"
+  - smoke_check: >
+      Verify all services start correctly and health endpoints respond.
+      Check mkobi_app role has no CREATEDB privilege.
+
+pass_criteria:
+  - Docker compose configuration validates
+  - All tests pass
+  - mkobi_app role verified without CREATEDB
+  - Migration applied successfully
+  - Resource limits visible in docker inspect output
+
+failure_action: return TASK_008_remove_createdb_privilege_mkobi_app to rework
+
+notes: >
+  This verification covers all infrastructure changes. If any sub-task fails,
+  return TASK_008 (CREATEDB removal) to rework as it was the cause of previous rollbacks.
+
+verification_results:
+  - docker_compose_config: PASSED - Configuration validated with --env-file
+  - tests_passed: PASSED - 58 tests passed (enum consistency, processing logs, services integration)
+  - mkobi_app_createdb: PASSED - test-db container shows rolcreatedb = f (false)
+  - migration_applied: PASSED - 4479eb53fd4e migration exists and was applied, processing_status enum has correct values (started, uploaded, processing, completed, failed)
+  - resource_limits: PASSED - Memory limits verified: db=1G, app=1G, redis=256M, rq-worker=512M, nginx=128M
+
+implementation_notes:
+  - init_script_verified: "docker/init-scripts/01-create-app-role.sh has no CREATEDB grant, only data manipulation privileges"
+  - port_8000_binding: "App service in production docker-compose.yml has no ports section (nginx is the only entry point)"
+  - starter_py_verified: "src/mkobi/db/starter.py has _verify_role_privileges() and explicit admin_url check raising ValueError"
+  - test_db_role: "Fresh test-db container correctly created mkobi_app without CREATEDB privilege"
