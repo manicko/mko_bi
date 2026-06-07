@@ -73,12 +73,14 @@ services:
       - ../tests:/app/tests
       - ../pyproject.toml:/app/pyproject.toml
       - ../uv.lock:/app/uv.lock
+    ports:
+      - "8000:8000"
     command: ["uvicorn", "src.mkobi.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload", "--reload-exclude", "/app/tests/"]
     # Remove healthcheck in dev for faster startup
     healthcheck:
       disable: true
 
-# Override rq-worker for development (remove production profile requirement)
+  # Override rq-worker for development (remove production profile requirement)
   rq-worker:
     profiles: []
     environment:

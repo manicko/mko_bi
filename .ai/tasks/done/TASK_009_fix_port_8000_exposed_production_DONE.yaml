@@ -2,7 +2,7 @@ id: TASK_009_fix_port_8000_exposed_production
 
 title: Remove port 8000 binding from app service in docker-compose.yml
 
-status: pending
+status: done
 
 priority: high
 
