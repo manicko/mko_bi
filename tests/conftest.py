@@ -120,7 +120,6 @@ def _get_worker_db_suffix() -> str:
     When running with pytest-xdist, each worker gets a unique id like 'gw0', 'gw1'.
     We use this to create separate schemas per worker for complete isolation.
     """
-    import os
     worker_id = os.environ.get("PYTEST_XDIST_WORKER", "")
     if worker_id:
         return f"_{worker_id}"
