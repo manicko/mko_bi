@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { renderHook, waitFor } from '@testing-library/react'
+import { renderHook, waitFor, act } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import React from 'react'
 import { MemoryRouter } from 'react-router-dom'
@@ -89,7 +89,7 @@ describe('useAuth', () => {
   })
 
   describe('initialization', () => {
-    it('sets isLoading to true initially', () => {
+    it('sets isLoading to true initially', async () => {
       vi.mocked(getToken).mockReturnValue('valid-token')
       vi.mocked(getProfile).mockResolvedValue({
         id: '1',
@@ -102,7 +102,11 @@ describe('useAuth', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() })
 
+      // isLoading starts true, then becomes false after profile fetch resolves
       expect(result.current.isLoading).toBe(true)
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
     })
 
     it('fetches profile when token exists', async () => {
@@ -215,7 +219,9 @@ describe('useAuth', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() })
 
-      await result.current.login('user@test.com', 'password123')
+      await act(async () => {
+        await result.current.login('user@test.com', 'password123')
+      })
 
       expect(login).toHaveBeenCalledWith('user@test.com', 'password123')
       expect(setToken).toHaveBeenCalledWith('new-token')
@@ -230,10 +236,16 @@ describe('useAuth', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() })
 
-      await expect(result.current.login('user@test.com', 'wrong')).rejects.toThrow('Invalid credentials')
+      await act(async () => {
+        await expect(result.current.login('user@test.com', 'wrong')).rejects.toThrow('Invalid credentials')
+      })
+
+      // Wait for state updates to complete
+      await waitFor(() => {
+        expect(result.current.user).toBeNull()
+      })
 
       expect(removeToken).toHaveBeenCalled()
-      expect(result.current.user).toBeNull()
     })
   })
 
@@ -244,7 +256,9 @@ describe('useAuth', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() })
 
-      await result.current.logout()
+      await act(async () => {
+        await result.current.logout()
+      })
 
       expect(logout).toHaveBeenCalled()
       expect(result.current.user).toBeNull()
@@ -257,7 +271,9 @@ describe('useAuth', () => {
       const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() })
 
       // Should not throw because error is caught
-      await result.current.logout()
+      await act(async () => {
+        await result.current.logout()
+      })
 
       expect(result.current.user).toBeNull()
     })
@@ -273,7 +289,9 @@ describe('useAuth', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() })
 
-      await result.current.registerRequest('newuser@test.com')
+      await act(async () => {
+        await result.current.registerRequest('newuser@test.com')
+      })
 
       expect(registerRequest).toHaveBeenCalledWith('newuser@test.com')
     })
@@ -293,7 +311,9 @@ describe('useAuth', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() })
 
-      await result.current.getProfile()
+      await act(async () => {
+        await result.current.getProfile()
+      })
 
       expect(getProfile).toHaveBeenCalled()
       await waitFor(() => {
@@ -307,10 +327,16 @@ describe('useAuth', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() })
 
-      await expect(result.current.getProfile()).rejects.toThrow('Unauthorized')
+      await act(async () => {
+        await expect(result.current.getProfile()).rejects.toThrow('Unauthorized')
+      })
+
+      // Wait for state updates
+      await waitFor(() => {
+        expect(result.current.user).toBeNull()
+      })
 
       expect(removeToken).toHaveBeenCalled()
-      expect(result.current.user).toBeNull()
     })
   })
 

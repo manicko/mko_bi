@@ -60,11 +60,11 @@ Look up `{task_implementor_model}` from `C:\py_dev\mkobi\.ai\models\lookup_table
 
 ### 4.2 Spawn Implementor Subagent
 
-Run up to 3 subagent at a time. If errors switch to 1 - never parallel.
+Run up to 1 subagent at a time. If errors switch to 1 - never parallel.
 
 ```
 Task(
-  prompt="First, read C:\py_dev\mkobi\.kilo\agents\implementor-subagent.md for your role and instructions.\n\n" + {subagent_prompt},
+  prompt="First, read C:\py_dev\mkobi\.kilo\agents\implementor.md for your role and instructions.\n\n" + {subagent_prompt},
   subagent_type="general",
   model="{task_implementor_model}",
   description="Implement task {TASK_FILE_NAME}"

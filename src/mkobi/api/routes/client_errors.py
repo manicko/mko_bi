@@ -5,31 +5,19 @@ No database persistence - errors are logged for monitoring.
 """
 
 import logging
-from typing import Any
 
 from fastapi import APIRouter, Request, status
-
-from pydantic import BaseModel
 
 from mkobi.config import get_config
 from mkobi.core import redis_client
 from mkobi.core.security import AsyncRateLimiter
+from mkobi.models.data import ClientErrorPayload
 from mkobi.models.enums import ErrorCode
 from mkobi.utils.exceptions import AppException
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/client-errors", tags=["client-errors"], redirect_slashes=False)
-
-
-class ClientErrorPayload(BaseModel):
-    """Payload model for client-side error reports."""
-
-    error: dict[str, Any]
-    componentStack: str | None = None
-    url: str
-    userAgent: str
-    timestamp: str
 
 
 @router.post(

@@ -1,0 +1,80 @@
+id: TASK_064_add_delete_old_logs_to_interface
+
+title: Add delete_old_logs to IProcessingLogRepository interface
+
+status: pending
+
+priority: medium
+
+depends_on: []
+  # No dependencies — interface and concrete impl already aligned, just missing abstract declaration
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\validated-findings.md
+source_section: BE-002/BE-005 — Interface contract violation for delete_old_logs
+
+description: >
+  Add the delete_old_logs abstract method to IProcessingLogRepository interface in
+  repository_interfaces.py. The concrete ProcessingLogRepository already implements
+  this method (processing_log_repo.py:331-363) and processing_log_service.py calls
+  it on the interface-typed variable. This fix closes the interface contract violation
+  and resolves the remaining mypy attr-defined errors.
+
+goals:
+  - Declare delete_old_logs in IProcessingLogRepository interface
+  - Match the concrete implementation signature exactly
+  - Resolve mypy errors in processing_log_service.py
+
+files:
+  - path: src/mkobi/interfaces/repository_interfaces.py
+
+    targets:
+      - type: class
+        name: IProcessingLogRepository
+
+    semantic_anchors:
+
+      insert_after:
+        type: method_definition
+        value: "async def delete(self, dashboard_id: UUID, db: AsyncSession) -> bool"
+
+      insert_before:
+        type: class_end
+        value: "class IProcessingLogRepository(abc.ABC)"
+
+changes:
+
+  - action: add_method
+
+    description: >
+      Add abstract method declaration to IProcessingLogRepository, matching the
+      concrete implementation signature in ProcessingLogRepository.delete_old_logs.
+
+    code_hint: |
+      @abc.abstractmethod
+      async def delete_old_logs(
+          self,
+          cutoff: datetime,
+          db: AsyncSession,
+      ) -> int:
+          """Delete processing logs in terminal states older than cutoff.
+
+          Args:
+              cutoff: Datetime cutoff - logs with finished_at before this are deleted.
+              db: Async database session.
+
+          Returns:
+              int: Number of deleted log entries.
+          """
+          pass
+
+acceptance_criteria:
+  - IProcessingLogRepository declares delete_old_logs as abstract method
+  - mypy passes without attr-defined errors in processing_log_service.py
+  - No other implementations of IProcessingLogRepository exist that would break (verified: only ProcessingLogRepository implements it)
+  - All existing tests pass
+
+tests_to_run:
+  - mypy src/mkobi/interfaces/repository_interfaces.py src/mkobi/services/processing_log_service.py
+  - pytest tests/ -x -q
+
+risk: low

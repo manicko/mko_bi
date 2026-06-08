@@ -360,7 +360,40 @@ tasks:
     notes: BE-005 - Extract ClientErrorPayload to shared models
 
   # =============================================================================
-  # LOW - Phase 16 (test ports - assessment then conditional removal)
+  # MEDIUM - Phase 16 (validated audit findings - Phase 01/02 uncovered)
+  # =============================================================================
+  - id: TASK_063_fix_task_queue_errorcode_import
+    depends_on: []
+    phase: backend
+    notes: BE-002 - Fix ErrorCode import path in task_queue.py (mypy attr-defined)
+
+  - id: TASK_064_add_delete_old_logs_to_interface
+    depends_on: []
+    phase: backend
+    notes: BE-002/BE-005 - Add delete_old_logs to IProcessingLogRepository interface
+
+  - id: TASK_065_fix_postgres_collation_mismatch
+    depends_on: []
+    phase: infrastructure
+    notes: BE-003 - Fix PostgreSQL collation version mismatch in test environment (297 tests failing)
+
+  - id: TASK_066_make_security_headers_environment_aware
+    depends_on: []
+    phase: backend
+    notes: BE-007 - Make SecurityHeadersMiddleware environment-aware (HSTS/CSP only in production)
+
+  - id: TASK_067_fix_axios_redirect_with_credentials
+    depends_on: []
+    phase: frontend
+    notes: FE-001 - Fix Axios redirect-with-credentials configuration (security risk)
+
+  - id: TASK_068_remove_redundant_filter_invalidation
+    depends_on: []
+    phase: frontend
+    notes: FE-002 - Remove redundant filter invalidation useEffect in DashboardView
+
+  # =============================================================================
+  # LOW - Phase 17 (test ports - assessment then conditional removal)
   # =============================================================================
   - id: TASK_055_assess_test_ports_removal_impact
     depends_on: []
@@ -374,7 +407,7 @@ tasks:
     notes: INF-011 - Remove test port exposure (ONLY if TASK_055 recommends "go")
 
   # =============================================================================
-  # FINAL VERIFICATION - Phase 17
+  # FINAL VERIFICATION - Phase 18
   # =============================================================================
   - id: TASK_062_verify_all_new_changes
     depends_on:
@@ -423,5 +456,11 @@ tasks:
       - TASK_059_add_csp_nonce_support
       - TASK_060_reduce_mock_heavy_test_assertions
       - TASK_061_fix_client_error_payload_inline
+      - TASK_063_fix_task_queue_errorcode_import
+      - TASK_064_add_delete_old_logs_to_interface
+      - TASK_065_fix_postgres_collation_mismatch
+      - TASK_066_make_security_headers_environment_aware
+      - TASK_067_fix_axios_redirect_with_credentials
+      - TASK_068_remove_redundant_filter_invalidation
     phase: verification
-    notes: Final verification of all new changes (TASK_017 through TASK_061)
+    notes: Final verification of all new changes (TASK_017 through TASK_068)

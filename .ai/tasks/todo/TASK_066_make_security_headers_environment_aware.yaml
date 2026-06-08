@@ -1,0 +1,86 @@
+id: TASK_066_make_security_headers_environment_aware
+
+title: Make SecurityHeadersMiddleware environment-aware (HSTS/CSP only in production)
+
+status: pending
+
+priority: medium
+
+depends_on: []
+  # No dependencies — standalone middleware change
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\validated-findings.md
+source_section: BE-007 — Security headers applied unconditionally in development
+
+description: >
+  SecurityHeadersMiddleware currently applies HSTS (Strict-Transport-Security) and
+  CSP (Content-Security-Policy: default-src 'self') headers on ALL responses
+  regardless of environment. In development, HSTS is meaningless (HTTP only) and
+  CSP breaks Swagger UI (/docs) and cross-origin frontend development. Make these
+  headers conditional on EnvironmentEnum.PRODUCTION while keeping defense-in-depth
+  headers (X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy)
+  enabled in all environments.
+
+goals:
+  - Apply HSTS and CSP only in production environment
+  - Keep other security headers enabled in all environments
+  - Preserve Swagger UI functionality in development
+  - No behavior change in production
+
+files:
+  - path: src/mkobi/app.py
+
+    targets:
+      - type: class
+        name: SecurityHeadersMiddleware
+
+      - type: method
+        name: dispatch
+
+    semantic_anchors:
+
+      insert_after:
+        type: assignment
+        value: 'response = await call_next(request)'
+
+      replace:
+        type: header_assignment
+        old_value: 'response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"'
+        new_value: "conditional based on environment check"
+
+changes:
+
+  - action: modify_method
+
+    description: >
+      Modify SecurityHeadersMiddleware.dispatch() to conditionally apply HSTS and
+      CSP headers only in production. Import EnvironmentEnum and get_config at module
+      level or within the method. Defense-in-depth headers (X-Content-Type-Options,
+      X-Frame-Options, X-XSS-Protection, Referrer-Policy) remain unconditional.
+
+    code_hint: |
+      # In dispatch method, after `response = await call_next(request)`:
+      response.headers["X-Content-Type-Options"] = "nosniff"
+      response.headers["X-Frame-Options"] = "DENY"
+      response.headers["X-XSS-Protection"] = "1; mode=block"
+      response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+
+      # Conditional headers (production only):
+      config = get_config()
+      if config.environment == EnvironmentEnum.PRODUCTION:
+          response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+          response.headers["Content-Security-Policy"] = "default-src 'self'"
+
+acceptance_criteria:
+  - HSTS header NOT present in development responses
+  - CSP header NOT present in development responses
+  - Swagger UI (/docs) loads without CSP errors in development
+  - All security headers present in production responses
+  - Defense-in-depth headers present in all environments
+  - All existing tests pass
+
+tests_to_run:
+  - pytest tests/ -x -q
+  - mypy src/mkobi/app.py
+
+risk: low

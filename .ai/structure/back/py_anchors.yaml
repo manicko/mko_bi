@@ -3852,6 +3852,13 @@
   value: ConfigDict
   stable_hash: 7779de68
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\data.py
+- id: 26c95b69
+  symbol_path:
+  - ClientErrorPayload
+  type: function_call
+  value: ConfigDict
+  stable_hash: 26c95b69
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\data.py
 - id: 2aabeef8
   symbol_path:
   - ProcessingStatus
@@ -12764,6 +12771,13 @@
   value: insert
   stable_hash: 8f580b91
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\storage\manager.py
+- id: 1c32d767
+  symbol_path:
+  - StorageManager
+  type: function_call
+  value: text
+  stable_hash: 1c32d767
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\storage\manager.py
 - id: 6a2e97ad
   symbol_path:
   - StorageManager
@@ -12877,6 +12891,13 @@
   type: function_call
   value: insert
   stable_hash: 8f580b91
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\storage\manager.py
+- id: 1c32d767
+  symbol_path:
+  - StorageManager
+  type: function_call
+  value: text
+  stable_hash: 1c32d767
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\storage\manager.py
 - id: 58b9fa62
   symbol_path:

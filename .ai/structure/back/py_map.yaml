@@ -523,6 +523,7 @@
   - GraphDataResponse
   - AggregatedDataResponse
   - FilterValuesResponse
+  - ClientErrorPayload
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\enums.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.models.enums
@@ -1713,16 +1714,14 @@
   module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.client_errors
   layer: unknown
   imports:
-  - typing
   - fastapi
-  - pydantic
   - mkobi.config
   - mkobi.core
   - mkobi.core.security
+  - mkobi.models.data
   - mkobi.models.enums
   - mkobi.utils.exceptions
-  classes:
-  - ClientErrorPayload
+  classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\dashboards.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.api.routes.dashboards

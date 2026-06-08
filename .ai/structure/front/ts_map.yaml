@@ -393,6 +393,7 @@
   layer: component
   imports:
     - ../../features/auth
+    - ./AccessDenied
   components:
     - RoleBasedAccess
   hooks: []

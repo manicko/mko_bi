@@ -36,6 +36,7 @@ __all__ = [
     "GraphDataResponse",
     "AggregatedDataResponse",
     "FilterValuesResponse",
+    "ClientErrorPayload",
 ]
 
 
@@ -493,6 +494,33 @@ class FilterValuesResponse(BaseModel):
             "example": {
                 "filter_name": "category",
                 "values": ["Electronics", "Clothing", "Food"],
+            }
+        },
+    )
+
+
+class ClientErrorPayload(BaseModel):
+    """Payload model for client-side error reports.
+
+    Used by the /client-errors endpoint to receive error details
+    from the frontend for monitoring purposes.
+    """
+
+    error: dict[str, Any]
+    componentStack: str | None = None
+    url: str
+    userAgent: str
+    timestamp: str
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        json_schema_extra={
+            "example": {
+                "error": {"message": "Cannot read property 'x' of undefined", "name": "TypeError"},
+                "componentStack": "in ChartRenderer (ChartRenderer.tsx:45)",
+                "url": "https://app.example.com/dashboard/123",
+                "userAgent": "Mozilla/5.0...",
+                "timestamp": "2026-06-08T12:34:56.789Z",
             }
         },
     )
