@@ -80,6 +80,70 @@ Currently, all routes in `routes.tsx` have implementations. Future features that
 
 ---
 
+## AccessDenied Component Research (FE-007)
+
+### Current State
+- **File:** `frontend/src/shared/components/AccessDenied.tsx`
+- **Status:** Exported from barrel but never rendered anywhere (only exported)
+- **Git Origin:** Created in commit 3c474dc ("tasks 1905-1") alongside PlaceholderPage
+
+### Investigation Findings
+
+#### 1. Component Analysis
+The AccessDenied component renders a centered message: "No access — contact your administrator"
+- Uses MUI Box and Typography
+- Centered layout with `minHeight: '50vh'`
+- Simple, clean design appropriate for permission denial states
+
+#### 2. RoleBasedAccess Integration
+**Current State:** `RoleBasedAccess` renders `null` as default fallback (lines 9, 12-13 in RoleBasedAccess.tsx)
+- `/admin` route uses RoleBasedAccess without explicit fallback - shows blank page when non-admin accesses it
+- This is a poor UX - unauthorized users see empty content instead of clear denial message
+
+**Integration Applied:** Changed default fallback to `<AccessDenied />` for better UX
+
+#### 3. Backend Error Handling
+Backend uses two error codes for access denial:
+- `PERMISSION_DENIED` - Used in 18 locations across routes (users, upload, layouts, graphs, admin, deps)
+- `ACCESS_DENIED` - Used in 6 locations (data routes, dashboards_crud)
+
+Both map to HTTP 403 Forbidden. API responses trigger toast notifications via axiosInstance.ts, but no dedicated page.
+
+#### 4. Dashboard Access Control
+DashboardView currently checks `dashboard.permission` for UI-level permissions (edit button visibility only)
+- No role-based access at route level
+- Dashboard data endpoint (`/data/aggregated`) returns 403 with ACCESS_DENIED when unauthorized
+
+### Recommendation: **Integrate into RoleBasedAccess**
+
+**Decision:** Set AccessDenied as the default fallback for RoleBasedAccess.
+
+**Rationale:**
+1. Provides clear feedback when users lack required roles
+2. Better UX than rendering nothing (current behavior)
+3. Follows the component's intended purpose
+4. Consistent with existing error handling patterns (NotFound for 404)
+
+### Usage Guidelines
+
+Use AccessDenied when:
+- RoleBasedAccess fallback for role-based authorization failures
+- Route-level access denial for admin-only pages
+- Inline permission denial in future dashboard access scenarios
+
+Do NOT use when:
+- Dashboard not found (use `NotFound`)
+- General server errors (use `ErrorPage` with variant="500")
+- Component-level errors (use `ErrorBoundary`)
+
+### Implementation Changes Made (per TASK_050)
+
+1. ✅ Added JSDoc to `AccessDenied.tsx` documenting intended usage patterns
+2. ✅ Updated `RoleBasedAccess.tsx` to use AccessDenied as default fallback
+3. ✅ Documented research findings in PLAN_02.md
+
+---
+
 **Date:** 2026-06-08
-**Author:** Research conducted per TASK_049
-**Reference:** FE-006 (audit finding)
+**Author:** Research conducted per TASK_049, TASK_050
+**Reference:** FE-006, FE-007 (audit findings)

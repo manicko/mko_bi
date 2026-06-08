@@ -1,4 +1,5 @@
 import { useAuth } from '../../features/auth'
+import { AccessDenied } from './AccessDenied'
 
 interface RoleBasedAccessProps {
   roles: string[]
@@ -6,7 +7,7 @@ interface RoleBasedAccessProps {
   fallback?: React.ReactNode
 }
 
-export function RoleBasedAccess({ roles, children, fallback = null }: RoleBasedAccessProps) {
+export function RoleBasedAccess({ roles, children, fallback = <AccessDenied /> }: RoleBasedAccessProps) {
   const { user } = useAuth()
 
   if (!user || !roles.includes(user.role)) {

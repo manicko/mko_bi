@@ -68,7 +68,7 @@ describe('RoleBasedAccess', () => {
     expect(screen.queryByText('Protected Content')).not.toBeInTheDocument()
   })
 
-  it('renders null fallback by default when user does not have required role', () => {
+  it('renders AccessDenied as default fallback when user does not have required role', () => {
     vi.mocked(useAuth).mockReturnValue(createMockUser('viewer'))
 
     render(
@@ -77,10 +77,9 @@ describe('RoleBasedAccess', () => {
       </RoleBasedAccess>
     )
 
-    // Default fallback is null, so nothing should be rendered
+    // Default fallback is AccessDenied component
     expect(screen.queryByText('Protected Content')).not.toBeInTheDocument()
-    // The component renders an empty fragment by default, so we check that no content exists
-    expect(screen.queryByRole('heading')).not.toBeInTheDocument()
+    expect(screen.getByText(/No access/)).toBeInTheDocument()
   })
 
   it('renders fallback when user is null', () => {
