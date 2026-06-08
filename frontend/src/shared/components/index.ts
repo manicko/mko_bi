@@ -6,4 +6,5 @@ export { AccessDenied } from './AccessDenied'
 export { ConfirmDialog } from './ConfirmDialog'
 export { ErrorBoundary } from './ErrorBoundary'
 export { ErrorPage } from './ErrorPage'
+export { PlaceholderPage } from './PlaceholderPage'
 
