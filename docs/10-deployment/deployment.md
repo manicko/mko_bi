@@ -9,6 +9,7 @@ tags:
   - health-checks
   - migrations
   - dash-migration
+  - rollback
 related:
   - backend-architecture
   - configuration
@@ -42,26 +43,26 @@ This guide covers deployment options for the mkobi BI Dashboard system, from loc
 ### Local Setup
 
 1. **Clone and configure:**
-   ```bash
-   git clone <repository-url>
-   cd mkobi
-   cp .env.example .env
-   # Edit .env with your local settings
-   ```
+    ```bash
+    git clone <repository-url>
+    cd mkobi
+    cp .env.example .env
+    # Edit .env with your local settings
+    ```
 
 2. **Backend:**
-   ```bash
-   uv sync
-   uv run uvicorn src.mkobi.main:app --reload --port 8000
-   ```
+    ```bash
+    uv sync
+    uv run uvicorn src.mkobi.main:app --reload --port 8000
+    ```
 
 3. **Frontend (separate terminal):**
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   # Server runs at http://localhost:5173 (Vite default)
-   ```
+    ```bash
+    cd frontend
+    npm install
+    npm run dev
+    # Server runs at http://localhost:5173 (Vite default)
+    ```
 
 4. **Database:**
 ```bash
@@ -91,33 +92,33 @@ FastAPI serves the built React static files directly. This is the simplest produ
 
 ```
 Client → FastAPI (port 8000)
-              ├── /api/*    → REST API handlers
-              ├── /static/ → React SPA build output (frontend/dist/)
-              └── /         → React SPA index.html
+            ├── /api/*    → REST API handlers
+            ├── /static/ → React SPA build output (frontend/dist/)
+            └── /         → React SPA index.html
 ```
 
 **Steps:**
 
 1. **Build frontend:**
-   ```bash
-   cd frontend
-   npm run build
-   # Output: frontend/dist/
-   ```
+    ```bash
+    cd frontend
+    npm run build
+    # Output: frontend/dist/
+    ```
 
 2. **FastAPI configuration:**
 
-   The backend mounts `frontend/dist/` as static files. All non-API routes fall through to the React `index.html` for client-side routing.
+    The backend mounts `frontend/dist/` as static files. All non-API routes fall through to the React `index.html` for client-side routing.
 
 3. **Environment variables required:**
-   ```
-   ENV=production
-   DATABASE__HOST=<production-db-host>
-   DATABASE__PASSWORD=<strong-password>
-   JWT__SECRET_KEY=<random-256-bit-secret>
-   CORS_ORIGINS=["https://your-domain.com"]
-   LOGGING__LEVEL=WARNING
-   ```
+    ```
+    ENV=production
+    DATABASE__HOST=<production-db-host>
+    DATABASE__PASSWORD=<strong-password>
+    JWT__SECRET_KEY=<random-256-bit-secret>
+    CORS_ORIGINS=["https://your-domain.com"]
+    LOGGING__LEVEL=WARNING
+    ```
 
 ### Option B — Nginx Reverse Proxy
 
@@ -125,8 +126,8 @@ Nginx proxies API requests to FastAPI and serves the React SPA static files. Thi
 
 ```
 Client → Nginx (port 80/443)
-              ├── /api/*  → FastAPI (port 8000)
-              └── /*      → React SPA static (frontend/dist/)
+            ├── /api/*  → FastAPI (port 8000)
+            └── /*      → React SPA static (frontend/dist/)
 ```
 
 **nginx.conf snippet:**
@@ -258,6 +259,76 @@ docker compose -f docker/docker-compose.yml down -v
 
 # Rebuild after code changes
 docker compose -f docker/docker-compose.yml up -d --build
+```
+
+---
+
+## Rollback Procedures
+
+When a deployment fails or introduces critical bugs, use these procedures to safely roll back to a previous stable state.
+
+### Docker Image Rollback
+
+To revert to a previous application version:
+
+```bash
+# List available local images
+docker images mkobi/app
+
+# Pull a specific previous image tag (if using versioned tags)
+docker pull mkobi/app:<previous-tag>
+
+# Update compose file or set environment to use specific tag
+# Then restart services
+docker compose -f docker/docker-compose.yml up -d
+```
+
+For Docker Compose with pre-built images, ensure you have versioned tags pushed to your registry and update the `image` tag in your compose configuration.
+
+### Database Migration Rollback
+
+Use Alembic to revert schema changes. **Warning:** Downgrading may cause data loss if the migration included column drops or data removal.
+
+```bash
+# Revert the last migration
+docker compose -f docker/docker-compose.yml exec app uv run alembic downgrade -1
+
+# Revert to a specific revision
+docker compose -f docker/docker-compose.yml exec app uv run alembic downgrade <revision>
+
+# Check current revision before rollback
+docker compose -f docker/docker-compose.yml exec app uv run alembic current
+
+# View migration history
+docker compose -f docker/docker-compose.yml exec app uv run alembic history
+```
+
+**Important considerations:**
+- Always backup your database before running downgrade
+- Test rollback procedures in staging first
+- Some migrations may not be reversible — check revision scripts in `alembic/versions/`
+
+### Configuration Rollback
+
+Restore previous configuration files from backup:
+
+```bash
+# Restore .env from backup
+cp .env.backup .env
+
+# Or restore from version control
+git checkout HEAD~1 -- .env
+
+# Restart services to apply changes
+docker compose -f docker/docker-compose.yml restart app
+```
+
+For production environments using Docker secrets or mounted config files:
+
+```bash
+# Restore secrets from backup location
+cp /secure/backups/.env.production .env
+docker compose -f docker/docker-compose.yml up -d
 ```
 
 ---
