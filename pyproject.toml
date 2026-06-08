@@ -199,6 +199,7 @@ addopts = [
     "-v",
     "--strict-markers",
     "--cov-fail-under=65",
+    "-n auto",
 ]
 console_output_style = "classic"
 pythonpath = ["src"]
@@ -237,4 +238,5 @@ dev = [
     "autopep8>=2.3.2",
     "types-aiofiles>=25.1.0.20260508",
     "libcst>=1.8.6",
+    "pytest-xdist>=3.0.0",
 ]

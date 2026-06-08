@@ -21,24 +21,21 @@ Orchestrator reviews diffs and commits. One task = one commit on the current bra
 
 <process>
 
-## Step 0 — Ensure Docker Environment is Running
-
-Start Docker services in **development or test mode** (never production). Follow `docs/11-guides/docker.md`. Confirm containers are `running` or `healthy`. If startup fails, document why and skip dependent steps.
-
-## 1. Ask User For Execution Limit
+## 0. Ask User For Execution Limit
 
 Ask: "How many tasks should be implemented in this run?"
 
 - WAIT for explicit response. Accept only positive integer. Store as `{MAX_TASKS}`.
 - Initialize `{COMPLETED_TASKS} = 0`.
 
-## 2. Prepare Execution Loop
+## 1. Prepare Execution Loop
 
 - Read execution order: `C:\py_dev\mkobi\.ai\tasks\todo\order.yaml`.
 - List files in `C:\py_dev\mkobi\.ai\tasks\todo\*`.
 - Select up to `{MAX_TASKS}` files as `{TASKS_FILES_TO_IMPLEMENT}`, preserving execution order.
 
-## 3. Load Shared Project Context
+
+## 2. Load Shared Project Context
 
 Read once, summarize, pass to every subagent:
 
@@ -48,6 +45,10 @@ Read once, summarize, pass to every subagent:
 - `C:\py_dev\mkobi\docs\11-guides\docker.md`
 
 Summarize into `{MAIN_CONTEXT}`: architecture, conventions, patterns, boundaries.
+
+## 3. — Ensure Docker Environment is Running
+
+Start Docker services in **development or test mode** (never production). Follow `docs/11-guides/docker.md`. Confirm containers are `running` or `healthy`. If startup fails, document why and skip dependent steps.
 
 ## 4. Task Execution Loop
 
@@ -103,46 +104,37 @@ Return ## IMPLEMENTATION_COMPLETE or ## IMPLEMENTATION_BLOCKED.
 Include: summary, files modified, validation results, problems found.
 ```
 
-### 4.3 Handle Subagent Return
 
-```powershell
-git diff HEAD --stat
-```
+### 4.3 Handle Subagent Return & Finalization Check
 
-Focus on files the task requires. Ignore changes from other agents or the user.
+ - if no subagent report or error - restart task
+
+ - if task finished check:
+  - task file moved to `done/*_DONE.yaml` (absent from `todo/`).  -  related to the task-files changed (ignore file changes not related to the task) 
+    ```powershell
+    git diff HEAD --stat   
+    ```
+
+  - **If checks pass:**
+    ```powershell
+    git add <task-related files only>
+    git commit -m "{type}({scope}): {description}" -m "Task: {TASK_FILE_NAME}"
+    ```
+    **Rules:**
+    - Always `git add <specific files>` — never `-A` or `.`
+    - Only stage task-required files.
+    **If checks fail:**
+    - `git restore <task-related files only>` (only if 100% sure of breakage)
+    - Re-spawn implementor with error details
+    - Do NOT continue or touch unrelated files
 
 
-**If task-related changes look good:**
-```powershell
-git add <task-related files only>
-git commit -m "{type}({scope}): {description}" -m "Task: {TASK_FILE_NAME}"
-```
-**If task-related changes look wrong and you are 100% sure that the agent you spawned broke something or did wrong.** Only in that case you can ran `git restore <specific task-related files>`
-Be sure that you do not touch files not related to the current task - this could be changes done by other agents. 
-And re-spawn implementor with error details.
-
-Rules:
-- Always `git add <specific files>` — NEVER `git add -A` or `git add .`
-- Only stage files the task requires.
-
-### 4.5 Validate Task Finalization
-
-Verify:
-- Task file renamed to `*_DONE.yaml`
-- Task file moved to `C:\py_dev\mkobi\.ai\tasks\done\`
-- Task file absent from `C:\py_dev\mkobi\.ai\tasks\todo\`
-
-If ANY check fails:
-1. Display `TASK FINALIZATION INVALID`.
-2. Spawn new subagent with failure details. Request completion fix ONLY.
-3. Do NOT continue until fixed.
-
-### 4.6 Update Progress
+### 4.4 Update Progress
 
 - Increment `{COMPLETED_TASKS}`.
 - Display `TASK COMPLETED SUCCESSFULLY`.
 
-### 4.7 Continue or Stop
+### 4.5 Continue or Stop
 
 If `{COMPLETED_TASKS} >= {MAX_TASKS}`: STOP.
 

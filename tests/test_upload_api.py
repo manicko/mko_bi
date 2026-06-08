@@ -2,6 +2,7 @@
 import gzip
 import tempfile
 from pathlib import Path
+from typing import Generator
 from uuid import UUID
 
 import pytest
@@ -75,7 +76,7 @@ N,South,Product12,999999.99,249999.99,2023-01-14,999
 """
 
     @pytest.fixture
-    def csv_file(self, csv_content: bytes) -> Path:
+    def csv_file(self, csv_content: bytes) -> Generator[Path, None, None]:
         """Create a temporary CSV file."""
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False) as f:
             f.write(csv_content)

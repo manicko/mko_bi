@@ -479,6 +479,8 @@
   layer: unknown
   imports:
     - react
+    - react-hook-form
+    - '@hookform/resolvers/zod'
     - '@mui/x-data-grid'
     - '@mui/x-data-grid'
     - '@mui/material'
@@ -494,13 +496,23 @@
     - ../../../shared/types/enums
     - ../../../shared/api/errorMessages
     - ../model/errorMessages
+    - ../../../shared/types/formSchemas
   components:
     - DashboardManagement
   hooks: []
   jsx_tags:
     - <Box>
     - '<Box sx={{ mb: 2 }}>'
-    - "<Button\r\n          variant=\"contained\"\r\n          startIcon={<AddIcon />}\r\n          onClick={() => {\r\n            setFormData({ name: '', description: '', layout: '' })\r\n            setError(null)\r\n            setCreateDialogOpen(true)\r\n          }}\r\n        >"
+    - |-
+      <Button
+                variant="contained"
+                startIcon={<AddIcon />}
+                onClick={() => {
+                  resetCreateForm()
+                  setError(null)
+                  setCreateDialogOpen(true)
+                }}
+              >
     - >-
       <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)}
       maxWidth="sm" fullWidth>
@@ -508,7 +520,12 @@
     - <DialogContent>
     - '<FormControl fullWidth sx={{ mt: 2 }}>'
     - <InputLabel>
-    - "<Select\r\n              value={formData.layout || ''}\r\n              label=\"Layout\"\r\n              onChange={(e) => setFormData({ ...formData, layout: e.target.value })}\r\n            >"
+    - |-
+      <Select
+                    label="Layout"
+                    {...createRegister('layout')}
+                    error={!!createErrors.layout}
+                  >
     - <MenuItem value="single-column">
     - <MenuItem value="two-columns">
     - <MenuItem value="grid">
@@ -516,8 +533,8 @@
     - <DialogActions>
     - <Button onClick={() => setCreateDialogOpen(false)}>
     - >-
-      <Button onClick={handleCreate} disabled={createMutation.isPending ||
-      !formData.name}>
+      <Button onClick={(e) => void handleCreateSubmit(handleCreate)(e)}
+      disabled={createMutation.isPending}>
     - >-
       <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)}
       maxWidth="sm" fullWidth>
@@ -526,8 +543,8 @@
     - <DialogActions>
     - <Button onClick={() => setEditDialogOpen(false)}>
     - >-
-      <Button onClick={handleEdit} disabled={updateMutation.isPending ||
-      !formData.name}>
+      <Button onClick={(e) => void handleEditSubmit(handleEdit)(e)}
+      disabled={updateMutation.isPending}>
 - path: C:/py_dev/mkobi/frontend/src/features/admin/ui/LogViewer.tsx
   module: C:.py_dev.mkobi.frontend.src.features.admin.ui.LogViewer
   layer: unknown
@@ -712,6 +729,7 @@
   layer: unknown
   imports:
     - react
+    - react-router-dom
     - ../../../shared/types/api.types
     - ../api/authApi
     - ./authToken
@@ -1280,19 +1298,6 @@
   components: []
   hooks: []
   jsx_tags: []
-- path: >-
-    C:/py_dev/mkobi/frontend/src/features/auth/model/__tests__/useAuth.forcePassword.test.ts
-  module: >-
-    C:.py_dev.mkobi.frontend.src.features.auth.model.__tests__.useAuth.forcePassword.test
-  layer: unknown
-  imports:
-    - vitest
-    - '@testing-library/react'
-    - ../../api/authApi
-    - ../useAuth
-  components: []
-  hooks: []
-  jsx_tags: []
 - path: C:/py_dev/mkobi/frontend/src/features/auth/model/__tests__/useAuth.test.tsx
   module: C:.py_dev.mkobi.frontend.src.features.auth.model.__tests__.useAuth.test
   layer: unknown
@@ -1300,6 +1305,8 @@
     - vitest
     - '@testing-library/react'
     - '@tanstack/react-query'
+    - react
+    - react-router-dom
     - ../useAuth
     - ../../api/authApi
     - ../authToken
@@ -1307,6 +1314,7 @@
   hooks: []
   jsx_tags:
     - <QueryClientProvider client={queryClient}>
+    - <MemoryRouter>
 - path: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/BarChart.tsx
   module: C:.py_dev.mkobi.frontend.src.features.dashboards.ui.charts.BarChart
   layer: unknown

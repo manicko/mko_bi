@@ -65,6 +65,8 @@
   - __repr__
   - database_url
   - admin_database_url
+  - validate_password_not_placeholder
+  - validate_admin_password_strength
   - validate_secret_key
   - __init__
   - validate_temp_password_ttl

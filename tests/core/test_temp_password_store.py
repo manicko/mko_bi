@@ -28,12 +28,12 @@ class MockPipeline:
         self._cmds.append(("delete", key))
         return self
 
-    async def execute(self) -> list:
+    async def execute(self) -> list[str | None | int]:
         """Execute all queued commands and return results.
 
         Returns results where results[0] is GET result.
         """
-        results = []
+        results: list[str | None | int] = []
         for cmd, key in self._cmds:
             if cmd == "get":
                 results.append(self._redis._data.get(key))

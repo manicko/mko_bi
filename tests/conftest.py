@@ -114,6 +114,19 @@ from mkobi.db.repositories.user_repo import UserRepository  # noqa: E402, F401
 TEST_ASYNC_DB_URL = str(_config.TEST_DATABASE_URL)
 
 
+def _get_worker_db_suffix() -> str:
+    """Get database suffix for xdist worker isolation.
+
+    When running with pytest-xdist, each worker gets a unique id like 'gw0', 'gw1'.
+    We use this to create separate schemas per worker for complete isolation.
+    """
+    import os
+    worker_id = os.environ.get("PYTEST_XDIST_WORKER", "")
+    if worker_id:
+        return f"_{worker_id}"
+    return ""
+
+
 class MockRedis:
     """Mock Redis client for testing rate limiter without real Redis."""
 

@@ -337,6 +337,60 @@
   value: str
   stable_hash: 164d02e7
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: b287d90a
+  symbol_path:
+  - DatabaseSettings
+  - validate_password_not_placeholder
+  type: function_call
+  value: ValueError
+  stable_hash: b287d90a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: f52b813c
+  symbol_path:
+  - DatabaseSettings
+  - validate_password_not_placeholder
+  type: return_statement
+  stable_hash: f52b813c
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: 7212194b
+  symbol_path:
+  - DatabaseSettings
+  - validate_password_not_placeholder
+  type: function_call
+  value: field_validator
+  stable_hash: 7212194b
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: 68512c36
+  symbol_path:
+  - DatabaseSettings
+  - validate_admin_password_strength
+  type: function_call
+  value: len
+  stable_hash: 68512c36
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: d9f05bf5
+  symbol_path:
+  - DatabaseSettings
+  - validate_admin_password_strength
+  type: function_call
+  value: ValueError
+  stable_hash: d9f05bf5
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: a8a50388
+  symbol_path:
+  - DatabaseSettings
+  - validate_admin_password_strength
+  type: return_statement
+  stable_hash: a8a50388
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: 8e45c6d3
+  symbol_path:
+  - DatabaseSettings
+  - validate_admin_password_strength
+  type: function_call
+  value: field_validator
+  stable_hash: 8e45c6d3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
 - id: ff9310ce
   symbol_path:
   - JWTSettings
@@ -777,6 +831,14 @@
   - DATABASE_URL
   type: return_statement
   stable_hash: 514f7484
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: d304704f
+  symbol_path:
+  - Settings
+  - DATABASE_URL
+  type: function_call
+  value: ValueError
+  stable_hash: d304704f
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
 - id: 514f7484
   symbol_path:
