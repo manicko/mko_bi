@@ -9,16 +9,9 @@ import type {
   GrantAccessRequest,
   ProcessingLog,
   LogFilters,
+  LayoutRead,
+  DashboardDetail,
 } from '../../../shared/types/api.types'
-
-// Layout type matching backend LayoutRead model
-export interface LayoutRead {
-  id: string
-  name: string
-  definition: Record<string, unknown>
-  created_at: string
-  updated_at: string
-}
 
 // User Management API
 export async function getUsers(): Promise<AdminUser[]> {
@@ -102,23 +95,23 @@ export async function getDashboardsAdmin(): Promise<DashboardAdmin[]> {
   return response.data
 }
 
-export async function createDashboard(data: CreateDashboardRequest): Promise<DashboardAdmin> {
-   const payload: Record<string, unknown> = { name: data.name }
-   if (data.description) {
-     payload.description = data.description
-   }
-   // Fetch layout by name dynamically instead of using hardcoded UUID mapping
-   if (data.layout) {
-     const layout = await getLayoutByName(data.layout)
-     if (layout) {
-       payload.layout_id = layout.id
-     }
-     // Graceful fallback: layout_id is optional, backend will use default if not provided
-   }
-   // config is optional - will use backend default if not provided
-   const response = await axiosInstance.post<DashboardAdmin>('/dashboards/', payload)
-   return response.data
- }
+export async function createDashboard(data: CreateDashboardRequest): Promise<DashboardDetail> {
+  const payload: Record<string, unknown> = { name: data.name }
+  if (data.description) {
+    payload.description = data.description
+  }
+  // Fetch layout by name dynamically instead of using hardcoded UUID mapping
+  if (data.layout) {
+    const layout = await getLayoutByName(data.layout)
+    if (layout) {
+      payload.layout_id = layout.id
+    }
+    // Graceful fallback: layout_id is optional, backend will use default if not provided
+  }
+  // config is optional - will use backend default if not provided
+  const response = await axiosInstance.post<DashboardDetail>('/dashboards/', payload)
+  return response.data
+}
 
 export async function updateDashboard(dashboardId: string, data: UpdateDashboardRequest): Promise<DashboardAdmin> {
   const response = await axiosInstance.put<DashboardAdmin>(`/dashboards/${dashboardId}`, data)

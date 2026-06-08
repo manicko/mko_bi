@@ -28,6 +28,15 @@ export interface ValidationFieldError {
   input?: string
 }
 
+// Layout type matching backend LayoutRead model (moved from adminApi.ts)
+export interface LayoutRead {
+  id: string
+  name: string
+  definition: Record<string, unknown>
+  created_at: string
+  updated_at: string
+}
+
 export interface UserProfile {
   id: string
   email: string
@@ -151,6 +160,8 @@ export interface DashboardDetail {
   description: string | null
   config: DashboardConfig
   permission: DashboardPermission
+  layout_id: string | null
+  layout: LayoutRead | null
   created_at: string
   updated_at: string
 }
