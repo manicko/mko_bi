@@ -144,6 +144,59 @@ Do NOT use when:
 
 ---
 
+## Charts Feature Module Research (FE-012)
+
+### Current State
+- **Target:** `frontend/src/features/charts/`
+- **Status:** Directory no longer exists - already removed during refactoring
+- **Git Origin:** Created in commit 0d1cbf5 (`feat dash add`), removed in commit 4eaf7ee (`doc dash`)
+
+### Investigation Findings
+
+#### 1. Git History Analysis
+- The empty `features/charts/` directory was created with a single `ChartRenderer.tsx` file in commit 0d1cbf5
+- It contained a simple wrapper that re-exported `PlotlyChart` from a non-existent `./PlotlyChart` path
+- The directory was moved/deleted in commit 4eaf7ee during documentation cleanup
+- Chart components now properly reside in `features/dashboards/ui/charts/` as dashboard-specific chart rendering
+
+#### 2. Current Chart Implementation Structure
+```
+frontend/src/features/dashboards/ui/charts/
+├── BarChart.tsx      # Bar chart with barmode grouping
+├── ChartRenderer.tsx # Main renderer with data conversion logic
+├── index.ts          # Barrel export (PlotlyChart, ChartRenderer)
+├── LineChart.tsx     # Line chart component
+├── PieChart.tsx      # Pie chart component
+├── PlotlyChart.tsx    # Re-exports PlotlyChart wrapper
+├── PlotlyChart.test.tsx
+└── TableChart.tsx    # HTML table rendering
+```
+
+#### 3. FSD Architecture Assessment
+Under Feature-Sliced Design principles:
+- Chart components are presentation-layer UI elements for dashboard visualization
+- They are tightly coupled to dashboard data models (`GraphDataWithConfig`)
+- No standalone chart configuration, templates, or export features exist that would warrant a separate `features/charts/` module
+- Keeping charts under `features/dashboards/ui/charts/` is correct - they are dashboard-specific UI components
+
+### Recommendation: **No Action Required - Already Resolved**
+
+**Decision:** The empty `features/charts/` directory has already been removed during refactoring.
+
+**Rationale:**
+1. The directory was empty and contained only a placeholder wrapper component
+2. Chart components correctly belong in `features/dashboards/ui/charts/` as they are tied to dashboard rendering
+3. No standalone chart feature functionality (export, templates, config) exists that would justify a separate module
+4. No code references the deleted directory - the refactoring was clean
+
+### Future Consideration
+If standalone chart features are needed in the future, create `features/charts/` with:
+- Chart export utilities (PNG/PDF/SVG)
+- Chart templates library
+- Standalone chart embedding widget
+- Shared chart configuration utilities
+---
+
 **Date:** 2026-06-08
-**Author:** Research conducted per TASK_049, TASK_050
-**Reference:** FE-006, FE-007 (audit findings)
+**Author:** Research conducted per TASK_052
+**Reference:** FE-012 (audit findings)
