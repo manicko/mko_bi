@@ -2,6 +2,25 @@
 # Docker Compose Configuration for Testing (STANDALONE)
 # Usage: docker compose -f docker/docker-compose.test.yml up -d
 #        docker compose -f docker/docker-compose.test.yml exec test-app uv run pytest tests/ -v
+#
+# SECURITY NOTE (INF-011): These ports are intentionally exposed to the host for
+# development workflow convenience. They enable:
+#   - Running pytest directly from host terminal (native execution)
+#   - Database GUI tools for debugging test database state
+#   - Parallel dev+test environment execution (shifted ports avoid conflicts)
+#
+# Risk Assessment:
+#   - LOW severity: Test database contains NO production data
+#   - Uses default passwords: test_password (postgres), test_app_password (mkobi_app)
+#   - Bind address: 0.0.0.0 (Docker default, localhost-only on most systems)
+#   - No CI/CD pipelines found that depend on these ports
+#
+# Alternatives considered but NOT recommended for removal:
+#   - Bind to 127.0.0.1: Adds complexity without significant security gain
+#   - Network-only access: Would break documented host-side pytest workflow
+#   - Override file: Adds developer friction for common use case
+#
+# See TASK_055_assess_test_ports_removal_impact for full assessment.
 # =============================================================================
 
 services:
