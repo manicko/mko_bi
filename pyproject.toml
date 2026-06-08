@@ -193,14 +193,7 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 asyncio_mode = "auto"
-addopts = [
-    "--import-mode=importlib",
-    "-ra",
-    "-v",
-    "--strict-markers",
-    "--cov-fail-under=65",
-    "-n auto",
-]
+addopts = "--import-mode=importlib -ra -v --strict-markers --cov-fail-under=65 -n auto"
 console_output_style = "classic"
 pythonpath = ["src"]
 # register custom markers to avoid PytestUnknownMarkWarning

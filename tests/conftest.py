@@ -111,19 +111,38 @@ from mkobi.core.security import (  # noqa: E402, F401
 )
 from mkobi.db.repositories.user_repo import UserRepository  # noqa: E402, F401
 
-TEST_ASYNC_DB_URL = str(_config.TEST_DATABASE_URL)
-
 
 def _get_worker_db_suffix() -> str:
     """Get database suffix for xdist worker isolation.
 
     When running with pytest-xdist, each worker gets a unique id like 'gw0', 'gw1'.
-    We use this to create separate schemas per worker for complete isolation.
+    We use this to create separate databases per worker for complete isolation.
     """
     worker_id = os.environ.get("PYTEST_XDIST_WORKER", "")
     if worker_id:
         return f"_{worker_id}"
     return ""
+
+
+def _build_worker_isolated_test_db_url() -> str:
+    """Build test database URL with worker isolation suffix for xdist."""
+    from urllib.parse import urlparse, urlunparse
+
+    base_url = str(_config.TEST_DATABASE_URL)
+    if not base_url:
+        raise RuntimeError("TEST_DATABASE_URL not configured")
+
+    # Add worker suffix for xdist parallel execution isolation
+    worker_suffix = _get_worker_db_suffix()
+    parsed = urlparse(base_url)
+    path = parsed.path
+    if path.startswith("/") and worker_suffix:
+        path = f"/{path[1:]}{worker_suffix}"
+    return urlunparse(parsed._replace(path=path))
+
+
+# Use worker-isolated URL for parallel xdist execution
+TEST_ASYNC_DB_URL = _build_worker_isolated_test_db_url()
 
 
 class MockRedis:
@@ -350,16 +369,30 @@ async def setup_test_database():
     Uses pytest-asyncio event loop to avoid loop conflicts.
     Recreates the test database and applies migrations.
     This fixture has session scope to run once before all tests.
+    When running with xdist, each worker gets its own isolated database.
     """
     from mkobi.db.starter import DatabaseStarter, DatabaseStarterConfig
     from mkobi.config import get_config, clear_config_cache
+    from urllib.parse import urlparse, urlunparse
 
     clear_config_cache()
     config = get_config()
+
+    # Build worker-isolated database URL
+    worker_suffix = _get_worker_db_suffix()
+    test_db_name = f"bidb_test{worker_suffix}" if worker_suffix else config.database.test_dbname
+
+    # Build isolated database URLs for xdist workers
+    parsed_main = urlparse(str(config.DATABASE_URL))
+    isolated_test_url = urlunparse(parsed_main._replace(path=f"/{test_db_name}"))
+
+    parsed_admin = urlparse(str(config.test_admin_database_url))
+    isolated_admin_url = urlunparse(parsed_admin._replace(path=f"/{test_db_name}"))
+
     starter_config = DatabaseStarterConfig(
         main_database_url=config.DATABASE_URL,
-        test_database_url=config.test_database_url,
-        test_admin_database_url=config.test_admin_database_url,
+        test_database_url=isolated_test_url,
+        test_admin_database_url=isolated_admin_url,
         recreate_test_db=True,
     )
     await DatabaseStarter(starter_config).recreate_test_database()
