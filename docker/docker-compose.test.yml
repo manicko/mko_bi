@@ -6,7 +6,7 @@
 
 services:
   test-db:
-    image: postgres:16
+    image: postgres:16.3
     container_name: test-db
     environment:
       POSTGRES_DB: bidb_test
@@ -35,7 +35,7 @@ services:
       - test_network
 
   test-redis:
-    image: redis:7-alpine
+    image: redis:7.4-alpine
     container_name: test-redis
     volumes:
       - test_redis_data:/data
@@ -148,3 +148,4 @@ volumes:
 networks:
   test_network:
     driver: bridge
+

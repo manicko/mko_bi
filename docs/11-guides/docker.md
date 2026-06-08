@@ -341,6 +341,55 @@ MIT
 - [Deployment](../10-deployment/deployment.md) - Production deployment strategies
 - [Task Queue Migration](./task-queue-migration.md) - Background task processing setup
 
+## Docker Image Versions
+
+### Pinned Image Versions
+
+Docker images are pinned to specific patch versions for reproducible builds:
+
+| Service | Image | Version |
+|---------|-------|--------|
+| db | postgres | 16.3 |
+| redis | redis | 7.4-alpine |
+| nginx | nginx | 1.27-alpine |
+| frontend | node | 20-alpine |
+
+### Updating Images
+
+To update Docker image versions:
+
+1. **Check for new versions:**
+   ```bash
+   # Visit Docker Hub for latest tags:
+   # - https://hub.docker.com/_/postgres
+   # - https://hub.docker.com/_/redis
+   # - https://hub.docker.com/_/nginx
+   # - https://hub.docker.com/_/node
+   ```
+
+2. **Update in all compose files:**
+   ```bash
+   # Update postgres version in docker-compose.yml
+   sed -i 's/postgres:16.x/postgres:<new-patch-version>/g' docker/docker-compose.yml
+   sed -i 's/postgres:16.x/postgres:<new-patch-version>/g' docker/docker-compose.test.yml
+
+   # Update redis version in all compose files
+   sed -i 's/redis:7.x-alpine/redis:<new-version>-alpine/g' docker/docker-compose.yml
+   sed -i 's/redis:7.x-alpine/redis:<new-version>-alpine/g' docker/docker-compose.test.yml
+   ```
+
+3. **Test compatibility:**
+   ```bash
+   # Start test environment and run tests
+   docker compose -f docker/docker-compose.test.yml up -d --build
+   ```
+
+4. **Apply in production:**
+   ```bash
+   docker compose -f docker/docker-compose.yml pull  # Pull new images
+   docker compose -f docker/docker-compose.yml up -d --build  # Rebuild and restart
+   ```
+
 ## Temp File Cleanup Architecture
 
 Temp files are created during CSV upload processing and must be cleaned up to prevent disk space exhaustion. Two independent cleanup mechanisms ensure no orphaned files remain after crashes or restarts.
