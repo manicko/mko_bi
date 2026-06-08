@@ -165,6 +165,58 @@ Each feature is a self-contained vertical slice with four sublayers:
 
 **Rules:** `shared/` must never import from `features/` or `app/`.
 
+## Component Architecture
+
+### Shared Components
+
+The following shared components are available for use across features:
+
+| Component | Purpose | Usage |
+| --- | --- | --- |
+| `PlaceholderPage` | Stub for unimplemented routes | Use for routes that exist in navigation but lack full implementation |
+| `AccessDenied` | Permission denial display | Role-based access denial (403), route-level access denial |
+| `NotFound` | 404 page | Unmatched routes (`*` path) |
+| `ProtectedRoute` | Auth guard | Redirects unauthenticated users to `/login` |
+| `RoleBasedAccess` | Role-based visibility | Renders children only for users with specified roles; defaults to `<AccessDenied />` fallback |
+| `ConfirmDialog` | Destructive action confirmation | Delete user/dashboard, reject registration — invoked via `useConfirmDialog` hook |
+| `ErrorBoundary` | Component-level error isolation | Catches render errors in component subtrees |
+| `ErrorPage` | Error state pages | Variant-based error pages (e.g., 500) |
+
+### PlaceholderPage Usage Guidelines
+
+Use `PlaceholderPage` when:
+- A route exists in navigation but the page is not yet implemented
+- Developing a new feature and need a stub during development
+
+Do NOT use when:
+- An action within an existing page is not implemented (use disabled button + tooltip instead)
+- A 404 should be shown (use `NotFound`)
+- Permission denial (use `AccessDenied`)
+
+### AccessDenied Integration
+
+`AccessDenied` serves as the default fallback for `RoleBasedAccess`. When a non-admin user accesses `/admin`, they see "No access — contact your administrator" instead of a blank page. The component is also appropriate for inline permission denial on individual dashboards.
+
+### Chart Component Placement
+
+Chart components (`BarChart`, `LineChart`, `PieChart`, `TableChart`, `ChartRenderer`, `PlotlyChart`) reside in `features/dashboards/ui/charts/` — they are dashboard-specific UI components tightly coupled to dashboard data models (`GraphDataWithConfig`). A standalone `features/charts/` module is not warranted because:
+- Chart components are presentation-layer elements scoped to dashboard visualization
+- No standalone chart features (export, templates, embedding) currently exist
+- Chart functionality is fully contained within the dashboard rendering pipeline
+
+### Dashboard-Focused Charts Directory
+
+```
+features/dashboards/ui/charts/
+├── index.ts          # Barrel export (PlotlyChart, ChartRenderer)
+├── BarChart.tsx      # Bar chart with barmode grouping
+├── ChartRenderer.tsx # Main renderer with data conversion logic
+├── LineChart.tsx     # Line chart component
+├── PieChart.tsx      # Pie chart component
+├── PlotlyChart.tsx   # Generic Plotly wrapper
+└── TableChart.tsx    # HTML table rendering
+```
+
 ## Enum Synchronization
 
 Frontend enums in `shared/types/enums.ts` mirror the backend `StrEnum` values defined in `src/mkobi/models/enums.py`. This ensures type safety across the API boundary. The frontend uses `as const` objects with derived union types instead of TypeScript enums for `erasableSyntaxOnly` compatibility.

@@ -141,9 +141,32 @@ The following indexes are also defined in the schema but are not part of the 7 c
 | `idx_filters_name`                        | `filters`            | `UNIQUE`  | `name`                 | Enforce unique filter names      |
 | `idx_dashboard_filters_dashboard_filter`  | `dashboard_filters`  | B-tree    | `dashboard_id`, `filter_id` | Optimize join table lookups |
 | `idx_processing_logs_dashboard_id`        | `processing_logs`    | B-tree    | `dashboard_id`         | Filter logs by dashboard         |
-| `uq_aggregated_data_dashboard_graph_dims` | `aggregated_data`    | `UNIQUE`  | `dashboard_id`, `graph_id`, `dims::text` | UPSERT conflict detection |
+| `uq_aggregated_data_dashboard_graph_dims` | `aggregated_data`    | `UNIQUE`  | `dashboard_id`, `graph_id`, `((dims)::text)` | UPSERT conflict detection (expression index) |
 | `uq_dashboard_filter_values`              | `dashboard_filter_values` | `UNIQUE` | `dashboard_id`, `filter_name`, `filter_value` | Idempotent filter value writes |
 | `idx_dashboard_filter_values_lookup`      | `dashboard_filter_values` | B-tree | `dashboard_id`, `filter_name` | Fast lookup of filter values by dashboard + name |
+
+---
+
+## Expression Indexes
+
+### `uq_aggregated_data_dashboard_graph_dims`
+
+This is a **unique expression index** — it includes a PostgreSQL expression rather than a plain column reference:
+
+```sql
+CREATE UNIQUE INDEX uq_aggregated_data_dashboard_graph_dims
+ON aggregated_data (dashboard_id, graph_id, ((dims)::text));
+```
+
+The `((dims)::text)` expression casts the JSONB `dims` column to text for deterministic comparison. This is necessary for UPSERT conflict detection because PostgreSQL JSONB equality is sensitive to key ordering. Combined with recursive key sorting in the application layer, this ensures that dimension sets with identical semantics produce identical text representations.
+
+**Important:** The `ON CONFLICT` clause in SQLAlchemy UPSERT statements must use the matching expression:
+
+```python
+text("((dims)::text)")
+```
+
+A plain column reference (`AggregatedData.dims`) would fail with `InvalidColumnReferenceError` because no unique index matches that specification.
 
 ---
 

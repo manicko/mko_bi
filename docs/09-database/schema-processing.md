@@ -92,6 +92,32 @@ CREATE TABLE aggregated_data (
 
 **JSONB normalization note:** The `dims` column uses recursive key sorting before writes. This ensures that `{"a": 1, "b": 2}` and `{"b": 2, "a": 1}` produce identical JSONB representations, enabling reliable UPSERT operations via the unique index on `dims::text`.
 
+### UPSERT Expression Index
+
+The unique index `uq_aggregated_data_dashboard_graph_dims` is defined as an **expression index**:
+
+```sql
+CREATE UNIQUE INDEX uq_aggregated_data_dashboard_graph_dims
+ON aggregated_data (dashboard_id, graph_id, ((dims)::text));
+```
+
+Because the index includes a PostgreSQL expression (`((dims)::text)`), the `ON CONFLICT` clause in UPSERT statements must use the exact same expression rather than a plain column reference. The code uses `text("((dims)::text)")` in SQLAlchemy to match the expression index:
+
+```python
+stmt.on_conflict_do_update(
+    index_elements=[
+        AggregatedData.dashboard_id,
+        AggregatedData.graph_id,
+        text("((dims)::text)"),
+    ],
+    set={"metrics": stmt.excluded.metrics},
+)
+```
+
+Using `AggregatedData.dims` (a plain column reference) would generate `ON CONFLICT (dashboard_id, graph_id, dims)`, which fails with `InvalidColumnReferenceError` because no unique index matches that plain column specification. The expression index requires the explicit `((dims)::text)` form.
+
+**Affected methods:** `StorageManager.upsert_aggregate()` and `StorageManager._bulk_upsert()`.
+
 ---
 
 ### `dashboard_filter_values` — Filter Value Cache

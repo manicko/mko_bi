@@ -194,6 +194,26 @@ Services with `profiles: [production]` are not started by default. Use `--profil
 
 See [Docker Guide](../11-guides/docker.md#production-services-profiles-production) for details.
 
+### Test Environment Port Configuration
+
+The standalone test Docker Compose (`docker/docker-compose.test.yml`) uses shifted host ports to enable parallel dev+test execution:
+
+| Service | Host Port | Container Port | Production Port |
+|---------|-----------|----------------|-----------------|
+| `test-db` | **5433** | 5432 | 5432 |
+| `test-redis` | **6380** | 6379 | 6379 |
+| `test-app` | **8001** | 8000 | 8000 |
+
+Ports are bound to `0.0.0.0` (Docker default). Security risk is **LOW** — the test database contains no production data and uses default test passwords.
+
+**Rationale:** Native test execution from the host terminal is a documented workflow. Running `pytest` directly (not via `docker compose exec`) is faster for iterative development. The shifted ports enable running dev and test environments simultaneously without conflicts.
+
+`tests/conftest.py` uses `os.environ.setdefault("DATABASE__PORT", "5433")` to support both workflows:
+- Inside Docker: environment variables set by Docker Compose (port 5432 internal)
+- From host: defaults to `localhost:5433` for direct pytest execution
+
+> **Security note:** On shared machines, consider binding to `127.0.0.1` instead of the default `0.0.0.0` to prevent cross-talk between developers. For CI/CD environments, running tests inside the container (`docker compose exec test-app uv run pytest`) avoids exposing ports entirely.
+
 ### Required Production Variables
 
 The following environment variables **must** be set explicitly. Docker Compose will refuse to start the `app` service without them:

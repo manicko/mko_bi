@@ -77,7 +77,13 @@ docker compose -f docker/docker-compose.test.yml exec test-app /app/.venv/bin/py
 docker compose -f docker/docker-compose.test.yml down
 ```
 
-> **Test Compose is Standalone:** `docker-compose.test.yml` defines its own isolated services (`test-db`, `test-redis`, `test-migrate`, `test-app`), volumes (`test_postgres_data`, `test_redis_data`), and network (`test_network`). It uses shifted host ports (5433, 6380, 8001) so it can run in parallel with the production compose without conflicts.
+> **Test Compose is Standalone:** `docker-compose.test.yml` defines its own isolated services (`test-db`, `test-redis`, `test-migrate`, `test-app`), volumes (`test_postgres_data`, `test_redis_data`), and network (`test_network`). It uses shifted host ports (**5433**, **6380**, **8001**) so it can run in parallel with the production compose without conflicts.
+
+> **Test Port Security Note:** Host ports are intentionally exposed for development workflow convenience:
+> - **Rationale:** Running `pytest` directly from the host terminal is faster for iterative development than `docker compose exec`. The shifted ports enable running both dev and test environments simultaneously.
+> - **Security risk is LOW** — the test database contains no production data and uses default test passwords.
+> - **For shared machines:** Consider binding to `127.0.0.1` instead of the default `0.0.0.0` to prevent cross-talk between developers.
+> - **For CI/CD:** Run tests inside the container (`docker compose exec test-app uv run pytest`) to avoid exposing ports entirely.
 
 ## Multi-Stage Builds Explained
 

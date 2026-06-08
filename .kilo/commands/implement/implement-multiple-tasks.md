@@ -60,7 +60,7 @@ Look up `{task_implementor_model}` from `C:\py_dev\mkobi\.ai\models\lookup_table
 
 ### 4.2 Spawn Implementor Subagent
 
-Only 1 subagent at a time. Never parallel.
+Run up to 3 subagent at a time. If errors switch to 1 - never parallel.
 
 ```
 Task(
@@ -85,7 +85,9 @@ Where `{subagent_prompt}` is:
 2. Validate preconditions: semantic targets exist, depends_on tasks are done.
    If already implemented: rename to *_DONE.yaml, move to done/, return IMPLEMENTATION_COMPLETE.
 3. Implement: edit only required files. Follow existing patterns.
-4. Validate:
+4. If found a bug or any problem not relates to the task - don't solve, but create the new file with report to C:\py_dev\mkobi\.ai\audit\00-bug_report\ХХ-report.md
+XX - free number.
+5. Validate:
    - Python: uv run ruff check <files>, uv run mypy <files>, uv run pytest <paths>
    - Frontend: npm run build, npm run lint, npm run test
    Fix only issues caused by your changes.
@@ -95,9 +97,9 @@ Where `{subagent_prompt}` is:
     -- remove obsolete tests
    -Do NOT degrade architecture for outdated tests.
 
-5. Verify: git diff HEAD --stat —  Check only that your changes applied correctly and ignore other changes. If you see changes in files not related to the task it is normal - other agents are doing their task in parallel.
+6. Verify: git diff HEAD --stat —  Check only that your changes applied correctly and ignore other changes. If you see changes in files not related to the task it is normal - other agents are doing their task in parallel.
 
-6. Finalize: rename task file to *_DONE.yaml, move to C:\py_dev\mkobi\.ai\tasks\done/.
+7. Finalize: rename task file to *_DONE.yaml, move to C:\py_dev\mkobi\.ai\tasks\done/.
 
 ## Output
 Return ## IMPLEMENTATION_COMPLETE or ## IMPLEMENTATION_BLOCKED.
@@ -107,10 +109,11 @@ Include: summary, files modified, validation results, problems found.
 
 ### 4.3 Handle Subagent Return & Finalization Check
 
- - if no subagent report or error - restart task
+  - if no subagent report or error - restart task
 
- - if task finished check:
-  - task file moved to `done/*_DONE.yaml` (absent from `todo/`).  -  related to the task-files changed (ignore file changes not related to the task) 
+  - if task finished check the agent report:
+  - ensure task file moved to `done/*_DONE.yaml` (absent from `todo/`).  
+  -  validate related to the task-files changes (ignore file changes not related to the task) 
     ```powershell
     git diff HEAD --stat   
     ```
@@ -128,6 +131,8 @@ Include: summary, files modified, validation results, problems found.
     - Re-spawn implementor with error details
     - Do NOT continue or touch unrelated files
 
+    If you are not sure that task was implemented - rerun agent with the same task. 
+    If you are 100% sure that agent damaged/corrupted the file check git history, find damaged file (lost code oe) use  `git restore <damaged_file>` Never restore all files. Only the damaged.
 
 ### 4.4 Update Progress
 

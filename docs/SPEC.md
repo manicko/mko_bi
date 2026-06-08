@@ -172,6 +172,11 @@ Access is validated on every request via the `dashboard_access` table.
 - **Dashboard filter values table** — `dashboard_filter_values` table stores distinct filter values extracted from aggregated data during CSV processing. Supports dynamic filter UI population via `GET /api/v1/dashboards/{id}/filter-values?filter_name={name}`. Filters with `config.source === "data"` fetch values from this table instead of static `config.options`. Values are rebuilt on each upload (idempotent overwrite).
 - **Per-chart GROUP BY aggregation** — `AggregationService` performs Polars GROUP BY per graph with `graph.dimensions + dashboard.filters.dimensions` as GROUP BY columns. Replaces the previous row-by-row iteration approach. Produces one row per unique dimension combination with aggregated metric values.
 - **CSV parsing config pass-through** — Processing config settings (separator, encoding, column_types, decimal_separator) are fetched from `processing_config` and applied to CSV parsing in `data_worker.py`. Post-read Polars transformation handles comma decimal separator for float columns.
+- **Expression index for UPSERT** — The `aggregated_data` table uses a unique expression index `((dims)::text)` for conflict detection. SQLAlchemy UPSERT statements must use `text("((dims)::text)")` in `index_elements` to match the expression index — a plain column reference fails with `InvalidColumnReferenceError`.
+- **AccessDenied as default fallback** — `RoleBasedAccess` renders `<AccessDenied />` as the default fallback when users lack required roles, providing clear feedback instead of a blank page.
+- **PlaceholderPage for route stubs** — `PlaceholderPage` provides a standardized "coming soon" UI for routes that exist in navigation but lack full implementation. Not for in-page elements (use disabled button + tooltip) or error states (use `NotFound`/`AccessDenied`).
+- **Charts under dashboards feature** — Chart components reside in `features/dashboards/ui/charts/` as dashboard-specific UI. No standalone `features/charts/` module is needed — chart functionality is fully contained within the dashboard rendering pipeline.
+- **Test port exposure trade-off** — Test compose ports (5433, 6380, 8001) are intentionally exposed for native pytest execution. Risk is LOW (no production data). Alternative: run tests inside the container via `docker compose exec` to avoid exposing ports.
 
 ---
 
@@ -193,9 +198,10 @@ Access is validated on every request via the `dashboard_access` table.
 | 3.3     | 2026-06-02 | Token revocation: Redis-backed blacklist with auto-expiring entries on logout (both access and refresh tokens revoked immediately). Server-side MIME type detection: python-magic reads actual file content instead of trusting client Content-Type header. Cumulative streaming size enforcement: file size limit checked during streaming even without Content-Length (prevents disk exhaustion). Backend password strength validation: Pydantic field_validator enforces min 8 chars + at least one letter + at least one digit. Resource-level access control on dashboard CRUD: update/delete endpoints check per-dashboard permissions, not just role. |
 | 3.4     | 2026-06-02 | Redis-backed temp password storage: `TempPasswordStore` with atomic GET+DELETE pipeline, configurable TTL via `TEMP_PASSWORD_TTL_SECONDS`. Retrieval-token pattern: reset/approve endpoints return `retrieval_token` instead of plaintext `temp_password`. New admin endpoint `GET /admin/temp-passwords/{retrieval_token}` for one-time retrieval. Frontend two-step retrieval flow with `RetrievePasswordDialog`. |
 | 3.5     | 2026-06-03 | Filter values subsystem: `dashboard_filter_values` table for caching distinct filter values extracted from aggregated data, `AggregationService` for per-chart Polars GROUP BY (graph.dims + filter.dims), `GET /dashboards/{id}/filter-values` API endpoint for dynamic filter UI population, automatic filter value extraction in `_store_aggregates` after each CSV upload, CSV parsing config (separator, encoding, column_types, decimal_separator) applied from `processing_config` settings. |
+| 3.6     | 2026-06-08 | Expression index UPSERT fix: `StorageManager._bulk_upsert()` and `upsert_aggregate()` now use `text("((dims)::text)")` in ON CONFLICT clauses to match the expression index `uq_aggregated_data_dashboard_graph_dims`. Frontend component documentation: `PlaceholderPage` (route-level stub), `AccessDenied` (default `RoleBasedAccess` fallback), chart components confirmed under `features/dashboards/ui/charts/` (no standalone `features/charts/` module needed). Test port security assessment: documented trade-offs for exposed test ports (5433, 6380, 8001) with LOW risk classification. |
 
 ---
 
 **Author:** Senior Python Architect
-**Date:** 2026-06-03
-**Version:** 3.5
+**Date:** 2026-06-08
+**Version:** 3.6

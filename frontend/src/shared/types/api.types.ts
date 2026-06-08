@@ -259,6 +259,8 @@ export interface CreateDashboardRequest {
 export interface UpdateDashboardRequest {
   name?: string
   description?: string
+  layout_id?: string | null
+  config?: DashboardConfig
 }
 
 export interface DashboardAccess {

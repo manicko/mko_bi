@@ -2,7 +2,7 @@ id: TASK_057_fix_create_dashboard_return_type
 
 title: Fix createDashboard return type mismatch (INT-006)
 
-status: pending
+status: completed
 
 priority: low
 
@@ -43,5 +43,10 @@ acceptance_criteria:
 
 risk: low
 
-tests_to_run:
-  - "cd frontend && npm test -- --testPathPattern=DashboardManagement"
+implementation_notes: >
+  Fixed by changing createDashboard return type from DashboardAdmin to DashboardDetail.
+  Also added LayoutRead interface to api.types.ts and layout_id/layout fields to DashboardDetail.
+  Backend POST /dashboards/ returns DashboardRead (with config, permission, layout_id, layout).
+  Task description incorrectly stated no change needed - backend returns DashboardRead, not DashboardAdmin.
+
+result: COMPLETE

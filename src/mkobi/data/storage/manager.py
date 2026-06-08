@@ -18,7 +18,7 @@ import warnings
 from typing import TYPE_CHECKING, Any
 from uuid import UUID
 
-from sqlalchemy import and_, delete, select
+from sqlalchemy import and_, delete, select, text
 from sqlalchemy.dialects.postgresql import insert
 
 from mkobi.db.models.aggregated_data import AggregatedData
@@ -180,7 +180,7 @@ class StorageManager:
             index_elements=[
                 AggregatedData.dashboard_id,
                 AggregatedData.graph_id,
-                AggregatedData.dims,
+                text("((dims)::text)"),
             ],
             set_={
                 "metrics": stmt.excluded.metrics,
@@ -336,7 +336,7 @@ class StorageManager:
                 index_elements=[
                     table_model.dashboard_id,
                     table_model.graph_id,
-                    table_model.dims,
+                    text("((dims)::text)"),
                 ],
                 set_={
                     "metrics": stmt.excluded.metrics,
