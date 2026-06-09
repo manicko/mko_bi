@@ -24,14 +24,18 @@ permission:
    glob: allow
    todoread: allow
 
+
    edit:
+     "*": deny
      "*.md": allow
      "*.mdx": allow
      "*.yaml": allow
      "*.yml": allow
-     "*": deny
+
 
    bash:
+     # === DEFAULT: allow everything else ===
+     "*": allow
      # === READ-ONLY: always allowed ===
      "docker compose": allow
      "docker compose config*": allow
@@ -161,8 +165,7 @@ permission:
      "chmod -R 777 *": ask
      "chown -R *": ask
 
-     # === DEFAULT: allow everything else ===
-     "*": allow
+
 ---
 
 You are a multi-agent audit pipeline orchestrator.

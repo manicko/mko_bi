@@ -201,9 +201,10 @@ Access is validated on every request via the `dashboard_access` table.
 | 3.5     | 2026-06-03 | Filter values subsystem: `dashboard_filter_values` table for caching distinct filter values extracted from aggregated data, `AggregationService` for per-chart Polars GROUP BY (graph.dims + filter.dims), `GET /dashboards/{id}/filter-values` API endpoint for dynamic filter UI population, automatic filter value extraction in `_store_aggregates` after each CSV upload, CSV parsing config (separator, encoding, column_types, decimal_separator) applied from `processing_config` settings. |
 | 3.6     | 2026-06-08 | Expression index UPSERT fix: `StorageManager._bulk_upsert()` and `upsert_aggregate()` now use `text("((dims)::text)")` in ON CONFLICT clauses to match the expression index `uq_aggregated_data_dashboard_graph_dims`. Frontend component documentation: `PlaceholderPage` (route-level stub), `AccessDenied` (default `RoleBasedAccess` fallback), chart components confirmed under `features/dashboards/ui/charts/` (no standalone `features/charts/` module needed). Test port security assessment: documented trade-offs for exposed test ports (5433, 6380, 8001) with LOW risk classification. |
 | 3.7     | 2026-06-09 | Internationalized character support: full Cyrillic and Latin character support documented across database (UTF-8 encoding), backend (Polars/SQLAlchemy Unicode handling), and frontend (React rendering). Standard user-facing date format set to `dd/mm/yyyy` with flexible input parsing via processing config `date_format` setting. |
+| 3.8     | 2026-06-09 | PostgreSQL 18 upgrade: migrated from `postgres:16.3` to `postgres:18-bookworm` with `builtin` locale provider and `C.UTF-8` collation. This eliminates collation version mismatch errors on Docker image updates by using an immutable collation version (fixed at `1`). Volume mount path changed from `/var/lib/postgresql/data` to `/var/lib/postgresql` per PG18 requirements. See `docker/docker-compose.yml` for configuration. |
 
 ---
 
 **Author:** Senior Python Architect
 **Date:** 2026-06-09
-**Version:** 3.7
+**Version:** 3.8

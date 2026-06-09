@@ -1,7 +1,7 @@
 ---
 name: 08-deployment-config
 description: Configuration and startup audit covering config management, lifecycle, and production readiness
-agent: audit-executor
+agent: auditor
 alwaysApply: false
 problems-only: true
 ---

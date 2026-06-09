@@ -38,7 +38,7 @@ This guide covers deployment options for the mkobi BI Dashboard system, from loc
 - Python 3.12+
 - Node.js 20+
 - uv (Python package manager)
-- PostgreSQL 16+ (local or Docker)
+- PostgreSQL 18+ (local or Docker)
 
 ### Local Setup
 
@@ -248,11 +248,23 @@ This follows the least-privilege principle: any SQL injection or application bug
 
 The role is created via an initialization SQL script mounted to `/docker-entrypoint-initdb.d/` in the PostgreSQL container. The application's `DATABASE__USER` and `DATABASE__PASSWORD` point to the `mkobi_app` role.
 
+### PostgreSQL Locale Configuration
+
+The PostgreSQL container uses the `builtin` locale provider with `C.UTF-8` collation:
+
+```yaml
+POSTGRES_INITDB_ARGS: "--locale-provider=builtin --locale=C.UTF-8"
+```
+
+The builtin provider gives an **immutable collation version** (fixed at `1`), eliminating collation mismatch errors that occur with the default `libc` provider when the Docker image's base OS changes. `C.UTF-8` supports both Latin and Cyrillic characters.
+
+This is configured in both `docker/docker-compose.yml` and `docker/docker-compose.test.yml`.
+
 ### Volumes
 
 | Volume | Container Path | Purpose |
 |--------|---------------|---------|
-| `postgres_data` | `/var/lib/postgresql/data` | Database persistence |
+| `postgres_data` | `/var/lib/postgresql` | Database persistence |
 | `app_data` | `/app/data` | Uploads, logs, temp files |
 | `redis_data` | `/data` | Task queue (if used) |
 

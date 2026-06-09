@@ -224,9 +224,26 @@ See [Deployment](../10-deployment/deployment.md) for the nginx configuration det
 
 ## Volumes
 
-- `postgres_data` - PostgreSQL data persistence
+- `postgres_data` - PostgreSQL data persistence (mounted at `/var/lib/postgresql` for PG18+ compatibility)
 - `app_data` - Application data (uploads, logs, temp files)
 - `redis_data` - Redis data (if using task queue)
+
+## PostgreSQL Locale Configuration
+
+PostgreSQL 18 uses the `builtin` locale provider with `C.UTF-8` collation, configured via `POSTGRES_INITDB_ARGS`:
+
+```yaml
+POSTGRES_INITDB_ARGS: "--locale-provider=builtin --locale=C.UTF-8"
+```
+
+This provides:
+- **Immutable collation version** (fixed at `1`) — no collation mismatch errors on image updates
+- **Full UTF-8 support** for both Latin and Cyrillic characters
+- **No index corruption risk** from OS locale changes
+
+The `-bookworm` Debian tag is used for stability. When upgrading to `-trixie` in the future, no collation refresh is needed — the builtin provider is immutable.
+
+> See `docker/docker-compose.yml` and `docker/docker-compose.test.yml` for the current locale configuration.
 
 ## Health Checks
 
@@ -355,7 +372,7 @@ Docker images are pinned to specific patch versions for reproducible builds:
 
 | Service | Image | Version |
 |---------|-------|--------|
-| db | postgres | 16.3 |
+| db | postgres | 18-bookworm |
 | redis | redis | 7.4-alpine |
 | nginx | nginx | 1.27-alpine |
 | frontend | node | 20-alpine |
@@ -376,8 +393,8 @@ To update Docker image versions:
 2. **Update in all compose files:**
    ```bash
    # Update postgres version in docker-compose.yml
-   sed -i 's/postgres:16.x/postgres:<new-patch-version>/g' docker/docker-compose.yml
-   sed -i 's/postgres:16.x/postgres:<new-patch-version>/g' docker/docker-compose.test.yml
+   sed -i 's/postgres:18-bookworm/postgres:<new-version>/g' docker/docker-compose.yml
+   sed -i 's/postgres:18-bookworm/postgres:<new-version>/g' docker/docker-compose.test.yml
 
    # Update redis version in all compose files
    sed -i 's/redis:7.x-alpine/redis:<new-version>-alpine/g' docker/docker-compose.yml

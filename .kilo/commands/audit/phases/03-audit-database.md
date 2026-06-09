@@ -1,7 +1,7 @@
 ---
 name: 03-database
 description: Database architecture audit covering migrations, indexing strategy, consistency guarantees, transactional safety, and scalability risks
-agent: audit-executor
+agent: auditor
 alwaysApply: false
 problems-only: true
 ---

@@ -1,7 +1,7 @@
 ---
 name: 09-integration
 description: Cross-cutting integration audit covering API contract consistency, auth flow, data flow, and type alignment
-agent: audit-executor
+agent: auditor
 alwaysApply: false
 problems-only: true
 ---

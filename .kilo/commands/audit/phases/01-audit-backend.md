@@ -2,7 +2,7 @@
 name: 01-backend
 status: complete
 validated: no
-executor: audit-executor
+executor: auditor
 problems-only: true
 ---
 

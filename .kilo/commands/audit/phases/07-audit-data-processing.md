@@ -1,7 +1,7 @@
 ---
 name: 07-data-processing
 description: Data processing audit covering pipeline correctness, resource management, and data integrity
-agent: audit-executor
+agent: auditor
 alwaysApply: false
 problems-only: true
 ---

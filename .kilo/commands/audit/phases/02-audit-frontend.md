@@ -1,7 +1,7 @@
 ---
 name: 02-frontend
 description: Frontend architecture audit covering component isolation, state management, type safety, security boundaries, and runtime behavior
-agent: audit-executor
+agent: auditor
 alwaysApply: false
 problems-only: true
 ---

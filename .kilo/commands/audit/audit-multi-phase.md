@@ -30,7 +30,7 @@ Set variables:
 - `{BASE_CONTEXT}` = summary of the above files
 - `{REPORT_TEMPLATE_PATH}` = `.ai/audit/templates/audit-findings.md`
 - `{TASK_FILES}` = list of files in `.kilo/commands/audit/phases/`
-- {AUDIT-EXECUTOR} - model from `C:\py_dev\mkobi\.ai\models\lookup_table.md`
+- {auditor} - model from `C:\py_dev\mkobi\.ai\models\lookup_table.md`
 - {VALIDATOR} -  model from `C:\py_dev\mkobi\.ai\models\lookup_table.md`
 
 *DO NOT*
@@ -73,16 +73,16 @@ IMPORTANT:
 ### 2.2 Launch Executor
 ```
 Task(
-  prompt="Read .kilo/agents/audit-executor.md for your role.\n"
+  prompt="Read .kilo/agents/auditor.md for your role.\n"
        + "Read and execute phase task: {TASK_PATH}\n"
        + "Report template: {REPORT_TEMPLATE_PATH}\n"
        + "Write findings to: {OUTPUT_PATH}\n"
        + "Base context: {BASE_CONTEXT}\n"
        + "problems_only = TRUE\n",
 
-  agent="audit-executor",
+  agent="auditor",
   mode = "subagent",
-  model = "{AUDIT-EXECUTOR}",
+  model = "{auditor}",
   description="Execute audit phase {PHASE_NUMBER} - {PHASE_NAME}"
 )
 ```

@@ -1,7 +1,7 @@
 ---
 name: 05-docker
 description: Infrastructure audit covering reproducibility, secrets management, isolation, resilience, and deployment safety
-agent: audit-executor
+agent: auditor
 alwaysApply: false
 problems-only: true
 ---

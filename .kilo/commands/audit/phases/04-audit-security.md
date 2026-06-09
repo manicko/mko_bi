@@ -1,7 +1,7 @@
 ---
 name: 04-security
 description: Security audit covering authentication, authorization, credential handling, input validation, and trust boundaries
-agent: audit-executor
+agent: auditor
 alwaysApply: false
 problems-only: true
 ---

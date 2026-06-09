@@ -1,7 +1,7 @@
 ---
 name: 06-tests
 description: Test quality audit covering coverage gaps, anti-patterns, and test isolation
-agent: audit-executor
+agent: auditor
 alwaysApply: false
 problems-only: true
 ---
