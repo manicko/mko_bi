@@ -46,12 +46,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
     Implements defense-in-depth by setting security headers at the application layer
     in addition to nginx. Headers include:
-    - X-Content-Type-Options: Prevents MIME type sniffing
-    - X-Frame-Options: Prevents clickjacking
-    - X-XSS-Protection: Enables browser XSS filter
-    - Referrer-Policy: Controls referrer information
-    - Strict-Transport-Security: Enforces HTTPS connections (HSTS)
-    - Content-Security-Policy: Prevents XSS and injection attacks (CSP)
+    - X-Content-Type-Options: Prevents MIME type sniffing (all environments)
+    - X-Frame-Options: Prevents clickjacking (all environments)
+    - X-XSS-Protection: Enables browser XSS filter (all environments)
+    - Referrer-Policy: Controls referrer information (all environments)
+    - Strict-Transport-Security: Enforces HTTPS connections (HSTS) - production only
+    - Content-Security-Policy: Prevents XSS and injection attacks (CSP) - production only
     """
 
     async def dispatch(self, request: Request, call_next: Any) -> Any:
@@ -69,8 +69,12 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
-        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
-        response.headers["Content-Security-Policy"] = "default-src 'self'"
+
+        config = get_config()
+        if config.environment == EnvironmentEnum.PRODUCTION:
+            response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+            response.headers["Content-Security-Policy"] = "default-src 'self'"
+
         return response
 
 
