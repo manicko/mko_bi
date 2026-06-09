@@ -25,7 +25,7 @@
 
 services:
   test-db:
-    image: postgres:16.3
+    image: postgres:16.3-bookworm
     container_name: test-db
     environment:
       POSTGRES_DB: bidb_test
