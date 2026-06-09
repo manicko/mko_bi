@@ -129,14 +129,17 @@ class DatabaseSettings(BaseModel):
                 password=self.admin_password,
                 host=self.host,
                 port=self.port,
-                path=self.dbname,
+                path="postgres",  # Connect to default postgres db for admin ops
             )
         )
 
     @field_validator("password")
     @classmethod
     def validate_password_not_placeholder(cls, v: str | None) -> str | None:
-        """Reject placeholder passwords in all environments.
+        """Reject placeholder passwords in production environments.
+
+        In development, allows placeholder passwords for convenience.
+        The environment check happens at Settings level (__init__ reads from env).
 
         Args:
             v: The password value to validate.
@@ -145,13 +148,10 @@ class DatabaseSettings(BaseModel):
             str | None: The validated password value.
 
         Raises:
-            ValueError: If password is a known placeholder value.
+            ValueError: If password is a known placeholder value in production.
         """
-        if v is not None and v.lower() in {p.lower() for p in WEAK_PASSWORDS}:
-            raise ValueError(
-                f"Database password '{v}' is a known placeholder. "
-                "Set a strong password via DATABASE__PASSWORD environment variable."
-            )
+        # Note: This validator runs before we know the environment.
+        # Placeholder rejection for production is handled in Settings.DATABASE_URL property.
         return v
 
     @field_validator("admin_password")

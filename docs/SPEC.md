@@ -154,6 +154,7 @@ Access is validated on every request via the `dashboard_access` table.
 - **Processing config auto-wiring** — The upload pipeline automatically fetches the dashboard's `processing_config` from the database and passes it through to the background worker, ensuring transformations are applied consistently.
 - **Upload response model** — The upload endpoint returns a structured `UploadResponse` model (with `task_id`, `filename`, `dashboard_id`, `status`, `message`, `uploaded_at`) instead of an ad-hoc dict.
 - **Upload transaction safety** — File move to final path occurs after DB commit to prevent orphan files on commit failure. The dashboard existence is verified before the access check on upload, returning a clear 404 for non-existent dashboards.
+- **Internationalized character support** — Full Cyrillic and Latin character support across all system layers (database UTF-8, backend Polars/SQLAlchemy, frontend React). The standard user-facing date format is `dd/mm/yyyy` with flexible input parsing via `date_format` in processing config.
 - **Cookie-based refresh tokens** — Refresh tokens are stored in httpOnly cookies (`mkobi_refresh_token`) instead of the request body, eliminating XSS-based token theft. The access token lifetime was reduced from 30 to 15 minutes; refresh tokens live 7 days. Login sets the cookie, refresh reads from it, logout clears it.
 - **POST /auth/logout endpoint** — Dedicated logout endpoint that clears the refresh token cookie. The frontend calls this on logout and then clears the in-memory access token.
 - **Frontend silent refresh** — On app initialization, if no access token exists, the frontend attempts a silent refresh using the httpOnly cookie. This keeps users logged in across page refreshes without requiring re-authentication.
@@ -199,9 +200,10 @@ Access is validated on every request via the `dashboard_access` table.
 | 3.4     | 2026-06-02 | Redis-backed temp password storage: `TempPasswordStore` with atomic GET+DELETE pipeline, configurable TTL via `TEMP_PASSWORD_TTL_SECONDS`. Retrieval-token pattern: reset/approve endpoints return `retrieval_token` instead of plaintext `temp_password`. New admin endpoint `GET /admin/temp-passwords/{retrieval_token}` for one-time retrieval. Frontend two-step retrieval flow with `RetrievePasswordDialog`. |
 | 3.5     | 2026-06-03 | Filter values subsystem: `dashboard_filter_values` table for caching distinct filter values extracted from aggregated data, `AggregationService` for per-chart Polars GROUP BY (graph.dims + filter.dims), `GET /dashboards/{id}/filter-values` API endpoint for dynamic filter UI population, automatic filter value extraction in `_store_aggregates` after each CSV upload, CSV parsing config (separator, encoding, column_types, decimal_separator) applied from `processing_config` settings. |
 | 3.6     | 2026-06-08 | Expression index UPSERT fix: `StorageManager._bulk_upsert()` and `upsert_aggregate()` now use `text("((dims)::text)")` in ON CONFLICT clauses to match the expression index `uq_aggregated_data_dashboard_graph_dims`. Frontend component documentation: `PlaceholderPage` (route-level stub), `AccessDenied` (default `RoleBasedAccess` fallback), chart components confirmed under `features/dashboards/ui/charts/` (no standalone `features/charts/` module needed). Test port security assessment: documented trade-offs for exposed test ports (5433, 6380, 8001) with LOW risk classification. |
+| 3.7     | 2026-06-09 | Internationalized character support: full Cyrillic and Latin character support documented across database (UTF-8 encoding), backend (Polars/SQLAlchemy Unicode handling), and frontend (React rendering). Standard user-facing date format set to `dd/mm/yyyy` with flexible input parsing via processing config `date_format` setting. |
 
 ---
 
 **Author:** Senior Python Architect
-**Date:** 2026-06-08
-**Version:** 3.6
+**Date:** 2026-06-09
+**Version:** 3.7

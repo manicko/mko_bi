@@ -218,6 +218,10 @@ The processing config defines how CSV data is parsed and transformed before aggr
 
 **Important:** The upload pipeline automatically fetches the dashboard's processing config and passes it to the background worker. No manual wiring is needed.
 
+**Character Support:** All text fields support both Cyrillic and Latin characters through UTF-8 encoding. Russian and English content can be displayed side-by-side in dashboard data, chart labels, and filter values.
+
+**Date Format:** The standard date format for user-facing displays is `dd/mm/yyyy` (e.g., `31/12/2024`). The `date_format` setting in processing config defines how input dates are parsed from CSV files (e.g., `%d.%m.%Y`, `%Y-%m-%d`).
+
 Set up the processing config via `PUT /api/v1/processing-configs/{dashboard_id}`. See [Processing API](../03-processing/processing-api.md) for annotated examples.
 
 ## Upload Data

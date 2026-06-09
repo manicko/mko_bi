@@ -40,6 +40,7 @@ PostgreSQL
 2. **React is UI-only** — the frontend contains no business logic, only presentation state.
 3. **Access control is enforced on every request** — the backend validates permissions for every API call.
 4. **No overengineering** — proven libraries are used directly without unnecessary abstraction layers.
+5. **Internationalization** — Full Cyrillic and Latin character support through UTF-8 encoding. The standard user-facing date format is `dd/mm/yyyy`.
 
 ## Layer Responsibilities
 

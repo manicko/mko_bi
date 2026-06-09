@@ -12,7 +12,7 @@ services:
   # Note: Using explicit config instead of YAML anchors for clarity
 
   db:
-    image: postgres:16.3-bookworm
+    image: postgres:18-bookworm
     environment:
       POSTGRES_DB: bidb
       POSTGRES_USER: postgres
@@ -21,8 +21,12 @@ services:
       POSTGRES_PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD is required}
       # Application role password (can be different from postgres password)
       MKOBI_APP_PASSWORD: ${MKOBI_APP_PASSWORD:?MKOBI_APP_PASSWORD is required}
+      # Initialize with builtin locale provider for immutable collation (no OS-dependent version changes).
+      # C.UTF-8 supports both Latin and Cyrillic properly, unlike C/POSIX which is ASCII-only.
+      # Using -bookworm tag for stability (will upgrade to -trixie when needed).
+      POSTGRES_INITDB_ARGS: "--locale-provider=builtin --locale=C.UTF-8"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql
       # Mount initialization scripts to create app role on first run
       - ../docker/init-scripts:/docker-entrypoint-initdb.d:ro
     healthcheck:

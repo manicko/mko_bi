@@ -90,6 +90,8 @@ User (Browser)
 
 * **Formats**: `.csv`, `.csv.gz`
 * **Encoding**: UTF-8 (or as specified in `processing_config.settings.encoding`)
+* **Character Support**: Full Cyrillic and Latin character set support across database, backend, and frontend
+* **Date Format**: Standard user-facing format is `dd/mm/yyyy`; processing config supports flexible input parsing via `date_format` setting
 * **Lifecycle**: File is uploaded → processed → deleted
 * **History**: Not stored (only aggregated results persist)
 * **Mode**: `overwrite` (replaces all data) or `append` (adds to existing)

@@ -33,6 +33,7 @@ The core schema contains the foundational tables for the BI Dashboard system: us
 - **UUID primary keys** for all entity tables (except `aggregated_data` which uses `BIGSERIAL`)
 - **JSONB columns** for flexible, schema-less data (graph configs, layout definitions, filter configs)
 - **PostgreSQL ENUM types** for role, permission, graph type, and filter type columns
+- **UTF-8 encoding** for full Cyrillic and Latin character support across all text columns
 - **`ON DELETE CASCADE`** for dependent child records (graphs, aggregated data)
 - **`ON DELETE SET NULL`** for optional references (layout_id, created_by)
 - **`TIMESTAMPTZ`** for all timestamp columns to preserve timezone information

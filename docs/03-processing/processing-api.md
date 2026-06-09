@@ -55,7 +55,8 @@ Content-Type: multipart/form-data
 - Allowed file extensions: `.csv`, `.csv.gz`
 - Allowed MIME types: `text/csv`, `application/gzip`, `application/x-gzip`
 - **MIME type detection:** Server-side content sniffing using `python-magic` (reads first 2KB of file bytes to detect actual MIME type — does not trust client `Content-Type` header). Falls back to extension-based detection if `libmagic` is unavailable.
-- Encoding: UTF-8
+- **Character Support:** UTF-8 encoding with full Cyrillic and Latin character support. All string data is stored and rendered in Unicode without restrictions.
+- **Date Format:** Input dates are parsed according to `processing_config.settings.date_format`. Standard user-facing display format is `dd/mm/yyyy`.
 - Rate limiting is enforced on upload endpoints
 - Maximum file size is enforced on the backend, including cumulative byte tracking during streaming writes (applies even when the client does not provide `Content-Length`)
 - Temporary files are deleted after processing

@@ -181,6 +181,19 @@ The FastAPI backend exposes the following endpoint groups:
 
 ---
 
+## Internationalization Support
+
+The system fully supports both Cyrillic and Latin character sets across all layers:
+
+- **Database:** PostgreSQL with UTF-8 encoding stores all text data without character set restrictions
+- **Backend:** Polars and SQLAlchemy handle Unicode strings natively; all string fields accept Cyrillic and Latin characters
+- **Frontend:** React renders Cyrillic and Latin text correctly in all UI components (graphs, tables, filters)
+- **Date format:** The standard date format for user-facing displays is `dd/mm/yyyy`. The processing config supports flexible date parsing (`date_format` setting) for various input formats.
+
+This enables Russian and English language content to be displayed side-by-side in dashboard data, chart labels, and filter values.
+
+---
+
 ## Related Docs
 
 * [Data Flow](data-flow.md) — End-to-end upload-to-display pipeline

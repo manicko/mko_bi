@@ -92,6 +92,12 @@ The custom `SecretsFileSource` class scans all environment variables ending with
 
 The application **refuses to start in production** if default credentials are detected:
 
+### Database Password
+
+- `DATABASE__PASSWORD` must be explicitly set in production
+- In development, placeholder passwords (e.g., `postgres`) are permitted but not recommended
+- The placeholder validation runs only in production mode, allowing easier development setup
+
 ### Admin Credentials
 
 ```python

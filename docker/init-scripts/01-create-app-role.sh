@@ -1,22 +1,31 @@
 #!/bin/bash
 # =============================================================================
-# Create dedicated application role with limited privileges (least-privilege)
-# This script is run on PostgreSQL container initialization.
-# Password is substituted by Docker postgres image from MKOBI_APP_PASSWORD env var.
+# Create dedicated application role.
+# This script is run on PostgreSQL container initialization (first volume start).
+#
+# NOTE: PostgreSQL 18+ uses the 'builtin' locale provider with C.UTF-8, which
+# provides immutable collation that never changes across OS updates. No template1
+# locale fix is needed.
 # =============================================================================
 
 set -e
 
-# Drop role if exists, then recreate with correct password
-# This ensures password is always in sync with MKOBI_APP_PASSWORD environment variable
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<EOF
+echo "Creating application role mkobi_app..."
+
+# Create the role with password from environment variable.
+# Use psql -v flag to pass the password safely (avoids shell expansion issues
+# with $$ heredoc patterns that caused PID-based garbage passwords).
+psql -v ON_ERROR_STOP=1 \
+     -v app_password="'${MKOBI_APP_PASSWORD}'" \
+     --username "$POSTGRES_USER" \
+     --dbname "$POSTGRES_DB" <<'EOF'
 DROP ROLE IF EXISTS mkobi_app;
-CREATE ROLE mkobi_app WITH LOGIN PASSWORD $${MKOBI_APP_PASSWORD}$$;
+CREATE ROLE mkobi_app WITH LOGIN PASSWORD :app_password;
 -- CREATEDB privilege NOT granted - admin credentials (postgres superuser)
 -- are used for CREATE/DROP DATABASE operations in recreate_test_database()
 
 -- Grant connection to the database
-GRANT CONNECT ON DATABASE ${POSTGRES_DB} TO mkobi_app;
+GRANT CONNECT ON DATABASE :DBNAME TO mkobi_app;
 
 -- Grant usage on public schema
 GRANT USAGE ON SCHEMA public TO mkobi_app;
@@ -32,4 +41,4 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE O
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT USAGE ON SEQUENCES TO mkobi_app;
 EOF
 
-echo "Application role mkobi_app created successfully"
+echo "Application role mkobi_app created successfully."

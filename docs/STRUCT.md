@@ -37,7 +37,7 @@ C:\PY_DEV\MKOBI
 |   |   |       audit-findings.md
 |   |   |       
 |   |   \---validated
-|   |           final-report_old.md
+|   |           validated-findings.md
 |   |           
 |   +---builders
 |   |   |   build.bat
@@ -68,9 +68,6 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
-|   |       01-findings.md
-|   |       02-findings.md
-|   |       
 |   +---researches
 |   +---structure
 |   |   |   map.md
@@ -85,75 +82,20 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
-|   |   |       TASK_001_fix_enqueue_job_failure_silent_none_DONE_validated.yaml
-|   |   |       TASK_002_fix_registration_response_field_name_mismatch_DONE_validated.yaml
-|   |   |       TASK_003_fix_token_cache_bypass_revocation_DONE_validated.yaml
-|   |   |       TASK_004_add_rate_limiting_client_errors_DONE_validated.yaml
-|   |   |       TASK_005_add_rate_limiting_refresh_endpoint_DONE_validated.yaml
-|   |   |       TASK_006_fix_rate_limiter_fail_closed_default_DONE_validated.yaml
-|   |   |       TASK_007_fix_http_exception_rfc7807_compliance_DONE_validated.yaml
-|   |   |       TASK_008_remove_createdb_privilege_mkobi_app_DONE_validated.yaml
-|   |   |       TASK_009_fix_port_8000_exposed_production_DONE_validated.yaml
-|   |   |       TASK_010_fix_data_pipeline_transaction_coordination_DONE_validated.yaml
-|   |   |       TASK_011_translate_error_messages_to_english_DONE_validated.yaml
-|   |   |       TASK_012_implement_missing_chart_renderers_DONE_validated.yaml
-|   |   |       TASK_013_run_pending_migrations_DONE_validated.yaml
-|   |   |       TASK_014_consolidate_data_worker_transactions_DONE_validated.yaml
-|   |   |       TASK_015_add_docker_resource_limits_DONE_validated.yaml
-|   |   |       TASK_016_verify_infrastructure_changes_DONE_validated.yaml
-|   |   |       TASK_017_fix_private_rate_limiter_access_DONE_validated.yaml
-|   |   |       TASK_018_fix_filter_values_bulk_insert_DONE_validated.yaml
-|   |   |       TASK_019_add_processing_logs_archival_DONE_validated.yaml
-|   |   |       TASK_020_validate_cors_origins_urls_DONE_validated.yaml
-|   |   |       TASK_021_fix_nginx_hsts_over_http_DONE_validated.yaml
-|   |   |       TASK_022_add_nginx_client_max_body_size_DONE_validated.yaml
-|   |   |       TASK_023_fix_aggregation_service_hardcoded_sum_DONE_validated.yaml
-|   |   |       TASK_024_integrate_data_validator_into_pipeline_DONE_validated.yaml
-|   |   |       TASK_025_add_processing_status_state_machine_DONE_validated.yaml
-|   |   |       TASK_026_fix_file_move_before_enqueue_DONE_validated.yaml
-|   |   |       TASK_027_fix_test_mode_transaction_boundary_DONE_validated.yaml
-|   |   |       TASK_028_fix_useFilterValues_reactive_token_DONE_validated.yaml
-|   |   |       TASK_029_remove_console_error_from_production_DONE_validated.yaml
-|   |   |       TASK_030_fix_plotly_component_any_type_DONE_validated.yaml
-|   |   |       TASK_031_remove_alert_from_dashboard_management_DONE_validated.yaml
-|   |   |       TASK_032_add_zod_validation_dashboard_form_DONE_validated.yaml
-|   |   |       TASK_033_fix_force_password_hard_navigation_DONE_validated.yaml
-|   |   |       TASK_034_fix_nginx_versioned_image_DONE_validated.yaml
-|   |   |       TASK_035_remove_auto_migrate_contradiction_DONE_validated.yaml
-|   |   |       TASK_036_fix_rq_worker_health_check_DONE_validated.yaml
-|   |   |       TASK_037_fix_processing_result_type_mismatch_DONE_validated.yaml
-|   |   |       TASK_038_fix_dashboard_detail_type_mismatch_DONE_validated.yaml
-|   |   |       TASK_039_fix_graph_data_type_mismatch_DONE_validated.yaml
-|   |   |       TASK_040_fix_layout_type_mismatch_DONE_validated.yaml
-|   |   |       TASK_041_validate_db_password_not_placeholder_DONE_validated.yaml
-|   |   |       TASK_042_reject_placeholder_db_password_production_DONE_validated.yaml
-|   |   |       TASK_043_add_weak_password_validation_DONE_validated.yaml
-|   |   |       TASK_044_add_test_coverage_threshold_DONE_validated.yaml
-|   |   |       TASK_045_add_worker_utility_test_coverage_DONE_validated.yaml
-|   |   |       TASK_046_remove_mypy_tests_exclude_DONE_validated.yaml
-|   |   |       TASK_047_add_e2e_upload_test_DONE_validated.yaml
-|   |   |       TASK_051_fix_act_warnings_in_tests_DONE.yaml
-|   |   |       TASK_052_research_charts_directory_usage_DONE.yaml
-|   |   |       TASK_053_add_rollback_procedure_docs_DONE.yaml
-|   |   |       TASK_054_pin_docker_image_versions_DONE.yaml
-|   |   |       TASK_055_assess_test_ports_removal_impact_DONE.yaml
-|   |   |       TASK_057_fix_create_dashboard_return_type_DONE.yaml
-|   |   |       TASK_058_fix_update_dashboard_request_type_DONE.yaml
-|   |   |       TASK_059_add_csp_nonce_support_DONE.yaml
-|   |   |       TASK_060_reduce_mock_heavy_test_assertions_DONE.yaml
-|   |   |       TASK_061_fix_client_error_payload_inline_DONE.yaml
-|   |   |       TASK_062_verify_all_new_changes_DONE.yaml
-|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
+|   |   |       TASK_063_fix_task_queue_errorcode_import.yaml
+|   |   |       TASK_064_add_delete_old_logs_to_interface.yaml
+|   |   |       TASK_065_fix_postgres_collation_mismatch.yaml
+|   |   |       TASK_066_make_security_headers_environment_aware.yaml
+|   |   |       TASK_067_fix_axios_redirect_with_credentials.yaml
+|   |   |       TASK_068_remove_redundant_filter_invalidation.yaml
 |   |   |       
 |   |   \---validation
-|   |           implementation_audit_001.md
-|   |           
 |   \---templates
 |           decision.md
 |           ui-brand.md

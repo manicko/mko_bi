@@ -25,15 +25,18 @@
 
 services:
   test-db:
-    image: postgres:16.3-bookworm
+    image: postgres:18-bookworm
     container_name: test-db
     environment:
       POSTGRES_DB: bidb_test
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${DATABASE__PASSWORD:-test_password}
       MKOBI_APP_PASSWORD: ${MKOBI_APP_PASSWORD:-test_app_password}
+      # Initialize with builtin locale provider for immutable collation (no OS-dependent version changes).
+      # C.UTF-8 supports both Latin and Cyrillic properly, unlike C/POSIX which is ASCII-only.
+      POSTGRES_INITDB_ARGS: "--locale-provider=builtin --locale=C.UTF-8"
     volumes:
-      - test_postgres_data:/var/lib/postgresql/data
+      - test_postgres_data:/var/lib/postgresql
       - ./init-scripts:/docker-entrypoint-initdb.d:ro
     ports:
       - "5433:5432"

@@ -141,9 +141,9 @@ The application **refuses to start** in production mode if default credentials a
 | `ADMIN_USERNAME` | `admin` | Must be explicitly set via environment variable |
 | `ADMIN_PASSWORD` | `admin` | Must be explicitly set; default `admin`/`admin` combination is rejected |
 | `JWT__SECRET_KEY` | — | Must be explicitly set; Docker Compose uses `${JWT__SECRET_KEY:?...}` fail-if-unset syntax |
-| `DATABASE__PASSWORD` | — | Must be explicitly set; same fail-if-unset pattern |
+| `DATABASE__PASSWORD` | — | Must be explicitly set; same fail-if-unset pattern; placeholder validation only applies in production |
 
-In development mode, default credentials are permitted but a **warning** is logged.
+In development mode, default credentials are permitted but a **warning** is logged. The `DATABASE__PASSWORD` placeholder check (`postgres`, `password`, etc.) runs **only in production** to allow easier development database setup.
 
 ---
 

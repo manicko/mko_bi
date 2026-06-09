@@ -44,6 +44,7 @@ PostgreSQL
 3. **Type Safety** — TypeScript on the frontend, Pydantic v2 on the backend. Shared types via OpenAPI.
 4. **No Overengineering** — Proven libraries are used; no unnecessary abstraction layers.
 5. **Business Logic Boundary** — All business logic resides in the FastAPI service layer. React contains only UI state.
+6. **Internationalization** — Full Cyrillic and Latin character support. The standard user-facing date format is `dd/mm/yyyy`.
 
 ## Technology Stack
 

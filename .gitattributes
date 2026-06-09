@@ -1,0 +1,9 @@
+# Enforce LF line endings for shell scripts (Linux containers require LF)
+*.sh text eol=lf
+
+# Enforce LF for SQL files (executed inside Linux containers)
+*.sql text eol=lf
+
+# Enforce LF for config files used by Linux containers
+*.conf text eol=lf
+*.cfg text eol=lf

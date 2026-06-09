@@ -229,12 +229,9 @@ class DatabaseStarter:
         # Drop and recreate test database
         try:
             async with admin_engine.connect() as conn:
-                # Refresh collation version on template1 before CREATE DATABASE.
-                # This prevents collation version mismatch errors when the Docker
-                # image's OS has been updated since the data volume was initialized.
-                await conn.execute(
-                    text("ALTER DATABASE template1 REFRESH COLLATION_VERSION")
-                )
+                # NOTE: With PostgreSQL 18+ and builtin locale provider (C.UTF-8),
+                # collation versions are immutable (fixed at '1') and never change.
+                # No collation refresh is needed, unlike with libc provider.
 
                 # Get properly quoted database name from the connection's dialect
                 quoted_db_name = conn.dialect.identifier_preparer.quote(db_name)
