@@ -396,3 +396,20 @@ class IProcessingLogRepository(abc.ABC):
     ) -> bool:
         """Delete processing logs by dashboard ID."""
         pass
+
+    @abc.abstractmethod
+    async def delete_old_logs(
+        self,
+        cutoff: datetime,
+        db: AsyncSession,
+    ) -> int:
+        """Delete processing logs in terminal states older than cutoff.
+
+        Args:
+            cutoff: Datetime cutoff - logs with finished_at before this are deleted.
+            db: Async database session.
+
+        Returns:
+            int: Number of deleted log entries.
+        """
+        pass
