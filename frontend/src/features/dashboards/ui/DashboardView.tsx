@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   Typography,
@@ -58,12 +58,6 @@ export function DashboardView() {
     },
     []
   )
-
-  useEffect(() => {
-    if (id && Object.keys(filters).length > 0) {
-      void invalidateAggregatedData(id)
-    }
-  }, [filters, id, invalidateAggregatedData])
 
   if (dashboardLoading) {
     return (
@@ -166,7 +160,7 @@ export function DashboardView() {
         onUploadComplete={() => {
           setUploadModalOpen(false)
           if (id) {
-            invalidateAggregatedData(id).catch(() => {})
+            void invalidateAggregatedData(id)
           }
         }}
       />
