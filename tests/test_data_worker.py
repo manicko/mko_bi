@@ -6,11 +6,14 @@ from uuid import uuid4
 import pytest
 import polars as pl
 
-from mkobi.models.enums import ProcessingStatus
+from mkobi.models.enums import AggregationFunctionEnum, ProcessingStatus
+from mkobi.models.data import ProcessingConfig
+from mkobi.utils.exceptions import AppException, ErrorCode
 from mkobi.workers.data_worker import (
     _update_processing_log_status,
     cleanup_stale_processing_logs,
     _store_aggregates,
+    _validate_processing_config,
 )
 
 
@@ -158,6 +161,82 @@ class TestDataWorker:
         )
 
         assert count == 5
+
+
+# --- _validate_processing_config tests ---
+
+
+class TestValidateProcessingConfig:
+    """Tests for _validate_processing_config function.
+
+    Note: Pydantic models already validate required fields. These tests focus on
+    custom validation for empty string values that pass Pydantic but are invalid
+    for processing logic.
+    """
+
+    def test_valid_config_no_fields(self):
+        """Test that config with no optional fields passes validation."""
+        config = ProcessingConfig()
+        _validate_processing_config(config)  # Should not raise
+
+    def test_valid_config_with_valid_fields(self):
+        """Test that config with valid fields passes validation."""
+        config = ProcessingConfig(
+            groupby=["category", "region"],
+            sort_by=["year"],
+            aggregations=[
+                {"column": "revenue", "function": AggregationFunctionEnum.SUM},
+            ],
+            yoy_config={"year_column": "year", "value_column": "revenue_sum"},
+            share_config={"value_column": "revenue_sum"},
+            custom_metrics=[{"name": "profit", "expr": "revenue - cost"}],
+        )
+        _validate_processing_config(config)  # Should not raise
+
+    def test_valid_config_with_dict_aggregations(self):
+        """Test that config with dict-style aggregations passes validation."""
+        config = ProcessingConfig(
+            aggregations=[
+                {"column": "revenue", "function": AggregationFunctionEnum.SUM},
+            ],
+        )
+        _validate_processing_config(config)  # Should not raise
+
+    def test_invalid_groupby_empty_string(self):
+        """Test that groupby with empty string raises error."""
+        config = ProcessingConfig(
+            groupby=["category", ""],
+        )
+        with pytest.raises(AppException) as exc_info:
+            _validate_processing_config(config)
+        assert exc_info.value.code == ErrorCode.VALIDATION_ERROR
+        assert "groupby" in exc_info.value.detail.lower()
+
+    def test_invalid_sort_by_empty_string(self):
+        """Test that sort_by with empty string raises error."""
+        config = ProcessingConfig(
+            sort_by=["year", ""],
+        )
+        with pytest.raises(AppException) as exc_info:
+            _validate_processing_config(config)
+        assert exc_info.value.code == ErrorCode.VALIDATION_ERROR
+        assert "sort_by" in exc_info.value.detail.lower()
+
+    def test_valid_metrics(self):
+        """Test that metrics with valid entries passes validation."""
+        config = ProcessingConfig(
+            metrics=[{"name": "revenue", "type": "sum"}],
+        )
+        _validate_processing_config(config)  # Should not raise
+
+    def test_invalid_metrics_empty_value(self):
+        """Test that metrics with empty values raises error."""
+        config = ProcessingConfig(
+            metrics=[{"name": "", "type": "sum"}],
+        )
+        with pytest.raises(AppException) as exc_info:
+            _validate_processing_config(config)
+        assert exc_info.value.code == ErrorCode.VALIDATION_ERROR
 
 
 # --- _store_aggregates tests ---

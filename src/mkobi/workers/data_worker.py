@@ -30,11 +30,107 @@ from mkobi.db.models.filters import Filter, dashboard_filters
 from mkobi.db.session import get_session
 from mkobi.models.data import LoaderConfig, ProcessingConfig
 from mkobi.models.enums import ProcessingStatus
+from mkobi.utils.exceptions import AppException, ErrorCode
 
 logger = logging.getLogger(__name__)
 
 # Default timeout for stale processing logs (in minutes)
 DEFAULT_STALE_PROCESSING_TIMEOUT_MINUTES = 30
+
+
+def _validate_processing_config(config: ProcessingConfig) -> None:
+    """Validate ProcessingConfig fields before processing.
+
+    Checks for invalid values in config fields that would cause errors
+    during processing. Raises AppException with VALIDATION_ERROR code
+    if any invalid values are found.
+
+    Args:
+        config: ProcessingConfig to validate.
+
+    Raises:
+        AppException: If any config field contains invalid values.
+    """
+    # Validate aggregations
+    if config.aggregations:
+        for agg in config.aggregations:
+            column = getattr(agg, "column", None)
+            if not column:
+                raise AppException(
+                    code=ErrorCode.VALIDATION_ERROR,
+                    detail="Processing config has invalid aggregation: column name is missing or empty",
+                )
+            function = getattr(agg, "function", None)
+            if not function:
+                raise AppException(
+                    code=ErrorCode.VALIDATION_ERROR,
+                    detail="Processing config has invalid aggregation: function is missing or empty",
+                )
+
+    # Validate groupby for empty strings
+    if config.groupby:
+        if any(not col for col in config.groupby):
+            raise AppException(
+                code=ErrorCode.VALIDATION_ERROR,
+                detail="Processing config has empty groupby column name",
+            )
+
+    # Validate sort_by for empty strings
+    if config.sort_by:
+        if any(not col for col in config.sort_by):
+            raise AppException(
+                code=ErrorCode.VALIDATION_ERROR,
+                detail="Processing config has empty sort_by column name",
+            )
+
+    # Validate yoy_config required fields
+    if config.yoy_config:
+        year_col = getattr(config.yoy_config, "year_column", None)
+        value_col = getattr(config.yoy_config, "value_column", None)
+        if not year_col:
+            raise AppException(
+                code=ErrorCode.VALIDATION_ERROR,
+                detail="Processing config yoy_config missing required field: year_column",
+            )
+        if not value_col:
+            raise AppException(
+                code=ErrorCode.VALIDATION_ERROR,
+                detail="Processing config yoy_config missing required field: value_column",
+            )
+
+    # Validate share_config required fields
+    if config.share_config:
+        value_col = getattr(config.share_config, "value_column", None)
+        if not value_col:
+            raise AppException(
+                code=ErrorCode.VALIDATION_ERROR,
+                detail="Processing config share_config missing required field: value_column",
+            )
+
+    # Validate custom_metrics required fields
+    if config.custom_metrics:
+        for metric in config.custom_metrics:
+            name = getattr(metric, "name", None)
+            expr = getattr(metric, "expr", None)
+            if not name:
+                raise AppException(
+                    code=ErrorCode.VALIDATION_ERROR,
+                    detail="Processing config has invalid custom_metric: name is missing or empty",
+                )
+            if not expr:
+                raise AppException(
+                    code=ErrorCode.VALIDATION_ERROR,
+                    detail=f"Processing config has invalid custom_metric '{name}': expression is missing or empty",
+                )
+
+    # Validate metrics
+    if config.metrics:
+        for metric in config.metrics:
+            if not all(str(k) and str(v) for k, v in metric.items()):
+                raise AppException(
+                    code=ErrorCode.VALIDATION_ERROR,
+                    detail="Processing config has invalid metric: both name and type are required",
+                )
 
 
 async def _update_processing_log_status(
@@ -289,6 +385,7 @@ async def _process_csv_file_async(
         # Apply processing config if provided
         if processing_config_dict:
             config = ProcessingConfig(**processing_config_dict)
+            _validate_processing_config(config)
 
             # Apply transformations in thread
             df = await asyncio.to_thread(
