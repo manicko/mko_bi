@@ -2,7 +2,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator, model_validator
 from uuid import UUID
 
-from mkobi.models.enums import UserRole
+from mkobi.models.enums import RegistrationStatus, UserRole
 from mkobi.models.user import UserRead
 from mkobi.utils.validators import validate_password_or_raise
 
@@ -44,7 +44,7 @@ class RegistrationRequestResponse(BaseModel):
 
     id: UUID
     email: EmailStr
-    status: str
+    status: RegistrationStatus
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -63,7 +63,7 @@ class RegistrationRequestItem(BaseModel):
 
     id: UUID
     email: EmailStr
-    status: str
+    status: RegistrationStatus
     requested_by_ip: str | None = None
     reviewed_by: UUID | None = None
     reviewed_at: datetime | None = None
