@@ -292,8 +292,8 @@ export interface ProcessingLog {
 }
 
 export interface LogFilters {
-  dashboard_id?: string
-  status_filter?: string
-  date_from?: string
-  date_to?: string
-}
+   dashboard_id?: string
+   status_filter?: ProcessingStatus
+   date_from?: string
+   date_to?: string
+ }

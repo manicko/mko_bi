@@ -18,8 +18,9 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker'
 import { getLogs } from '../api/adminApi'
 import { useQuery } from '@tanstack/react-query'
 import type { LogFilters } from '../../../shared/types/api.types'
+import { ProcessingStatus } from '../../../shared/types/enums'
 
-const statusOptions = ['started', 'uploaded', 'processing', 'completed', 'failed']
+const statusOptions = Object.values(ProcessingStatus)
 
 const columns: GridColDef[] = [
   { field: 'id', headerName: 'ID', width: 100 },
@@ -86,11 +87,14 @@ export function LogViewer() {
 
           <FormControl size="small" sx={{ minWidth: 150 }}>
             <InputLabel>Status Filter</InputLabel>
-            <Select
-              value={filters.status_filter || ''}
-              label="Status Filter"
-              onChange={(e) => setFilters({ ...filters, status_filter: e.target.value || undefined })}
-            >
+<Select
+               value={filters.status_filter || ''}
+               label="Status Filter"
+               onChange={(e) => {
+                 const value = e.target.value
+                 setFilters({ ...filters, status_filter: value || undefined })
+               }}
+             >
               <MenuItem value="">All</MenuItem>
               {statusOptions.map((status) => (
                 <MenuItem key={status} value={status}>{status}</MenuItem>
