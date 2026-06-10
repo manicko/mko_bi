@@ -11,6 +11,9 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from mkobi.models.enums import ProcessingStatus
+from mkobi.models.processing_logs import ProcessingLogFilter, ProcessingLogRead
+
 
 class IRepository(abc.ABC):
     """Base repository interface."""
@@ -333,7 +336,7 @@ class IProcessingLogRepository(abc.ABC):
     async def create_log(
         self,
         dashboard_id: UUID | None,
-        status: Any,
+        status: ProcessingStatus,
         message: str | None,
         db: AsyncSession,
     ) -> Any:
@@ -344,7 +347,7 @@ class IProcessingLogRepository(abc.ABC):
     async def update_status(
         self,
         log_id: UUID,
-        status: Any,
+        status: ProcessingStatus,
         message: str | None,
         db: AsyncSession,
         finished_at: datetime | None = None,
@@ -357,16 +360,16 @@ class IProcessingLogRepository(abc.ABC):
         self,
         dashboard_id: UUID | None,
         db: AsyncSession,
-    ) -> list[Any]:
+    ) -> list[ProcessingLogRead]:
         """Get all processing logs for dashboard."""
         pass
 
     @abc.abstractmethod
     async def get_filtered(
         self,
-        filters: Any,
+        filters: ProcessingLogFilter,
         db: AsyncSession,
-    ) -> list[Any]:
+    ) -> list[ProcessingLogRead]:
         """Get processing logs with filtering."""
         pass
 
@@ -375,7 +378,7 @@ class IProcessingLogRepository(abc.ABC):
         self,
         dashboard_id: UUID,
         db: AsyncSession,
-    ) -> Any | None:
+    ) -> ProcessingLogRead | None:
         """Get latest processing log for dashboard."""
         pass
 
@@ -384,7 +387,7 @@ class IProcessingLogRepository(abc.ABC):
         self,
         log_id: UUID,
         db: AsyncSession,
-    ) -> Any | None:
+    ) -> ProcessingLogRead | None:
         """Get log by ID."""
         pass
 
