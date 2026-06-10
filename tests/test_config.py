@@ -87,6 +87,7 @@ class TestSettingsFromEnv(TestSettingsBase):
         monkeypatch.setenv("ENV", "production")
         monkeypatch.setenv("ADMIN_USERNAME", "testadmin")
         monkeypatch.setenv("ADMIN_PASSWORD", "testpassword123")
+        monkeypatch.setenv("CORS_ORIGINS", '["https://production.example.com"]')
         settings = Settings()
         assert settings.environment == EnvironmentEnum.PRODUCTION
 
@@ -347,6 +348,7 @@ class TestWeakCredentialDetection(TestSettingsBase):
         monkeypatch.setenv("ENV", "production")
         monkeypatch.setenv("ADMIN_USERNAME", "secure_admin")
         monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
+        monkeypatch.setenv("CORS_ORIGINS", '["https://production.example.com"]')
         # Should not raise
         settings = Settings()
         assert settings.admin_username == "secure_admin"
@@ -469,6 +471,7 @@ class TestDatabaseUrlPasswordValidation(TestSettingsBase):
         monkeypatch.setenv("ENV", "production")
         monkeypatch.setenv("ADMIN_USERNAME", "prodadmin")
         monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
+        monkeypatch.setenv("CORS_ORIGINS", '["https://production.example.com"]')
         from mkobi.config import clear_config_cache
         clear_config_cache()
         settings = Settings()
@@ -505,6 +508,7 @@ class TestDebugModeValidation(TestSettingsBase):
         monkeypatch.setenv("DEBUG", "false")
         monkeypatch.setenv("ADMIN_USERNAME", "prodadmin")
         monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
+        monkeypatch.setenv("CORS_ORIGINS", '["https://production.example.com"]')
         from mkobi.config import clear_config_cache
         clear_config_cache()
         # Should not raise
@@ -618,3 +622,84 @@ class TestCORsOriginUrlValidation(TestSettingsBase):
         assert "http://valid.com" in settings.cors_origins
         assert "ftp://files.example.com" not in settings.cors_origins
         assert "ws://socket.example.com" not in settings.cors_origins
+
+
+class TestCORsOriginsPlaceholderValidation(TestSettingsBase):
+    """Tests for CORS origins placeholder validation in production."""
+
+    @pytest.mark.parametrize("placeholder_origin", [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://example.com",
+        "https://your-domain.com",
+    ])
+    def test_placeholder_origin_rejected_in_production(self, monkeypatch, placeholder_origin):
+        """Verify placeholder CORS origins are rejected in production."""
+        monkeypatch.setenv("ENV", "production")
+        monkeypatch.setenv("ADMIN_USERNAME", "prodadmin")
+        monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
+        monkeypatch.setenv("CORS_ORIGINS", f'["{placeholder_origin}", "https://real-domain.com"]')
+        from mkobi.config import clear_config_cache
+        clear_config_cache()
+        with pytest.raises(ValueError, match="Placeholder CORS origins not allowed in production"):
+            Settings()
+
+    def test_placeholder_multiple_origins_rejected_in_production(self, monkeypatch):
+        """Verify multiple placeholder CORS origins are all reported in error."""
+        monkeypatch.setenv("ENV", "production")
+        monkeypatch.setenv("ADMIN_USERNAME", "prodadmin")
+        monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
+        monkeypatch.setenv("CORS_ORIGINS", '["http://localhost:3000", "https://example.com"]')
+        from mkobi.config import clear_config_cache
+        clear_config_cache()
+        with pytest.raises(ValueError, match="Placeholder CORS origins not allowed in production"):
+            Settings()
+
+    @pytest.mark.parametrize("placeholder_origin", [
+        "http://localhost:3000",
+        "https://example.com",
+    ])
+    def test_placeholder_accepted_in_development(self, monkeypatch, placeholder_origin):
+        """Verify placeholder CORS origins are accepted in development."""
+        monkeypatch.setenv("ENV", "development")
+        monkeypatch.setenv("CORS_ORIGINS", f'["{placeholder_origin}", "http://localhost:5173"]')
+        from mkobi.config import clear_config_cache
+        clear_config_cache()
+        settings = Settings()
+        assert placeholder_origin in settings.cors_origins
+
+    @pytest.mark.parametrize("placeholder_origin", [
+        "http://localhost:3000",
+        "https://example.com",
+    ])
+    def test_placeholder_accepted_in_staging(self, monkeypatch, placeholder_origin):
+        """Verify placeholder CORS origins are accepted in staging."""
+        monkeypatch.setenv("ENV", "staging")
+        monkeypatch.setenv("CORS_ORIGINS", f'["{placeholder_origin}", "https://staging.example.com"]')
+        from mkobi.config import clear_config_cache
+        clear_config_cache()
+        settings = Settings()
+        assert placeholder_origin in settings.cors_origins
+
+    def test_valid_origins_accepted_in_production(self, monkeypatch):
+        """Verify valid CORS origins pass validation in production."""
+        monkeypatch.setenv("ENV", "production")
+        monkeypatch.setenv("ADMIN_USERNAME", "prodadmin")
+        monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
+        monkeypatch.setenv("CORS_ORIGINS", '["https://app.example.com", "https://api.example.com"]')
+        from mkobi.config import clear_config_cache
+        clear_config_cache()
+        settings = Settings()
+        assert "https://app.example.com" in settings.cors_origins
+        assert "https://api.example.com" in settings.cors_origins
+
+    def test_empty_cors_origins_accepted_in_production(self, monkeypatch):
+        """Verify empty CORS origins list is accepted in production."""
+        monkeypatch.setenv("ENV", "production")
+        monkeypatch.setenv("ADMIN_USERNAME", "prodadmin")
+        monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
+        monkeypatch.setenv("CORS_ORIGINS", "[]")
+        from mkobi.config import clear_config_cache
+        clear_config_cache()
+        settings = Settings()
+        assert settings.cors_origins == []

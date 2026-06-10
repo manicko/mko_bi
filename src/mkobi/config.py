@@ -426,6 +426,35 @@ class Settings(BaseSettings):
             raise ValueError("debug=True is not allowed in production environment")
         return self
 
+    # --- Placeholder CORS origins that should never be used in production ---
+    CORS_ORIGINS_PLACEHOLDERS: ClassVar[set[str]] = {
+        "*",
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "https://example.com",
+        "https://your-domain.com",
+    }
+
+    @model_validator(mode="after")
+    def validate_cors_origins_not_placeholder(self) -> "Settings":
+        """Validate CORS origins do not contain placeholder values in production.
+
+        In production, known placeholder values like '*' or example URLs would
+        lead to misconfigured CORS and should be rejected with an error.
+        Development and staging environments allow these for local workflows.
+        """
+        if self.environment == EnvironmentEnum.PRODUCTION:
+            invalid_origins = [
+                origin for origin in self.cors_origins
+                if origin in self.CORS_ORIGINS_PLACEHOLDERS
+            ]
+            if invalid_origins:
+                raise ValueError(
+                    f"Placeholder CORS origins not allowed in production: {invalid_origins}. "
+                    "Please set CORS_ORIGINS to your actual production domains."
+                )
+        return self
+
     @field_validator("cors_origins")
     @classmethod
     def validate_cors_origins(cls, value: list[str]) -> list[str]:
