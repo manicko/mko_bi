@@ -162,6 +162,8 @@ def upgrade() -> None:
     )
 
     # Create dashboard_filters table (many-to-many)
+    # Primary key on (dashboard_id, filter_id) creates unique index dashboard_filters_pkey
+    # No additional index needed - PK index already covers all queries
     op.execute(
         """
         CREATE TABLE IF NOT EXISTS dashboard_filters (
@@ -170,9 +172,6 @@ def upgrade() -> None:
             PRIMARY KEY (dashboard_id, filter_id)
         )
         """
-    )
-    op.execute(
-        "CREATE INDEX IF NOT EXISTS idx_dashboard_filters_dashboard_id ON dashboard_filters (dashboard_id, filter_id)"
     )
 
     # Create processing_configs table

@@ -80,10 +80,10 @@ class Filter(Base):
 
 
 # Intermediate table for many-to-many relationship between dashboards and filters
+# Primary key on (dashboard_id, filter_id) creates index dashboard_filters_pkey
 dashboard_filters = Table(
     "dashboard_filters",
     Base.metadata,
     Column("dashboard_id", PG_UUID(as_uuid=True), ForeignKey("dashboards.id", ondelete="CASCADE"), primary_key=True),
     Column("filter_id", PG_UUID(as_uuid=True), ForeignKey("filters.id", ondelete="CASCADE"), primary_key=True),
-    Index("idx_dashboard_filters_dashboard_id", "dashboard_id", "filter_id"),
 )

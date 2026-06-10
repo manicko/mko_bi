@@ -139,7 +139,7 @@ The following indexes are also defined in the schema but are not part of the 7 c
 | `idx_dashboards_name`                     | `dashboards`         | `UNIQUE`  | `name`                 | Enforce unique dashboard names   |
 | `idx_graphs_dashboard_name`               | `graphs`             | `UNIQUE`  | `dashboard_id`, `name` | Enforce unique graph names per dashboard |
 | `idx_filters_name`                        | `filters`            | `UNIQUE`  | `name`                 | Enforce unique filter names      |
-| `idx_dashboard_filters_dashboard_filter`  | `dashboard_filters`  | B-tree    | `dashboard_id`, `filter_id` | Optimize join table lookups |
+| `idx_dashboard_filters_dashboard_filter`  | `dashboard_filters`  | `UNIQUE`    | `dashboard_id`, `filter_id` | Primary key index (replaces redundant non-unique index) |
 | `idx_processing_logs_dashboard_id`        | `processing_logs`    | B-tree    | `dashboard_id`         | Filter logs by dashboard         |
 | `uq_aggregated_data_dashboard_graph_dims` | `aggregated_data`    | `UNIQUE`  | `dashboard_id`, `graph_id`, `((dims)::text)` | UPSERT conflict detection (expression index) |
 | `uq_dashboard_filter_values`              | `dashboard_filter_values` | `UNIQUE` | `dashboard_id`, `filter_name`, `filter_value` | Idempotent filter value writes |
