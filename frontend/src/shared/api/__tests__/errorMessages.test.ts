@@ -125,6 +125,7 @@ describe('sharedErrorMessages', () => {
   it('contains all processing error codes', () => {
     expect(sharedErrorMessages[ErrorCode.PROCESSING_FAILED]).toBeDefined()
     expect(sharedErrorMessages[ErrorCode.PROCESSING_IN_PROGRESS]).toBeDefined()
+    expect(sharedErrorMessages[ErrorCode.INVALID_TRANSITION]).toBeDefined()
   })
 
   it('all messages are in English', () => {

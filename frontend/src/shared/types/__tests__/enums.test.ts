@@ -147,5 +147,6 @@ describe('ErrorCode', () => {
   it('has correct values for processing errors', () => {
     expect(ErrorCode.PROCESSING_FAILED).toBe('PROCESSING_FAILED')
     expect(ErrorCode.PROCESSING_IN_PROGRESS).toBe('PROCESSING_IN_PROGRESS')
+    expect(ErrorCode.INVALID_TRANSITION).toBe('INVALID_TRANSITION')
   })
 })

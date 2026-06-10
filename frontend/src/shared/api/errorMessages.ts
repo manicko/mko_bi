@@ -50,6 +50,7 @@ export const sharedErrorMessages: Record<ErrorCode, string> = {
   // Processing errors
   [ErrorCode.PROCESSING_FAILED]: 'Data processing failed',
   [ErrorCode.PROCESSING_IN_PROGRESS]: 'Data processing already in progress',
+  [ErrorCode.INVALID_TRANSITION]: 'This status change is not allowed',
 }
 
 /**

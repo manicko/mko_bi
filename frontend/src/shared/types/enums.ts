@@ -116,6 +116,7 @@ export const ErrorCode = {
   // Processing errors
   PROCESSING_FAILED: 'PROCESSING_FAILED',
   PROCESSING_IN_PROGRESS: 'PROCESSING_IN_PROGRESS',
+  INVALID_TRANSITION: 'INVALID_TRANSITION',
 } as const
 
 export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode]
