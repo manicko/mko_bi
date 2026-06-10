@@ -1,0 +1,67 @@
+id: TASK_005_clear_filter_values_on_overwrite
+
+title: HIGH — Clear dashboard filter values on data overwrite mode
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_critical_add_dashboard_access_control
+
+source_file: .ai/audit/validated/final-report.md
+source_finding: DP-002
+
+description: >
+  In src/mkobi/workers/data_worker.py, when processing data in OVERWRITE mode,
+  existing dashboard filter values (stored in DashboardFilterValue) are not cleared
+  when the dashboard's configured filters change between uploads. This leaves orphaned
+  filter values that reference non-existent filters, causing stale/incorrect filter
+  UI state. When overwriting data, all existing filter values for the dashboard should
+  be deleted before recomputing and storing new ones.
+
+goals:
+  - Delete all existing DashboardFilterValue records for the dashboard before
+    recomputing aggregates in OVERWRITE mode
+  - Ensure new filter values are computed from the new data, not merged with old
+  - Preserve APPEND mode behavior (no deletion of filter values)
+
+files:
+  - path: src/mkobi/workers/data_worker.py
+    targets:
+      - type: function
+        name: process_csv_background_sync
+    semantic_anchors:
+      insert_after:
+        type: conditional_block
+        value: upload.mode == OVERWRITE check
+    changes:
+      - action: add_code
+        description: >
+          Before recomputing filter values in OVERWRITE mode, delete all existing
+          DashboardFilterValue records for the dashboard_id.
+        code_hint: |
+          if upload.mode == UploadMode.OVERWRITE:
+              await dashboard_filter_values_repo.delete_all_by_dashboard(
+                  dashboard_id=dashboard_id
+              )
+
+acceptance_criteria:
+  - All filter values are removed before OVERWRITE processing recomputes them
+  - No orphaned filter values remain after overwrite
+  - APPEND mode behavior is unchanged
+  - Tests verify filter values are fresh after overwrite
+
+tests_to_run:
+  - pytest tests/ -k "overwrite or filter_value" -v --no-header
+  - pytest tests/ -k "data_worker" -v --no-header
+
+risk: medium
+risk_notes: >
+  Medium risk — deleting data always requires care. Must ensure the deletion
+  happens within the same transaction as the new value insertion, and that
+  APPEND mode is not affected. The delete should be scoped to dashboard_id.
+
+type: implementation
+category: data-processing
+severity: high

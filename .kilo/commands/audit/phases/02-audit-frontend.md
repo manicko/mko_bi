@@ -71,30 +71,25 @@ Run the project's frontend test suite.
 
 ### Step R5 — Dead/Unused Code Search
 
-Identify components, pages, and API clients that exist in the codebase but are never rendered:
+Search for code that is unreachable, never called, or conditionally impossible:
 
-- Find all page/route components. Check which are registered in the router config.
-- Components imported nowhere = dead code **only after Step R5-CROSSCHECK**.
-- API client functions called nowhere = dead endpoints or dead client code.
-- Routes in the router with no corresponding backend endpoint = broken navigation.
+- Functions/methods defined but never invoked outside tests.
+- Branches guarded by conditions that are always true/false.
+- Imported modules that are never used (beyond linter detection, check logical dead code).
+- Routes defined in routers but not mounted in the app.
 
-For each finding, provide file path, line number, and evidence of non-use.
+Record each instance with file path and line number.
 
 #### Step R5-CROSSCHECK — Verify "Dead" Code Against Specification
 
 **Before filing any "dead code" finding, you MUST cross-reference the item against the specification:**
 
-1. Read `docs/SPEC.md` and applicable docs under `docs/07-frontend/`, `docs/02-dashboards/`, `docs/03-processing/`.
-2. Check `src/mkobi/models/enums.py` for enum values (e.g., `GraphType`, `FilterType`) that define required features.
-3. Check `src/mkobi/models/` for Pydantic models that reference the component type (e.g., `DashboardConfig.graph_types`).
-4. For each "dead" component, answer: **Is this component type listed in the specification as a supported feature?**
+Read `docs/` and check if the "dead" function/route/feature is documented as a required capability.
 
-**Decision logic:**
-- **If the spec requires it but the component exists and is unwired** → This is NOT dead code. File as `[SPEC-DEVIATION]`: "Component X implements spec-required feature Y but is never imported/rendered — the feature is missing from the UI."
-- **If the spec requires it and no component exists at all** → File as `[SPEC-DEVIATION]`: "Feature Y is specified but has no frontend implementation."
-- **Only if the spec does NOT mention the feature AND the component is unwired** → File as dead code.
+**Dead Code Policy:**
+- Dead code is ONLY when NOT documented — if code exists but is unused and documentation specifies it should exist, this is future-proofing, not dead code.
+- When filing dead code findings, the recommendation should be to investigate purpose, not delete — ask why the code exists before suggesting removal.
 
-**Flagging rule:** If you find unwired components whose types match enum values in `GraphType`, `FilterType`, or similar spec enums, this is a **missing implementation finding**, not a dead code finding.
 
 ### Step R6 — API Contract Alignment
 

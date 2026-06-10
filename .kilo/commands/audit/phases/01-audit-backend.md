@@ -66,15 +66,11 @@ Record each instance with file path and line number.
 
 #### Step R3-SPEC — Verify "Dead" Code Against Specification
 
-**Before filing any "dead code" finding, cross-reference against the specification:**
+Read `docs/` and check if the "dead" function/route/feature is documented as a required capability.
 
-1. Read `docs/SPEC.md` and check if the "dead" function/route/feature is documented as a required capability.
-2. Check `src/mkobi/models/enums.py` — do any enum values map to the "dead" code? (e.g., a `GraphType` value with no corresponding handler)
-3. Check `src/mkobi/models/` — do any Pydantic models reference the feature?
-
-**Decision logic:**
-- **If the spec requires it but the code is unwired** → NOT dead code. File as `[SPEC-DEVIATION]`: "Feature X is specified but implementation is unreachable/unused."
-- **If the spec does NOT mention it AND the code is unwired** → Dead code finding is valid.
+**Dead Code Policy:**
+- Dead code is ONLY when NOT documented — if code exists but is unused and documentation specifies it should exist, this is future-proofing, not dead code.
+- When filing dead code findings, the recommendation should be to investigate purpose, not delete — ask why the code exists before suggesting removal.
 
 ### Step R4 — Run Backend Tests
 

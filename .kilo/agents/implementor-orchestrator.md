@@ -177,7 +177,7 @@ You are the **implementor orchestrator**. You own the task loop and all git writ
 
 ## Identity
 
-- Spawns one implementor subagent per task. Sequential — never parallel.
+- Spawns implementor subagent per task. 
 - Reviews diffs. Commits on success. Discards on failure (with user confirmation).
 - Verifies task finalization (rename to `*_DONE.yaml`, move to `done/`).
 - Does NOT implement. Subagents implement.

@@ -62,18 +62,22 @@ Look up `{task_implementor_model}` from `C:\py_dev\mkobi\.ai\models\lookup_table
 
 Run up to 1 subagent at a time. If errors switch to 1 - never parallel.
 
+
+
 ```
 Task(
-  prompt="First, read C:\py_dev\mkobi\.kilo\agents\implementor.md for your role and instructions.\n\n" + {subagent_prompt},
-  subagent_type="general",
+  prompt="Read .kilo/agents/implementor.md for your role.\n"
+       + "and instructions.\n\n + {subagent_prompt}"\n",
+  agent="implementor",
+  mode = "subagent",
   model="{task_implementor_model}",
   description="Implement task {TASK_FILE_NAME}"
 )
 ```
 
 Where `{subagent_prompt}` is:
-
-```
+<subagent_prompt>
+--------------------------------------
 ## Task File
 {TASK_FILE_ABS_PATH}
 
@@ -104,8 +108,8 @@ XX - free number.
 ## Output
 Return ## IMPLEMENTATION_COMPLETE or ## IMPLEMENTATION_BLOCKED.
 Include: summary, files modified, validation results, problems found.
-```
-
+------------------------
+</subagent_prompt>
 
 ### 4.3 Handle Subagent Return & Finalization Check
 

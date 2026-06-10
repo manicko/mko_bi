@@ -1,0 +1,72 @@
+id: TASK_002_fix_test_seeder_race_condition
+
+title: HIGH — Fix test seeder race condition under parallel xdist execution
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_critical_add_dashboard_access_control
+
+source_file: .ai/audit/validated/final-report.md
+source_finding: BE-002
+
+description: >
+  The test seeder src/mkobi/db/seeders/test_media_dash.py has race conditions under
+  parallel xdist execution. The seeder does not use idempotent operations (INSERT ... ON
+  CONFLICT or equivalent), leading to duplicate key violations or constraint failures when
+  multiple test workers run simultaneously. Make all seeding operations idempotent so they
+  can safely run in parallel without inter-worker conflicts.
+
+goals:
+  - Make all INSERT operations idempotent using ON CONFLICT DO UPDATE/NOTHING
+  - Remove any assumptions about empty database state before seeding
+  - Ensure seeder produces identical data regardless of execution order
+  - Remove quiet suppressions that mask underlying issues
+
+files:
+  - path: src/mkobi/db/seeders/test_media_dash.py
+    targets:
+      - type: module
+        name: test_media_dash
+    semantic_anchors:
+      insert_after:
+        type: function_definition
+        value: seed function entry points
+    changes:
+      - action: modify_code
+        description: >
+          Replace plain INSERT statements with idempotent equivalents. Use
+          INSERT ... ON CONFLICT (unique_column) DO UPDATE SET ... (for upsert)
+          or INSERT ... ON CONFLICT DO NOTHING (for create-if-absent).
+        code_hint: |
+          await session.execute(
+              text("""
+                  INSERT INTO dashboards (id, name, ...)
+                  VALUES (:id, :name, ...)
+                  ON CONFLICT (id) DO UPDATE SET
+                      name = EXCLUDED.name, ...
+              """),
+              params,
+          )
+
+acceptance_criteria:
+  - Seeder runs successfully under pytest-xdist with -n 4 or higher
+  - No duplicate key violations or constraint errors in parallel execution
+  - Seeder produces identical database state after each run
+  - All existing tests that depend on seeded data pass
+
+tests_to_run:
+  - pytest tests/ -n 2 --dist=loadgroup -v --no-header
+  - pytest tests/ -k "test_" -v --no-header
+
+risk: medium
+risk_notes: >
+  Medium risk because changing INSERT patterns could affect test data expectations.
+  Must verify that all tests relying on seeded data still pass. The seeding is
+  for tests only, not production data.
+
+type: implementation
+category: backend
+severity: high

@@ -1,0 +1,85 @@
+id: TASK_008_add_graceful_shutdown_for_session_engine
+
+title: MEDIUM — Add graceful shutdown handler for database session engine disposal
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_003_fix_cleanup_session_injection
+
+source_file: .ai/audit/validated/final-report.md
+source_finding: DC-004
+
+description: >
+  The database session engine (created in src/mkobi/db/session.py or src/mkobi/db/starter.py)
+  is not disposed of during application graceful shutdown. This can lead to connection leaks,
+  uncommitted transactions, or "connection pool is closed" errors during deployment restarts.
+  Add a shutdown event handler that calls engine.dispose() to cleanly close all connections.
+
+goals:
+  - Register a FastAPI lifespan or shutdown event handler that disposes the engine
+  - Ensure engine disposal happens after all background tasks complete
+  - Log the shutdown for observability
+
+files:
+  - path: src/mkobi/db/session.py
+    targets:
+      - type: function
+        name: get_engine (or engine creation)
+    semantic_anchors:
+      insert_after:
+        type: module_level
+        value: engine initialization
+    changes:
+      - action: add_code
+        description: >
+          Export an async dispose_engine() function that awaits engine.dispose().
+        code_hint: |
+          async def dispose_engine() -> None:
+              global _engine
+              if _engine is not None:
+                  await _engine.dispose()
+                  _engine = None
+                  logger.info("Database engine disposed cleanly")
+
+  - path: src/mkobi/app.py
+    targets:
+      - type: function
+        name: create_app
+    semantic_anchors:
+      insert_after:
+        type: function_call
+        value: add_exception_handlers(app)
+    changes:
+      - action: add_code
+        description: >
+          Register dispose_engine as a shutdown handler in the FastAPI lifespan context.
+        code_hint: |
+          from mkobi.db.session import dispose_engine
+          
+          @asynccontextmanager
+          async def lifespan(app: FastAPI):
+              yield
+              await dispose_engine()
+
+acceptance_criteria:
+  - Engine is disposed on application shutdown
+  - No connection pool errors during graceful restart
+  - Shutdown log message is emitted
+  - Existing tests pass
+
+tests_to_run:
+  - pytest tests/ -v --no-header
+  - ruff check src/mkobi/db/session.py src/mkobi/app.py
+  - mypy src/mkobi/db/session.py src/mkobi/app.py
+
+risk: low
+risk_notes: >
+  Low risk — disposal is only called at shutdown. The change is additive and
+  doesn't affect runtime behavior during normal operation.
+
+type: implementation
+category: deployment-config
+severity: medium

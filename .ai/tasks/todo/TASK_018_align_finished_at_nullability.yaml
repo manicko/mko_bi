@@ -1,0 +1,59 @@
+id: TASK_018_align_finished_at_nullability
+
+title: LOW — Align frontend ProcessingLog.finished_at with backend (nullable, not optional)
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_017_use_processing_status_enum_for_status_filter
+
+source_file: .ai/audit/validated/final-report.md
+source_finding: INT-004
+
+description: >
+  The frontend ProcessingLog type in frontend/src/shared/types/api.types.ts marks
+  finished_at as optional (finished_at?: ...), but the backend always returns it
+  (as a nullable field). The frontend type should reflect that finished_at is
+  always present but may be null. Change from optional to nullable type.
+
+goals:
+  - Change finished_at from optional (?) to nullable ( | null) in ProcessingLog type
+  - Ensure frontend code handles null finished_at correctly
+  - Align with backend ProcessingLogRead model
+
+files:
+  - path: frontend/src/shared/types/api.types.ts
+    targets:
+      - type: interface
+        name: ProcessingLog
+    semantic_anchors:
+      insert_after:
+        type: property_definition
+        name: finished_at
+    changes:
+      - action: modify_code
+        description: >
+          Change finished_at from optional to nullable.
+        code_hint: |
+          finished_at: string | null;
+
+acceptance_criteria:
+  - finished_at is typed as string | null (not optional)
+  - TypeScript compilation passes
+  - LogViewer handles null finished_at gracefully
+  - No runtime behavior change
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+  - cd frontend && npx vitest run --reporter=verbose src/features/admin/
+
+risk: minimal
+risk_notes: >
+  Minimal risk — type alignment only. The backend always returns finished_at
+  (possibly null), so the frontend should expect it. No runtime changes.
+
+type: implementation
+category: frontend
+severity: low

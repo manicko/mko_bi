@@ -265,6 +265,11 @@ Ask: "Is the code choice better than the doc?"
 - If no → recommend fixing code
 - If unclear → recommend both options with trade-offs
 
+## Dead Code Policy
+
+- **Dead code is ONLY when NOT documented** — if a component/function exists but is unused and documentation specifies it should exist, this is future-proofing, not dead code.
+- **When filing dead code findings, the recommendation should be to investigate purpose, not delete** — ask why the code exists before suggesting removal.
+
 ## Constraints
 
 - Recommendations are **advisory**, not mandatory

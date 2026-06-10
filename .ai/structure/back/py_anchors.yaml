@@ -17,6 +17,13 @@
   value: call_next
   stable_hash: 3580f424
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
+- id: 632c3a72
+  symbol_path:
+  - SecurityHeadersMiddleware
+  type: function_call
+  value: get_config
+  stable_hash: 632c3a72
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
 - id: cc192197
   symbol_path:
   - SecurityHeadersMiddleware
@@ -336,14 +343,6 @@
   type: function_call
   value: str
   stable_hash: 164d02e7
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
-- id: b287d90a
-  symbol_path:
-  - DatabaseSettings
-  - validate_password_not_placeholder
-  type: function_call
-  value: ValueError
-  stable_hash: b287d90a
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
 - id: f52b813c
   symbol_path:

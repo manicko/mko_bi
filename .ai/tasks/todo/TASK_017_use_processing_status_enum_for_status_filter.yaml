@@ -1,0 +1,60 @@
+id: TASK_017_use_processing_status_enum_for_status_filter
+
+title: LOW — Use ProcessingStatus enum for status_filter in frontend LogFilters type
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_011_add_invalid_transition_frontend_enum
+
+source_file: .ai/audit/validated/final-report.md
+source_finding: INT-003
+
+description: >
+  The LogFilters type in frontend/src/shared/types/api.types.ts defines status_filter
+  as a generic string instead of the ProcessingStatus enum. This weakens type safety
+  and allows invalid status values to be passed. Change the type to use the
+  ProcessingStatus enum.
+
+goals:
+  - Change status_filter type from string to ProcessingStatus in LogFilters
+  - Update any code that sets status_filter to use enum values
+  - Ensure type safety across the admin LogViewer feature
+
+files:
+  - path: frontend/src/shared/types/api.types.ts
+    targets:
+      - type: interface
+        name: LogFilters
+    semantic_anchors:
+      insert_after:
+        type: property_definition
+        name: status_filter
+    changes:
+      - action: modify_code
+        description: >
+          Change status_filter type from string to ProcessingStatus.
+        code_hint: |
+          status_filter?: ProcessingStatus;
+
+acceptance_criteria:
+  - status_filter is typed as ProcessingStatus enum
+  - TypeScript compilation passes
+  - No invalid status values can be assigned to status_filter
+  - LogViewer component works correctly with the typed enum
+
+tests_to_run:
+  - cd frontend && npx tsc --noEmit
+  - cd frontend && npx vitest run --reporter=verbose src/features/admin/
+
+risk: low
+risk_notes: >
+  Low risk — tightening from string to enum. The enum values are the same
+  strings, so runtime behavior is unchanged. TypeScript will catch any
+  assignments that don't use valid enum values.
+
+type: implementation
+category: frontend
+severity: low

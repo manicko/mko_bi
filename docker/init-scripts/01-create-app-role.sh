@@ -13,19 +13,20 @@ set -e
 echo "Creating application role mkobi_app..."
 
 # Create the role with password from environment variable.
-# Use psql -v flag to pass the password safely (avoids shell expansion issues
+# Use psql -v flag to pass variables safely (avoids shell expansion issues
 # with $$ heredoc patterns that caused PID-based garbage passwords).
 psql -v ON_ERROR_STOP=1 \
      -v app_password="'${MKOBI_APP_PASSWORD}'" \
+     -v dbname="${POSTGRES_DB}" \
      --username "$POSTGRES_USER" \
-     --dbname "$POSTGRES_DB" <<'EOF'
+     --dbname "$POSTGRES_DB" <<EOF
 DROP ROLE IF EXISTS mkobi_app;
-CREATE ROLE mkobi_app WITH LOGIN PASSWORD :app_password;
+CREATE ROLE mkobi_app WITH LOGIN PASSWORD :'app_password';
 -- CREATEDB privilege NOT granted - admin credentials (postgres superuser)
 -- are used for CREATE/DROP DATABASE operations in recreate_test_database()
 
 -- Grant connection to the database
-GRANT CONNECT ON DATABASE :DBNAME TO mkobi_app;
+GRANT CONNECT ON DATABASE :'dbname' TO mkobi_app;
 
 -- Grant usage on public schema
 GRANT USAGE ON SCHEMA public TO mkobi_app;

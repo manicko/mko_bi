@@ -1,0 +1,62 @@
+id: TASK_010_use_registration_status_enum_in_backend
+
+title: MEDIUM — Use RegistrationStatus enum in backend registration models instead of str
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_002_fix_test_seeder_race_condition
+
+source_file: .ai/audit/validated/final-report.md
+source_finding: INT-001
+
+description: >
+  The backend registration request models in src/mkobi/models/auth.py use `str` type
+  for the status field instead of the RegistrationStatus enum. This weakens type safety
+  and creates a mismatch with the frontend which uses RegistrationStatus. Update the
+  Pydantic models to use RegistrationStatus enum for the status field.
+
+goals:
+  - Change status field type from str to RegistrationStatus in relevant Pydantic models
+  - Ensure database serialization/deserialization still works correctly
+  - Align backend type with frontend RegistrationStatus enum
+
+files:
+  - path: src/mkobi/models/auth.py
+    targets:
+      - type: class
+        name: RegistrationRequestResponse
+      - type: class
+        name: RegistrationRequestItem
+    semantic_anchors:
+      insert_after:
+        type: field_definition
+        name: status
+    changes:
+      - action: modify_code
+        description: >
+          Change status: str to status: RegistrationStatus in the Pydantic models.
+        code_hint: |
+          status: RegistrationStatus
+
+acceptance_criteria:
+  - Status fields use RegistrationStatus enum type
+  - JSON serialization produces the same string values as before
+  - Frontend type alignment is complete
+  - All tests pass
+
+tests_to_run:
+  - pytest tests/ -k "registration" -v --no-header
+  - pytest tests/ -v --no-header
+  - mypy src/mkobi/models/auth.py
+
+risk: low
+risk_notes: >
+  Low risk — the enum values are strings (StrEnum), so serialization is identical.
+  The change is purely about type safety and does not alter wire format.
+
+type: implementation
+category: backend
+severity: medium

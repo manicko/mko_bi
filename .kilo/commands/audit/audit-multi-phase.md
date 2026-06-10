@@ -62,6 +62,7 @@ For each phase file in `{SELECTED_PHASES}` (sorted by phase number) follow steps
 IMPORTANT: 
 - do not read task files or findings templates just pass file paths to agent to read them 
 - Max allowed parallel subagents = 2 
+Spawn next agent as any of tasks done.
 
 <phase_loop>
 
@@ -141,7 +142,7 @@ By severity:
 </output>
 
 <retry_rules>
-- Max 1 retry per phase (2 total attempts maximum)
+- Max 2 retry per phase (3 total attempts maximum)
 - On second failure: escalate to user with structured failure report (phase number, error, missing outputs)
 - Rejected findings cleaned from file before merge
 </retry_rules>

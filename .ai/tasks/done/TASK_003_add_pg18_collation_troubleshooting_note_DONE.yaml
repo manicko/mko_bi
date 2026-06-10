@@ -1,0 +1,62 @@
+id: TASK_003_add_pg18_collation_troubleshooting_note
+
+title: Add PostgreSQL 18 collation error troubleshooting note to docker.md
+
+status: done
+
+priority: medium
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\05-docker-validated_0906.md
+source_section: INF-01 — PostgreSQL 18 Collation Refresh Error
+
+description: >
+  Add a troubleshooting entry to `docs/11-guides/docker.md` explaining the
+  harmless `ALTER DATABASE template1 REFRESH COLLATION_VERSION` syntax error
+  that appears in PostgreSQL 18 logs when using the `postgres:18-bookworm` image.
+  The error is caused by a known incompatibility between the Debian
+  `postgresql-common` package and PostgreSQL 18's stricter parser. It is
+  completely harmless when using the `builtin` locale provider with `C.UTF-8`.
+
+goals:
+  - Document the collation error as a known issue in the troubleshooting section
+  - Explain why the error is harmless (builtin locale provider = immutable collation)
+  - Reduce developer concern when seeing 40+ error lines in container logs
+  - Provide guidance on monitoring upstream fixes
+
+files:
+  - path: C:\py_dev\mkobi\docs\11-guides\docker.md
+    targets:
+      - type: section
+        name: Troubleshooting
+    semantic_anchors:
+      insert_after:
+        type: heading
+        value: "## Troubleshooting"
+    changes:
+      - action: add_section
+        description: >
+          Add a new troubleshooting entry under "## Troubleshooting" titled
+          "PostgreSQL 18 Collation Version Error" that documents:
+          1. The error message: `ERROR: syntax error at or near "COLLATION_VERSION"` with `ALTER DATABASE template1 REFRESH COLLATION_VERSION`
+          2. Root cause: Debian `postgresql-common` package uses underscore syntax rejected by PG18's parser
+          3. Why it's harmless: `builtin` locale provider with `C.UTF-8` has immutable collation version (always 1)
+          4. The error is non-fatal — the database starts and works correctly
+          5. Upstream fix is tracked in the Debian bug tracker and docker-library/postgres
+          6. Current mitigation: `POSTGRES_INITDB_ARGS: "--locale-provider=builtin --locale=C.UTF-8"` (already configured)
+
+acceptance_criteria:
+  - docker.md Troubleshooting section includes the collation error entry
+  - Entry clearly states the error is harmless and non-fatal
+  - Entry explains the root cause in accessible terms
+  - No changes to production code or Docker configuration files
+
+tests_to_run:
+  - Verify documentation renders correctly (markdown lint or manual review)
+
+risk: minimal
+risk_rationale: >
+  Documentation-only change. No code, configuration, or runtime behavior is modified.
+
+rollback: Revert the documentation changes via git.

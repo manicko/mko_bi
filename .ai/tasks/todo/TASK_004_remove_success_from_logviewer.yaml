@@ -1,0 +1,63 @@
+id: TASK_004_remove_success_from_logviewer
+
+title: HIGH — Remove invalid "success" status from frontend LogViewer
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_critical_add_dashboard_access_control
+
+source_file: .ai/audit/validated/final-report.md
+source_finding: FE-006
+
+description: >
+  The LogViewer component in frontend/src/features/admin/ui/LogViewer.tsx includes
+  "success" as a status filter option, but this value is not in the backend
+  ProcessingStatus enum. The backend enum uses different status values (e.g., "completed",
+  "failed", etc.). This causes the filter to send an invalid status that the backend
+  does not recognize, leading to empty or incorrect filter results. Remove "success" and
+  align the status options with the actual ProcessingStatus enum values.
+
+goals:
+  - Remove "success" from LogViewer status filter dropdown options
+  - Ensure all status options match backend ProcessingStatus enum values
+  - Update any related utility code that references "success"
+
+files:
+  - path: frontend/src/features/admin/ui/LogViewer.tsx
+    targets:
+      - type: component
+        name: LogViewer
+    semantic_anchors:
+      insert_after:
+        type: jsx_element
+        value: status filter Select component
+    changes:
+      - action: remove_code
+        description: >
+          Remove the <MenuItem> entry with value "success" from the status filter.
+          Ensure remaining options map to actual ProcessingStatus enum values.
+        code_hint: |
+          {/* Remove this block: */}
+          {/* <MenuItem value="success">Success</MenuItem> */}
+
+acceptance_criteria:
+  - "success" is no longer present in any status filter option
+  - All remaining status options match backend ProcessingStatus enum
+  - LogViewer filter works correctly for all valid statuses
+  - Frontend tests pass (no reference to "success" status)
+
+tests_to_run:
+  - cd frontend && npx vitest run --reporter=verbose src/features/admin/
+  - cd frontend && npx tsc --noEmit
+
+risk: minimal
+risk_notes: >
+  Minimal risk — removing an invalid option that doesn't match the backend.
+  No production data uses "success" status since it's not in the backend enum.
+
+type: implementation
+category: frontend
+severity: high

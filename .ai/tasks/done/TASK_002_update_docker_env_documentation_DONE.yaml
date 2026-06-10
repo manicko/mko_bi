@@ -1,0 +1,59 @@
+id: TASK_002_update_docker_env_documentation
+
+title: Update docker.md with clear environment file documentation
+
+status: done
+
+priority: high
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\05-docker-validated_0906.md
+source_section: INF-02 — Docker Environment File Configuration
+
+description: >
+  Update `docs/11-guides/docker.md` to clearly document the distinction between
+  the root `.env` file (working development values) and the `docker/.env.*`
+  files (templates requiring manual editing). Add explicit guidance for new
+  developers on which file to use and how to configure it.
+
+goals:
+  - Clarify that `docker/.env.development` and `docker/.env.production` are templates with CHANGE_ME placeholders
+  - Clarify that the root `.env` contains working development values
+  - Add a step in the Quick Start section for copying and filling env templates
+  - Reduce developer confusion about which env file to use
+
+files:
+  - path: C:\py_dev\mkobi\docs\11-guides\docker.md
+    targets:
+      - type: section
+        name: Environment Variables
+    semantic_anchors:
+      insert_after:
+        type: heading
+        value: "## Environment Variables"
+    changes:
+      - action: update_section
+        description: >
+          Update the Environment Variables section to clearly document:
+          1. The root `.env` file contains working development values (not a template)
+          2. `docker/.env.development` is a template with CHANGE_ME placeholders — must be copied and filled
+          3. `docker/.env.production` is a template with comments only — must be copied and filled
+          4. Add a Quick Start step: "Copy `docker/.env.development` to `docker/.env` and fill in your values"
+          5. Clarify the usage pattern: `--env-file .env` for development, `--env-file docker/.env.production` for production
+
+acceptance_criteria:
+  - docker.md clearly distinguishes between root .env (working values) and docker/.env.* (templates)
+  - docker.md includes a Quick Start step for copying and filling env templates
+  - docker.md documents the correct --env-file flag usage for both development and production
+  - No changes to production code or Docker configuration files
+
+tests_to_run:
+  - Verify documentation renders correctly (markdown lint or manual review)
+
+risk: minimal
+risk_rationale: >
+  Documentation-only change. No code, configuration, or runtime behavior is modified.
+  Risk is limited to documentation accuracy.
+
+rollback: Revert the documentation changes via git.

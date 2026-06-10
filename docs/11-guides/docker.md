@@ -156,13 +156,34 @@ docker build -f docker/Dockerfile --build-arg UV_VERSION=v0.1.0 --target prod -t
 
 Environment variables are loaded from `.env` in the project root. All Docker Compose commands require `--env-file .env` flag to load them, because `docker-compose.yml` uses `${VAR:?error}` enforcement patterns that prevent startup without explicit values.
 
-**Important:** The `.env` file in the project root is a **development template** with placeholder values. For **production deployments**, use `docker/.env.production` instead:
+### Which .env File to Use
+
+| File | Purpose | Values |
+|------|---------|--------|
+| `.env` (project root) | Development - ready to use | Contains working development values |
+| `docker/.env.development` | Development template | Template with `CHANGE_ME` placeholders - must be copied |
+| `docker/.env.production` | Production deployment | Template with comments - must be filled before deployment |
+
+### Quick Start: Environment Setup
+
+For new developers, set up your environment:
+
+```bash
+# Option 1: Use the root .env (works out of the box for development)
+# No setup needed - the .env file contains working development values
+docker compose -f docker/docker-compose.yml --env-file .env -f docker/docker-compose.override.yml up -d
+
+# Option 2: Copy the development template to docker/.env
+# Fill in your preferred values (not required if using root .env)
+cp docker/.env.development docker/.env
+# Edit docker/.env and replace CHANGE_ME placeholders
+docker compose -f docker/docker-compose.yml --env-file docker/.env -f docker/docker-compose.override.yml up -d
+```
+
+For production deployments, use `docker/.env.production`:
 ```bash
 # Production deployment (correct)
 docker compose --env-file docker/.env.production -f docker/docker-compose.yml up -d
-
-# Development (correct)
-docker compose --env-file .env -f docker/docker-compose.yml -f docker/docker-compose.override.yml up -d
 ```
 
 **Required variables in `.env`:**
@@ -304,6 +325,29 @@ docker compose -f docker/docker-compose.yml --env-file .env exec app npm run bui
 # Check nginx logs (if using)
 docker compose -f docker/docker-compose.yml --env-file .env logs nginx
 ```
+
+### PostgreSQL 18 Collation Version Error
+
+When starting PostgreSQL 18 containers, you may see repeated errors in the logs like:
+```
+ERROR:  syntax error at or near "COLLATION_VERSION"
+LINE:  ALTER DATABASE template1 REFRESH COLLATION_VERSION
+```
+
+**Why this is harmless:** This error is caused by a known incompatibility between the Debian `postgresql-common` package (used in the postgres image) and PostgreSQL 18's stricter parser. The underscore syntax `REFRESH COLLATION_VERSION` was valid in PG16/17 but PostgreSQL 18 requires `REFRESH COLLATION VERSION` (space instead of underscore).
+
+**Why it doesn't affect this project:** The PostgreSQL 18 configuration uses the `builtin` locale provider with `C.UTF-8` collation:
+```yaml
+POSTGRES_INITDB_ARGS: "--locale-provider=builtin --locale=C.UTF-8"
+```
+
+The `builtin` locale provider creates an immutable collation version (always `1`), meaning this refresh operation is never actually needed. The database starts and operates correctly despite these log messages.
+
+**Current status:** The issue is tracked in:
+- Debian bug tracker: `postgresql-common` package
+- Docker Library GitHub: `docker-library/postgres`
+
+These error messages are cosmetic and do not require any action. You can safely ignore them.
 
 ### "required variable X is missing a value" error
 This means Docker Compose cannot find your `.env` file. Ensure you:

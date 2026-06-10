@@ -1,0 +1,59 @@
+id: TASK_016_update_formula_parser_docs
+
+title: LOW — Update docs to correctly state numeric literals are supported in formula parser
+
+status: pending
+
+priority: low
+
+depends_on:
+  - TASK_015_add_processing_config_upfront_validation
+
+source_file: .ai/audit/validated/final-report.md
+source_finding: DP-006
+
+description: >
+  The documentation in docs/03-processing/processing-api.md incorrectly states that
+  numeric literals are not supported in the formula parser. The formula parser in
+  src/mkobi/data/processing/formula_parser.py actually does support numeric literals
+  (via _is_numeric_literal). Update the documentation to accurately describe the
+  formula parser's capabilities.
+
+goals:
+  - Update docs/03-processing/processing-api.md to remove the incorrect statement
+  - Add documentation showing numeric literal usage in formulas
+  - Ensure examples are accurate and tested
+
+files:
+  - path: docs/03-processing/processing-api.md
+    targets:
+      - type: documentation
+        name: processing-api.md
+    semantic_anchors:
+      insert_after:
+        type: section
+        name: formula parser section
+    changes:
+      - action: modify_code
+        description: >
+          Remove the incorrect statement about numeric literals being unsupported.
+          Add a note that numeric literals (integers and decimals) are supported.
+        code_hint: |
+          **Numeric literals** (e.g., `100`, `3.14`, `-50`) are supported in formulas
+          and can be used directly in expressions like `revenue * 1.1` or `cost + 50`.
+
+acceptance_criteria:
+  - Documentation no longer claims numeric literals are unsupported
+  - Formula parser documentation accurately describes supported features
+  - Examples in docs are consistent with actual parser behavior
+
+tests_to_run:
+  - pytest tests/ -k "formula" -v --no-header
+
+risk: minimal
+risk_notes: >
+  Minimal risk — documentation-only change. No code is modified.
+
+type: documentation
+category: docs
+severity: low

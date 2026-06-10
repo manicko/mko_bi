@@ -1,0 +1,71 @@
+id: TASK_003_fix_cleanup_session_injection
+
+title: HIGH — Fix cleanup_old_processing_logs session isolation for test compatibility
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_critical_add_dashboard_access_control
+
+source_file: .ai/audit/validated/final-report.md
+source_finding: BE-003
+
+description: >
+  The cleanup_old_processing_logs function in src/mkobi/services/file_cleanup.py creates
+  its own database session via get_session(), which is invisible to test SAVEPOINT
+  transactions. This means cleanup operations bypass test rollback mechanisms, causing
+  test pollution and non-deterministic results. Refactor cleanup to accept an injected
+  session parameter so tests can pass their transactional session.
+
+goals:
+  - Add optional session parameter to cleanup functions
+  - Use the injected session instead of creating a new one when inside a test
+  - Fall back to get_session() when no session is provided (production behavior)
+  - Ensure test SAVEPOINTs can roll back cleanup changes
+
+files:
+  - path: src/mkobi/services/file_cleanup.py
+    targets:
+      - type: function
+        name: cleanup_old_processing_logs
+      - type: function
+        name: cleanup_stale_temp_files
+    semantic_anchors:
+      insert_after:
+        type: function_definition
+        value: cleanup function signatures
+    changes:
+      - action: modify_code
+        description: >
+          Add session: AsyncSession = None parameter. Internally, use
+          session or await get_session() as session pattern for optional injection.
+        code_hint: |
+          async def cleanup_old_processing_logs(
+              session: AsyncSession | None = None,
+          ) -> None:
+              if session is None:
+                  async with get_session() as new_session:
+                      await _do_cleanup(new_session)
+              else:
+                  await _do_cleanup(session)
+
+acceptance_criteria:
+  - cleanup functions accept an optional session parameter
+  - Tests can inject a SAVEPOINT session that rolls back after test
+  - Production behavior unchanged (creates own session when none provided)
+  - All existing tests pass
+
+tests_to_run:
+  - pytest tests/ -k "cleanup" -v --no-header
+  - pytest tests/ -v --no-header
+
+risk: low
+risk_notes: >
+  Low risk — additive change with fallback. Existing callers don't pass session
+  and get identical behavior. Tests gain controllability without breaking production.
+
+type: implementation
+category: backend
+severity: high

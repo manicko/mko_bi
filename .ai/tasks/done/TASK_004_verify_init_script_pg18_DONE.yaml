@@ -1,0 +1,71 @@
+id: TASK_004_verify_init_script_pg18
+
+title: Verify 01-create-app-role.sh executes correctly in PostgreSQL 18
+
+status: done
+
+implementation_notes: >
+  Fixed bug in init script where `:DBNAME` variable was undefined. Added `-v dbname="${POSTGRES_DB}"`
+  to pass the database name to psql and changed `GRANT CONNECT ON DATABASE :DBNAME` to use the
+  passed variable. Also fixed the password interpolation to use `:'app_password'` syntax for
+  proper psql variable substitution.
+
+priority: medium
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\05-docker-validated_0906.md
+source_section: Additional Discovery — PostgreSQL 18 PGDATA Path Change
+
+description: >
+  Verify that the `docker/init-scripts/01-create-app-role.sh` initialization
+  script executes correctly in PostgreSQL 18. There is a known issue
+  (docker-library/postgres#1373) where `/docker-entrypoint-initdb.d/` scripts
+  may not execute in PG18 when using the new directory structure
+  (`/var/lib/postgresql` instead of `/var/lib/postgresql/data`). If the init
+  script doesn't execute, the `mkobi_app` role won't be created, and the
+  application will fail to connect to the database.
+
+goals:
+  - Confirm that the init script runs on fresh PG18 container startup
+  - Verify the `mkobi_app` role is created with correct privileges
+  - If the script fails, implement a workaround (e.g., inline the role creation in docker-compose.yml command or use a custom entrypoint)
+
+files:
+  - path: C:\py_dev\mkobi\docker\init-scripts\01-create-app-role.sh
+    targets:
+      - type: file
+        name: 01-create-app-role.sh
+    semantic_anchors:
+      insert_after: N/A
+      insert_before: N/A
+    changes:
+      - action: verify_or_fix
+        description: >
+          Test whether the init script executes correctly in PG18. If it does
+          not execute, implement a workaround to ensure the mkobi_app role is
+          created. Possible workarounds:
+          1. Add role creation to the migrate service entrypoint
+          2. Use a custom docker-entrypoint wrapper
+          3. Inline role creation in the db service command
+
+acceptance_criteria:
+  - On a fresh PG18 container start (no existing volumes), the `mkobi_app` role exists in PostgreSQL
+  - The application can connect to the database using the `mkobi_app` credentials
+  - `docker compose -f docker/docker-compose.yml up -d` completes successfully with the app service reaching healthy state
+  - If a workaround is needed, it is documented in docker.md
+
+tests_to_run:
+  - docker compose -f docker/docker-compose.yml down -v  # Clean start
+  - docker compose -f docker/docker-compose.yml up -d     # Fresh start
+  - docker compose -f docker/docker-compose.yml exec db psql -U postgres -c "SELECT rolname FROM pg_roles WHERE rolname = 'mkobi_app';"
+  - docker compose -f docker/docker-compose.yml exec app curl -f http://localhost:8000/health
+
+risk: medium
+risk_rationale: >
+  If the init script doesn't execute and no workaround is implemented, the
+  application will fail to connect to the database. The risk is medium because
+  the issue only manifests on fresh container starts (no existing data volume).
+  Existing deployments with already-initialized databases are unaffected.
+
+rollback: Revert any changes to init scripts or docker-compose.yml.

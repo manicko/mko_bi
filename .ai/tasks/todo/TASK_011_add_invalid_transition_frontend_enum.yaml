@@ -1,0 +1,75 @@
+id: TASK_011_add_invalid_transition_frontend_enum
+
+title: MEDIUM — Add INVALID_TRANSITION error code to frontend ErrorCode enum
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_004_remove_success_from_logviewer
+
+source_file: .ai/audit/validated/final-report.md
+source_finding: INT-002
+
+description: >
+  The frontend ErrorCode enum in frontend/src/shared/types/enums.ts is missing
+  INVALID_TRANSITION, which exists in the backend ErrorCode enum. This means the
+  frontend cannot properly handle or display error messages when the backend rejects
+  an invalid processing status transition. Add the missing code to align frontend
+  with backend.
+
+goals:
+  - Add INVALID_TRANSITION to the frontend ErrorCode enum
+  - Ensure errorMessages mapping includes a user-friendly message for it
+  - Align with backend ErrorCode.INVALID_TRANSITION
+
+files:
+  - path: frontend/src/shared/types/enums.ts
+    targets:
+      - type: enum
+        name: ErrorCode
+    semantic_anchors:
+      insert_after:
+        type: enum_member
+        last existing member
+    changes:
+      - action: add_code
+        description: >
+          Add INVALID_TRANSITION entry to the ErrorCode enum.
+        code_hint: |
+          INVALID_TRANSITION = "INVALID_TRANSITION",
+
+  - path: frontend/src/features/admin/model/errorMessages.ts
+    targets:
+      - type: object
+        name: errorMessages
+    semantic_anchors:
+      insert_after:
+        type: object_entry
+        key: existing ErrorCode entry
+    changes:
+      - action: add_code
+        description: >
+          Add error message mapping for INVALID_TRANSITION.
+        code_hint: |
+          [ErrorCode.INVALID_TRANSITION]: "This status change is not allowed.",
+
+acceptance_criteria:
+  - INVALID_TRANSITION exists in frontend ErrorCode enum
+  - Error message mapping returns a user-friendly string
+  - Admin panel can display INVALID_TRANSITION errors correctly
+  - Frontend tests and TypeScript compile pass
+
+tests_to_run:
+  - cd frontend && npx vitest run --reporter=verbose src/shared/types/__tests__/enums.test.ts
+  - cd frontend && npx tsc --noEmit
+
+risk: minimal
+risk_notes: >
+  Minimal risk — purely additive change. Adds a missing enum value that has no
+  existing consumers. Wire format is a standard string code.
+
+type: implementation
+category: frontend
+severity: medium
