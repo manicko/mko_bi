@@ -2,7 +2,7 @@ id: TASK_017_use_processing_status_enum_for_status_filter
 
 title: LOW — Use ProcessingStatus enum for status_filter in frontend LogFilters type
 
-status: pending
+status: done
 
 priority: low
 

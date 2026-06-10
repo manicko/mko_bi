@@ -201,8 +201,8 @@ export interface ProcessingStatusResponse {
   status: ProcessingStatus
   progress: number
   message?: string
-  started_at?: string
-  finished_at?: string
+  started_at: string | null
+  finished_at: string | null
 }
 
 export interface ProcessingResult {
@@ -288,7 +288,7 @@ export interface ProcessingLog {
   status: ProcessingStatus
   message?: string
   started_at: string | null
-  finished_at?: string
+  finished_at: string | null
 }
 
 export interface LogFilters {
