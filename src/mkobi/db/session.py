@@ -122,3 +122,16 @@ async def drop_db() -> None:
     engine = await get_async_engine()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
+
+
+async def dispose_engine() -> None:
+    """Dispose the global database engine on application shutdown.
+
+    This function safely disposes the async engine connection pool,
+    releasing all database connections. Safe to call multiple times.
+    """
+    global _engine
+    if _engine is not None:
+        await _engine.dispose()
+        _engine = None
+        logger.info("Database engine disposed cleanly")

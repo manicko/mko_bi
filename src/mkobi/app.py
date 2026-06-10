@@ -29,6 +29,7 @@ from mkobi.db.starter import (
 )
 from mkobi.workers.data_worker import start_stale_processing_cleanup_task
 from mkobi.core.task_queue import get_task_queue
+from mkobi.db.session import dispose_engine
 
 # Get configuration and setup logging
 config = get_config()
@@ -165,6 +166,9 @@ async def lifespan(app: FastAPI) -> Any:
             except asyncio.CancelledError:
                 pass
             logger.info("Task queue worker cancelled")
+
+        # Dispose the main application engine
+        await dispose_engine()
 
         await starter.shutdown()
 
