@@ -20,6 +20,7 @@ from mkobi.models.processing_configs import (
 from mkobi.services.processing_config_service import ProcessingConfigService
 from mkobi.models.enums import ErrorCode
 from mkobi.utils.exceptions import AppException
+from mkobi.core.permissions import check_dashboard_access
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +39,48 @@ async def get_config_endpoint(
     db: AsyncSession = Depends(get_db_dependency),
     processing_config_service: ProcessingConfigService = Depends(get_processing_config_service),
 ) -> ProcessingConfigRead:
+    """Get processing config by dashboard ID with access control.
+
+    IDOR protection: verifies user has read access to the dashboard.
+
+    Args:
+        dashboard_id: Dashboard ID to get config for.
+        current_user: Current authenticated user.
+        db: Database session.
+        processing_config_service: Injected processing config service.
+
+    Returns:
+        ProcessingConfigRead: Processing config model.
+
+    Raises:
+        AppException 403: If user has no read access to the dashboard.
+        AppException 404: If processing config not found.
+        AppException 500: On database error.
+    """
+    logger.info(
+        "Requesting processing config: dashboard_id=%s, user_id=%s",
+        dashboard_id,
+        current_user.id,
+    )
+
     try:
+        # IDOR protection: verify user has view access to the dashboard
+        if not await check_dashboard_access(
+            user_id=current_user.id,
+            dashboard_id=dashboard_id,
+            db=db,
+            required_permission="view",
+        ):
+            logger.warning(
+                "Access denied to processing config: user_id=%s, dashboard_id=%s",
+                current_user.id,
+                dashboard_id,
+            )
+            raise AppException(
+                code=ErrorCode.PERMISSION_DENIED,
+                detail="You do not have read access to this dashboard",
+            )
+
         config = await processing_config_service.get_by_dashboard_id(dashboard_id, db=db)
         if config is None:
             raise AppException(
@@ -69,7 +111,49 @@ async def upsert_config_endpoint(
     db: AsyncSession = Depends(get_db_dependency),
     processing_config_service: ProcessingConfigService = Depends(get_processing_config_service),
 ) -> ProcessingConfigRead:
+    """Upsert processing config with dashboard access control.
+
+    IDOR protection: verifies user has edit access to the dashboard.
+
+    Args:
+        dashboard_id: Dashboard ID to upsert config for.
+        config_update: Model with processing config data.
+        current_user: Current authenticated user.
+        db: Database session.
+        processing_config_service: Injected processing config service.
+
+    Returns:
+        ProcessingConfigRead: Processing config model.
+
+    Raises:
+        AppException 403: If user has no edit access to the dashboard.
+        AppException 422: If data validation failed.
+        AppException 500: On database error.
+    """
+    logger.info(
+        "Upserting processing config: dashboard_id=%s, user_id=%s",
+        dashboard_id,
+        current_user.id,
+    )
+
     try:
+        # IDOR protection: verify user has edit access to the dashboard
+        if not await check_dashboard_access(
+            user_id=current_user.id,
+            dashboard_id=dashboard_id,
+            db=db,
+            required_permission="edit",
+        ):
+            logger.warning(
+                "Edit access denied to processing config: user_id=%s, dashboard_id=%s",
+                current_user.id,
+                dashboard_id,
+            )
+            raise AppException(
+                code=ErrorCode.PERMISSION_DENIED,
+                detail="You do not have edit access to this dashboard",
+            )
+
         if config_update.settings is None:
             raise AppException(
                 code=ErrorCode.MISSING_REQUIRED_FIELD,
@@ -86,6 +170,8 @@ async def upsert_config_endpoint(
             code=ErrorCode.VALIDATION_ERROR,
             detail=str(e),
         ) from e
+    except AppException:
+        raise
     except Exception as e:
         logger.error("Error updating processing config: %s", e)
         raise AppException(
@@ -105,13 +191,53 @@ async def delete_config_endpoint(
     db: AsyncSession = Depends(get_db_dependency),
     processing_config_service: ProcessingConfigService = Depends(get_processing_config_service),
 ) -> None:
+    """Delete processing config with dashboard access control.
+
+    IDOR protection: verifies user has edit access to the dashboard.
+
+    Args:
+        dashboard_id: Dashboard ID to delete config for.
+        current_user: Current authenticated user.
+        db: Database session.
+        processing_config_service: Injected processing config service.
+
+    Raises:
+        AppException 403: If user has no edit access to the dashboard.
+        AppException 404: If processing config not found.
+        AppException 500: On database error.
+    """
+    logger.info(
+        "Deleting processing config: dashboard_id=%s, user_id=%s",
+        dashboard_id,
+        current_user.id,
+    )
+
     try:
+        # IDOR protection: verify user has edit access to the dashboard
+        if not await check_dashboard_access(
+            user_id=current_user.id,
+            dashboard_id=dashboard_id,
+            db=db,
+            required_permission="edit",
+        ):
+            logger.warning(
+                "Edit access denied to delete processing config: user_id=%s, dashboard_id=%s",
+                current_user.id,
+                dashboard_id,
+            )
+            raise AppException(
+                code=ErrorCode.PERMISSION_DENIED,
+                detail="You do not have edit access to this dashboard",
+            )
+
         await processing_config_service.delete(dashboard_id, db=db)
     except ValueError as e:
         raise AppException(
             code=ErrorCode.PROCESSING_CONFIG_NOT_FOUND,
             detail=str(e),
         ) from e
+    except AppException:
+        raise
     except Exception as e:
         logger.error("Error deleting processing config: %s", e)
         raise AppException(
