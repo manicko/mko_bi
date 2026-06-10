@@ -222,6 +222,7 @@ Custom metrics are defined as formulas referencing column names with basic arith
 ### Supported Syntax
 
 - Simple binary expressions with column names: `revenue - cost`, `profit / revenue * 100`
+- **Numeric literals** (e.g., `100`, `3.14`, `-50`) are supported and can be used directly in expressions like `revenue * 100` or `cost + 50`
 - Operators: `+`, `-`, `*`, `/`
 
 ### Limitations [HIGH-RISK]
@@ -229,9 +230,8 @@ Custom metrics are defined as formulas referencing column names with basic arith
 The formula parser has the following limitations:
 
 - **Not supported:** parentheses, nested expressions
-- **Not supported:** numeric literals as operands (e.g., `100 * revenue` is invalid)
 - **Not supported:** column names with special characters or spaces
-- **Not supported:** unary operators
+- **Not supported:** unary operators (except negative numeric literals like `-50` in expressions)
 
 Formulas are validated before processing. Invalid formulas produce clear error messages indicating the position and nature of the syntax error.
 
