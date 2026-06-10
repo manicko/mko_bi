@@ -5537,6 +5537,12 @@
   value: delete
   stable_hash: 1d110525
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\file_cleanup.py
+- id: 1d110525
+  symbol_path: []
+  type: function_call
+  value: delete
+  stable_hash: 1d110525
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\file_cleanup.py
 - id: badf14c1
   symbol_path: []
   type: return_statement
@@ -11567,17 +11573,41 @@
   value: select
   stable_hash: e7428f46
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: 44728f12
+  symbol_path: []
+  type: function_call
+  value: pg_insert
+  stable_hash: 44728f12
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
 - id: a5be5300
   symbol_path: []
   type: function_call
   value: str
   stable_hash: a5be5300
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
-- id: 1a18d138
+- id: 44728f12
   symbol_path: []
   type: function_call
-  value: list
-  stable_hash: 1a18d138
+  value: pg_insert
+  stable_hash: 44728f12
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: 44728f12
+  symbol_path: []
+  type: function_call
+  value: pg_insert
+  stable_hash: 44728f12
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: a5be5300
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: a5be5300
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
+- id: a5be5300
+  symbol_path: []
+  type: function_call
+  value: str
+  stable_hash: a5be5300
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
 - id: fc75dfca
   symbol_path: []
@@ -11585,11 +11615,11 @@
   value: delete
   stable_hash: fc75dfca
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
-- id: d894556f
+- id: 44728f12
   symbol_path: []
   type: function_call
-  value: Dashboard
-  stable_hash: d894556f
+  value: pg_insert
+  stable_hash: 44728f12
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
 - id: e7428f46
   symbol_path: []
@@ -11597,11 +11627,11 @@
   value: select
   stable_hash: e7428f46
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
-- id: 52acf3a0
+- id: 44728f12
   symbol_path: []
   type: function_call
-  value: Filter
-  stable_hash: 52acf3a0
+  value: pg_insert
+  stable_hash: 44728f12
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
 - id: e7428f46
   symbol_path: []
@@ -11609,30 +11639,6 @@
   value: select
   stable_hash: e7428f46
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
-- id: 52acf3a0
-  symbol_path: []
-  type: function_call
-  value: Filter
-  stable_hash: 52acf3a0
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
-- id: '49833333'
-  symbol_path: []
-  type: function_call
-  value: Graph
-  stable_hash: '49833333'
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
-- id: '49833333'
-  symbol_path: []
-  type: function_call
-  value: Graph
-  stable_hash: '49833333'
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
-- id: d35c5128
-  symbol_path: []
-  type: function_call
-  value: ProcessingConfig
-  stable_hash: d35c5128
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
 - id: a5be5300
   symbol_path: []
   type: function_call
@@ -11645,23 +11651,17 @@
   value: str
   stable_hash: a5be5300
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
-- id: a5be5300
+- id: 44728f12
   symbol_path: []
   type: function_call
-  value: str
-  stable_hash: a5be5300
+  value: pg_insert
+  stable_hash: 44728f12
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
-- id: a5be5300
+- id: 44728f12
   symbol_path: []
   type: function_call
-  value: str
-  stable_hash: a5be5300
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
-- id: a5be5300
-  symbol_path: []
-  type: function_call
-  value: str
-  stable_hash: a5be5300
+  value: pg_insert
+  stable_hash: 44728f12
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\seeders\test_media_dash.py
 - id: f2222225
   symbol_path: []
@@ -15430,6 +15430,18 @@
   value: Depends
   stable_hash: a0b26860
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
+- id: befb0da3
+  symbol_path: []
+  type: function_call
+  value: check_dashboard_access
+  stable_hash: befb0da3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
+- id: '21421814'
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: '21421814'
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
 - id: '21421814'
   symbol_path: []
   type: function_call
@@ -15464,6 +15476,18 @@
   type: function_call
   value: Depends
   stable_hash: a0b26860
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
+- id: befb0da3
+  symbol_path: []
+  type: function_call
+  value: check_dashboard_access
+  stable_hash: befb0da3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
+- id: '21421814'
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: '21421814'
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
 - id: '21421814'
   symbol_path: []
@@ -15511,6 +15535,18 @@
   type: function_call
   value: Depends
   stable_hash: a0b26860
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
+- id: befb0da3
+  symbol_path: []
+  type: function_call
+  value: check_dashboard_access
+  stable_hash: befb0da3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
+- id: '21421814'
+  symbol_path: []
+  type: function_call
+  value: AppException
+  stable_hash: '21421814'
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_configs.py
 - id: '21421814'
   symbol_path: []

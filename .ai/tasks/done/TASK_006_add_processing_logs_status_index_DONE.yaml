@@ -2,7 +2,7 @@ id: TASK_006_add_processing_logs_status_index
 
 title: MEDIUM — Add missing index on processing_logs.status
 
-status: pending
+status: complete
 
 priority: medium
 

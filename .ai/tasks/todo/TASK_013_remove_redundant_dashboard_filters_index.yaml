@@ -1,6 +1,6 @@
 id: TASK_013_remove_redundant_dashboard_filters_index
 
-title: LOW — Remove redundant index on dashboard_filters table
+title: LOW — Remove redundant index on dashboard_filters table. And ensure it will not recreate on future migrations and db recreation
 
 status: pending
 

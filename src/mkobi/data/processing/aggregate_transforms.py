@@ -202,7 +202,7 @@ def _calculate_yoy(
     result = result.with_columns([
         pl.when(prev_value_expr.is_null() | (prev_value_expr == 0))
         .then(None)
-        .otherwise((pl.col(value_column) - prev_value_expr) / prev_value_expr * 100)
+        .otherwise(((pl.col(value_column) - prev_value_expr) / prev_value_expr * 100).round(4))
         .alias(alias)
     ])
 
@@ -245,7 +245,7 @@ def _calculate_share(
         result = result.with_columns(
             pl.when(pl.col("total") == 0)
             .then(0.0)
-            .otherwise(pl.col(value_column) / pl.col("total") * 100)
+            .otherwise(((pl.col(value_column) / pl.col("total") * 100)).round(4))
             .alias(alias)
         )
         result = result.drop("total")
@@ -254,6 +254,6 @@ def _calculate_share(
         if total == 0:
             result = df.with_columns(pl.lit(0.0).alias(alias))
         else:
-            result = df.with_columns((pl.col(value_column) / total * 100).alias(alias))
+            result = df.with_columns(((pl.col(value_column) / total * 100).round(4)).alias(alias))
 
     return result

@@ -2,7 +2,7 @@ id: TASK_007_add_yoy_precision_rounding
 
 title: MEDIUM — Add precision rounding to YoY calculations to avoid floating-point artifacts
 
-status: pending
+status: complete
 
 priority: medium
 

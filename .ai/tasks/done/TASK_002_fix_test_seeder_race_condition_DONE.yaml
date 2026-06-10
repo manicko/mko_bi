@@ -2,7 +2,7 @@ id: TASK_002_fix_test_seeder_race_condition
 
 title: HIGH — Fix test seeder race condition under parallel xdist execution
 
-status: pending
+status: complete
 
 priority: high
 

@@ -2,7 +2,7 @@ id: TASK_005_clear_filter_values_on_overwrite
 
 title: HIGH — Clear dashboard filter values on data overwrite mode
 
-status: pending
+status: complete
 
 priority: high
 

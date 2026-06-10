@@ -218,8 +218,11 @@ class TestCleanupOldProcessingLogs:
             db=async_db_session,
         )
 
-        # Run cleanup with 30 day retention
-        deleted_count = await cleanup_old_processing_logs(retention_days=30)
+        # Run cleanup with injected session for test isolation
+        deleted_count = await cleanup_old_processing_logs(retention_days=30, session=async_db_session)
+
+        # Commit to make changes visible within the test session
+        await async_db_session.commit()
 
         assert deleted_count == 2, "Should have deleted 2 old logs (COMPLETED and FAILED)"
 
@@ -270,8 +273,11 @@ class TestCleanupOldProcessingLogs:
             await async_db_session.execute(stmt)
             await async_db_session.commit()
 
-        # Run cleanup with 30 day retention
-        deleted_count = await cleanup_old_processing_logs(retention_days=30)
+        # Run cleanup with injected session for test isolation
+        deleted_count = await cleanup_old_processing_logs(retention_days=30, session=async_db_session)
+
+        # Commit to make changes visible within the test session
+        await async_db_session.commit()
 
         assert deleted_count == 0, "Non-terminal states should never be deleted"
 

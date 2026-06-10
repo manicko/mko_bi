@@ -23,8 +23,8 @@ async def test_ensure_test_media_dash_creates_dashboard(async_db_session):
     from mkobi.db.seeders.test_media_dash import ensure_test_media_dash
     from mkobi.db.models import Dashboard, Graph
 
-    # Run the seeder
-    result = await ensure_test_media_dash()
+    # Run the seeder with test session for proper isolation
+    result = await ensure_test_media_dash(db=async_db_session)
 
     # Verify result structure
     assert result["dashboard_id"] is not None
@@ -52,11 +52,11 @@ async def test_ensure_test_media_dash_is_idempotent(async_db_session):
     from mkobi.db.models import Dashboard, Graph, Filter
 
     # First run - may see "created" or "updated" depending on previous tests
-    result1 = await ensure_test_media_dash()
+    result1 = await ensure_test_media_dash(db=async_db_session)
     dashboard_id_1 = result1["dashboard_id"]
 
     # Second run - should always be "updated" since dashboard now exists
-    result2 = await ensure_test_media_dash()
+    result2 = await ensure_test_media_dash(db=async_db_session)
     assert result2["action"] == "updated"
     assert result2["dashboard_id"] == dashboard_id_1
 
@@ -99,7 +99,7 @@ async def test_ensure_test_media_dash_creates_processing_config(async_db_session
     from mkobi.db.seeders.test_media_dash import ensure_test_media_dash
     from mkobi.db.models import Dashboard, ProcessingConfig
 
-    await ensure_test_media_dash()
+    await ensure_test_media_dash(db=async_db_session)
 
     stmt = select(Dashboard).where(Dashboard.name == "test_media_dash")
     dashboard = (await async_db_session.execute(stmt)).scalar_one()
@@ -123,7 +123,7 @@ async def test_ensure_test_media_dash_creates_graphs_with_correct_config(async_d
     from mkobi.db.models import Dashboard, Graph
     from mkobi.models.enums import GraphType
 
-    await ensure_test_media_dash()
+    await ensure_test_media_dash(db=async_db_session)
 
     stmt = select(Dashboard).where(Dashboard.name == "test_media_dash")
     dashboard = (await async_db_session.execute(stmt)).scalar_one()
@@ -162,7 +162,7 @@ async def test_ensure_test_media_dash_creates_filters_binds_to_dashboard(async_d
     from mkobi.db.models import Dashboard
     from mkobi.models.enums import FilterType
 
-    await ensure_test_media_dash()
+    await ensure_test_media_dash(db=async_db_session)
 
     stmt = select(Dashboard).where(Dashboard.name == "test_media_dash")
     dashboard = (await async_db_session.execute(stmt)).scalar_one()
@@ -291,7 +291,7 @@ async def test_dashboard_config_contains_filters_definition(async_db_session):
     from mkobi.db.seeders.test_media_dash import ensure_test_media_dash
     from mkobi.db.models import Dashboard
 
-    await ensure_test_media_dash()
+    await ensure_test_media_dash(db=async_db_session)
 
     stmt = select(Dashboard).where(Dashboard.name == "test_media_dash")
     dashboard = (await async_db_session.execute(stmt)).scalar_one()

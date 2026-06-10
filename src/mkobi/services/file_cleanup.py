@@ -9,6 +9,7 @@ from datetime import datetime, UTC, timedelta
 from pathlib import Path
 
 from sqlalchemy import delete
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.config import get_config
 from mkobi.core.logging_config import get_logger
@@ -102,7 +103,10 @@ def cleanup_stale_temp_files(max_age_hours: int | None = None) -> int:
     return deleted_count
 
 
-async def cleanup_old_processing_logs(retention_days: int | None = None) -> int:
+async def cleanup_old_processing_logs(
+    retention_days: int | None = None,
+    session: AsyncSession | None = None,
+) -> int:
     """Delete processing logs in terminal states older than the retention period.
 
     This function is designed to be called periodically (e.g., via a background task)
@@ -112,6 +116,9 @@ async def cleanup_old_processing_logs(retention_days: int | None = None) -> int:
     Args:
         retention_days: Number of days to keep logs. If None, uses the configured
             logs_retention_days setting (default 30 days).
+        session: Optional injected session for test compatibility. If None, creates
+            its own session. In tests, pass the test session to ensure changes
+            are rolled back properly.
 
     Returns:
         int: Number of deleted log entries.
@@ -120,19 +127,34 @@ async def cleanup_old_processing_logs(retention_days: int | None = None) -> int:
     days = retention_days if retention_days is not None else config.logs_retention_days
     cutoff = datetime.now(UTC) - timedelta(days=days)
 
-    async with get_session() as db:
-        async with db.begin():
-            stmt = (
-                delete(ProcessingLog)
-                .where(
-                    ProcessingLog.status.in_(
-                        [ProcessingStatus.COMPLETED, ProcessingStatus.FAILED]
-                    ),
-                    ProcessingLog.finished_at < cutoff,
+    if session is None:
+        # Production behavior: create and manage our own session
+        async with get_session() as db:
+            async with db.begin():
+                stmt = (
+                    delete(ProcessingLog)
+                    .where(
+                        ProcessingLog.status.in_(
+                            [ProcessingStatus.COMPLETED, ProcessingStatus.FAILED]
+                        ),
+                        ProcessingLog.finished_at < cutoff,
+                    )
                 )
+                result = await db.execute(stmt)
+                count = result.rowcount or 0
+    else:
+        # Test behavior: use the provided session (SAVEPOINT-managed)
+        stmt = (
+            delete(ProcessingLog)
+            .where(
+                ProcessingLog.status.in_(
+                    [ProcessingStatus.COMPLETED, ProcessingStatus.FAILED]
+                ),
+                ProcessingLog.finished_at < cutoff,
             )
-            result = await db.execute(stmt)
-            count = result.rowcount or 0
+        )
+        result = await session.execute(stmt)
+        count = result.rowcount or 0
 
     if count > 0:
         logger.info("Cleaned up %d old processing logs (retention=%dd)", count, days)

@@ -19,7 +19,7 @@ import { getLogs } from '../api/adminApi'
 import { useQuery } from '@tanstack/react-query'
 import type { LogFilters } from '../../../shared/types/api.types'
 
-const statusOptions = ['started', 'uploaded', 'processing', 'success', 'failed', 'completed']
+const statusOptions = ['started', 'uploaded', 'processing', 'completed', 'failed']
 
 const columns: GridColDef[] = [
   { field: 'id', headerName: 'ID', width: 100 },
@@ -30,7 +30,7 @@ const columns: GridColDef[] = [
     width: 130,
     renderCell: (params) => {
       const status = params.value as string
-      const color = status === 'success' || status === 'completed' ? 'success'
+      const color = status === 'completed' ? 'success'
         : status === 'failed' ? 'error'
         : 'warning'
       return <Chip label={status} color={color} size="small" />

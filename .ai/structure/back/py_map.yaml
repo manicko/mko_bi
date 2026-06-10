@@ -794,6 +794,7 @@
   - datetime
   - pathlib
   - sqlalchemy
+  - sqlalchemy.ext.asyncio
   - mkobi.config
   - mkobi.core.logging_config
   - mkobi.db.models.processing_logs
@@ -1500,6 +1501,8 @@
   imports:
   - typing
   - sqlalchemy
+  - sqlalchemy.ext.asyncio
+  - sqlalchemy.dialects.postgresql
   - mkobi.db.models
   - mkobi.db.models.filters
   - mkobi.db.session
@@ -1875,6 +1878,7 @@
   - mkobi.services.processing_config_service
   - mkobi.models.enums
   - mkobi.utils.exceptions
+  - mkobi.core.permissions
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_logs.py

@@ -510,6 +510,10 @@ async def _store_aggregates(
         if filter_names:
             filter_values = await agg_service.extract_filter_values(records, filter_names)
             filter_values_repo = DashboardFilterValuesRepository()
+            # In OVERWRITE mode, clear all existing filter values first
+            # to avoid orphaned values from removed/renamed filters
+            if mode == UploadMode.OVERWRITE:
+                await filter_values_repo.clear_dashboard_values(dashboard_id, db_session)
             for fname, fvalues in filter_values.items():
                 if fvalues:
                     await filter_values_repo.save_filter_values(
@@ -574,6 +578,10 @@ async def _store_aggregates(
                 if filter_names:
                     filter_values = await agg_service.extract_filter_values(records, filter_names)
                     filter_values_repo = DashboardFilterValuesRepository()
+                    # In OVERWRITE mode, clear all existing filter values first
+                    # to avoid orphaned values from removed/renamed filters
+                    if mode == UploadMode.OVERWRITE:
+                        await filter_values_repo.clear_dashboard_values(dashboard_id, session)
                     for fname, fvalues in filter_values.items():
                         if fvalues:
                             await filter_values_repo.save_filter_values(
