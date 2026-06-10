@@ -2,6 +2,7 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 
+from mkobi.models.enums import AggregationFunctionEnum
 from mkobi.models.types import ProcessingSettingsDict
 
 
@@ -9,6 +10,7 @@ class ProcessingConfigBase(BaseModel):
     """Base model for processing settings."""
 
     settings: ProcessingSettingsDict
+    metric_agg: AggregationFunctionEnum | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -18,7 +20,8 @@ class ProcessingConfigBase(BaseModel):
                     "loader": "sales_loader",
                     "date_column": "event_date",
                     "timezone": "UTC",
-                }
+                },
+                "metric_agg": "sum",
             }
         },
     )
@@ -34,6 +37,7 @@ class ProcessingConfigUpdate(BaseModel):
     """Model for updating processing settings."""
 
     settings: ProcessingSettingsDict | None = None
+    metric_agg: AggregationFunctionEnum | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -43,7 +47,8 @@ class ProcessingConfigUpdate(BaseModel):
                     "loader": "updated_loader",
                     "date_column": "updated_date",
                     "timezone": "Europe/Moscow",
-                }
+                },
+                "metric_agg": "mean",
             }
         },
     )
@@ -65,6 +70,7 @@ class ProcessingConfigRead(ProcessingConfigBase):
                     "date_column": "event_date",
                     "timezone": "UTC",
                 },
+                "metric_agg": "sum",
                 "updated_at": "2026-04-24T16:02:46+03:00",
             }
         },

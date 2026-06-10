@@ -8,7 +8,7 @@ from typing import Any, TypedDict
 
 from pydantic import BaseModel, Field
 
-from mkobi.models.enums import YoyModeEnum
+from mkobi.models.enums import AggregationFunctionEnum, YoyModeEnum
 
 
 # ==================== Aggregated Data Types ====================
@@ -178,6 +178,7 @@ class ProcessingSettingsDict(TypedDict, total=False):
     yoy_config: dict[str, Any] | None  # year-over-year config
     share_config: dict[str, Any] | None  # share calculation config
     custom_metrics: list[dict[str, Any]] | None  # custom metric formulas
+    metric_agg: str | None  # Default aggregation function for metrics (sum, mean, min, max, count)
 
 
 # ==================== Auth Token Types ====================
@@ -286,6 +287,7 @@ class ProcessingSettingsModel(BaseModel):
     timezone: str = "UTC"
     encoding: str | None = "UTF-8"
     separator: str | None = ","
+    metric_agg: AggregationFunctionEnum | None = None
 
     model_config = {"extra": "allow"}
 
