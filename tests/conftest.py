@@ -83,6 +83,41 @@ def pytest_sessionstart(session):
         )
 
 
+def pytest_sessionfinish(session, exitstatus):
+    """Clean up temporary files after all tests complete.
+
+    This hook ensures that temp files created during tests are cleaned up
+    even if tests fail or are interrupted. Deletes all CSV files from the
+    upload temp directory.
+    """
+    import logging
+    from pathlib import Path
+
+    logger = logging.getLogger(__name__)
+
+    try:
+        from mkobi.config import get_config
+
+        upload_dir = Path(get_config().upload_temp_dir)
+
+        if upload_dir.exists():
+            # Remove all CSV files in the upload directory
+            # Files created during tests have age ~0, so we use direct deletion
+            deleted_count = 0
+            for file_path in upload_dir.glob("*.csv*"):
+                try:
+                    file_path.unlink()
+                    deleted_count += 1
+                except Exception as e:
+                    logger.warning("Failed to delete temp file %s: %s", file_path, e)
+
+            if deleted_count > 0:
+                logger.info("Cleaned up %d temp files after test session", deleted_count)
+    except Exception as e:
+        # Log cleanup failures but don't fail the test session
+        logger.warning("Failed to clean up temp files after test session: %s", e)
+
+
 def pytest_configure(config):
     """Ensure config is properly initialized before tests run."""
     # Config should already be initialized above, this is just a sanity check
