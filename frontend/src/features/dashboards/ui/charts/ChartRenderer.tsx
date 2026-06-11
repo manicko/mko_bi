@@ -87,5 +87,16 @@ export function ChartRenderer({ graph }: ChartRendererProps) {
 
   // Bar and pie charts use PlotlyChart
   const plotlyData = convertToPlotlyData(graph)
+
+  // Bar charts get default layout (barmode, xaxis type)
+  if (graph.type === 'bar') {
+    const barLayout = {
+      ...graph.layout,
+      barmode: (graph.config?.barmode || 'group') as 'group' | 'overlay' | 'relative' | 'stack',
+      xaxis: { type: 'category' as const },
+    }
+    return <PlotlyChart data={plotlyData} layout={barLayout} />
+  }
+
   return <PlotlyChart data={plotlyData} layout={graph.layout} />
 }

@@ -67,9 +67,8 @@ frontend/
 │   │   │       ├── DashboardFilters.tsx  # Filter panel component
 │   │   │       └── charts/
 │   │   │           ├── index.ts          # Chart exports
-│   │   │           ├── BarChart.tsx      # Bar chart (Plotly.js)
+│   │   │           ├── ChartRenderer.tsx # Main renderer with data conversion logic
 │   │   │           ├── LineChart.tsx     # Line chart (Plotly.js)
-│   │   │           ├── PieChart.tsx      # Pie chart (Plotly.js)
 │   │   │           ├── PlotlyChart.tsx   # Generic Plotly wrapper
 │   │   │           └── TableChart.tsx    # Table chart
 │   │   │
@@ -199,20 +198,19 @@ Do NOT use when:
 
 ### Chart Component Placement
 
-Chart components (`BarChart`, `LineChart`, `PieChart`, `TableChart`, `ChartRenderer`, `PlotlyChart`) reside in `features/dashboards/ui/charts/` — they are dashboard-specific UI components tightly coupled to dashboard data models (`GraphDataWithConfig`). A standalone `features/charts/` module is not warranted because:
+Chart components (`LineChart`, `TableChart`, `ChartRenderer`, `PlotlyChart`) reside in `features/dashboards/ui/charts/` — they are dashboard-specific UI components tightly coupled to dashboard data models (`GraphDataWithConfig`). A standalone `features/charts/` module is not warranted because:
 - Chart components are presentation-layer elements scoped to dashboard visualization
 - No standalone chart features (export, templates, embedding) currently exist
 - Chart functionality is fully contained within the dashboard rendering pipeline
+- All chart types (bar, pie, line, table) are rendered through `ChartRenderer`, which delegates to `PlotlyChart` (for bar/pie), `LineChart` (for line), and `TableChart` (for table)
 
 ### Dashboard-Focused Charts Directory
 
 ```
 features/dashboards/ui/charts/
 ├── index.ts          # Barrel export (PlotlyChart, ChartRenderer)
-├── BarChart.tsx      # Bar chart with barmode grouping
 ├── ChartRenderer.tsx # Main renderer with data conversion logic
 ├── LineChart.tsx     # Line chart component
-├── PieChart.tsx      # Pie chart component
 ├── PlotlyChart.tsx   # Generic Plotly wrapper
 └── TableChart.tsx    # HTML table rendering
 ```
