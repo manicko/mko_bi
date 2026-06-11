@@ -126,8 +126,8 @@ def _validate_processing_config(config: ProcessingConfig) -> None:
 
     # Validate metrics
     if config.metrics:
-        for metric in config.metrics:
-            if not all(str(k) and str(v) for k, v in metric.items()):
+        for metric_dict in config.metrics:
+            if not all(str(k) and str(v) for k, v in metric_dict.items()):
                 raise AppException(
                     code=ErrorCode.VALIDATION_ERROR,
                     detail="Processing config has invalid metric: both name and type are required",
