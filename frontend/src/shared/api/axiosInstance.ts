@@ -36,12 +36,16 @@ let failedQueue: Array<{
   reject: (error: Error) => void
 }> = []
 
-const processQueue = (error: Error | null, token: string | null = null): void => {
+type ProcessQueueParams =
+  | { error: Error; token?: never }
+  | { error?: never; token: string }
+
+const processQueue = (params: ProcessQueueParams): void => {
   failedQueue.forEach((prom) => {
-    if (error) {
-      prom.reject(error)
+    if (params.error) {
+      prom.reject(params.error)
     } else {
-      prom.resolve(token!)
+      prom.resolve(params.token)
     }
   })
   failedQueue = []
@@ -96,12 +100,12 @@ axiosInstance.interceptors.response.use(
         }
         const newToken = await handler()
         setToken(newToken.access_token)
-        processQueue(null, newToken.access_token)
+        processQueue({ token: newToken.access_token })
         originalConfig.headers.Authorization = `Bearer ${newToken.access_token}`
         return axiosInstance(originalConfig)
       } catch (err) {
         const errorToReject = err instanceof Error ? err : new Error(String(err))
-        processQueue(errorToReject, null)
+        processQueue({ error: errorToReject })
         removeToken()
         toast.error('Session expired. Please login again.')
         window.location.href = '/login'

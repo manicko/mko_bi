@@ -80,6 +80,15 @@ export function ChartRenderer({ graph }: ChartRendererProps) {
     return <TableChart data={{ rows: graph.data }} />
   }
 
+  // Handle empty data state
+  if (graph.data.length === 0) {
+    return (
+      <div className="flex items-center justify-center h-64 text-gray-500">
+        No data available for this chart
+      </div>
+    )
+  }
+
   // Line charts use LineChart component with scatter type
   if (graph.type === 'line') {
     return <LineChart data={convertToPlotlyData(graph)[0]} layout={graph.layout} />

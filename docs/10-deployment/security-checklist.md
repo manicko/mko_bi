@@ -88,6 +88,20 @@ environment:
 4. **JWT Secret**: Verify `JWT__SECRET_KEY` is at least 32 bytes of random data
 5. **Admin Credentials**: Confirm `ADMIN_USERNAME` and `ADMIN_PASSWORD` are not default values
 
+## Test Port Exposure in CI/CD
+
+The test compose file (`docker/docker-compose.test.yml`) exposes database and application ports to the host for convenient local test execution. In CI/CD environments, avoid exposing these ports for security:
+
+```bash
+# Instead of relying on exposed ports, use:
+docker compose -f docker/docker-compose.test.yml exec app uv run pytest tests/
+
+# Or run tests inside the container network:
+docker compose -f docker/docker-compose.test.yml exec test-app /app/.venv/bin/pytest tests/
+```
+
+**Rationale:** While port exposure is acceptable for local development (security risk is LOW — test databases contain no production data), CI/CD environments may have different network security boundaries. Running tests inside the container via `docker compose exec` keeps ports isolated within the Docker network.
+
 ## Cross-References
 
 - [Deployment](deployment.md) — Production deployment procedures
