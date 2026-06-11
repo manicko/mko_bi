@@ -29,8 +29,9 @@ from mkobi.db.models.processing_logs import ProcessingLog
 from mkobi.db.models.filters import Filter, dashboard_filters
 from mkobi.db.session import get_session
 from mkobi.models.data import LoaderConfig, ProcessingConfig
-from mkobi.models.enums import ProcessingStatus
-from mkobi.utils.exceptions import AppException, ErrorCode
+from mkobi.models.enums import ErrorCode, ProcessingStatus
+
+from mkobi.utils.exceptions import AppException
 
 logger = logging.getLogger(__name__)
 
