@@ -1,0 +1,64 @@
+id: TASK_021_change_log_level_to_warning_in_production
+
+title: Change LOG_LEVEL to WARNING in production environment template
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\08-deployment-config-validated.md
+source_section: DC-003
+
+description: >
+  The security checklist recommends `WARNING` for production log level to reduce
+  log verbosity, but `docker/.env.production` sets `LOGGING__LEVEL=INFO`. Change
+  to `WARNING` for production deployments to align with security hardening
+  recommendations.
+
+goals:
+  - Change LOGGING__LEVEL from INFO to WARNING in .env.production
+  - Align with security checklist recommendation
+  - Reduce production log verbosity
+
+files:
+  - path: docker/.env.production
+
+    targets:
+      - type: environment_variable
+        name: LOGGING__LEVEL
+
+    semantic_anchors:
+      insert_after:
+        type: comment
+        value: Optional Security Hardening
+
+changes:
+  - action: modify_code
+
+    description: >
+      Change `LOGGING__LEVEL=INFO` to `LOGGING__LEVEL=WARNING` in the
+      "Optional Security Hardening" section of docker/.env.production.
+
+    code_hint: |
+      # Before:
+      LOGGING__LEVEL=INFO
+      # After:
+      LOGGING__LEVEL=WARNING
+
+acceptance_criteria:
+  - docker/.env.production sets LOGGING__LEVEL=WARNING
+  - Application starts correctly with WARNING log level
+  - Security checklist alignment is documented
+
+tests_to_run:
+  - No specific tests needed (configuration change)
+
+risk: low
+risk_reason: >
+  Changing log level from INFO to WARNING is non-breaking. It only affects
+  which log messages are emitted. The application will have less verbose logs
+  in production, which is the desired security hardening behavior.
+
+rollback: Change LOGGING__LEVEL back to INFO.

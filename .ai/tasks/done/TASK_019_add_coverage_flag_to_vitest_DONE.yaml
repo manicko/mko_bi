@@ -1,0 +1,62 @@
+id: TASK_019_add_coverage_flag_to_vitest
+
+title: Add --coverage flag to vitest test script in frontend/package.json
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\test_validated_004.md
+source_section: TST-003
+
+description: >
+  The `frontend/vite.config.ts` defines coverage thresholds (statements: 50,
+  branches: 40, functions: 45, lines: 50) but `frontend/package.json` test script
+  runs `vitest run` without `--coverage`. The coverage configuration is
+  effectively unused. Add the `--coverage` flag to enforce the defined thresholds.
+
+goals:
+  - Add --coverage flag to vitest test command
+  - Enforce coverage thresholds defined in vite.config.ts
+  - Enable CI/CD coverage reporting
+
+files:
+  - path: frontend/package.json
+
+    targets:
+      - type: script
+        name: test
+
+    semantic_anchors:
+      insert_after:
+        type: scripts_section
+
+changes:
+  - action: modify_code
+
+    description: >
+      Change the test script from `vitest run` to `vitest run --coverage`.
+
+    code_hint: |
+      # Before:
+      "test": "vitest run"
+      # After:
+      "test": "vitest run --coverage"
+
+acceptance_criteria:
+  - frontend/package.json test script includes --coverage
+  - `npm test` (or `yarn test`) produces coverage report
+  - Coverage thresholds from vite.config.ts are enforced
+
+tests_to_run:
+  - cd frontend && npm test (verify coverage report is generated)
+
+risk: low
+risk_reason: >
+  Adding --coverage only affects test output. If coverage thresholds are not
+  met, tests will fail. Need to verify current coverage meets thresholds
+  before enabling.
+
+rollback: Remove --coverage from test script.

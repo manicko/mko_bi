@@ -1,0 +1,31 @@
+id: TASK_034_verify_stage4_data_processing_advisory
+
+title: Verify — Data processing advisory fixes (DP-004, DP-005)
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_025_add_type_validation_for_processing_config_fields
+  - TASK_026_add_cleanup_for_commit_failure_in_data_worker
+
+verifies:
+  - TASK_025_add_type_validation_for_processing_config_fields
+  - TASK_026_add_cleanup_for_commit_failure_in_data_worker
+
+verification_steps:
+  - build: ruff check src/mkobi/services/processing_config_service.py src/mkobi/workers/data_worker.py
+  - test: pytest tests/ -k "processing_config or data_worker" -v --no-header
+  - smoke_check: mypy src/mkobi/services/processing_config_service.py src/mkobi/workers/data_worker.py
+
+pass_criteria:
+  - ruff passes on both modified files
+  - mypy passes on both modified files
+  - All processing_config and data_worker tests pass
+  - Type validation works correctly for invalid config submissions
+  - Commit failure cleanup path is exercised
+
+failure_action: return TASK_025 or TASK_026 to rework
+
+rollback_task: TASK_025_add_type_validation_for_processing_config_fields

@@ -1,0 +1,68 @@
+id: TASK_010_add_processing_logs_composite_index
+
+title: Add missing composite index declaration to ProcessingLog model
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\db_findings.md
+source_section: DB-001
+
+description: >
+  The ProcessingLog model declares only `idx_processing_logs_dashboard_id` in
+  `__table_args__`, but the migration `b749bc53b1ee` also creates
+  `idx_processing_logs_status_finished_at ON processing_logs (status, finished_at)`.
+  Alembic autogenerate detects this mismatch and would drop the existing index
+  on the next migration. Add the composite index to the model to resolve the drift.
+
+goals:
+  - Declare `idx_processing_logs_status_finished_at` in ProcessingLog.__table_args__
+  - Align model with actual database schema
+  - Eliminate alembic drift detection warning
+
+files:
+  - path: src/mkobi/db/models/processing_logs.py
+
+    targets:
+      - type: class
+        name: ProcessingLog
+
+    semantic_anchors:
+      insert_after:
+        type: class_attribute
+        value: __table_args__
+
+changes:
+  - action: modify_code
+
+    description: >
+      Add the composite index `idx_processing_logs_status_finished_at` on
+      `(status, finished_at)` to `__table_args__` tuple alongside the existing
+      `idx_processing_logs_dashboard_id` index.
+
+    code_hint: |
+      __table_args__ = (
+          Index("idx_processing_logs_dashboard_id", "dashboard_id"),
+          Index("idx_processing_logs_status_finished_at", "status", "finished_at"),
+      )
+
+acceptance_criteria:
+  - ProcessingLog.__table_args__ contains both index declarations
+  - `alembic check` (or `alembic autogenerate`) produces no drift for processing_logs indexes
+  - ruff and mypy pass without errors
+
+tests_to_run:
+  - pytest tests/ -k "processing_log" -v --no-header
+  - ruff check src/mkobi/db/models/processing_logs.py
+  - mypy src/mkobi/db/models/processing_logs.py
+
+risk: high
+risk_reason: >
+  Modifying model __table_args__ affects database schema detection. Must verify
+  the index already exists in the database (confirmed by audit evidence) so this
+  is a declarative alignment, not a structural change.
+
+rollback: Revert __table_args__ to previous single-index declaration.

@@ -1,0 +1,33 @@
+id: TASK_024_verify_stage3_infrastructure
+
+title: Verify — Infrastructure changes (INF-001, INF-003, DC-002)
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_015_fix_init_script_sql_syntax_error
+  - TASK_016_fix_vite_windows_sigbus_crash
+  - TASK_017_add_cors_origins_fail_fast_to_compose
+
+verifies:
+  - TASK_015_fix_init_script_sql_syntax_error
+  - TASK_016_fix_vite_windows_sigbus_crash
+  - TASK_017_add_cors_origins_fail_fast_to_compose
+
+verification_steps:
+  - build: docker compose config (verify compose files are valid)
+  - test: docker compose up -d (verify all services start)
+  - smoke_check: docker compose logs postgres (verify no SQL errors), docker compose logs frontend (verify no SIGBUS)
+
+pass_criteria:
+  - docker compose config succeeds
+  - All containers start without errors
+  - PostgreSQL logs show no GRANT CONNECT errors
+  - Frontend container is healthy (on Windows: no SIGBUS)
+  - CORS_ORIGINS fail-fast works (test by unsetting variable)
+
+failure_action: return TASK_015, TASK_016, or TASK_017 to rework
+
+rollback_task: TASK_015_fix_init_script_sql_syntax_error

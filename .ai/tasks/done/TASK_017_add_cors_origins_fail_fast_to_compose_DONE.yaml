@@ -1,0 +1,70 @@
+id: TASK_017_add_cors_origins_fail_fast_to_compose
+
+title: Add fail-fast validation for CORS_ORIGINS in docker-compose.yml
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\08-deployment-config-validated.md
+source_section: DC-002
+
+description: >
+  The `docker-compose.yml` uses `${CORS_ORIGINS:-["http://localhost:3000"]}`
+  which provides a default placeholder value. The security checklist expects
+  fail-fast behavior using `${CORS_ORIGINS:?error}` syntax (like JWT__SECRET_KEY
+  and DATABASE__PASSWORD). The backend already rejects placeholder CORS origins
+  at startup, but the error message is cryptic. Use compose-level fail-fast for
+  clear startup failure.
+
+goals:
+  - Change CORS_ORIGINS variable syntax to fail-fast in docker-compose.yml
+  - Provide clear error message when CORS_ORIGINS is not set in production
+  - Align with security checklist pattern used for other required variables
+
+files:
+  - path: docker/docker-compose.yml
+
+    targets:
+      - type: environment_variable
+        value: CORS_ORIGINS
+
+    semantic_anchors:
+      insert_after:
+        type: service
+        value: app
+
+changes:
+  - action: modify_code
+
+    description: >
+      Change `${CORS_ORIGINS:-["http://localhost:3000"]}` to
+      `${CORS_ORIGINS:?CORS_ORIGINS is required in production}` in the app
+      service environment section of docker-compose.yml.
+
+    code_hint: |
+      # Before:
+      CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000"]}
+      # After:
+      CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS is required in production}
+
+acceptance_criteria:
+  - docker-compose.yml uses fail-fast syntax for CORS_ORIGINS
+  - Container fails to start with clear error if CORS_ORIGINS is unset
+  - Container starts normally when CORS_ORIGINS is set
+  - Development workflow (using .env) is unaffected
+
+tests_to_run:
+  - docker compose config (verify compose file is valid)
+
+risk: medium
+risk_reason: >
+  Changing from default to fail-fast means containers will not start without
+  CORS_ORIGINS explicitly set. This is the intended security behavior but could
+  break existing development workflows that rely on the default. The .env file
+  at project root sets `ENV=development` and should not be affected since the
+  variable substitution only fails when the variable is completely unset.
+
+rollback: Restore `${CORS_ORIGINS:-["http://localhost:3000"]}` syntax.

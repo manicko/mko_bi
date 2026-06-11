@@ -1,0 +1,72 @@
+id: TASK_013_wire_metric_agg_from_config_to_aggregation
+
+title: Wire metric_agg from processing config to aggregate_for_dashboard call
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\07-data-processing-validated.md
+source_section: DP-002
+
+description: >
+  The `AggregationService.aggregate_for_dashboard` method supports a `metric_agg`
+  parameter (default "sum"), and the processing config documents `metric_agg` as
+  configurable. However, in `_store_aggregates` (data_worker.py lines 582 and 650),
+  `aggregate_for_dashboard` is called without extracting `metric_agg` from
+  `processing_config_dict["settings"]`, making the documented feature non-functional.
+
+goals:
+  - Extract `metric_agg` from processing_config_dict["settings"]
+  - Pass it to aggregate_for_dashboard in both test and production code paths
+  - Make the documented configurable aggregation actually work
+
+files:
+  - path: src/mkobi/workers/data_worker.py
+
+    targets:
+      - type: function
+        name: _store_aggregates
+
+    semantic_anchors:
+      insert_before:
+        type: function_call
+        value: aggregate_for_dashboard
+
+changes:
+  - action: modify_code
+
+    description: >
+      Extract `metric_agg` from `processing_config_dict["settings"]` and pass it
+      to the `aggregate_for_dashboard` call. Apply to both code paths
+      (test mode around line 582 and production mode around line 650).
+
+    code_hint: |
+      # Extract metric_agg from settings before calling aggregate_for_dashboard:
+      metric_agg = processing_config_dict.get("settings", {}).get("metric_agg", "sum")
+      # Then pass it:
+      aggregated = await aggregation_service.aggregate_for_dashboard(
+          ...,
+          metric_agg=metric_agg,
+      )
+
+acceptance_criteria:
+  - metric_agg is extracted from processing_config_dict["settings"]
+  - Both code paths in _store_aggregates pass metric_agg to aggregate_for_dashboard
+  - When metric_agg is not in settings, defaults to "sum"
+  - ruff and mypy pass without errors
+
+tests_to_run:
+  - pytest tests/ -k "aggregate" -v --no-header
+  - ruff check src/mkobi/workers/data_worker.py
+  - mypy src/mkobi/workers/data_worker.py
+
+risk: low
+risk_reason: >
+  This is a pure wire-up of an existing capability. The AggregationService
+  already supports metric_agg; we are just passing the config value through.
+  Default value "sum" preserves existing behavior.
+
+rollback: Remove the metric_agg extraction and pass the hardcoded default.

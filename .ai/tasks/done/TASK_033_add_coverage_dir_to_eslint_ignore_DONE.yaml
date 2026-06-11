@@ -1,0 +1,63 @@
+id: TASK_033_add_coverage_dir_to_eslint_ignore
+
+title: Add coverage directory to ESLint global ignores
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\02-frontend-validated.md
+source_section: FE-004
+
+description: >
+  The `eslint.config.js` at `frontend/eslint.config.js` only excludes `dist` from
+  global ignores (line 9). Generated coverage files in `frontend/coverage/` trigger
+  lint warnings about unused `eslint-disable` directives. Add the coverage directory
+  to the global ignores to prevent linting machine-generated code.
+
+goals:
+  - Add coverage directory to ESLint global ignores
+  - Prevent lint warnings from generated coverage files
+  - Keep the ignore list minimal and specific
+
+files:
+  - path: frontend/eslint.config.js
+
+    targets:
+      - type: config
+        name: globalIgnores
+
+    semantic_anchors:
+      insert_after:
+        type: function_call
+        value: globalIgnores
+
+changes:
+  - action: modify_code
+
+    description: >
+      Add `'coverage'` to the `globalIgnores` array alongside `'dist'`.
+
+    code_hint: |
+      # Before:
+      globalIgnores(['dist']),
+      # After:
+      globalIgnores(['dist', 'coverage']),
+
+acceptance_criteria:
+  - eslint.config.js ignores both dist and coverage directories
+  - ESLint does not report warnings for files in coverage/
+  - Source files in src/ are still linted normally
+
+tests_to_run:
+  - cd frontend && npx eslint src/ (verify source files are still linted)
+  - cd frontend && npx eslint coverage/ (verify coverage files produce no warnings)
+
+risk: minimal
+risk_reason: >
+  Adding an ignore entry only reduces linting scope. No source code is affected.
+  The coverage directory contains generated files that should not be linted.
+
+rollback: Remove 'coverage' from the globalIgnores array.

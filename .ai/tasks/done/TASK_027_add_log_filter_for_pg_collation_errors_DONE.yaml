@@ -1,0 +1,61 @@
+id: TASK_027_add_log_filter_for_pg_collation_errors
+
+title: Add log filter for PostgreSQL collation version error messages
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\05-docker-validated.md
+source_section: INF-004
+
+description: >
+  PostgreSQL 18 logs a collation version error that is cosmetic but misleading.
+  The error stems from `postgresql-common` package incompatibility with PG18's
+  stricter parser. Since the `builtin` locale provider with `C.UTF-8` makes the
+  collation version immutable (fixed at 1), this error is harmless. Add a log
+  filter configuration to suppress this specific error message to reduce noise
+  in container logs.
+
+goals:
+  - Suppress the cosmetic PostgreSQL collation version error from logs
+  - Reduce log noise in container environments
+  - Document that the error is harmless
+
+files:
+  - path: docker/init-scripts/
+
+    targets:
+      - type: new_file
+        name: 02-filter-collation-logs.sh
+
+changes:
+  - action: add_code
+
+    description: >
+      Create a new init script or modify the PostgreSQL logging configuration to
+      filter out the collation version error. Alternatively, add a comment in
+      the docker documentation explaining that this error is harmless and can
+      be safely ignored.
+
+    code_hint: |
+      # Option: Add to docker-compose.yml postgres command:
+      # command: ["postgres", "-c", "log_min_messages=warning"]
+      # Or add a log filter in postgresql.conf
+
+acceptance_criteria:
+  - PostgreSQL collation error is suppressed or documented as harmless
+  - Other PostgreSQL log messages are unaffected
+  - Container starts normally with the logging configuration
+
+tests_to_run:
+  - docker compose up -d postgres (verify container starts, check logs for collation error)
+
+risk: low
+risk_reason: >
+  This is a cosmetic change that only affects log output. The error is documented
+  as harmless in docker.md. Suppressing it reduces noise without hiding real issues.
+
+rollback: Remove the log filter configuration.

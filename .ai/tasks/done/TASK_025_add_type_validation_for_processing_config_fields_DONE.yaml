@@ -1,0 +1,88 @@
+id: TASK_025_add_type_validation_for_processing_config_fields
+
+title: Add type validation for processing config field types in _validate_settings
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_012_remove_unused_required_fields_from_validate_settings
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\07-data-processing-validated.md
+source_section: DP-004
+
+description: >
+  The `_validate_settings` method in ProcessingConfigService validates the presence
+  of required fields but does not validate their types. Fields like `separator`,
+  `decimal_separator`, `column_types`, `date_format` can be provided with incorrect
+  types, causing runtime errors deep in the processing pipeline instead of clear
+  validation errors at config submission time. Add type validation for these fields
+  to fail early with descriptive error messages.
+
+goals:
+  - Add type validation for `separator` (str), `decimal_separator` (str), `column_types` (dict), `date_format` (str)
+  - Provide clear error messages indicating which field has the wrong type
+  - Fail at config submission time rather than during data processing
+
+files:
+  - path: src/mkobi/services/processing_config_service.py
+
+    targets:
+      - type: class
+        name: ProcessingConfigService
+
+      - type: method
+        name: _validate_settings
+
+    semantic_anchors:
+      insert_after:
+        type: function_call
+        value: required_fields validation loop
+
+changes:
+  - action: add_code
+
+    description: >
+      After the required fields presence check, add a type validation block that
+      verifies the types of key processing config fields. For each field, check
+      the type and raise AppException with VALIDATION_ERROR if the type is wrong.
+
+    code_hint: |
+      # Type validation for processing config fields
+      type_checks = {
+          "separator": str,
+          "decimal_separator": str,
+          "column_types": dict,
+          "date_format": str,
+      }
+      for field_name, expected_type in type_checks.items():
+          value = settings.get(field_name)
+          if value is not None and not isinstance(value, expected_type):
+              raise AppException(
+                  ErrorCode.VALIDATION_ERROR,
+                  detail=f"Field '{field_name}' must be of type {expected_type.__name__}, "
+                         f"got {type(value).__name__}",
+              )
+
+acceptance_criteria:
+  - _validate_settings validates types of separator, decimal_separator, column_types, date_format
+  - Passing a non-string value for separator raises VALIDATION_ERROR
+  - Passing a non-dict value for column_types raises VALIDATION_ERROR
+  - Fields with correct types pass validation
+  - Fields not present in settings are not type-validated (only required fields are checked)
+  - ruff and mypy pass without errors
+
+tests_to_run:
+  - pytest tests/ -k "processing_config" -v --no-header
+  - ruff check src/mkobi/services/processing_config_service.py
+  - mypy src/mkobi/services/processing_config_service.py
+
+risk: low
+risk_reason: >
+  Adding type validation is a relaxing change for correctly-typed configs and a
+  tightening change for incorrectly-typed ones. Since the fields were previously
+  unvalidated, this only improves error messages. No functional behavior changes
+  for valid configs.
+
+rollback: Remove the type validation block from _validate_settings.

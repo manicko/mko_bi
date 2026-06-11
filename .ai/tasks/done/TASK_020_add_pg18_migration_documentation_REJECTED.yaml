@@ -1,0 +1,90 @@
+id: TASK_020_add_pg18_migration_documentation
+
+title: Add PostgreSQL 18+ migration documentation for volume mount path change
+
+status: rejected
+
+priority: low
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\05-docker-validated.md
+source_section: INF-002
+
+description: >
+  The volume mount path `/var/lib/postgresql` is correct for PostgreSQL 18+
+  but differs from older versions that used `/var/lib/postgresql/data`. Users
+  upgrading from PG16/17 may encounter data compatibility errors. Add upgrade
+  migration documentation to guide users through the transition.
+
+goals:
+  - Document the volume mount path change for PG18+
+  - Provide upgrade instructions for users migrating from PG16/17
+  - Add warnings about data incompatibility between versions
+
+files:
+  - path: docs/11-guides/docker.md
+
+    targets:
+      - type: section
+        name: PostgreSQL 18+ compatibility
+
+    semantic_anchors:
+      insert_after:
+        type: heading
+        value: PostgreSQL 18+
+
+changes:
+  - action: add_code
+
+    description: >
+      Add a section documenting the volume mount path change and upgrade
+      instructions. Include:
+      - Explanation of path change from `/var/lib/postgresql/data` to `/var/lib/postgresql`
+      - Steps to backup data before upgrading
+      - Steps to clean old volumes and reinitialize
+      - Note that data from older versions is not compatible
+
+    code_hint: |
+      ## PostgreSQL 18+ Volume Mount Upgrade Guide
+
+      PostgreSQL 18 changed the default data directory to `/var/lib/postgresql`.
+      If you are upgrading from PostgreSQL 16 or 17, follow these steps:
+
+      1. **Backup your data:**
+         ```bash
+         docker compose exec pg_dumpall -U postgres > backup.sql
+         ```
+
+      2. **Stop containers and remove old volumes:**
+         ```bash
+         docker compose down
+         docker volume rm mkobi_postgres_data
+         ```
+
+      3. **Start fresh with new PostgreSQL version:**
+         ```bash
+         docker compose up -d
+         ```
+
+      4. **Restore data:**
+         ```bash
+         docker compose exec -T postgres psql -U postgres < backup.sql
+         ```
+
+      **Note:** Direct data file copy between major PostgreSQL versions is not
+      supported. Always use `pg_dump`/`pg_restore` for migration.
+
+acceptance_criteria:
+  - Documentation includes upgrade steps for PG16/17 to PG18+
+  - Warning about data incompatibility is present
+  - Backup and restore commands are documented
+
+tests_to_run:
+  - No code tests needed (documentation only)
+
+risk: minimal
+rejected_reason: >
+  We are in development and have not released with previos PostgreSQL versions before 18.
+
+rollback: Remove the added documentation section.

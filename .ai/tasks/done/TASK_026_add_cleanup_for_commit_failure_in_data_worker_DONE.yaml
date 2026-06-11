@@ -1,0 +1,78 @@
+id: TASK_026_add_cleanup_for_commit_failure_in_data_worker
+
+title: Add temp file cleanup for commit failure path in data_worker.py
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\07-data-processing-validated.md
+source_section: DP-005
+
+description: >
+  In `_store_aggregates` in `data_worker.py`, when a database commit fails after
+  the processed file has been moved to its final location, the temp file cleanup
+  may not execute. The file is moved to the final path before the transaction
+  commits, so a commit failure leaves the file in an inconsistent state. Add
+  cleanup logic for the commit failure path to ensure temp files are removed.
+
+goals:
+  - Ensure temp files are cleaned up when database commit fails
+  - Prevent orphaned temp files from accumulating on disk
+  - Follow the existing cleanup pattern used elsewhere in the codebase
+
+files:
+  - path: src/mkobi/workers/data_worker.py
+
+    targets:
+      - type: function
+        name: _store_aggregates
+
+    semantic_anchors:
+      insert_after:
+        type: function_call
+        value: session.begin()
+
+      insert_before:
+        type: return_statement
+
+changes:
+  - action: modify_code
+
+    description: >
+      Wrap the commit path in a try/except block. On commit failure, clean up
+      any temp files that were created during processing before re-raising
+      the exception. Follow the existing pattern of using `Path.unlink(missing_ok=True)`
+      for cleanup.
+
+    code_hint: |
+      try:
+          # ... existing commit logic ...
+          await session.commit()
+      except Exception:
+          # Clean up temp files on commit failure
+          if temp_file_path and temp_file_path.exists():
+              temp_file_path.unlink(missing_ok=True)
+          raise
+
+acceptance_criteria:
+  - Commit failure path includes temp file cleanup
+  - Temp file is removed when commit fails
+  - Exception is re-raised after cleanup
+  - Normal commit path is unaffected
+  - ruff and mypy pass without errors
+
+tests_to_run:
+  - pytest tests/ -k "data_worker or store_aggregates" -v --no-header
+  - ruff check src/mkobi/workers/data_worker.py
+  - mypy src/mkobi/workers/data_worker.py
+
+risk: low
+risk_reason: >
+  This adds defensive cleanup code. The change only executes on the error path,
+  so normal processing is unaffected. The cleanup uses `missing_ok=True` which
+  is safe for concurrent scenarios.
+
+rollback: Remove the try/except wrapper and restore the original commit logic.

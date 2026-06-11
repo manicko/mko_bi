@@ -1,0 +1,65 @@
+id: TASK_015_fix_init_script_sql_syntax_error
+
+title: Fix psql GRANT CONNECT syntax in init script
+
+status: pending
+
+priority: critical
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\05-docker-validated.md
+source_section: INF-001
+
+description: >
+  The init script `docker/init-scripts/01-create-app-role.sh` line 29 uses
+  `GRANT CONNECT ON DATABASE :'dbname' TO mkobi_app;`. The `:'variable` syntax
+  produces a quoted string literal `'bidb'` (including quotes), which causes a
+  PostgreSQL syntax error. The correct syntax is `:dbname` (unquoted identifier).
+
+goals:
+  - Fix the GRANT CONNECT statement to use unquoted identifier syntax
+  - Ensure the mkobi_app role can be created successfully on container startup
+
+files:
+  - path: docker/init-scripts/01-create-app-role.sh
+
+    targets:
+      - type: function
+        name: GRANT CONNECT
+
+    semantic_anchors:
+      insert_after:
+        type: command
+        value: GRANT CONNECT ON DATABASE
+
+changes:
+  - action: modify_code
+
+    description: >
+      Change `:'dbname'` to `:dbname` in the GRANT CONNECT statement.
+      The `:variable` syntax outputs the unquoted value, which is required
+      for database name identifiers in GRANT statements.
+
+    code_hint: |
+      # Before:
+      GRANT CONNECT ON DATABASE :'dbname' TO mkobi_app;
+      # After:
+      GRANT CONNECT ON DATABASE :dbname TO mkobi_app;
+
+acceptance_criteria:
+  - Init script uses `:dbname` (unquoted) syntax
+  - Container starts without SQL errors in PostgreSQL logs
+  - mkobi_app role is created successfully
+  - ruff check passes (if applicable for shell)
+
+tests_to_run:
+  - docker compose up postgres (verify no SQL errors in logs)
+
+risk: critical
+risk_reason: >
+  This fix is required for all database-dependent services to function.
+  The change is minimal (single character removal) but blocks all DB access
+  if not fixed. Must verify the fix works in the actual container environment.
+
+rollback: Restore `:'dbname'` syntax (will break DB access again).
