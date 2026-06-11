@@ -75,14 +75,14 @@ class ProcessingLogService(IProcessingLogService):
         self, dashboard_id: UUID, db: AsyncSession
     ) -> list[ProcessingLogRead]:
         """Get processing logs by dashboard ID."""
-        return await self.log_repo.get_by_dashboard(dashboard_id, db)
+        return cast(list[ProcessingLogRead], await self.log_repo.get_by_dashboard(dashboard_id, db))
 
     async def get_processing_logs_by_status(
         self, status: str, db: AsyncSession
     ) -> list[ProcessingLogRead]:
         """Get processing logs by status."""
         filters = ProcessingLogFilter(status=ProcessingStatus(status))
-        return await self.log_repo.get_filtered(filters, db)
+        return cast(list[ProcessingLogRead], await self.log_repo.get_filtered(filters, db))
 
     async def update_processing_log(
         self,
@@ -221,7 +221,7 @@ class ProcessingLogService(IProcessingLogService):
     ) -> list[ProcessingLogRead]:
         """Get filtered processing logs."""
         logger.info("Getting filtered logs: filters=%s", filters)
-        return await self.log_repo.get_filtered(filters, db)
+        return cast(list[ProcessingLogRead], await self.log_repo.get_filtered(filters, db))
 
     async def delete_old_logs(
         self, retention_days: int | None = None, db: AsyncSession | None = None
@@ -246,13 +246,13 @@ class ProcessingLogService(IProcessingLogService):
         if db is not None:
             # Use provided session (test mode)
             count = await self.log_repo.delete_old_logs(cutoff, db)
-            return count
+            return cast(int, count)
 
         # Production mode - create new session
         async with get_session() as session:
             async with session.begin():
                 count = await self.log_repo.delete_old_logs(cutoff, session)
-                return count
+                return cast(int, count)
 
 
 
