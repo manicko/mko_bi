@@ -1,0 +1,94 @@
+id: TASK_009_remove_dead_chart_components_and_update_renderer
+
+title: Remove dead BarChart/PieChart components and update ChartRenderer
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+source_reference: C:\py_dev\mkobi\.ai\audit\validated\validated_004.md
+source_section: 6.1 Primary Recommendation: Remove Dead Code
+
+description: >
+  BarChart.tsx and PieChart.tsx are dead code — never imported, never re-exported,
+  fully duplicated by ChartRenderer→PlotlyChart pipeline. Remove both files, add
+  bar-specific layout defaults (barmode: 'group', xaxis.type: 'category') into
+  ChartRenderer's bar path, and update fsd-structure.md documentation.
+
+goals:
+  - Delete BarChart.tsx and PieChart.tsx (dead code, zero runtime value)
+  - Add bar-specific layout defaults to ChartRenderer's bar rendering path
+  - Update fsd-structure.md to remove dead components from documentation
+  - Preserve LineChart.tsx (actively used by ChartRenderer)
+  - All existing frontend tests continue to pass
+
+files:
+  - path: frontend/src/features/dashboards/ui/charts/BarChart.tsx
+    targets:
+      - type: component
+        name: BarChart
+    changes:
+      - action: delete_file
+        description: Delete entire file — component is never imported anywhere
+
+  - path: frontend/src/features/dashboards/ui/charts/PieChart.tsx
+    targets:
+      - type: component
+        name: PieChart
+    changes:
+      - action: delete_file
+        description: Delete entire file — component is never imported anywhere
+
+  - path: frontend/src/features/dashboards/ui/charts/ChartRenderer.tsx
+    targets:
+      - type: function
+        name: ChartRenderer
+    semantic_anchors:
+      insert_after:
+        type: variable_declaration
+        value: convertToPlotlyData
+    changes:
+      - action: modify_code
+        description: >
+          In the bar rendering path (around line 88-90), add bar-specific layout
+          defaults before passing to PlotlyChart. After `const plotlyData = convertToPlotlyData(graph)`,
+          construct a barLayout:
+          ```
+          const barLayout = {
+            barmode: graph.config?.barmode || 'group',
+            xaxis: { type: 'category' },
+            ...graph.layout,
+          }
+          return <PlotlyChart data={plotlyData} layout={barLayout} />
+          ```
+          This preserves the intent of the dead BarChart component (barmode and x-axis type defaults).
+
+  - path: docs/07-frontend/fsd-structure.md
+    targets:
+      - type: documentation
+        name: fsd-structure
+    changes:
+      - action: modify_code
+        description: >
+          1. Remove `BarChart.tsx` and `PieChart.tsx` from the folder tree (lines 70-72)
+          2. Remove `BarChart.tsx` and `PieChart.tsx` from the "Dashboard-Focused Charts Directory" section
+          3. Update the chart component documentation to list only: ChartRenderer.tsx, LineChart.tsx, PlotlyChart.tsx, TableChart.tsx
+          4. Add a note that all chart types are rendered through ChartRenderer, which delegates to PlotlyChart (for bar/pie), LineChart (for line), and TableChart (for table)
+
+acceptance_criteria:
+  - BarChart.tsx and PieChart.tsx files deleted
+  - ChartRenderer applies bar-specific layout defaults (barmode, x-axis type) for bar charts
+  - fsd-structure.md updated to reflect simplified chart architecture
+  - LineChart.tsx retained (actively used)
+  - charts/index.ts unchanged (already doesn't export BarChart/PieChart)
+  - All existing frontend tests pass (165 tests)
+  - No runtime behavior change for pie charts (no pie-specific defaults to preserve)
+
+tests_to_run:
+  - cd frontend && npm test -- --run
+
+risk: minimal
+effort: small
+rollback: trivial

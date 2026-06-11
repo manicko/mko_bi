@@ -1,5 +1,5 @@
 ---
-id: docker-domain
+id: docker-guide
 domain: guides
 tags:
   - docker
@@ -9,23 +9,42 @@ related:
   - run-guide
   - deployment
   - task-queue-migration
+  - file-cleanup
 ---
+
+# Docker Guide for mkobi BI Dashboard System
 
 ## Purpose
 
 This document provides comprehensive Docker setup instructions for the mkobi BI Dashboard System, including multi-stage builds, development environment configuration, testing procedures, and production deployment guidelines.
 
-# Docker Setup for mkobi BI Dashboard System
+## Architecture Overview
 
-## Overview
+### Containers
 
-This project uses a multi-stage Dockerfile with the following targets:
-- **frontend-builder** — Builds React SPA (intermediate stage)
-- **base** — Common base image with system dependencies (build-essential, libpq-dev, libmagic1)
-- **prod-base** — Minimal runtime base for production (libpq5, libmagic1 only; no build tools)
-- **dev** — Development environment with hot reload
-- **test** — Environment for running tests
-- **prod** — Production image with multiple workers (default)
+| Container | Purpose | Ports |
+|-----------|---------|-------|
+| `app` | FastAPI backend with hot reload (dev) or multi-workers (prod) | 8000 |
+| `frontend` | Vite development server (dev only) | 5173 |
+| `db` | PostgreSQL 18 database | 5432 |
+| `redis` | Redis for task queue (production profile) | 6379 |
+| `nginx` | Reverse proxy for production (production profile) | 80 |
+
+### Networks
+
+- Default: `app_network` (bridge)
+- Test: `test_network` (isolated)
+
+### Volumes
+
+- `postgres_data` — PostgreSQL data persistence (mounted at `/var/lib/postgresql` for PG18+ compatibility)
+- `app_data` — Application data (uploads, logs, temp files)
+- `redis_data` — Redis data (if using task queue)
+
+### Profiles
+
+- Default: Starts `app`, `frontend`, `db`, `migrate`
+- `production`: Adds `rq-worker`, `nginx`, `redis`
 
 ## Prerequisites
 
@@ -35,21 +54,10 @@ This project uses a multi-stage Dockerfile with the following targets:
 
 ## Quick Start
 
-### Production
-
-```bash
-# Build and start production environment
-docker compose -f docker/docker-compose.yml --env-file .env up -d
-
-# Or with specific target
-DOCKER_TARGET=prod docker compose -f docker/docker-compose.yml --env-file .env up -d
-```
-
 ### Development
 
 ```bash
 # Start development environment with hot reload
-# Note: docker-compose.override.yml is auto-loaded by Docker Compose
 docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml --env-file .env up -d
 
 # Frontend dev server runs at http://localhost:5173 (Vite hot reload)
@@ -85,133 +93,132 @@ docker compose -f docker/docker-compose.test.yml down
 > - **For shared machines:** Consider binding to `127.0.0.1` instead of the default `0.0.0.0` to prevent cross-talk between developers.
 > - **For CI/CD:** Run tests inside the container (`docker compose exec test-app uv run pytest`) to avoid exposing ports entirely.
 
-## Multi-Stage Builds Explained
-
-### Stage: base
-- Python 3.12-slim-bookworm as base
-- Installs system dependencies: `build-essential`, `libpq-dev`, `libmagic1`, `curl`
-  - `libmagic1` is required for server-side MIME type detection (python-magic library) in the file upload pipeline
-- Installs uv for fast dependency management
-- Creates non-root user for security
-
-### Stage: frontend-builder
-- Uses Node 20 Alpine
-- Installs frontend dependencies
-- Builds React production bundle
-- Output: `frontend/dist/`
-
-### Stage: dev
-- Extends base
-- Installs ALL dependencies (including dev)
-- Copies source code for hot reload
-- Runs with `--reload` flag
-
-### Stage: test
-- Extends base
-- Installs ALL dependencies (including dev)
-- Copies tests and source code
-- Sets `ENV=test`
-- Default command runs pytest
-
-### Stage: prod-base
-- Python 3.12-slim-bookworm as base
-- Installs only runtime dependencies: `libpq5`, `libmagic1`, `curl`
-- No build tools (build-essential, libpq-dev) — smaller attack surface
-- Installs uv for dependency management
-- Creates non-root user
-- Extended by `prod` stage
-
-### Stage: prod (default target)
-- Extends **prod-base** (not `base`) for minimal image size
-- Installs only production dependencies (`uv sync --no-dev`)
-- Copies frontend build artifacts from frontend-builder stage
-- Runs with multiple workers (`--workers 4`)
-- Includes HEALTHCHECK directive (curl `/health`)
-
-## Layer Caching Optimizations
-
-The Dockerfile is optimized for fast builds:
-
-1. **Copy dependency files first**: `pyproject.toml` and `uv.lock` are copied before source code
-2. **Separate frontend build**: Frontend is built in a separate stage
-3. **Minimal layers**: Related commands are combined to reduce layers
-4. **Proper .dockerignore**: Excludes unnecessary files from build context
-
-## Build Examples
+### Production
 
 ```bash
-# Build specific target
-docker build -f docker/Dockerfile --target dev -t mkobi:dev .
-docker build -f docker/Dockerfile --target prod -t mkobi:prod .
-docker build -f docker/Dockerfile --target test -t mkobi:test .
+# Build and start production environment
+docker compose -f docker/docker-compose.yml --env-file .env up -d
 
-# Build with no cache (force rebuild)
-docker build -f docker/Dockerfile --no-cache --target prod -t mkobi:prod .
+# Or with specific target
+DOCKER_TARGET=prod docker compose -f docker/docker-compose.yml --env-file .env up -d
 
-# Build with build args
-docker build -f docker/Dockerfile --build-arg UV_VERSION=v0.1.0 --target prod -t mkobi:prod .
+# Start with production services (RQ worker, nginx)
+docker compose -f docker/docker-compose.yml --profile production up -d
 ```
 
-## Environment Variables
+## Daily Operations
 
-Environment variables are loaded from `.env` in the project root. All Docker Compose commands require `--env-file .env` flag to load them, because `docker-compose.yml` uses `${VAR:?error}` enforcement patterns that prevent startup without explicit values.
-
-### Which .env File to Use
-
-| File | Purpose | Values |
-|------|---------|--------|
-| `.env` (project root) | Development - ready to use | Contains working development values |
-| `docker/.env.development` | Development template | Template with `CHANGE_ME` placeholders - must be copied |
-| `docker/.env.production` | Production deployment | Template with comments - must be filled before deployment |
-
-### Quick Start: Environment Setup
-
-For new developers, set up your environment:
+### Start Services
 
 ```bash
-# Option 1: Use the root .env (works out of the box for development)
-# No setup needed - the .env file contains working development values
-docker compose -f docker/docker-compose.yml --env-file .env -f docker/docker-compose.override.yml up -d
-
-# Option 2: Copy the development template to docker/.env
-# Fill in your preferred values (not required if using root .env)
-cp docker/.env.development docker/.env
-# Edit docker/.env and replace CHANGE_ME placeholders
-docker compose -f docker/docker-compose.yml --env-file docker/.env -f docker/docker-compose.override.yml up -d
+docker compose -f docker/docker-compose.yml --env-file .env up -d
 ```
 
-For production deployments, use `docker/.env.production`:
+### Stop Services
+
 ```bash
-# Production deployment (correct)
-docker compose --env-file docker/.env.production -f docker/docker-compose.yml up -d
+docker compose -f docker/docker-compose.yml --env-file .env down
 ```
 
-**Required variables in `.env`:**
-- `DATABASE__PASSWORD` — PostgreSQL superuser password
-- `MKOBI_APP_PASSWORD` — Application database role password
-- `JWT__SECRET_KEY` — JWT signing secret
-- `ADMIN_USERNAME` — Initial admin username
-- `ADMIN_PASSWORD` — Initial admin password
+### Stop and Remove Volumes
 
-For local development, `docker-compose.override.yml` provides sensible defaults for non-sensitive variables.
+```bash
+docker compose -f docker/docker-compose.yml --env-file .env down -v
+```
 
-Key variables:
-- `ENV` — Environment (development/test/production)
-- `DATABASE__HOST` — Database host
-- `DATABASE__PASSWORD` — Database password
-- `JWT__SECRET_KEY` — JWT secret key
-- `LOGGING__LEVEL` — Logging level (DEBUG/INFO/WARNING/ERROR)
-- `AUTO_MIGRATE` — Auto-run database migrations (true/false)
-- `RECREATE_TEST_DB` — Recreate test database on startup (true/false)
-- `APP__COOKIE_SECURE` — Cookie Secure attribute (true/false). Defaults to `true`. Set to `false` in development when using HTTP, as browsers will not send cookies with the Secure flag over unencrypted connections.
+### View Logs
 
-**Security Note:** For production deployments, always set `DATABASE__PASSWORD`, `MKOBI_APP_PASSWORD`, and `JWT__SECRET_KEY` to strong, unique values. The compose file uses `${VAR:?error}` enforcement — services will fail to start without these variables explicitly set.
+```bash
+docker compose -f docker/docker-compose.yml --env-file .env logs -f app
+docker compose -f docker/docker-compose.yml --env-file .env logs -f frontend
+docker compose -f docker/docker-compose.yml --env-file .env logs db
+```
 
-## Production Services (profiles: production)
+### Execute Commands in Container
 
-The following services are defined in `docker-compose.yml` with `profiles: [production]`. They are **not** started by default — use `--profile production` to include them:
+```bash
+docker compose -f docker/docker-compose.yml --env-file .env exec app /bin/bash
+docker compose -f docker/docker-compose.yml --env-file .env exec app /app/.venv/bin/pytest tests/
+```
 
-### RQ Worker (`rq-worker`)
+### Rebuild After Changes
+
+```bash
+docker compose -f docker/docker-compose.yml --env-file .env up -d --build
+```
+
+### View Running Containers
+
+```bash
+docker compose -f docker/docker-compose.yml --env-file .env ps
+```
+
+## Development Workflow
+
+### Hot Reload
+
+The development environment uses:
+- **Backend:** `--reload` flag with uvicorn for automatic reload on code changes
+- **Frontend:** Vite dev server with hot module replacement (HMR)
+
+### Frontend Development
+
+- Dev server: http://localhost:5173
+- Proxies `/api` to backend at http://localhost:8000
+- TypeScript/React with TanStack Query
+
+### Backend Development
+
+- FastAPI with automatic reload
+- PostgreSQL with hot reload support
+- Shared `app_data` volume for temp files
+
+### Cookie Configuration
+
+The `AppSettings.cookie_secure` setting controls cookie security:
+- `true` (default): Requires HTTPS — use in production
+- `false`: Works over HTTP — used in development via override
+
+## Testing
+
+### Test Compose
+
+`docker-compose.test.yml` provides an isolated testing environment:
+- Shifted ports: 5433 (Postgres), 6380 (Redis), 8001 (API)
+- Separate volumes: `test_postgres_data`, `test_redis_data`
+- Standalone network: `test_network`
+
+### Running Tests
+
+```bash
+# Run all tests
+docker compose -f docker/docker-compose.test.yml exec test-app /app/.venv/bin/pytest tests/ -v
+
+# Run specific test file
+docker compose -f docker/docker-compose.test.yml exec test-app /app/.venv/bin/pytest tests/test_auth.py -v
+
+# Run with coverage
+docker compose -f docker/docker-compose.test.yml exec test-app /app/.venv/bin/pytest tests/ --cov=src/mkobi
+```
+
+### Test Isolation
+
+The test environment is completely isolated from development:
+- No port conflicts
+- No shared volumes
+- Separate database instance
+
+## Production Deployment
+
+### Production Profile
+
+Start with the production profile to include `rq-worker` and `nginx`:
+
+```bash
+docker compose -f docker/docker-compose.yml --profile production up -d
+```
+
+### RQ Worker
 
 Runs the Redis Queue worker for background task processing (CSV uploads, data aggregation).
 
@@ -228,14 +235,9 @@ docker compose -f docker/docker-compose.yml --profile production up -d
 
 > **Note:** The RQ worker is the production implementation of the task queue. The in-memory `asyncio.Queue` (MVP) is used when the RQ worker is not running. See [Task Queue Migration](./task-queue-migration.md) for the migration plan details.
 
-### Nginx Reverse Proxy (`nginx`)
+### Nginx Reverse Proxy
 
 Optional Nginx reverse proxy for production. Serves the React SPA static files and proxies API requests to FastAPI.
-
-```bash
-# Start with nginx
-docker compose -f docker/docker-compose.yml --profile production up -d
-```
 
 - **Depends on:** `app`
 - **Ports:** `80:80`
@@ -243,11 +245,157 @@ docker compose -f docker/docker-compose.yml --profile production up -d
 
 See [Deployment](../10-deployment/deployment.md) for the nginx configuration details.
 
-## Volumes
+## Environment Configuration
 
-- `postgres_data` - PostgreSQL data persistence (mounted at `/var/lib/postgresql` for PG18+ compatibility)
-- `app_data` - Application data (uploads, logs, temp files)
-- `redis_data` - Redis data (if using task queue)
+### Which .env File to Use
+
+| File | Purpose | Values |
+|------|---------|--------|
+| `.env` (project root) | Development - ready to use | Contains working development values |
+| `docker/.env.development` | Development template | Template with `CHANGE_ME` placeholders - must be copied |
+| `docker/.env.production` | Production deployment | Template with comments - must be filled before deployment |
+
+### Development Setup
+
+For new developers, set up your environment:
+
+```bash
+# Option 1: Use the root .env (works out of the box for development)
+# No setup needed - the .env file contains working development values
+docker compose -f docker/docker-compose.yml --env-file .env -f docker/docker-compose.override.yml up -d
+
+# Option 2: Copy the development template to docker/.env
+# Fill in your preferred values (not required if using root .env)
+cp docker/.env.development docker/.env
+# Edit docker/.env and replace CHANGE_ME placeholders
+docker compose -f docker/docker-compose.yml --env-file docker/.env -f docker/docker-compose.override.yml up -d
+```
+
+### Production Setup
+
+For production deployments, use `docker/.env.production`:
+
+```bash
+# Production deployment (correct)
+docker compose --env-file docker/.env.production -f docker/docker-compose.yml up -d
+```
+
+### Required Variables
+
+**Required in production `.env`:**
+
+| Variable | Description |
+|----------|-------------|
+| `DATABASE__PASSWORD` | PostgreSQL superuser password |
+| `MKOBI_APP_PASSWORD` | Application database role password |
+| `JWT__SECRET_KEY` | JWT signing secret |
+| `ADMIN_USERNAME` | Initial admin username |
+| `ADMIN_PASSWORD` | Initial admin password |
+
+**Key Variables:**
+
+| Variable | Description |
+|----------|-------------|
+| `ENV` | Environment (development/test/production) |
+| `DATABASE__HOST` | Database host |
+| `DATABASE__PASSWORD` | Database password |
+| `JWT__SECRET_KEY` | JWT secret key |
+| `LOGGING__LEVEL` | Logging level (DEBUG/INFO/WARNING/ERROR) |
+| `AUTO_MIGRATE` | Auto-run database migrations (true/false) |
+| `RECREATE_TEST_DB` | Recreate test database on startup (true/false) |
+| `APP__COOKIE_SECURE` | Cookie Secure attribute (true/false). Defaults to `true`. Set to `false` in development when using HTTP. |
+
+> **Security Note:** For production deployments, always set `DATABASE__PASSWORD`, `MKOBI_APP_PASSWORD`, and `JWT__SECRET_KEY` to strong, unique values. The compose file uses `${VAR:?error}` enforcement — services will fail to start without these variables explicitly set.
+
+## Docker Internals
+
+### Multi-Stage Build Architecture
+
+This project uses a multi-stage Dockerfile with the following targets:
+
+| Stage | Description |
+|-------|-------------|
+| `frontend-builder` | Builds React SPA (intermediate stage) |
+| `base` | Common base image with system dependencies (build-essential, libpq-dev, libmagic1) |
+| `prod-base` | Minimal runtime base for production (libpq5, libmagic1 only; no build tools) |
+| `dev` | Development environment with hot reload |
+| `test` | Environment for running tests |
+| `prod` (default) | Production image with multiple workers |
+
+**Stage Details:**
+
+**base**
+- Python 3.12-slim-bookworm as base
+- Installs system dependencies: `build-essential`, `libpq-dev`, `libmagic1`, `curl`
+  - `libmagic1` is required for server-side MIME type detection (python-magic library) in the file upload pipeline
+- Installs uv for fast dependency management
+- Creates non-root user for security
+
+**frontend-builder**
+- Uses Node 20 Alpine
+- Installs frontend dependencies
+- Builds React production bundle
+- Output: `frontend/dist/`
+
+**dev**
+- Extends base
+- Installs ALL dependencies (including dev)
+- Copies source code for hot reload
+- Runs with `--reload` flag
+
+**test**
+- Extends base
+- Installs ALL dependencies (including dev)
+- Copies tests and source code
+- Sets `ENV=test`
+- Default command runs pytest
+
+**prod-base**
+- Python 3.12-slim-bookworm as base
+- Installs only runtime dependencies: `libpq5`, `libmagic1`, `curl`
+- No build tools (build-essential, libpq-dev) — smaller attack surface
+- Installs uv for dependency management
+- Creates non-root user
+- Extended by `prod` stage
+
+**prod** (default target)
+- Extends **prod-base** (not `base`) for minimal image size
+- Installs only production dependencies (`uv sync --no-dev`)
+- Copies frontend build artifacts from frontend-builder stage
+- Runs with multiple workers (`--workers 4`)
+- Includes HEALTHCHECK directive (curl `/health`)
+
+### Layer Caching Optimizations
+
+The Dockerfile is optimized for fast builds:
+
+1. **Copy dependency files first**: `pyproject.toml` and `uv.lock` are copied before source code
+2. **Separate frontend build**: Frontend is built in a separate stage
+3. **Minimal layers**: Related commands are combined to reduce layers
+4. **Proper .dockerignore**: Excludes unnecessary files from build context
+
+### Build Examples
+
+```bash
+# Build specific target
+docker build -f docker/Dockerfile --target dev -t mkobi:dev .
+docker build -f docker/Dockerfile --target prod -t mkobi:prod .
+docker build -f docker/Dockerfile --target test -t mkobi:test .
+
+# Build with no cache (force rebuild)
+docker build -f docker/Dockerfile --no-cache --target prod -t mkobi:prod .
+
+# Build with build args
+docker build -f docker/Dockerfile --build-arg UV_VERSION=v0.1.0 --target prod -t mkobi:prod .
+```
+
+## Health Checks
+
+| Service | Method |
+|---------|--------|
+| db | Uses `pg_isready` to check PostgreSQL readiness |
+| app | Uses HTTP health endpoint `/health` |
+| redis | Uses `redis-cli ping` |
 
 ## PostgreSQL Locale Configuration
 
@@ -264,42 +412,10 @@ This provides:
 
 The `-bookworm` Debian tag is used for stability. When upgrading to `-trixie` in the future, no collation refresh is needed — the builtin provider is immutable.
 
-> See `docker/docker-compose.yml` and `docker/docker-compose.test.yml` for the current locale configuration.
-
-## Health Checks
-
-- **db**: Uses `pg_isready` to check PostgreSQL readiness
-- **app**: Uses HTTP health endpoint `/health`
-- **redis**: Uses `redis-cli ping`
-
-## Common Commands
-
-```bash
-# View running containers
-docker compose -f docker/docker-compose.yml --env-file .env ps
-
-# View logs
-docker compose -f docker/docker-compose.yml --env-file .env logs -f app
-
-# Execute command in running container
-docker compose -f docker/docker-compose.yml --env-file .env exec app /app/.venv/bin/pytest tests/
-
-# Open shell in container
-docker compose -f docker/docker-compose.yml --env-file .env exec app /bin/bash
-
-# Stop all services
-docker compose -f docker/docker-compose.yml --env-file .env down
-
-# Stop and remove volumes
-docker compose -f docker/docker-compose.yml --env-file .env down -v
-
-# Rebuild after changes
-docker compose -f docker/docker-compose.yml --env-file .env up -d --build
-```
-
 ## Troubleshooting
 
 ### Database connection issues
+
 ```bash
 # Check if database is ready
 docker compose -f docker/docker-compose.yml --env-file .env exec db pg_isready -U postgres
@@ -309,6 +425,7 @@ docker compose -f docker/docker-compose.yml --env-file .env logs db
 ```
 
 ### Migration issues
+
 ```bash
 # Run migrations manually
 docker compose -f docker/docker-compose.yml --env-file .env exec app uv run alembic upgrade head
@@ -318,6 +435,7 @@ docker compose -f docker/docker-compose.yml --env-file .env exec app uv run alem
 ```
 
 ### Frontend not loading
+
 ```bash
 # Rebuild frontend
 docker compose -f docker/docker-compose.yml --env-file .env exec app npm run build --prefix frontend
@@ -329,6 +447,7 @@ docker compose -f docker/docker-compose.yml --env-file .env logs nginx
 ### PostgreSQL 18 Collation Version Error
 
 When starting PostgreSQL 18 containers, you may see repeated errors in the logs like:
+
 ```
 ERROR:  syntax error at or near "COLLATION_VERSION"
 LINE:  ALTER DATABASE template1 REFRESH COLLATION_VERSION
@@ -337,6 +456,7 @@ LINE:  ALTER DATABASE template1 REFRESH COLLATION_VERSION
 **Why this is harmless:** This error is caused by a known incompatibility between the Debian `postgresql-common` package (used in the postgres image) and PostgreSQL 18's stricter parser. The underscore syntax `REFRESH COLLATION_VERSION` was valid in PG16/17 but PostgreSQL 18 requires `REFRESH COLLATION VERSION` (space instead of underscore).
 
 **Why it doesn't affect this project:** The PostgreSQL 18 configuration uses the `builtin` locale provider with `C.UTF-8` collation:
+
 ```yaml
 POSTGRES_INITDB_ARGS: "--locale-provider=builtin --locale=C.UTF-8"
 ```
@@ -350,11 +470,12 @@ The `builtin` locale provider creates an immutable collation version (always `1`
 These error messages are cosmetic and do not require any action. You can safely ignore them.
 
 ### "required variable X is missing a value" error
+
 This means Docker Compose cannot find your `.env` file. Ensure you:
 1. Have a `.env` file in the project root (copy from `.env.example`)
 2. Pass `--env-file .env` flag with every `docker compose -f docker/docker-compose.yml` command
 
-## Security Notes
+## Security
 
 1. **Non-root user**: Application runs as `app` user (not root)
 2. **Secrets**: Use Docker secrets or environment variables for sensitive data
@@ -398,21 +519,16 @@ If migrating from a single-stage Dockerfile:
 3. Test each environment (dev/test/prod)
 4. Update CI/CD pipelines to use new targets
 
-## License
-
-MIT
-
 ## Cross-References
 
 - [Run Guide](../99-reference/run-guide.md) - Complete application run instructions
 - [Deployment](../10-deployment/deployment.md) - Production deployment strategies
 - [Task Queue Migration](./task-queue-migration.md) - Background task processing setup
+- [Temp File Cleanup](../03-processing/file-cleanup.md) - File cleanup architecture
 
-## Docker Image Versions
+## Reference
 
-### Pinned Image Versions
-
-Docker images are pinned to specific patch versions for reproducible builds:
+### Docker Image Versions
 
 | Service | Image | Version |
 |---------|-------|--------|
@@ -421,113 +537,8 @@ Docker images are pinned to specific patch versions for reproducible builds:
 | nginx | nginx | 1.27-alpine |
 | frontend | node | 20-alpine |
 
-### Updating Images
+To update image versions, visit Docker Hub for latest tags and update in compose files.
 
-To update Docker image versions:
+## License
 
-1. **Check for new versions:**
-   ```bash
-   # Visit Docker Hub for latest tags:
-   # - https://hub.docker.com/_/postgres
-   # - https://hub.docker.com/_/redis
-   # - https://hub.docker.com/_/nginx
-   # - https://hub.docker.com/_/node
-   ```
-
-2. **Update in all compose files:**
-   ```bash
-   # Update postgres version in docker-compose.yml
-   sed -i 's/postgres:18-bookworm/postgres:<new-version>/g' docker/docker-compose.yml
-   sed -i 's/postgres:18-bookworm/postgres:<new-version>/g' docker/docker-compose.test.yml
-
-   # Update redis version in all compose files
-   sed -i 's/redis:7.x-alpine/redis:<new-version>-alpine/g' docker/docker-compose.yml
-   sed -i 's/redis:7.x-alpine/redis:<new-version>-alpine/g' docker/docker-compose.test.yml
-   ```
-
-3. **Test compatibility:**
-   ```bash
-   # Start test environment and run tests
-   docker compose -f docker/docker-compose.test.yml up -d --build
-   ```
-
-4. **Apply in production:**
-   ```bash
-   docker compose -f docker/docker-compose.yml pull  # Pull new images
-   docker compose -f docker/docker-compose.yml up -d --build  # Rebuild and restart
-   ```
-
-## Temp File Cleanup Architecture
-
-Temp files are created during CSV upload processing and must be cleaned up to prevent disk space exhaustion. Two independent cleanup mechanisms ensure no orphaned files remain after crashes or restarts.
-
-### Cleanup Mechanisms
-
-#### 1. Startup Cleanup
-
-On application startup, `cleanup_stale_temp_files()` is called in `src/mkobi/db/starter.py:167`. This function:
-
-- Scans the upload temp directory (`config.upload_temp_dir`)
-- Deletes all `.csv*` files older than the threshold
-- Runs before request handling begins
-- Designed to clean up files from previous runs that were never removed
-
-**Code location:** `src/mkobi/services/file_cleanup.py`
-
-```python
-deleted_count = cleanup_stale_temp_files()
-if deleted_count > 0:
-    logger.info("Cleaned up %d orphaned temp files during startup", deleted_count)
-```
-
-#### 2. Worker Cleanup
-
-During background processing in `src/mkobi/workers/data_worker.py`:
-
-- **Success path (lines 308-310):** Temp file is deleted immediately after successful processing
-- **Error path (lines 332-340):** Temp file is deleted even when processing fails, with error logging as fallback
-
-```python
-# On success
-if file_path.exists():
-    await asyncio.to_thread(file_path.unlink)
-    logger.info("Temp file deleted: %s", file_path)
-
-# On error
-if file_path.exists():
-    try:
-        await asyncio.to_thread(file_path.unlink)
-    except Exception:
-        logger.warning("Failed to clean up temp file: %s", file_path, exc_info=True)
-```
-
-### Configuration
-
-The cleanup behavior is controlled by environment variables:
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `STALE_FILE_THRESHOLD_HOURS` | Age threshold in hours before temp files are considered stale | 24 |
-| `LOGS_RETENTION_DAYS` | Retention period for processing logs | 30 |
-| `STALE_PROCESSING_TIMEOUT_MINUTES` | Timeout for stale PROCESSING entries to be marked FAILED | 30 |
-| `STALE_PROCESSING_CLEANUP_INTERVAL_SECONDS` | Interval for cleanup worker runs | 300 |
-
-These are defined in `src/mkobi/config.py`:
-
-```python
-stale_file_threshold_hours: int = Field(default=24, alias="STALE_FILE_THRESHOLD_HOURS")
-logs_retention_days: int = Field(default=30, alias="LOGS_RETENTION_DAYS")
-stale_processing_timeout_minutes: int = Field(default=30, alias="STALE_PROCESSING_TIMEOUT_MINUTES")
-stale_processing_cleanup_interval_seconds: int = Field(default=300, alias="STALE_PROCESSING_CLEANUP_INTERVAL_SECONDS")
-```
-
-### Crash/Restart Behavior
-
-The dual cleanup mechanism ensures resilience:
-
-1. **Graceful shutdown:** Worker cleanup handles completed or failed processing
-2. **Worker crash:** Temp files remain in the upload directory but are caught by startup cleanup
-3. **Container restart:** Startup cleanup removes any orphaned files older than the threshold
-4. **Partial processing:** Files left by incomplete processing are removed on next startup
-
-The `app_data` volume persists across container restarts, allowing stale files to accumulate. The startup cleanup ensures they are eventually removed without manual intervention.
+MIT

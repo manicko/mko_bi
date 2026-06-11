@@ -48,7 +48,7 @@ Summarize into `{MAIN_CONTEXT}`: architecture, conventions, patterns, boundaries
 
 ## 3. — Ensure Docker Environment is Running
 
-Start Docker services in **development or test mode** (never production). Follow `docs/11-guides/docker.md`. Confirm containers are `running` or `healthy`. If startup fails, document why and skip dependent steps.
+Start Docker services in **both development and test modes** (never production). Follow `docs/11-guides/docker.md`. Confirm containers are `running` or `healthy`. If startup fails, document why and skip dependent steps.
 
 ## 4. Task Execution Loop
 
@@ -66,8 +66,7 @@ Run up to 1 subagent at a time. If errors switch to 1 - never parallel.
 
 ```
 Task(
-  prompt="Read .kilo/agents/implementor.md for your role.\n"
-       + "and instructions.\n\n + {subagent_prompt}"\n",
+  prompt="{subagent_prompt}",
   agent="implementor",
   mode = "subagent",
   model="{task_implementor_model}",

@@ -26,6 +26,7 @@ Generate:
 - DO NOT implement fixes
 - DO NOT redesign architecture
 - ONLY plan and generate semantic implementation tasks
+- DO NOT write line numbers this is misleading. Write semantic anchors (modules functions, classes and etc) 
 - Prefer incremental evolution
 - Prefer stable semantic targeting
 - Avoid broad rewrites
@@ -162,7 +163,7 @@ Prefer anchors:
 - lifecycle hooks
 - transaction boundaries
 
-Never use:
+IMPORTANT Never use:
 - line numbers
 - positional patching
 - formatting assumptions

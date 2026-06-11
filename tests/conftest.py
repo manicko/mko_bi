@@ -91,28 +91,17 @@ def pytest_sessionfinish(session, exitstatus):
     upload temp directory.
     """
     import logging
-    from pathlib import Path
 
     logger = logging.getLogger(__name__)
 
     try:
-        from mkobi.config import get_config
+        from mkobi.services.file_cleanup import cleanup_stale_temp_files
 
-        upload_dir = Path(get_config().upload_temp_dir)
+        # max_age_hours=0 means delete all files immediately regardless of age
+        deleted_count = cleanup_stale_temp_files(max_age_hours=0)
 
-        if upload_dir.exists():
-            # Remove all CSV files in the upload directory
-            # Files created during tests have age ~0, so we use direct deletion
-            deleted_count = 0
-            for file_path in upload_dir.glob("*.csv*"):
-                try:
-                    file_path.unlink()
-                    deleted_count += 1
-                except Exception as e:
-                    logger.warning("Failed to delete temp file %s: %s", file_path, e)
-
-            if deleted_count > 0:
-                logger.info("Cleaned up %d temp files after test session", deleted_count)
+        if deleted_count > 0:
+            logger.info("Cleaned up %d temp files after test session", deleted_count)
     except Exception as e:
         # Log cleanup failures but don't fail the test session
         logger.warning("Failed to clean up temp files after test session: %s", e)

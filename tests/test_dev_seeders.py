@@ -182,11 +182,16 @@ async def test_ensure_test_media_dash_creates_filters_binds_to_dashboard(async_d
 
 async def test_seed_script_ruff_mypy():
     """Verify seed script passes linting and type checks."""
+    import shutil
     import subprocess
+
+    # Use venv binaries directly to avoid uv permission issues in container
+    ruff_path = shutil.which("ruff") or "/app/.venv/bin/ruff"
+    mypy_path = shutil.which("mypy") or "/app/.venv/bin/mypy"
 
     # Run ruff check
     result = subprocess.run(
-        ["uv", "run", "ruff", "check", "src/mkobi/db/seeders/test_media_dash.py"],
+        [ruff_path, "check", "src/mkobi/db/seeders/test_media_dash.py"],
         capture_output=True,
         text=True,
     )
@@ -194,7 +199,7 @@ async def test_seed_script_ruff_mypy():
 
     # Run mypy
     result = subprocess.run(
-        ["uv", "run", "mypy", "src/mkobi/db/seeders/test_media_dash.py"],
+        [mypy_path, "src/mkobi/db/seeders/test_media_dash.py"],
         capture_output=True,
         text=True,
     )
@@ -203,17 +208,22 @@ async def test_seed_script_ruff_mypy():
 
 async def test_dev_seeders_module_ruff_mypy():
     """Verify dev_seeders module passes linting and type checks."""
+    import shutil
     import subprocess
 
+    # Use venv binaries directly to avoid uv permission issues in container
+    ruff_path = shutil.which("ruff") or "/app/.venv/bin/ruff"
+    mypy_path = shutil.which("mypy") or "/app/.venv/bin/mypy"
+
     result = subprocess.run(
-        ["uv", "run", "ruff", "check", "src/mkobi/db/dev_seeders.py"],
+        [ruff_path, "check", "src/mkobi/db/dev_seeders.py"],
         capture_output=True,
         text=True,
     )
     assert result.returncode == 0, f"Ruff check failed: {result.stdout}"
 
     result = subprocess.run(
-        ["uv", "run", "mypy", "src/mkobi/db/dev_seeders.py"],
+        [mypy_path, "src/mkobi/db/dev_seeders.py"],
         capture_output=True,
         text=True,
     )

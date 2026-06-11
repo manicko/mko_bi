@@ -52,6 +52,8 @@ def cleanup_stale_temp_files(max_age_hours: int | None = None) -> int:
     Args:
         max_age_hours: Maximum age of files in hours before deletion.
             If None, uses the configured threshold (default 24 hours).
+            If 0, deletes all files regardless of age (immediate cleanup).
+            Negative values are invalid and return 0 without deletion.
 
     Returns:
         int: Number of files deleted.
@@ -64,7 +66,7 @@ def cleanup_stale_temp_files(max_age_hours: int | None = None) -> int:
     )
     upload_dir = Path(config.upload_temp_dir)
 
-    if threshold_hours <= 0:
+    if threshold_hours < 0:
         logger.warning("Invalid threshold %d hours, skipping cleanup", threshold_hours)
         return 0
 
@@ -73,7 +75,8 @@ def cleanup_stale_temp_files(max_age_hours: int | None = None) -> int:
         return 0
 
     # Calculate cutoff time (seconds since epoch)
-    cutoff_seconds = threshold_hours * 3600
+    # threshold_hours=0 means delete all files immediately (used for test cleanup)
+    cutoff_seconds = 0 if threshold_hours == 0 else threshold_hours * 3600
     current_time = time()
     deleted_count = 0
 

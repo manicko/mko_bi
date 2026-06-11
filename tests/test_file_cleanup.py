@@ -133,20 +133,46 @@ class TestFileCleanup:
         deleted_count = cleanup_stale_temp_files()
         assert deleted_count == 0
 
-    def test_cleanup_stale_temp_files_invalid_threshold(self, monkeypatch):
-        """Test cleanup with invalid threshold returns 0."""
+    def test_cleanup_stale_temp_files_zero_threshold_deletes_all(self, monkeypatch):
+        """Test that max_age_hours=0 deletes all files regardless of age."""
         temp_dir = tempfile.mkdtemp()
         monkeypatch.setattr(
             "mkobi.services.file_cleanup.get_config",
             lambda: MagicMock(upload_temp_dir=temp_dir, stale_file_threshold_hours=24)
         )
 
+        # Create test files
+        file1 = Path(temp_dir) / "test_file1.csv"
+        file1.write_text("test,data\n1,2\n")
+        file2 = Path(temp_dir) / "test_file2.csv.gz"
+        file2.write_text("compressed\n")
+
         deleted_count = cleanup_stale_temp_files(max_age_hours=0)
-        assert deleted_count == 0
+        assert deleted_count == 2  # All files should be deleted
+
+        # Verify all files are gone
+        assert not file1.exists()
+        assert not file2.exists()
+
+        # Cleanup
+        shutil.rmtree(temp_dir, ignore_errors=True)
+
+    def test_cleanup_stale_temp_files_negative_threshold(self, monkeypatch):
+        """Test cleanup with negative threshold returns 0."""
+        temp_dir = tempfile.mkdtemp()
+        monkeypatch.setattr(
+            "mkobi.services.file_cleanup.get_config",
+            lambda: MagicMock(upload_temp_dir=temp_dir, stale_file_threshold_hours=24)
+        )
+
+        # Create test files
+        file1 = Path(temp_dir) / "test_file1.csv"
+        file1.write_text("test\n")
 
         deleted_count = cleanup_stale_temp_files(max_age_hours=-1)
-        assert deleted_count == 0
-        
+        assert deleted_count == 0  # Negative threshold is invalid, no files deleted
+        assert file1.exists()  # File should still exist
+
         # Cleanup
         shutil.rmtree(temp_dir, ignore_errors=True)
 

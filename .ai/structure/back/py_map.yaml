@@ -906,6 +906,8 @@
   - ProcessingConfigService
   functions:
   - __init__
+  - _merge_metric_agg_into_settings
+  - _extract_metric_agg_from_settings
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.services.processing_log_service
   layer: unknown

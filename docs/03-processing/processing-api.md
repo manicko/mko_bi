@@ -11,6 +11,7 @@ tags:
   - processing-logs
 related:
   - task-queue
+  - file-cleanup
   - dashboards-api
   - schema-processing
   - data-flow
@@ -383,6 +384,7 @@ Only aggregated data is stored. The structure uses a single `aggregated_data` ta
 ## Cross-References
 
 - [Task Queue Migration](task-queue.md) — In-memory to Redis/RQ migration plan
+- [Temp File Cleanup](file-cleanup.md) — Temp file cleanup architecture
 - [Dashboards API](../02-dashboards/dashboards-api.md) — Dashboard, graph, and filter CRUD
 - [Authentication API](../01-auth/auth-api.md) — JWT auth and role definitions
 - [Database Schema](../09-database/schema-core.md) — `aggregated_data`, `processing_configs`, `processing_logs` table definitions

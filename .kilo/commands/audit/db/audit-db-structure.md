@@ -9,7 +9,7 @@ alwaysApply: false
 
 ## Step 0 — Ensure Docker Environment is Running
 
-Start Docker services in **development or test mode** (never production) before connecting to the database. Follow the setup instructions in `docs/11-guides/docker.md`. Confirm the database container is in `running` or `healthy` state before proceeding. If the environment cannot be started, document why and skip dependent steps.
+Start Docker services in **both development and test modes** (never production) before connecting to the database. Follow the setup instructions in `docs/11-guides/docker.md`. Confirm the database container is in `running` or `healthy` state before proceeding. If the environment cannot be started, document why and skip dependent steps.
 
 ## Objective
 
@@ -183,7 +183,7 @@ Detect:
 Verify ENUM types are created with `checkfirst=True` for idempotency:
 
 ```python
-user_role_enum = ENUM('admin', 'editor', 'viewer', name='user_role')
+user_role_enum = ENUM("admin", "editor", "viewer", name="user_role")
 user_role_enum.create(op.get_bind(), checkfirst=True)
 ```
 

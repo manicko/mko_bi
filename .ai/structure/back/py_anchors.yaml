@@ -6325,6 +6325,50 @@
   type: return_statement
   stable_hash: 6e453bae
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\layout_service.py
+- id: ccc579fd
+  symbol_path:
+  - ProcessingConfigService
+  - _merge_metric_agg_into_settings
+  type: return_statement
+  stable_hash: ccc579fd
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_config_service.py
+- id: ccc579fd
+  symbol_path:
+  - ProcessingConfigService
+  - _merge_metric_agg_into_settings
+  type: return_statement
+  stable_hash: ccc579fd
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_config_service.py
+- id: a96feac3
+  symbol_path:
+  - ProcessingConfigService
+  - _extract_metric_agg_from_settings
+  type: return_statement
+  stable_hash: a96feac3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_config_service.py
+- id: a96feac3
+  symbol_path:
+  - ProcessingConfigService
+  - _extract_metric_agg_from_settings
+  type: return_statement
+  stable_hash: a96feac3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_config_service.py
+- id: cad8c79d
+  symbol_path:
+  - ProcessingConfigService
+  - _extract_metric_agg_from_settings
+  type: function_call
+  value: isinstance
+  stable_hash: cad8c79d
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_config_service.py
+- id: ab4ae5bd
+  symbol_path:
+  - ProcessingConfigService
+  - _extract_metric_agg_from_settings
+  type: function_call
+  value: str
+  stable_hash: ab4ae5bd
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_config_service.py
 - id: a6a18d0a
   symbol_path:
   - ProcessingConfigService

@@ -37,7 +37,7 @@ Before performing audit checks, discover the project's integration architecture:
 
 ### Step R0 — Ensure Docker Environment is Running
 
-Start Docker services in **development or test mode** (never production) before any verification step. Follow the setup instructions in `docs/11-guides/docker.md`. Confirm all required containers are in `running` or `healthy` state before proceeding. If the environment cannot be started, document why and skip dependent steps.
+Start Docker services in **both development and test modes** (never production) before any verification step. Follow the setup instructions in `docs/11-guides/docker.md`. Confirm all required containers are in `running` or `healthy` state before proceeding. If the environment cannot be started, document why and skip dependent steps.
 
 ### Step R1 — Full Route-by-Route Contract Comparison
 

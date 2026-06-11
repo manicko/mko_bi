@@ -1,0 +1,27 @@
+tasks:
+  - id: TASK_001_remove_redundant_cast_in_processing_log_service
+    depends_on: []
+
+  - id: TASK_002_fix_errorcode_import_in_data_worker
+    depends_on: []
+
+  - id: TASK_003_fix_type_annotation_in_data_worker_metrics
+    depends_on: []
+
+  - id: TASK_004_fix_uuid_none_type_in_processing_log_service_delete
+    depends_on: []
+
+  - id: TASK_005_fix_uuid_none_type_in_data_service_check_access
+    depends_on: []
+
+  - id: TASK_006_fix_uuid_none_type_in_data_service_graph_repo
+    depends_on: []
+
+  - id: TASK_007_add_session_scoped_temp_file_cleanup_in_conftest
+    depends_on: []
+
+  - id: TASK_008_add_explicit_return_types_for_repository_methods
+    depends_on: []
+
+  - id: TASK_009_remove_dead_chart_components_and_update_renderer
+    depends_on: []

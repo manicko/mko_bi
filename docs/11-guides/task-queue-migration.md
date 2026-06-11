@@ -10,6 +10,7 @@ tags:
 related:
   - processing-api
   - backend-architecture
+  - file-cleanup
   - deployment
   - docker
 ---
@@ -429,6 +430,7 @@ This allows toggling between in-memory and Redis queues via environment variable
 ## Cross-References
 
 - [Processing API](../03-processing/processing-api.md) — Upload, processing pipeline, and data endpoints
+- [Temp File Cleanup](../03-processing/file-cleanup.md) — File cleanup architecture
 - [Overview](../00-overview/overview.md) — System architecture and data flow
 - [Security Overview](../08-security/security-overview.md) — Rate limiting and upload constraints
 - [Deployment](../10-deployment/deployment.md) — Docker deployment and Redis configuration
