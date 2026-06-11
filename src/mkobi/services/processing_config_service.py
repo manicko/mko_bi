@@ -13,8 +13,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.interfaces.repository_interfaces import IProcessingConfigRepository
 from mkobi.interfaces.service_interfaces import IProcessingConfigService
+from mkobi.models.enums import ErrorCode
 from mkobi.models.processing_configs import ProcessingConfigRead
 from mkobi.models.types import ProcessingSettingsDict
+from mkobi.utils.exceptions import AppException
 
 logger = logging.getLogger(__name__)
 
@@ -76,12 +78,29 @@ class ProcessingConfigService(IProcessingConfigService):
 
         Raises:
             ValueError: If settings structure is incorrect.
+            AppException: If settings field types are invalid.
         """
         if not isinstance(settings, dict):
             raise ValueError("Settings must be a dictionary")
 
         if not settings:
             raise ValueError("Settings cannot be empty")
+
+        # Type validation for processing config fields
+        type_checks: dict[str, type] = {
+            "separator": str,
+            "decimal_separator": str,
+            "column_types": dict,
+            "date_format": str,
+        }
+        for field_name, expected_type in type_checks.items():
+            value = settings.get(field_name)
+            if value is not None and not isinstance(value, expected_type):
+                raise AppException(
+                    ErrorCode.VALIDATION_ERROR,
+                    detail=f"Field '{field_name}' must be of type {expected_type.__name__}, "
+                    f"got {type(value).__name__}",
+                )
 
     async def get_by_dashboard_id(
         self, dashboard_id: UUID, db: AsyncSession

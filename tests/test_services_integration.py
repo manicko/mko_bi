@@ -25,9 +25,10 @@ from mkobi.services.layout_service import LayoutService
 from mkobi.services.processing_config_service import ProcessingConfigService
 from mkobi.services.processing_log_service import ProcessingLogService
 from mkobi.models.graph import GraphCreate
-from mkobi.models.enums import UserRole, GraphType
+from mkobi.models.enums import UserRole, GraphType, ErrorCode
 from mkobi.models.layout import LayoutUpdate
 from mkobi.models.filters import FilterUpdate
+from mkobi.utils.exceptions import AppException
 
 
 # ========== AuthService Integration Tests ==========
@@ -621,6 +622,79 @@ class TestProcessingConfigServiceIntegration:
                 settings="not a dict",
                 db=async_db_session,
             )
+
+    async def test_create_config_invalid_separator_type(self, config_service, async_db_session, dashboard_id):
+        """Test config creation with non-string separator raises validation error."""
+        with pytest.raises(AppException) as exc_info:
+            await config_service.create_processing_config(
+                dashboard_id=dashboard_id,
+                settings={"separator": 123},  # Should be str, not int
+                db=async_db_session,
+            )
+        assert exc_info.value.code == ErrorCode.VALIDATION_ERROR
+        assert "separator" in exc_info.value.detail
+        assert "str" in exc_info.value.detail
+
+    async def test_create_config_invalid_decimal_separator_type(self, config_service, async_db_session, dashboard_id):
+        """Test config creation with non-string decimal_separator raises validation error."""
+        with pytest.raises(AppException) as exc_info:
+            await config_service.create_processing_config(
+                dashboard_id=dashboard_id,
+                settings={"decimal_separator": ["comma"]},  # Should be str, not list
+                db=async_db_session,
+            )
+        assert exc_info.value.code == ErrorCode.VALIDATION_ERROR
+        assert "decimal_separator" in exc_info.value.detail
+
+    async def test_create_config_invalid_column_types_type(self, config_service, async_db_session, dashboard_id):
+        """Test config creation with non-dict column_types raises validation error."""
+        with pytest.raises(AppException) as exc_info:
+            await config_service.create_processing_config(
+                dashboard_id=dashboard_id,
+                settings={"column_types": "not_a_dict"},  # Should be dict
+                db=async_db_session,
+            )
+        assert exc_info.value.code == ErrorCode.VALIDATION_ERROR
+        assert "column_types" in exc_info.value.detail
+        assert "dict" in exc_info.value.detail
+
+    async def test_create_config_invalid_date_format_type(self, config_service, async_db_session, dashboard_id):
+        """Test config creation with non-string date_format raises validation error."""
+        with pytest.raises(AppException) as exc_info:
+            await config_service.create_processing_config(
+                dashboard_id=dashboard_id,
+                settings={"date_format": 2024},  # Should be str, not int
+                db=async_db_session,
+            )
+        assert exc_info.value.code == ErrorCode.VALIDATION_ERROR
+        assert "date_format" in exc_info.value.detail
+
+    async def test_create_config_valid_type_settings(self, config_service, async_db_session, dashboard_id):
+        """Test config creation with valid typed settings passes validation."""
+        valid_settings = {
+            "separator": ",",
+            "decimal_separator": ".",
+            "column_types": {"col1": "str", "col2": "int"},
+            "date_format": "%Y-%m-%d",
+        }
+        result = await config_service.create_processing_config(
+            dashboard_id=dashboard_id,
+            settings=valid_settings,
+            db=async_db_session,
+        )
+        assert result is not None
+        assert result.dashboard_id == dashboard_id
+
+    async def test_create_config_missing_fields_no_type_validation(self, config_service, async_db_session, dashboard_id):
+        """Test that missing optional fields are not type-validated (pass validation)."""
+        # Only provide a value that is not in the type_checks list
+        # Missing fields should not trigger type validation
+        result = await config_service.create_processing_config(
+            dashboard_id=dashboard_id,
+            settings={"encoding": "UTF-8"},
+            db=async_db_session,
+        )
+        assert result is not None
 
     async def test_get_config_with_db(self, config_service, async_db_session, dashboard_id, valid_settings):
         """Test getting config by dashboard ID."""
