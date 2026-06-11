@@ -163,6 +163,7 @@ async def upsert_config_endpoint(
             dashboard_id=dashboard_id,
             db=db,
             settings=config_update.settings,
+            metric_agg=config_update.metric_agg,
         )
         return config
     except ValueError as e:
