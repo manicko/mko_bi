@@ -588,9 +588,8 @@ class TestProcessingConfigServiceIntegration:
     def valid_settings(self):
         """Return valid processing settings."""
         return {
-            "loader": "csv",
-            "date_column": "date",
-            "timezone": "UTC",
+            "separator": ",",
+            "encoding": "UTF-8",
         }
 
     async def test_create_config_with_db(self, config_service, async_db_session, dashboard_id, valid_settings):
@@ -605,10 +604,21 @@ class TestProcessingConfigServiceIntegration:
 
     async def test_create_config_invalid_settings(self, config_service, async_db_session, dashboard_id):
         """Test config creation with invalid settings raises."""
-        with pytest.raises(ValueError):
+        # Empty settings should raise ValueError
+        with pytest.raises(ValueError, match="Settings cannot be empty"):
             await config_service.create_processing_config(
                 dashboard_id=dashboard_id,
-                settings={"invalid": "settings"},
+                settings={},
+                db=async_db_session,
+            )
+
+    async def test_create_config_non_dict_settings(self, config_service, async_db_session, dashboard_id):
+        """Test config creation with non-dict settings raises."""
+        # Non-dict settings should raise ValueError
+        with pytest.raises(ValueError, match="Settings must be a dictionary"):
+            await config_service.create_processing_config(
+                dashboard_id=dashboard_id,
+                settings="not a dict",
                 db=async_db_session,
             )
 
@@ -633,7 +643,7 @@ class TestProcessingConfigServiceIntegration:
             db=async_db_session,
         )
         updated_settings = valid_settings.copy()
-        updated_settings["loader"] = "json"
+        updated_settings["separator"] = ";"
         result = await config_service.update_processing_config(
             dashboard_id=dashboard_id,
             settings=updated_settings,

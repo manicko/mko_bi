@@ -83,21 +83,6 @@ class ProcessingConfigService(IProcessingConfigService):
         if not settings:
             raise ValueError("Settings cannot be empty")
 
-        required_fields = ["loader", "date_column", "timezone"]
-        missing_fields = [field for field in required_fields if field not in settings]
-        if missing_fields:
-            raise ValueError(f"Missing required fields: {', '.join(missing_fields)}")
-
-        loader = settings.get("loader")
-        if not isinstance(loader, str) or not loader.strip():
-            raise ValueError("Field 'loader' must be a non-empty string")
-        date_column = settings.get("date_column")
-        if not isinstance(date_column, str) or not date_column.strip():
-            raise ValueError("Field 'date_column' must be a non-empty string")
-        timezone = settings.get("timezone")
-        if not isinstance(timezone, str) or not timezone.strip():
-            raise ValueError("Field 'timezone' must be a non-empty string")
-
     async def get_by_dashboard_id(
         self, dashboard_id: UUID, db: AsyncSession
     ) -> ProcessingConfigRead | None:
