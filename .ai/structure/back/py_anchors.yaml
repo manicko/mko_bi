@@ -5388,6 +5388,13 @@
   value: ValueError
   stable_hash: 55fdb03c
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\data_service.py
+- id: 4f3762b3
+  symbol_path:
+  - DataService
+  type: function_call
+  value: AppException
+  stable_hash: 4f3762b3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\data_service.py
 - id: c93bbbfa
   symbol_path:
   - DataService
@@ -5421,6 +5428,13 @@
   type: function_call
   value: ValueError
   stable_hash: 55fdb03c
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\data_service.py
+- id: 4f3762b3
+  symbol_path:
+  - DataService
+  type: function_call
+  value: AppException
+  stable_hash: 4f3762b3
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\data_service.py
 - id: c93bbbfa
   symbol_path:
@@ -6574,6 +6588,13 @@
   type: return_statement
   stable_hash: 18b500a0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
+- id: 38d5a6c0
+  symbol_path:
+  - ProcessingLogService
+  type: function_call
+  value: cast
+  stable_hash: 38d5a6c0
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
 - id: 2e656bdc
   symbol_path:
   - ProcessingLogService
@@ -6593,6 +6614,13 @@
   - ProcessingLogService
   type: return_statement
   stable_hash: 18b500a0
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
+- id: 38d5a6c0
+  symbol_path:
+  - ProcessingLogService
+  type: function_call
+  value: cast
+  stable_hash: 38d5a6c0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
 - id: 18b500a0
   symbol_path:
@@ -6625,6 +6653,13 @@
   - ProcessingLogService
   type: return_statement
   stable_hash: 18b500a0
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
+- id: 40ff99b7
+  symbol_path:
+  - ProcessingLogService
+  type: function_call
+  value: AppException
+  stable_hash: 40ff99b7
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
 - id: 18b500a0
   symbol_path:
@@ -6708,6 +6743,13 @@
   - ProcessingLogService
   type: return_statement
   stable_hash: 18b500a0
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
+- id: 38d5a6c0
+  symbol_path:
+  - ProcessingLogService
+  type: function_call
+  value: cast
+  stable_hash: 38d5a6c0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
 - id: 1464b146
   symbol_path:

@@ -814,6 +814,21 @@ class TestProcessingLogServiceIntegration:
             message="Starting",
             db=async_db_session,
         )
+        # Follow proper state transitions: started -> uploaded -> processing -> completed
+        await log_service.update_processing_log(
+            log_id=log.id,
+            status="uploaded",
+            message="File uploaded",
+            finished_at=None,
+            db=async_db_session,
+        )
+        await log_service.update_processing_log(
+            log_id=log.id,
+            status="processing",
+            message="Processing",
+            finished_at=None,
+            db=async_db_session,
+        )
         result = await log_service.update_processing_log(
             log_id=log.id,
             status="completed",

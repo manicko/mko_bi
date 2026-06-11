@@ -1,27 +1,186 @@
 tasks:
-  - id: TASK_001_remove_redundant_cast_in_processing_log_service
+  # STAGE 1: Database Schema (must come first - blocks all DB operations)
+  - id: TASK_010_add_processing_logs_composite_index
+    depends_on: []
+    status: done
+
+  - id: TASK_011_add_started_at_index_for_stale_log_cleanup
+    depends_on:
+      - TASK_010_add_processing_logs_composite_index
+
+  # STAGE 2: Backend Code Fixes (independent, can run in parallel after DB schema)
+  - id: TASK_012_remove_unused_required_fields_from_validate_settings
     depends_on: []
 
-  - id: TASK_002_fix_errorcode_import_in_data_worker
+  - id: TASK_013_wire_metric_agg_from_config_to_aggregation
     depends_on: []
 
-  - id: TASK_003_fix_type_annotation_in_data_worker_metrics
+  - id: TASK_014_wrap_test_cleanup_in_try_finally
     depends_on: []
 
-  - id: TASK_004_fix_uuid_none_type_in_processing_log_service_delete
+  # STAGE 3: Infrastructure/Docker (independent of backend fixes)
+  - id: TASK_015_fix_init_script_sql_syntax_error
     depends_on: []
 
-  - id: TASK_005_fix_uuid_none_type_in_data_service_check_access
+  - id: TASK_016_fix_vite_windows_sigbus_crash
     depends_on: []
 
-  - id: TASK_006_fix_uuid_none_type_in_data_service_graph_repo
+  - id: TASK_017_add_cors_origins_fail_fast_to_compose
     depends_on: []
 
-  - id: TASK_007_add_session_scoped_temp_file_cleanup_in_conftest
+  # STAGE 4: Test/CI Improvements (independent)
+  - id: TASK_018_remove_pytest_xdist_auto_from_pyproject
     depends_on: []
 
-  - id: TASK_008_add_explicit_return_types_for_repository_methods
+  - id: TASK_019_add_coverage_flag_to_vitest
     depends_on: []
 
-  - id: TASK_009_remove_dead_chart_components_and_update_renderer
+  # STAGE 5: Documentation (independent)
+  - id: TASK_020_add_pg18_migration_documentation
     depends_on: []
+    status: rejected
+
+  # STAGE 6: Advisory Config (independent)
+  - id: TASK_021_change_log_level_to_warning_in_production
+    depends_on: []
+
+  # STAGE 7: Data Processing Advisory (independent)
+  - id: TASK_025_add_type_validation_for_processing_config_fields
+    depends_on:
+      - TASK_012_remove_unused_required_fields_from_validate_settings
+
+  - id: TASK_026_add_cleanup_for_commit_failure_in_data_worker
+    depends_on: []
+
+  # STAGE 8: Infrastructure Advisory (independent)
+  - id: TASK_027_add_log_filter_for_pg_collation_errors
+    depends_on: []
+
+  - id: TASK_028_clarify_production_env_workflow_in_docs
+    depends_on: []
+
+  - id: TASK_029_add_cicd_warning_about_test_port_exposure
+    depends_on: []
+
+  - id: TASK_030_fix_log_level_variable_name_mismatch
+    depends_on: []
+    status: done
+
+  # STAGE 9: Frontend Advisory (independent)
+  - id: TASK_031_fix_type_safety_in_401_request_queue
+    depends_on: []
+
+  - id: TASK_032_add_empty_data_state_in_chart_renderer
+    depends_on: []
+
+  - id: TASK_033_add_coverage_dir_to_eslint_ignore
+    depends_on: []
+
+  # STAGE 10: Verification Tasks (depend on their respective stages)
+  - id: TASK_022_verify_stage1_database_schema
+    depends_on:
+      - TASK_010_add_processing_logs_composite_index
+      - TASK_011_add_started_at_index_for_stale_log_cleanup
+
+  - id: TASK_023_verify_stage2_backend_fixes
+    depends_on:
+      - TASK_012_remove_unused_required_fields_from_validate_settings
+      - TASK_013_wire_metric_agg_from_config_to_aggregation
+
+  - id: TASK_024_verify_stage3_infrastructure
+    depends_on:
+      - TASK_015_fix_init_script_sql_syntax_error
+      - TASK_016_fix_vite_windows_sigbus_crash
+      - TASK_017_add_cors_origins_fail_fast_to_compose
+
+  - id: TASK_034_verify_stage4_data_processing_advisory
+    depends_on:
+      - TASK_025_add_type_validation_for_processing_config_fields
+      - TASK_026_add_cleanup_for_commit_failure_in_data_worker
+
+  - id: TASK_035_verify_stage5_frontend_and_docs
+    depends_on:
+      - TASK_027_add_log_filter_for_pg_collation_errors
+      - TASK_028_clarify_production_env_workflow_in_docs
+      - TASK_029_add_cicd_warning_about_test_port_exposure
+- TASK_030_fix_log_level_variable_name_mismatch [DONE]
+      - TASK_031_fix_type_safety_in_401_request_queue
+      - TASK_032_add_empty_data_state_in_chart_renderer
+      - TASK_033_add_coverage_dir_to_eslint_ignore
+
+execution_order:
+  # Phase 1: Foundation (DB Schema) - must complete first
+  phase_1:
+    - TASK_010_add_processing_logs_composite_index [DONE]
+    - TASK_011_add_started_at_index_for_stale_log_cleanup
+
+  # Phase 2: Independent implementation tasks (can run in parallel)
+  phase_2:
+    - TASK_012_remove_unused_required_fields_from_validate_settings
+    - TASK_013_wire_metric_agg_from_config_to_aggregation
+    - TASK_014_wrap_test_cleanup_in_try_finally
+    - TASK_015_fix_init_script_sql_syntax_error
+    - TASK_016_fix_vite_windows_sigbus_crash
+    - TASK_017_add_cors_origins_fail_fast_to_compose
+    - TASK_018_remove_pytest_xdist_auto_from_pyproject
+    - TASK_019_add_coverage_flag_to_vitest
+    - TASK_021_change_log_level_to_warning_in_production
+    - TASK_026_add_cleanup_for_commit_failure_in_data_worker
+    - TASK_027_add_log_filter_for_pg_collation_errors
+    - TASK_028_clarify_production_env_workflow_in_docs
+    - TASK_029_add_cicd_warning_about_test_port_exposure
+    - TASK_030_fix_log_level_variable_name_mismatch
+    - TASK_031_fix_type_safety_in_401_request_queue
+    - TASK_032_add_empty_data_state_in_chart_renderer
+    - TASK_033_add_coverage_dir_to_eslint_ignore
+
+  # Phase 3: Dependent implementation task (after TASK_012)
+  phase_3:
+    - TASK_025_add_type_validation_for_processing_config_fields
+
+  # Phase 4: Verification (after all implementations)
+  phase_4:
+    - TASK_022_verify_stage1_database_schema
+    - TASK_023_verify_stage2_backend_fixes
+    - TASK_024_verify_stage3_infrastructure
+    - TASK_034_verify_stage4_data_processing_advisory
+    - TASK_035_verify_stage5_frontend_and_docs
+
+parallel_groups:
+  # Tasks that can execute simultaneously (no dependencies between them)
+  group_a:  # Independent backend fixes
+    - TASK_012_remove_unused_required_fields_from_validate_settings
+    - TASK_013_wire_metric_agg_from_config_to_aggregation
+    - TASK_014_wrap_test_cleanup_in_try_finally
+
+  group_b:  # Independent infrastructure fixes
+    - TASK_015_fix_init_script_sql_syntax_error
+    - TASK_016_fix_vite_windows_sigbus_crash
+    - TASK_017_add_cors_origins_fail_fast_to_compose
+
+  group_c:  # Independent test/CI improvements
+    - TASK_018_remove_pytest_xdist_auto_from_pyproject
+    - TASK_019_add_coverage_flag_to_vitest
+
+  group_d:  # Independent data processing advisory
+    - TASK_026_add_cleanup_for_commit_failure_in_data_worker
+
+  group_e:  # Independent infrastructure advisory
+    - TASK_027_add_log_filter_for_pg_collation_errors
+    - TASK_028_clarify_production_env_workflow_in_docs
+    - TASK_029_add_cicd_warning_about_test_port_exposure
+    - TASK_030_fix_log_level_variable_name_mismatch
+
+  group_f:  # Independent frontend advisory
+    - TASK_031_fix_type_safety_in_401_request_queue
+    - TASK_032_add_empty_data_state_in_chart_renderer
+    - TASK_033_add_coverage_dir_to_eslint_ignore
+
+summary:
+  total_tasks: 25
+  completed_tasks: 5
+  rejected_tasks: 1
+  mandatory_tasks: 6
+  advisory_tasks: 16
+  verification_tasks: 5
+  max_parallelism: 18  # sum of all parallel groups

@@ -60,7 +60,7 @@ Look up `{task_implementor_model}` from `C:\py_dev\mkobi\.ai\models\lookup_table
 
 ### 4.2 Spawn Implementor Subagent
 
-Run up to 1 subagent at a time. If errors switch to 1 - never parallel.
+Run up to 2 subagent at a time. If errors switch to 1 - never parallel.
 
 
 
@@ -82,6 +82,12 @@ Where `{subagent_prompt}` is:
 
 ## Project Context
 {MAIN_CONTEXT}
+
+
+## Ensure Docker Environment is Running
+
+Start Docker services in **both development and test modes** (never production) before connecting to the database. Follow the setup instructions in `docs/11-guides/docker.md`. Confirm the database container is in `running` or `healthy` state before proceeding. If the environment cannot be started, document why and skip dependent steps.
+
 
 ## What To Do
 1. Read the task file. Understand scope, affected files, acceptance criteria.

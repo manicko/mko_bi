@@ -104,7 +104,7 @@ await axiosInstance.post(`/dashboards/${dashboardId}/access`, {
 |----------|-------|
 | CRITICAL | 0 |
 | HIGH | 0 |
-| MEDIUM | 1 |
+| MEDIUM | 2 |
 | LOW | 2 |
 
 ## Mandatory Fixes

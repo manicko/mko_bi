@@ -292,13 +292,6 @@
   type: component
   value: Header
   stable_hash: df29c216
-- id: f2935dc8
-  file: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/BarChart.tsx
-  symbol_path:
-    - BarChart
-  type: component
-  value: BarChart
-  stable_hash: f2935dc8
 - id: e88d88d5
   file: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/ChartRenderer.tsx
   symbol_path:
@@ -313,13 +306,6 @@
   type: component
   value: LineChart
   stable_hash: 54ea06b6
-- id: 1e5443ba
-  file: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/PieChart.tsx
-  symbol_path:
-    - PieChart
-  type: component
-  value: PieChart
-  stable_hash: 1e5443ba
 - id: 8fedc7fc
   file: >-
     C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/PlotlyChart.test.tsx

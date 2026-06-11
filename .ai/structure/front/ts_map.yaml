@@ -1317,16 +1317,6 @@
   jsx_tags:
     - <QueryClientProvider client={queryClient}>
     - <MemoryRouter>
-- path: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/BarChart.tsx
-  module: C:.py_dev.mkobi.frontend.src.features.dashboards.ui.charts.BarChart
-  layer: unknown
-  imports:
-    - ./PlotlyChart
-    - react-plotly.js
-  components:
-    - BarChart
-  hooks: []
-  jsx_tags: []
 - path: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/ChartRenderer.tsx
   module: C:.py_dev.mkobi.frontend.src.features.dashboards.ui.charts.ChartRenderer
   layer: unknown
@@ -1355,16 +1345,6 @@
     - react-plotly.js
   components:
     - LineChart
-  hooks: []
-  jsx_tags: []
-- path: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/PieChart.tsx
-  module: C:.py_dev.mkobi.frontend.src.features.dashboards.ui.charts.PieChart
-  layer: unknown
-  imports:
-    - ./PlotlyChart
-    - react-plotly.js
-  components:
-    - PieChart
   hooks: []
   jsx_tags: []
 - path: >-
