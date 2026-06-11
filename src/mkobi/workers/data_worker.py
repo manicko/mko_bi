@@ -424,7 +424,10 @@ async def _process_csv_file_async(
         }
 
         # Store aggregates in database with mode (within same transaction)
-        await _store_aggregates(df, dashboard_id, task_id, mode, db_session=session)
+        await _store_aggregates(
+            df, dashboard_id, task_id, mode, db_session=session,
+            processing_config_dict=processing_config_dict
+        )
 
         # Clean up temp file
         if file_path.exists():
@@ -516,6 +519,7 @@ async def _store_aggregates(
     task_id: str,
     mode: str = "overwrite",
     db_session: AsyncSession | None = None,
+    processing_config_dict: dict[str, Any] | None = None,
 ) -> None:
     """Store aggregated data to database.
 
@@ -525,6 +529,7 @@ async def _store_aggregates(
         task_id: Task ID for logging.
         mode: Upload mode - "overwrite" clears old data, "append" keeps it.
         db_session: Optional database session for testing. If None, creates a new session.
+        processing_config_dict: Processing configuration for extracting metric_agg.
     """
     from mkobi.data.storage.manager import StorageManager
     from mkobi.models.enums import UploadMode
@@ -579,7 +584,10 @@ async def _store_aggregates(
 
         # Use AggregationService for per-chart GROUP BY aggregation
         agg_service = AggregationService()
-        records = await agg_service.aggregate_for_dashboard(df, graph_reads, filter_reads)
+        metric_agg = (processing_config_dict or {}).get("settings", {}).get("metric_agg", "sum")
+        records = await agg_service.aggregate_for_dashboard(
+            df, graph_reads, filter_reads, metric_agg=metric_agg
+        )
 
         # Convert records to StorageManager format
         aggregates = [
@@ -647,7 +655,10 @@ async def _store_aggregates(
 
                 # Use AggregationService for per-chart GROUP BY aggregation
                 agg_service = AggregationService()
-                records = await agg_service.aggregate_for_dashboard(df, graph_reads, filter_reads)
+                metric_agg = (processing_config_dict or {}).get("settings", {}).get("metric_agg", "sum")
+                records = await agg_service.aggregate_for_dashboard(
+                    df, graph_reads, filter_reads, metric_agg=metric_agg
+                )
 
                 # Convert records to StorageManager format
                 aggregates = [
