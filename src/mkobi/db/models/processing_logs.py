@@ -67,6 +67,7 @@ class ProcessingLog(Base):
     __table_args__ = (
         Index("idx_processing_logs_dashboard_id", "dashboard_id"),
         Index("idx_processing_logs_status_finished_at", "status", "finished_at"),
+        Index("idx_processing_logs_status_started_at", "status", "started_at"),
     )
 
     # Relationship with dashboard
