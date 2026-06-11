@@ -239,13 +239,13 @@ class ProcessingLogService(IProcessingLogService):
         if db is not None:
             # Use provided session (test mode)
             count = await self.log_repo.delete_old_logs(cutoff, db)
-            return cast(int, count)
+            return count
 
         # Production mode - create new session
         async with get_session() as session:
             async with session.begin():
                 count = await self.log_repo.delete_old_logs(cutoff, session)
-                return cast(int, count)
+                return count
 
 
 
