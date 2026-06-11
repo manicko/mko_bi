@@ -560,6 +560,7 @@
     - ../api/adminApi
     - '@tanstack/react-query'
     - ../../../shared/types/api.types
+    - ../../../shared/types/enums
   components:
     - LogViewer
   hooks: []
@@ -573,7 +574,7 @@
     - <MenuItem value="">
     - '<FormControl size="small" sx={{ minWidth: 150 }}>'
     - <InputLabel>
-    - "<Select\r\n              value={filters.status_filter || ''}\r\n              label=\"Status Filter\"\r\n              onChange={(e) => setFilters({ ...filters, status_filter: e.target.value || undefined })}\r\n            >"
+    - "<Select\r\n               value={filters.status_filter || ''}\r\n               label=\"Status Filter\"\r\n               onChange={(e) => {\r\n                 const value = e.target.value\r\n                 setFilters({ ...filters, status_filter: value || undefined })\r\n               }}\r\n             >"
     - <MenuItem value="">
     - <MenuItem key={status} value={status}>
     - <Button variant="contained" onClick={handleApplyFilters}>

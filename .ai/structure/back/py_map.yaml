@@ -18,6 +18,7 @@
   - mkobi.db.starter
   - mkobi.workers.data_worker
   - mkobi.core.task_queue
+  - mkobi.db.session
   - mkobi.utils.exceptions
   - pathlib
   - starlette.staticfiles
@@ -72,6 +73,7 @@
   - validate_temp_password_ttl
   - validate_admin_credentials
   - validate_debug_mode
+  - validate_cors_origins_not_placeholder
   - validate_cors_origins
   - settings_customise_sources
   - __init__
@@ -386,6 +388,8 @@
   - typing
   - uuid
   - sqlalchemy.ext.asyncio
+  - mkobi.models.enums
+  - mkobi.models.processing_logs
   classes:
   - IRepository
   - IUserRepository
@@ -604,6 +608,7 @@
   - datetime
   - pydantic
   - uuid
+  - mkobi.models.enums
   - mkobi.models.types
   classes:
   - ProcessingConfigBase
@@ -1063,6 +1068,7 @@
   - mkobi.db.session
   - mkobi.models.data
   - mkobi.models.enums
+  - mkobi.utils.exceptions
   - mkobi.data.storage.manager
   - mkobi.models.enums
   - mkobi.models.graph
@@ -1071,6 +1077,7 @@
   - mkobi.db.repositories.dashboard_filter_values_repo
   classes: []
   functions:
+  - _validate_processing_config
   - _to_graph_read
   - _to_filter_read
   - process_csv_background_sync

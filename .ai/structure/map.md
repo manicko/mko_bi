@@ -1,5 +1,5 @@
 Folder PATH listing for volume Windows
-Volume serial number is F012-D5D6
+Volume serial number is 00000231 F012:D5D6
 C:\PY_DEV\MKOBI
 |   $null
 |   .coverage
@@ -122,6 +122,15 @@ C:\PY_DEV\MKOBI
 |   |   |       TASK_005_clear_filter_values_on_overwrite_DONE.yaml
 |   |   |       TASK_006_add_processing_logs_status_index_DONE.yaml
 |   |   |       TASK_007_add_yoy_precision_rounding_DONE.yaml
+|   |   |       TASK_008_add_graceful_shutdown_for_session_engine_DONE.yaml
+|   |   |       TASK_009_improve_cors_origins_validation_DONE.yaml
+|   |   |       TASK_010_use_registration_status_enum_in_backend_DONE.yaml
+|   |   |       TASK_011_add_invalid_transition_frontend_enum_DONE.yaml
+|   |   |       TASK_012_tighten_repository_return_types_DONE.yaml
+|   |   |       TASK_013_remove_redundant_dashboard_filters_index_DONE.yaml
+|   |   |       TASK_016_update_formula_parser_docs_DONE.yaml
+|   |   |       TASK_017_use_processing_status_enum_for_status_filter_DONE.yaml
+|   |   |       TASK_018_align_finished_at_nullability_DONE.yaml
 |   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
@@ -129,17 +138,8 @@ C:\PY_DEV\MKOBI
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
-|   |   |       TASK_008_add_graceful_shutdown_for_session_engine.yaml
-|   |   |       TASK_009_improve_cors_origins_validation.yaml
-|   |   |       TASK_010_use_registration_status_enum_in_backend.yaml
-|   |   |       TASK_011_add_invalid_transition_frontend_enum.yaml
-|   |   |       TASK_012_tighten_repository_return_types.yaml
-|   |   |       TASK_013_remove_redundant_dashboard_filters_index.yaml
 |   |   |       TASK_014_expose_metric_agg_in_processing_config.yaml
 |   |   |       TASK_015_add_processing_config_upfront_validation.yaml
-|   |   |       TASK_016_update_formula_parser_docs.yaml
-|   |   |       TASK_017_use_processing_status_enum_for_status_filter.yaml
-|   |   |       TASK_018_align_finished_at_nullability.yaml
 |   |   |       
 |   |   \---validation
 |   \---templates
@@ -18514,6 +18514,7 @@ C:\PY_DEV\MKOBI
 |   |   |   000000000002_add_dashboard_filter_values_table.py
 |   |   |   4479eb53fd4e_remove_unused_success_value_from_.py
 |   |   |   b749bc53b1ee_add_processing_logs_status_index.py
+|   |   |   f47ac18b5b9e_remove_redundant_dashboard_filters_index.py
 |   |   |   
 |   |   \---__pycache__
 |   |           000000000000_initial_migration.cpython-314.pyc
@@ -18521,6 +18522,7 @@ C:\PY_DEV\MKOBI
 |   |           000000000002_add_dashboard_filter_values_table.cpython-314.pyc
 |   |           4479eb53fd4e_remove_unused_success_value_from_.cpython-314.pyc
 |   |           b749bc53b1ee_add_processing_logs_status_index.cpython-314.pyc
+|   |           f47ac18b5b9e_remove_redundant_dashboard_filters_index.cpython-314.pyc
 |   |           
 |   \---__pycache__
 |           env.cpython-314.pyc
@@ -18556,10 +18558,12 @@ C:\PY_DEV\MKOBI
 |           1f5e4b73-4244-4776-bb1e-dbdfa22715a3.csv
 |           23aa9015-93e4-48d0-8028-6e10c87a110f.csv.gz
 |           253506f8-ff54-4f75-ba1b-caef2d200d99.csv.gz
+|           26c49601-3a41-4395-8b14-f3961091820d.csv
 |           28844f21-32c1-4e54-94d0-bbf1840f6c29.csv.gz
 |           28bd7dbe-444f-4aa0-b70f-5f79b6491628.csv
 |           29edaa07-3d51-4ec3-95a4-303062ef93d4.csv
 |           2b79f378-6650-4540-b007-4a9df3e3285b.csv.gz
+|           2cde9aa8-d743-430c-a86d-6dec8dcde648.csv
 |           2ce09efe-fae5-4d67-9ea6-e469ba74d9dd.csv
 |           2ff9f114-9ca7-4823-99be-3b608f14862f.csv
 |           30c2a743-0444-4fe3-9cbe-3b70150bfe89.csv
@@ -18598,21 +18602,26 @@ C:\PY_DEV\MKOBI
 |           75d52407-3432-4088-a7f6-0d6e79d32596.csv
 |           7a75f68f-aa4b-4e80-8c07-05501ebf0b8d.csv.gz
 |           7aa16c42-678f-49d8-975d-68a3c4973274.csv
+|           7c6f1c88-7efb-46e0-affa-4da276bb6161.csv.gz
 |           7f3aaf1e-6532-4d2c-9bed-4a349540372b.csv
 |           814b27f4-f8c7-46f5-a502-0e578e7a2369.csv.gz
 |           82203fef-5e7c-4627-b8f6-bc0716de464d.csv.gz
+|           859ceda2-1c69-4c98-b5c0-43d06365de6a.csv
 |           8a4e4712-ea9c-4da9-906b-27953597faf4.csv
 |           8c6fc1e6-fa3a-45d2-a853-af4dcd487998.csv
 |           8df3dfbe-23d4-47eb-af47-dbb6327917f2.csv
+|           8ef7f69d-019e-44bd-859f-e40fb9e161bf.csv
 |           8f056e5d-43a9-43ee-af79-23e046453195.csv
 |           900b8849-8de9-49db-b99c-440594c93d4d.csv.gz
 |           9083229c-3700-4637-9110-4193e6b9042e.csv
 |           910144ee-50ab-43ca-85a7-5b6c2a676a09.csv
 |           9228358c-556e-461d-8579-3b7ab0759a4b.csv
+|           92a8d801-4afc-4db3-b6bf-8db92d94af4f.csv
 |           93898271-986d-4f7e-a243-1b4f665023bc.csv
 |           955bcd65-7f41-4a3c-bfc3-01bb701eb7dc.csv
 |           9ba4a602-7f77-45cd-a1d3-441dad3ea506.csv.gz
 |           9cf18a3e-43d5-42bb-a1bb-9d7588c1a5fe.csv
+|           9ef06d25-83e6-473d-8abd-6312927a6469.csv.gz
 |           a02d56bf-c89a-49fa-8dda-751f1b7665f5.csv
 |           a1e3fe02-273f-4ddc-ad21-980fd4ea791e.csv
 |           a1ebb615-21c4-43df-a64c-0e098a8337d6.csv.gz
@@ -18623,16 +18632,21 @@ C:\PY_DEV\MKOBI
 |           a71c64da-3082-4206-a5c3-8e0a205f74f2.csv
 |           a7c97790-e27f-476b-a918-2569ed7cfe35.csv
 |           a93d4ce0-d60b-440c-8120-c565bf50ccf2.csv
+|           aa422838-4eef-4f99-b383-946c4d3c2fee.csv
 |           ab3c173b-479a-4bc0-bbab-8e53dd71246a.csv
 |           ac12725a-85e7-4fdf-becb-a46b2f265155.csv
+|           af19aff4-3a28-4371-a575-c58f9d8425bf.csv.gz
 |           b037671d-79d1-4933-b24e-05abac8a39a2.csv
 |           b126975f-f1fa-4b5f-9f41-0b15a6260c4f.csv
 |           b346cb1c-6ce6-4c22-a69c-0865714ad57a.csv
+|           b5b33599-8f3d-4a50-b25f-352760262e95.csv
+|           b6deb36e-5525-49e1-9002-86fcaa7b096d.csv.gz
 |           b74670e4-848b-4bda-8ba6-5c5a08566781.csv
 |           b8d01ecc-3b0b-46d3-8ff0-da042c65ceaf.csv
 |           b9e9499d-4a03-4793-83cf-406079d5bd6e.csv
 |           bc4fb7a8-32f6-42dd-b47b-9e0b9aaa8b00.csv
 |           bd0a33c6-b5b7-4ec7-b416-ec3e925f73c5.csv
+|           bf8845aa-730e-4699-80fc-babecce94517.csv
 |           bfee9f92-d99b-408b-8b0d-db1afcd1d8f1.csv.gz
 |           c02c9a20-bea1-4fe5-a571-2ebfd3b233b7.csv
 |           c18b841b-ee4d-4480-8561-76a1e88dcbd5.csv
@@ -18654,9 +18668,13 @@ C:\PY_DEV\MKOBI
 |           e2ba061e-0660-4b04-82be-77410c07935f.csv
 |           e32ef1bb-cce6-4404-b80a-bd982b6f8aa1.csv
 |           e531855a-d792-4106-a783-e5473aff7664.csv
+|           e952ec04-8083-415e-99c7-4fe737839ab0.csv
+|           e97f8eff-8c93-4e23-b723-d6e8925ed79b.csv
+|           eab9837e-5132-4836-a1fc-93fd581fafbc.csv
 |           ed35d868-86ce-4289-926c-e9eb767f8306.csv
 |           eebf1d18-e44f-4d2a-b0ed-46dceb0d3962.csv
 |           ef1bc063-809a-4fb3-b157-9872486f3526.csv
+|           f0661192-94e8-4691-9e28-83df63b267ae.csv
 |           f0c2b536-7207-498f-9496-c96cb5dfd865.csv
 |           f4e72d62-1b9b-4a07-ac47-1fbcb9d983eb.csv
 |           f5dbc7cd-03a9-4b1a-8df0-55933fcbbc1e.csv
@@ -18664,6 +18682,7 @@ C:\PY_DEV\MKOBI
 |           f7bd0b2f-7634-4d23-9450-b704c057be7e.csv.gz
 |           f9d6e80d-98ab-4d61-a690-a95ad0ab7aeb.csv
 |           fb4fa5f3-f884-4aa1-9e4d-fdd449065793.csv.gz
+|           fe6ff8d6-6e0d-4bc6-aa5b-2d2564ddb9f8.csv
 |           fecdd6dd-ff2b-4ea0-a32b-5f6b6c2579cc.csv
 |           fff57272-b0b5-490c-9742-ba82a1e55615.csv
 |           
@@ -18850,22 +18869,22 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           AdminPanel-DZu65e-5.js
-|   |           ChangePasswordPage-BcuSPG-B.js
-|   |           dashboardApi-DwUeHUcR.js
-|   |           DashboardList-BCNO7j6e.js
-|   |           DashboardView-OEXKb5M0.js
+|   |           AdminPanel-Bsb8OW6o.js
+|   |           ChangePasswordPage-DPqjA2M0.js
+|   |           dashboardApi-D7_OZC7d.js
+|   |           DashboardList-BKow6NVe.js
+|   |           DashboardView-DClBpT8O.js
 |   |           formSchemas-BqZO3XbW.js
-|   |           index-B4EziOsV.js
-|   |           LoginForm-E1Tp7JAE.js
+|   |           index-CDZsd9Z4.js
+|   |           LoginForm-Vf3xregl.js
 |   |           mui-nuHIX8iL.js
 |   |           plotly-BxTkdUEp.js
 |   |           react-CuvdHX7R.js
-|   |           RegisterForm-mNmQc7jf.js
+|   |           RegisterForm-DcjOkzVR.js
 |   |           rolldown-runtime-S-ySWqyJ.js
 |   |           shortUuid-TYuFZJYs.js
-|   |           userApi-Bv76-6cf.js
-|   |           UserProfile-C0pS_n4B.js
+|   |           userApi-8wswV9C2.js
+|   |           UserProfile-CKETqjGv.js
 |   |           vendor-Bx3jSdF9.js
 |   |           
 |   +---node_modules

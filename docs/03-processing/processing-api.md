@@ -319,9 +319,12 @@ Authorization: Bearer <token>
     "date_column": "event_date",
     "timezone": "UTC"
   },
+  "metric_agg": "sum",
   "updated_at": "2026-05-18T12:00:00Z"
 }
 ```
+
+**Note:** The `metric_agg` field is exposed at the top level of the processing config response, defining the default aggregation function for metrics (`sum`, `mean`, `min`, `max`, `count`).
 
 ### Update Processing Configuration
 
@@ -352,7 +355,7 @@ Authorization: Bearer <token>
 | **Method**     | `GET`                                              |
 | **Path**       | `/api/v1/admin/logs`                               |
 | **Auth level** | Admin                                              |
-| **Query params**| `status`, `dashboard_id`, `date_from`, `date_to`, `skip`, `limit`     |
+| **Query params**| `status_filter`, `dashboard_id`, `date_from`, `date_to`, `skip`, `limit`     |
 
 **Response** (`200 OK`): List of `ProcessingLogRead` objects, filtered and sorted by `started_at` DESC.
 

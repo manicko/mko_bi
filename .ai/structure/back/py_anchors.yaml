@@ -66,6 +66,12 @@
   value: queue_worker
   stable_hash: 9436fd70
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
+- id: 44316f51
+  symbol_path: []
+  type: function_call
+  value: dispose_engine
+  stable_hash: 44316f51
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
 - id: 471a4919
   symbol_path:
   - create_app
@@ -714,6 +720,29 @@
   type: function_call
   value: model_validator
   stable_hash: d08799a7
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: f1f95992
+  symbol_path:
+  - Settings
+  - validate_cors_origins_not_placeholder
+  type: function_call
+  value: ValueError
+  stable_hash: f1f95992
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: 207abab3
+  symbol_path:
+  - Settings
+  - validate_cors_origins_not_placeholder
+  type: return_statement
+  stable_hash: 207abab3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: a6dad9de
+  symbol_path:
+  - Settings
+  - validate_cors_origins_not_placeholder
+  type: function_call
+  value: model_validator
+  stable_hash: a6dad9de
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
 - id: f526a929
   symbol_path:
@@ -7518,6 +7547,160 @@
   value: exception_type
   stable_hash: b8c184c8
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\validators.py
+- id: ce5e76e2
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: getattr
+  stable_hash: ce5e76e2
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: af032885
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: AppException
+  stable_hash: af032885
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: ce5e76e2
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: getattr
+  stable_hash: ce5e76e2
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: af032885
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: AppException
+  stable_hash: af032885
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: dad437d6
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: any
+  stable_hash: dad437d6
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: af032885
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: AppException
+  stable_hash: af032885
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: dad437d6
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: any
+  stable_hash: dad437d6
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: af032885
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: AppException
+  stable_hash: af032885
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: ce5e76e2
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: getattr
+  stable_hash: ce5e76e2
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: ce5e76e2
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: getattr
+  stable_hash: ce5e76e2
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: af032885
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: AppException
+  stable_hash: af032885
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: af032885
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: AppException
+  stable_hash: af032885
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: ce5e76e2
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: getattr
+  stable_hash: ce5e76e2
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: af032885
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: AppException
+  stable_hash: af032885
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: ce5e76e2
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: getattr
+  stable_hash: ce5e76e2
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: ce5e76e2
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: getattr
+  stable_hash: ce5e76e2
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: af032885
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: AppException
+  stable_hash: af032885
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: af032885
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: AppException
+  stable_hash: af032885
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 206cac33
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: all
+  stable_hash: 206cac33
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: ad1eaf03
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: str
+  stable_hash: ad1eaf03
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: ad1eaf03
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: str
+  stable_hash: ad1eaf03
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: af032885
+  symbol_path:
+  - _validate_processing_config
+  type: function_call
+  value: AppException
+  stable_hash: af032885
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: 71bdc9d8
   symbol_path: []
   type: function_call
@@ -7624,6 +7807,12 @@
   type: function_call
   value: ProcessingConfig
   stable_hash: cf05de01
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: bf1fb1f9
+  symbol_path: []
+  type: function_call
+  value: _validate_processing_config
+  stable_hash: bf1fb1f9
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: e35992da
   symbol_path: []
@@ -8610,12 +8799,6 @@
   type: function_call
   value: ForeignKey
   stable_hash: a5bc92c0
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\filters.py
-- id: def227c3
-  symbol_path: []
-  type: function_call
-  value: Index
-  stable_hash: def227c3
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\filters.py
 - id: 2d81f385
   symbol_path:

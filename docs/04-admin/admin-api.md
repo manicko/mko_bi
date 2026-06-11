@@ -487,7 +487,7 @@ Retrieve processing logs with filtering and pagination. Admin only.
 
 | Parameter      | Type      | Required | Description                                |
 | -------------- | --------- | -------- | ------------------------------------------ |
-| `status`       | string    | No       | Filter by status: `started`, `uploaded`, `processing`, `success`, `failed`, `completed` |
+| `status_filter`       | string    | No       | Filter by status: `started`, `uploaded`, `processing`, `success`, `failed`, `completed` |
 | `dashboard_id` | UUID      | No       | Filter by dashboard                        |
 | `date_from`    | datetime  | No       | Filter logs with started_at >= this date    |
 | `date_to`      | datetime  | No       | Filter logs with started_at <= this date    |
@@ -664,7 +664,7 @@ Displays processing logs with filtering and pagination.
 - Paginated navigation
 
 **Related API endpoints:**
-- `GET /api/v1/admin/logs` — List logs with filters (supports `status`, `dashboard_id`, `date_from`, `date_to`, `skip`, `limit`)
+- `GET /api/v1/admin/logs` — List logs with filters (supports `status_filter`, `dashboard_id`, `date_from`, `date_to`, `skip`, `limit`)
 - `GET /api/v1/admin/logs/:log_id` — Get single log entry
 
 ### Dashboard Access Management (`/admin`)

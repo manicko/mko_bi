@@ -9,4 +9,5 @@ export const adminErrorMessages: Partial<Record<ErrorCode, string>> = {
   [ErrorCode.PERMISSION_DENIED]: 'Insufficient permissions for administrative operation',
   [ErrorCode.EMAIL_ALREADY_EXISTS]: 'A user with this email already exists',
   [ErrorCode.VALIDATION_ERROR]: 'Administrative data validation error',
+  [ErrorCode.INVALID_TRANSITION]: 'Invalid status transition for processing log',
 }

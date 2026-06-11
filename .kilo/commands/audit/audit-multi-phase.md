@@ -119,7 +119,7 @@ If missing or empty: retry once, then escalate on second failure.
 ## 3. Merge Final Report
 
 Use template `.ai/audit/templates/final-report.md`.
-Merge all validated findings from `.ai/audit/99-validation/` into `.ai/audit/final-report.md`.
+Merge all validated findings from `.ai/audit/99-validation/` into `.ai/audit/validated/final-report.md`.
 
 </process>
 

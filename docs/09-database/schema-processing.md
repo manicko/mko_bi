@@ -210,9 +210,39 @@ CREATE TABLE processing_configs (
 {
   "loader": "sales_loader",
   "date_column": "event_date",
-  "timezone": "UTC"
+  "timezone": "UTC",
+  "encoding": "UTF-8",
+  "separator": ",",
+  "decimal_separator": null,
+  "column_types": {
+    "revenue": "float",
+    "cost": "float"
+  },
+  "date_format": null,
+  "metric_agg": "sum"
 }
 ```
+
+**Available settings fields:**
+| Field | Type | Description |
+| ----- | ---- | ----------- |
+| `loader` | string | Loader identifier for data source type |
+| `date_column` | string | Primary date column for time-based operations |
+| `timezone` | string | Timezone for date processing (default: "UTC") |
+| `encoding` | string | File encoding (default: "UTF-8") |
+| `separator` | string | CSV delimiter character (default: ",") |
+| `decimal_separator` | string | Decimal separator for float columns (e.g., "," for EU format) |
+| `column_types` | object | Column type casting map (e.g., `{"age": "int", "price": "float"}`) |
+| `date_format` | string | Date format string for parsing input dates |
+| `renames` | object | Column renaming map |
+| `computed_fields` | array | Computed column expressions via formula parser |
+| `filters` | array | Row-level filter conditions |
+| `groupby` | array | Columns to group by |
+| `aggregations` | array | Aggregation configuration definitions |
+| `yoy_config` | object | Year-over-year comparison settings |
+| `share_config` | object | Share calculation configuration |
+| `custom_metrics` | array | Custom metric formulas |
+| `metric_agg` | string | Default aggregation function for metrics (`sum`, `mean`, `min`, `max`, `count`) |
 
 **Note:** This table stores configuration only, not business logic. Processing logic is implemented in the service layer (`src/mkobi/services/`).
 
