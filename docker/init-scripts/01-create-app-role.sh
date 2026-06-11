@@ -26,7 +26,7 @@ CREATE ROLE mkobi_app WITH LOGIN PASSWORD :'app_password';
 -- are used for CREATE/DROP DATABASE operations in recreate_test_database()
 
 -- Grant connection to the database
-GRANT CONNECT ON DATABASE :'dbname' TO mkobi_app;
+GRANT CONNECT ON DATABASE :dbname TO mkobi_app;
 
 -- Grant usage on public schema
 GRANT USAGE ON SCHEMA public TO mkobi_app;
