@@ -306,39 +306,40 @@ Beta,South,200,50
             f.write(multi_dim_csv)
             multi_file = Path(f.name)
 
-        with open(multi_file, "rb") as f:
-            upload_response = await authenticated_client.post(
-                f"/upload/{dashboard.id}?mode=overwrite",
-                files={"file": ("multi.csv", f, "text/csv")},
+        try:
+            with open(multi_file, "rb") as f:
+                upload_response = await authenticated_client.post(
+                    f"/upload/{dashboard.id}?mode=overwrite",
+                    files={"file": ("multi.csv", f, "text/csv")},
+                )
+
+            task_id = upload_response.json()["task_id"]
+
+            # Process
+            task_file = upload_dir / f"{task_id}.csv"
+            result = await process_csv_background(
+                file_path_str=str(task_file),
+                task_id=str(task_id),
+                dashboard_id_str=str(dashboard.id),
+                processing_config_dict=None,
+                mode="overwrite",
+                db_session=async_db_session,
             )
 
-        task_id = upload_response.json()["task_id"]
+            assert result["success"] is True
 
-        # Process
-        task_file = upload_dir / f"{task_id}.csv"
-        result = await process_csv_background(
-            file_path_str=str(task_file),
-            task_id=str(task_id),
-            dashboard_id_str=str(dashboard.id),
-            processing_config_dict=None,
-            mode="overwrite",
-            db_session=async_db_session,
-        )
+            # Verify both graphs have data
+            data_response = await authenticated_client.get(
+                "/data/aggregated",
+                params={"dashboard_id": str(dashboard.id)},
+            )
 
-        assert result["success"] is True
+            assert data_response.status_code == status.HTTP_200_OK
+            data = data_response.json()
+            assert len(data["graphs"]) == 2
 
-        # Verify both graphs have data
-        data_response = await authenticated_client.get(
-            "/data/aggregated",
-            params={"dashboard_id": str(dashboard.id)},
-        )
-
-        assert data_response.status_code == status.HTTP_200_OK
-        data = data_response.json()
-        assert len(data["graphs"]) == 2
-
-        graph_ids = {g["graph_id"] for g in data["graphs"]}
-        assert str(graph.id) in graph_ids
-        assert str(second_graph.id) in graph_ids
-
-        multi_file.unlink(missing_ok=True)
+            graph_ids = {g["graph_id"] for g in data["graphs"]}
+            assert str(graph.id) in graph_ids
+            assert str(second_graph.id) in graph_ids
+        finally:
+            multi_file.unlink(missing_ok=True)
