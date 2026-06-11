@@ -320,6 +320,11 @@ class DataService(IDataService):
         log = await self.log_repo.get_by_id(task_id, db)
         if log is None:
             raise ValueError(f"Processing task {task_id} not found")
+        if log.dashboard_id is None:
+            raise AppException(
+                code=ErrorCode.VALIDATION_ERROR,
+                detail="Processing log has no associated dashboard",
+            )
         if user_id:
             has_access = await check_dashboard_access(
                 user_id=user_id, dashboard_id=log.dashboard_id,
@@ -348,6 +353,11 @@ class DataService(IDataService):
         log = await self.log_repo.get_by_id(task_id, db)
         if log is None:
             raise ValueError(f"Processing task {task_id} not found")
+        if log.dashboard_id is None:
+            raise AppException(
+                code=ErrorCode.VALIDATION_ERROR,
+                detail="Processing log has no associated dashboard",
+            )
         if user_id:
             has_access = await check_dashboard_access(
                 user_id=user_id, dashboard_id=log.dashboard_id,
