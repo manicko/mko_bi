@@ -131,6 +131,13 @@ class ProcessingLogService(IProcessingLogService):
         if log is None:
             return False
 
+        # Ensure dashboard_id exists before attempting deletion
+        if log.dashboard_id is None:
+            raise AppException(
+                code=ErrorCode.VALIDATION_ERROR,
+                detail="Processing log has no associated dashboard — cannot delete by dashboard_id",
+            )
+
         # Delete all logs for the dashboard
         result: bool = await self.log_repo.delete(log.dashboard_id, db)
         return result
