@@ -10,6 +10,7 @@ related:
   - deployment
   - task-queue-migration
   - file-cleanup
+  - processing-api
 ---
 
 # Docker Guide for mkobi BI Dashboard System
@@ -71,6 +72,11 @@ docker compose -f docker/docker-compose.yml --env-file .env logs -f frontend
 > **Note on Cookie Security:** The `AppSettings.cookie_secure` setting defaults to `true`, which requires HTTPS for cookies to be sent. Since the development environment runs over HTTP, `docker-compose.override.yml` sets `APP__COOKIE_SECURE=false` to allow authentication cookies to work correctly. Do not use `true` in production — the default value is secure.
 
 > **Note on Port 8000 Access in Development:** Port 8000 serves the backend API and the production React build. The production frontend build uses secure cookies and memory-only token storage, which cannot authenticate over HTTP. **The intended development entry point is http://localhost:5173**, which runs the Vite development server with hot reload. The frontend dev server proxies `/api` requests to the backend at port 8000, enabling proper authentication flow in development.
+
+> **Note on Frontend Profile:** The frontend service requires the `frontend` profile. To start it explicitly:
+> ```bash
+> docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml --env-file .env --profile frontend up -d
+> ```
 
 ### Testing
 
@@ -242,6 +248,13 @@ Optional Nginx reverse proxy for production. Serves the React SPA static files a
 - **Depends on:** `app`
 - **Ports:** `80:80`
 - **Volumes:** `nginx.conf` (read-only), `frontend/dist` (read-only)
+- **Security hardening:**
+  - `read_only: true` — immutable root filesystem
+  - `tmpfs` for runtime-writable paths: `/tmp`, `/var/cache/nginx`, `/var/run`, `/var/log/nginx`
+  - All volumes mounted read-only (`:ro`)
+  - Healthcheck verifies HTTP response (not just config syntax)
+
+> **Note on `no-new-privileges`:** The official `nginx` image uses `setuid` internally to drop from root to the `nginx` user. Adding `security_opt: no-new-privileges:true` would crash the container. For nginx, the `read_only` filesystem is the primary hardening control.
 
 See [Deployment](../10-deployment/deployment.md) for the nginx configuration details.
 
@@ -333,7 +346,7 @@ This project uses a multi-stage Dockerfile with the following targets:
 
 **frontend-builder**
 - Uses Node 20 Alpine
-- Installs frontend dependencies
+- Installs frontend dependencies via `npm ci` with BuildKit `--mount=type=cache` for persistent `node_modules` across builds
 - Builds React production bundle
 - Output: `frontend/dist/`
 
@@ -370,9 +383,10 @@ This project uses a multi-stage Dockerfile with the following targets:
 The Dockerfile is optimized for fast builds:
 
 1. **Copy dependency files first**: `pyproject.toml` and `uv.lock` are copied before source code
-2. **Separate frontend build**: Frontend is built in a separate stage
-3. **Minimal layers**: Related commands are combined to reduce layers
-4. **Proper .dockerignore**: Excludes unnecessary files from build context
+2. **Separate frontend build**: Frontend is built in a separate stage using `npm ci` (deterministic, lockfile-enforcing install)
+3. **BuildKit cache mount for npm**: `RUN --mount=type=cache,target=/app/frontend/node_modules` persists `node_modules` across rebuilds — dependencies are only re-downloaded when `package.json` changes
+4. **Minimal layers**: Related commands are combined to reduce layers
+5. **Proper .dockerignore**: Excludes unnecessary files from build context
 
 ### Build Examples
 
@@ -394,8 +408,9 @@ docker build -f docker/Dockerfile --build-arg UV_VERSION=v0.1.0 --target prod -t
 | Service | Method |
 |---------|--------|
 | db | Uses `pg_isready` to check PostgreSQL readiness |
-| app | Uses HTTP health endpoint `/health` |
+| app | Uses HTTP health endpoint `/health` with `start_period: 40s` (waits for db + migrate) |
 | redis | Uses `redis-cli ping` |
+| nginx | Uses `wget --spider -q http://localhost/` (verifies nginx is actually serving, not just config-valid) |
 
 ## PostgreSQL Locale Configuration
 
@@ -432,6 +447,27 @@ docker compose -f docker/docker-compose.yml --env-file .env exec app uv run alem
 
 # Check migration status
 docker compose -f docker/docker-compose.yml --env-file .env exec app uv run alembic current
+```
+
+### SIGBUS Error in Frontend Container (Windows)
+
+When running the frontend container on Windows Docker Desktop, you may encounter:
+
+```
+npm error signal SIGBUS
+npm error command sh -c vite --host 0.0.0.0
+```
+
+**Root cause:** This occurs due to cross-OS file system incompatibility. Mounts from Windows NTFS to Linux containers through gRPC FUSE or SMB layers cause memory alignment issues when Node.js/Vite accesses files.
+
+**Solution:** The frontend service now uses a dedicated Docker image (`Dockerfile.frontend.dev`) that:
+- Installs `node_modules` inside the container during build (avoiding Windows file system issues)
+- Mounts individual source files explicitly for hot reload
+
+**Alternative workaround (if issue persists):**
+```powershell
+# Clear corrupted frontend cache volume
+docker volume rm docker_frontend_node_modules frontend_vite_cache
 ```
 
 ### Frontend not loading
@@ -478,9 +514,25 @@ This means Docker Compose cannot find your `.env` file. Ensure you:
 ## Security
 
 1. **Non-root user**: Application runs as `app` user (not root)
-2. **Secrets**: Use Docker secrets or environment variables for sensitive data
-3. **.env file**: Never commit `.env` file to version control
-4. **Production**: Change default passwords and JWT secret in production
+2. **Read-only filesystem**: `app` and `nginx` services use `read_only: true` with explicit `tmpfs` mounts for runtime-writable paths
+3. **No privilege escalation**: `app` service uses `security_opt: no-new-privileges:true`, blocking `setuid`/`setgid` binary exploitation
+4. **Minimal capabilities**: `app` service drops all Linux capabilities via `cap_drop: ALL` (binds to port 8000, no privileged ports needed)
+5. **Secrets**: Use Docker secrets or environment variables for sensitive data
+6. **.env file**: Never commit `.env` file to version control
+7. **Production**: Change default passwords and JWT secret in production
+8. **Image scanning**: Run `docker/scripts/scan-images.ps1` to scan built images for CVEs before deployment
+
+### Volume vs tmpfs for Data Directories
+
+The `app_data` volume is used for `/app/data` instead of tmpfs mounts for a critical reason:
+
+- **tmpfs limitation**: tmpfs mounts in Docker create directories owned by root. The application runs as the `app` user (uid=100, gid=101), which cannot write to root-owned tmpfs directories.
+- **Solution**: The `app_data` named volume persists data and inherits the ownership set in the Dockerfile (`chown -R app:app /app/data`).
+
+**Important**: When running with the development override (`docker-compose.override.yml`), the `app` and `rq-worker` services override `read_only: true` to `read_only: false` to allow write access to temp directories. This is necessary because:
+- The app service streams upload files to `/app/data/tmp_uploads`
+- The RQ worker processes these files and needs the same access
+- Both services share the `app_data` volume for consistent permissions
 
 ## Performance Tips
 
@@ -500,11 +552,14 @@ This means Docker Compose cannot find your `.env` file. Ensure you:
 │   ├── docker-compose.yml            # Production compose file
 │   ├── docker-compose.override.yml   # Development overrides
 │   ├── docker-compose.test.yml       # Test environment (standalone)
-│   ├── Dockerfile                    # Multi-stage Dockerfile
+│   ├── Dockerfile                    # Multi-stage Dockerfile (backend + frontend-builder)
+│   ├── Dockerfile.frontend.dev       # Frontend development Dockerfile (avoids Windows SIGBUS)
 │   ├── init-scripts/
 │   │   └── 01-create-app-role.sh     # DB initialization (creates mkobi_app role)
-│   └── nginx/
-│       └── nginx.conf                # Nginx configuration (production profile)
+│   ├── nginx/
+│   │   └── nginx.conf                # Nginx configuration (production profile)
+│   └── scripts/
+│       └── scan-images.ps1           # Trivy vulnerability scanner for built images
 └── frontend/
     ├── dist/                         # Built frontend (generated)
     └── ...
@@ -518,6 +573,37 @@ If migrating from a single-stage Dockerfile:
 2. Update `docker-compose.yml` to specify build target
 3. Test each environment (dev/test/prod)
 4. Update CI/CD pipelines to use new targets
+
+## Application Data Directories
+
+### Temporary and Upload Folders
+
+The application uses several directories for file processing, managed through the `app_data` Docker volume. This volume-based approach (instead of tmpfs) ensures correct ownership for the non-root `app` user.
+
+| Directory | Path (Docker) | Purpose | Lifecycle |
+|---------|---------------|---------|-----------|
+| `tmp_uploads` | `/app/data/tmp_uploads` | Initial upload streaming, temp file storage during processing | Auto-cleanup on success/failure, startup cleanup for stale files |
+| `uploads` | `/app/data/uploads` | Potential permanent file storage (if used) | Manual or policy-based cleanup |
+| `logs` | `/app/data/logs` | Application logs | Rotated, retention by `LOGS_RETENTION_DAYS` |
+
+### Upload Temp Directory
+
+- **Configuration:** `UPLOAD__TEMP_DIR` environment variable (defaults to platformdirs path)
+- **Used by:** `src/mkobi/api/routes/upload.py` for streaming uploads
+- **Lifecycle:**
+  1. Initial temp file created with prefix `upload_{uuid}` during streaming
+  2. File renamed to `{log_id}.csv` or `{log_id}.csv.gz` when processing starts
+  3. Deleted after processing completes (success or failure)
+  4. Orphaned files (>= 24h old) cleaned up on application startup via `cleanup_stale_temp_files()`
+
+### Cleanup Configuration
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `STALE_FILE_THRESHOLD_HOURS` | Age threshold for stale temp files | 24 |
+| `LOGS_RETENTION_DAYS` | Log retention period | 30 |
+
+See [Temp File Cleanup](../03-processing/file-cleanup.md) for the complete cleanup architecture.
 
 ## Cross-References
 

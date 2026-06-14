@@ -39,6 +39,44 @@ logger = logging.getLogger(__name__)
 DEFAULT_STALE_PROCESSING_TIMEOUT_MINUTES = 30
 
 
+def _map_processing_error_to_code(error: Exception) -> str:
+    """Map processing exception to ErrorCode string.
+
+    Analyzes exception type and message to determine appropriate error code
+    for RFC 7807 compliant error reporting.
+
+    Args:
+        error: The exception that occurred during processing.
+
+    Returns:
+        str: Error code string for error classification.
+    """
+    error_msg = str(error).lower()
+
+    # File not found errors
+    if isinstance(error, FileNotFoundError):
+        return str(ErrorCode.FILE_UPLOAD_ERROR.value)
+
+    # File format/encoding errors
+    if "encoding" in error_msg:
+        return str(ErrorCode.FILE_PROCESSING_ERROR.value)
+    if "csv" in error_msg and ("read" in error_msg or "parse" in error_msg):
+        return str(ErrorCode.FILE_PROCESSING_ERROR.value)
+
+    # Validation errors
+    if "missing required columns" in error_msg:
+        return str(ErrorCode.VALIDATION_ERROR.value)
+    if "validation failed" in error_msg:
+        return str(ErrorCode.VALIDATION_ERROR.value)
+
+    # File too large errors (caught earlier but just in case)
+    if "too large" in error_msg or "size" in error_msg:
+        return str(ErrorCode.FILE_TOO_LARGE.value)
+
+    # Default to processing failed for all other errors
+    return str(ErrorCode.PROCESSING_FAILED.value)
+
+
 def _validate_processing_config(config: ProcessingConfig) -> None:
     """Validate ProcessingConfig fields before processing.
 
@@ -141,7 +179,7 @@ async def _update_processing_log_status(
     started_at: datetime | None = None,
     finished_at: datetime | None = None,
     session: AsyncSession | None = None,
-    commit: bool = True,
+    error_code: str | None = None,
 ) -> None:
     """Update processing log status.
 
@@ -153,9 +191,7 @@ async def _update_processing_log_status(
         finished_at: Processing finish time.
         session: Optional database session for testing. If None, creates a new session.
             When provided, caller manages transaction (SAVEPOINT pattern).
-        commit: Deprecated. When session is provided, this parameter is ignored and
-            no commit occurs - caller manages transaction. When session is None,
-            production mode handles transactions internally.
+        error_code: Error code for RFC 7807 error reporting (optional).
     """
     try:
         values: dict[str, Any] = {
@@ -165,6 +201,8 @@ async def _update_processing_log_status(
 
         if started_at is not None:
             values["started_at"] = started_at
+        if error_code is not None:
+            values["error_code"] = error_code
         if status in (ProcessingStatus.COMPLETED, ProcessingStatus.FAILED):
             values["finished_at"] = finished_at or datetime.now(UTC)
 
@@ -293,7 +331,6 @@ async def _process_csv_file_async(
             message="Processing started (background task)",
             started_at=datetime.now(UTC),
             session=session,
-            commit=False,
         )
 
         # Extract CSV parsing config from processing_config
@@ -333,7 +370,7 @@ async def _process_csv_file_async(
                 message=error_msg,
                 finished_at=datetime.now(UTC),
                 session=session,
-                commit=False,
+                error_code=ErrorCode.VALIDATION_ERROR.value,
             )
             raise ValueError(error_msg)
 
@@ -441,7 +478,6 @@ async def _process_csv_file_async(
             message=f"Processing completed successfully: {result_data['rows']} rows processed",
             finished_at=datetime.now(UTC),
             session=session,
-            commit=False,
         )
 
         return {
@@ -457,7 +493,8 @@ async def _process_csv_file_async(
             return await _run_with_transaction(db_session)
         except Exception as e:
             error_msg = str(e)
-            logger.exception("Processing failed: task_id=%s, error=%s", task_id, error_msg)
+            error_code = _map_processing_error_to_code(e)
+            logger.exception("Processing failed: task_id=%s, error=%s, code=%s", task_id, error_msg, error_code)
 
             # Clean up temp file on error
             if file_path.exists():
@@ -477,7 +514,7 @@ async def _process_csv_file_async(
                 message=f"Processing failed: {error_msg}",
                 finished_at=datetime.now(UTC),
                 session=db_session,
-                commit=False,
+                error_code=error_code,
             )
             raise
     else:
@@ -488,7 +525,8 @@ async def _process_csv_file_async(
                     return await _run_with_transaction(session)
                 except Exception as e:
                     error_msg = str(e)
-                    logger.exception("Processing failed: task_id=%s, error=%s", task_id, error_msg)
+                    error_code = _map_processing_error_to_code(e)
+                    logger.exception("Processing failed: task_id=%s, error=%s, code=%s", task_id, error_msg, error_code)
 
                     # Clean up temp file on error
                     if file_path.exists():
@@ -508,7 +546,7 @@ async def _process_csv_file_async(
                         message=f"Processing failed: {error_msg}",
                         finished_at=datetime.now(UTC),
                         session=session,
-                        commit=False,
+                        error_code=error_code,
                     )
                     raise
 

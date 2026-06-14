@@ -195,15 +195,17 @@ export interface GraphDataWithConfig {
 // UploadMode is now imported from './enums'
 
 export interface ProcessingStatusResponse {
-  task_id: string
-  filename: string
-  dashboard_id: string
-  status: ProcessingStatus
-  progress: number
-  message?: string
-  started_at: string | null
-  finished_at: string | null
-}
+   task_id: string
+   filename: string
+   dashboard_id: string
+   status: ProcessingStatus
+   progress: number
+   message?: string
+   started_at: string | null
+   finished_at: string | null
+   // Error code for RFC 7807 compliant error reporting when processing fails
+   error_code?: ErrorCode | null
+ }
 
 export interface ProcessingResult {
   success: boolean
@@ -282,14 +284,16 @@ export interface ChangePasswordRequest {
 }
 
 export interface ProcessingLog {
-  id: string
-  dashboard_id: string | null
-  dashboard_name?: string | null
-  status: ProcessingStatus
-  message?: string
-  started_at: string | null
-  finished_at: string | null
-}
+   id: string
+   dashboard_id: string | null
+   dashboard_name?: string | null
+   status: ProcessingStatus
+   message?: string
+   started_at: string | null
+   finished_at: string | null
+   // Error code for RFC 7807 compliant error reporting when processing fails
+   error_code?: ErrorCode | null
+ }
 
 export interface LogFilters {
    dashboard_id?: string

@@ -341,6 +341,7 @@ class DataService(IDataService):
             message=log.message,
             started_at=log.started_at,
             finished_at=log.finished_at,
+            error_code=log.error_code,
         )
 
     async def get_processing_result(

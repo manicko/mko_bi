@@ -351,6 +351,7 @@ class IProcessingLogRepository(abc.ABC):
         message: str | None,
         db: AsyncSession,
         finished_at: datetime | None = None,
+        error_code: str | None = None,
     ) -> None:
         """Update processing log status."""
         pass

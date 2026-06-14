@@ -76,6 +76,7 @@ class ProcessingLogRepository(IProcessingLogRepository):
         message: str | None,
         db: AsyncSession,
         finished_at: datetime | None = None,
+        error_code: str | None = None,
     ) -> None:
         """Update processing log status.
 
@@ -85,6 +86,7 @@ class ProcessingLogRepository(IProcessingLogRepository):
             message: Message (optional).
             db: Async database session.
             finished_at: Explicit finished_at timestamp (optional).
+            error_code: Error code for RFC 7807 error reporting (optional).
         """
         try:
             result = await db.execute(
@@ -100,6 +102,8 @@ class ProcessingLogRepository(IProcessingLogRepository):
             log_obj.status = status
             if message is not None:
                 log_obj.message = message
+            if error_code is not None:
+                log_obj.error_code = error_code
 
             # Set finished_at on completed or failed status, or use explicit value
             if finished_at is not None:

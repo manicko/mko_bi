@@ -900,8 +900,10 @@
   - sqlalchemy.ext.asyncio
   - mkobi.interfaces.repository_interfaces
   - mkobi.interfaces.service_interfaces
+  - mkobi.models.enums
   - mkobi.models.processing_configs
   - mkobi.models.types
+  - mkobi.utils.exceptions
   classes:
   - ProcessingConfigService
   functions:

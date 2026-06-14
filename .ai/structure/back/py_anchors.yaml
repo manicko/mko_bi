@@ -6404,13 +6404,6 @@
   value: ValueError
   stable_hash: 65f2c5df
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_config_service.py
-- id: 65f2c5df
-  symbol_path:
-  - ProcessingConfigService
-  type: function_call
-  value: ValueError
-  stable_hash: 65f2c5df
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_config_service.py
 - id: a6a18d0a
   symbol_path:
   - ProcessingConfigService
@@ -6418,40 +6411,19 @@
   value: isinstance
   stable_hash: a6a18d0a
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_config_service.py
-- id: 65f2c5df
+- id: faea8821
   symbol_path:
   - ProcessingConfigService
   type: function_call
-  value: ValueError
-  stable_hash: 65f2c5df
+  value: AppException
+  stable_hash: faea8821
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_config_service.py
-- id: a6a18d0a
+- id: 486659c7
   symbol_path:
   - ProcessingConfigService
   type: function_call
-  value: isinstance
-  stable_hash: a6a18d0a
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_config_service.py
-- id: 65f2c5df
-  symbol_path:
-  - ProcessingConfigService
-  type: function_call
-  value: ValueError
-  stable_hash: 65f2c5df
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_config_service.py
-- id: a6a18d0a
-  symbol_path:
-  - ProcessingConfigService
-  type: function_call
-  value: isinstance
-  stable_hash: a6a18d0a
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_config_service.py
-- id: 65f2c5df
-  symbol_path:
-  - ProcessingConfigService
-  type: function_call
-  value: ValueError
-  stable_hash: 65f2c5df
+  value: type
+  stable_hash: 486659c7
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_config_service.py
 - id: f4303b23
   symbol_path:
@@ -9319,6 +9291,20 @@
   type: function_call
   value: DateTime
   stable_hash: 569587e4
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\processing_logs.py
+- id: 39f0bcfa
+  symbol_path:
+  - ProcessingLog
+  type: function_call
+  value: Index
+  stable_hash: 39f0bcfa
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\processing_logs.py
+- id: 39f0bcfa
+  symbol_path:
+  - ProcessingLog
+  type: function_call
+  value: Index
+  stable_hash: 39f0bcfa
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\processing_logs.py
 - id: 39f0bcfa
   symbol_path:

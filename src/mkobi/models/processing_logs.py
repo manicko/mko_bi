@@ -56,6 +56,8 @@ class ProcessingLogUpdate(BaseModel):
     message: str | None = None
     started_at: datetime | None = None
     finished_at: datetime | None = None
+    # Error code for RFC 7807 compliant error reporting when processing fails
+    error_code: str | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -79,6 +81,8 @@ class ProcessingLogRead(BaseModel):
     message: str | None = None
     started_at: datetime | None = None
     finished_at: datetime | None = None
+    # Error code for RFC 7807 compliant error reporting when processing fails
+    error_code: str | None = None
 
     model_config = ConfigDict(
         from_attributes=True,

@@ -64,6 +64,13 @@ class ProcessingLog(Base):
         nullable=True,
     )
 
+    # Structured error code for RFC 7807 compliant error reporting
+    # Allows frontend to display user-friendly error messages for processing failures
+    error_code: Mapped[str | None] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+
     __table_args__ = (
         Index("idx_processing_logs_dashboard_id", "dashboard_id"),
         Index("idx_processing_logs_status_finished_at", "status", "finished_at"),

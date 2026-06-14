@@ -1329,7 +1329,8 @@
   components:
     - ChartRenderer
   hooks: []
-  jsx_tags: []
+  jsx_tags:
+    - <div className="flex items-center justify-center h-64 text-gray-500">
 - path: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/index.ts
   module: C:.py_dev.mkobi.frontend.src.features.dashboards.ui.charts.index
   layer: unknown

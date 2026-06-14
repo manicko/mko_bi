@@ -201,7 +201,12 @@ class CSVLoader:
                 if "has_header" in config:
                     read_kwargs["has_header"] = config["has_header"]
                 if "encoding" in config:
-                    read_kwargs["encoding"] = config["encoding"]
+                    # Polars scan_csv only supports 'utf8' or 'utf8-lossy', not 'utf-8-sig'
+                    # Convert utf-8-sig to utf8 (BOM will be handled by has_header=True)
+                    encoding = config["encoding"]
+                    if encoding == "utf-8-sig":
+                        encoding = "utf8"
+                    read_kwargs["encoding"] = encoding
 
             if file_path.suffix == ".gz" or file_path.name.endswith(".csv.gz"):
                 logger.debug("Reading gzipped CSV file (lazy): %s", file_path)
@@ -281,7 +286,11 @@ class CSVLoader:
                 if "has_header" in config:
                     read_kwargs["has_header"] = config["has_header"]
             if config and "encoding" in config:
-                read_kwargs["encoding"] = config["encoding"]
+                # Polars read_csv only supports 'utf8' or 'utf8-lossy', not 'utf-8-sig'
+                encoding = config["encoding"]
+                if encoding == "utf-8-sig":
+                    encoding = "utf8"
+                read_kwargs["encoding"] = encoding
 
             if file_path.suffix == ".gz" or file_path.name.endswith(".csv.gz"):
                 logger.debug("Reading gzipped CSV file: %s", file_path)

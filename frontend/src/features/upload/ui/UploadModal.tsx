@@ -1,31 +1,35 @@
 import { useState, useCallback, useEffect, useRef } from 'react'
 import {
-  Box,
-  Typography,
-  Button,
-  ToggleButton,
-  ToggleButtonGroup,
-  LinearProgress,
-  Paper,
-  Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+ Box,
+ Typography,
+ Button,
+ ToggleButton,
+ ToggleButtonGroup,
+ LinearProgress,
+ Paper,
+ Alert,
+ Dialog,
+ DialogTitle,
+ DialogContent,
+ DialogActions,
 } from '@mui/material'
 import { toast } from 'react-hot-toast'
 import { FileDropzone } from './FileDropzone'
 import { uploadApi, useProcessingStatus } from '../api/uploadApi'
-import { UploadMode, FileUploadStatus, ProcessingStatus } from '../../../shared/types/enums'
+import { UploadMode, FileUploadStatus, ProcessingStatus, ErrorCode } from '../../../shared/types/enums'
+import { extractApiError } from '../../../shared/api/errorHandler'
+import { getErrorMessage } from '../../../shared/api/errorMessages'
+import { uploadErrorMessages } from '../model/errorMessages'
 
 interface FileUploadState {
-  file: File
-  progress: number
-  status: FileUploadStatus
-  error?: string
-  processingLogId?: string
-  processingStatus?: ProcessingStatus
-}
+   file: File
+   progress: number
+   status: FileUploadStatus
+   error?: string
+   error_code?: ErrorCode | null
+   processingLogId?: string
+   processingStatus?: ProcessingStatus
+ }
 
 interface UploadModalProps {
   open: boolean
@@ -52,28 +56,45 @@ export function UploadModal({ open, onClose, dashboardId, onUploadComplete }: Up
   const processingLogId = fileStates.length > 0 ? fileStates[0].processingLogId ?? null : null
   const { data: statusData } = useProcessingStatus(processingLogId, uploadComplete)
 
-  // Update processing status when polling returns data
-  useEffect(() => {
-    if (statusData?.status) {
-      const status = statusData.status
+// Update processing status when polling returns data
+   useEffect(() => {
+     if (statusData?.status) {
+       const status = statusData.status
 
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFileStates((prev) =>
-        prev.map((f) =>
-          f.processingLogId
-            ? { ...f, processingStatus: status, status: status === 'failed' ? FileUploadStatus.ERROR : f.status }
-            : f
-        )
-      )
+       // eslint-disable-next-line react-hooks/set-state-in-effect
+       setFileStates((prev) =>
+         prev.map((f) =>
+           f.processingLogId
+             ? { ...f, processingStatus: status, status: status === 'failed' ? FileUploadStatus.ERROR : f.status }
+             : f
+         )
+       )
 
-      // Handle completion
-      if (status === 'completed') {
-        toast.success('Processing complete!')
-        setProcessingFinished(true)
-        onUploadCompleteRef.current?.()
-      }
-    }
-  }, [statusData])
+       // Handle completion
+       if (status === 'completed') {
+         toast.success('Processing complete!')
+         setProcessingFinished(true)
+         onUploadCompleteRef.current?.()
+       }
+
+       // Handle processing failure with RFC 7807 error code
+       if (status === 'failed' && statusData.error_code) {
+         const userMessage = getErrorMessage(
+           statusData.error_code,
+           uploadErrorMessages,
+           statusData.message || undefined
+         )
+         setFileStates((prev) =>
+           prev.map((f) =>
+             f.processingLogId
+               ? { ...f, status: FileUploadStatus.ERROR, error: userMessage, error_code: statusData.error_code }
+               : f
+           )
+         )
+         toast.error(`Processing failed for ${files[0]?.name || 'file'}: ${userMessage}`)
+       }
+     }
+   }, [statusData, files])
 
   const handleModeChange = (_: React.MouseEvent<HTMLElement>, newMode: UploadMode | null) => {
     if (newMode !== null) {
@@ -117,41 +138,46 @@ export function UploadModal({ open, onClose, dashboardId, onUploadComplete }: Up
         )
       )
 
-      try {
-        const response = await uploadApi.uploadFile(
-          dashboardId,
-          file,
-          mode,
-          (percent) => {
-            setFileStates((prev) =>
-              prev.map((f, idx) =>
-                idx === i ? { ...f, progress: percent } : f
-              )
-            )
-          }
-        )
+try {
+         const response = await uploadApi.uploadFile(
+           dashboardId,
+           file,
+           mode,
+           (percent) => {
+             setFileStates((prev) =>
+               prev.map((f, idx) =>
+                 idx === i ? { ...f, progress: percent } : f
+               )
+             )
+           }
+         )
 
-        setFileStates((prev) =>
-          prev.map((f, idx) =>
-            idx === i
-              ? {
-                  ...f,
-                  status: FileUploadStatus.SUCCESS,
-                  progress: 100,
-                  processingLogId: response.task_id,
-                }
-              : f
-          )
-        )
-      } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Upload failed'
-        setFileStates((prev) =>
-          prev.map((f, idx) =>
-            idx === i ? { ...f, status: FileUploadStatus.ERROR, error: errorMessage } : f
-          )
-        )
-        toast.error(`Failed to upload ${file.name}`)
-      }
+         setFileStates((prev) =>
+           prev.map((f, idx) =>
+             idx === i
+               ? {
+                   ...f,
+                   status: FileUploadStatus.SUCCESS,
+                   progress: 100,
+                   processingLogId: response.task_id,
+                 }
+               : f
+           )
+         )
+       } catch (err) {
+         const extracted = extractApiError(err)
+         const userMessage = getErrorMessage(
+           extracted.code,
+           uploadErrorMessages,
+           extracted.message
+         )
+         setFileStates((prev) =>
+           prev.map((f, idx) =>
+             idx === i ? { ...f, status: FileUploadStatus.ERROR, error: userMessage } : f
+           )
+         )
+         toast.error(`Failed to upload ${file.name}: ${userMessage}`)
+       }
     }
 
     setIsUploading(false)

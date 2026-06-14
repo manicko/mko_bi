@@ -93,7 +93,7 @@ Upload → Parse (Polars) → Transform (processing_config) → Aggregate → Sa
 
 | Stage | Description |
 | ----- | ----------- |
-| **1. Upload** | File saved to temporary directory via `platformdirs`; MIME type and size validated |
+| **1. Upload** | File saved to temporary directory (`UPLOAD__TEMP_DIR`, defaults to `platformdirs`; see [Docker Guide](../11-guides/docker.md#application-data-directories) for mounted paths). MIME type and size validated. |
 | **2. Parse** | File read using Polars; CSV parsing config (separator, encoding, column_types) applied from `processing_config` |
 | **3. Transform** | Post-read transformations applied (e.g., decimal separator normalization for float columns) |
 | **4. Aggregate** | Per-chart GROUP BY via `AggregationService`: for each graph, GROUP BY columns = graph.dimensions + dashboard.filter.dimensions; metric values summed |

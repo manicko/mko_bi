@@ -7,9 +7,10 @@ tags:
   - lifecycle
   - crash-recovery
 related:
-  - task-queue
+  - task-queue-migration
   - processing-api
   - backend-architecture
+  - docker-guide
 ---
 
 # Temp File Cleanup Architecture
@@ -92,5 +93,6 @@ The `app_data` volume persists across container restarts, allowing stale files t
 ## Cross-References
 
 - [Processing API](processing-api.md) — Upload endpoint and processing pipeline
-- [Task Queue Migration](task-queue.md) — Background processing with RQ worker
+- [Task Queue Migration](task-queue-migration.md) — Background processing with RQ worker
 - [Backend Architecture](../06-backend/architecture.md) — Clean Architecture and startup lifecycle
+- [Docker Guide](../11-guides/docker.md) — Volume configuration and permission setup
