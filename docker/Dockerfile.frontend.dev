@@ -1,0 +1,28 @@
+# =============================================================================
+# Frontend Development Dockerfile
+# Avoids SIGBUS errors from Windows volume mounts by building dependencies in-container
+# Uses explicit file mounts for hot reload (not wholesale directory mount)
+# =============================================================================
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy package files first for layer caching
+COPY frontend/package*.json ./
+
+# Install dependencies in-container (avoids Windows gRPC FUSE issues)
+RUN npm ci
+
+# Copy source code
+COPY frontend/ ./
+
+# Expose Vite default port
+EXPOSE 5173
+
+# Use polling for file watching (required for Docker on Windows/macOS)
+ENV CHOKIDAR_USEPOLLING=true
+ENV WATCHPACK_POLLING=true
+
+# Start Vite dev server
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

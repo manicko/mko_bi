@@ -14,8 +14,10 @@ WORKDIR /app/frontend
 # Copy package files first for layer caching
 COPY frontend/package*.json ./
 
-# Install dependencies (use npm install as package-lock.json may be excluded)
-RUN npm install
+# Install dependencies with BuildKit cache mount for faster rebuilds
+# Use npm ci for deterministic installs (fails on lockfile mismatch)
+RUN --mount=type=cache,target=/app/frontend/node_modules \
+    npm ci
 
 # Copy frontend source and build
 COPY frontend/ ./

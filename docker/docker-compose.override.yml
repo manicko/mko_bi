@@ -24,21 +24,32 @@ services:
         condition: service_healthy
     restart: "no"
 
-  # Frontend development server with Vite hot reload
+  # Frontend development server with Vite hot reload (opt-in via profiles)
+  # Uses dedicated build to avoid SIGBUS errors from Windows volume mounts
   frontend:
-    image: node:20-alpine
-    working_dir: /app
-    volumes:
-      - ../frontend:/app
-      - frontend_node_modules:/app/node_modules
+    profiles: ["frontend"]
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend.dev
     ports:
       - "5173:5173"
-    command: ["sh", "-c", "npm install && npm run dev -- --host 0.0.0.0"]
     environment:
       CHOKIDAR_USEPOLLING: "true"
       WATCHPACK_POLLING: "true"
+    # Mount source code for hot reload (node_modules built into image)
+    volumes:
+      - ../frontend/src:/app/src
+      - ../frontend/public:/app/public
+      - ../frontend/index.html:/app/index.html
+      - ../frontend/tsconfig.app.json:/app/tsconfig.app.json
+      - ../frontend/tsconfig.json:/app/tsconfig.json
+      - ../frontend/tsconfig.node.json:/app/tsconfig.node.json
+      - ../frontend/vite.config.ts:/app/vite.config.ts
+      - ../frontend/eslint.config.js:/app/eslint.config.js
+      - frontend_vite_cache:/app/node_modules/.vite
     # No depends_on - frontend can start independently
 
+  # Development app service
   app:
     build:
       context: ..
@@ -65,6 +76,7 @@ services:
       ADMIN_USERNAME: ${ADMIN_USERNAME:?ADMIN_USERNAME must be set}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:?ADMIN_PASSWORD must be set}
       LOGGING__LEVEL: DEBUG
+      LOGGING__LOG_FILE: ""
       AUTO_MIGRATE: "false"
       CORS_ORIGINS: ${CORS_ORIGINS:-["http://localhost:3000"]}
     volumes:
@@ -99,4 +111,4 @@ services:
       POSTGRES_PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD must be set}
 
 volumes:
-  frontend_node_modules:
+  frontend_vite_cache:

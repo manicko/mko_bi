@@ -16,7 +16,7 @@ echo "Creating application role mkobi_app..."
 # Use psql -v flag to pass variables safely (avoids shell expansion issues
 # with $$ heredoc patterns that caused PID-based garbage passwords).
 psql -v ON_ERROR_STOP=1 \
-     -v app_password="'${MKOBI_APP_PASSWORD}'" \
+     -v app_password="${MKOBI_APP_PASSWORD}" \
      -v dbname="${POSTGRES_DB}" \
      --username "$POSTGRES_USER" \
      --dbname "$POSTGRES_DB" <<EOF
