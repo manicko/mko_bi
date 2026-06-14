@@ -514,7 +514,7 @@ This means Docker Compose cannot find your `.env` file. Ensure you:
 ## Security
 
 1. **Non-root user**: Application runs as `app` user (not root)
-2. **Read-only filesystem**: `app` and `nginx` services use `read_only: true` with explicit `tmpfs` mounts for runtime-writable paths
+2. **Read-only filesystem**: `nginx` service uses `read_only: true` with explicit `tmpfs` mounts for runtime-writable paths (nginx uses setuid internally, so `security_opt` cannot be applied)
 3. **No privilege escalation**: `app` service uses `security_opt: no-new-privileges:true`, blocking `setuid`/`setgid` binary exploitation
 4. **Minimal capabilities**: `app` service drops all Linux capabilities via `cap_drop: ALL` (binds to port 8000, no privileged ports needed)
 5. **Secrets**: Use Docker secrets or environment variables for sensitive data
@@ -522,17 +522,17 @@ This means Docker Compose cannot find your `.env` file. Ensure you:
 7. **Production**: Change default passwords and JWT secret in production
 8. **Image scanning**: Run `docker/scripts/scan-images.ps1` to scan built images for CVEs before deployment
 
+**Important**: When running with the development override (`docker-compose.override.yml`), the `app` and `rq-worker` services override `read_only: true` to `read_only: false` to allow write access to temp directories. This is necessary because:
+- The app service streams upload files to `/app/data/tmp_uploads`
+- The RQ worker processes these files and needs the same access
+- Both services share the `app_data` volume for consistent permissions
+
 ### Volume vs tmpfs for Data Directories
 
 The `app_data` volume is used for `/app/data` instead of tmpfs mounts for a critical reason:
 
 - **tmpfs limitation**: tmpfs mounts in Docker create directories owned by root. The application runs as the `app` user (uid=100, gid=101), which cannot write to root-owned tmpfs directories.
 - **Solution**: The `app_data` named volume persists data and inherits the ownership set in the Dockerfile (`chown -R app:app /app/data`).
-
-**Important**: When running with the development override (`docker-compose.override.yml`), the `app` and `rq-worker` services override `read_only: true` to `read_only: false` to allow write access to temp directories. This is necessary because:
-- The app service streams upload files to `/app/data/tmp_uploads`
-- The RQ worker processes these files and needs the same access
-- Both services share the `app_data` volume for consistent permissions
 
 ## Performance Tips
 

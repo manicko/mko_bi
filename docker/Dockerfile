@@ -93,6 +93,10 @@ WORKDIR /app
 # Create non-root user
 RUN addgroup --system app && adduser --system --group app
 
+# Create data directories with proper permissions for non-root user
+RUN mkdir -p /app/data/uploads /app/data/logs /app/data/tmp_uploads && \
+    chown -R app:app /app/data
+
 # -----------------------------------------------------------------------------
 # Stage: dev - Development image
 # Hot reload controlled via docker-compose.override.yml
@@ -166,9 +170,6 @@ COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
 # Copy remaining files
 COPY alembic/ ./alembic/
 COPY alembic.ini ./
-
-RUN mkdir -p /app/data/uploads /app/data/logs /app/data/tmp_uploads && \
-    chown -R app:app /app/data
 
 USER app
 
