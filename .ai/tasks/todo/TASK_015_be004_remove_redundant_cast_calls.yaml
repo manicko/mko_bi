@@ -1,0 +1,65 @@
+id: TASK_015_be004_remove_redundant_cast_calls
+
+title: Fix BE-004 — Remove redundant cast() calls in processing_log_service.py
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Fix the LOW issue where 5 redundant cast() calls in processing_log_service.py are flagged
+  by mypy. The repository interfaces already declare the correct return types, making these
+  casts unnecessary. Lines 72 and 153 are NOT redundant (create_log returns Any) and must stay.
+
+source_file: .ai/audit/99-validation/01-backend-validated.md
+source_section: BE-004: Remove redundant cast() calls in processing_log_service.py
+
+files:
+  - path: src/mkobi/services/processing_log_service.py
+    targets:
+      - type: function
+        name: get_by_dashboard
+      - type: function
+        name: get_filtered
+      - type: function
+        name: delete_old_logs
+    semantic_anchors:
+      find:
+        type: function_call
+        value: cast
+      description: 5 redundant cast() calls at lines 78, 85, 224, 249, 255
+
+changes:
+  - action: replace_code
+    description: >
+      Remove the 5 redundant cast() calls. The repository interfaces already guarantee
+      these return types: get_by_dashboard → list[ProcessingLogRead], get_filtered →
+      list[ProcessingLogRead], delete_old_logs → int.
+    code_hint: |
+      # Line 78: cast(list[ProcessingLogRead], await self.log_repo.get_by_dashboard(...))
+      # → return await self.log_repo.get_by_dashboard(dashboard_id, db)
+
+      # Line 85: cast(list[ProcessingLogRead], await self.log_repo.get_filtered(...))
+      # → return await self.log_repo.get_filtered(filters, db)
+
+      # Line 224: cast(list[ProcessingLogRead], await self.log_repo.get_filtered(...))
+      # → return await self.log_repo.get_filtered(filters, db)
+
+      # Line 249: return cast(int, count) → return count
+
+      # Line 255: return cast(int, count) → return count
+
+acceptance_criteria:
+  - 5 redundant cast() calls removed
+  - Lines 72 and 153 cast() calls remain (create_log returns Any)
+  - mypy passes with no redundant cast errors
+  - from typing import cast import stays (still used at lines 72, 153)
+
+risk_notes: >
+  Trivial risk — removing type-level casts that mypy confirms are redundant.
+
+tests_to_run:
+  - command: mypy src/mkobi/services/processing_log_service.py
+    reason: Verify no mypy errors after cast removal

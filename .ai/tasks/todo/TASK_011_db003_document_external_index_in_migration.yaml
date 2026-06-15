@@ -1,0 +1,60 @@
+id: TASK_011_db003_document_external_index_in_migration
+
+title: Fix DB-003 — Document externally-created index in migration f47ac18b5b9e
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Fix the LOW issue where migration f47ac18b5b9e drops an index that was never created by
+  any versioned Alembic migration. The index was created externally (manually or via a
+  non-versioned migration). The migration's docstring should explain the index's origin.
+
+source_file: .ai/audit/99-validation/03-database-validated.md
+source_section: DB-003: Document the externally-created index in migration f47ac18b5b9e
+
+files:
+  - path: alembic/versions/f47ac18b5b9e_remove_redundant_dashboard_filters_index.py
+    targets:
+      - type: function
+        name: upgrade
+      - type: function
+        name: downgrade
+    semantic_anchors:
+      replace:
+        type: docstring
+        description: Module docstring and downgrade docstring
+
+changes:
+  - action: replace_code
+    description: >
+      Update the module docstring to explain that idx_dashboard_filters_dashboard_id was
+      created externally (not via Alembic) and is redundant with the PRIMARY KEY on
+      (dashboard_id, filter_id). Update the downgrade docstring to explain that the
+      index recreation is only for rollback compatibility.
+    code_hint: |
+      """Remove redundant index on dashboard_filters table.
+
+      The PRIMARY KEY constraint on (dashboard_id, filter_id) already creates
+      a unique index (dashboard_filters_pkey) that serves all queries. The
+      non-unique idx_dashboard_filters_dashboard_id index was created externally
+      (e.g., manually or via a non-versioned migration) and is redundant.
+
+      This migration uses DROP INDEX IF EXISTS to safely handle databases where
+      the index may or may not exist.
+      """
+
+acceptance_criteria:
+  - Module docstring documents the external origin of the index
+  - Downgrade docstring explains the index recreation is for rollback compatibility
+  - No code logic changes needed
+
+risk_notes: >
+  No risk — documentation-only change.
+
+tests_to_run:
+  - command: ruff check alembic/versions/f47ac18b5b9e_remove_redundant_dashboard_filters_index.py
+    reason: Verify no lint issues after docstring update

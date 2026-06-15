@@ -1,0 +1,54 @@
+id: TASK_013_be002_update_mime_validation_test_regex
+
+title: Fix BE-002 — Update test regex for MIME-first validation error
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Fix the MEDIUM issue where test_validate_file_invalid_extension expects "Invalid file format"
+  error but gets "Detected MIME type text/plain not allowed" because MIME-first validation
+  runs before extension checking. The test should assert the actual MIME rejection path.
+
+source_file: .ai/audit/99-validation/01-backend-validated.md
+source_section: BE-002: Update Test Regex for MIME-First Validation Error
+
+files:
+  - path: tests/test_data_service.py
+    targets:
+      - type: method
+        name: test_validate_file_invalid_extension
+    semantic_anchors:
+      replace:
+        type: method
+        value: test_validate_file_invalid_extension
+
+changes:
+  - action: replace_code
+    description: >
+      Update the test to expect "Detected MIME type.*not allowed" regex instead of
+      "Invalid file format.*test.txt". Update the docstring to explain that libmagic
+      detects the .txt file with CSV-like content as text/plain, which is not in the
+      allowed MIME types list. The MIME-first validation correctly rejects it before
+      the extension check runs.
+    code_hint: |
+      # BEFORE:
+      with pytest.raises(ValueError, match="Invalid file format.*test.txt"):
+
+      # AFTER:
+      with pytest.raises(ValueError, match="Detected MIME type.*not allowed"):
+
+acceptance_criteria:
+  - Test expects "Detected MIME type.*not allowed" error
+  - Test passes in Docker container with libmagic1 installed
+  - Docstring explains MIME-first validation behavior
+
+risk_notes: >
+  Trivial risk — updates test assertion to match actual security behavior.
+
+tests_to_run:
+  - command: pytest tests/test_data_service.py -v -k "invalid_extension" --no-cov
+    reason: Verify MIME validation test passes

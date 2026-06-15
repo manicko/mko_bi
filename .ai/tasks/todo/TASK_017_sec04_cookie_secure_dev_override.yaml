@@ -1,0 +1,51 @@
+id: TASK_017_sec04_cookie_secure_dev_override
+
+title: Fix SEC-004 — Document cookie_secure environment-based override for development
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Fix the LOW issue where cookie_secure defaults to True with no documented way to override
+  for development. The pydantic-settings mechanism already supports APP__COOKIE_SECURE=false
+  as an environment variable override — this just needs documentation.
+
+source_file: .ai/audit/99-validation/04-security-validated.md
+source_section: SEC-004: cookie_secure Hardcoded True
+
+files:
+  - path: src/mkobi/config.py
+    targets:
+      - type: class
+        name: AppSettings
+      - type: field
+        name: cookie_secure
+    semantic_anchors:
+      insert_after:
+        type: field
+        value: cookie_secure
+
+changes:
+  - action: add_code
+    description: >
+      Add a docstring comment to the cookie_secure field documenting the override mechanism:
+      `APP__COOKIE_SECURE=false` for development environments.
+    code_hint: |
+      cookie_secure: bool = Field(
+          True,
+          description="Secure flag for cookies. Set APP__COOKIE_SECURE=false for development.",
+      )
+
+acceptance_criteria:
+  - cookie_secure field has a docstring documenting the override mechanism
+  - No code logic changes needed (pydantic-settings already supports the override)
+
+risk_notes: >
+  No risk — documentation-only change.
+
+tests_to_run:
+  - command: mypy src/mkobi/config.py
+    reason: Verify no type errors after docstring addition

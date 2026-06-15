@@ -1,0 +1,45 @@
+id: TASK_050_int009_add_filter_values_consistency_test
+
+title: Fix INT-009 — Add filter values consistency test after APPEND upload
+
+status: pending
+
+priority: medium
+
+depends_on:
+  - TASK_002_dp02_clear_filter_values_append_mode
+
+description: >
+  Fix the MEDIUM issue where filter values consistency after APPEND upload is untested.
+  Add a test that verifies filter values match the uploaded data after both OVERWRITE
+  and APPEND uploads.
+
+source_file: .ai/audit/99-validation/90-integration-validated.md
+source_section: INT-009: Filter Values Consistency is Untested
+
+files:
+  - path: tests/test_filter_values_consistency.py
+    targets:
+      - type: method
+        name: test_filter_values_after_overwrite
+      - type: method
+        name: test_filter_values_after_append
+
+changes:
+  - action: add_code
+    description: >
+      Add test_filter_values_consistency.py with two tests:
+      - test_filter_values_after_overwrite: Upload in OVERWRITE mode, verify filter values match new data
+      - test_filter_values_after_append: Upload in APPEND mode, verify filter values include all data
+
+acceptance_criteria:
+  - Test verifies filter values match data after OVERWRITE upload
+  - Test verifies filter values match data after APPEND upload
+  - Depends on DP-02 fix for APPEND mode
+
+risk_notes: >
+  Low risk — adds a new test file. Depends on DP-02 fix.
+
+tests_to_run:
+  - command: pytest tests/test_filter_values_consistency.py -v --no-cov
+    reason: Verify filter values consistency test passes

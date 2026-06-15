@@ -1,0 +1,29 @@
+id: TASK_063_verify_database_stage1
+
+title: Verify — Database Stage 1 (DB-001 through DB-003)
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_009_db001_fix_cleanup_old_logs_filter
+  - TASK_010_db002_move_commit_after_none_check
+  - TASK_011_db003_document_external_index_in_migration
+
+verifies:
+  - TASK_009_db001_fix_cleanup_old_logs_filter
+  - TASK_010_db002_move_commit_after_none_check
+  - TASK_011_db003_document_external_index_in_migration
+
+verification_steps:
+  - build: docker compose -f docker/docker-compose.test.yml build
+  - test: docker compose -f docker/docker-compose.test.yml run --rm test pytest tests/test_starter.py tests/test_layout_service.py -v --no-cov
+  - smoke_check: docker compose -f docker/docker-compose.test.yml run --rm test pytest tests/ -x --no-cov -q
+
+pass_criteria:
+  - All database-related tests pass
+  - No test failures or errors
+  - mypy passes on modified files
+
+failure_action: Return the failing implementation task(s) to rework

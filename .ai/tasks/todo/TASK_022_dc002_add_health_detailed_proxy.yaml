@@ -1,0 +1,48 @@
+id: TASK_022_dc002_add_health_detailed_proxy
+
+title: Fix DC-002 — Add /health/detailed proxy to Nginx config
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Fix the LOW issue where Nginx proxies /health but not /health/detailed. The
+  /health/detailed endpoint is documented as a public monitoring endpoint.
+
+source_file: .ai/audit/99-validation/08-deployment-config-validated.md
+source_section: DC-002 — Nginx Missing /health/detailed Proxy
+
+files:
+  - path: docker/nginx/nginx.conf
+    targets:
+      - type: location_block
+        value: /health
+    semantic_anchors:
+      find:
+        type: location
+        value: location /health {
+
+changes:
+  - action: replace_code
+    description: >
+      Extend the /health location block to also match /health/detailed.
+    code_hint: |
+      # BEFORE:
+      location /health {
+
+      # AFTER:
+      location ~ ^/health(/detailed)?$ {
+
+acceptance_criteria:
+  - Nginx proxies both /health and /health/detailed to the application
+  - Backward compatible — /health still works
+
+risk_notes: >
+  Trivial risk — adding a regex location match. The endpoint is already public and documented.
+
+tests_to_run:
+  - command: docker compose -f docker/docker-compose.yml config
+    reason: Verify compose with nginx is valid

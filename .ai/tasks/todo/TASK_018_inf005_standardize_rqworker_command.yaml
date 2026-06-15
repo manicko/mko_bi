@@ -1,0 +1,62 @@
+id: TASK_018_inf005_standardize_rqworker_command
+
+title: Fix INF-005/DC-005 — Standardize rqworker command to direct binary path
+
+status: pending
+
+priority: high
+
+depends_on: []
+
+description: >
+  Fix the HIGH issue where production compose uses `uv run rq worker` while development
+  override uses `/app/.venv/bin/rqworker`. The uv run form depends on uv being in the
+  app user's PATH, which is not guaranteed. Standardize on the direct binary path.
+  Merges INF-005 and DC-005 findings.
+
+source_file: .ai/audit/99-validation/05-docker-validated.md
+source_section: INF-005: rqworker Command — Standardize on Direct Binary Path
+source_file_2: .ai/audit/99-validation/08-deployment-config-validated.md
+source_section_2: DC-005: rqworker Command Format Inconsistency
+
+files:
+  - path: docker/docker-compose.yml
+    targets:
+      - type: service
+        name: rq-worker
+    semantic_anchors:
+      find:
+        type: command
+        value: uv run rq worker
+  - path: docker/docker-compose.test.yml
+    targets:
+      - type: service
+        name: test-rq-worker
+
+changes:
+  - action: replace_code
+    description: >
+      Change the rq-worker command in docker-compose.yml from
+      `["uv", "run", "rq", "worker", "--url", "redis://redis:6379/0"]` to
+      `["/app/.venv/bin/rqworker", "--url", "redis://redis:6379/0"]`.
+      Update the healthcheck test to use `/app/.venv/bin/python` instead of `uv run`.
+    code_hint: |
+      # BEFORE:
+      command: ["uv", "run", "rq", "worker", "--url", "redis://redis:6379/0"]
+
+      # AFTER:
+      command: ["/app/.venv/bin/rqworker", "--url", "redis://redis:6379/0"]
+
+acceptance_criteria:
+  - rq-worker command uses direct binary path `/app/.venv/bin/rqworker`
+  - Healthcheck uses `/app/.venv/bin/python`
+  - Matches the development override pattern
+  - No dependency on uv PATH resolution at runtime
+
+risk_notes: >
+  Low risk — the direct binary path is already proven in the development override.
+  The rqworker binary is installed into .venv by `uv sync --frozen --no-dev`.
+
+tests_to_run:
+  - command: docker compose -f docker/docker-compose.yml config
+    reason: Verify compose file is valid after command change

@@ -1,0 +1,57 @@
+id: TASK_002_dp02_clear_filter_values_append_mode
+
+title: Fix DP-02 — APPEND mode does not clear stale filter values, causing data drift
+
+status: pending
+
+priority: high
+
+depends_on:
+  - TASK_001_dp08_independent_session_for_failed_status
+
+description: >
+  Fix the HIGH issue where APPEND mode in data_worker does not clear stale filter values
+  before saving new ones. Per SPEC.md "Values are rebuilt on each upload (idempotent overwrite),"
+  both OVERWRITE and APPEND modes must clear existing filter values before saving new ones.
+
+source_file: .ai/audit/99-validation/07-data-processing-validated.md
+source_section: DP-02: APPEND mode doesn't clear stale filter values
+
+files:
+  - path: src/mkobi/workers/data_worker.py
+    targets:
+      - type: function
+        name: _store_aggregates
+    semantic_anchors:
+      find:
+        type: condition
+        value: if mode == UploadMode.OVERWRITE
+      description: Two locations — test mode path and production mode path both have identical conditional that only clears filter values in OVERWRITE mode.
+
+changes:
+  - action: replace_code
+    description: >
+      Remove the `if mode == UploadMode.OVERWRITE:` conditional at both the test mode path
+      and the production mode path. Replace with an unconditional call to
+      `filter_values_repo.clear_dashboard_values(dashboard_id, session)`. This ensures
+      filter values are always rebuilt on each upload per SPEC.
+    code_hint: |
+      # BEFORE (two locations):
+      if mode == UploadMode.OVERWRITE:
+          await filter_values_repo.clear_dashboard_values(dashboard_id, db_session)
+
+      # AFTER (both locations):
+      await filter_values_repo.clear_dashboard_values(dashboard_id, db_session)
+
+acceptance_criteria:
+  - APPEND mode clears stale filter values before saving new ones
+  - OVERWRITE mode behavior unchanged
+  - No orphaned filter values after APPEND upload
+
+risk_notes: >
+  Medium risk — changes data clearing logic in APPEND mode. Verify with APPEND mode
+  integration tests before deployment. No schema changes needed.
+
+tests_to_run:
+  - command: pytest tests/test_data_worker.py -v -k "store_aggregates" --no-cov
+    reason: Verify store_aggregates tests cover both modes

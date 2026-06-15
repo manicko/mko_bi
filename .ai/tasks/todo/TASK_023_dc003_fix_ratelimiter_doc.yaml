@@ -1,0 +1,42 @@
+id: TASK_023_dc003_fix_ratelimiter_doc
+
+title: Fix DC-003 — Fix RATE_LIMITER_FAIL_CLOSED default in documentation
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Fix the MEDIUM issue where docs/08-security/security-overview.md states "false" as the
+  default for fail-open mode, but the code default is True (fail-closed). Update the
+  documentation to match the code.
+
+source_file: .ai/audit/99-validation/08-deployment-config-validated.md
+source_section: DC-003 — RATE_LIMITER_FAIL_CLOSED Default
+
+files:
+  - path: docs/08-security/security-overview.md
+    targets:
+      - type: section
+        description: Rate limiter section mentioning fail-closed default
+    semantic_anchors:
+      find:
+        type: text
+        value: false (as default for fail-open mode)
+
+changes:
+  - action: replace_code
+    description: >
+      Update the documentation to state that the default is `true` (fail-closed mode),
+      matching the code default at config.py.
+
+acceptance_criteria:
+  - Documentation states the correct default: true (fail-closed)
+  - Matches the code default in config.py
+
+risk_notes: >
+  No risk — documentation-only change.
+
+tests_to_run: []

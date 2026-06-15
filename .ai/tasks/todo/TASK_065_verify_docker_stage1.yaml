@@ -1,0 +1,30 @@
+id: TASK_065_verify_docker_stage1
+
+title: Verify — Docker Stage 1 (INF-005 through INF-007)
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_018_inf005_standardize_rqworker_command
+  - TASK_019_inf006_db_port_bind_localhost
+  - TASK_020_inf007_fix_postgresql_healthcheck
+
+verifies:
+  - TASK_018_inf005_standardize_rqworker_command
+  - TASK_019_inf006_db_port_bind_localhost
+  - TASK_020_inf007_fix_postgresql_healthcheck
+
+verification_steps:
+  - build: docker compose -f docker/docker-compose.yml build
+  - build_test: docker compose -f docker/docker-compose.test.yml build
+  - smoke_check: docker compose -f docker/docker-compose.yml config
+  - smoke_check_test: docker compose -f docker/docker-compose.test.yml config
+
+pass_criteria:
+  - All compose files are valid (config command succeeds)
+  - All services build successfully
+  - No port conflicts or healthcheck syntax errors
+
+failure_action: Return the failing implementation task(s) to rework

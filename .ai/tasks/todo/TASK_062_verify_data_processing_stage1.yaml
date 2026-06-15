@@ -1,0 +1,43 @@
+id: TASK_062_verify_data_processing_stage1
+
+title: Verify — Data Processing Stage 1 (DP-01 through DP-08)
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_001_dp08_independent_session_for_failed_status
+  - TASK_002_dp02_clear_filter_values_append_mode
+  - TASK_003_dp07_lower_timeout_orphaned_uploaded_check
+  - TASK_004_dp01_remove_dead_datapipeline_class
+  - TASK_005_dp03_tighten_glob_pattern
+  - TASK_006_dp04_reraise_in_test_mode
+  - TASK_007_dp05_preserve_native_dim_types
+  - TASK_008_dp06_remove_round_from_storage
+
+verifies:
+  - TASK_001_dp08_independent_session_for_failed_status
+  - TASK_002_dp02_clear_filter_values_append_mode
+  - TASK_003_dp07_lower_timeout_orphaned_uploaded_check
+  - TASK_004_dp01_remove_dead_datapipeline_class
+  - TASK_005_dp03_tighten_glob_pattern
+  - TASK_006_dp04_reraise_in_test_mode
+  - TASK_007_dp05_preserve_native_dim_types
+  - TASK_008_dp06_remove_round_from_storage
+
+verification_steps:
+  - build: docker compose -f docker/docker-compose.test.yml build
+  - test: docker compose -f docker/docker-compose.test.yml run --rm test pytest tests/test_data_worker.py tests/test_aggregation_service.py tests/test_file_processing.py -v --no-cov
+  - smoke_check: docker compose -f docker/docker-compose.test.yml run --rm test pytest tests/ -x --no-cov -q
+
+pass_criteria:
+  - All data processing tests pass
+  - No test failures or errors
+  - mypy passes on modified files
+
+failure_action: Return the failing implementation task(s) to rework
+
+risk_notes: >
+  This verification task runs after all data processing tasks complete.
+  If any test fails, the corresponding implementation task is returned to rework.

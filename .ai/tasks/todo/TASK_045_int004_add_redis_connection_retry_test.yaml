@@ -1,0 +1,41 @@
+id: TASK_045_int004_add_redis_connection_retry_test
+
+title: Fix INT-004 — Add Redis connection retry test
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Fix the LOW issue where Redis connection retry logic is untested.
+  Add a test that verifies the retry behavior on connection failure.
+
+source_file: .ai/audit/99-validation/90-integration-validated.md
+source_section: INT-004: Redis Connection Retry is Untested
+
+files:
+  - path: tests/test_redis_connection.py
+    targets:
+      - type: method
+        name: test_redis_connection_retry
+
+changes:
+  - action: add_code
+    description: >
+      Add test_redis_connection.py with a test that mocks Redis connection failures
+      and verifies: (1) retry on connection failure, (2) exponential backoff,
+      (3) eventual success, (4) max retries respected.
+
+acceptance_criteria:
+  - Test verifies retry on Redis connection failure
+  - Test verifies exponential backoff
+  - Test verifies max retries
+
+risk_notes: >
+  Low risk — adds a new test file with mocked Redis.
+
+tests_to_run:
+  - command: pytest tests/test_redis_connection.py -v --no-cov
+    reason: Verify Redis connection retry test passes

@@ -1,0 +1,42 @@
+id: TASK_044_int003_add_cors_preflight_test
+
+title: Fix INT-003 — Add CORS preflight request test
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Fix the LOW issue where CORS preflight (OPTIONS) requests are untested.
+  Add a test that verifies the CORS middleware correctly handles OPTIONS requests.
+
+source_file: .ai/audit/99-validation/90-integration-validated.md
+source_section: INT-003: CORS Preflight is Untested
+
+files:
+  - path: tests/test_cors.py
+    targets:
+      - type: method
+        name: test_cors_preflight
+
+changes:
+  - action: add_code
+    description: >
+      Add test_cors.py with a test that sends an OPTIONS request with Origin header
+      and verifies: (1) 200 response, (2) Access-Control-Allow-Origin header present,
+      (3) Access-Control-Allow-Methods includes GET, POST, PUT, DELETE,
+      (4) Access-Control-Allow-Headers includes Authorization, Content-Type.
+
+acceptance_criteria:
+  - OPTIONS request returns 200
+  - CORS headers present in response
+  - Allowed methods and headers documented
+
+risk_notes: >
+  Trivial risk — adds a new test file.
+
+tests_to_run:
+  - command: pytest tests/test_cors.py -v --no-cov
+    reason: Verify CORS preflight test passes

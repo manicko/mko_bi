@@ -1,0 +1,40 @@
+id: TASK_061_int020_add_data_export_test
+
+title: Fix INT-020 — Add data export integration test
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Fix the LOW issue where data export functionality is untested.
+  Add an integration test that verifies data export produces valid output.
+
+source_file: .ai/audit/99-validation/90-integration-validated.md
+source_section: INT-020: Data Export is Untested
+
+files:
+  - path: tests/test_data_export.py
+    targets:
+      - type: method
+        name: test_data_export
+
+changes:
+  - action: add_code
+    description: >
+      Add test_data_export.py with a test that: (1) uploads data,
+      (2) requests data export, (3) verifies export format is valid CSV/Excel,
+      (4) verifies exported data matches uploaded data.
+
+acceptance_criteria:
+  - Test verifies data export produces valid output
+  - Test verifies exported data matches source data
+
+risk_notes: >
+  Low risk — adds a new test file.
+
+tests_to_run:
+  - command: pytest tests/test_data_export.py -v --no-cov
+    reason: Verify data export test passes

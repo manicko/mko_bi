@@ -1,0 +1,40 @@
+id: TASK_054_int013_add_websocket_reconnect_test
+
+title: Fix INT-013 — Add WebSocket reconnection test for processing status
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Fix the LOW issue where WebSocket reconnection for processing status updates
+  is untested. Add a test that verifies the client reconnects after connection loss.
+
+source_file: .ai/audit/99-validation/90-integration-validated.md
+source_section: INT-013: WebSocket Reconnection is Untested
+
+files:
+  - path: tests/test_websocket_reconnect.py
+    targets:
+      - type: method
+        name: test_websocket_reconnect
+
+changes:
+  - action: add_code
+    description: >
+      Add test_websocket_reconnect.py with a test that: (1) connects WebSocket,
+      (2) simulates connection loss, (3) verifies automatic reconnection,
+      (4) verifies processing status updates resume after reconnection.
+
+acceptance_criteria:
+  - Test verifies WebSocket reconnection after connection loss
+  - Test verify processing status updates resume
+
+risk_notes: >
+  Low risk — adds a new test file.
+
+tests_to_run:
+  - command: pytest tests/test_websocket_reconnect.py -v --no-cov
+    reason: Verify WebSocket reconnection test passes

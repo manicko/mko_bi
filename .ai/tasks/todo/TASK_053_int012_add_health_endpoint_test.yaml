@@ -1,0 +1,41 @@
+id: TASK_053_int012_add_health_endpoint_test
+
+title: Fix INT-012 — Add health endpoint integration test
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Fix the LOW issue where health endpoints are untested. Add integration tests
+  for /health and /health/detailed endpoints.
+
+source_file: .ai/audit/99-validation/90-integration-validated.md
+source_section: INT-012: Health Endpoints are Untested
+
+files:
+  - path: tests/test_health.py
+    targets:
+      - type: method
+        name: test_health_endpoint
+      - type: method
+        name: test_health_detailed_endpoint
+
+changes:
+  - action: add_code
+    description: >
+      Add test_health.py with tests for /health (returns 200 with status ok)
+      and /health/detailed (returns 200 with component statuses).
+
+acceptance_criteria:
+  - /health returns 200 with status ok
+  - /health/detailed returns 200 with component statuses
+
+risk_notes: >
+  Trivial risk — adds a new test file.
+
+tests_to_run:
+  - command: pytest tests/test_health.py -v --no-cov
+    reason: Verify health endpoint tests pass

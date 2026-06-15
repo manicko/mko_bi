@@ -735,6 +735,8 @@
     - ../../../shared/types/api.types
     - ../api/authApi
     - ./authToken
+    - ../../../shared/api/errorHandler
+    - ../../../shared/types/enums
   components: []
   hooks:
     - useAuth
@@ -1012,6 +1014,9 @@
     - ./FileDropzone
     - ../api/uploadApi
     - ../../../shared/types/enums
+    - ../../../shared/api/errorHandler
+    - ../../../shared/api/errorMessages
+    - ../model/errorMessages
   components:
     - UploadModal
   hooks: []

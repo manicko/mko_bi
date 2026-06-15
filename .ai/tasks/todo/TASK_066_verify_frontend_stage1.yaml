@@ -1,0 +1,38 @@
+id: TASK_066_verify_frontend_stage1
+
+title: Verify — Frontend Stage 1 (FE tasks)
+
+type: verification
+
+status: pending
+
+depends_on:
+  - TASK_030_fe002_add_react_query_devtools
+  - TASK_031_fe003_add_error_boundary
+  - TASK_032_fe004_fix_mui_lab_loadingbutton_deprecation
+  - TASK_033_fe006_consolidate_error_query_hooks
+  - TASK_034_fe007_add_debounce_to_filter_search
+  - TASK_035_fe008_add_zod_password_validation
+  - TASK_036_fe009_add_loading_skeleton
+  - TASK_037_fe010_add_date_fns_formatting
+
+verifies:
+  - TASK_030_fe002_add_react_query_devtools
+  - TASK_031_fe003_add_error_boundary
+  - TASK_032_fe004_fix_mui_lab_loadingbutton_deprecation
+  - TASK_033_fe006_consolidate_error_query_hooks
+  - TASK_034_fe007_add_debounce_to_filter_search
+  - TASK_035_fe008_add_zod_password_validation
+  - TASK_036_fe009_add_loading_skeleton
+  - TASK_037_fe010_add_date_fns_formatting
+
+verification_steps:
+  - build: cd frontend && npm run build
+  - smoke_check: cd frontend && npm run build 2>&1 | grep -i "error" | wc -l | xargs -I{} test {} -eq 0
+
+pass_criteria:
+  - Frontend production build succeeds with zero errors
+  - No TypeScript compilation errors
+  - Bundle size within acceptable limits
+
+failure_action: Return the failing implementation task(s) to rework

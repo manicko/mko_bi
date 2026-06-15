@@ -1,0 +1,52 @@
+id: TASK_004_dp01_remove_dead_datapipeline_class
+
+title: Fix DP-01 — Remove dead DataPipeline class from registry.py
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Remove the dead DataPipeline class from registry.py. The class is never imported or called
+  anywhere. The active pipeline lives in data_worker.py. Removing it reduces confusion and
+  maintenance debt.
+
+source_file: .ai/audit/99-validation/07-data-processing-validated.md
+source_section: DP-01: Remove dead DataPipeline class from registry.py
+
+files:
+  - path: src/mkobi/data/processing/registry.py
+    targets:
+      - type: class
+        name: DataPipeline
+    semantic_anchors:
+      delete:
+        type: class
+        value: DataPipeline
+  - path: src/mkobi/services/processing_log_service.py
+    targets:
+      - type: comment
+        description: Docstring comment referencing DataPipeline
+
+changes:
+  - action: delete_code
+    description: Delete the entire DataPipeline class (all methods) and its associated unused imports (tenacity, cast, ConnectionError, ProcessingLogRead, IProcessingConfigService, IProcessingLogService, apply_transformations, aggregate_data, StorageManager).
+  - action: replace_code
+    description: Update module docstring to reference data_worker.py as the authoritative pipeline.
+  - action: replace_code
+    description: Update comment in processing_log_service.py from "Called from DataPipeline" to "Called from data_worker".
+
+acceptance_criteria:
+  - DataPipeline class no longer exists in registry.py
+  - registry.py has no unused imports
+  - mypy passes with no errors
+  - No references to DataPipeline remain in the codebase
+
+tests_to_run:
+  - command: mypy src/mkobi/data/processing/registry.py
+    reason: Verify no type errors after removal
+
+risk_notes: >
+  Trivial risk — pure dead code removal. Verify no hidden dynamic imports exist.

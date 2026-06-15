@@ -1,0 +1,43 @@
+id: TASK_055_research_placeholder_page_usage
+
+title: Research INT-014 — Investigate PlaceholderPage component usage before deletion
+
+type: research
+
+status: pending
+
+depends_on: []
+
+description: >
+  Research task for INT-014. The PlaceholderPage component exists in
+  frontend/src/shared/components/PlaceholderPage.tsx but may have no routes
+  pointing to it. Investigate whether it can be deleted or serves a purpose
+  as a fallback/placeholder for future features.
+
+source_file: .ai/audit/99-validation/90-integration-validated.md
+source_section: INT-014: PlaceholderPage May Be Dead Code
+
+files:
+  - path: frontend/src/shared/components/PlaceholderPage.tsx
+  - path: frontend/src/app/routes.tsx
+  - path: frontend/src/shared/components/index.ts
+
+changes:
+  - action: research
+    description: >
+      Investigate all imports and usages of PlaceholderPage across the frontend.
+      Check: (1) direct imports, (2) re-exports from shared/components/index.ts,
+      (3) lazy loading references, (4) dynamic route references.
+      Produce a go/no-go/go-with-changes recommendation.
+
+acceptance_criteria:
+  - All usages of PlaceholderPage identified
+  - Go/no-go/go-with-changes recommendation documented in .ai/plans/INT-014-placeholder-page.md
+  - If go: delete PlaceholderPage and its re-export
+  - If no-go: document the reason and intended future use
+
+risk_notes: >
+  This is a research task. The blocked implementation task (INT-014 deletion)
+  must not execute until this research recommends "go".
+
+output_file: .ai/plans/INT-014-placeholder-page.md

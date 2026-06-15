@@ -1,0 +1,50 @@
+id: TASK_043_int002_add_openapi_error_schemas
+
+title: Fix INT-002 — Add OpenAPI error response schemas to FastAPI routes
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Fix the LOW issue where FastAPI routes lack OpenAPI error response schemas.
+  The RFC 7807 error format is implemented but not documented in OpenAPI.
+  Add responses={400: ..., 401: ..., 403: ..., 404: ..., 422: ..., 500: ...}
+  to all API routes.
+
+source_file: .ai/audit/99-validation/90-integration-validated.md
+source_section: INT-002: Missing OpenAPI Error Response Schemas
+
+files:
+  - path: src/mkobi/api/routes/
+    targets:
+      - type: router_files
+        description: All route files in api/routes/
+  - path: src/mkobi/models/
+    targets:
+      - type: file
+        description: ProblemDetail or error response model
+
+changes:
+  - action: add_code
+    description: >
+      Create a reusable error response model (ProblemDetail) matching the RFC 7807
+      format with fields: type, title, status, detail, code, details.
+    - action: replace_code
+    description: >
+      Add responses parameter to all API route decorators documenting the error
+      codes each route can return. Use a shared responses dict for common patterns.
+
+acceptance_criteria:
+  - ProblemDetail model exists and matches RFC 7807 format
+  - All API routes have responses parameter with error schemas
+  - Swagger UI shows error response documentation
+
+risk_notes: >
+  Low risk — adds OpenAPI documentation. No runtime behavior change.
+
+tests_to_run:
+  - command: pytest tests/test_openapi.py -v --no-cov
+    reason: Verify OpenAPI schema generation

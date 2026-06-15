@@ -1,0 +1,49 @@
+id: TASK_021_dc001_remove_xframe_from_app
+
+title: Fix DC-001 — Remove X-Frame-Options DENY from app.py, let Nginx handle it
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Fix the MEDIUM issue where app.py sets X-Frame-Options DENY but Nginx sets SAMEORIGIN,
+  and Nginx's `always` flag causes it to override the app header. Remove the conflicting
+  DENY from app.py and let Nginx's SAMEORIGIN policy take effect, which supports the
+  documented iframe fallback strategy for Dash migration.
+
+source_file: .ai/audit/99-validation/08-deployment-config-validated.md
+source_section: DC-001 — X-Frame-Options Conflict
+
+files:
+  - path: src/mkobi/app.py
+    targets:
+      - type: class
+        name: SecurityHeadersMiddleware
+      - type: method
+        name: dispatch
+    semantic_anchors:
+      find:
+        type: assignment
+        value: response.headers["X-Frame-Options"]
+
+changes:
+  - action: delete_code
+    description: >
+      Remove the line `response.headers["X-Frame-Options"] = "DENY"` from
+      SecurityHeadersMiddleware.dispatch(). Nginx already sets SAMEORIGIN.
+
+acceptance_criteria:
+  - app.py no longer sets X-Frame-Options header
+  - Nginx SAMEORIGIN policy is the effective header
+  - Deployment doc iframe strategy remains viable
+
+risk_notes: >
+  Low risk — removes the conflicting header. Nginx already sets SAMEORIGIN which is
+  the desired policy.
+
+tests_to_run:
+  - command: pytest tests/test_app.py -v -k "security" --no-cov
+    reason: Verify security header tests pass without X-Frame-Options from app

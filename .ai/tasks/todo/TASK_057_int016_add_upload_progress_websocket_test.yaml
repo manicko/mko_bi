@@ -1,0 +1,40 @@
+id: TASK_057_int016_add_upload_progress_websocket_test
+
+title: Fix INT-016 — Add upload progress WebSocket integration test
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Fix the LOW issue where upload progress via WebSocket is untested.
+  Add an integration test that verifies progress updates are sent during upload.
+
+source_file: .ai/audit/99-validation/90-integration-validated.md
+source_section: INT-016: Upload Progress WebSocket is Untested
+
+files:
+  - path: tests/test_upload_progress.py
+    targets:
+      - type: method
+        name: test_upload_progress_websocket
+
+changes:
+  - action: add_code
+    description: >
+      Add test_upload_progress.py with a test that: (1) uploads a file,
+      (2) listens for WebSocket progress updates, (3) verifies progress
+      percentage increases, (4) verifies 100% completion message.
+
+acceptance_criteria:
+  - Test verifies WebSocket progress updates during upload
+  - Test verifies 100% completion message
+
+risk_notes: >
+  Low risk — adds a new test file.
+
+tests_to_run:
+  - command: pytest tests/test_upload_progress.py -v --no-cov
+    reason: Verify upload progress test passes
