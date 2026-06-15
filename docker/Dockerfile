@@ -15,7 +15,6 @@ WORKDIR /app/frontend
 COPY frontend/package*.json ./
 
 # Install dependencies with BuildKit cache mount for faster rebuilds
-# Use npm ci for deterministic installs (fails on lockfile mismatch)
 RUN --mount=type=cache,target=/app/frontend/node_modules \
     npm ci
 

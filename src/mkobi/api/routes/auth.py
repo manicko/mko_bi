@@ -292,6 +292,8 @@ async def refresh(
         )
 
     # Apply rate limiting for refresh attempts based on client IP
+    # Only rate-limit requests that have a refresh token (actual auth attempts),
+    # not routine navigation without cookies which wastes quota unnecessarily
     client_ip = request.client.host if request.client else "unknown"
     rate_limiter = AsyncRateLimiter(
         redis_client,

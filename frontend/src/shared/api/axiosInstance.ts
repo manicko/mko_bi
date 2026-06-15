@@ -55,7 +55,15 @@ const processQueue = (params: ProcessQueueParams): void => {
 axiosInstance.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    if (error.response?.status === 401) {
+    const status = error.response?.status
+
+    // Handle rate limit (429) - skip toast/redirect, let caller handle silently
+    // This is important for refresh endpoint where rate limiting is expected behavior
+    if (status === 429) {
+      return Promise.reject(error)
+    }
+
+    if (status === 401) {
       // Skip redirect/toast for login endpoint - let inline form error handle it
       if (error.config?.url?.includes('/auth/login')) {
         return Promise.reject(error)
@@ -115,9 +123,8 @@ axiosInstance.interceptors.response.use(
       }
     }
 
-    // Handle 403 and other non-401 errors with localized toast
-    const status = error.response?.status
-    if (status && status !== 401) {
+    // Handle 403 and other non-401/429 errors with localized toast
+    if (status && status !== 401 && status !== 429) {
       // Skip toast for login endpoint - let inline form error handle it
       if (error.config?.url?.includes('/auth/login')) {
         return Promise.reject(error)
