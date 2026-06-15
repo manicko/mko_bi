@@ -379,9 +379,14 @@ class DatabaseStarter:
             result = await conn.execute(
                 text(
                     "DELETE FROM processing_logs "
-                    "WHERE started_at < :cutoff AND status IN (:completed_status, 'failed')"
+                    "WHERE finished_at < :cutoff "
+                    "AND status IN (:completed_status, :failed_status)"
                 ),
-                {"cutoff": cutoff_date, "completed_status": ProcessingStatus.COMPLETED.value},
+                {
+                    "cutoff": cutoff_date,
+                    "completed_status": ProcessingStatus.COMPLETED.value,
+                    "failed_status": ProcessingStatus.FAILED.value,
+                },
             )
             await conn.commit()
 
