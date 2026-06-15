@@ -538,17 +538,24 @@ async def _process_csv_file_async(
                                 file_path,
                                 exc_info=True,
                             )
+                    raise  # Re-raise inside transaction block triggers rollback
 
-                    # Update status to failed within the same transaction
-                    await _update_processing_log_status(
-                        task_id=task_id,
-                        status=ProcessingStatus.FAILED,
-                        message=f"Processing failed: {error_msg}",
-                        finished_at=datetime.now(UTC),
-                        session=session,
-                        error_code=error_code,
-                    )
-                    raise
+        # Use independent session for status update OUTSIDE the rolled-back transaction.
+        # This ensures the FAILED status persists even when main transaction rolls back.
+        try:
+            await _update_processing_log_status(
+                task_id=task_id,
+                status=ProcessingStatus.FAILED,
+                message=f"Processing failed: {error_msg}",
+                finished_at=datetime.now(UTC),
+                error_code=error_code,
+            )
+        except Exception as status_err:
+            logger.exception(
+                "Failed to update processing log status to FAILED: task_id=%s, error=%s",
+                task_id,
+                status_err,
+            )
 
 
 async def _store_aggregates(
