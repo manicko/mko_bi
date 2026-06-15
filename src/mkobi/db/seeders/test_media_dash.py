@@ -9,11 +9,11 @@ import logging
 from typing import Any
 
 from sqlalchemy import delete, select
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.db.models import Dashboard, Graph, ProcessingConfig
-from mkobi.db.models.filters import dashboard_filters, Filter
+from mkobi.db.models.filters import Filter, dashboard_filters
 from mkobi.db.session import get_async_sessionlocal
 from mkobi.models.enums import FilterType, GraphType
 
@@ -53,13 +53,15 @@ async def ensure_test_media_dash(db: AsyncSession | None = None) -> dict[str, An
         existing_dashboard_stmt = select(Dashboard).where(
             Dashboard.name == DASHBOARD_NAME
         )
-        existing_dashboard = (await db.execute(existing_dashboard_stmt)).scalar_one_or_none()
+        existing_dashboard = (
+            await db.execute(existing_dashboard_stmt)
+        ).scalar_one_or_none()
         is_update = existing_dashboard is not None
 
         # Upsert dashboard with ON CONFLICT DO UPDATE
         upsert_dashboard = pg_insert(Dashboard).values(
             name=DASHBOARD_NAME,
-            description="Test media dashboard for Phase 02",
+            description="Test media dashboard",
             config={
                 "graph_types": ["bar"],
                 "filters": [
@@ -124,9 +126,7 @@ async def ensure_test_media_dash(db: AsyncSession | None = None) -> dict[str, An
         result["filter_ids"] = [str(filter1_id), str(filter2_id)]
 
         # Delete existing graphs for this dashboard (idempotent - ensures clean state)
-        await db.execute(
-            delete(Graph).where(Graph.dashboard_id == dashboard_id)
-        )
+        await db.execute(delete(Graph).where(Graph.dashboard_id == dashboard_id))
 
         # Insert graph for Monthly TVR by Brand
         insert_graph = pg_insert(Graph).values(
@@ -138,7 +138,7 @@ async def ensure_test_media_dash(db: AsyncSession | None = None) -> dict[str, An
                 "color": "brand",
                 "metrics": ["tvr_sum"],
                 "orientation": "v",
-                "barmode": "group",
+                "barmode": "stack",
             },
             dimensions=["year", "month", "month_label", "brand"],
             metrics=["tvr"],
@@ -167,7 +167,7 @@ async def ensure_test_media_dash(db: AsyncSession | None = None) -> dict[str, An
                 "color": "advertiser",
                 "metrics": ["tvr_sum"],
                 "orientation": "v",
-                "barmode": "group",
+                "barmode": "stack",
             },
             dimensions=["year", "month", "month_label", "advertiser"],
             metrics=["tvr"],
@@ -223,7 +223,10 @@ async def ensure_test_media_dash(db: AsyncSession | None = None) -> dict[str, An
                 "computed_fields": [
                     {"name": "year", "expr": "pl.col('date').dt.year()"},
                     {"name": "month", "expr": "pl.col('date').dt.month()"},
-                    {"name": "month_label", "expr": "pl.col('date').dt.strftime('%b %Y')"},
+                    {
+                        "name": "month_label",
+                        "expr": "pl.col('date').dt.strftime('%b %Y')",
+                    },
                 ],
                 "renames": {"TVR": "tvr"},
             },
