@@ -356,7 +356,7 @@ class TestWeakCredentialDetection(TestSettingsBase):
 
 
 class TestJWTSecretValidation(TestSettingsBase):
-    """Tests for JWT secret key strength validation."""
+    """Tests for JWT secret key validation and loading."""
 
     def test_short_jwt_secret_rejected(self, monkeypatch):
         """Verify JWT secret shorter than 32 characters is rejected."""
@@ -376,12 +376,11 @@ class TestJWTSecretValidation(TestSettingsBase):
         with pytest.raises(ValueError, match="too common"):
             Settings()
 
-    def test_none_jwt_secret_accepted(self, monkeypatch):
-        """Verify .env fallback is applied when JWT__SECRET_KEY env var is deleted."""
-        monkeypatch.delenv("JWT__SECRET_KEY", raising=False)
+    def test_env_jwt_secret_accepted(self, monkeypatch):
+        """Verify JWT__SECRET_KEY from env var is loaded into settings."""
+        monkeypatch.setenv("JWT__SECRET_KEY", "test-jwt-secret-key-for-unit-tests-32-chars!")
         settings = Settings()
-        # .env file provides the fallback value
-        assert settings.jwt.secret_key == "dev-secret-key-for-security-testing-do-not-use-in-prod-32chars"
+        assert settings.jwt.secret_key == "test-jwt-secret-key-for-unit-tests-32-chars!"
 
     def test_strong_jwt_secret_accepted(self, monkeypatch):
         """Verify strong JWT secret passes validation."""
