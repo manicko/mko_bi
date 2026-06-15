@@ -1081,6 +1081,7 @@
   - mkobi.db.repositories.dashboard_filter_values_repo
   classes: []
   functions:
+  - _map_processing_error_to_code
   - _validate_processing_config
   - _to_graph_read
   - _to_filter_read
@@ -1512,8 +1513,8 @@
   imports:
   - typing
   - sqlalchemy
-  - sqlalchemy.ext.asyncio
   - sqlalchemy.dialects.postgresql
+  - sqlalchemy.ext.asyncio
   - mkobi.db.models
   - mkobi.db.models.filters
   - mkobi.db.session

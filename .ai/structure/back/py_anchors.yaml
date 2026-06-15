@@ -4390,6 +4390,13 @@
   value: str
   stable_hash: cff3c344
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
+- id: 0e85f9e3
+  symbol_path:
+  - AuthService
+  type: function_call
+  value: verify_password
+  stable_hash: 0e85f9e3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
 - id: 98feca73
   symbol_path:
   - AuthService
@@ -7605,6 +7612,111 @@
   value: exception_type
   stable_hash: b8c184c8
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\utils\validators.py
+- id: 2cf6bf93
+  symbol_path:
+  - _map_processing_error_to_code
+  type: function_call
+  value: str
+  stable_hash: 2cf6bf93
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 8f6c2535
+  symbol_path:
+  - _map_processing_error_to_code
+  type: function_call
+  value: isinstance
+  stable_hash: 8f6c2535
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: d8e50c5a
+  symbol_path:
+  - _map_processing_error_to_code
+  type: return_statement
+  stable_hash: d8e50c5a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 2cf6bf93
+  symbol_path:
+  - _map_processing_error_to_code
+  type: function_call
+  value: str
+  stable_hash: 2cf6bf93
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: d8e50c5a
+  symbol_path:
+  - _map_processing_error_to_code
+  type: return_statement
+  stable_hash: d8e50c5a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 2cf6bf93
+  symbol_path:
+  - _map_processing_error_to_code
+  type: function_call
+  value: str
+  stable_hash: 2cf6bf93
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: d8e50c5a
+  symbol_path:
+  - _map_processing_error_to_code
+  type: return_statement
+  stable_hash: d8e50c5a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 2cf6bf93
+  symbol_path:
+  - _map_processing_error_to_code
+  type: function_call
+  value: str
+  stable_hash: 2cf6bf93
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: d8e50c5a
+  symbol_path:
+  - _map_processing_error_to_code
+  type: return_statement
+  stable_hash: d8e50c5a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 2cf6bf93
+  symbol_path:
+  - _map_processing_error_to_code
+  type: function_call
+  value: str
+  stable_hash: 2cf6bf93
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: d8e50c5a
+  symbol_path:
+  - _map_processing_error_to_code
+  type: return_statement
+  stable_hash: d8e50c5a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 2cf6bf93
+  symbol_path:
+  - _map_processing_error_to_code
+  type: function_call
+  value: str
+  stable_hash: 2cf6bf93
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: d8e50c5a
+  symbol_path:
+  - _map_processing_error_to_code
+  type: return_statement
+  stable_hash: d8e50c5a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 2cf6bf93
+  symbol_path:
+  - _map_processing_error_to_code
+  type: function_call
+  value: str
+  stable_hash: 2cf6bf93
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: d8e50c5a
+  symbol_path:
+  - _map_processing_error_to_code
+  type: return_statement
+  stable_hash: d8e50c5a
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 2cf6bf93
+  symbol_path:
+  - _map_processing_error_to_code
+  type: function_call
+  value: str
+  stable_hash: 2cf6bf93
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: ce5e76e2
   symbol_path:
   - _validate_processing_config
@@ -7906,6 +8018,12 @@
   value: str
   stable_hash: c22d8585
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: ff88f2fa
+  symbol_path: []
+  type: function_call
+  value: _map_processing_error_to_code
+  stable_hash: ff88f2fa
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: d2583edf
   symbol_path: []
   type: function_call
@@ -7934,6 +8052,12 @@
   type: function_call
   value: str
   stable_hash: c22d8585
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: ff88f2fa
+  symbol_path: []
+  type: function_call
+  value: _map_processing_error_to_code
+  stable_hash: ff88f2fa
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: d2583edf
   symbol_path: []
@@ -9291,6 +9415,20 @@
   type: function_call
   value: DateTime
   stable_hash: 569587e4
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\processing_logs.py
+- id: 3f31f37f
+  symbol_path:
+  - ProcessingLog
+  type: function_call
+  value: mapped_column
+  stable_hash: 3f31f37f
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\processing_logs.py
+- id: 2a3f25af
+  symbol_path:
+  - ProcessingLog
+  type: function_call
+  value: String
+  stable_hash: 2a3f25af
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\models\processing_logs.py
 - id: 39f0bcfa
   symbol_path:

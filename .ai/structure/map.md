@@ -1,5 +1,5 @@
 Folder PATH listing for volume Windows
-Volume serial number is 000001A9 F012:D5D6
+Volume serial number is 000001E1 F012:D5D6
 C:\PY_DEV\MKOBI
 |   $null
 |   .coverage
@@ -23,15 +23,43 @@ C:\PY_DEV\MKOBI
 |   +---audit
 |   |   +---00-bug_report
 |   |   +---01-backend
+|   |   |       findings.md
+|   |   |       
 |   |   +---02-frontend
+|   |   |       findings.md
+|   |   |       
 |   |   +---03-database
+|   |   |       findings.md
+|   |   |       
 |   |   +---04-security
+|   |   |       findings.md
+|   |   |       
 |   |   +---05-docker
+|   |   |       findings.md
+|   |   |       
 |   |   +---06-tests
+|   |   |       findings.md
+|   |   |       
 |   |   +---07-data-processing
+|   |   |       findings.md
+|   |   |       
 |   |   +---08-deployment-config
+|   |   |       findings.md
+|   |   |       
 |   |   +---90-integration
+|   |   |       findings.md
+|   |   |       
 |   |   +---99-validation
+|   |   |       01-backend-validated.md
+|   |   |       02-frontend-validated.md
+|   |   |       03-database-validated.md
+|   |   |       04-security-validated.md
+|   |   |       05-docker-validated.md
+|   |   |       06-tests-validated.md
+|   |   |       07-data-processing-validated.md
+|   |   |       08-deployment-config-validated.md
+|   |   |       90-integration-validated.md
+|   |   |       
 |   |   +---templates
 |   |   |       audit-final-report.md
 |   |   |       audit-findings.md
@@ -124,6 +152,7 @@ C:\PY_DEV\MKOBI
 |   +---commands
 |   |   +---audit
 |   |   |   |   audit-multi-phase.md
+|   |   |   |   audit-refine.md
 |   |   |   |   
 |   |   |   +---db
 |   |   |   |       audit-db-structure.md
@@ -4106,6 +4135,22 @@ C:\PY_DEV\MKOBI
 |   |   CACHEDIR.TAG
 |   |   
 |   +---3.12
+|   |       cache.0.db
+|   |       cache.1.db
+|   |       cache.10.db
+|   |       cache.11.db
+|   |       cache.12.db
+|   |       cache.13.db
+|   |       cache.14.db
+|   |       cache.15.db
+|   |       cache.2.db
+|   |       cache.3.db
+|   |       cache.4.db
+|   |       cache.5.db
+|   |       cache.6.db
+|   |       cache.7.db
+|   |       cache.8.db
+|   |       cache.9.db
 |   |       cache.db
 |   |       
 |   \---3.14
@@ -4125,141 +4170,153 @@ C:\PY_DEV\MKOBI
 |   |   .gitignore
 |   |   CACHEDIR.TAG
 |   |   
-|   \---0.15.11
-|           10013860482725448453
-|           10057411350721290139
-|           10119604572848763823
-|           10138865835748088738
-|           10230988319528074641
-|           10295244075409957205
-|           10332956634717187
-|           10737132678416349065
-|           10742838609778655603
-|           10935714315424551900
-|           10938613591103303777
-|           10948476163302620677
-|           1095519094892101606
-|           11092974304706959660
-|           11129194515861262591
-|           11227675848000888208
-|           11271300276186920267
-|           11275517881243319742
-|           11365897687952233166
-|           11420930624079632156
-|           11447499452315586894
-|           11579431968259216324
-|           11620535064788163278
-|           11828545457000650861
-|           11870273425821113076
-|           12027190643564332336
-|           12282141724362119035
-|           12307146655617653322
-|           12357092406023108598
-|           12486641141209802238
-|           12494202477944290166
-|           12748228862393371081
-|           12854355449537389127
-|           12865600087165886199
-|           12958775000513637759
-|           13393548723153612342
-|           13721529446913284213
-|           1376855041015071554
-|           13949329209897281892
-|           13979636886595267432
-|           14448297638087247601
-|           14471665815449548435
-|           14868791088356965909
-|           14896133796014091425
-|           14928974306267782854
-|           14935019083915977090
-|           14996853144395971813
-|           15140065523350679006
-|           15148737339896158544
-|           15153524657400564750
-|           15277114159884559793
-|           1529686620810630138
-|           15352730184470552885
-|           1547959260298683871
-|           15573187231842253987
-|           15720867240633417268
-|           1585135333544026547
-|           15931875610329894108
-|           15996359271151126581
-|           16046144574879741032
-|           16294550865607449170
-|           16465980159764868755
-|           16694333838154772341
-|           16846376584888948641
-|           17026149742167329357
-|           17140577629999618652
-|           17166282850675266395
-|           17419975731504119433
-|           17556468404000029226
-|           17854153124996753119
-|           18026271333213864176
-|           18314010786084399445
-|           1899610610776696
-|           2005181514682530500
-|           2487259879282215702
-|           2538837565174628824
-|           2579218018333130348
-|           2595011032096545692
-|           2811555875434957630
-|           2860230903318966006
-|           2884556158334305810
-|           3056817873056230276
-|           3260407669037216599
-|           3595074396664940103
-|           3799095370338655179
-|           3886207311954978573
-|           3943775776542244984
-|           4073547250558669416
-|           4666518430813917687
-|           4822613425997244324
-|           4826675141430873430
-|           4925289080536601073
-|           5178735118944880258
-|           5182174678267865401
-|           5377123736532754113
-|           5398284773524182058
-|           5441873096946848584
-|           548744676179618953
-|           566855382229407645
-|           5709452140939349378
-|           575935244963015849
-|           588675765649189692
-|           5951258198829786083
-|           6038535742750017888
-|           6170860939686119761
-|           6570399622211204762
-|           667405885731847680
-|           6735482999765834792
-|           6833625021446709262
-|           6838092479933338148
-|           6892763454862441121
-|           7152645585890148736
-|           7283139603309816298
-|           7757781752673505822
-|           7858831275428853260
-|           7967026381743137253
-|           8030558945267085120
-|           8081801220538038106
-|           8252212323481120275
-|           8306074993673646402
-|           8355429658002352420
-|           8922659809379559877
-|           8945076740746415801
-|           917350453597199039
-|           9263634438576266095
-|           9264443950869140365
-|           9380205082554397989
-|           9653023392263037788
-|           9750208591691005672
-|           9778448368005484923
-|           9884324470963683366
-|           9891234191485983440
-|           9937099668536583205
-|           999224519614300536
+|   +---0.15.11
+|   |       10013860482725448453
+|   |       10057411350721290139
+|   |       10119604572848763823
+|   |       10138865835748088738
+|   |       10230988319528074641
+|   |       10295244075409957205
+|   |       10332956634717187
+|   |       10737132678416349065
+|   |       10742838609778655603
+|   |       10935714315424551900
+|   |       10938613591103303777
+|   |       10948476163302620677
+|   |       1095519094892101606
+|   |       11092974304706959660
+|   |       11129194515861262591
+|   |       11227675848000888208
+|   |       11271300276186920267
+|   |       11275517881243319742
+|   |       11365897687952233166
+|   |       11420930624079632156
+|   |       11447499452315586894
+|   |       11579431968259216324
+|   |       11620535064788163278
+|   |       11828545457000650861
+|   |       11870273425821113076
+|   |       12027190643564332336
+|   |       12282141724362119035
+|   |       12307146655617653322
+|   |       12357092406023108598
+|   |       12486641141209802238
+|   |       12494202477944290166
+|   |       12748228862393371081
+|   |       12854355449537389127
+|   |       12865600087165886199
+|   |       12958775000513637759
+|   |       13393548723153612342
+|   |       13721529446913284213
+|   |       1376855041015071554
+|   |       13949329209897281892
+|   |       13979636886595267432
+|   |       14448297638087247601
+|   |       14471665815449548435
+|   |       14868791088356965909
+|   |       14896133796014091425
+|   |       14928974306267782854
+|   |       14935019083915977090
+|   |       14996853144395971813
+|   |       15140065523350679006
+|   |       15148737339896158544
+|   |       15153524657400564750
+|   |       15277114159884559793
+|   |       1529686620810630138
+|   |       15352730184470552885
+|   |       1547959260298683871
+|   |       15573187231842253987
+|   |       15720867240633417268
+|   |       1585135333544026547
+|   |       15931875610329894108
+|   |       15996359271151126581
+|   |       16046144574879741032
+|   |       16294550865607449170
+|   |       16465980159764868755
+|   |       16694333838154772341
+|   |       16846376584888948641
+|   |       17026149742167329357
+|   |       17140577629999618652
+|   |       17166282850675266395
+|   |       17419975731504119433
+|   |       17556468404000029226
+|   |       17854153124996753119
+|   |       18026271333213864176
+|   |       18314010786084399445
+|   |       1899610610776696
+|   |       2005181514682530500
+|   |       2487259879282215702
+|   |       2538837565174628824
+|   |       2579218018333130348
+|   |       2595011032096545692
+|   |       2811555875434957630
+|   |       2860230903318966006
+|   |       2884556158334305810
+|   |       3056817873056230276
+|   |       3260407669037216599
+|   |       3595074396664940103
+|   |       3799095370338655179
+|   |       3886207311954978573
+|   |       3943775776542244984
+|   |       4073547250558669416
+|   |       4666518430813917687
+|   |       4822613425997244324
+|   |       4826675141430873430
+|   |       4925289080536601073
+|   |       5178735118944880258
+|   |       5182174678267865401
+|   |       5377123736532754113
+|   |       5398284773524182058
+|   |       5441873096946848584
+|   |       548744676179618953
+|   |       566855382229407645
+|   |       5709452140939349378
+|   |       575935244963015849
+|   |       588675765649189692
+|   |       5951258198829786083
+|   |       6038535742750017888
+|   |       6170860939686119761
+|   |       6570399622211204762
+|   |       667405885731847680
+|   |       6735482999765834792
+|   |       6833625021446709262
+|   |       6838092479933338148
+|   |       6892763454862441121
+|   |       7152645585890148736
+|   |       7283139603309816298
+|   |       7757781752673505822
+|   |       7858831275428853260
+|   |       7967026381743137253
+|   |       8030558945267085120
+|   |       8081801220538038106
+|   |       8252212323481120275
+|   |       8306074993673646402
+|   |       8355429658002352420
+|   |       8922659809379559877
+|   |       8945076740746415801
+|   |       917350453597199039
+|   |       9263634438576266095
+|   |       9264443950869140365
+|   |       9380205082554397989
+|   |       9653023392263037788
+|   |       9750208591691005672
+|   |       9778448368005484923
+|   |       9884324470963683366
+|   |       9891234191485983440
+|   |       9937099668536583205
+|   |       999224519614300536
+|   |       
+|   \---0.15.17
+|           12677494854074373733
+|           13837011016437660755
+|           15070302777659503799
+|           15141806382368711934
+|           17542036672745001782
+|           3191942672172237307
+|           3739137510923691957
+|           6552858498947234364
+|           8242261867021603117
+|           9199865814309567475
 |           
 +---.venv
 |   |   .gitignore
@@ -4279,11 +4336,11 @@ C:\PY_DEV\MKOBI
 |   |                   
 |   +---Lib
 |   |   \---site-packages
-|   |       |   0aca9ce3d91742c5b361__mypyc.cp314-win_amd64.pyd
 |   |       |   30fcd23745efe32ce681__mypyc.cp314-win_amd64.pyd
 |   |       |   81d243bd2c585b0f4821__mypyc.cp314-win_amd64.pyd
 |   |       |   a1_coverage.pth
 |   |       |   autopep8.py
+|   |       |   fb62009ad6f7d3457273__mypyc.cp314-win_amd64.pyd
 |   |       |   fd7dcdb10166ebd4db98__mypyc.cp314-win_amd64.pyd
 |   |       |   mccabe.py
 |   |       |   mypy_extensions.py
@@ -4652,20 +4709,28 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   
 |   |       |   |   \---__pycache__
 |   |       |   |           _eventloop.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _eventloop.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _eventloop.cpython-314.pyc
 |   |       |   |           _resources.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _resources.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _resources.cpython-314.pyc
 |   |       |   |           _sockets.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _sockets.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _sockets.cpython-314.pyc
 |   |       |   |           _streams.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _streams.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _streams.cpython-314.pyc
 |   |       |   |           _subprocesses.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _subprocesses.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _subprocesses.cpython-314.pyc
 |   |       |   |           _tasks.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _tasks.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _tasks.cpython-314.pyc
 |   |       |   |           _testing.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _testing.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _testing.cpython-314.pyc
 |   |       |   |           __init__.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           __init__.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           __init__.cpython-314.pyc
 |   |       |   |           
 |   |       |   +---streams
@@ -4679,12 +4744,16 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   
 |   |       |   |   \---__pycache__
 |   |       |   |           memory.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           memory.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           memory.cpython-314.pyc
 |   |       |   |           stapled.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           stapled.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           stapled.cpython-314.pyc
 |   |       |   |           tls.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           tls.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           tls.cpython-314.pyc
 |   |       |   |           __init__.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           __init__.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           __init__.cpython-314.pyc
 |   |       |   |           
 |   |       |   +---_backends
@@ -4694,9 +4763,12 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   
 |   |       |   |   \---__pycache__
 |   |       |   |           _asyncio.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _asyncio.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _asyncio.cpython-314.pyc
 |   |       |   |           _trio.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _trio.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           __init__.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           __init__.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           __init__.cpython-314.pyc
 |   |       |   |           
 |   |       |   +---_core
@@ -4719,45 +4791,65 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   
 |   |       |   |   \---__pycache__
 |   |       |   |           _contextmanagers.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _contextmanagers.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _contextmanagers.cpython-314.pyc
 |   |       |   |           _eventloop.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _eventloop.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _eventloop.cpython-314.pyc
 |   |       |   |           _exceptions.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _exceptions.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _exceptions.cpython-314.pyc
 |   |       |   |           _fileio.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _fileio.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _fileio.cpython-314.pyc
 |   |       |   |           _resources.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _resources.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _resources.cpython-314.pyc
 |   |       |   |           _signals.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _signals.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _signals.cpython-314.pyc
 |   |       |   |           _sockets.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _sockets.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _sockets.cpython-314.pyc
 |   |       |   |           _streams.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _streams.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _streams.cpython-314.pyc
 |   |       |   |           _subprocesses.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _subprocesses.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _subprocesses.cpython-314.pyc
 |   |       |   |           _synchronization.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _synchronization.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _synchronization.cpython-314.pyc
 |   |       |   |           _tasks.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _tasks.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _tasks.cpython-314.pyc
 |   |       |   |           _tempfile.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _tempfile.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _tempfile.cpython-314.pyc
 |   |       |   |           _testing.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _testing.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _testing.cpython-314.pyc
 |   |       |   |           _typedattr.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           _typedattr.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           _typedattr.cpython-314.pyc
 |   |       |   |           __init__.cpython-314-pytest-9.0.3.pyc
+|   |       |   |           __init__.cpython-314-pytest-9.1.0.pyc
 |   |       |   |           __init__.cpython-314.pyc
 |   |       |   |           
 |   |       |   \---__pycache__
 |   |       |           from_thread.cpython-314-pytest-9.0.3.pyc
+|   |       |           from_thread.cpython-314-pytest-9.1.0.pyc
 |   |       |           from_thread.cpython-314.pyc
 |   |       |           lowlevel.cpython-314-pytest-9.0.3.pyc
+|   |       |           lowlevel.cpython-314-pytest-9.1.0.pyc
 |   |       |           lowlevel.cpython-314.pyc
 |   |       |           pytest_plugin.cpython-314-pytest-9.0.3.pyc
+|   |       |           pytest_plugin.cpython-314-pytest-9.1.0.pyc
 |   |       |           to_thread.cpython-314-pytest-9.0.3.pyc
+|   |       |           to_thread.cpython-314-pytest-9.1.0.pyc
 |   |       |           to_thread.cpython-314.pyc
 |   |       |           __init__.cpython-314-pytest-9.0.3.pyc
+|   |       |           __init__.cpython-314-pytest-9.1.0.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
 |   |       +---anyio-4.13.0.dist-info
@@ -4802,6 +4894,25 @@ C:\PY_DEV\MKOBI
 |   |       |   |   
 |   |       |   \---licenses
 |   |       |           LICENSE
+|   |       |           
+|   |       +---ast_serialize
+|   |       |       ast_serialize.pyd
+|   |       |       py.typed
+|   |       |       __init__.py
+|   |       |       __init__.pyi
+|   |       |       
+|   |       +---ast_serialize-0.5.0.dist-info
+|   |       |   |   INSTALLER
+|   |       |   |   METADATA
+|   |       |   |   RECORD
+|   |       |   |   REQUESTED
+|   |       |   |   WHEEL
+|   |       |   |   
+|   |       |   +---licenses
+|   |       |   |       LICENSE
+|   |       |   |       
+|   |       |   \---sboms
+|   |       |           mypy_parser.cyclonedx.json
 |   |       |           
 |   |       +---asyncpg
 |   |       |   |   cluster.py
@@ -5018,7 +5129,7 @@ C:\PY_DEV\MKOBI
 |   |       |           __init__.cp314-win_amd64.pyd
 |   |       |           __init__.py
 |   |       |           
-|   |       +---black-26.3.1.dist-info
+|   |       +---black-26.5.1.dist-info
 |   |       |   |   entry_points.txt
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
@@ -5066,17 +5177,13 @@ C:\PY_DEV\MKOBI
 |   |       |           __init__.py
 |   |       |           
 |   |       +---certifi
-|   |       |   |   cacert.pem
-|   |       |   |   core.py
-|   |       |   |   py.typed
-|   |       |   |   __init__.py
-|   |       |   |   __main__.py
-|   |       |   |   
-|   |       |   \---__pycache__
-|   |       |           core.cpython-314.pyc
-|   |       |           __init__.cpython-314.pyc
-|   |       |           
-|   |       +---certifi-2026.4.22.dist-info
+|   |       |       cacert.pem
+|   |       |       core.py
+|   |       |       py.typed
+|   |       |       __init__.py
+|   |       |       __main__.py
+|   |       |       
+|   |       +---certifi-2026.5.20.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -5158,12 +5265,11 @@ C:\PY_DEV\MKOBI
 |   |       |           types.cpython-314.pyc
 |   |       |           utils.cpython-314.pyc
 |   |       |           _compat.cpython-314.pyc
-|   |       |           _textwrap.cpython-314.pyc
 |   |       |           _utils.cpython-314.pyc
 |   |       |           _winconsole.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---click-8.3.3.dist-info
+|   |       +---click-8.4.1.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -5269,7 +5375,6 @@ C:\PY_DEV\MKOBI
 |   |       |   \---__pycache__
 |   |       |           annotate.cpython-314.pyc
 |   |       |           bytecode.cpython-314.pyc
-|   |       |           cmdline.cpython-314.pyc
 |   |       |           collector.cpython-314.pyc
 |   |       |           config.cpython-314.pyc
 |   |       |           context.cpython-314.pyc
@@ -5280,7 +5385,6 @@ C:\PY_DEV\MKOBI
 |   |       |           disposition.cpython-314.pyc
 |   |       |           env.cpython-314.pyc
 |   |       |           exceptions.cpython-314.pyc
-|   |       |           execfile.cpython-314.pyc
 |   |       |           files.cpython-314.pyc
 |   |       |           html.cpython-314.pyc
 |   |       |           inorout.cpython-314.pyc
@@ -5310,7 +5414,7 @@ C:\PY_DEV\MKOBI
 |   |       |           xmlreport.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---coverage-7.13.5.dist-info
+|   |       +---coverage-7.14.1.dist-info
 |   |       |   |   entry_points.txt
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
@@ -5915,7 +6019,7 @@ C:\PY_DEV\MKOBI
 |   |       |       \---xetex
 |   |       |               __init__.py
 |   |       |               
-|   |       +---docutils-0.22.4.dist-info
+|   |       +---docutils-0.23.dist-info
 |   |       |   |   entry_points.txt
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
@@ -6202,13 +6306,12 @@ C:\PY_DEV\MKOBI
 |   |       |           responses.cpython-314.pyc
 |   |       |           routing.cpython-314.pyc
 |   |       |           sse.cpython-314.pyc
-|   |       |           staticfiles.cpython-314.pyc
 |   |       |           types.cpython-314.pyc
 |   |       |           utils.cpython-314.pyc
 |   |       |           websockets.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---fastapi-0.136.0.dist-info
+|   |       +---fastapi-0.136.3.dist-info
 |   |       |   |   entry_points.txt
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
@@ -6372,7 +6475,7 @@ C:\PY_DEV\MKOBI
 |   |       |   \---__pycache__
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---greenlet-3.4.0.dist-info
+|   |       +---greenlet-3.5.1.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -6599,6 +6702,7 @@ C:\PY_DEV\MKOBI
 |   |       |           LICENSE
 |   |       |           
 |   |       +---idna
+|   |       |   |   cli.py
 |   |       |   |   codec.py
 |   |       |   |   compat.py
 |   |       |   |   core.py
@@ -6608,6 +6712,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |   py.typed
 |   |       |   |   uts46data.py
 |   |       |   |   __init__.py
+|   |       |   |   __main__.py
 |   |       |   |   
 |   |       |   \---__pycache__
 |   |       |           core.cpython-314.pyc
@@ -6617,7 +6722,8 @@ C:\PY_DEV\MKOBI
 |   |       |           uts46data.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---idna-3.13.dist-info
+|   |       +---idna-3.18.dist-info
+|   |       |   |   entry_points.txt
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -6774,7 +6880,7 @@ C:\PY_DEV\MKOBI
 |   |       |   \---licenses
 |   |       |           LICENSE
 |   |       |           
-|   |       +---jaraco_functools-4.4.0.dist-info
+|   |       +---jaraco_functools-4.5.0.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -6822,37 +6928,21 @@ C:\PY_DEV\MKOBI
 |   |       |           utils.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---js
-|   |       |       install.json
-|   |       |       
 |   |       +---jwt
-|   |       |   |   algorithms.py
-|   |       |   |   api_jwk.py
-|   |       |   |   api_jws.py
-|   |       |   |   api_jwt.py
-|   |       |   |   exceptions.py
-|   |       |   |   help.py
-|   |       |   |   jwks_client.py
-|   |       |   |   jwk_set_cache.py
-|   |       |   |   py.typed
-|   |       |   |   types.py
-|   |       |   |   utils.py
-|   |       |   |   warnings.py
-|   |       |   |   __init__.py
-|   |       |   |   
-|   |       |   \---__pycache__
-|   |       |           algorithms.cpython-314.pyc
-|   |       |           api_jwk.cpython-314.pyc
-|   |       |           api_jws.cpython-314.pyc
-|   |       |           api_jwt.cpython-314.pyc
-|   |       |           exceptions.cpython-314.pyc
-|   |       |           jwks_client.cpython-314.pyc
-|   |       |           jwk_set_cache.cpython-314.pyc
-|   |       |           types.cpython-314.pyc
-|   |       |           utils.cpython-314.pyc
-|   |       |           warnings.cpython-314.pyc
-|   |       |           __init__.cpython-314.pyc
-|   |       |           
+|   |       |       algorithms.py
+|   |       |       api_jwk.py
+|   |       |       api_jws.py
+|   |       |       api_jwt.py
+|   |       |       exceptions.py
+|   |       |       help.py
+|   |       |       jwks_client.py
+|   |       |       jwk_set_cache.py
+|   |       |       py.typed
+|   |       |       types.py
+|   |       |       utils.py
+|   |       |       warnings.py
+|   |       |       __init__.py
+|   |       |       
 |   |       +---keyring
 |   |       |   |   backend.py
 |   |       |   |   backend_complete.bash
@@ -7367,6 +7457,8 @@ C:\PY_DEV\MKOBI
 |   |       |       internal.cp314-win_amd64.pyd
 |   |       |       internal.pyi
 |   |       |       py.typed
+|   |       |       random.cp314-win_amd64.pyd
+|   |       |       random.pyi
 |   |       |       strings.cp314-win_amd64.pyd
 |   |       |       strings.pyi
 |   |       |       time.cp314-win_amd64.pyd
@@ -7375,7 +7467,7 @@ C:\PY_DEV\MKOBI
 |   |       |       vecs.pyi
 |   |       |       __init__.pyi
 |   |       |       
-|   |       +---librt-0.9.0.dist-info
+|   |       +---librt-0.11.0.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -7553,7 +7645,7 @@ C:\PY_DEV\MKOBI
 |   |       |           text.py
 |   |       |           __init__.py
 |   |       |           
-|   |       +---markdown_it_py-4.0.0.dist-info
+|   |       +---markdown_it_py-4.2.0.dist-info
 |   |       |   |   entry_points.txt
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
@@ -7635,7 +7727,7 @@ C:\PY_DEV\MKOBI
 |   |       |       __init__.py
 |   |       |       __init__.pyi
 |   |       |       
-|   |       +---more_itertools-11.0.2.dist-info
+|   |       +---more_itertools-11.1.0.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -7738,6 +7830,8 @@ C:\PY_DEV\MKOBI
 |   |       |   |   ipc.py
 |   |       |   |   join.cp314-win_amd64.pyd
 |   |       |   |   join.py
+|   |       |   |   known_modules.cp314-win_amd64.pyd
+|   |       |   |   known_modules.py
 |   |       |   |   literals.cp314-win_amd64.pyd
 |   |       |   |   literals.py
 |   |       |   |   lookup.cp314-win_amd64.pyd
@@ -7762,6 +7856,8 @@ C:\PY_DEV\MKOBI
 |   |       |   |   modulefinder.py
 |   |       |   |   moduleinspect.cp314-win_amd64.pyd
 |   |       |   |   moduleinspect.py
+|   |       |   |   modules_state.cp314-win_amd64.pyd
+|   |       |   |   modules_state.py
 |   |       |   |   mro.cp314-win_amd64.pyd
 |   |       |   |   mro.py
 |   |       |   |   nativeparse.cp314-win_amd64.pyd
@@ -8846,6 +8942,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   \---_typeshed
 |   |       |   |   |           dbapi.pyi
 |   |       |   |   |           importlib.pyi
+|   |       |   |   |           README.md
 |   |       |   |   |           wsgi.pyi
 |   |       |   |   |           xml.pyi
 |   |       |   |   |           _type_checker_internals.pyi
@@ -8856,6 +8953,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |       |   \---librt
 |   |       |   |       |           base64.pyi
 |   |       |   |       |           internal.pyi
+|   |       |   |       |           random.pyi
 |   |       |   |       |           strings.pyi
 |   |       |   |       |           time.pyi
 |   |       |   |       |           vecs.pyi
@@ -8877,7 +8975,7 @@ C:\PY_DEV\MKOBI
 |   |       |           version.cpython-314.pyc
 |   |       |           __main__.cpython-314.pyc
 |   |       |           
-|   |       +---mypy-1.20.2.dist-info
+|   |       +---mypy-2.1.0.dist-info
 |   |       |   |   entry_points.txt
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
@@ -9078,6 +9176,8 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   |   libbase64.h
 |   |       |   |   |   |   librt_base64.c
 |   |       |   |   |   |   librt_base64.h
+|   |       |   |   |   |   librt_base64_api.c
+|   |       |   |   |   |   librt_base64_api.h
 |   |       |   |   |   |   lib_openmp.c
 |   |       |   |   |   |   
 |   |       |   |   |   +---arch
@@ -9151,19 +9251,33 @@ C:\PY_DEV\MKOBI
 |   |       |   |   +---internal
 |   |       |   |   |       librt_internal.c
 |   |       |   |   |       librt_internal.h
+|   |       |   |   |       librt_internal_api.c
+|   |       |   |   |       librt_internal_api.h
+|   |       |   |   |       
+|   |       |   |   +---random
+|   |       |   |   |       librt_random.c
+|   |       |   |   |       librt_random.h
+|   |       |   |   |       librt_random_api.c
+|   |       |   |   |       librt_random_api.h
 |   |       |   |   |       
 |   |       |   |   +---strings
 |   |       |   |   |       librt_strings.c
 |   |       |   |   |       librt_strings.h
+|   |       |   |   |       librt_strings_api.c
+|   |       |   |   |       librt_strings_api.h
 |   |       |   |   |       librt_strings_common.h
 |   |       |   |   |       
 |   |       |   |   +---time
 |   |       |   |   |       librt_time.c
 |   |       |   |   |       librt_time.h
+|   |       |   |   |       librt_time_api.c
+|   |       |   |   |       librt_time_api.h
 |   |       |   |   |       
 |   |       |   |   \---vecs
 |   |       |   |           librt_vecs.c
 |   |       |   |           librt_vecs.h
+|   |       |   |           librt_vecs_api.c
+|   |       |   |           librt_vecs_api.h
 |   |       |   |           vecs_internal.h
 |   |       |   |           vec_bool.c
 |   |       |   |           vec_float.c
@@ -9202,6 +9316,8 @@ C:\PY_DEV\MKOBI
 |   |       |   |       generic_ops.py
 |   |       |   |       int_ops.cp314-win_amd64.pyd
 |   |       |   |       int_ops.py
+|   |       |   |       librt_random_ops.cp314-win_amd64.pyd
+|   |       |   |       librt_random_ops.py
 |   |       |   |       librt_strings_ops.cp314-win_amd64.pyd
 |   |       |   |       librt_strings_ops.py
 |   |       |   |       librt_time_ops.cp314-win_amd64.pyd
@@ -9238,6 +9354,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |       test_emit.py
 |   |       |   |       test_emitclass.py
 |   |       |   |       test_emitfunc.py
+|   |       |   |       test_emitmodule.py
 |   |       |   |       test_emitwrapper.py
 |   |       |   |       test_exceptions.py
 |   |       |   |       test_external.py
@@ -9338,39 +9455,21 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   __init__.py
 |   |       |   |   |   
 |   |       |   |   +---v1
-|   |       |   |   |   |   dependencies.py
-|   |       |   |   |   |   dtypes.py
-|   |       |   |   |   |   selectors.py
-|   |       |   |   |   |   typing.py
-|   |       |   |   |   |   _dtypes.py
-|   |       |   |   |   |   _namespace.py
-|   |       |   |   |   |   __init__.py
-|   |       |   |   |   |   
-|   |       |   |   |   \---__pycache__
-|   |       |   |   |           dependencies.cpython-314.pyc
-|   |       |   |   |           dtypes.cpython-314.pyc
-|   |       |   |   |           selectors.cpython-314.pyc
-|   |       |   |   |           typing.cpython-314.pyc
-|   |       |   |   |           _dtypes.cpython-314.pyc
-|   |       |   |   |           __init__.cpython-314.pyc
-|   |       |   |   |           
-|   |       |   |   +---v2
-|   |       |   |   |   |   dependencies.py
-|   |       |   |   |   |   dtypes.py
-|   |       |   |   |   |   selectors.py
-|   |       |   |   |   |   typing.py
-|   |       |   |   |   |   _namespace.py
-|   |       |   |   |   |   __init__.py
-|   |       |   |   |   |   
-|   |       |   |   |   \---__pycache__
-|   |       |   |   |           dependencies.cpython-314.pyc
-|   |       |   |   |           dtypes.cpython-314.pyc
-|   |       |   |   |           selectors.cpython-314.pyc
-|   |       |   |   |           typing.cpython-314.pyc
-|   |       |   |   |           __init__.cpython-314.pyc
-|   |       |   |   |           
-|   |       |   |   \---__pycache__
-|   |       |   |           __init__.cpython-314.pyc
+|   |       |   |   |       dependencies.py
+|   |       |   |   |       dtypes.py
+|   |       |   |   |       selectors.py
+|   |       |   |   |       typing.py
+|   |       |   |   |       _dtypes.py
+|   |       |   |   |       _namespace.py
+|   |       |   |   |       __init__.py
+|   |       |   |   |       
+|   |       |   |   \---v2
+|   |       |   |           dependencies.py
+|   |       |   |           dtypes.py
+|   |       |   |           selectors.py
+|   |       |   |           typing.py
+|   |       |   |           _namespace.py
+|   |       |   |           __init__.py
 |   |       |   |           
 |   |       |   +---testing
 |   |       |   |   |   __init__.py
@@ -9398,31 +9497,18 @@ C:\PY_DEV\MKOBI
 |   |       |   |       __init__.py
 |   |       |   |       
 |   |       |   +---_compliant
-|   |       |   |   |   any_namespace.py
-|   |       |   |   |   column.py
-|   |       |   |   |   dataframe.py
-|   |       |   |   |   expr.py
-|   |       |   |   |   group_by.py
-|   |       |   |   |   namespace.py
-|   |       |   |   |   selectors.py
-|   |       |   |   |   series.py
-|   |       |   |   |   typing.py
-|   |       |   |   |   window.py
-|   |       |   |   |   __init__.py
-|   |       |   |   |   
-|   |       |   |   \---__pycache__
-|   |       |   |           any_namespace.cpython-314.pyc
-|   |       |   |           column.cpython-314.pyc
-|   |       |   |           dataframe.cpython-314.pyc
-|   |       |   |           expr.cpython-314.pyc
-|   |       |   |           group_by.cpython-314.pyc
-|   |       |   |           namespace.cpython-314.pyc
-|   |       |   |           selectors.cpython-314.pyc
-|   |       |   |           series.cpython-314.pyc
-|   |       |   |           typing.cpython-314.pyc
-|   |       |   |           window.cpython-314.pyc
-|   |       |   |           __init__.cpython-314.pyc
-|   |       |   |           
+|   |       |   |       any_namespace.py
+|   |       |   |       column.py
+|   |       |   |       dataframe.py
+|   |       |   |       expr.py
+|   |       |   |       group_by.py
+|   |       |   |       namespace.py
+|   |       |   |       selectors.py
+|   |       |   |       series.py
+|   |       |   |       typing.py
+|   |       |   |       window.py
+|   |       |   |       __init__.py
+|   |       |   |       
 |   |       |   +---_dask
 |   |       |   |       dataframe.py
 |   |       |   |       expr.py
@@ -9507,52 +9593,17 @@ C:\PY_DEV\MKOBI
 |   |       |   |       utils.py
 |   |       |   |       __init__.py
 |   |       |   |       
-|   |       |   +---_sql
-|   |       |   |       dataframe.py
-|   |       |   |       expr.py
-|   |       |   |       expr_dt.py
-|   |       |   |       expr_str.py
-|   |       |   |       group_by.py
-|   |       |   |       namespace.py
-|   |       |   |       typing.py
-|   |       |   |       __init__.py
-|   |       |   |       
-|   |       |   \---__pycache__
-|   |       |           dataframe.cpython-314.pyc
-|   |       |           dependencies.cpython-314.pyc
-|   |       |           dtypes.cpython-314.pyc
-|   |       |           exceptions.cpython-314.pyc
-|   |       |           expr.cpython-314.pyc
-|   |       |           expr_cat.cpython-314.pyc
-|   |       |           expr_dt.cpython-314.pyc
-|   |       |           expr_list.cpython-314.pyc
-|   |       |           expr_name.cpython-314.pyc
-|   |       |           expr_str.cpython-314.pyc
-|   |       |           expr_struct.cpython-314.pyc
-|   |       |           functions.cpython-314.pyc
-|   |       |           plugins.cpython-314.pyc
-|   |       |           schema.cpython-314.pyc
-|   |       |           selectors.cpython-314.pyc
-|   |       |           series.cpython-314.pyc
-|   |       |           series_cat.cpython-314.pyc
-|   |       |           series_dt.cpython-314.pyc
-|   |       |           series_list.cpython-314.pyc
-|   |       |           series_str.cpython-314.pyc
-|   |       |           series_struct.cpython-314.pyc
-|   |       |           translate.cpython-314.pyc
-|   |       |           typing.cpython-314.pyc
-|   |       |           _constants.cpython-314.pyc
-|   |       |           _enum.cpython-314.pyc
-|   |       |           _exceptions.cpython-314.pyc
-|   |       |           _expression_parsing.cpython-314.pyc
-|   |       |           _native.cpython-314.pyc
-|   |       |           _translate.cpython-314.pyc
-|   |       |           _typing.cpython-314.pyc
-|   |       |           _typing_compat.cpython-314.pyc
-|   |       |           _utils.cpython-314.pyc
-|   |       |           __init__.cpython-314.pyc
+|   |       |   \---_sql
+|   |       |           dataframe.py
+|   |       |           expr.py
+|   |       |           expr_dt.py
+|   |       |           expr_str.py
+|   |       |           group_by.py
+|   |       |           namespace.py
+|   |       |           typing.py
+|   |       |           __init__.py
 |   |       |           
-|   |       +---narwhals-2.20.0.dist-info
+|   |       +---narwhals-2.22.1.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -9568,7 +9619,7 @@ C:\PY_DEV\MKOBI
 |   |       |       __init__.py
 |   |       |       __init__.pyi
 |   |       |       
-|   |       +---nh3-0.3.4.dist-info
+|   |       +---nh3-0.3.5.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -9697,6 +9748,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   |   test_assumed_shape.py
 |   |       |   |   |   |   test_block_docstring.py
 |   |       |   |   |   |   test_callback.py
+|   |       |   |   |   |   test_capi_maps.py
 |   |       |   |   |   |   test_character.py
 |   |       |   |   |   |   test_common.py
 |   |       |   |   |   |   test_crackfortran.py
@@ -9972,74 +10024,43 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   __init__.py
 |   |       |   |   |   __init__.pyi
 |   |       |   |   |   
-|   |       |   |   +---tests
-|   |       |   |   |   |   test_arraypad.py
-|   |       |   |   |   |   test_arraysetops.py
-|   |       |   |   |   |   test_arrayterator.py
-|   |       |   |   |   |   test_array_utils.py
-|   |       |   |   |   |   test_format.py
-|   |       |   |   |   |   test_function_base.py
-|   |       |   |   |   |   test_histograms.py
-|   |       |   |   |   |   test_index_tricks.py
-|   |       |   |   |   |   test_io.py
-|   |       |   |   |   |   test_loadtxt.py
-|   |       |   |   |   |   test_mixins.py
-|   |       |   |   |   |   test_nanfunctions.py
-|   |       |   |   |   |   test_packbits.py
-|   |       |   |   |   |   test_polynomial.py
-|   |       |   |   |   |   test_recfunctions.py
-|   |       |   |   |   |   test_regression.py
-|   |       |   |   |   |   test_shape_base.py
-|   |       |   |   |   |   test_stride_tricks.py
-|   |       |   |   |   |   test_twodim_base.py
-|   |       |   |   |   |   test_type_check.py
-|   |       |   |   |   |   test_ufunclike.py
-|   |       |   |   |   |   test_utils.py
-|   |       |   |   |   |   test__datasource.py
-|   |       |   |   |   |   test__iotools.py
-|   |       |   |   |   |   test__version.py
-|   |       |   |   |   |   __init__.py
-|   |       |   |   |   |   
-|   |       |   |   |   \---data
-|   |       |   |   |           py2-np0-objarr.npy
-|   |       |   |   |           py2-objarr.npy
-|   |       |   |   |           py2-objarr.npz
-|   |       |   |   |           py3-objarr.npy
-|   |       |   |   |           py3-objarr.npz
-|   |       |   |   |           python3.npy
-|   |       |   |   |           win64python2.npy
-|   |       |   |   |           
-|   |       |   |   \---__pycache__
-|   |       |   |           array_utils.cpython-314.pyc
-|   |       |   |           format.cpython-314.pyc
-|   |       |   |           introspect.cpython-314.pyc
-|   |       |   |           mixins.cpython-314.pyc
-|   |       |   |           npyio.cpython-314.pyc
-|   |       |   |           scimath.cpython-314.pyc
-|   |       |   |           stride_tricks.cpython-314.pyc
-|   |       |   |           _arraypad_impl.cpython-314.pyc
-|   |       |   |           _arraysetops_impl.cpython-314.pyc
-|   |       |   |           _arrayterator_impl.cpython-314.pyc
-|   |       |   |           _array_utils_impl.cpython-314.pyc
-|   |       |   |           _datasource.cpython-314.pyc
-|   |       |   |           _format_impl.cpython-314.pyc
-|   |       |   |           _function_base_impl.cpython-314.pyc
-|   |       |   |           _histograms_impl.cpython-314.pyc
-|   |       |   |           _index_tricks_impl.cpython-314.pyc
-|   |       |   |           _iotools.cpython-314.pyc
-|   |       |   |           _nanfunctions_impl.cpython-314.pyc
-|   |       |   |           _npyio_impl.cpython-314.pyc
-|   |       |   |           _polynomial_impl.cpython-314.pyc
-|   |       |   |           _scimath_impl.cpython-314.pyc
-|   |       |   |           _shape_base_impl.cpython-314.pyc
-|   |       |   |           _stride_tricks_impl.cpython-314.pyc
-|   |       |   |           _twodim_base_impl.cpython-314.pyc
-|   |       |   |           _type_check_impl.cpython-314.pyc
-|   |       |   |           _ufunclike_impl.cpython-314.pyc
-|   |       |   |           _utils_impl.cpython-314.pyc
-|   |       |   |           _version.cpython-314.pyc
-|   |       |   |           __init__.cpython-314.pyc
-|   |       |   |           
+|   |       |   |   \---tests
+|   |       |   |       |   test_arraypad.py
+|   |       |   |       |   test_arraysetops.py
+|   |       |   |       |   test_arrayterator.py
+|   |       |   |       |   test_array_utils.py
+|   |       |   |       |   test_format.py
+|   |       |   |       |   test_function_base.py
+|   |       |   |       |   test_histograms.py
+|   |       |   |       |   test_index_tricks.py
+|   |       |   |       |   test_io.py
+|   |       |   |       |   test_loadtxt.py
+|   |       |   |       |   test_mixins.py
+|   |       |   |       |   test_nanfunctions.py
+|   |       |   |       |   test_packbits.py
+|   |       |   |       |   test_polynomial.py
+|   |       |   |       |   test_recfunctions.py
+|   |       |   |       |   test_regression.py
+|   |       |   |       |   test_shape_base.py
+|   |       |   |       |   test_stride_tricks.py
+|   |       |   |       |   test_twodim_base.py
+|   |       |   |       |   test_type_check.py
+|   |       |   |       |   test_ufunclike.py
+|   |       |   |       |   test_utils.py
+|   |       |   |       |   test__datasource.py
+|   |       |   |       |   test__iotools.py
+|   |       |   |       |   test__version.py
+|   |       |   |       |   __init__.py
+|   |       |   |       |   
+|   |       |   |       \---data
+|   |       |   |               py2-np0-objarr.npy
+|   |       |   |               py2-objarr.npy
+|   |       |   |               py2-objarr.npz
+|   |       |   |               py3-objarr.npy
+|   |       |   |               py3-objarr.npz
+|   |       |   |               python3.npy
+|   |       |   |               win64python2.npy
+|   |       |   |               
 |   |       |   +---linalg
 |   |       |   |   |   lapack_lite.cp314-win_amd64.lib
 |   |       |   |   |   lapack_lite.cp314-win_amd64.pyd
@@ -10052,15 +10073,11 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   __init__.py
 |   |       |   |   |   __init__.pyi
 |   |       |   |   |   
-|   |       |   |   +---tests
-|   |       |   |   |       test_deprecations.py
-|   |       |   |   |       test_linalg.py
-|   |       |   |   |       test_regression.py
-|   |       |   |   |       __init__.py
-|   |       |   |   |       
-|   |       |   |   \---__pycache__
-|   |       |   |           _linalg.cpython-314.pyc
-|   |       |   |           __init__.cpython-314.pyc
+|   |       |   |   \---tests
+|   |       |   |           test_deprecations.py
+|   |       |   |           test_linalg.py
+|   |       |   |           test_regression.py
+|   |       |   |           __init__.py
 |   |       |   |           
 |   |       |   +---ma
 |   |       |   |   |   API_CHANGES.txt
@@ -10094,19 +10111,15 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   __init__.py
 |   |       |   |   |   __init__.pyi
 |   |       |   |   |   
-|   |       |   |   +---tests
-|   |       |   |   |       test_defmatrix.py
-|   |       |   |   |       test_interaction.py
-|   |       |   |   |       test_masked_matrix.py
-|   |       |   |   |       test_matrix_linalg.py
-|   |       |   |   |       test_multiarray.py
-|   |       |   |   |       test_numeric.py
-|   |       |   |   |       test_regression.py
-|   |       |   |   |       __init__.py
-|   |       |   |   |       
-|   |       |   |   \---__pycache__
-|   |       |   |           defmatrix.cpython-314.pyc
-|   |       |   |           __init__.cpython-314.pyc
+|   |       |   |   \---tests
+|   |       |   |           test_defmatrix.py
+|   |       |   |           test_interaction.py
+|   |       |   |           test_masked_matrix.py
+|   |       |   |           test_matrix_linalg.py
+|   |       |   |           test_multiarray.py
+|   |       |   |           test_numeric.py
+|   |       |   |           test_regression.py
+|   |       |   |           __init__.py
 |   |       |   |           
 |   |       |   +---polynomial
 |   |       |   |   |   chebyshev.py
@@ -10554,143 +10567,115 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   \---pkgconfig
 |   |       |   |   |           numpy.pc
 |   |       |   |   |           
-|   |       |   |   +---tests
-|   |       |   |   |   |   test_abc.py
-|   |       |   |   |   |   test_api.py
-|   |       |   |   |   |   test_argparse.py
-|   |       |   |   |   |   test_arraymethod.py
-|   |       |   |   |   |   test_arrayobject.py
-|   |       |   |   |   |   test_arrayprint.py
-|   |       |   |   |   |   test_array_api_info.py
-|   |       |   |   |   |   test_array_coercion.py
-|   |       |   |   |   |   test_array_interface.py
-|   |       |   |   |   |   test_casting_floatingpoint_errors.py
-|   |       |   |   |   |   test_casting_unittests.py
-|   |       |   |   |   |   test_conversion_utils.py
-|   |       |   |   |   |   test_cpu_dispatcher.py
-|   |       |   |   |   |   test_cpu_features.py
-|   |       |   |   |   |   test_custom_dtypes.py
-|   |       |   |   |   |   test_cython.py
-|   |       |   |   |   |   test_datetime.py
-|   |       |   |   |   |   test_defchararray.py
-|   |       |   |   |   |   test_deprecations.py
-|   |       |   |   |   |   test_dlpack.py
-|   |       |   |   |   |   test_dtype.py
-|   |       |   |   |   |   test_einsum.py
-|   |       |   |   |   |   test_errstate.py
-|   |       |   |   |   |   test_extint128.py
-|   |       |   |   |   |   test_finfo.py
-|   |       |   |   |   |   test_function_base.py
-|   |       |   |   |   |   test_getlimits.py
-|   |       |   |   |   |   test_half.py
-|   |       |   |   |   |   test_hashtable.py
-|   |       |   |   |   |   test_indexerrors.py
-|   |       |   |   |   |   test_indexing.py
-|   |       |   |   |   |   test_item_selection.py
-|   |       |   |   |   |   test_limited_api.py
-|   |       |   |   |   |   test_longdouble.py
-|   |       |   |   |   |   test_memmap.py
-|   |       |   |   |   |   test_mem_overlap.py
-|   |       |   |   |   |   test_mem_policy.py
-|   |       |   |   |   |   test_multiarray.py
-|   |       |   |   |   |   test_multiprocessing.py
-|   |       |   |   |   |   test_multithreading.py
-|   |       |   |   |   |   test_nditer.py
-|   |       |   |   |   |   test_nep50_promotions.py
-|   |       |   |   |   |   test_numeric.py
-|   |       |   |   |   |   test_numerictypes.py
-|   |       |   |   |   |   test_overrides.py
-|   |       |   |   |   |   test_print.py
-|   |       |   |   |   |   test_protocols.py
-|   |       |   |   |   |   test_records.py
-|   |       |   |   |   |   test_regression.py
-|   |       |   |   |   |   test_scalarbuffer.py
-|   |       |   |   |   |   test_scalarinherit.py
-|   |       |   |   |   |   test_scalarmath.py
-|   |       |   |   |   |   test_scalarprint.py
-|   |       |   |   |   |   test_scalar_ctors.py
-|   |       |   |   |   |   test_scalar_methods.py
-|   |       |   |   |   |   test_shape_base.py
-|   |       |   |   |   |   test_simd.py
-|   |       |   |   |   |   test_simd_module.py
-|   |       |   |   |   |   test_stringdtype.py
-|   |       |   |   |   |   test_strings.py
-|   |       |   |   |   |   test_ufunc.py
-|   |       |   |   |   |   test_umath.py
-|   |       |   |   |   |   test_umath_accuracy.py
-|   |       |   |   |   |   test_umath_complex.py
-|   |       |   |   |   |   test_unicode.py
-|   |       |   |   |   |   test__exceptions.py
-|   |       |   |   |   |   _locales.py
-|   |       |   |   |   |   _natype.py
-|   |       |   |   |   |   
-|   |       |   |   |   +---data
-|   |       |   |   |   |       astype_copy.pkl
-|   |       |   |   |   |       generate_umath_validation_data.cpp
-|   |       |   |   |   |       recarray_from_file.fits
-|   |       |   |   |   |       umath-validation-set-arccos.csv
-|   |       |   |   |   |       umath-validation-set-arccosh.csv
-|   |       |   |   |   |       umath-validation-set-arcsin.csv
-|   |       |   |   |   |       umath-validation-set-arcsinh.csv
-|   |       |   |   |   |       umath-validation-set-arctan.csv
-|   |       |   |   |   |       umath-validation-set-arctanh.csv
-|   |       |   |   |   |       umath-validation-set-cbrt.csv
-|   |       |   |   |   |       umath-validation-set-cos.csv
-|   |       |   |   |   |       umath-validation-set-cosh.csv
-|   |       |   |   |   |       umath-validation-set-exp.csv
-|   |       |   |   |   |       umath-validation-set-exp2.csv
-|   |       |   |   |   |       umath-validation-set-expm1.csv
-|   |       |   |   |   |       umath-validation-set-log.csv
-|   |       |   |   |   |       umath-validation-set-log10.csv
-|   |       |   |   |   |       umath-validation-set-log1p.csv
-|   |       |   |   |   |       umath-validation-set-log2.csv
-|   |       |   |   |   |       umath-validation-set-README.txt
-|   |       |   |   |   |       umath-validation-set-sin.csv
-|   |       |   |   |   |       umath-validation-set-sinh.csv
-|   |       |   |   |   |       umath-validation-set-tan.csv
-|   |       |   |   |   |       umath-validation-set-tanh.csv
-|   |       |   |   |   |       
-|   |       |   |   |   \---examples
-|   |       |   |   |       +---cython
-|   |       |   |   |       |       checks.pyx
-|   |       |   |   |       |       meson.build
-|   |       |   |   |       |       setup.py
-|   |       |   |   |       |       
-|   |       |   |   |       \---limited_api
-|   |       |   |   |               limited_api1.c
-|   |       |   |   |               limited_api2.pyx
-|   |       |   |   |               limited_api_latest.c
-|   |       |   |   |               meson.build
-|   |       |   |   |               setup.py
-|   |       |   |   |               
-|   |       |   |   \---__pycache__
-|   |       |   |           arrayprint.cpython-314.pyc
-|   |       |   |           einsumfunc.cpython-314.pyc
-|   |       |   |           fromnumeric.cpython-314.pyc
-|   |       |   |           function_base.cpython-314.pyc
-|   |       |   |           getlimits.cpython-314.pyc
-|   |       |   |           memmap.cpython-314.pyc
-|   |       |   |           multiarray.cpython-314.pyc
-|   |       |   |           numeric.cpython-314.pyc
-|   |       |   |           numerictypes.cpython-314.pyc
-|   |       |   |           overrides.cpython-314.pyc
-|   |       |   |           printoptions.cpython-314.pyc
-|   |       |   |           records.cpython-314.pyc
-|   |       |   |           shape_base.cpython-314.pyc
-|   |       |   |           umath.cpython-314.pyc
-|   |       |   |           _add_newdocs.cpython-314.pyc
-|   |       |   |           _add_newdocs_scalars.cpython-314.pyc
-|   |       |   |           _asarray.cpython-314.pyc
-|   |       |   |           _dtype.cpython-314.pyc
-|   |       |   |           _dtype_ctypes.cpython-314.pyc
-|   |       |   |           _exceptions.cpython-314.pyc
-|   |       |   |           _internal.cpython-314.pyc
-|   |       |   |           _methods.cpython-314.pyc
-|   |       |   |           _string_helpers.cpython-314.pyc
-|   |       |   |           _type_aliases.cpython-314.pyc
-|   |       |   |           _ufunc_config.cpython-314.pyc
-|   |       |   |           __init__.cpython-314.pyc
-|   |       |   |           
+|   |       |   |   \---tests
+|   |       |   |       |   test_abc.py
+|   |       |   |       |   test_api.py
+|   |       |   |       |   test_argparse.py
+|   |       |   |       |   test_arraymethod.py
+|   |       |   |       |   test_arrayobject.py
+|   |       |   |       |   test_arrayprint.py
+|   |       |   |       |   test_array_api_info.py
+|   |       |   |       |   test_array_coercion.py
+|   |       |   |       |   test_array_interface.py
+|   |       |   |       |   test_casting_floatingpoint_errors.py
+|   |       |   |       |   test_casting_unittests.py
+|   |       |   |       |   test_conversion_utils.py
+|   |       |   |       |   test_cpu_dispatcher.py
+|   |       |   |       |   test_cpu_features.py
+|   |       |   |       |   test_custom_dtypes.py
+|   |       |   |       |   test_cython.py
+|   |       |   |       |   test_datetime.py
+|   |       |   |       |   test_defchararray.py
+|   |       |   |       |   test_deprecations.py
+|   |       |   |       |   test_dlpack.py
+|   |       |   |       |   test_dtype.py
+|   |       |   |       |   test_einsum.py
+|   |       |   |       |   test_errstate.py
+|   |       |   |       |   test_extint128.py
+|   |       |   |       |   test_finfo.py
+|   |       |   |       |   test_function_base.py
+|   |       |   |       |   test_getlimits.py
+|   |       |   |       |   test_half.py
+|   |       |   |       |   test_hashtable.py
+|   |       |   |       |   test_indexerrors.py
+|   |       |   |       |   test_indexing.py
+|   |       |   |       |   test_item_selection.py
+|   |       |   |       |   test_limited_api.py
+|   |       |   |       |   test_longdouble.py
+|   |       |   |       |   test_memmap.py
+|   |       |   |       |   test_mem_overlap.py
+|   |       |   |       |   test_mem_policy.py
+|   |       |   |       |   test_multiarray.py
+|   |       |   |       |   test_multiprocessing.py
+|   |       |   |       |   test_multithreading.py
+|   |       |   |       |   test_nditer.py
+|   |       |   |       |   test_nep50_promotions.py
+|   |       |   |       |   test_numeric.py
+|   |       |   |       |   test_numerictypes.py
+|   |       |   |       |   test_overrides.py
+|   |       |   |       |   test_print.py
+|   |       |   |       |   test_protocols.py
+|   |       |   |       |   test_records.py
+|   |       |   |       |   test_regression.py
+|   |       |   |       |   test_scalarbuffer.py
+|   |       |   |       |   test_scalarinherit.py
+|   |       |   |       |   test_scalarmath.py
+|   |       |   |       |   test_scalarprint.py
+|   |       |   |       |   test_scalar_ctors.py
+|   |       |   |       |   test_scalar_methods.py
+|   |       |   |       |   test_shape_base.py
+|   |       |   |       |   test_simd.py
+|   |       |   |       |   test_simd_module.py
+|   |       |   |       |   test_stringdtype.py
+|   |       |   |       |   test_strings.py
+|   |       |   |       |   test_ufunc.py
+|   |       |   |       |   test_umath.py
+|   |       |   |       |   test_umath_accuracy.py
+|   |       |   |       |   test_umath_complex.py
+|   |       |   |       |   test_unicode.py
+|   |       |   |       |   test__exceptions.py
+|   |       |   |       |   _locales.py
+|   |       |   |       |   _natype.py
+|   |       |   |       |   
+|   |       |   |       +---data
+|   |       |   |       |       astype_copy.pkl
+|   |       |   |       |       generate_umath_validation_data.cpp
+|   |       |   |       |       recarray_from_file.fits
+|   |       |   |       |       umath-validation-set-arccos.csv
+|   |       |   |       |       umath-validation-set-arccosh.csv
+|   |       |   |       |       umath-validation-set-arcsin.csv
+|   |       |   |       |       umath-validation-set-arcsinh.csv
+|   |       |   |       |       umath-validation-set-arctan.csv
+|   |       |   |       |       umath-validation-set-arctanh.csv
+|   |       |   |       |       umath-validation-set-cbrt.csv
+|   |       |   |       |       umath-validation-set-cos.csv
+|   |       |   |       |       umath-validation-set-cosh.csv
+|   |       |   |       |       umath-validation-set-exp.csv
+|   |       |   |       |       umath-validation-set-exp2.csv
+|   |       |   |       |       umath-validation-set-expm1.csv
+|   |       |   |       |       umath-validation-set-log.csv
+|   |       |   |       |       umath-validation-set-log10.csv
+|   |       |   |       |       umath-validation-set-log1p.csv
+|   |       |   |       |       umath-validation-set-log2.csv
+|   |       |   |       |       umath-validation-set-README.txt
+|   |       |   |       |       umath-validation-set-sin.csv
+|   |       |   |       |       umath-validation-set-sinh.csv
+|   |       |   |       |       umath-validation-set-tan.csv
+|   |       |   |       |       umath-validation-set-tanh.csv
+|   |       |   |       |       
+|   |       |   |       \---examples
+|   |       |   |           +---cython
+|   |       |   |           |       checks.pyx
+|   |       |   |           |       meson.build
+|   |       |   |           |       setup.py
+|   |       |   |           |       
+|   |       |   |           \---limited_api
+|   |       |   |                   limited_api1.c
+|   |       |   |                   limited_api2.pyx
+|   |       |   |                   limited_api_latest.c
+|   |       |   |                   meson.build
+|   |       |   |                   setup.py
+|   |       |   |                   
 |   |       |   +---_pyinstaller
 |   |       |   |   |   hook-numpy.py
 |   |       |   |   |   hook-numpy.pyi
@@ -10703,61 +10688,32 @@ C:\PY_DEV\MKOBI
 |   |       |   |           __init__.py
 |   |       |   |           
 |   |       |   +---_typing
-|   |       |   |   |   _add_docstring.py
-|   |       |   |   |   _array_like.py
-|   |       |   |   |   _char_codes.py
-|   |       |   |   |   _dtype_like.py
-|   |       |   |   |   _extended_precision.py
-|   |       |   |   |   _nbit.py
-|   |       |   |   |   _nbit_base.py
-|   |       |   |   |   _nbit_base.pyi
-|   |       |   |   |   _nested_sequence.py
-|   |       |   |   |   _scalars.py
-|   |       |   |   |   _shape.py
-|   |       |   |   |   _ufunc.py
-|   |       |   |   |   _ufunc.pyi
-|   |       |   |   |   __init__.py
-|   |       |   |   |   
-|   |       |   |   \---__pycache__
-|   |       |   |           _array_like.cpython-314.pyc
-|   |       |   |           _char_codes.cpython-314.pyc
-|   |       |   |           _dtype_like.cpython-314.pyc
-|   |       |   |           _nbit.cpython-314.pyc
-|   |       |   |           _nbit_base.cpython-314.pyc
-|   |       |   |           _nested_sequence.cpython-314.pyc
-|   |       |   |           _scalars.cpython-314.pyc
-|   |       |   |           _shape.cpython-314.pyc
-|   |       |   |           _ufunc.cpython-314.pyc
-|   |       |   |           __init__.cpython-314.pyc
-|   |       |   |           
-|   |       |   +---_utils
-|   |       |   |   |   _convertions.py
-|   |       |   |   |   _convertions.pyi
-|   |       |   |   |   _inspect.py
-|   |       |   |   |   _inspect.pyi
-|   |       |   |   |   _pep440.py
-|   |       |   |   |   _pep440.pyi
-|   |       |   |   |   __init__.py
-|   |       |   |   |   __init__.pyi
-|   |       |   |   |   
-|   |       |   |   \---__pycache__
-|   |       |   |           _convertions.cpython-314.pyc
-|   |       |   |           _inspect.cpython-314.pyc
-|   |       |   |           __init__.cpython-314.pyc
-|   |       |   |           
-|   |       |   \---__pycache__
-|   |       |           dtypes.cpython-314.pyc
-|   |       |           exceptions.cpython-314.pyc
-|   |       |           version.cpython-314.pyc
-|   |       |           _array_api_info.cpython-314.pyc
-|   |       |           _distributor_init.cpython-314.pyc
-|   |       |           _expired_attrs_2_0.cpython-314.pyc
-|   |       |           _globals.cpython-314.pyc
-|   |       |           _pytesttester.cpython-314.pyc
-|   |       |           __config__.cpython-314.pyc
-|   |       |           __init__.cpython-314.pyc
+|   |       |   |       _add_docstring.py
+|   |       |   |       _array_like.py
+|   |       |   |       _char_codes.py
+|   |       |   |       _dtype_like.py
+|   |       |   |       _extended_precision.py
+|   |       |   |       _nbit.py
+|   |       |   |       _nbit_base.py
+|   |       |   |       _nbit_base.pyi
+|   |       |   |       _nested_sequence.py
+|   |       |   |       _scalars.py
+|   |       |   |       _shape.py
+|   |       |   |       _ufunc.py
+|   |       |   |       _ufunc.pyi
+|   |       |   |       __init__.py
+|   |       |   |       
+|   |       |   \---_utils
+|   |       |           _convertions.py
+|   |       |           _convertions.pyi
+|   |       |           _inspect.py
+|   |       |           _inspect.pyi
+|   |       |           _pep440.py
+|   |       |           _pep440.pyi
+|   |       |           __init__.py
+|   |       |           __init__.pyi
 |   |       |           
-|   |       +---numpy-2.4.4.dist-info
+|   |       +---numpy-2.4.6.dist-info
 |   |       |   |   DELVEWHEEL
 |   |       |   |   entry_points.txt
 |   |       |   |   INSTALLER
@@ -10849,6 +10805,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |   _manylinux.py
 |   |       |   |   _musllinux.py
 |   |       |   |   _parser.py
+|   |       |   |   _structures.py
 |   |       |   |   _tokenizer.py
 |   |       |   |   __init__.py
 |   |       |   |   
@@ -10860,7 +10817,7 @@ C:\PY_DEV\MKOBI
 |   |       |           version.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---packaging-26.1.dist-info
+|   |       +---packaging-26.2.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -11241,7 +11198,7 @@ C:\PY_DEV\MKOBI
 |   |       |           _version.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---pathspec-1.1.0.dist-info
+|   |       +---pathspec-1.1.1.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -11269,7 +11226,7 @@ C:\PY_DEV\MKOBI
 |   |       |           windows.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---platformdirs-4.9.6.dist-info
+|   |       +---platformdirs-4.10.0.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -11284,7 +11241,6 @@ C:\PY_DEV\MKOBI
 |   |       |   |   basedatatypes.py
 |   |       |   |   basewidget.py
 |   |       |   |   callbacks.py
-|   |       |   |   conftest.py
 |   |       |   |   exceptions.py
 |   |       |   |   files.py
 |   |       |   |   missing_anywidget.py
@@ -11349,11 +11305,8 @@ C:\PY_DEV\MKOBI
 |   |       |   |       __init__.py
 |   |       |   |       
 |   |       |   +---graph_objects
-|   |       |   |   |   __init__.py
-|   |       |   |   |   
-|   |       |   |   \---__pycache__
-|   |       |   |           __init__.cpython-314.pyc
-|   |       |   |           
+|   |       |   |       __init__.py
+|   |       |   |       
 |   |       |   +---graph_objs
 |   |       |   |   |   graph_objs.py
 |   |       |   |   |   _bar.py
@@ -13615,59 +13568,55 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |           _z.py
 |   |       |   |   |           __init__.py
 |   |       |   |   |           
-|   |       |   |   +---waterfall
-|   |       |   |   |   |   _connector.py
-|   |       |   |   |   |   _decreasing.py
-|   |       |   |   |   |   _hoverlabel.py
-|   |       |   |   |   |   _increasing.py
-|   |       |   |   |   |   _insidetextfont.py
-|   |       |   |   |   |   _legendgrouptitle.py
-|   |       |   |   |   |   _outsidetextfont.py
-|   |       |   |   |   |   _stream.py
-|   |       |   |   |   |   _textfont.py
-|   |       |   |   |   |   _totals.py
-|   |       |   |   |   |   __init__.py
-|   |       |   |   |   |   
-|   |       |   |   |   +---connector
-|   |       |   |   |   |       _line.py
-|   |       |   |   |   |       __init__.py
-|   |       |   |   |   |       
-|   |       |   |   |   +---decreasing
-|   |       |   |   |   |   |   _marker.py
-|   |       |   |   |   |   |   __init__.py
-|   |       |   |   |   |   |   
-|   |       |   |   |   |   \---marker
-|   |       |   |   |   |           _line.py
-|   |       |   |   |   |           __init__.py
-|   |       |   |   |   |           
-|   |       |   |   |   +---hoverlabel
-|   |       |   |   |   |       _font.py
-|   |       |   |   |   |       __init__.py
-|   |       |   |   |   |       
-|   |       |   |   |   +---increasing
-|   |       |   |   |   |   |   _marker.py
-|   |       |   |   |   |   |   __init__.py
-|   |       |   |   |   |   |   
-|   |       |   |   |   |   \---marker
-|   |       |   |   |   |           _line.py
-|   |       |   |   |   |           __init__.py
-|   |       |   |   |   |           
-|   |       |   |   |   +---legendgrouptitle
-|   |       |   |   |   |       _font.py
-|   |       |   |   |   |       __init__.py
-|   |       |   |   |   |       
-|   |       |   |   |   \---totals
-|   |       |   |   |       |   _marker.py
-|   |       |   |   |       |   __init__.py
-|   |       |   |   |       |   
-|   |       |   |   |       \---marker
-|   |       |   |   |               _line.py
-|   |       |   |   |               __init__.py
-|   |       |   |   |               
-|   |       |   |   \---__pycache__
-|   |       |   |           _figure.cpython-314.pyc
-|   |       |   |           __init__.cpython-314.pyc
-|   |       |   |           
+|   |       |   |   \---waterfall
+|   |       |   |       |   _connector.py
+|   |       |   |       |   _decreasing.py
+|   |       |   |       |   _hoverlabel.py
+|   |       |   |       |   _increasing.py
+|   |       |   |       |   _insidetextfont.py
+|   |       |   |       |   _legendgrouptitle.py
+|   |       |   |       |   _outsidetextfont.py
+|   |       |   |       |   _stream.py
+|   |       |   |       |   _textfont.py
+|   |       |   |       |   _totals.py
+|   |       |   |       |   __init__.py
+|   |       |   |       |   
+|   |       |   |       +---connector
+|   |       |   |       |       _line.py
+|   |       |   |       |       __init__.py
+|   |       |   |       |       
+|   |       |   |       +---decreasing
+|   |       |   |       |   |   _marker.py
+|   |       |   |       |   |   __init__.py
+|   |       |   |       |   |   
+|   |       |   |       |   \---marker
+|   |       |   |       |           _line.py
+|   |       |   |       |           __init__.py
+|   |       |   |       |           
+|   |       |   |       +---hoverlabel
+|   |       |   |       |       _font.py
+|   |       |   |       |       __init__.py
+|   |       |   |       |       
+|   |       |   |       +---increasing
+|   |       |   |       |   |   _marker.py
+|   |       |   |       |   |   __init__.py
+|   |       |   |       |   |   
+|   |       |   |       |   \---marker
+|   |       |   |       |           _line.py
+|   |       |   |       |           __init__.py
+|   |       |   |       |           
+|   |       |   |       +---legendgrouptitle
+|   |       |   |       |       _font.py
+|   |       |   |       |       __init__.py
+|   |       |   |       |       
+|   |       |   |       \---totals
+|   |       |   |           |   _marker.py
+|   |       |   |           |   __init__.py
+|   |       |   |           |   
+|   |       |   |           \---marker
+|   |       |   |                   _line.py
+|   |       |   |                   __init__.py
+|   |       |   |                   
 |   |       |   +---io
 |   |       |   |       base_renderers.py
 |   |       |   |       json.py
@@ -13689,9 +13638,9 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   package.json
 |   |       |   |   |   
 |   |       |   |   \---static
-|   |       |   |           1.9daa5160b7fc741623bf.js
-|   |       |   |           1.9daa5160b7fc741623bf.js.LICENSE.txt
-|   |       |   |           remoteEntry.b2077f01f9b03ba2c63d.js
+|   |       |   |           1.747c8e0c8042a68fba0a.js
+|   |       |   |           1.747c8e0c8042a68fba0a.js.LICENSE.txt
+|   |       |   |           remoteEntry.2a6392a40c19ad8383a0.js
 |   |       |   |           style.js
 |   |       |   |           third-party-licenses.json
 |   |       |   |           
@@ -13723,15 +13672,10 @@ C:\PY_DEV\MKOBI
 |   |       |   |           __init__.py
 |   |       |   |           
 |   |       |   +---offline
-|   |       |   |   |   offline.py
-|   |       |   |   |   _plotlyjs_version.py
-|   |       |   |   |   __init__.py
-|   |       |   |   |   
-|   |       |   |   \---__pycache__
-|   |       |   |           offline.cpython-314.pyc
-|   |       |   |           _plotlyjs_version.cpython-314.pyc
-|   |       |   |           __init__.cpython-314.pyc
-|   |       |   |           
+|   |       |   |       offline.py
+|   |       |   |       _plotlyjs_version.py
+|   |       |   |       __init__.py
+|   |       |   |       
 |   |       |   +---package_data
 |   |       |   |   |   plotly.min.js
 |   |       |   |   |   widgetbundle.js
@@ -13764,16 +13708,9 @@ C:\PY_DEV\MKOBI
 |   |       |   |       _validators.json
 |   |       |   |       
 |   |       |   \---__pycache__
-|   |       |           basedatatypes.cpython-314.pyc
-|   |       |           exceptions.cpython-314.pyc
-|   |       |           files.cpython-314.pyc
-|   |       |           optional_imports.cpython-314.pyc
-|   |       |           shapeannotation.cpython-314.pyc
-|   |       |           tools.cpython-314.pyc
-|   |       |           _subplots.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---plotly-6.7.0.dist-info
+|   |       +---plotly-6.8.0.dist-info
 |   |       |   |   entry_points.txt
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
@@ -14165,6 +14102,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   group_by.py
 |   |       |   |   |   in_process.py
 |   |       |   |   |   opt_flags.py
+|   |       |   |   |   query_result.py
 |   |       |   |   |   __init__.py
 |   |       |   |   |   
 |   |       |   |   \---__pycache__
@@ -14173,6 +14111,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |           group_by.cpython-314.pyc
 |   |       |   |           in_process.cpython-314.pyc
 |   |       |   |           opt_flags.cpython-314.pyc
+|   |       |   |           query_result.cpython-314.pyc
 |   |       |   |           __init__.cpython-314.pyc
 |   |       |   |           
 |   |       |   +---meta
@@ -14332,7 +14271,7 @@ C:\PY_DEV\MKOBI
 |   |       |           _typing.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---polars-1.40.1.dist-info
+|   |       +---polars-1.41.2.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -14343,7 +14282,7 @@ C:\PY_DEV\MKOBI
 |   |       |   \---licenses
 |   |       |           LICENSE
 |   |       |           
-|   |       +---polars_runtime_32-1.40.1.dist-info
+|   |       +---polars_runtime_32-1.41.2.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -14662,7 +14601,7 @@ C:\PY_DEV\MKOBI
 |   |       |           _migration.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---pydantic-2.13.3.dist-info
+|   |       +---pydantic-2.13.4.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -14683,7 +14622,7 @@ C:\PY_DEV\MKOBI
 |   |       |           core_schema.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---pydantic_core-2.46.3.dist-info
+|   |       +---pydantic_core-2.46.4.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -14753,7 +14692,7 @@ C:\PY_DEV\MKOBI
 |   |       |           version.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---pydantic_settings-2.14.0.dist-info
+|   |       +---pydantic_settings-2.14.1.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -15216,7 +15155,7 @@ C:\PY_DEV\MKOBI
 |   |       |           AUTHORS
 |   |       |           LICENSE
 |   |       |           
-|   |       +---pyjwt-2.12.1.dist-info
+|   |       +---pyjwt-2.13.0.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -15235,9 +15174,8 @@ C:\PY_DEV\MKOBI
 |   |       |   |   
 |   |       |   \---__pycache__
 |   |       |           __init__.cpython-314.pyc
-|   |       |           __main__.cpython-314.pyc
 |   |       |           
-|   |       +---pytest-9.0.3.dist-info
+|   |       +---pytest-9.1.0.dist-info
 |   |       |   |   entry_points.txt
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
@@ -15255,10 +15193,10 @@ C:\PY_DEV\MKOBI
 |   |       |   |   __init__.py
 |   |       |   |   
 |   |       |   \---__pycache__
-|   |       |           plugin.cpython-314-pytest-9.0.3.pyc
-|   |       |           __init__.cpython-314-pytest-9.0.3.pyc
+|   |       |           plugin.cpython-314-pytest-9.1.0.pyc
+|   |       |           __init__.cpython-314-pytest-9.1.0.pyc
 |   |       |           
-|   |       +---pytest_asyncio-1.3.0.dist-info
+|   |       +---pytest_asyncio-1.4.0.dist-info
 |   |       |   |   entry_points.txt
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
@@ -15277,8 +15215,11 @@ C:\PY_DEV\MKOBI
 |   |       |   |   
 |   |       |   \---__pycache__
 |   |       |           engine.cpython-314-pytest-9.0.3.pyc
+|   |       |           engine.cpython-314-pytest-9.1.0.pyc
 |   |       |           plugin.cpython-314-pytest-9.0.3.pyc
+|   |       |           plugin.cpython-314-pytest-9.1.0.pyc
 |   |       |           __init__.cpython-314-pytest-9.0.3.pyc
+|   |       |           __init__.cpython-314-pytest-9.1.0.pyc
 |   |       |           
 |   |       +---pytest_cov-7.1.0.dist-info
 |   |       |   |   entry_points.txt
@@ -15301,8 +15242,11 @@ C:\PY_DEV\MKOBI
 |   |       |   |   
 |   |       |   \---__pycache__
 |   |       |           plugin.cpython-314-pytest-9.0.3.pyc
+|   |       |           plugin.cpython-314-pytest-9.1.0.pyc
 |   |       |           _util.cpython-314-pytest-9.0.3.pyc
+|   |       |           _util.cpython-314-pytest-9.1.0.pyc
 |   |       |           __init__.cpython-314-pytest-9.0.3.pyc
+|   |       |           __init__.cpython-314-pytest-9.1.0.pyc
 |   |       |           
 |   |       +---pytest_mock-3.15.1.dist-info
 |   |       |   |   entry_points.txt
@@ -15330,9 +15274,9 @@ C:\PY_DEV\MKOBI
 |   |       |           
 |   |       +---pythonwin
 |   |       |   |   dde.pyd
-|   |       |   |   license.txt
-|   |       |   |   mfc140u.dll
+|   |       |   |   License.txt
 |   |       |   |   Pythonwin.exe
+|   |       |   |   Scintilla-License.txt
 |   |       |   |   scintilla.dll
 |   |       |   |   start_pythonwin.pyw
 |   |       |   |   win32ui.pyd
@@ -15436,6 +15380,7 @@ C:\PY_DEV\MKOBI
 |   |       |       |       CallTips.py
 |   |       |       |       FormatParagraph.py
 |   |       |       |       IdleHistory.py
+|   |       |       |       LICENSE.txt
 |   |       |       |       PyParse.py
 |   |       |       |       __init__.py
 |   |       |       |       
@@ -15527,7 +15472,7 @@ C:\PY_DEV\MKOBI
 |   |       |           multipart.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---python_multipart-0.0.26.dist-info
+|   |       +---python_multipart-0.0.32.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -15557,15 +15502,44 @@ C:\PY_DEV\MKOBI
 |   |       |   \---licenses
 |   |       |           LICENSE
 |   |       |           
-|   |       +---pywin32-311.dist-info
-|   |       |       entry_points.txt
-|   |       |       INSTALLER
-|   |       |       METADATA
-|   |       |       RECORD
-|   |       |       REQUESTED
-|   |       |       top_level.txt
-|   |       |       WHEEL
-|   |       |       
+|   |       +---pywin32-312.dist-info
+|   |       |   |   entry_points.txt
+|   |       |   |   INSTALLER
+|   |       |   |   METADATA
+|   |       |   |   RECORD
+|   |       |   |   REQUESTED
+|   |       |   |   top_level.txt
+|   |       |   |   WHEEL
+|   |       |   |   
+|   |       |   \---licenses
+|   |       |       +---adodbapi
+|   |       |       |       license.txt
+|   |       |       |       
+|   |       |       +---com
+|   |       |       |   |   License.txt
+|   |       |       |   |   
+|   |       |       |   \---win32comext
+|   |       |       |       \---mapi
+|   |       |       |           \---src
+|   |       |       |               \---MAPIStubLibrary
+|   |       |       |                       LICENSE
+|   |       |       |                       
+|   |       |       +---isapi
+|   |       |       |       README.txt
+|   |       |       |       
+|   |       |       +---pythonwin
+|   |       |       |   |   License.txt
+|   |       |       |   |   
+|   |       |       |   +---pywin
+|   |       |       |   |   \---idle
+|   |       |       |   |           LICENSE.txt
+|   |       |       |   |           
+|   |       |       |   \---Scintilla
+|   |       |       |           License.txt
+|   |       |       |           
+|   |       |       \---win32
+|   |       |               License.txt
+|   |       |               
 |   |       +---pywin32_ctypes-0.2.3.dist-info
 |   |       |       INSTALLER
 |   |       |       LICENSE.txt
@@ -15599,15 +15573,17 @@ C:\PY_DEV\MKOBI
 |   |       |       __init__.py
 |   |       |       __main__.py
 |   |       |       
-|   |       +---readme_renderer-44.0.dist-info
-|   |       |       INSTALLER
-|   |       |       LICENSE
-|   |       |       METADATA
-|   |       |       RECORD
-|   |       |       REQUESTED
-|   |       |       top_level.txt
-|   |       |       WHEEL
-|   |       |       
+|   |       +---readme_renderer-45.0.dist-info
+|   |       |   |   INSTALLER
+|   |       |   |   METADATA
+|   |       |   |   RECORD
+|   |       |   |   REQUESTED
+|   |       |   |   top_level.txt
+|   |       |   |   WHEEL
+|   |       |   |   
+|   |       |   \---licenses
+|   |       |           LICENSE
+|   |       |           
 |   |       +---redis
 |   |       |   |   background.py
 |   |       |   |   backoff.py
@@ -15621,6 +15597,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |   driver_info.py
 |   |       |   |   event.py
 |   |       |   |   exceptions.py
+|   |       |   |   keyspace_notifications.py
 |   |       |   |   lock.py
 |   |       |   |   maint_notifications.py
 |   |       |   |   ocsp.py
@@ -15629,12 +15606,14 @@ C:\PY_DEV\MKOBI
 |   |       |   |   sentinel.py
 |   |       |   |   typing.py
 |   |       |   |   utils.py
+|   |       |   |   _defaults.py
 |   |       |   |   __init__.py
 |   |       |   |   
 |   |       |   +---asyncio
 |   |       |   |   |   client.py
 |   |       |   |   |   cluster.py
 |   |       |   |   |   connection.py
+|   |       |   |   |   keyspace_notifications.py
 |   |       |   |   |   lock.py
 |   |       |   |   |   retry.py
 |   |       |   |   |   sentinel.py
@@ -15668,6 +15647,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |           client.cpython-314.pyc
 |   |       |   |           cluster.cpython-314.pyc
 |   |       |   |           connection.cpython-314.pyc
+|   |       |   |           keyspace_notifications.cpython-314.pyc
 |   |       |   |           lock.cpython-314.pyc
 |   |       |   |           retry.cpython-314.pyc
 |   |       |   |           sentinel.cpython-314.pyc
@@ -15787,6 +15767,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   hiredis.py
 |   |       |   |   |   resp2.py
 |   |       |   |   |   resp3.py
+|   |       |   |   |   response_callbacks.py
 |   |       |   |   |   socket.py
 |   |       |   |   |   __init__.py
 |   |       |   |   |   
@@ -15798,6 +15779,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |           hiredis.cpython-314.pyc
 |   |       |   |           resp2.cpython-314.pyc
 |   |       |   |           resp3.cpython-314.pyc
+|   |       |   |           response_callbacks.cpython-314.pyc
 |   |       |   |           socket.cpython-314.pyc
 |   |       |   |           __init__.cpython-314.pyc
 |   |       |   |           
@@ -15812,15 +15794,17 @@ C:\PY_DEV\MKOBI
 |   |       |           driver_info.cpython-314.pyc
 |   |       |           event.cpython-314.pyc
 |   |       |           exceptions.cpython-314.pyc
+|   |       |           keyspace_notifications.cpython-314.pyc
 |   |       |           lock.cpython-314.pyc
 |   |       |           maint_notifications.cpython-314.pyc
 |   |       |           retry.cpython-314.pyc
 |   |       |           sentinel.cpython-314.pyc
 |   |       |           typing.cpython-314.pyc
 |   |       |           utils.cpython-314.pyc
+|   |       |           _defaults.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---redis-7.4.0.dist-info
+|   |       +---redis-8.0.0.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -15831,45 +15815,28 @@ C:\PY_DEV\MKOBI
 |   |       |           LICENSE
 |   |       |           
 |   |       +---requests
-|   |       |   |   adapters.py
-|   |       |   |   api.py
-|   |       |   |   auth.py
-|   |       |   |   certs.py
-|   |       |   |   compat.py
-|   |       |   |   cookies.py
-|   |       |   |   exceptions.py
-|   |       |   |   help.py
-|   |       |   |   hooks.py
-|   |       |   |   models.py
-|   |       |   |   packages.py
-|   |       |   |   sessions.py
-|   |       |   |   status_codes.py
-|   |       |   |   structures.py
-|   |       |   |   utils.py
-|   |       |   |   _internal_utils.py
-|   |       |   |   __init__.py
-|   |       |   |   __version__.py
-|   |       |   |   
-|   |       |   \---__pycache__
-|   |       |           adapters.cpython-314.pyc
-|   |       |           api.cpython-314.pyc
-|   |       |           auth.cpython-314.pyc
-|   |       |           certs.cpython-314.pyc
-|   |       |           compat.cpython-314.pyc
-|   |       |           cookies.cpython-314.pyc
-|   |       |           exceptions.cpython-314.pyc
-|   |       |           hooks.cpython-314.pyc
-|   |       |           models.cpython-314.pyc
-|   |       |           packages.cpython-314.pyc
-|   |       |           sessions.cpython-314.pyc
-|   |       |           status_codes.cpython-314.pyc
-|   |       |           structures.cpython-314.pyc
-|   |       |           utils.cpython-314.pyc
-|   |       |           _internal_utils.cpython-314.pyc
-|   |       |           __init__.cpython-314.pyc
-|   |       |           __version__.cpython-314.pyc
-|   |       |           
-|   |       +---requests-2.33.1.dist-info
+|   |       |       adapters.py
+|   |       |       api.py
+|   |       |       auth.py
+|   |       |       certs.py
+|   |       |       compat.py
+|   |       |       cookies.py
+|   |       |       exceptions.py
+|   |       |       help.py
+|   |       |       hooks.py
+|   |       |       models.py
+|   |       |       packages.py
+|   |       |       py.typed
+|   |       |       sessions.py
+|   |       |       status_codes.py
+|   |       |       structures.py
+|   |       |       utils.py
+|   |       |       _internal_utils.py
+|   |       |       _types.py
+|   |       |       __init__.py
+|   |       |       __version__.py
+|   |       |       
+|   |       +---requests-2.34.2.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -16194,20 +16161,13 @@ C:\PY_DEV\MKOBI
 |   |       |   |   __init__.py
 |   |       |   |   
 |   |       |   +---cli
-|   |       |   |   |   cli.py
-|   |       |   |   |   cli_cron.py
-|   |       |   |   |   helpers.py
-|   |       |   |   |   workers.py
-|   |       |   |   |   __init__.py
-|   |       |   |   |   __main__.py
-|   |       |   |   |   
-|   |       |   |   \---__pycache__
-|   |       |   |           cli.cpython-314.pyc
-|   |       |   |           cli_cron.cpython-314.pyc
-|   |       |   |           helpers.cpython-314.pyc
-|   |       |   |           workers.cpython-314.pyc
-|   |       |   |           __init__.cpython-314.pyc
-|   |       |   |           
+|   |       |   |       cli.py
+|   |       |   |       cli_cron.py
+|   |       |   |       helpers.py
+|   |       |   |       workers.py
+|   |       |   |       __init__.py
+|   |       |   |       __main__.py
+|   |       |   |       
 |   |       |   +---contrib
 |   |       |   |       __init__.py
 |   |       |   |       
@@ -16224,8 +16184,6 @@ C:\PY_DEV\MKOBI
 |   |       |   \---__pycache__
 |   |       |           command.cpython-314.pyc
 |   |       |           connections.cpython-314.pyc
-|   |       |           cron.cpython-314.pyc
-|   |       |           cron_scheduler_registry.cpython-314.pyc
 |   |       |           defaults.cpython-314.pyc
 |   |       |           dependency.cpython-314.pyc
 |   |       |           exceptions.cpython-314.pyc
@@ -16247,11 +16205,10 @@ C:\PY_DEV\MKOBI
 |   |       |           types.cpython-314.pyc
 |   |       |           utils.cpython-314.pyc
 |   |       |           version.cpython-314.pyc
-|   |       |           worker_pool.cpython-314.pyc
 |   |       |           worker_registration.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---rq-2.8.0.dist-info
+|   |       +---rq-2.9.1.dist-info
 |   |       |   |   entry_points.txt
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
@@ -16304,15 +16261,18 @@ C:\PY_DEV\MKOBI
 |   |       |       __init__.py
 |   |       |       __main__.py
 |   |       |       
-|   |       +---ruff-0.15.11.dist-info
+|   |       +---ruff-0.15.17.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
 |   |       |   |   REQUESTED
 |   |       |   |   WHEEL
 |   |       |   |   
-|   |       |   \---licenses
-|   |       |           LICENSE
+|   |       |   +---licenses
+|   |       |   |       LICENSE
+|   |       |   |       
+|   |       |   \---sboms
+|   |       |           ruff.cyclonedx.json
 |   |       |           
 |   |       +---six-1.17.0.dist-info
 |   |       |       INSTALLER
@@ -16448,24 +16408,15 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |           __init__.cpython-314.pyc
 |   |       |   |   |           
 |   |       |   |   +---sqlite
-|   |       |   |   |   |   aiosqlite.py
-|   |       |   |   |   |   base.py
-|   |       |   |   |   |   dml.py
-|   |       |   |   |   |   json.py
-|   |       |   |   |   |   provision.py
-|   |       |   |   |   |   pysqlcipher.py
-|   |       |   |   |   |   pysqlite.py
-|   |       |   |   |   |   __init__.py
-|   |       |   |   |   |   
-|   |       |   |   |   \---__pycache__
-|   |       |   |   |           aiosqlite.cpython-314.pyc
-|   |       |   |   |           base.cpython-314.pyc
-|   |       |   |   |           dml.cpython-314.pyc
-|   |       |   |   |           json.cpython-314.pyc
-|   |       |   |   |           pysqlcipher.cpython-314.pyc
-|   |       |   |   |           pysqlite.cpython-314.pyc
-|   |       |   |   |           __init__.cpython-314.pyc
-|   |       |   |   |           
+|   |       |   |   |       aiosqlite.py
+|   |       |   |   |       base.py
+|   |       |   |   |       dml.py
+|   |       |   |   |       json.py
+|   |       |   |   |       provision.py
+|   |       |   |   |       pysqlcipher.py
+|   |       |   |   |       pysqlite.py
+|   |       |   |   |       __init__.py
+|   |       |   |   |       
 |   |       |   |   \---__pycache__
 |   |       |   |           _typing.cpython-314.pyc
 |   |       |   |           __init__.cpython-314.pyc
@@ -16824,7 +16775,7 @@ C:\PY_DEV\MKOBI
 |   |       |           types.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---sqlalchemy-2.0.49.dist-info
+|   |       +---sqlalchemy-2.0.50.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -16901,7 +16852,7 @@ C:\PY_DEV\MKOBI
 |   |       |           _utils.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
-|   |       +---starlette-1.0.0.dist-info
+|   |       +---starlette-1.3.1.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -17173,7 +17124,7 @@ C:\PY_DEV\MKOBI
 |   |       |   \---licenses
 |   |       |           LICENSE
 |   |       |           
-|   |       +---types_aiofiles-25.1.0.20260508.dist-info
+|   |       +---types_aiofiles-25.1.0.20260518.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -17184,7 +17135,7 @@ C:\PY_DEV\MKOBI
 |   |       |   \---licenses
 |   |       |           LICENSE
 |   |       |           
-|   |       +---types_pyyaml-6.0.12.20260408.dist-info
+|   |       +---types_pyyaml-6.0.12.20260518.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -17195,7 +17146,7 @@ C:\PY_DEV\MKOBI
 |   |       |   \---licenses
 |   |       |           LICENSE
 |   |       |           
-|   |       +---types_requests-2.33.0.20260408.dist-info
+|   |       +---types_requests-2.33.0.20260518.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -17258,72 +17209,35 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   socks.py
 |   |       |   |   |   __init__.py
 |   |       |   |   |   
-|   |       |   |   +---emscripten
-|   |       |   |   |       connection.py
-|   |       |   |   |       emscripten_fetch_worker.js
-|   |       |   |   |       fetch.py
-|   |       |   |   |       request.py
-|   |       |   |   |       response.py
-|   |       |   |   |       __init__.py
-|   |       |   |   |       
-|   |       |   |   \---__pycache__
-|   |       |   |           socks.cpython-314.pyc
-|   |       |   |           __init__.cpython-314.pyc
+|   |       |   |   \---emscripten
+|   |       |   |           connection.py
+|   |       |   |           emscripten_fetch_worker.js
+|   |       |   |           fetch.py
+|   |       |   |           request.py
+|   |       |   |           response.py
+|   |       |   |           __init__.py
 |   |       |   |           
 |   |       |   +---http2
-|   |       |   |   |   connection.py
-|   |       |   |   |   probe.py
-|   |       |   |   |   __init__.py
-|   |       |   |   |   
-|   |       |   |   \---__pycache__
-|   |       |   |           probe.cpython-314.pyc
-|   |       |   |           __init__.cpython-314.pyc
-|   |       |   |           
-|   |       |   +---util
-|   |       |   |   |   connection.py
-|   |       |   |   |   proxy.py
-|   |       |   |   |   request.py
-|   |       |   |   |   response.py
-|   |       |   |   |   retry.py
-|   |       |   |   |   ssltransport.py
-|   |       |   |   |   ssl_.py
-|   |       |   |   |   ssl_match_hostname.py
-|   |       |   |   |   timeout.py
-|   |       |   |   |   url.py
-|   |       |   |   |   util.py
-|   |       |   |   |   wait.py
-|   |       |   |   |   __init__.py
-|   |       |   |   |   
-|   |       |   |   \---__pycache__
-|   |       |   |           connection.cpython-314.pyc
-|   |       |   |           proxy.cpython-314.pyc
-|   |       |   |           request.cpython-314.pyc
-|   |       |   |           response.cpython-314.pyc
-|   |       |   |           retry.cpython-314.pyc
-|   |       |   |           ssltransport.cpython-314.pyc
-|   |       |   |           ssl_.cpython-314.pyc
-|   |       |   |           ssl_match_hostname.cpython-314.pyc
-|   |       |   |           timeout.cpython-314.pyc
-|   |       |   |           url.cpython-314.pyc
-|   |       |   |           util.cpython-314.pyc
-|   |       |   |           wait.cpython-314.pyc
-|   |       |   |           __init__.cpython-314.pyc
-|   |       |   |           
-|   |       |   \---__pycache__
-|   |       |           connection.cpython-314.pyc
-|   |       |           connectionpool.cpython-314.pyc
-|   |       |           exceptions.cpython-314.pyc
-|   |       |           fields.cpython-314.pyc
-|   |       |           filepost.cpython-314.pyc
-|   |       |           poolmanager.cpython-314.pyc
-|   |       |           response.cpython-314.pyc
-|   |       |           _base_connection.cpython-314.pyc
-|   |       |           _collections.cpython-314.pyc
-|   |       |           _request_methods.cpython-314.pyc
-|   |       |           _version.cpython-314.pyc
-|   |       |           __init__.cpython-314.pyc
+|   |       |   |       connection.py
+|   |       |   |       probe.py
+|   |       |   |       __init__.py
+|   |       |   |       
+|   |       |   \---util
+|   |       |           connection.py
+|   |       |           proxy.py
+|   |       |           request.py
+|   |       |           response.py
+|   |       |           retry.py
+|   |       |           ssltransport.py
+|   |       |           ssl_.py
+|   |       |           ssl_match_hostname.py
+|   |       |           timeout.py
+|   |       |           url.py
+|   |       |           util.py
+|   |       |           wait.py
+|   |       |           __init__.py
 |   |       |           
-|   |       +---urllib3-2.6.3.dist-info
+|   |       +---urllib3-2.7.0.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -17390,7 +17304,7 @@ C:\PY_DEV\MKOBI
 |   |       |           watchfilesreload.py
 |   |       |           __init__.py
 |   |       |           
-|   |       +---uvicorn-0.46.0.dist-info
+|   |       +---uvicorn-0.49.0.dist-info
 |   |       |   |   entry_points.txt
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
@@ -17401,8 +17315,34 @@ C:\PY_DEV\MKOBI
 |   |       |   \---licenses
 |   |       |           LICENSE.md
 |   |       |           
+|   |       +---watchfiles
+|   |       |       cli.py
+|   |       |       filters.py
+|   |       |       main.py
+|   |       |       py.typed
+|   |       |       run.py
+|   |       |       version.py
+|   |       |       _rust_notify.cp314-win_amd64.pyd
+|   |       |       _rust_notify.pyi
+|   |       |       __init__.py
+|   |       |       __main__.py
+|   |       |       
+|   |       +---watchfiles-1.2.0.dist-info
+|   |       |   |   entry_points.txt
+|   |       |   |   INSTALLER
+|   |       |   |   METADATA
+|   |       |   |   RECORD
+|   |       |   |   REQUESTED
+|   |       |   |   WHEEL
+|   |       |   |   
+|   |       |   +---licenses
+|   |       |   |       LICENSE
+|   |       |   |       
+|   |       |   \---sboms
+|   |       |           watchfiles_rust_notify.cyclonedx.json
+|   |       |           
 |   |       +---win32
-|   |       |   |   license.txt
+|   |       |   |   License.txt
 |   |       |   |   mmapfile.pyd
 |   |       |   |   odbc.pyd
 |   |       |   |   perfmon.pyd
@@ -17769,6 +17709,8 @@ C:\PY_DEV\MKOBI
 |   |       |           __init__.py
 |   |       |           
 |   |       +---win32comext
+|   |       |   |   License.txt
+|   |       |   |   
 |   |       |   +---adsi
 |   |       |   |   |   adsi.pyd
 |   |       |   |   |   adsicon.py
@@ -17794,6 +17736,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |       
 |   |       |   +---axdebug
 |   |       |   |       adb.py
+|   |       |   |       axdebug.pyd
 |   |       |   |       codecontainer.py
 |   |       |   |       contexts.py
 |   |       |   |       debugger.py
@@ -17820,7 +17763,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |       scriptdispatch.py
 |   |       |   |   |       __init__.py
 |   |       |   |   |       
-|   |       |   |   +---Demos
+|   |       |   |   +---demos
 |   |       |   |   |   \---client
 |   |       |   |   |       +---asp
 |   |       |   |   |       |   |   caps.asp
@@ -17889,7 +17832,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   ifiltercon.py
 |   |       |   |   |   __init__.py
 |   |       |   |   |   
-|   |       |   |   \---demo
+|   |       |   |   \---demos
 |   |       |   |           filterDemo.py
 |   |       |   |           
 |   |       |   +---internet
@@ -17901,8 +17844,10 @@ C:\PY_DEV\MKOBI
 |   |       |   |   |   emsabtags.py
 |   |       |   |   |   exchange.pyd
 |   |       |   |   |   mapi.pyd
+|   |       |   |   |   MAPIStubLibrary-License.txt
 |   |       |   |   |   mapitags.py
 |   |       |   |   |   mapiutil.py
+|   |       |   |   |   NOTICE.md
 |   |       |   |   |   __init__.py
 |   |       |   |   |   
 |   |       |   |   \---demos
@@ -18007,20 +17952,21 @@ C:\PY_DEV\MKOBI
 |   |       |           
 |   |       +---wrapt
 |   |       |       arguments.py
+|   |       |       caching.py
 |   |       |       decorators.py
 |   |       |       importer.py
 |   |       |       patches.py
 |   |       |       proxies.py
-|   |       |       py.typed
+|   |       |       signature.py
+|   |       |       synchronization.py
 |   |       |       weakrefs.py
 |   |       |       wrappers.py
 |   |       |       _wrappers.c
 |   |       |       _wrappers.cp314-win_amd64.pyd
 |   |       |       __init__.py
-|   |       |       __init__.pyi
 |   |       |       __wrapt__.py
 |   |       |       
-|   |       +---wrapt-2.1.2.dist-info
+|   |       +---wrapt-2.2.1.dist-info
 |   |       |   |   INSTALLER
 |   |       |   |   METADATA
 |   |       |   |   RECORD
@@ -18031,6 +17977,9 @@ C:\PY_DEV\MKOBI
 |   |       |   \---licenses
 |   |       |           LICENSE
 |   |       |           
+|   |       +---wrapt-stubs
+|   |       |       __init__.pyi
+|   |       |       
 |   |       +---xdist
 |   |       |   |   dsession.py
 |   |       |   |   looponfail.py
@@ -18066,14 +18015,20 @@ C:\PY_DEV\MKOBI
 |   |       |   \---__pycache__
 |   |       |           dsession.cpython-314-pytest-9.0.3.pyc
 |   |       |           looponfail.cpython-314-pytest-9.0.3.pyc
+|   |       |           looponfail.cpython-314-pytest-9.1.0.pyc
 |   |       |           newhooks.cpython-314-pytest-9.0.3.pyc
+|   |       |           newhooks.cpython-314-pytest-9.1.0.pyc
 |   |       |           plugin.cpython-314-pytest-9.0.3.pyc
+|   |       |           plugin.cpython-314-pytest-9.1.0.pyc
 |   |       |           remote.cpython-314-pytest-9.0.3.pyc
 |   |       |           report.cpython-314-pytest-9.0.3.pyc
 |   |       |           workermanage.cpython-314-pytest-9.0.3.pyc
 |   |       |           _path.cpython-314-pytest-9.0.3.pyc
+|   |       |           _path.cpython-314-pytest-9.1.0.pyc
 |   |       |           _version.cpython-314-pytest-9.0.3.pyc
+|   |       |           _version.cpython-314-pytest-9.1.0.pyc
 |   |       |           __init__.cpython-314-pytest-9.0.3.pyc
+|   |       |           __init__.cpython-314-pytest-9.1.0.pyc
 |   |       |           
 |   |       +---yaml
 |   |       |   |   composer.py
@@ -18161,12 +18116,7 @@ C:\PY_DEV\MKOBI
 |   |       |   |       __init__.py
 |   |       |   |       
 |   |       |   \---__pycache__
-|   |       |           basevalidators.cpython-314.pyc
-|   |       |           exceptions.cpython-314.pyc
-|   |       |           files.cpython-314.pyc
 |   |       |           importers.cpython-314.pyc
-|   |       |           optional_imports.cpython-314.pyc
-|   |       |           utils.cpython-314.pyc
 |   |       |           __init__.cpython-314.pyc
 |   |       |           
 |   |       +---_polars_runtime_32
@@ -18230,27 +18180,41 @@ C:\PY_DEV\MKOBI
 |   |       |   |   __init__.py
 |   |       |   |   
 |   |       |   +---assertion
+|   |       |   |   |   compare_text.py
+|   |       |   |   |   highlight.py
 |   |       |   |   |   rewrite.py
 |   |       |   |   |   truncate.py
 |   |       |   |   |   util.py
+|   |       |   |   |   _compare_any.py
+|   |       |   |   |   _compare_mapping.py
+|   |       |   |   |   _compare_sequence.py
+|   |       |   |   |   _compare_set.py
+|   |       |   |   |   _guards.py
+|   |       |   |   |   _typing.py
 |   |       |   |   |   __init__.py
 |   |       |   |   |   
 |   |       |   |   \---__pycache__
+|   |       |   |           compare_text.cpython-314.pyc
+|   |       |   |           highlight.cpython-314.pyc
 |   |       |   |           rewrite.cpython-314.pyc
 |   |       |   |           truncate.cpython-314.pyc
 |   |       |   |           util.cpython-314.pyc
+|   |       |   |           _compare_any.cpython-314.pyc
+|   |       |   |           _compare_mapping.cpython-314.pyc
+|   |       |   |           _compare_sequence.cpython-314.pyc
+|   |       |   |           _compare_set.cpython-314.pyc
+|   |       |   |           _guards.cpython-314.pyc
+|   |       |   |           _typing.cpython-314.pyc
 |   |       |   |           __init__.cpython-314.pyc
 |   |       |   |           
 |   |       |   +---config
 |   |       |   |   |   argparsing.py
-|   |       |   |   |   compat.py
 |   |       |   |   |   exceptions.py
 |   |       |   |   |   findpaths.py
 |   |       |   |   |   __init__.py
 |   |       |   |   |   
 |   |       |   |   \---__pycache__
 |   |       |   |           argparsing.cpython-314.pyc
-|   |       |   |           compat.cpython-314.pyc
 |   |       |   |           exceptions.cpython-314.pyc
 |   |       |   |           findpaths.cpython-314.pyc
 |   |       |   |           __init__.cpython-314.pyc
@@ -18335,7 +18299,7 @@ C:\PY_DEV\MKOBI
 |   |       |           stepwise.cpython-314.pyc
 |   |       |           subtests.cpython-314.pyc
 |   |       |           terminal.cpython-314.pyc
-|   |       |           terminalprogress.cpython-314-pytest-9.0.3.pyc
+|   |       |           terminalprogress.cpython-314-pytest-9.1.0.pyc
 |   |       |           threadexception.cpython-314.pyc
 |   |       |           timing.cpython-314.pyc
 |   |       |           tmpdir.cpython-314.pyc
@@ -18384,6 +18348,7 @@ C:\PY_DEV\MKOBI
 |   |       fastapi.exe
 |   |       flake8.exe
 |   |       httpx.exe
+|   |       idna.exe
 |   |       isort-identify-imports.exe
 |   |       isort.exe
 |   |       keyring.exe
@@ -18431,6 +18396,7 @@ C:\PY_DEV\MKOBI
 |   |       stubtest.exe
 |   |       twine.exe
 |   |       uvicorn.exe
+|   |       watchfiles.exe
 |   |       
 |   \---share
 |       \---jupyter
@@ -18442,9 +18408,9 @@ C:\PY_DEV\MKOBI
 |           |       |   package.json
 |           |       |   
 |           |       \---static
-|           |               1.9daa5160b7fc741623bf.js
-|           |               1.9daa5160b7fc741623bf.js.LICENSE.txt
-|           |               remoteEntry.b2077f01f9b03ba2c63d.js
+|           |               1.747c8e0c8042a68fba0a.js
+|           |               1.747c8e0c8042a68fba0a.js.LICENSE.txt
+|           |               remoteEntry.2a6392a40c19ad8383a0.js
 |           |               style.js
 |           |               third-party-licenses.json
 |           |               
@@ -18460,6 +18426,7 @@ C:\PY_DEV\MKOBI
 |   |   |   000000000001_add_missing_fk_indexes.py
 |   |   |   000000000002_add_dashboard_filter_values_table.py
 |   |   |   4479eb53fd4e_remove_unused_success_value_from_.py
+|   |   |   82739c97fde1_add_error_code_column_to_processing_.py
 |   |   |   b749bc53b1ee_add_processing_logs_status_index.py
 |   |   |   c5d6e7f8a9b0_add_processing_logs_started_at_index.py
 |   |   |   f47ac18b5b9e_remove_redundant_dashboard_filters_index.py
@@ -18469,6 +18436,7 @@ C:\PY_DEV\MKOBI
 |   |           000000000001_add_missing_fk_indexes.cpython-314.pyc
 |   |           000000000002_add_dashboard_filter_values_table.cpython-314.pyc
 |   |           4479eb53fd4e_remove_unused_success_value_from_.cpython-314.pyc
+|   |           82739c97fde1_add_error_code_column_to_processing_.cpython-314.pyc
 |   |           b749bc53b1ee_add_processing_logs_status_index.cpython-314.pyc
 |   |           c5d6e7f8a9b0_add_processing_logs_started_at_index.cpython-314.pyc
 |   |           f47ac18b5b9e_remove_redundant_dashboard_filters_index.cpython-314.pyc
@@ -18498,12 +18466,16 @@ C:\PY_DEV\MKOBI
 |   |   docker-compose.test.yml
 |   |   docker-compose.yml
 |   |   Dockerfile
+|   |   Dockerfile.frontend.dev
 |   |   
 |   +---init-scripts
 |   |       01-create-app-role.sh
 |   |       
-|   \---nginx
-|           nginx.conf
+|   +---nginx
+|   |       nginx.conf
+|   |       
+|   \---scripts
+|           scan-images.ps1
 |           
 +---docs
 |   |   README.md
@@ -18675,22 +18647,22 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           AdminPanel-Cnz6J0Db.js
-|   |           ChangePasswordPage-SetwtsYA.js
-|   |           dashboardApi-Dm-CkDmk.js
-|   |           DashboardList-BVAHJGyh.js
-|   |           DashboardView-kzezDRAc.js
+|   |           AdminPanel-CG1uV7Hc.js
+|   |           ChangePasswordPage-BK-niaxH.js
+|   |           dashboardApi-BFqN-wq3.js
+|   |           DashboardList-DrPAeWZB.js
+|   |           DashboardView-Cgvo-39p.js
 |   |           formSchemas-BqZO3XbW.js
-|   |           index-BsxuimWj.js
-|   |           LoginForm-Dt09scYj.js
+|   |           index-b6BS_1J8.js
+|   |           LoginForm-CS7veBcg.js
 |   |           mui-nuHIX8iL.js
 |   |           plotly-BxTkdUEp.js
 |   |           react-CuvdHX7R.js
-|   |           RegisterForm-Bpz1R0Iq.js
+|   |           RegisterForm-B8GBuWF7.js
 |   |           rolldown-runtime-S-ySWqyJ.js
 |   |           shortUuid-TYuFZJYs.js
-|   |           userApi-Cj-bhRsO.js
-|   |           UserProfile--MPbr6sj.js
+|   |           userApi-DmsGdY-f.js
+|   |           UserProfile-TaU2Ucrg.js
 |   |           vendor-Bx3jSdF9.js
 |   |           
 |   +---node_modules
@@ -101132,6 +101104,7 @@ C:\PY_DEV\MKOBI
 |   |   |   |   |   
 |   |   |   |   \---__pycache__
 |   |   |   |           test_media_dash.cpython-314-pytest-9.0.3.pyc
+|   |   |   |           test_media_dash.cpython-314-pytest-9.1.0.pyc
 |   |   |   |           test_media_dash.cpython-314.pyc
 |   |   |   |           __init__.cpython-314.pyc
 |   |   |   |           
@@ -101300,6 +101273,7 @@ C:\PY_DEV\MKOBI
     |   |   
     |   \---__pycache__
     |           test_temp_password_retrieval.cpython-314-pytest-9.0.3.pyc
+    |           test_temp_password_retrieval.cpython-314-pytest-9.1.0.pyc
     |           test_temp_password_retrieval.cpython-314.pyc
     |           
     +---core
@@ -101307,57 +101281,96 @@ C:\PY_DEV\MKOBI
     |   |   
     |   \---__pycache__
     |           test_temp_password_store.cpython-314-pytest-9.0.3.pyc
+    |           test_temp_password_store.cpython-314-pytest-9.1.0.pyc
     |           
     \---__pycache__
             conftest.cpython-314-pytest-9.0.3.pyc
+            conftest.cpython-314-pytest-9.1.0.pyc
             conftest.cpython-314.pyc
             test_aggregation_service.cpython-314-pytest-9.0.3.pyc
+            test_aggregation_service.cpython-314-pytest-9.1.0.pyc
             test_append_mode_bug.cpython-314-pytest-9.0.3.pyc
             test_append_mode_fix.cpython-314-pytest-9.0.3.pyc
             test_auth.cpython-314-pytest-9.0.3.pyc
+            test_auth.cpython-314-pytest-9.1.0.pyc
             test_auth_api.cpython-314-pytest-9.0.3.pyc
+            test_auth_api.cpython-314-pytest-9.1.0.pyc
             test_auth_service.cpython-314-pytest-9.0.3.pyc
+            test_auth_service.cpython-314-pytest-9.1.0.pyc
             test_config.cpython-314-pytest-9.0.3.pyc
+            test_config.cpython-314-pytest-9.1.0.pyc
             test_dashboards_api.cpython-314-pytest-9.0.3.pyc
+            test_dashboards_api.cpython-314-pytest-9.1.0.pyc
             test_data_csv_loader.cpython-314-pytest-9.0.3.pyc
+            test_data_csv_loader.cpython-314-pytest-9.1.0.pyc
             test_data_endpoint.cpython-314-pytest-9.0.3.pyc
+            test_data_endpoint.cpython-314-pytest-9.1.0.pyc
             test_data_loader.cpython-314-pytest-9.0.3.pyc
             test_data_processing.cpython-314-pytest-9.0.3.pyc
             test_data_service.cpython-314-pytest-9.0.3.pyc
+            test_data_service.cpython-314-pytest-9.1.0.pyc
             test_data_service.cpython-314.pyc
             test_data_transformations.cpython-314-pytest-9.0.3.pyc
+            test_data_transformations.cpython-314-pytest-9.1.0.pyc
             test_data_validator.cpython-314-pytest-9.0.3.pyc
+            test_data_validator.cpython-314-pytest-9.1.0.pyc
             test_data_worker.cpython-314-pytest-9.0.3.pyc
+            test_data_worker.cpython-314-pytest-9.1.0.pyc
             test_deps.cpython-314-pytest-9.0.3.pyc
+            test_deps.cpython-314-pytest-9.1.0.pyc
             test_deps.cpython-314.pyc
             test_dev_seeders.cpython-314-pytest-9.0.3.pyc
+            test_dev_seeders.cpython-314-pytest-9.1.0.pyc
             test_e2e_upload.cpython-314-pytest-9.0.3.pyc
+            test_e2e_upload.cpython-314-pytest-9.1.0.pyc
             test_enum_db_consistency.cpython-314-pytest-9.0.3.pyc
+            test_enum_db_consistency.cpython-314-pytest-9.1.0.pyc
             test_error_response_format.cpython-314-pytest-9.0.3.pyc
+            test_error_response_format.cpython-314-pytest-9.1.0.pyc
             test_file_cleanup.cpython-314-pytest-9.0.3.pyc
+            test_file_cleanup.cpython-314-pytest-9.1.0.pyc
             test_filters.cpython-314-pytest-9.0.3.pyc
             test_force_password_change_backend.cpython-314-pytest-9.0.3.pyc
+            test_force_password_change_backend.cpython-314-pytest-9.1.0.pyc
             test_graphs.cpython-314-pytest-9.0.3.pyc
+            test_graphs.cpython-314-pytest-9.1.0.pyc
             test_graph_service.cpython-314-pytest-9.0.3.pyc
+            test_graph_service.cpython-314-pytest-9.1.0.pyc
             test_layouts.cpython-314-pytest-9.0.3.pyc
+            test_layouts.cpython-314-pytest-9.1.0.pyc
             test_mime_validation.cpython-314-pytest-9.0.3.pyc
+            test_mime_validation.cpython-314-pytest-9.1.0.pyc
             test_models.cpython-314-pytest-9.0.3.pyc
             test_permissions.cpython-314-pytest-9.0.3.pyc
+            test_permissions.cpython-314-pytest-9.1.0.pyc
             test_processing_logs.cpython-314-pytest-9.0.3.pyc
+            test_processing_logs.cpython-314-pytest-9.1.0.pyc
             test_pydantic_models.cpython-314-pytest-9.0.3.pyc
+            test_pydantic_models.cpython-314-pytest-9.1.0.pyc
             test_repositories.cpython-314-pytest-9.0.3.pyc
+            test_repositories.cpython-314-pytest-9.1.0.pyc
             test_resource_access_control.cpython-314-pytest-9.0.3.pyc
+            test_resource_access_control.cpython-314-pytest-9.1.0.pyc
             test_security.cpython-314-pytest-9.0.3.pyc
+            test_security.cpython-314-pytest-9.1.0.pyc
             test_services_integration.cpython-314-pytest-9.0.3.pyc
+            test_services_integration.cpython-314-pytest-9.1.0.pyc
             test_share_calculation.cpython-314-pytest-9.0.3.pyc
             test_sql_expression.cpython-314-pytest-9.0.3.pyc
             test_storage_manager.cpython-314-pytest-9.0.3.pyc
+            test_storage_manager.cpython-314-pytest-9.1.0.pyc
             test_streaming_size_limit.cpython-314-pytest-9.0.3.pyc
+            test_streaming_size_limit.cpython-314-pytest-9.1.0.pyc
             test_time_utils.cpython-314-pytest-9.0.3.pyc
+            test_time_utils.cpython-314-pytest-9.1.0.pyc
             test_token_revocation.cpython-314-pytest-9.0.3.pyc
+            test_token_revocation.cpython-314-pytest-9.1.0.pyc
             test_upload_api.cpython-314-pytest-9.0.3.pyc
+            test_upload_api.cpython-314-pytest-9.1.0.pyc
             test_upload_api.cpython-314.pyc
             test_users_api.cpython-314-pytest-9.0.3.pyc
+            test_users_api.cpython-314-pytest-9.1.0.pyc
             test_validators.cpython-314-pytest-9.0.3.pyc
+            test_validators.cpython-314-pytest-9.1.0.pyc
             test_yoy_calculation.cpython-314-pytest-9.0.3.pyc
             
