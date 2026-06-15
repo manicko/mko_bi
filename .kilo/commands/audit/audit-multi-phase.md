@@ -116,11 +116,6 @@ If missing or empty: retry once, then escalate on second failure.
 
 </phase_loop>
 
-## 3. Merge Final Report
-
-Use template `.ai/audit/templates/final-report.md`.
-Merge all validated findings from `.ai/audit/99-validation/` into `.ai/audit/validated/final-report.md`.
-
 </process>
 
 <output>
@@ -130,7 +125,6 @@ AUDIT COMPLETE
 
 Phases completed: {N}/{N}
 Validated findings: {N} total
-Final report: .ai/audit/validated/final-report.md
 
 By severity:
 - CRITICAL: {n}

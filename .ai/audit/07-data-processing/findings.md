@@ -9,54 +9,51 @@
 
 ## Findings
 
-### DP-01: Naive datetime used for `uploaded_at` timestamp — inconsistent with rest of codebase
+### DP-01: `DataPipeline` in `registry.py` is dead code with transaction safety issues
 
 | Field | Value |
 |-------|-------|
 | **ID** | DP-01 |
-| **Severity** | LOW |
-| **Type** | SPEC-DEVIATION |
-| **Affected Modules** | `src/mkobi/services/data_service.py` |
+| **Severity** | MEDIUM |
+| **Type** | BEST-PRACTICE |
+| **Affected Modules** | `src/mkobi/data/processing/registry.py` |
 | **Classification** | advisory |
 
-**Description:** The `_execute_upload` method in `DataService` uses `datetime.now()` (naive, no timezone) for the `uploaded_at` field in `UploadResponse` (line 165). Every other timestamp in the data processing pipeline uses `datetime.now(UTC)` — the worker (`data_worker.py` lines 207, 251, 263, 280, 332, 371, 479, 515, 547), the processing log repository (lines 56, 112), file cleanup (line 131), and security module (lines 253, 255, 296) all use timezone-aware UTC timestamps. This inconsistency means `uploaded_at` will be ambiguous — it will reflect the server's local timezone, which varies by deployment environment. In a Docker container this is typically UTC, but on a developer machine it could be any timezone, causing subtle ordering and display bugs.
+**Description:** The `DataPipeline` class in `registry.py` is defined but never imported or executed anywhere in the codebase. The actual processing path goes through `data_worker.py:process_csv_background → _process_csv_file_async`. `DataPipeline` is orphaned code that also has a critical architectural flaw: it receives a `db: AsyncSession` parameter in its `run()` method but never wraps the multi-step processing (transform → aggregate → save) in a single transaction boundary (`session.begin()`). Each step commits/rolls back independently via the injected `log_service`, meaning partial results could be persisted if a later step fails.
 
-**Evidence:** `src/mkobi/services/data_service.py:165` — `uploaded_at=datetime.now()`. Compare with `src/mkobi/workers/data_worker.py:332` — `started_at=datetime.now(UTC)` and `src/mkobi/db/repositories/processing_log_repo.py:56` — `"started_at": datetime.now(UTC)`.
+**Evidence:**
+- `src/mkobi/data/processing/registry.py:67-179` — `DataPipeline.run()` calls `apply_transformations`, `aggregate_data`, `_save_with_retry`, and multiple `log_service.update_processing_log` calls without a surrounding `async with session.begin()` transaction.
+- Grep for `DataPipeline` across the entire `src/` tree returns only the class definition itself and a comment in `processing_log_service.py:51` — zero call sites.
+- The active pipeline in `src/mkobi/workers/data_worker.py:522-551` correctly wraps everything in `async with session.begin()`.
 
-**Recommendation:** Change `datetime.now()` to `datetime.now(UTC)` at `src/mkobi/services/data_service.py:165`. This is a trivial one-line fix that aligns with the project-wide convention already established in every other processing stage.
+**Recommendation:** Remove `DataPipeline` from `registry.py` to eliminate dead code and avoid confusion. If it was intended as a refactor target, document that `data_worker.py` is the authoritative implementation. Effort: trivial. Priority: recommended.
 
 ---
 
-### DP-02: Upload processing creates two separate database transactions — processing log and aggregate data can diverge
+### DP-02: APPEND mode does not clear stale filter values, causing data drift
 
 | Field | Value |
 |-------|-------|
 | **ID** | DP-02 |
 | **Severity** | HIGH |
-| **Type** | BEST-PRACTICE |
-| **Affected Modules** | `src/mkobi/services/file_processing.py`, `src/mkobi/workers/data_worker.py` |
+| **Type** | SPEC-DEVIATION |
+| **Affected Modules** | `src/mkobi/workers/data_worker.py` |
 | **Classification** | mandatory |
 
-**Description:** The data processing pipeline spans two completely independent database transactions with no atomicity guarantee between them:
+**Description:** In `_store_aggregates`, when `mode == UploadMode.APPEND`, the filter values from previous uploads are never cleared — only the `OVERWRITE` branch calls `filter_values_repo.clear_dashboard_values()`. This means that in APPEND mode, filter values from old data (including values that no longer exist in the appended dataset) will persist indefinitely in the `dashboard_filter_values` table. Users will see stale/phantom filter options in the UI that don't correspond to any actual data.
 
-1. **Transaction 1** (upload phase, `file_processing.py:268`): Creates the processing log entry, moves the temp file, enqueues the background job, and commits. If the enqueue fails, this transaction rolls back (line 264).
-
-2. **Transaction 2** (background worker, `data_worker.py:522-524`): A brand-new `async with get_session() as session` / `async with session.begin()` block that updates the processing log status, stores aggregates, and marks the job complete.
-
-The problem: if Transaction 1 commits successfully but the application crashes *before* Transaction 2 starts (e.g., worker process dies, OOM kill, deployment restart), the processing log remains permanently in `UPLOADED` state. The `cleanup_stale_processing_logs` function (`data_worker.py:234-292`) only cleans up entries stuck in `PROCESSING` state — it explicitly filters for `ProcessingLog.status == ProcessingStatus.PROCESSING`. Entries stuck in `UPLOADED` state are never cleaned up, leaving orphaned processing logs and uploaded files that consume disk space forever.
-
-Additionally, if Transaction 2 partially fails (e.g., the server crashes between `_store_aggregates` and the final `_update_processing_log_status` to `COMPLETED`), the processing log can be stuck in `PROCESSING` state with partial aggregate data already committed. The stale cleanup will eventually mark it as `FAILED`, but the partial aggregate data remains in the database — users may see inconsistent dashboard data.
+Per SPEC.md: "Values are rebuilt on each upload (idempotent overwrite)." The APPEND mode should either also rebuild filter values from the combined dataset, or the behavior should be explicitly documented as a known limitation.
 
 **Evidence:**
-- `src/mkobi/services/file_processing.py:211-268` — Transaction 1: creates log, flushes, commits.
-- `src/mkobi/workers/data_worker.py:520-551` — Transaction 2: separate session, separate transaction.
-- `src/mkobi/workers/data_worker.py:254-266` — Stale cleanup only handles `PROCESSING` state, not `UPLOADED`.
+- `src/mkobi/workers/data_worker.py:659-660` — test mode path: `if mode == UploadMode.OVERWRITE: await filter_values_repo.clear_dashboard_values(dashboard_id, db_session)`
+- `src/mkobi/workers/data_worker.py:730-731` — production mode path: identical conditional, no APPEND handling
+- SPEC.md line 173: "Values are rebuilt on each upload (idempotent overwrite)"
 
-**Recommendation:** At minimum, extend `cleanup_stale_processing_logs` to also handle `UPLOADED` state entries (which indicate the background worker never started). For the partial-commit issue within Transaction 2, the current design already wraps everything in a single `session.begin()` block (line 523), which provides atomicity for the worker phase — if anything fails, the entire Transaction 2 rolls back. However, the temp file cleanup on error path (lines 531-540) happens *inside* the transaction block, meaning if the file deletion fails, the transaction still rolls back, which is correct. The primary gap is the `UPLOADED` state orphan scenario.
+**Recommendation:** In APPEND mode, after saving new filter values, also delete any filter values for the dashboard that are not present in the new dataset. Alternatively, clear and rebuild filter values on every upload regardless of mode. The simplest fix: always clear dashboard filter values before saving new ones, removing the `if mode == UploadMode.OVERWRITE` guard. Effort: small. Priority: mandatory.
 
 ---
 
-### DP-03: `find_task_file` uses glob matching that can match wrong files for UUIDs with shared substrings
+### DP-03: `find_task_file` uses glob with task_id substring, risking file collision
 
 | Field | Value |
 |-------|-------|
@@ -66,143 +63,131 @@ Additionally, if Transaction 2 partially fails (e.g., the server crashes between
 | **Affected Modules** | `src/mkobi/services/file_processing.py` |
 | **Classification** | advisory |
 
-**Description:** The `find_task_file` function at `file_processing.py:295` uses `upload_dir.glob(f"*{task_id}*.csv*")` to locate a task's file. UUIDs are hex strings, and it's theoretically possible for two different UUIDs to share a long substring (e.g., `aabbccdd-...-1234` and `aabbccdd-...-5678`). The glob pattern `*{task_id}*` matches any file containing the task_id substring, not just files where the task_id is the actual filename prefix. Since the file was renamed to `{task_id}{file_ext}` at line 234, the correct glob pattern should be `f"{task_id}*.csv*"` (without the leading `*`). The current pattern could return multiple matches for edge cases, and the function silently returns the first match (`task_files[0]`), potentially processing the wrong file.
+**Description:** `find_task_file()` uses `upload_dir.glob(f"*{task_id}*.csv*")` to locate a task's file. Since UUIDs are hex strings, it's theoretically possible (though unlikely) for one UUID to be a substring of another, causing the glob to match multiple files. The function returns `task_files[0]` (arbitrary order), which could return the wrong file. More practically, the glob pattern `*{task_id}*` is broader than necessary — the file was stored as `{task_id}{file_ext}` (e.g., `{uuid}.csv`), so the pattern should be `{task_id}.csv*`.
 
-**Evidence:** `src/mkobi/services/file_processing.py:295` — `task_files = list(upload_dir.glob(f"*{task_id}*.csv*"))`. Compare with the rename at line 234: `final_file_path = upload_dir / f"{log.id}{file_ext}"`.
+**Evidence:**
+- `src/mkobi/services/file_processing.py:295` — `task_files = list(upload_dir.glob(f"*{task_id}*.csv*"))`
+- `src/mkobi/services/file_processing.py:234` — file is stored as `final_file_path = upload_dir / f"{log.id}{file_ext}"` where `file_ext` is `.csv` or `.csv.gz`
+- `src/mkobi/services/file_processing.py:300` — returns `task_files[0]` without checking for multiple matches
 
-**Recommendation:** Change the glob pattern from `f"*{task_id}*.csv*"` to `f"{task_id}*.csv*"` at line 295. This matches only files that *start with* the task ID, which is the naming convention established at line 234.
+**Recommendation:** Change the glob to `f"{task_id}.csv*"` to match the exact naming convention used when the file was stored. Add an assertion or error if more than one file matches. Effort: trivial. Priority: recommended.
 
 ---
 
-### DP-04: `trigger_processing` does not pass `processing_config` when re-enqueuing
+### DP-04: `_update_processing_log_status` in test mode does not rollback on failure
 
 | Field | Value |
 |-------|-------|
 | **ID** | DP-04 |
-| **Severity** | MEDIUM |
-| **Type** | SPEC-DEVIATION |
-| **Affected Modules** | `src/mkobi/services/data_service.py` |
+| **Severity** | LOW |
+| **Type** | BEST-PRACTICE |
+| **Affected Modules** | `src/mkobi/workers/data_worker.py` |
 | **Classification** | advisory |
 
-**Description:** The `trigger_processing` method in `DataService` accepts a `processing_config` parameter (line 261) but does not pass it to `enqueue_processing_job` at line 286-290. The `processing_config` argument is accepted but silently ignored. This means manually triggered re-processing always runs with no processing configuration, even when the caller provides one. This is inconsistent with the initial upload path in `_execute_upload` (lines 136-145), which fetches and passes the processing config.
+**Description:** In `_update_processing_log_status`, when `session is not None` (test mode), the function executes the UPDATE statement but explicitly does NOT commit (by design — the caller manages the transaction). However, if the UPDATE fails with a `SQLAlchemyError`, the function catches it, logs it, and silently swallows the error. The comment says "No rollback in test mode - caller (SAVEPOINT) manages transaction", but the swallowed exception means the caller never knows the status update failed. This could leave processing logs in an inconsistent state during tests, making test assertions unreliable.
 
-**Evidence:** `src/mkobi/services/data_service.py:286-290`:
-```python
-await enqueue_processing_job(
-    file_path=file_path, dashboard_id=dashboard_id,
-    task_id=task_id, mode="overwrite",
-    processing_config=processing_config,  # <-- this IS passed
-)
-```
+**Evidence:**
+- `src/mkobi/workers/data_worker.py:214-230` — test mode path: `await session.execute(stmt)` followed by `except SQLAlchemyError: logger.error(...)` with no re-raise
+- `src/mkobi/workers/data_worker.py:228` — comment: "No rollback in test mode - caller (SAVEPOINT) manages transaction"
 
-Wait — reviewing again, `processing_config` IS passed at line 289. However, the `mode` is hardcoded to `"overwrite"` at line 288, ignoring the original upload mode. This means re-processing always overwrites, even if the original upload was `APPEND`. This could be intentional for manual re-trigger, but it's undocumented behavior.
-
-**Evidence:** `src/mkobi/services/data_service.py:288` — `mode="overwrite"` hardcoded.
-
-**Recommendation:** Document whether the hardcoded `mode="overwrite"` is intentional for manual re-trigger. If the original mode should be preserved, the method should accept and forward the mode parameter.
+**Recommendation:** Consider re-raising the exception after logging, or at minimum adding a warning-level log that clearly indicates the status update was lost. This makes test debugging easier. Effort: trivial. Priority: recommended.
 
 ---
 
-### DP-05: `DataPipeline.run` in `registry.py` is orphaned — not called by the actual worker
+### DP-05: `AggregationService.aggregate_for_dashboard` converts all dimension values to strings, losing type information
 
 | Field | Value |
 |-------|-------|
 | **ID** | DP-05 |
 | **Severity** | MEDIUM |
 | **Type** | BEST-PRACTICE |
-| **Affected Modules** | `src/mkobi/data/processing/registry.py` |
+| **Affected Modules** | `src/mkobi/services/aggregation_service.py` |
 | **Classification** | advisory |
 
-**Description:** The `DataPipeline` class in `registry.py` provides an alternative processing orchestration with its own `run()` method (line 67) that creates processing log entries, transforms data, aggregates, and saves. However, the actual background worker (`data_worker.py:745-785`, `process_csv_background`) does not use `DataPipeline` at all — it implements its own processing logic inline in `_process_csv_file_async`. This means:
+**Description:** In `AggregationService.aggregate_for_dashboard()`, all dimension values are cast to `str()` before storing in the `dims` dict: `dims = {col: str(row[col]) for col in groupby_cols}`. This means numeric dimensions (e.g., year=2024), date dimensions, and boolean dimensions all become strings. When these are later stored in JSONB and retrieved for filtering/sorting, numeric sorting becomes lexicographic (e.g., "9" > "10"), and date ordering breaks. The frontend receives all dimension values as strings and must parse them back.
 
-1. `DataPipeline` is dead code in production — no worker calls it.
-2. The `tenacity` retry logic in `DataPipeline._save_with_retry` (lines 204-221) is never exercised, while the actual worker has no retry logic for storage operations.
-3. The `DataPipeline` uses `aggregate_data` from `transformations.py` (which does per-graph aggregation inline), while the worker uses `AggregationService.aggregate_for_dashboard` — two different aggregation implementations.
+**Evidence:**
+- `src/mkobi/services/aggregation_service.py:83` — `dims = {col: str(row[col]) for col in groupby_cols}`
+- These dims are stored in JSONB via `src/mkobi/data/storage/manager.py:296` — `"dims": _normalize_json_keys(agg["dims"])`
 
-This creates maintenance risk: bug fixes to the pipeline logic may be applied to `DataPipeline` but not to the actual worker, or vice versa.
-
-**Evidence:** `src/mkobi/data/processing/registry.py:67-221` — `DataPipeline.run()` is defined but never imported or called by `data_worker.py`. The worker's `process_csv_background` at `data_worker.py:745-785` implements its own flow.
-
-**Recommendation:** Either remove `DataPipeline` (if it's truly dead code) or migrate the worker to use it. If keeping both, add a comment in `DataPipeline` indicating it's not currently used in production. The retry logic in `_save_with_retry` should be incorporated into the actual worker's storage path.
+**Recommendation:** Preserve original types in dims values. Only cast to string when the value is a Polars date/datetime type that doesn't serialize cleanly to JSON. Use `row[col]` directly and let JSON serialization handle native Python types (int, float, str, bool). Effort: small. Priority: recommended.
 
 ---
 
-### DP-06: Worker creates a separate DB session for status updates outside the main transaction
+### DP-06: `_calculate_yoy` uses `round(4)` on floating-point results, causing precision loss in aggregations
 
 | Field | Value |
 |-------|-------|
 | **ID** | DP-06 |
-| **Severity** | HIGH |
+| **Severity** | LOW |
 | **Type** | BEST-PRACTICE |
-| **Affected Modules** | `src/mkobi/workers/data_worker.py` |
-| **Classification** | mandatory |
+| **Affected Modules** | `src/mkobi/data/processing/aggregate_transforms.py` |
+| **Classification** | advisory |
 
-**Description:** The `_update_processing_log_status` function (line 175-231) has two code paths:
-- When `session is not None` (test mode): uses the provided session, no commit.
-- When `session is None` (production): creates a **brand-new** session with `get_session()` and its own transaction (`async with db.begin()`).
+**Description:** Both `_calculate_yoy` and `_calculate_share` apply `.round(4)` to their results. This truncates YoY percentages and share percentages to 4 decimal places. While this is reasonable for display, it means the stored aggregated data has reduced precision. If downstream calculations use these rounded values (e.g., summing YoY across groups), errors compound. The rounding should ideally happen at the presentation layer, not during data processing/storage.
 
-In the production path of `_process_csv_file_async` (line 520-551), the main processing happens inside `async with session.begin()`. When an error occurs, the except block (line 526) calls `_update_processing_log_status` **without** passing the session — so the function creates a separate session/transaction (line 220-222). This means the FAILED status update is committed in a different transaction from the main one. If the main transaction rolls back (which it does on any exception due to `session.begin()` context manager), but the status update transaction commits, the log shows FAILED with no aggregate data — which is correct. However, if the status update transaction *also* fails (e.g., DB is down), the processing log remains in whatever state it was before the worker started, with no indication of failure.
+**Evidence:**
+- `src/mkobi/data/processing/aggregate_transforms.py:205` — `.round(4)` on YoY calculation
+- `src/mkobi/data/processing/aggregate_transforms.py:248` — `.round(4)` on share calculation with group_cols
+- `src/mkobi/data/processing/aggregate_transforms.py:257` — `.round(4)` on share calculation without group_cols
 
-More critically, the `_update_processing_log_status` production path (lines 219-222) does its own `async with db.begin()` — a nested transaction. If the DB connection is broken, this will fail silently (caught at line 226-227, only logged), and the processing log status will never be updated to FAILED.
-
-**Evidence:** `src/mkobi/workers/data_worker.py:218-222`:
-```python
-async with get_session() as db:
-    async with db.begin():
-        await db.execute(stmt)
-```
-And the error path at lines 543-550 where `_update_processing_log_status` is called without `session=session`.
-
-**Recommendation:** In the production error path (lines 543-550), pass the main session to `_update_processing_log_status` so the FAILED status update is part of the same transaction. This ensures atomicity: either both the rollback and the FAILED status are persisted, or neither is. The current separate-session approach can leave the processing log in an inconsistent state.
+**Recommendation:** Store full-precision values in the database. Apply rounding only when formatting for display in the frontend or API response serialization. Effort: small. Priority: recommended.
 
 ---
 
-### DP-07: `APPEND` mode in worker does not clear old data but also doesn't merge — it only adds new aggregate rows
+### DP-07: In-memory `TaskQueue` loses all pending tasks on worker crash or restart
 
 | Field | Value |
 |-------|-------|
 | **ID** | DP-07 |
-| **Severity** | MEDIUM |
-| **Type** | BEST-PRACTICE |
-| **Affected Modules** | `src/mkobi/workers/data_worker.py`, `src/mkobi/data/storage/manager.py` |
-| **Classification** | advisory |
+| **Severity** | HIGH |
+| **Type** | SPEC-DEVIATION |
+| **Affected Modules** | `src/mkobi/core/task_queue.py` |
+| **Classification** | mandatory |
 
-**Description:** When `mode="append"`, the worker calls `_store_aggregates` with `clear_old=False`, which calls `StorageManager.save_aggregates` with `clear_old=False`, which performs a bulk UPSERT (lines 136-148). The UPSERT matches on `(dashboard_id, graph_id, dims::text)` and updates only the `metrics`. This means:
+**Description:** The `TaskQueue` implementation uses `asyncio.Queue` with in-memory `_statuses`, `_results`, and `_errors` dictionaries. If the worker process crashes or is restarted, all enqueued tasks and their statuses are permanently lost. The `processing_logs` row remains in `STARTED` or `UPLOADED` state indefinitely (until the stale cleanup task marks it as FAILED after 30 minutes). During that 30-minute window, users see the task as "in progress" with no way to recover. The SPEC documents this as MVP behavior with a migration path to Redis/RQ, but there is no detection or alerting for lost tasks.
 
-1. New dimension combinations from the appended data are inserted — correct.
-2. Existing dimension combinations have their metrics *overwritten* (not added) — this is an UPSERT, not a mathematical append.
-3. Dimension combinations that existed in the old data but are absent in the new data remain unchanged — they are not removed.
+**Evidence:**
+- `src/mkobi/core/task_queue.py:28-31` — `self._queue: asyncio.Queue`, `self._statuses: dict`, `self._results: dict`, `self._errors: dict` — all in-memory
+- `src/mkobi/core/task_queue.py:144-155` — `shutdown()` only logs a warning about pending tasks
+- `src/mkobi/workers/data_worker.py:234-292` — `cleanup_stale_processing_logs` has a 30-minute default timeout
+- SPEC.md line 121: "In-memory TaskQueue (MVP) with a documented migration path to Redis/RQ"
 
-This behavior is semantically an "upsert/merge" rather than a true "append." If a user uploads a file with fewer rows (e.g., only 2024 data after previously having 2023+2024), the old 2023 data persists. This may be intentional, but it's not documented and could confuse users expecting APPEND to mean "add new rows to existing data" (which it does) while also expecting old rows to be removed if they're not in the new file (which it doesn't do).
-
-**Evidence:** `src/mkobi/data/storage/manager.py:136-148` — `clear_old=False` path does UPSERT. `src/mkobi/workers/data_worker.py:637-642` — `clear_old = (mode == UploadMode.OVERWRITE)`.
-
-**Recommendation:** Document the APPEND behavior clearly. If true append-with-replacement semantics are desired (replace all data for dimensions present in new file, keep dimensions not in new file), consider adding a pre-step that deletes existing records for any `(dashboard_id, graph_id, dims)` combinations that appear in the new data before inserting.
+**Recommendation:** This is acknowledged MVP behavior. To reduce the impact: (1) lower the stale processing timeout from 30 minutes to 5 minutes for faster failure detection, (2) add a startup check that marks any `UPLOADED` logs (not just `PROCESSING`) as FAILED if no worker has touched them, since `UPLOADED` means "enqueued but not yet started". Effort: small. Priority: mandatory for production use.
 
 ---
 
-### DP-08: No validation that uploaded file's columns match graph dimension/metric requirements before aggregation
+### DP-08: `_process_csv_file_async` error path updates status but transaction rolls back, leaving no failure record
 
 | Field | Value |
 |-------|-------|
 | **ID** | DP-08 |
-| **Severity** | MEDIUM |
-| **Type** | BEST-PRACTICE |
+| **Severity** | CRITICAL |
+| **Type** | RUNTIME-ERROR |
 | **Affected Modules** | `src/mkobi/workers/data_worker.py` |
-| **Classification** | advisory |
+| **Classification** | mandatory |
 
-**Description:** The worker's `_process_csv_file_async` validates the CSV structure (required columns, data types) at lines 358-375, but the `LoaderConfig` used for validation is constructed from `processing_config_dict` settings (lines 358-361). If no processing config is provided (which is the default when no config has been set up), `required_columns` is an empty list and `column_types` is empty — meaning the validation passes for any CSV structure. The actual column compatibility with graph dimensions and metrics is only checked implicitly at line 57-59 of `aggregation_service.py`, where non-existent columns are silently skipped:
+**Description:** In the production mode error path of `_process_csv_file_async` (line 520-551), when an exception occurs inside the `async with session.begin()` block, the flow is: (1) exception is caught, (2) `_update_processing_log_status` is called with `session=session` to set status to FAILED, (3) the exception is re-raised. However, because the `session.begin()` context manager catches the re-raised exception and performs a **rollback**, the FAILED status update from step 2 is also rolled back. The processing log is left in whatever state it was before the error — typically `PROCESSING`. The stale cleanup task will eventually mark it as FAILED, but until then, the user sees a permanently stuck "processing" task with no error details.
 
-```python
-groupby_cols = [d for d in (graph.dimensions + dashboard_filter_dim_names) if d in df.columns]
-metric_cols = [m for m in graph.metrics if m in df.columns]
-```
+The same issue exists in the test mode error path (line 492-519) if the caller's SAVEPOINT is rolled back.
 
-If a graph expects a column that doesn't exist in the uploaded file, that column is silently omitted from the GROUP BY, and the graph is skipped entirely if no valid columns remain (line 61-65). No error or warning is raised — the user sees an empty graph with no indication that required data was missing.
+**Evidence:**
+- `src/mkobi/workers/data_worker.py:520-551` — production error path:
+  ```python
+  async with get_session() as session:
+      async with session.begin():          # <-- transaction boundary
+          try:
+              return await _run_with_transaction(session)
+          except Exception as e:
+              # ... update status to FAILED within same session ...
+              await _update_processing_log_status(
+                  task_id=task_id, status=ProcessingStatus.FAILED, ..., session=session
+              )
+              raise  # <-- session.begin() catches this and ROLLS BACK
+  ```
+- `src/mkobi/workers/data_worker.py:218-222` — `_update_processing_log_status` in test mode does NOT commit, relying on the caller's transaction
 
-**Evidence:** `src/mkobi/services/aggregation_service.py:52-65` — silent column skipping. `src/mkobi/workers/data_worker.py:358-361` — validation config derived from processing_config which may be empty.
-
-**Recommendation:** After loading the CSV, compare the file's columns against the union of all graph dimensions and metrics for the dashboard. If required columns are missing, raise a clear validation error before processing begins, rather than silently producing empty results.
+**Recommendation:** The FAILED status update must use a **separate, independent database session** that commits immediately, outside the rolled-back transaction. Create a new session via `get_session()` inside the except block, use it to update the status to FAILED, commit it, and close it. This ensures the failure record persists even when the main transaction rolls back. Effort: small. Priority: mandatory.
 
 ---
 
@@ -210,27 +195,26 @@ If a graph expects a column that doesn't exist in the uploaded file, that column
 
 | Severity | Count |
 |----------|-------|
-| CRITICAL | 0 |
+| CRITICAL | 1 |
 | HIGH | 2 |
-| MEDIUM | 5 |
-| LOW | 1 |
+| MEDIUM | 3 |
+| LOW | 2 |
 
 ## Mandatory Fixes
 
-- **DP-02**: Extend `cleanup_stale_processing_logs` to handle `UPLOADED` state entries, or implement a mechanism to detect and clean up orphaned processing logs that never transitioned to `PROCESSING`.
-- **DP-06**: Pass the main session to `_update_processing_log_status` in the worker's error path so the FAILED status update is atomic with the main transaction rollback.
+1. **DP-02** — APPEND mode does not clear stale filter values, causing data drift
+2. **DP-07** — In-memory `TaskQueue` loses all pending tasks on worker crash or restart (MVP limitation, needs mitigation)
+3. **DP-08** — `_process_csv_file_async` error path updates status but transaction rolls back, leaving no failure record
 
 ## Advisory Recommendations
 
-- **DP-01**: Use `datetime.now(UTC)` instead of `datetime.now()` for `uploaded_at` timestamp.
-- **DP-03**: Fix glob pattern in `find_task_file` to avoid potential UUID substring collisions.
-- **DP-04**: Document or fix the hardcoded `mode="overwrite"` in `trigger_processing`.
-- **DP-05**: Remove or integrate the orphaned `DataPipeline` class; migrate its retry logic to the actual worker.
-- **DP-07**: Document APPEND mode semantics clearly for users.
-- **DP-08**: Add pre-processing validation that uploaded file columns cover graph dimension/metric requirements.
+1. **DP-01** — `DataPipeline` in `registry.py` is dead code with transaction safety issues
+2. **DP-03** — `find_task_file` uses glob with task_id substring, risking file collision
+3. **DP-04** — `_update_processing_log_status` in test mode does not rollback on failure
+4. **DP-05** — `AggregationService.aggregate_for_dashboard` converts all dimension values to strings, losing type information
+5. **DP-06** — `_calculate_yoy` uses `round(4)` on floating-point results, causing precision loss in aggregations
 
 ## Doc Updates Needed
 
-- **DP-01**: Update any API documentation that describes the `uploaded_at` field to specify it's UTC.
-- **DP-04**: Document the behavior of `trigger_processing` regarding upload mode.
-- **DP-07**: Document APPEND mode semantics in the data upload API docs.
+- SPEC.md should document the APPEND mode behavior for filter values (DP-02) — either as a known limitation or as a bug to fix.
+- SPEC.md should document the in-memory TaskQueue limitations and the stale processing timeout behavior (DP-07).

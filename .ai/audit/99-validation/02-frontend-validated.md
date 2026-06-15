@@ -123,3 +123,286 @@ All validated advisory findings are low-risk:
 | FE-008 | VALIDATED |
 | FE-009 | VALIDATED |
 | FE-010 | VALIDATED |
+
+---
+
+## Actionable Recommendations
+
+### FE-002: Remove unused `generateShortId()`
+
+**File:** `frontend/src/shared/utils/shortUuid.ts`
+
+**Change:** Remove lines 20-27 (the `generateShortId` function and its JSDoc):
+
+```typescript
+// REMOVE this entire block (lines 20-27):
+/**
+ * Generates a new short ID by creating a UUID v4 and returning first 8 characters.
+ * Uses crypto.randomUUID() for secure random generation.
+ * @returns An 8-character short ID
+ */
+export function generateShortId(): string {
+  return crypto.randomUUID().slice(0, SHORT_ID_LENGTH)
+}
+```
+
+**Rationale:** `generateShortId()` has zero call sites across the entire codebase. The `shortUuid()` function (which truncates existing UUIDs for display) is the actively used export, imported by 3 files. Dead code increases maintenance surface and bundle size for no benefit. If random ID generation is needed in the future, `crypto.randomUUID()` can be called directly at the call site.
+
+---
+
+### FE-003: Consolidate duplicate `getProfile()` into a single source
+
+**File:** `frontend/src/features/users/api/userApi.ts`
+
+**Change:** Remove the local `getProfile` definition and re-export from `authApi`:
+
+```typescript
+// REPLACE the entire file content with:
+import { axiosInstance } from '../../../shared/api/axiosInstance'
+import type { UserProfile, ChangePasswordRequest } from '../../../shared/types/api.types'
+import { getProfile } from '../../auth/api/authApi'
+
+// Re-export getProfile from authApi as the single source of truth
+export { getProfile }
+
+export async function deleteAccount(): Promise<void> {
+  await axiosInstance.delete('/users/me')
+}
+
+export async function changePassword(data: ChangePasswordRequest): Promise<void> {
+  await axiosInstance.post('/auth/change-password', data)
+}
+```
+
+**File:** `frontend/src/features/users/index.ts` (barrel file — update if it re-exports `getProfile` from `userApi`)
+
+**Rationale:** Both `authApi.ts:21-23` and `userApi.ts:4-6` contain identical `getProfile()` implementations calling `GET /auth/me`. This violates DRY and creates a maintenance risk — if the endpoint changes, both must be updated. The auth feature owns authentication, so `authApi.ts` should be the single source of truth. The `userApi.ts` version is a leftover from before the auth feature was consolidated.
+
+---
+
+### FE-004: Convert `UploadModal` import to lazy() in DashboardView
+
+**File:** `frontend/src/features/dashboards/ui/DashboardView.tsx`
+
+**Change 1 — Replace the static import (line 13) with a lazy import at the top of the file:**
+
+```typescript
+// REPLACE line 13:
+import { UploadModal } from '../../upload/ui/UploadModal'
+
+// WITH a lazy import (add near the top, after existing imports):
+const UploadModal = lazy(() =>
+  import('../../upload/ui/UploadModal').then((module) => ({ default: module.UploadModal as ComponentType })),
+)
+```
+
+**Change 2 — Add required imports at the top:**
+
+```typescript
+// ADD to existing React import (line 1):
+import { useCallback, useState, lazy, Suspense } from 'react'
+
+// ADD a new import after line 2:
+import type { ComponentType } from 'react'
+```
+
+**Change 3 — Wrap the JSX usage in a Suspense boundary (around line 156):**
+
+```typescript
+// REPLACE:
+<UploadModal
+  open={uploadModalOpen}
+  onClose={() => setUploadModalOpen(false)}
+  dashboardId={id || ''}
+  onUploadComplete={() => {
+    setUploadModalOpen(false)
+    if (id) {
+      void invalidateAggregatedData(id)
+    }
+  }}
+/>
+
+// WITH:
+<Suspense fallback={null}>
+  <UploadModal
+    open={uploadModalOpen}
+    onClose={() => setUploadModalOpen(false)}
+    dashboardId={id || ''}
+    onUploadComplete={() => {
+      setUploadModalOpen(false)
+      if (id) {
+        void invalidateAggregatedData(id)
+      }
+    }}
+  />
+</Suspense>
+```
+
+**Rationale:** The routes file (`routes.tsx:13-35`) lazy-loads all route components including `DashboardView`, but the static `UploadModal` import creates a eager dependency chain: `DashboardView → UploadModal → uploadApi → ...`. This means the upload feature code is loaded on every dashboard view visit, even though the modal is only rendered when `uploadModalOpen === true` (which requires the "Upload Data" button click, itself gated behind `canEdit`). The `fallback={null}` is appropriate because the modal is hidden until explicitly opened — there's no visual flash.
+
+---
+
+### FE-006: Standardize `useAuth` import path in RegisterForm
+
+**File:** `frontend/src/features/auth/ui/RegisterForm.tsx`
+
+**Change:** Replace the barrel import with the direct path:
+
+```typescript
+// REPLACE line 4:
+import { useAuth } from '../'
+
+// WITH:
+import { useAuth } from '../model/useAuth'
+```
+
+**Rationale:** `LoginForm.tsx:7` already uses the direct path `'../model/useAuth'`. The barrel import `'../'` works because `features/auth/index.ts` re-exports `useAuth`, but it's an unnecessary indirection that obscures the actual module dependency. The direct path is consistent with `LoginForm.tsx`, `ErrorPage.tsx:4`, and `routes.tsx:10` — all of which import from the explicit `useAuth` module path. This also makes refactoring easier since barrel files can mask circular dependency issues.
+
+---
+
+### FE-007: Remove unnecessary `useAuth()` call from ErrorPage
+
+**File:** `frontend/src/shared/components/ErrorPage.tsx`
+
+**Change 1 — Remove the `useAuth` import and call (lines 4, 12):**
+
+```typescript
+// REMOVE line 4:
+import { useAuth } from '../../features/auth/model/useAuth'
+
+// REMOVE line 12:
+const { user } = useAuth()
+```
+
+**Change 2 — Simplify the `goToHome` logic (line 14):**
+
+```typescript
+// REPLACE line 14:
+const goToHome = user ? '/dashboards' : '/login'
+
+// WITH:
+const goToHome = '/login'
+```
+
+**Rationale:** `ErrorPage` is rendered for unauthenticated users hitting 404/500 errors (via the `ErrorBoundary` and `NotFound` routes). In this context, the user is never authenticated — if they were, they'd be inside the `ProtectedRoute` wrapper which handles auth. The `useAuth()` call triggers a token refresh attempt and profile fetch on every error page render, causing unnecessary API calls and potential error toasts for users who are already in a broken state. Hardcoding `goToHome = '/login'` is correct because: (1) unauthenticated users should go to login, (2) authenticated users never reach this component through normal flow.
+
+---
+
+### FE-008: Implement dashboard filter dropdown in LogViewer
+
+**File:** `frontend/src/features/admin/ui/LogViewer.tsx`
+
+**Change 1 — Add the `useQuery` import and a dashboard list query (after line 19):**
+
+```typescript
+// ADD import (modify line 19):
+import { getLogs, getDashboardsAdmin } from '../api/adminApi'
+```
+
+**Change 2 — Add a query for dashboards inside the `LogViewer` component (after line 47):**
+
+```typescript
+// ADD after line 47 (const [appliedFilters, ...)):
+const { data: dashboards = [] } = useQuery({
+  queryKey: ['admin', 'dashboards'],
+  queryFn: getDashboardsAdmin,
+})
+```
+
+**Change 3 — Replace the TODO comment with actual dashboard menu items (lines 83-84):**
+
+```typescript
+// REPLACE:
+<MenuItem value="">All</MenuItem>
+{/* TODO: Load dashboards for filter */}
+
+// WITH:
+<MenuItem value="">All</MenuItem>
+{dashboards.map((dashboard) => (
+  <MenuItem key={dashboard.id} value={dashboard.id}>
+    {dashboard.name}
+  </MenuItem>
+))}
+```
+
+**Rationale:** `getDashboardsAdmin()` already exists in `adminApi.ts:93-95` and returns `DashboardAdmin[]` with `id` and `name` fields. The `useQuery` hook is already used in this component for `getLogs`. The filter's `onChange` handler (line 81) already sets `dashboard_id` in filters, and `getLogs()` (line 133) already passes `LogFilters` to the backend which supports `dashboard_id` filtering. This is a 3-line implementation that completes an existing feature.
+
+---
+
+### FE-009: Add guard against double-invoke of `onUploadComplete` callback
+
+**File:** `frontend/src/features/upload/ui/UploadModal.tsx`
+
+**Change — Add a ref-based guard to prevent duplicate callback invocation:**
+
+```typescript
+// ADD after line 53 (after onUploadCompleteRef declaration):
+const hasCompletedRef = useRef(false)
+
+// MODIFY the completion check (around line 74-78):
+if (status === 'completed') {
+  toast.success('Processing complete!')
+  setProcessingFinished(true)
+  if (!hasCompletedRef.current) {
+    hasCompletedRef.current = true
+    onUploadCompleteRef.current?.()
+  }
+}
+```
+
+**Change — Reset the guard in handleClose (after line 194):**
+
+```typescript
+// ADD after setProcessingFinished(false) in handleClose (line 194):
+hasCompletedRef.current = false
+```
+
+**Rationale:** The polling effect (line 60-97) fires every 2 seconds via `useProcessingStatus`. When status becomes `'completed'`, `onUploadCompleteRef.current?.()` is called. However, `handleClose` (line 188-197) can also trigger `onClose()` which may call the same callback from the parent (e.g., `DashboardView` calls `invalidateAggregatedData`). Without a guard, the callback fires once from the polling effect and potentially again from the close handler's state reset chain. The `useRef` guard ensures exactly one invocation per upload cycle, and resetting it in `handleClose` prepares for the next upload session.
+
+---
+
+### FE-010: Fix DashboardFilters state desync with deep comparison
+
+**File:** `frontend/src/features/dashboards/ui/DashboardFilters.tsx`
+
+**Change — Replace the object reference comparison with a deep equality check:**
+
+```typescript
+// REPLACE the useEffect (lines 38-41):
+useEffect(() => {
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setLocalFilters(values || {})
+}, [values])
+
+// WITH:
+import { isEqual } from 'lodash-es'  // ADD to imports at top
+
+useEffect(() => {
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setLocalFilters((prev) => {
+    const next = values || {}
+    return isEqual(prev, next) ? prev : next
+  })
+}, [values])
+```
+
+**Alternative (no new dependency) — Use JSON serialization for comparison:**
+
+```typescript
+// REPLACE the useEffect (lines 38-41):
+useEffect(() => {
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setLocalFilters(values || {})
+}, [values])
+
+// WITH:
+useEffect(() => {
+  // eslint-disable-next-line react-hooks/set-state-in-effect
+  setLocalFilters((prev) => {
+    const next = values || {}
+    return JSON.stringify(prev) === JSON.stringify(next) ? prev : next
+  })
+}, [values])
+```
+
+**Rationale:** The current `useEffect` dependency on `values` uses object reference comparison. When the parent (`DashboardView`) resets filters via `handleFilterChange({})`, it creates a new empty object each time — which works. But if the parent ever passes the same filter values (e.g., from a cached or memoized source), the reference won't change and `localFilters` won't sync. The functional updater with deep comparison ensures: (1) actual value changes always propagate, (2) identical values don't trigger unnecessary re-renders, (3) external resets are always reflected. The `JSON.stringify` approach avoids adding `lodash-es` as a dependency and is safe here because filter values are plain primitives/arrays (no circular references, dates, or special objects).

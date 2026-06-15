@@ -37,7 +37,7 @@ Generate:
 # Workflow
 
 ## Step 1 Preparation List files only (do not read contents): 
-- `C:\py_dev\mkobi\.ai\audit\validated\**` 
+- `C:\py_dev\mkobi\.ai\audit\C:\py_dev\mkobi\.ai\audit\99-validation\**` 
 - `C:\py_dev\mkobi\.ai\plans\**`
 
 ---

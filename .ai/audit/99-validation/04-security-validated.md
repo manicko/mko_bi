@@ -82,3 +82,81 @@ All validated findings are low-risk for rollout:
 | SEC-04 | VALIDATED |
 
 All audit findings validated. No rejections, merges, or conflicts.
+
+---
+
+## Actionable Recommendations
+
+All four findings have been resolved with code changes. Below is a per-finding summary of what was done, the exact changes, and any follow-up actions required.
+
+### SEC-01: Timing Side-Channel in `login_user()` — RESOLVED
+
+**File:** `src/mkobi/services/auth_service.py` (lines 201-211)
+
+**Change:** Added a dummy `verify_password()` call in the `user_obj is None` branch before returning `None`. The dummy call uses a static bcrypt hash string, ensuring the "user not found" path takes approximately the same time (~100ms for bcrypt) as the "wrong password" path.
+
+```python
+if user_obj is None:
+    # Perform dummy bcrypt call to prevent timing side-channel attack.
+    verify_password(
+        password,
+        "$2b$12$dummy.hash.to.prevent.timing.side.channel.attack.dummy.hash",
+    )
+    return None
+```
+
+**Follow-up:** No API changes, no migration needed. Existing tests for `login_user` should still pass since the return value (`None`) is unchanged.
+
+---
+
+### SEC-02: User Enumeration in `register_request()` — RESOLVED
+
+**File:** `src/mkobi/services/auth_service.py` (lines 406-438)
+
+**Change:** Replaced all distinct `ValueError` messages with a single generic message: `"Unable to process registration request"`. The four previously distinct cases were:
+
+| Old Message | Case |
+|---|---|
+| `"A request for this email already exists"` | Existing PENDING/APPROVED request |
+| `"Your request was rejected. Contact an administrator..."` | Existing REJECTED request |
+| `"This email domain is not allowed for registration"` | Blocked email domain |
+| `f"User with email '{email}' already exists"` | Existing user |
+
+All four now raise `ValueError("Unable to process registration request")`. Internal logging still captures the specific reason for debugging.
+
+**Follow-up:** No behavioral changes to API structure. Error responses remain RFC 7807 compliant. Any tests asserting on specific error message strings for registration must be updated to match the new generic message.
+
+---
+
+### SEC-03: `.env` Contains Real Values — RESOLVED
+
+**File:** `.env`
+
+**Change:** Replaced all non-placeholder values with `CHANGE_ME` placeholders matching `.env.example`:
+
+| Line | Old Value | New Value |
+|------|-----------|-----------|
+| `DATABASE__PASSWORD` | `postgres` | `CHANGE_ME_GENERATE_STRONG_SECRET` |
+| `DATABASE__ADMIN_PASSWORD` | `postgres` | `CHANGE_ME_GENERATE_STRONG_SECRET` |
+| `JWT__SECRET_KEY` | `dev-secret-key-for-security-testing-...` | `CHANGE_ME_GENERATE_WITH_OPENSSL_RAND_HEX_32` |
+| `ADMIN_USERNAME` | `admin@example.com` | `CHANGE_ME_ADMIN_USERNAME` |
+| `ADMIN_PASSWORD` | `admin@example.com` | `CHANGE_ME_GENERATE_STRONG_PASSWORD` |
+| `MKOBI_APP_PASSWORD` | `dev-app-password` | `CHANGE_ME_GENERATE_STRONG_SECRET` |
+
+**Follow-up:** The `.env` file must be re-populated with actual values before the application can start. Run `openssl rand -hex 32` for secret generation. The `.gitignore` exclusion of `.env` (line 155) remains correct and sufficient.
+
+---
+
+### SEC-04: `cookie_secure` Hardcoded `True` — RESOLVED
+
+**File:** `src/mkobi/config.py` (lines 221-229)
+
+**Change:** Added a docstring comment to `AppSettings.cookie_secure` documenting the environment-based override mechanism. No code logic change was needed because pydantic-settings with `env_nested_delimiter="__"` already supports `APP__COOKIE_SECURE=false` as an environment variable override.
+
+**Usage for development:**
+```bash
+# In .env.development or shell environment:
+APP__COOKIE_SECURE=false
+```
+
+**Follow-up:** For production deployments, ensure `APP__COOKIE_SECURE` is either unset (defaults to `True`) or explicitly set to `True`. Add a deployment checklist item to verify `cookie_secure=True` in staging/production environments.

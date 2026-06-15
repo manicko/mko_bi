@@ -200,6 +200,13 @@ class AuthService(IAuthService):
 
         user_obj = await self.user_repo.get_by_email_with_hash(email=email, db=db)
         if user_obj is None:
+            # Perform dummy bcrypt call to prevent timing side-channel attack.
+            # Without this, an attacker can distinguish "user not found" (fast)
+            # from "wrong password" (slow bcrypt verify) by measuring response time.
+            verify_password(
+                password,
+                "$2b$12$dummy.hash.to.prevent.timing.side.channel.attack.dummy.hash",
+            )
             return None
 
         if not verify_password(password, user_obj.password_hash):
@@ -413,15 +420,13 @@ class AuthService(IAuthService):
                     "Registration request already exists (active)",
                     extra={"email": email, "status": existing_request.status.value}
                 )
-                raise ValueError("A request for this email already exists")
+                raise ValueError("Unable to process registration request")
             if existing_request.status == RegistrationStatus.REJECTED:
                 logger.warning(
                     "Registration request already exists (rejected)",
                     extra={"email": email, "status": existing_request.status.value}
                 )
-                raise ValueError(
-                    "Your request was rejected. Contact an administrator for more information."
-                )
+                raise ValueError("Unable to process registration request")
 
         # Check if email domain is blocked
         if email_domain in self.blocked_domains_set:
@@ -429,13 +434,13 @@ class AuthService(IAuthService):
                 "Registration attempt with blocked email domain",
                 extra={"email": email, "domain": email_domain}
             )
-            raise ValueError("This email domain is not allowed for registration")
+            raise ValueError("Unable to process registration request")
 
         # Check if user with this email already exists
         existing_user = await self.user_repo.get_by_email(email=email, db=db)
         if existing_user is not None:
             logger.warning("User already exists", extra={"email": email})
-            raise ValueError(f"User with email '{email}' already exists")
+            raise ValueError("Unable to process registration request")
 
         try:
             req = await self.reg_request_repo.create(email, ip, db)

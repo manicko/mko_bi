@@ -224,6 +224,8 @@ class AppSettings(BaseModel):
     name: str = "mkobi"
     version: str = "1.0.0"
     # Cookie security settings
+    # In production, always keep True. In development, set APP__COOKIE_SECURE=false
+    # to allow HTTP cookies without TLS.
     cookie_secure: bool = True
 
 
