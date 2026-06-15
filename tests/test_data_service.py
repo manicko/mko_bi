@@ -552,21 +552,27 @@ class TestFileValidation:
     async def test_validate_file_invalid_extension(self, data_service, valid_csv_content):
         """Test validation rejects .txt extension.
 
-        Note: With MIME detection from content, CSV content (containing commas and newlines)
-        is detected as text/csv by the fallback detector, which is allowed. The extension
-        check fails first because .txt is not in the allowed extensions.
+        Note: With MIME detection from content using python-magic/libmagic, a .txt file
+        with plain text content is detected as text/plain by libmagic, which is not in
+        the allowed MIME types list. The MIME-first validation rejects it before the
+        extension check runs. This is the expected security behavior: MIME detection
+        from content takes priority over extension-based checks.
+
+        On systems without libmagic, the fallback detector returns application/octet-
+        stream for plain text without commas/newlines, which also triggers MIME error.
         """
         from mkobi.services.file_processing import validate_file
 
-        # Create a file with .txt extension and CSV content
-        # CSV content with commas/newlines is detected as text/csv (allowed), so extension
-        # check fails first with Invalid file format error
+        # Create a file with .txt extension and plain text content (no CSV structure)
+        # libmagic detects this as text/plain (not in allowed types), so MIME-first
+        # validation raises before the extension check. Without libmagic, fallback returns
+        # application/octet-stream which is also not allowed.
         with tempfile.NamedTemporaryFile(suffix=".txt", delete=False) as tmp:
-            tmp.write(b"col1,col2\nval1,val2\n")
+            tmp.write(b"plain text data without csv structure")
             tmp_path = Path(tmp.name)
 
         try:
-            with pytest.raises(ValueError, match="Invalid file format.*test.txt"):
+            with pytest.raises(ValueError, match="Detected MIME type.*not allowed"):
                 validate_file(
                     file_path=tmp_path,
                     filename="test.txt",
