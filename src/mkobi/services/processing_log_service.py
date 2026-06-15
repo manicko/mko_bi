@@ -48,7 +48,7 @@ class ProcessingLogService(IProcessingLogService):
     """Service for processing log business logic.
 
     Provides methods for managing processing log lifecycle.
-    Called from DataPipeline at each processing stage.
+    Called from data_worker at each processing stage.
     """
 
     def __init__(self, log_repo: IProcessingLogRepository) -> None:
