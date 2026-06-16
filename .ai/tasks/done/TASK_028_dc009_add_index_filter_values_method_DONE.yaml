@@ -1,0 +1,50 @@
+id: TASK_028_dc009_add_index_filter_values_method
+
+title: Fix DC-009 — Add ensure_indexes to FilterValuesService for dashboard_filter_values table
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Fix the LOW issue where dashboard_filter_values has no ensure_indexes method.
+  Add ensure_indexes(db) to FilterValuesService and wire it into the startup sequence.
+
+source_file: .ai/audit/99-validation/08-deployment-config-validated.md
+source_section: DC-009: Missing Startup Indexes — Filter Values
+
+files:
+  - path: src/mkobi/services/filter_values_service.py
+    targets:
+      - type: class
+        name: FilterValuesService
+    semantic_anchors:
+      insert_after:
+        type: class
+        value: FilterValuesService
+  - path: src/mkobi/app.py
+    targets:
+      - type: function
+        name: lifespan
+
+changes:
+  - action: add_code
+    description: >
+      Add an `ensure_indexes(db)` method to FilterValuesService that creates indexes
+      on dashboard_filter_values table for dashboard_id and filter_name lookups.
+    - action: add_code
+    description: Wire the new ensure_indexes method into the application startup sequence.
+
+acceptance_criteria:
+  - FilterValuesService has ensure_indexes method
+  - Method creates indexes via CREATE INDEX IF NOT EXISTS
+  - Wired into app.py startup sequence
+
+risk_notes: >
+  Low risk — uses CREATE INDEX IF NOT EXISTS. Idempotent.
+
+tests_to_run:
+  - command: pytest tests/test_filter_values_service.py -v -k "index" --no-cov
+    reason: Verify filter values service index tests

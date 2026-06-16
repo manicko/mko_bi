@@ -10,6 +10,7 @@ from datetime import datetime, UTC, timedelta
 from typing import cast
 from uuid import UUID
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.interfaces.repository_interfaces import IProcessingLogRepository
@@ -255,3 +256,45 @@ class ProcessingLogService(IProcessingLogService):
             async with session.begin():
                 count = await self.log_repo.delete_old_logs(cutoff, session)
                 return count
+
+    async def ensure_indexes(self, db: AsyncSession) -> None:
+        """Create indexes on processing_logs table if they do not exist.
+
+        This method is called during application startup to ensure indexes
+        exist for optimal query performance. It uses CREATE INDEX IF NOT EXISTS
+        which is idempotent and safe to run on every startup.
+
+        Args:
+            db: Async database session.
+        """
+        from sqlalchemy.engine.interfaces import Dialect
+
+        # Get dialect to check if we're running on PostgreSQL
+        dialect: Dialect = db.bind().dialect
+
+        if dialect.name == "postgresql":
+            # Create index for dashboard_id lookups (used in get_by_dashboard queries)
+            await db.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS idx_processing_logs_dashboard_id "
+                    "ON processing_logs (dashboard_id)"
+                ),
+            )
+            # Create composite index for status + finished_at lookups
+            # (used in cleanup queries and status-based filtering)
+            await db.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS idx_processing_logs_status_finished_at "
+                    "ON processing_logs (status, finished_at)"
+                ),
+            )
+            # Create composite index for status + started_at lookups
+            # (used in stale processing cleanup queries)
+            await db.execute(
+                text(
+                    "CREATE INDEX IF NOT EXISTS idx_processing_logs_status_started_at "
+                    "ON processing_logs (status, started_at)"
+                ),
+            )
+            await db.commit()
+            logger.info("Ensured indexes on processing_logs table")

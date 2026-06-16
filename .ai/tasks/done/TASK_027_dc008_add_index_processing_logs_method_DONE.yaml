@@ -1,0 +1,50 @@
+id: TASK_027_dc008_add_index_processing_logs_method
+
+title: Fix DC-008 — Add ensure_indexes to ProcessingLogService for processing_logs table
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Fix the LOW issue where the processing_logs table has no ensure_indexes method in
+  ProcessingLogService. Add ensure_indexes(db) and wire it into the startup sequence.
+
+source_file: .ai/audit/99-validation/08-deployment-config-validated.md
+source_section: DC-008: Missing Indexes on Startup — Processing Logs
+
+files:
+  - path: src/mkobi/services/processing_log_service.py
+    targets:
+      - type: class
+        name: ProcessingLogService
+    semantic_anchors:
+      insert_after:
+        type: method
+        name: delete_old_logs
+  - path: src/mkobi/app.py
+    targets:
+      - type: function
+        name: lifespan
+
+changes:
+  - action: add_code
+    description: >
+      Add an `ensure_indexes(db)` method to ProcessingLogService that creates indexes
+      on the processing_logs table for status+finished_at and dashboard_id lookups.
+    - action: add_code
+    description: Wire the new ensure_indexes method into the application startup sequence.
+
+acceptance_criteria:
+  - ProcessingLogService has ensure_indexes method
+  - Method creates indexes via CREATE INDEX IF NOT EXISTS
+  - Wired into app.py startup sequence
+
+risk_notes: >
+  Low risk — uses CREATE INDEX IF NOT EXISTS. Idempotent.
+
+tests_to_run:
+  - command: pytest tests/test_processing_log_service.py -v -k "index" --no-cov
+    reason: Verify processing log service index tests
