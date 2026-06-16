@@ -14,7 +14,12 @@ from mkobi.config import get_config
 from mkobi.core.logging_config import get_logger
 from mkobi.core.task_queue import enqueue_job
 from mkobi.data.loaders.loader import detect_file_type
-from mkobi.models.enums import FileExtensionEnum, MimeTypeEnum, ProcessingStatus, UploadMode
+from mkobi.models.enums import (
+    FileExtensionEnum,
+    MimeTypeEnum,
+    ProcessingStatus,
+    UploadMode,
+)
 
 logger = get_logger(__name__)
 
@@ -37,6 +42,7 @@ try:
         return detected_mime or "application/octet-stream"
 
 except ImportError:
+
     def detect_mime_type_from_content(file_path: Path) -> str:
         """Detect MIME type from file content using gzip magic bytes fallback.
 
@@ -153,9 +159,7 @@ def validate_file(
             f"({file_size} > {max_file_size} bytes)"
         )
 
-    logger.info(
-        "File validated successfully: %s (%d bytes)", filename, file_size
-    )
+    logger.info("File validated successfully: %s (%d bytes)", filename, file_size)
     return file_size
 
 
@@ -216,10 +220,7 @@ async def process_upload_with_session(
     )
     await db.flush()
 
-    logger.info(
-        "File validated for processing: size=%d, mode=%s",
-        file_size, mode
-    )
+    logger.info("File validated for processing: size=%d, mode=%s", file_size, mode)
 
     # Update status to UPLOADED after validation
     await log_repo.update_status(
@@ -244,7 +245,9 @@ async def process_upload_with_session(
 
     logger.info(
         "File moved to final location: path=%s, size=%d, mode=%s",
-        final_file_path, file_size, mode
+        final_file_path,
+        file_size,
+        mode,
     )
 
     # Enqueue job BEFORE commit for proper transaction atomicity
@@ -289,13 +292,19 @@ def find_task_file(task_id: UUID) -> str:
 
     Raises:
         ValueError: If no file is found for the task.
+        ValueError: If multiple files match the task ID.
     """
     config = get_config()
     upload_dir = Path(config.upload_temp_dir)
-    task_files = list(upload_dir.glob(f"*{task_id}*.csv*"))
+    task_files = list(upload_dir.glob(f"{task_id}.csv*"))
 
     if not task_files:
         raise ValueError(f"File for task {task_id} not found in temp directory")
+
+    if len(task_files) > 1:
+        raise ValueError(
+            f"Multiple files found for task {task_id}: {[f.name for f in task_files]}"
+        )
 
     return str(task_files[0])
 
@@ -331,9 +340,7 @@ async def get_and_validate_processing_log(
             log.dashboard_id,
             dashboard_id,
         )
-        raise ValueError(
-            f"Task {task_id} does not belong to dashboard {dashboard_id}"
-        )
+        raise ValueError(f"Task {task_id} does not belong to dashboard {dashboard_id}")
 
     return log
 
