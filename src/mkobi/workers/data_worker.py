@@ -226,6 +226,7 @@ async def _update_processing_log_status(
     except SQLAlchemyError as e:
         logger.error("Failed to update processing log status: %s", e)
         # No rollback in test mode - caller (SAVEPOINT) manages transaction
+        raise
     except Exception as e:
         logger.exception("Unexpected error updating processing log status: %s", e)
         raise
