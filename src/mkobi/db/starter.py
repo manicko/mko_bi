@@ -20,7 +20,7 @@ from asyncpg.exceptions import InvalidPasswordError
 from sqlalchemy import DDL, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from mkobi.config import get_config
+from mkobi.config import WEAK_PASSWORDS, get_config
 from mkobi.core.security import hash_password
 from mkobi.models.enums import EnvironmentEnum, ProcessingStatus, UserRole
 from mkobi.services.file_cleanup import cleanup_stale_temp_files
@@ -319,6 +319,9 @@ class DatabaseStarter:
 
         Idempotent — safe to run multiple times.
         Uses atomic UPSERT to avoid race conditions on concurrent startup.
+
+        Raises:
+            ValueError: If the admin password matches a known placeholder value.
         """
         from mkobi.db.session import get_async_sessionlocal
 
@@ -326,7 +329,18 @@ class DatabaseStarter:
         admin_email = config.admin_username
         admin_password = config.admin_password
 
-        # Warn if using default credentials (not production due to config validation)
+        # Refuse to create admin user with a known placeholder password.
+        # This check runs in ALL environments to prevent accidental use of
+        # default credentials. Production already rejects weak passwords via
+        # Settings.validate_admin_credentials, but this provides defense-in-depth
+        # at the point where the password is actually consumed.
+        if admin_password.lower() in {p.lower() for p in WEAK_PASSWORDS}:
+            raise ValueError(
+                "Admin password is a known placeholder value. "
+                "Set ADMIN_PASSWORD to a strong, unique password."
+            )
+
+        # Warn if using default username (not production due to config validation)
         if admin_email == "admin":
             logger.warning(
                 "Using default admin username - set ADMIN_USERNAME environment variable"
