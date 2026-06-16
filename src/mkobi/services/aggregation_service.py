@@ -15,6 +15,21 @@ from mkobi.models.filters import FilterRead
 logger = logging.getLogger(__name__)
 
 
+def _coerce_dim_value(value: Any) -> str | int | float | bool:
+    """Convert a Polars value to a JSON-safe native Python type.
+
+    Preserves int, float, and bool as-is for correct sorting in the frontend.
+    Converts date/datetime types to ISO format strings.
+    """
+    if value is None:
+        return ""
+    if isinstance(value, (int, float, bool)):
+        return value
+    if hasattr(value, "isoformat"):
+        return str(value.isoformat())
+    return str(value)
+
+
 class AggregationService:
     """Service for aggregating data for dashboard graphs.
 
@@ -42,7 +57,7 @@ class AggregationService:
             metric_agg: Aggregation type for metrics (default: "sum").
 
         Returns:
-            List of dicts with {dashboard_id, graph_id, dims: {all str}, metrics: {}}.
+            List of dicts with {dashboard_id, graph_id, dims: {native types}, metrics: {}}.
         """
         dashboard_filter_dim_names = [f.name for f in dashboard_filters]
         results: list[dict[str, Any]] = []
@@ -50,7 +65,8 @@ class AggregationService:
         for graph in graphs:
             # Collect columns for GROUP BY from graph dimensions and dashboard filters
             groupby_cols = [
-                d for d in (graph.dimensions + dashboard_filter_dim_names)
+                d
+                for d in (graph.dimensions + dashboard_filter_dim_names)
                 if d in df.columns
             ]
 
@@ -73,14 +89,16 @@ class AggregationService:
                 "count": lambda c: c.count(),
             }
             agg_fn = _agg_fn_map.get(metric_agg, lambda c: c.sum())
-            agg_exprs = [agg_fn(pl.col(m)).alias(f"{m}_{metric_agg}") for m in metric_cols]
+            agg_exprs = [
+                agg_fn(pl.col(m)).alias(f"{m}_{metric_agg}") for m in metric_cols
+            ]
 
             # Perform GROUP BY aggregation
             result = df.group_by(groupby_cols).agg(agg_exprs)
 
-            # Convert each row to record dict with string dimensions
+            # Convert each row to record dict with coerced dimensions
             for row in result.to_dicts():
-                dims = {col: str(row[col]) for col in groupby_cols}
+                dims = {col: _coerce_dim_value(row[col]) for col in groupby_cols}
                 metrics = {k: v for k, v in row.items() if k not in groupby_cols}
                 record = {
                     "dashboard_id": graph.dashboard_id,
@@ -96,7 +114,7 @@ class AggregationService:
         self,
         aggregated_records: list[dict[str, Any]],
         dashboard_filter_names: list[str],
-    ) -> dict[str, list[str]]:
+    ) -> dict[str, list[str | int | float | bool]]:
         """Extract distinct values for each filter dimension from aggregated records.
 
         Args:
@@ -104,10 +122,10 @@ class AggregationService:
             dashboard_filter_names: List of filter dimension names.
 
         Returns:
-            Dict with {filter_name: [sorted unique string values]}.
+            Dict with {filter_name: [sorted unique values preserving native types]}.
         """
         # Initialize sets for each filter name
-        value_sets: dict[str, set[str]] = {
+        value_sets: dict[str, set[Any]] = {
             name: set() for name in dashboard_filter_names
         }
 
@@ -116,10 +134,11 @@ class AggregationService:
             dims = record.get("dims", {})
             for filter_name in dashboard_filter_names:
                 if filter_name in dims:
-                    value_sets[filter_name].add(str(dims[filter_name]))
+                    value_sets[filter_name].add(dims[filter_name])
 
-        # Return sorted lists
+        # Return sorted lists with native types preserved
+        # Empty string ("") needs special handling for sorting
         return {
-            name: sorted(list(values))
+            name: sorted(list(values), key=lambda v: (isinstance(v, str), v))
             for name, values in value_sets.items()
         }

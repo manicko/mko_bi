@@ -1,4 +1,5 @@
 """Tests for AggregationService business logic."""
+
 from unittest.mock import MagicMock
 from uuid import uuid4
 
@@ -188,9 +189,9 @@ class TestAggregationService:
         for r in results:
             assert isinstance(r["dims"], dict)
             assert isinstance(r["metrics"], dict)
-            # All dim values should be strings
+            # All dim values should be native types (str, int, float, bool)
             for v in r["dims"].values():
-                assert isinstance(v, str)
+                assert isinstance(v, (str, int, float, bool))
 
     # --- extract_filter_values tests ---
 
@@ -215,7 +216,9 @@ class TestAggregationService:
         result = await aggregation_service.extract_filter_values([], ["region"])
         assert result == {"region": []}
 
-    async def test_extract_filter_values_missing_filter_in_dims(self, aggregation_service):
+    async def test_extract_filter_values_missing_filter_in_dims(
+        self, aggregation_service
+    ):
         """Test extraction when some filters not present in records."""
         records = [
             {"dims": {"region": "North"}},
