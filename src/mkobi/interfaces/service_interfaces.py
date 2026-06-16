@@ -253,6 +253,11 @@ class IDashboardService(abc.ABC):
         """Get access list for dashboard."""
         pass
 
+    @abc.abstractmethod
+    async def ensure_indexes(self, db: AsyncSession) -> None:
+        """Create indexes on dashboards table if they do not exist."""
+        pass
+
 
 class IGraphService(abc.ABC):
     """Graph service interface."""
