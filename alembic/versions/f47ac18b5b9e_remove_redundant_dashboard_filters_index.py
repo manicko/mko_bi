@@ -1,8 +1,12 @@
 """Remove redundant index on dashboard_filters table.
 
 The PRIMARY KEY constraint on (dashboard_id, filter_id) already creates
-a unique index that serves all queries. The redundant non-unique
-idx_dashboard_filters_dashboard_id index wastes write performance and storage.
+a unique index (dashboard_filters_pkey) that serves all queries. The
+non-unique idx_dashboard_filters_dashboard_id index was created externally
+(e.g., manually or via a non-versioned migration) and is redundant.
+
+This migration uses DROP INDEX IF EXISTS to safely handle databases where
+the index may or may not exist.
 
 Revision ID: f47ac18b5b9e
 Revises: b749bc53b1ee
@@ -32,9 +36,11 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Recreate the redundant index for rollback compatibility.
+    """Recreate the index for rollback compatibility.
 
-    This recreates the index that was removed in upgrade().
+    This recreates the idx_dashboard_filters_dashboard_id index that was
+    removed in upgrade(). The index was created externally and its removal
+    does not affect the PRIMARY KEY constraint.
     """
     op.execute(
         "CREATE INDEX IF NOT EXISTS idx_dashboard_filters_dashboard_id "
