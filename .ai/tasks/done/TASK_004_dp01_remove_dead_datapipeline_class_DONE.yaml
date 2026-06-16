@@ -2,7 +2,7 @@ id: TASK_004_dp01_remove_dead_datapipeline_class
 
 title: Fix DP-01 — Remove dead DataPipeline class from registry.py
 
-status: pending
+status: done
 
 priority: medium
 

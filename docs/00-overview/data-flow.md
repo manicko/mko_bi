@@ -116,12 +116,19 @@ User (Browser)
 
 The aggregation step uses `AggregationService` which performs **per-chart GROUP BY** with Polars. For each graph, the GROUP BY columns include both the graph's dimensions and the dashboard's filter dimensions. This produces one row per unique combination of dimension values with aggregated metric values (sum by default).
 
-After aggregation, distinct filter values are extracted from the aggregated records and persisted to the `dashboard_filter_values` table. These values are used to dynamically populate filter UI controls (checkboxes, dropdowns) when the filter's `config.source` is set to `"data"`.
+After aggregation, sorting is applied to ensure proper chart visualization:
+- X-axis sorted chronologically (uses `year`/`month` columns if present, otherwise sorts by X dimension directly)
+- Color dimension sorted by total metric volume (descending) so larger values appear at the bottom of stacked bars
+
+The `_apply_chart_sorting()` method calculates color totals via GROUP BY, joins back to the main dataframe, and applies multi-column sort before converting to output records. Helper columns (prefixed with `_`) are excluded from the final metrics output.
+
+After sorting, distinct filter values are extracted from the aggregated records and persisted to the `dashboard_filter_values` table. These values are used to dynamically populate filter UI controls (checkboxes, dropdowns) when the filter's `config.source` is set to `"data"`.
 
 ```
 CSV data → AggregationService.aggregate_for_dashboard()
          ├─ For each graph: GROUP BY (graph.dims + filter.dims)
          ├─ Produce aggregated records (dims + metrics)
+         ├─ Apply chart sorting (_color_total desc, x-axis asc)
          ├─ StorageManager.save_aggregates() → aggregated_data table
          └─ extract_filter_values() → dashboard_filter_values table
 ```

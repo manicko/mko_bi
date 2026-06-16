@@ -39,7 +39,7 @@ async def test_ensure_test_media_dash_creates_dashboard(async_db_session):
     dashboard = (await async_db_session.execute(stmt)).scalar_one_or_none()
     assert dashboard is not None
     assert dashboard.name == "test_media_dash"
-    assert dashboard.description == "Test media dashboard for Phase 02"
+    assert dashboard.description == "Test media dashboard"
 
     # Verify graphs were created
     graph_count = await async_db_session.scalar(
@@ -199,13 +199,13 @@ async def test_seed_script_ruff_mypy():
     )
     assert result.returncode == 0, f"Ruff check failed: {result.stdout}"
 
-    # Run mypy
+    # Run mypy with a writable cache directory
     result = subprocess.run(
-        [mypy_path, "src/mkobi/db/seeders/test_media_dash.py"],
+        [mypy_path, "--cache-dir", "/tmp/.mypy_cache", "src/mkobi/db/seeders/test_media_dash.py"],
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 0, f"Mypy check failed: {result.stdout}"
+    assert result.returncode == 0, f"Mypy check failed: {result.stdout + result.stderr}"
 
 
 async def test_dev_seeders_module_ruff_mypy():
@@ -224,12 +224,13 @@ async def test_dev_seeders_module_ruff_mypy():
     )
     assert result.returncode == 0, f"Ruff check failed: {result.stdout}"
 
+    # Run mypy with a writable cache directory
     result = subprocess.run(
-        [mypy_path, "src/mkobi/db/dev_seeders.py"],
+        [mypy_path, "--cache-dir", "/tmp/.mypy_cache", "src/mkobi/db/dev_seeders.py"],
         capture_output=True,
         text=True,
     )
-    assert result.returncode == 0, f"Mypy check failed: {result.stdout}"
+    assert result.returncode == 0, f"Mypy check failed: {result.stdout + result.stderr}"
 
 
 async def test_starter_calls_dev_seeders_in_development_mode():

@@ -10,7 +10,6 @@ from mkobi.models.filters import FilterRead
 from mkobi.services.aggregation_service import AggregationService
 
 
-@pytest.mark.asyncio
 class TestAggregationService:
     """Unit tests for AggregationService business logic."""
 
@@ -406,3 +405,106 @@ class TestAggregationService:
         for r in results:
             # Check that metric key uses "unknown_func" suffix (falling back to sum behavior)
             assert any(k.endswith("_unknown_func") for k in r["metrics"].keys())
+
+    # --- _apply_chart_sorting tests ---
+
+    def test_apply_chart_sorting_x_chronological(self, aggregation_service):
+        """Test chronological x-axis sorting using year/month columns."""
+        df = pl.DataFrame({
+            "year": [2024, 2024, 2023, 2023],
+            "month": [3, 1, 12, 1],
+            "month_label": ["Mar 2024", "Jan 2024", "Dec 2023", "Jan 2023"],
+            "sales_sum": [100.0, 200.0, 300.0, 400.0],
+        })
+
+        result = aggregation_service._apply_chart_sorting(
+            df,
+            x_col="month_label",
+            color_col=None,
+            metric_cols=["sales"],
+            metric_agg="sum",
+        )
+
+        # Should be sorted by year, month ascending
+        assert result["month_label"][0] == "Jan 2023"
+        assert result["month_label"][1] == "Dec 2023"
+        assert result["month_label"][2] == "Jan 2024"
+        assert result["month_label"][3] == "Mar 2024"
+
+    def test_apply_chart_sorting_color_by_metric(self, aggregation_service):
+        """Test color dimension sorting by total metric (descending)."""
+        df = pl.DataFrame({
+            "year": [2024, 2024, 2024, 2024],
+            "month": [1, 1, 1, 1],
+            "brand": ["A", "B", "A", "B"],
+            "sales_sum": [100.0, 500.0, 200.0, 600.0],
+        })
+
+        result = aggregation_service._apply_chart_sorting(
+            df,
+            x_col="month_label",
+            color_col="brand",
+            metric_cols=["sales"],
+            metric_agg="sum",
+        )
+
+        # Brand B has larger total (1100) than A (300), so B should come first
+        # Within each brand, months are in order
+        assert result["brand"][0] == "B"  # B has total 1100
+        assert result["brand"][1] == "B"
+        assert result["brand"][2] == "A"  # A has total 300
+        assert result["brand"][3] == "A"
+
+    def test_apply_chart_sorting_combined(self, aggregation_service):
+        """Test combined x-axis chronological and color metric sorting."""
+        df = pl.DataFrame({
+            "year": [2024, 2024, 2023, 2023, 2024, 2024, 2023, 2023],
+            "month": [1, 1, 12, 12, 3, 3, 11, 11],
+            "brand": ["A", "B", "A", "B", "A", "B", "A", "B"],
+            "sales_sum": [100.0, 500.0, 200.0, 600.0, 150.0, 550.0, 250.0, 650.0],
+        })
+
+        result = aggregation_service._apply_chart_sorting(
+            df,
+            x_col="month_label",
+            color_col="brand",
+            metric_cols=["sales"],
+            metric_agg="sum",
+        )
+
+        # Brand B total = 500+600+550+650 = 2300, Brand A total = 100+200+150+250 = 700
+        # B should come first (larger total), then A
+        # Within each brand: ascending by year then month
+        # For B: (2023, 11)=650, (2023, 12)=600, (2024, 1)=500, (2024, 3)=550
+        # For A: (2023, 11)=250, (2023, 12)=200, (2024, 1)=100, (2024, 3)=150
+        assert result["brand"][0] == "B"
+        assert result["year"][0] == 2023
+        assert result["month"][0] == 11
+
+        assert result["brand"][1] == "B"
+        assert result["year"][1] == 2023
+        assert result["month"][1] == 12
+
+        assert result["brand"][2] == "B"
+        assert result["year"][2] == 2024
+        assert result["month"][2] == 1
+
+        assert result["brand"][3] == "B"
+        assert result["year"][3] == 2024
+        assert result["month"][3] == 3
+
+        assert result["brand"][4] == "A"
+        assert result["year"][4] == 2023
+        assert result["month"][4] == 11
+
+        assert result["brand"][5] == "A"
+        assert result["year"][5] == 2023
+        assert result["month"][5] == 12
+
+        assert result["brand"][6] == "A"
+        assert result["year"][6] == 2024
+        assert result["month"][6] == 1
+
+        assert result["brand"][7] == "A"
+        assert result["year"][7] == 2024
+        assert result["month"][7] == 3

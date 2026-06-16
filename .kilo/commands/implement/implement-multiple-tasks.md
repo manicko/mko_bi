@@ -58,39 +58,13 @@ For each task file in `{TASKS_FILES_TO_IMPLEMENT}` (one at a time):
 
 Look up `{task_implementor_model}` from `C:\py_dev\mkobi\.ai\models\lookup_table.md`.
 
-### 4.2 Spawn Implementor Subagent
+### 4.2  Prepare {subagent_prompt}
 
-Run up to 2 subagent at a time. If errors switch to 1 - never parallel.
-
-
-
-```
-Task(
-  prompt="{subagent_prompt}",
-  agent="implementor",
-  mode = "subagent",
-  model="{task_implementor_model}",
-  description="Implement task {TASK_FILE_NAME}"
-)
-```
-
-Where `{subagent_prompt}` is:
 <subagent_prompt>
 --------------------------------------
-## Task File
-{TASK_FILE_ABS_PATH}
-
-## Project Context
-{MAIN_CONTEXT}
-
-
-## Ensure Docker Environment is Running
-
-Start Docker services in **both development and test modes** (never production) before connecting to the database. Follow the setup instructions in `docs/11-guides/docker.md`. Confirm the database container is in `running` or `healthy` state before proceeding. If the environment cannot be started, document why and skip dependent steps.
-
 
 ## What To Do
-1. Read the task file. Understand scope, affected files, acceptance criteria.
+1. Read the task file {TASK_FILE_ABS_PATH}. Understand scope, affected files, acceptance criteria.
 2. Validate preconditions: semantic targets exist, depends_on tasks are done.
    If already implemented: rename to *_DONE.yaml, move to done/, return IMPLEMENTATION_COMPLETE.
 3. Implement: edit only required files. Follow existing patterns.
@@ -113,10 +87,35 @@ XX - free number.
 ## Output
 Return ## IMPLEMENTATION_COMPLETE or ## IMPLEMENTATION_BLOCKED.
 Include: summary, files modified, validation results, problems found.
+
+
+## Project Context
+{MAIN_CONTEXT}
+
+## Should you need to run tests or check frontend Ensure Docker Environment is Running
+
+Start Docker services in **both development and test modes** (never production) before connecting to the database. Follow the setup instructions in `docs/11-guides/docker.md`. Confirm the database container is in `running` or `healthy` state before proceeding. If the environment cannot be started, document why and skip dependent steps.
+
 ------------------------
+
 </subagent_prompt>
 
-### 4.3 Handle Subagent Return & Finalization Check
+
+### 4.3  Spawn Implementor Subagent
+
+Run up to 2 subagent at a time. If errors switch to 1 - never parallel.
+
+```
+Task(
+  prompt="{subagent_prompt}",
+  agent="implementor",
+  mode = "subagent",
+  model="{task_implementor_model}",
+  description="Implement task {TASK_FILE_NAME}"
+)
+```
+
+### 4.4 Handle Subagent Return & Finalization Check
 
   - if no subagent report or error - restart task
 
@@ -143,7 +142,7 @@ Include: summary, files modified, validation results, problems found.
     If you are not sure that task was implemented - rerun agent with the same task. 
     If you are 100% sure that agent damaged/corrupted the file check git history, find damaged file (lost code oe) use  `git restore <damaged_file>` Never restore all files. Only the damaged.
 
-### 4.4 Update Progress
+### 4.5 Update Progress
 
 - Increment `{COMPLETED_TASKS}`.
 - Display `TASK COMPLETED SUCCESSFULLY`.

@@ -128,6 +128,13 @@ class YoYConfig(TypedDict, total=False):
     year_field: str
 
 
+class SortConfig(TypedDict, total=False):
+    """Sorting configuration for chart axes."""
+
+    by: str  # Dimension or metric column to sort by
+    direction: str  # "asc" or "desc"
+
+
 class GraphConfigDict(TypedDict, total=False):
     """Chart configuration (config field)."""
 
@@ -140,6 +147,9 @@ class GraphConfigDict(TypedDict, total=False):
     layout: ChartLayoutConfig | None
     yoy: YoYConfig | None
     secondary_y: list[str] | None
+    # Sorting configuration
+    sort_x: SortConfig | None  # Sort x-axis values
+    sort_color: SortConfig | None  # Sort color dimension values (by metric)
 
 
 # ==================== Filter Config Types ====================
@@ -262,6 +272,9 @@ class GraphConfigModel(BaseModel):
     layout: ChartLayoutConfig | None = None
     yoy: YoYConfig | None = None
     secondary_y: list[str] | None = None
+    # Sorting configuration
+    sort_x: SortConfig | None = None
+    sort_color: SortConfig | None = None
 
     model_config = {"extra": "allow"}
 

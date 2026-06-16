@@ -389,7 +389,7 @@ class TestAuthService:
         mock_request.status = RegistrationStatus.PENDING
         mock_reg_request_repo.get_by_email.return_value = mock_request
 
-        with pytest.raises(ValueError, match="A request for this email already exists"):
+        with pytest.raises(ValueError, match="Unable to process registration request"):
             await auth_service.register_request("duplicate@example.com", db=mock_db, ip="127.0.0.1")
 
     async def test_register_request_duplicate_rejected(self, auth_service, mock_reg_request_repo, mock_db):
@@ -398,7 +398,7 @@ class TestAuthService:
         mock_request.status = RegistrationStatus.REJECTED
         mock_reg_request_repo.get_by_email.return_value = mock_request
 
-        with pytest.raises(ValueError, match="Your request was rejected"):
+        with pytest.raises(ValueError, match="Unable to process registration request"):
             await auth_service.register_request("rejected@example.com", db=mock_db, ip="127.0.0.1")
 
     async def test_register_request_duplicate_approved(self, auth_service, mock_reg_request_repo, mock_db):
@@ -407,7 +407,7 @@ class TestAuthService:
         mock_request.status = RegistrationStatus.APPROVED
         mock_reg_request_repo.get_by_email.return_value = mock_request
 
-        with pytest.raises(ValueError, match="A request for this email already exists"):
+        with pytest.raises(ValueError, match="Unable to process registration request"):
             await auth_service.register_request("approved@example.com", db=mock_db, ip="127.0.0.1")
 
     async def test_register_request_blocked_domain(
@@ -417,7 +417,7 @@ class TestAuthService:
         mock_reg_request_repo.get_by_email.return_value = None
 
         with pytest.raises(
-            ValueError, match="This email domain is not allowed for registration"
+            ValueError, match="Unable to process registration request"
         ):
             await auth_service.register_request("user@tempmail.com", db=mock_db, ip="127.0.0.1")
 

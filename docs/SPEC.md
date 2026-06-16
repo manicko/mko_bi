@@ -203,9 +203,10 @@ Access is validated on every request via the `dashboard_access` table.
 | 3.7     | 2026-06-09 | Internationalized character support: full Cyrillic and Latin character support documented across database (UTF-8 encoding), backend (Polars/SQLAlchemy Unicode handling), and frontend (React rendering). Standard user-facing date format set to `dd/mm/yyyy` with flexible input parsing via processing config `date_format` setting. |
 | 3.8     | 2026-06-09 | PostgreSQL 18 upgrade: migrated from `postgres:16.3` to `postgres:18-bookworm` with `builtin` locale provider and `C.UTF-8` collation. This eliminates collation version mismatch errors on Docker image updates by using an immutable collation version (fixed at `1`). Volume mount path changed from `/var/lib/postgresql/data` to `/var/lib/postgresql` per PG18 requirements. See `docker/docker-compose.yml` for configuration. |
 | 3.9     | 2026-06-11 | Added `idx_processing_logs_status_finished_at` composite index on processing_logs (status, finished_at) for optimized cleanup query performance. Processing config settings documentation updated with complete field reference including metric_agg, separator, encoding, column_types, decimal_separator, and date_format. Processing config API response now documents metric_agg field. List logs query parameter renamed from `status` to `status_filter` for consistency with ProcessingStatus enum usage. |
+| 3.10    | 2026-06-16 | Chart data sorting in AggregationService. X-axis sorted chronologically (via year/month columns when available). Color dimension (brands/categories) sorted by total metric volume (descending) for proper stacked bar visualization. Implemented via `_apply_chart_sorting()` method after GROUP BY. Uses helper `_color_total` column excluded from final output. `SortConfig` TypedDict added to `GraphConfigDict` with `sort_x` and `sort_color` optional fields. |
 
 ---
 
 **Author:** Senior Python Architect
-**Date:** 2026-06-11
-**Version:** 3.9
+**Date:** 2026-06-16
+**Version:** 3.10

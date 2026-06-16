@@ -2,7 +2,7 @@ id: TASK_009_db001_fix_cleanup_old_logs_filter
 
 title: Fix DB-001 — Fix started_at filter in cleanup_old_logs, use finished_at
 
-status: pending
+status: completed
 
 priority: high
 

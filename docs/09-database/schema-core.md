@@ -193,7 +193,9 @@ CREATE TABLE graphs (
   "y_axis": "revenue",
   "orientation": "v",
   "barmode": "group",
-  "colors": ["#1f77b4", "#ff7f0e"]
+  "colors": ["#1f77b4", "#ff7f0e"],
+  "sort_x": {"by": "month", "direction": "asc"},
+  "sort_color": {"by": "revenue_sum", "direction": "desc"}
 }
 ```
 

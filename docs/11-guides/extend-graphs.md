@@ -67,6 +67,8 @@ ChartRenderer converts flat {dims, metrics} records → Plotly traces
 
 **Key design principle:** `GraphType` uses Python `StrEnum`, where the enum value is a plain string (e.g., `"bar"`). These strings are stored in PostgreSQL `ENUM` types, which means adding a new type requires both a code change (the StrEnum) and a database migration (`ALTER TYPE ... ADD VALUE`). On the frontend, a `const` object with `as const` assertion mirrors the backend enum to maintain type safety without runtime overhead.
 
+**Chart data sorting:** The `AggregationService` applies automatic sorting after GROUP BY: (1) X-axis sorted chronologically using `year`/`month` columns when available, otherwise by the X dimension directly; (2) Color dimension (brands/categories) sorted by total metric volume (descending) so larger values appear first in stacked bar charts. This ensures consistent visualization without manual trace ordering in the frontend. For Plotly stacked bars, the first trace appears at the bottom of the stack, so descending color totals places larger aggregations at the bottom where they are more visible.
+
 **How ChartRenderer works:** The backend does NOT construct Plotly trace data. Instead, the `AggregationService` produces flat records with `{dims: {...}, metrics: {...}}` and stores them in the `aggregated_data` table. The frontend `ChartRenderer` component receives these flat records and converts them to Plotly `Data[]` format. It has type-specific logic: for `bar` charts it sets `orientation` from config; for `pie` charts it extracts labels/values from dims/metrics. If data already arrives in Plotly format (has `x` and `y` fields), it passes through as-is.
 
 ## Extending Graph Types
