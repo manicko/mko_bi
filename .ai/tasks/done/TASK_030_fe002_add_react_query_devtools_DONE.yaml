@@ -1,0 +1,56 @@
+id: TASK_030_fe002_add_react_query_devtools
+
+title: Fix FE-002 — Add React Query devtools for development environment
+
+status: completed
+
+priority: low
+
+depends_on: []
+
+description: >
+  Fix the LOW issue where React Query devtools are not configured. Add
+  @tanstack/react-query-devtools to the development build for debugging query state.
+
+source_file: .ai/audit/99-validation/02-frontend-validated.md
+source_section: FE-002: Add React Query Devtools
+
+files:
+  - path: frontend/package.json
+    targets:
+      - type: dependency
+        description: devDependencies section
+  - path: frontend/src/app/providers.tsx
+    targets:
+      - type: component
+        name: App
+    semantic_anchors:
+      insert_after:
+        type: import
+        value: QueryClientProvider
+
+changes:
+  - action: add_code
+    description: >
+      Add `@tanstack/react-query-devtools` to devDependencies in package.json.
+      Import and conditionally render ReactQueryDevtools in providers.tsx,
+      only in development mode (import.meta.env.DEV).
+    code_hint: |
+      // In providers.tsx:
+      import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
+
+      // Inside App component, after QueryClientProvider:
+      {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
+
+acceptance_criteria:
+  - @tanstack/react-query-devtools in devDependencies
+  - ReactQueryDevtools rendered only in development mode
+  - No impact on production bundle
+
+risk_notes: >
+  Trivial risk — standard React Query devtools setup. Conditional import ensures
+  zero production impact.
+
+tests_to_run:
+  - command: cd frontend && npm run build
+    reason: Verify production build succeeds without devtools

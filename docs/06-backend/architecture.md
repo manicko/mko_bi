@@ -151,7 +151,7 @@ Required modules: `aiofiles`, `fastapi`, `sqlalchemy`, `httpx`, `pydantic`, `pol
 
 ### Stale Processing Log Cleanup
 
-A periodic background task detects and resolves processing logs stuck in `PROCESSING` state (e.g., due to worker crashes). Entries that have been in `PROCESSING` state longer than a configurable timeout (default: 30 minutes) are automatically marked as `FAILED` with an error message indicating the cleanup action. This provides visibility into crashed workers and prevents indefinite `PROCESSING` states.
+A periodic background task detects and resolves processing logs stuck in `PROCESSING` state (e.g., due to worker crashes). Entries that have been in `PROCESSING` state longer than a configurable timeout (default: 5 minutes) are automatically marked as `FAILED` with an error message indicating the cleanup action. This provides visibility into crashed workers and prevents indefinite `PROCESSING` states.
 
 ### Shutdown
 
