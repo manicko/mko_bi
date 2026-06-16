@@ -61,10 +61,10 @@ class LayoutService(ILayoutService):
 
         try:
             layout_obj = await self.layout_repo.create(db=db, name=name, definition=definition)
-            await db.commit()
 
             if layout_obj is None:
                 raise ValueError("Failed to create layout")
+            await db.commit()
 
             logger.info("Layout created: id=%s, name=%s", layout_obj.id, layout_obj.name)
             return cast(LayoutRead, LayoutRead.model_validate(layout_obj))
