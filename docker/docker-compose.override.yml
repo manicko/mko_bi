@@ -1,10 +1,11 @@
 # =============================================================================
 # Docker Compose Override for Development
 # Usage: docker compose -f docker/docker-compose.yml -f docker/docker-compose.override.yml up -d
+#
+# WARNING: Do NOT use this override in production.
+# This file exposes the database port (5432) to the host machine.
+# Running production compose with this override exposes the database to the network.
 # =============================================================================
-# WARNING: This override file is for DEVELOPMENT use only. Do NOT use it in production
-# environments as it exposes ports, disables security settings, and uses development-only
-# configurations that are not suitable for production deployments.
 
 services:
   # Migration service - runs alembic migrations before app starts (same as production)
@@ -138,8 +139,9 @@ services:
       disable: true
 
   db:
-    # Expose port for local development tools (bound to localhost only for security)
     ports:
+      # Bound to 127.0.0.1 to limit exposure to local machine only.
+      # Do not change to 0.0.0.0 — that would expose the database to the network.
       - "127.0.0.1:5432:5432"
     environment:
       # Override production postgres password with development default
