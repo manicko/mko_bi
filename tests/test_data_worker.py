@@ -12,6 +12,7 @@ from mkobi.utils.exceptions import AppException, ErrorCode
 from mkobi.workers.data_worker import (
     _update_processing_log_status,
     cleanup_stale_processing_logs,
+    mark_orphaned_uploaded_logs_failed,
     _store_aggregates,
     _validate_processing_config,
 )
@@ -161,6 +162,33 @@ class TestDataWorker:
         )
 
         assert count == 5
+
+    # --- mark_orphaned_uploaded_logs_failed tests ---
+
+    async def test_mark_orphaned_uploaded_logs_failed_finds_orphaned(
+        self, mock_session
+    ):
+        """Test marking orphaned UPLOADED entries as FAILED."""
+        mock_result = MagicMock()
+        mock_result.rowcount = 2
+        mock_session.execute.return_value = mock_result
+
+        count = await mark_orphaned_uploaded_logs_failed(session=mock_session)
+
+        assert count == 2
+        mock_session.execute.assert_called_once()
+
+    async def test_mark_orphaned_uploaded_logs_failed_no_entries(
+        self, mock_session
+    ):
+        """Test marking returns 0 when no orphaned entries found."""
+        mock_result = MagicMock()
+        mock_result.rowcount = 0
+        mock_session.execute.return_value = mock_result
+
+        count = await mark_orphaned_uploaded_logs_failed(session=mock_session)
+
+        assert count == 0
 
 
 # --- _validate_processing_config tests ---

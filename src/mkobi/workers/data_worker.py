@@ -36,7 +36,7 @@ from mkobi.utils.exceptions import AppException
 logger = logging.getLogger(__name__)
 
 # Default timeout for stale processing logs (in minutes)
-DEFAULT_STALE_PROCESSING_TIMEOUT_MINUTES = 30
+DEFAULT_STALE_PROCESSING_TIMEOUT_MINUTES = 5
 
 
 def _map_processing_error_to_code(error: Exception) -> str:
@@ -288,6 +288,67 @@ async def cleanup_stale_processing_logs(
             "Marked %d stale PROCESSING entries as FAILED (timeout=%dm)",
             count,
             timeout_minutes,
+        )
+    return int(count)
+
+
+async def mark_orphaned_uploaded_logs_failed(
+    session: AsyncSession | None = None,
+) -> int:
+    """Mark UPLOADED logs older than 1 minute as FAILED.
+
+    On startup, any log stuck in UPLOADED state means the worker
+    crashed between enqueue and processing start. This function marks
+    those orphaned entries as FAILED.
+
+    Args:
+        session: Optional database session for testing. If None, creates a new session
+            with transaction. When provided, caller manages transaction (SAVEPOINT pattern).
+
+    Returns:
+        int: Number of entries that were marked as FAILED.
+    """
+    cutoff = datetime.now(UTC) - timedelta(minutes=1)
+
+    if session is not None:
+        # Test mode - use provided session (SAVEPOINT pattern)
+        stmt = (
+            update(ProcessingLog)
+            .where(
+                ProcessingLog.status == ProcessingStatus.UPLOADED,
+                ProcessingLog.started_at < cutoff,
+            )
+            .values(
+                status=ProcessingStatus.FAILED,
+                message="Worker restart: orphaned UPLOADED entry detected",
+                finished_at=datetime.now(UTC),
+            )
+        )
+        result = await session.execute(stmt)
+        count = result.rowcount if result.rowcount is not None else 0
+    else:
+        # Production mode - create new session with transaction
+        async with get_session() as db:
+            async with db.begin():
+                stmt = (
+                    update(ProcessingLog)
+                    .where(
+                        ProcessingLog.status == ProcessingStatus.UPLOADED,
+                        ProcessingLog.started_at < cutoff,
+                    )
+                    .values(
+                        status=ProcessingStatus.FAILED,
+                        message="Worker restart: orphaned UPLOADED entry detected",
+                        finished_at=datetime.now(UTC),
+                    )
+                )
+                result = await db.execute(stmt)
+                count = result.rowcount if result.rowcount is not None else 0
+
+    if count > 0:
+        logger.info(
+            "Marked %d orphaned UPLOADED entries as FAILED (cutoff=1m)",
+            count,
         )
     return int(count)
 

@@ -27,7 +27,10 @@ from mkobi.db.starter import (
     DatabaseNotFoundError,
     SchemaNotFoundError,
 )
-from mkobi.workers.data_worker import start_stale_processing_cleanup_task
+from mkobi.workers.data_worker import (
+    start_stale_processing_cleanup_task,
+    mark_orphaned_uploaded_logs_failed,
+)
 from mkobi.core.task_queue import get_task_queue
 from mkobi.db.session import dispose_engine
 
@@ -108,6 +111,10 @@ async def lifespan(app: FastAPI) -> Any:
         logger.info("Initializing application...")
         await starter.startup()
         logger.info("Application initialized successfully")
+
+        # Mark orphaned UPLOADED entries as FAILED on startup
+        await mark_orphaned_uploaded_logs_failed()
+        logger.info("Checked for orphaned UPLOADED entries")
 
         # Start background cleanup task for stale processing logs
         cleanup_task = asyncio.create_task(
