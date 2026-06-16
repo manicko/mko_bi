@@ -3,7 +3,8 @@
 The PRIMARY KEY constraint on (dashboard_id, filter_id) already creates
 a unique index (dashboard_filters_pkey) that serves all queries. The
 non-unique idx_dashboard_filters_dashboard_id index was created externally
-(e.g., manually or via a non-versioned migration) and is redundant.
+(e.g., manually or via a non-versioned migration) and is redundant — it
+covers the same column set as the PK and only adds unnecessary write overhead.
 
 This migration uses DROP INDEX IF EXISTS to safely handle databases where
 the index may or may not exist.
@@ -36,11 +37,15 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    """Recreate the index for rollback compatibility.
+    """Recreate the redundant index for rollback compatibility.
 
-    This recreates the idx_dashboard_filters_dashboard_id index that was
-    removed in upgrade(). The index was created externally and its removal
-    does not affect the PRIMARY KEY constraint.
+    Recreates idx_dashboard_filters_dashboard_id which was originally
+    created externally (not via Alembic). The index is redundant with
+    the PRIMARY KEY on (dashboard_id, filter_id) and is only recreated
+    to support downgrade paths on databases where it previously existed.
+
+    Note: This index is safe to leave in place if downgrade is executed
+    on a database that never had it — it will simply be an unused index.
     """
     op.execute(
         "CREATE INDEX IF NOT EXISTS idx_dashboard_filters_dashboard_id "
