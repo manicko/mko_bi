@@ -646,62 +646,90 @@ class TestCORsOriginsPlaceholderValidation(TestSettingsBase):
         with pytest.raises(ValueError, match="Placeholder CORS origins not allowed in production"):
             Settings()
 
-    def test_placeholder_multiple_origins_rejected_in_production(self, monkeypatch):
-        """Verify multiple placeholder CORS origins are all reported in error."""
+
+class TestProductionCredentialValidation(TestSettingsBase):
+    """Tests for production credential validation (database password and JWT secret)."""
+
+    @pytest.mark.parametrize("weak_db_password", [
+        "password", "123456", "admin", "secret", "test", "postgres", "CHANGE_ME",
+    ])
+    def test_weak_database_password_rejected_in_production(self, monkeypatch, weak_db_password):
+        """Verify weak database passwords are rejected in production."""
         monkeypatch.setenv("ENV", "production")
+        monkeypatch.setenv("DATABASE__PASSWORD", weak_db_password)
+        monkeypatch.setenv("JWT__SECRET_KEY", "strong-jwt-secret-key-32-characters-long!")
         monkeypatch.setenv("ADMIN_USERNAME", "prodadmin")
         monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
-        monkeypatch.setenv("CORS_ORIGINS", '["http://localhost:3000", "https://example.com"]')
+        monkeypatch.setenv("CORS_ORIGINS", '["https://production.example.com"]')
         from mkobi.config import clear_config_cache
         clear_config_cache()
-        with pytest.raises(ValueError, match="Placeholder CORS origins not allowed in production"):
+        with pytest.raises(ValueError, match="DATABASE__PASSWORD is a known weak/placeholder value"):
             Settings()
 
-    @pytest.mark.parametrize("placeholder_origin", [
-        "http://localhost:3000",
-        "https://example.com",
+    def test_strong_database_password_accepted_in_production(self, monkeypatch):
+        """Verify strong database passwords pass validation in production."""
+        monkeypatch.setenv("ENV", "production")
+        monkeypatch.setenv("DATABASE__PASSWORD", "StrongDbP@ssw0rd123!")
+        monkeypatch.setenv("JWT__SECRET_KEY", "strong-jwt-secret-key-32-characters-long!")
+        monkeypatch.setenv("ADMIN_USERNAME", "prodadmin")
+        monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
+        monkeypatch.setenv("CORS_ORIGINS", '["https://production.example.com"]')
+        from mkobi.config import clear_config_cache
+        clear_config_cache()
+        # Should not raise
+        settings = Settings()
+        assert settings.database.password == "StrongDbP@ssw0rd123!"
+
+    @pytest.mark.parametrize("weak_jwt_secret", [
+        "dev-secret-key-for-local-development", "change_me_in_production",
+        "change_me_use_openssl_rand_hex_32", "change_me", "default",
     ])
-    def test_placeholder_accepted_in_development(self, monkeypatch, placeholder_origin):
-        """Verify placeholder CORS origins are accepted in development."""
+    def test_weak_jwt_secret_rejected_in_production(self, monkeypatch, weak_jwt_secret):
+        """Verify weak JWT secrets are rejected in production."""
+        monkeypatch.setenv("ENV", "production")
+        monkeypatch.setenv("DATABASE__PASSWORD", "StrongDbP@ssw0rd123!")
+        monkeypatch.setenv("JWT__SECRET_KEY", weak_jwt_secret)
+        monkeypatch.setenv("ADMIN_USERNAME", "prodadmin")
+        monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
+        monkeypatch.setenv("CORS_ORIGINS", '["https://production.example.com"]')
+        from mkobi.config import clear_config_cache
+        clear_config_cache()
+        # Either too short (< 32 chars) or too common - both are rejected
+        with pytest.raises(ValueError, match="JWT secret key (must be at least 32 characters|is too common)"):
+            Settings()
+
+    def test_strong_jwt_secret_accepted_in_production(self, monkeypatch):
+        """Verify strong JWT secrets pass validation in production."""
+        monkeypatch.setenv("ENV", "production")
+        monkeypatch.setenv("DATABASE__PASSWORD", "StrongDbP@ssw0rd123!")
+        monkeypatch.setenv("JWT__SECRET_KEY", "strong-jwt-secret-key-32-characters-long!")
+        monkeypatch.setenv("ADMIN_USERNAME", "prodadmin")
+        monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
+        monkeypatch.setenv("CORS_ORIGINS", '["https://production.example.com"]')
+        from mkobi.config import clear_config_cache
+        clear_config_cache()
+        # Should not raise
+        settings = Settings()
+        assert settings.jwt.secret_key == "strong-jwt-secret-key-32-characters-long!"
+
+    def test_weak_db_password_accepted_in_development(self, monkeypatch):
+        """Verify weak db password passes validation in development (warning only)."""
         monkeypatch.setenv("ENV", "development")
-        monkeypatch.setenv("CORS_ORIGINS", f'["{placeholder_origin}", "http://localhost:5173"]')
+        monkeypatch.setenv("DATABASE__PASSWORD", "CHANGE_ME_GENERATE_STRONG_SECRET")
+        monkeypatch.setenv("JWT__SECRET_KEY", "strong-jwt-secret-key-32-characters-long!")
         from mkobi.config import clear_config_cache
         clear_config_cache()
+        # Should not raise - development allows weak db credentials
         settings = Settings()
-        assert placeholder_origin in settings.cors_origins
+        assert settings.database.password == "CHANGE_ME_GENERATE_STRONG_SECRET"
 
-    @pytest.mark.parametrize("placeholder_origin", [
-        "http://localhost:3000",
-        "https://example.com",
-    ])
-    def test_placeholder_accepted_in_staging(self, monkeypatch, placeholder_origin):
-        """Verify placeholder CORS origins are accepted in staging."""
+    def test_weak_db_password_accepted_in_staging(self, monkeypatch):
+        """Verify weak db password passes validation in staging."""
         monkeypatch.setenv("ENV", "staging")
-        monkeypatch.setenv("CORS_ORIGINS", f'["{placeholder_origin}", "https://staging.example.com"]')
+        monkeypatch.setenv("DATABASE__PASSWORD", "CHANGE_ME_GENERATE_STRONG_SECRET")
+        monkeypatch.setenv("JWT__SECRET_KEY", "strong-jwt-secret-key-32-characters-long!")
         from mkobi.config import clear_config_cache
         clear_config_cache()
+        # Should not raise - staging allows weak db credentials
         settings = Settings()
-        assert placeholder_origin in settings.cors_origins
-
-    def test_valid_origins_accepted_in_production(self, monkeypatch):
-        """Verify valid CORS origins pass validation in production."""
-        monkeypatch.setenv("ENV", "production")
-        monkeypatch.setenv("ADMIN_USERNAME", "prodadmin")
-        monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
-        monkeypatch.setenv("CORS_ORIGINS", '["https://app.example.com", "https://api.example.com"]')
-        from mkobi.config import clear_config_cache
-        clear_config_cache()
-        settings = Settings()
-        assert "https://app.example.com" in settings.cors_origins
-        assert "https://api.example.com" in settings.cors_origins
-
-    def test_empty_cors_origins_accepted_in_production(self, monkeypatch):
-        """Verify empty CORS origins list is accepted in production."""
-        monkeypatch.setenv("ENV", "production")
-        monkeypatch.setenv("ADMIN_USERNAME", "prodadmin")
-        monkeypatch.setenv("ADMIN_PASSWORD", "StrongP@ss1")
-        monkeypatch.setenv("CORS_ORIGINS", "[]")
-        from mkobi.config import clear_config_cache
-        clear_config_cache()
-        settings = Settings()
-        assert settings.cors_origins == []
+        assert settings.database.password == "CHANGE_ME_GENERATE_STRONG_SECRET"

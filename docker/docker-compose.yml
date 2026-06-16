@@ -18,8 +18,9 @@ services:
       POSTGRES_USER: postgres
       # NOTE: For local development, this defaults to 'postgres'.
       # For production, explicitly set DATABASE__PASSWORD in your .env file.
+      # NOTE: ${VAR:?} enforces presence, not strength.
+      # The application validates credential strength at startup when ENV=production.
       POSTGRES_PASSWORD: ${DATABASE__PASSWORD:?DATABASE__PASSWORD is required}
-      # Application role password (can be different from postgres password)
       MKOBI_APP_PASSWORD: ${MKOBI_APP_PASSWORD:?MKOBI_APP_PASSWORD is required}
       # Initialize with builtin locale provider for immutable collation (no OS-dependent version changes).
       # C.UTF-8 supports both Latin and Cyrillic properly, unlike C/POSIX which is ASCII-only.
@@ -202,8 +203,8 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    profiles:
-      - production
+      profiles:
+        - production
     deploy:
       resources:
         limits:

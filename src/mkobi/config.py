@@ -457,6 +457,35 @@ class Settings(BaseSettings):
                 )
         return self
 
+    @model_validator(mode="after")
+    def validate_production_credentials(self) -> "Settings":
+        """Reject known-weak credentials when running in production.
+
+        Extends the existing validate_admin_credentials pattern to cover
+        database passwords and JWT secrets. Fails fast on startup rather
+        than allowing a production deployment with compromised credentials.
+        """
+        if self.environment == EnvironmentEnum.PRODUCTION:
+            # Check database password against known-weak values
+            db_password = self.database.password
+            if db_password and db_password.lower() in {
+                p.lower() for p in WEAK_PASSWORDS
+            }:
+                raise ValueError(
+                    "DATABASE__PASSWORD is a known weak/placeholder value. "
+                    "Set a strong password for production."
+                )
+            # Check JWT secret against known-weak values
+            jwt_secret = self.jwt.secret_key
+            if jwt_secret and jwt_secret.lower() in {
+                s.lower() for s in JWTSettings.WEAK_SECRETS
+            }:
+                raise ValueError(
+                    "JWT__SECRET_KEY is a known weak/placeholder value. "
+                    "Generate a strong secret for production."
+                )
+        return self
+
     @field_validator("cors_origins")
     @classmethod
     def validate_cors_origins(cls, value: list[str]) -> list[str]:
