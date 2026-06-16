@@ -566,6 +566,7 @@ class Settings(BaseSettings):
         super().__init__(**data)
         self._log_initialization()
         self._ensure_upload_dir()
+        self._log_security_warnings()
 
     def _log_initialization(self) -> None:
         """Log configuration initialization without exposing secrets."""
@@ -582,6 +583,44 @@ class Settings(BaseSettings):
         """Create directory for temporary upload files if it doesn't exist."""
         upload_path = Path(self.upload.temp_dir)
         upload_path.mkdir(parents=True, exist_ok=True)
+
+    def _log_security_warnings(self) -> None:
+        """Log security warnings for weak/default credentials in non-production.
+
+        Checks database password, admin credentials, and JWT secret against known
+        weak values and logs warnings. Does not block startup - only alerts developers.
+        """
+        if self.environment == EnvironmentEnum.PRODUCTION:
+            return
+
+        # Check database password against known-weak values
+        if self.database.password:
+            if self.database.password.lower() in {p.lower() for p in WEAK_PASSWORDS}:
+                logger.warning(
+                    "Weak database password detected: DATABASE__PASSWORD uses a known "
+                    "weak/placeholder value. Generate a strong password for production."
+                )
+
+        # Check admin credentials against known-weak values
+        if self.admin_username.lower() in {u.lower() for u in WEAK_USERNAMES}:
+            logger.warning(
+                "Weak admin username detected: ADMIN_USERNAME uses a known weak value. "
+                "Set a secure username for production use."
+            )
+
+        if self.admin_password.lower() in {p.lower() for p in WEAK_PASSWORDS}:
+            logger.warning(
+                "Weak admin password detected: ADMIN_PASSWORD uses a known "
+                "weak/placeholder value. Set a secure password for production use."
+            )
+
+        # Check JWT secret against known-weak values
+        if self.jwt.secret_key:
+            if self.jwt.secret_key.lower() in {s.lower() for s in JWTSettings.WEAK_SECRETS}:
+                logger.warning(
+                    "Weak JWT secret detected: JWT__SECRET_KEY uses a known "
+                    "weak/placeholder value. Generate a strong secret for production."
+                )
 
     @property
     def DATABASE_URL(self) -> str | None:
