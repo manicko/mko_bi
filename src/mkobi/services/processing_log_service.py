@@ -68,21 +68,23 @@ class ProcessingLogService(IProcessingLogService):
         message: str | None = None,
     ) -> ProcessingLogRead:
         """Create processing log entry."""
-        log = await self.log_repo.create_log(dashboard_id, ProcessingStatus(status), message, db)
+        log = await self.log_repo.create_log(
+            dashboard_id, ProcessingStatus(status), message, db
+        )
         return cast(ProcessingLogRead, ProcessingLogRead.model_validate(log))
 
     async def get_processing_logs_by_dashboard(
         self, dashboard_id: UUID, db: AsyncSession
     ) -> list[ProcessingLogRead]:
         """Get processing logs by dashboard ID."""
-        return cast(list[ProcessingLogRead], await self.log_repo.get_by_dashboard(dashboard_id, db))
+        return await self.log_repo.get_by_dashboard(dashboard_id, db)
 
     async def get_processing_logs_by_status(
         self, status: str, db: AsyncSession
     ) -> list[ProcessingLogRead]:
         """Get processing logs by status."""
         filters = ProcessingLogFilter(status=ProcessingStatus(status))
-        return cast(list[ProcessingLogRead], await self.log_repo.get_filtered(filters, db))
+        return await self.log_repo.get_filtered(filters, db)
 
     async def update_processing_log(
         self,
@@ -121,9 +123,7 @@ class ProcessingLogService(IProcessingLogService):
         log = await self.log_repo.get_by_id(log_id, db)
         return log  # Already returns ProcessingLogRead | None
 
-    async def delete_processing_log(
-        self, log_id: UUID, db: AsyncSession
-    ) -> bool:
+    async def delete_processing_log(self, log_id: UUID, db: AsyncSession) -> bool:
         """Delete processing log entry."""
 
         # Get the log first to find its dashboard_id
@@ -221,7 +221,7 @@ class ProcessingLogService(IProcessingLogService):
     ) -> list[ProcessingLogRead]:
         """Get filtered processing logs."""
         logger.info("Getting filtered logs: filters=%s", filters)
-        return cast(list[ProcessingLogRead], await self.log_repo.get_filtered(filters, db))
+        return await self.log_repo.get_filtered(filters, db)
 
     async def delete_old_logs(
         self, retention_days: int | None = None, db: AsyncSession | None = None
@@ -240,19 +240,18 @@ class ProcessingLogService(IProcessingLogService):
         from mkobi.db.session import get_session
 
         config = get_config()
-        days = retention_days if retention_days is not None else config.logs_retention_days
+        days = (
+            retention_days if retention_days is not None else config.logs_retention_days
+        )
         cutoff = datetime.now(UTC) - timedelta(days=days)
 
         if db is not None:
             # Use provided session (test mode)
             count = await self.log_repo.delete_old_logs(cutoff, db)
-            return cast(int, count)
+            return count
 
         # Production mode - create new session
         async with get_session() as session:
             async with session.begin():
                 count = await self.log_repo.delete_old_logs(cutoff, session)
-                return cast(int, count)
-
-
-
+                return count
