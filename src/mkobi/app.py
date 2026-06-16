@@ -45,10 +45,11 @@ logger = logging.getLogger(__name__)
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """Middleware to add security headers to all responses.
 
-    Implements defense-in-depth by setting security headers at the application layer
-    in addition to nginx. Headers include:
+    Sets security headers at the application layer. Nginx proxies handle X-Frame-Options
+    (SAMEORIGIN for iframe compatibility during Dash migration) and other baseline headers.
+
+    Headers include:
     - X-Content-Type-Options: Prevents MIME type sniffing (all environments)
-    - X-Frame-Options: Prevents clickjacking (all environments)
     - X-XSS-Protection: Enables browser XSS filter (all environments)
     - Referrer-Policy: Controls referrer information (all environments)
     - Strict-Transport-Security: Enforces HTTPS connections (HSTS) - production only
@@ -67,7 +68,6 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         """
         response = await call_next(request)
         response.headers["X-Content-Type-Options"] = "nosniff"
-        response.headers["X-Frame-Options"] = "DENY"
         response.headers["X-XSS-Protection"] = "1; mode=block"
         response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
 
@@ -231,7 +231,7 @@ def create_app() -> FastAPI:
         minimum_size=1000,
     )
 
-    # Configure security headers middleware (defense-in-depth)
+    # Configure security headers middleware
     application.add_middleware(SecurityHeadersMiddleware)
 
     # Register routers with /api/v1 prefix
