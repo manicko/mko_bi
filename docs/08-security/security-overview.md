@@ -57,8 +57,8 @@ The rate limiter depends on Redis. When Redis is unavailable, the system operate
 
 | Mode | Config Value | Behavior | Log Level | Use Case |
 | --- | --- | --- | --- | --- |
-| **Fail-open** (default) | `RATE_LIMITER_FAIL_CLOSED=false` | Requests are allowed through when Redis is down | WARNING | Development, availability-first deployments |
-| **Fail-closed** | `RATE_LIMITER_FAIL_CLOSED=true` | Requests are rejected with HTTP 429 when the rate limiter cannot be initialized | CRITICAL | Production — prevents rate limit bypass during Redis outages |
+| **Fail-open** | `RATE_LIMITER_FAIL_CLOSED=false` | Requests are allowed through when Redis is down | WARNING | Development, availability-first deployments |
+| **Fail-closed** (default) | `RATE_LIMITER_FAIL_CLOSED=true` | Requests are rejected with HTTP 429 when the rate limiter cannot be initialized | CRITICAL | Production — prevents rate limit bypass during Redis outages |
 
 **Health tracking:** Rate limiter health is tracked internally. When the rate limiter is disabled due to Redis unavailability, an error-level log is emitted with exception details.
 
