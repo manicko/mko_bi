@@ -1,0 +1,55 @@
+id: TASK_014_be003_fix_ruff_cache_permissions_in_tests
+
+title: Fix BE-003 — Add --no-cache to ruff check subprocess calls in test container
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Fix the LOW issue where tests test_seed_script_ruff_mypy and test_dev_seeders_module_ruff_mypy
+  fail because the non-root app user has no write access to .ruff_cache in the Docker test
+  container. Adding --no-cache to the ruff check subprocess calls avoids the permission issue.
+
+source_file: .ai/audit/99-validation/01-backend-validated.md
+source_section: BE-003: Fix Ruff Cache Permissions in Test Container
+
+files:
+  - path: tests/test_dev_seeders.py
+    targets:
+      - type: method
+        name: test_seed_script_ruff_mypy
+      - type: method
+        name: test_dev_seeders_module_ruff_mypy
+    semantic_anchors:
+      find:
+        type: function_call
+        value: subprocess.run
+      description: Two subprocess.run calls with ruff check — add --no-cache flag
+
+changes:
+  - action: replace_code
+    description: >
+      Add `--no-cache` flag to both `ruff check` subprocess.run calls.
+    code_hint: |
+      # BEFORE (both locations):
+      [ruff_path, "check", "src/mkobi/db/seeders/test_media_dash.py"]
+      [ruff_path, "check", "src/mkobi/db/dev_seeders.py"]
+
+      # AFTER (both locations):
+      [ruff_path, "check", "--no-cache", "src/mkobi/db/seeders/test_media_dash.py"]
+      [ruff_path, "check", "--no-cache", "src/mkobi/db/dev_seeders.py"]
+
+acceptance_criteria:
+  - Both ruff check subprocess calls use --no-cache flag
+  - Tests pass in Docker test container
+  - Negligible performance impact (single file checks)
+
+risk_notes: >
+  Trivial risk — single flag addition to two subprocess calls.
+
+tests_to_run:
+  - command: pytest tests/test_dev_seeders.py -v -k "ruff" --no-cov
+    reason: Verify ruff-related tests pass in container
