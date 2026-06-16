@@ -333,6 +333,7 @@ class TestStoreAggregates:
 
             mock_repo_instance = AsyncMock()
             mock_repo_instance.save_filter_values = AsyncMock()
+            mock_repo_instance.clear_dashboard_values = AsyncMock()
             mock_repo.return_value = mock_repo_instance
 
             await _store_aggregates(
@@ -349,7 +350,11 @@ class TestStoreAggregates:
     async def test_store_aggregates_append_mode(
         self, mock_session
     ):
-        """Test _store_aggregates uses append mode correctly (clear_old=False)."""
+        """Test _store_aggregates uses append mode correctly (clear_old=False).
+
+        Per SPEC.md, filter values are rebuilt on each upload (idempotent overwrite),
+        so clear_dashboard_values must be called regardless of mode.
+        """
         from mkobi.models.enums import GraphType, FilterType
 
         df = pl.DataFrame({"a": [1, 2], "b": ["x", "y"]})
@@ -400,6 +405,7 @@ class TestStoreAggregates:
 
             mock_repo_instance = AsyncMock()
             mock_repo_instance.save_filter_values = AsyncMock()
+            mock_repo_instance.clear_dashboard_values = AsyncMock()
             mock_repo.return_value = mock_repo_instance
 
             await _store_aggregates(
@@ -413,6 +419,9 @@ class TestStoreAggregates:
             # Check that clear_old was False (append mode)
             call_kwargs = mock_manager_instance.save_aggregates.call_args
             assert call_kwargs[1]["clear_old"] is False
+
+            # Verify filter values are cleared in append mode (idempotent rebuild per SPEC.md)
+            mock_repo_instance.clear_dashboard_values.assert_called_once()
 
     async def test_store_aggregates_logs_processed_count(
         self, mock_session
@@ -470,6 +479,7 @@ class TestStoreAggregates:
 
             mock_repo_instance = AsyncMock()
             mock_repo_instance.save_filter_values = AsyncMock()
+            mock_repo_instance.clear_dashboard_values = AsyncMock()
             mock_repo.return_value = mock_repo_instance
 
             await _store_aggregates(
