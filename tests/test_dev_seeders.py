@@ -193,7 +193,7 @@ async def test_seed_script_ruff_mypy():
 
     # Run ruff check
     result = subprocess.run(
-        [ruff_path, "check", "src/mkobi/db/seeders/test_media_dash.py"],
+        [ruff_path, "check", "--no-cache", "src/mkobi/db/seeders/test_media_dash.py"],
         capture_output=True,
         text=True,
     )
@@ -218,7 +218,7 @@ async def test_dev_seeders_module_ruff_mypy():
     mypy_path = shutil.which("mypy") or "/app/.venv/bin/mypy"
 
     result = subprocess.run(
-        [ruff_path, "check", "src/mkobi/db/dev_seeders.py"],
+        [ruff_path, "check", "--no-cache", "src/mkobi/db/dev_seeders.py"],
         capture_output=True,
         text=True,
     )
