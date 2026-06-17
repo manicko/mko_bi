@@ -8,7 +8,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
-    CurrentUser,
+    AdminUser,
     get_auth_service,
     get_db_dependency,
     get_registration_request_repository,
@@ -43,6 +43,7 @@ router = APIRouter(prefix="/admin", tags=["admin"], redirect_slashes=False)
     responses=admin_responses,
 )
 async def get_users_admin_endpoint(
+    admin_user: AdminUser,
     user_service: IUserService = Depends(get_user_service),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> list[UserRead]:
@@ -69,6 +70,7 @@ async def get_users_admin_endpoint(
 async def update_user_role_admin_endpoint(
     user_id: UUID,
     user_data: UserUpdateRequest,
+    admin_user: AdminUser,
     user_service: IUserService = Depends(get_user_service),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> UserRead:
@@ -105,6 +107,7 @@ async def update_user_role_admin_endpoint(
 )
 async def delete_user_admin_endpoint(
     user_id: UUID,
+    admin_user: AdminUser,
     user_service: Any = Depends(get_user_service),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> None:
@@ -142,6 +145,7 @@ async def delete_user_admin_endpoint(
 async def update_user_active_admin_endpoint(
     user_id: UUID,
     user_data: UserUpdateActiveRequest,
+    admin_user: AdminUser,
     user_service: IUserService = Depends(get_user_service),
     db: AsyncSession = Depends(get_db_dependency),
     redis_client: Any = Depends(get_redis_client_dependency),
@@ -198,19 +202,19 @@ async def update_user_active_admin_endpoint(
 )
 async def reset_user_password_admin_endpoint(
     user_id: UUID,
-    current_user: CurrentUser,
+    admin_user: AdminUser,
     db: AsyncSession = Depends(get_db_dependency),
     auth_service: AuthService = Depends(get_auth_service),
 ) -> dict[str, Any]:
     """Reset user password and return temporary password."""
     logger.info(
         "Admin: resetting password for user: id=%s, admin=%s",
-        user_id, current_user.email,
+        user_id, admin_user.email,
     )
     try:
         result = await auth_service.reset_password_admin(
             user_id=user_id,
-            admin_user_id=current_user.id,
+            admin_user_id=admin_user.id,
             db=db,
         )
         if result is None:
@@ -248,6 +252,7 @@ async def reset_user_password_admin_endpoint(
     responses=admin_responses,
 )
 async def get_registration_requests_admin_endpoint(
+    admin_user: AdminUser,
     db: AsyncSession = Depends(get_db_dependency),
     repo: Any = Depends(get_registration_request_repository),
 ) -> list[RegistrationRequestItem]:
@@ -273,7 +278,7 @@ async def get_registration_requests_admin_endpoint(
 )
 async def approve_registration_request_admin_endpoint(
     request_id: UUID,
-    current_user: CurrentUser,
+    admin_user: AdminUser,
     db: AsyncSession = Depends(get_db_dependency),
     auth_service: AuthService = Depends(get_auth_service),
     repo: Any = Depends(get_registration_request_repository),
@@ -320,7 +325,7 @@ async def approve_registration_request_admin_endpoint(
             request_id=request_id,
             status=RegistrationStatus.APPROVED,
             db=db,
-            reviewed_by=current_user.id,
+            reviewed_by=admin_user.id,
         )
         await db.commit()
 
@@ -349,7 +354,7 @@ async def approve_registration_request_admin_endpoint(
 )
 async def reject_registration_request_admin_endpoint(
     request_id: UUID,
-    current_user: CurrentUser,
+    admin_user: AdminUser,
     db: AsyncSession = Depends(get_db_dependency),
     repo: Any = Depends(get_registration_request_repository),
 ) -> dict[str, Any]:
@@ -375,7 +380,7 @@ async def reject_registration_request_admin_endpoint(
             request_id=request_id,
             status=RegistrationStatus.REJECTED,
             db=db,
-            reviewed_by=current_user.id,
+            reviewed_by=admin_user.id,
         )
         await db.commit()
 
@@ -403,6 +408,7 @@ async def reject_registration_request_admin_endpoint(
 )
 async def retrieve_temp_password_admin_endpoint(
     retrieval_token: str,
+    admin_user: AdminUser,
     temp_password_store: TempPasswordStore = Depends(get_temp_password_store),
 ) -> dict[str, str]:
     """Retrieve a temporary password by its retrieval token (one-time, admin only)."""

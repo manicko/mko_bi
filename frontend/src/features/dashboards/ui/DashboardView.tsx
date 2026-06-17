@@ -1,5 +1,5 @@
-import { useCallback, useState, lazy, Suspense } from 'react'
-import { useParams } from 'react-router-dom'
+import { useCallback, useState, lazy, Suspense, useEffect } from 'react'
+import { useParams, useLocation } from 'react-router-dom'
 import {
   Typography,
   CircularProgress,
@@ -20,8 +20,17 @@ const UploadModal = lazy(() =>
   import('../../upload/ui/UploadModal').then((module) => ({ default: module.UploadModal })),
 )
 
+const FILTER_STORAGE_KEY_PREFIX = 'dashboard-filters-'
+
+// Helper to get filter storage key for a dashboard
+function getFilterStorageKey(dashboardId: string | undefined): string | null {
+  if (!dashboardId) return null
+  return `${FILTER_STORAGE_KEY_PREFIX}${dashboardId}`
+}
+
 export function DashboardView() {
-  const { id } = useParams<{ id: string }>()
+const { id } = useParams()
+   const location = useLocation()
 
   const [filters, setFilters] = useState<
     Record<string, string | string[] | number | number[]>
@@ -39,6 +48,40 @@ export function DashboardView() {
     error: dataError,
   } = useAggregatedData(id || '', filters)
   const { invalidateAggregatedData } = useInvalidateDashboard()
+
+  // Load persisted filters from sessionStorage on mount
+  useEffect(() => {
+    const storageKey = getFilterStorageKey(id)
+    if (storageKey) {
+      try {
+        if (location.state?.preserveFilters === false) {
+          // Clear saved filters when explicitly requested
+          sessionStorage.removeItem(storageKey)
+        } else {
+          // Restore saved filters (default behavior)
+          const savedFilters = sessionStorage.getItem(storageKey)
+          if (savedFilters) {
+            const parsed = JSON.parse(savedFilters) as Record<string, string | string[] | number | number[]>
+            setFilters(parsed)
+          }
+        }
+      } catch {
+        // Ignore JSON parse errors - continue with empty filters
+      }
+    }
+  }, [id, location.state?.preserveFilters])
+
+  // Save filters to sessionStorage whenever they change
+  useEffect(() => {
+    const storageKey = getFilterStorageKey(id)
+    if (storageKey && Object.keys(filters).length > 0) {
+      try {
+        sessionStorage.setItem(storageKey, JSON.stringify(filters))
+      } catch {
+        // Ignore storage errors
+      }
+    }
+  }, [id, filters])
 
   // Derive filterDetails from dashboard config
   const filterDetails: FilterDetail[] = dashboard?.config?.filters && dashboard.config.filters.length > 0
@@ -62,6 +105,14 @@ export function DashboardView() {
     },
     []
   )
+
+  const handleResetFilters = useCallback(() => {
+    setFilters({})
+    const storageKey = getFilterStorageKey(id)
+    if (storageKey) {
+      sessionStorage.removeItem(storageKey)
+    }
+  }, [id])
 
   if (dashboardLoading) {
     return (
@@ -111,6 +162,7 @@ export function DashboardView() {
               filters={filterDetails}
               values={filters}
               onChange={handleFilterChange}
+              onReset={handleResetFilters}
               dashboardId={id || ''}
             />
           </Grid>

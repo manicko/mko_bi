@@ -20,6 +20,7 @@ interface DashboardFiltersProps {
   filters: FilterDetail[]
   values: Record<string, string | string[] | number | number[]>
   onChange: (filters: Record<string, string | string[] | number | number[]>) => void
+  onReset?: () => void
   dashboardId: string
 }
 
@@ -27,6 +28,7 @@ export function DashboardFilters({
   filters,
   values,
   onChange,
+  onReset,
   dashboardId,
 }: DashboardFiltersProps) {
   const [localFilters, setLocalFilters] = useState<
@@ -77,7 +79,8 @@ export function DashboardFilters({
       debounceTimeoutRef.current = null
     }
     onChange(emptyFilters)
-  }, [onChange])
+    onReset?.()
+  }, [onChange, onReset])
 
   if (!filters || filters.length === 0) {
     return null

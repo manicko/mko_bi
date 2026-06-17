@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
+    AdminUser,
     CurrentUser,
     get_db_dependency,
     get_dashboard_service,
@@ -53,12 +54,14 @@ router = APIRouter(tags=["dashboards"], redirect_slashes=False)
     responses=admin_responses,
 )
 async def get_dashboards_admin_endpoint(
+    admin_user: AdminUser,
     db: AsyncSession = Depends(get_db_dependency),
     dashboard_service: DashboardService = Depends(get_dashboard_service),
 ) -> list[DashboardAdmin]:
     """Get all dashboards for admin panel.
 
     Args:
+        admin_user: Authenticated admin user.
         db: Database session.
         dashboard_service: Injected dashboard service.
 
@@ -96,7 +99,7 @@ async def get_dashboards_admin_endpoint(
 )
 async def create_dashboard_endpoint(
     dashboard_data: DashboardCreate,
-    current_user: CurrentUser,
+    admin_user: AdminUser,
     db: AsyncSession = Depends(get_db_dependency),
     dashboard_service: DashboardService = Depends(get_dashboard_service),
 ) -> DashboardRead:
@@ -107,7 +110,7 @@ async def create_dashboard_endpoint(
 
     Args:
         dashboard: Dashboard creation data model.
-        current_user: Current authenticated user.
+        admin_user: Current authenticated admin user.
         db: Database session.
         dashboard_service: Injected dashboard service.
 
@@ -121,14 +124,14 @@ async def create_dashboard_endpoint(
     logger.info(
         "Creating dashboard: name=%s, owner_id=%s",
         dashboard_data.name,
-        current_user.id,
+        admin_user.id,
     )
 
     try:
         result = await dashboard_service.create_dashboard(
             name=dashboard_data.name,
             config=dashboard_data.config.model_dump(),
-            owner_id=current_user.id,
+            owner_id=admin_user.id,
             description=dashboard_data.description,
             layout_id=dashboard_data.layout_id,
             db=db,

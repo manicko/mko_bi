@@ -12,6 +12,7 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
+    AdminUser,
     CurrentUser,
     get_db_dependency,
     get_user_service,
@@ -46,6 +47,7 @@ router = APIRouter(prefix="/users", tags=["users"], redirect_slashes=False)
 )
 async def create_user_endpoint(
     user_data: UserCreateRequest,
+    admin_user: AdminUser,
     user_service: UserService = Depends(get_user_service),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> UserRead:
@@ -95,6 +97,7 @@ async def create_user_endpoint(
     responses=admin_responses,
 )
 async def get_users_endpoint(
+    admin_user: AdminUser,
     user_service: UserService = Depends(get_user_service),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> list[UserRead]:
@@ -209,6 +212,7 @@ async def get_user_endpoint(
 async def update_user_endpoint(
     user_id: UUID,
     user_data: UserUpdateRequest,
+    admin_user: AdminUser,
     user_service: UserService = Depends(get_user_service),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> UserRead:
@@ -321,6 +325,7 @@ async def delete_me_endpoint(
 )
 async def delete_user_endpoint(
     user_id: UUID,
+    admin_user: AdminUser,
     user_service: UserService = Depends(get_user_service),
     db: AsyncSession = Depends(get_db_dependency),
 ) -> None:
