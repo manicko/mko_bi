@@ -79,9 +79,9 @@ XX - free number.
     -- remove obsolete tests
    -Do NOT degrade architecture for outdated tests.
 
-6. Verify: git diff HEAD --stat —  Check only that your changes applied correctly and ignore other changes. If you see changes in files not related to the task it is normal - other agents are doing their task in parallel.
 
-7. Finalize: rename task file to *_DONE.yaml, move to C:\py_dev\mkobi\.ai\tasks\done/.
+6. Finalize: rename task file to *_DONE.yaml, move to C:\py_dev\mkobi\.ai\tasks\done/.
+If you see changes in files not related to the task it is normal - other agents are doing their task in parallel.
 
 Output:
 Return ## IMPLEMENTATION_COMPLETE or ## IMPLEMENTATION_BLOCKED.
@@ -93,13 +93,14 @@ Project Context:
 Docker:
 Should you need to run tests or check frontend Ensure Docker Environment is Running in **development and test modes** (never production) before connecting to the database. Follow the setup instructions in `docs/11-guides/docker.md`.
 
+GIT: Do not execute any Git command that modifies the repository state. You are working on the same files with other agents.
 
 </subagent_prompt>
 
 
 ### 4.3  Spawn Implementor Subagent
 
-Run up to 2 subagent at a time. Start new as soon as any of agents finished. If errors switch to 1 - never parallel.
+Run up to 3 subagent at a time. Start new as soon as any of agents finished. If errors switch to 1 - never parallel.
 
 ```
 Task(

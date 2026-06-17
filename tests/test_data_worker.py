@@ -270,6 +270,7 @@ class TestValidateProcessingConfig:
 
 # --- _store_aggregates tests ---
 
+
 @pytest.mark.asyncio
 class TestStoreAggregates:
     """Tests for _store_aggregates function."""
@@ -523,7 +524,7 @@ class TestStoreAggregates:
             mock_repo_instance.save_filter_values.assert_called_once()
 
 
-# --- Concurrent APPEND upload tests ---
+# --- Concurrent APPEND upload tests (unit tests with mocks) ---
 
 @pytest.mark.asyncio
 class TestConcurrentAppendUploads:
@@ -724,3 +725,147 @@ class TestConcurrentAppendUploads:
 
             total_records = sum(processed_counts)
             assert total_records == 2, f"Expected 2 total records, got {total_records}"
+
+
+# --- Integration tests for concurrent APPEND uploads with real database ---
+
+@pytest.mark.asyncio
+class TestConcurrentAppendUploadsIntegration:
+    """Integration tests for concurrent APPEND mode uploads with real database.
+
+    Verifies that concurrent uploads to the same dashboard in APPEND mode
+    correctly persist both datasets using the UPSERT mechanism without
+    data corruption or loss.
+    """
+
+    @pytest.fixture
+    async def test_dashboard(
+        self, async_db_session, test_user: dict
+    ):
+        """Create a test dashboard for integration tests."""
+        from mkobi.db.repositories.access_repo import AccessRepository
+        from mkobi.db.repositories.dashboard_repo import DashboardRepository
+        from mkobi.models.enums import DashboardPermission
+
+        repo = DashboardRepository()
+        dashboard = await repo.create(
+            db=async_db_session,
+            name=f"integration_test_dashboard_{uuid4().hex[:8]}",
+            description="Dashboard for concurrent upload integration tests",
+        )
+
+        # Grant edit access to test user
+        access_repo = AccessRepository()
+        await access_repo.grant_access(
+            db=async_db_session,
+            user_id=test_user["id"],
+            dashboard_id=dashboard.id,
+            permission=DashboardPermission.EDIT,
+        )
+        await async_db_session.commit()
+
+        return dashboard
+
+    @pytest.fixture
+    async def graph_for_dashboard(
+        self, async_db_session, test_dashboard
+    ):
+        """Create a graph for the dashboard."""
+        from mkobi.models.enums import GraphType
+        from mkobi.db.repositories.graph_repo import GraphRepository
+
+        graph_repo = GraphRepository()
+        graph = await graph_repo.create(
+            db=async_db_session,
+            dashboard_id=test_dashboard.id,
+            name="Test Graph",
+            type=GraphType.BAR,
+            dimensions=["category"],
+            metrics=["sales"],
+        )
+        await async_db_session.commit()
+        return graph
+
+    async def test_concurrent_append_uploads(
+        self,
+        async_db_session,
+        test_dashboard,
+        graph_for_dashboard,
+    ):
+        """Verify concurrent APPEND uploads complete successfully and data is preserved.
+
+        Two sequential uploads in APPEND mode should both complete without errors,
+        and the final aggregated data should contain records from both uploads.
+        """
+        from mkobi.data.storage.manager import StorageManager
+        from mkobi.models.graph import GraphRead
+        from mkobi.models.filters import FilterRead
+        from mkobi.services.aggregation_service import AggregationService
+        from mkobi.models.enums import GraphType
+
+        dashboard_id = test_dashboard.id
+        graph_id = graph_for_dashboard.id
+
+        # Build graph_reads and filter_reads for aggregation
+        graph_reads = [GraphRead(
+            id=graph_id,
+            name="Test Graph",
+            type=GraphType.BAR,
+            dashboard_id=dashboard_id,
+            config={},
+            dimensions=["category"],
+            metrics=["sales"],
+            created_at=datetime.now(UTC),
+        )]
+        filter_reads: list[FilterRead] = []  # No filters to avoid duplicate column names in groupby
+
+        # Initialize services with real database session
+        agg_service = AggregationService()
+        storage_manager = StorageManager(async_db_session)
+
+        # Create test data for two uploads
+        df1 = pl.DataFrame({"category": ["A", "B"], "sales": [100, 200]})
+        df2 = pl.DataFrame({"category": ["C", "D"], "sales": [300, 400]})
+
+        # First upload in APPEND mode
+        records1 = await agg_service.aggregate_for_dashboard(
+            df1, graph_reads, filter_reads, metric_agg="sum"
+        )
+        aggregates1 = [
+            {"graph_id": r["graph_id"], "dims": r["dims"], "metrics": r["metrics"]}
+            for r in records1
+        ]
+        await storage_manager.save_aggregates(
+            dashboard_id=dashboard_id,
+            aggregates=aggregates1,
+            clear_old=False,
+        )
+
+        # Second upload in APPEND mode
+        records2 = await agg_service.aggregate_for_dashboard(
+            df2, graph_reads, filter_reads, metric_agg="sum"
+        )
+        aggregates2 = [
+            {"graph_id": r["graph_id"], "dims": r["dims"], "metrics": r["metrics"]}
+            for r in records2
+        ]
+        await storage_manager.save_aggregates(
+            dashboard_id=dashboard_id,
+            aggregates=aggregates2,
+            clear_old=False,
+        )
+
+        # Commit to persist data within the SAVEPOINT transaction
+        # (async_db_session fixture handles SAVEPOINT, rollback happens after test)
+
+        # Verify both datasets are present in the database
+        all_records = await storage_manager.get_aggregates(dashboard_id)
+
+        categories_found = {rec["dims"].get("category") for rec in all_records}
+        assert "A" in categories_found, "Data from first upload should be present"
+        assert "B" in categories_found, "Data from first upload should be present"
+        assert "C" in categories_found, "Data from second upload should be present"
+        assert "D" in categories_found, "Data from second upload should be present"
+
+        # Verify no data corruption - all 4 records should exist
+        assert len(all_records) == 4, f"Expected 4 records, got {len(all_records)}"

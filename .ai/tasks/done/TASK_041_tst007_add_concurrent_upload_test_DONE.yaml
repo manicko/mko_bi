@@ -2,7 +2,7 @@ id: TASK_041_tst007_add_concurrent_upload_test
 
 title: Fix TST-007 — Add concurrent upload test to verify APPEND mode isolation
 
-status: pending
+status: completed
 
 priority: medium
 
