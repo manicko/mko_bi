@@ -61,7 +61,6 @@ Look up `{task_implementor_model}` from `C:\py_dev\mkobi\.ai\models\lookup_table
 ### 4.2  Prepare {subagent_prompt}
 
 <subagent_prompt>
---------------------------------------
 
 ## What To Do
 1. Read the task file {TASK_FILE_ABS_PATH}. Understand scope, affected files, acceptance criteria.
@@ -84,26 +83,23 @@ XX - free number.
 
 7. Finalize: rename task file to *_DONE.yaml, move to C:\py_dev\mkobi\.ai\tasks\done/.
 
-## Output
+Output:
 Return ## IMPLEMENTATION_COMPLETE or ## IMPLEMENTATION_BLOCKED.
 Include: summary, files modified, validation results, problems found.
 
-
-## Project Context
+Project Context:
 {MAIN_CONTEXT}
 
-## Should you need to run tests or check frontend Ensure Docker Environment is Running
+Docker:
+Should you need to run tests or check frontend Ensure Docker Environment is Running in **development and test modes** (never production) before connecting to the database. Follow the setup instructions in `docs/11-guides/docker.md`.
 
-Start Docker services in **both development and test modes** (never production) before connecting to the database. Follow the setup instructions in `docs/11-guides/docker.md`. Confirm the database container is in `running` or `healthy` state before proceeding. If the environment cannot be started, document why and skip dependent steps.
-
-------------------------
 
 </subagent_prompt>
 
 
 ### 4.3  Spawn Implementor Subagent
 
-Run up to 2 subagent at a time. If errors switch to 1 - never parallel.
+Run up to 2 subagent at a time. Start new as soon as any of agents finished. If errors switch to 1 - never parallel.
 
 ```
 Task(

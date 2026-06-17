@@ -2,7 +2,7 @@ id: TASK_048_int007_add_file_cleanup_test
 
 title: Fix INT-007 — Add temporary file cleanup test after processing failure
 
-status: pending
+status: completed
 
 priority: low
 
@@ -19,14 +19,14 @@ files:
   - path: tests/test_file_cleanup.py
     targets:
       - type: method
-        name: test_temp_file_cleanup_on_failure
+        name: test_temp_file_cleaned_up_when_processing_fails
 
 changes:
   - action: add_code
     description: >
-      Add test_file_cleanup.py with a test that: (1) uploads a file, (2) triggers
-      a processing failure (e.g., malformed CSV), (3) verifies the temp file
-      is cleaned up after the failure.
+      Added TestTempFileCleanupOnProcessingFailure class with test_temp_file_cleaned_up_when_processing_fails
+      that creates malformed CSV, triggers processing failure via _process_csv_file_async, and verifies
+      temp file cleanup in the exception handler.
 
 acceptance_criteria:
   - Test verifies temp file cleanup on processing failure

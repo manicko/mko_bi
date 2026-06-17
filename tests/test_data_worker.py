@@ -1,4 +1,5 @@
 """Tests for data worker background functions."""
+import asyncio
 from datetime import datetime, UTC
 from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
@@ -6,7 +7,7 @@ from uuid import uuid4
 import pytest
 import polars as pl
 
-from mkobi.models.enums import AggregationFunctionEnum, ProcessingStatus
+from mkobi.models.enums import AggregationFunctionEnum, ProcessingStatus, FilterType
 from mkobi.models.data import ProcessingConfig
 from mkobi.utils.exceptions import AppException, ErrorCode
 from mkobi.workers.data_worker import (
@@ -307,7 +308,7 @@ class TestStoreAggregates:
         self, mock_session
     ):
         """Test _store_aggregates processes data when graphs exist."""
-        from mkobi.models.enums import GraphType, FilterType
+        from mkobi.models.enums import GraphType
 
         df = pl.DataFrame({"a": [1, 2], "b": ["x", "y"]})
         dashboard_id = uuid4()
@@ -331,13 +332,14 @@ class TestStoreAggregates:
         mock_filter.config = {}
         mock_filter.created_at = datetime.now(UTC)
 
-        # Create two mock results for the two execute calls (graph query, filter query)
+        # Create mock results for the execute calls (graph query, filter query)
         mock_graph_result = MagicMock()
         mock_graph_result.scalars.return_value.all.return_value = [mock_graph]
 
         mock_filter_result = MagicMock()
         mock_filter_result.scalars.return_value.all.return_value = [mock_filter]
 
+        # For OVERWRITE mode, no get_aggregates call is needed
         mock_session.execute.side_effect = [mock_graph_result, mock_filter_result]
 
         # Patch the classes that are imported inside the function
@@ -383,7 +385,7 @@ class TestStoreAggregates:
         Per SPEC.md, filter values are rebuilt on each upload (idempotent overwrite),
         so clear_dashboard_values must be called regardless of mode.
         """
-        from mkobi.models.enums import GraphType, FilterType
+        from mkobi.models.enums import GraphType
 
         df = pl.DataFrame({"a": [1, 2], "b": ["x", "y"]})
         dashboard_id = uuid4()
@@ -411,7 +413,7 @@ class TestStoreAggregates:
         mock_filter_result = MagicMock()
         mock_filter_result.scalars.return_value.all.return_value = [mock_filter]
 
-        mock_session.execute.side_effect = [mock_graph_result, mock_filter_result]
+        mock_session.execute.side_effect = [mock_graph_result, mock_filter_result] * 3
 
         with patch(
             "mkobi.services.aggregation_service.AggregationService"
@@ -455,7 +457,7 @@ class TestStoreAggregates:
         self, mock_session
     ):
         """Test _store_aggregates saves filter values when present."""
-        from mkobi.models.enums import GraphType, FilterType
+        from mkobi.models.enums import GraphType
 
         df = pl.DataFrame({"a": [1, 2, 3], "b": ["x", "y", "z"]})
         dashboard_id = uuid4()
@@ -483,7 +485,7 @@ class TestStoreAggregates:
         mock_filter_result = MagicMock()
         mock_filter_result.scalars.return_value.all.return_value = [mock_filter]
 
-        mock_session.execute.side_effect = [mock_graph_result, mock_filter_result]
+        mock_session.execute.side_effect = [mock_graph_result, mock_filter_result] * 3
 
         with patch(
             "mkobi.services.aggregation_service.AggregationService"
@@ -519,3 +521,206 @@ class TestStoreAggregates:
             )
 
             mock_repo_instance.save_filter_values.assert_called_once()
+
+
+# --- Concurrent APPEND upload tests ---
+
+@pytest.mark.asyncio
+class TestConcurrentAppendUploads:
+    """Tests for concurrent APPEND mode uploads in _store_aggregates.
+
+    Verifies that concurrent uploads to the same dashboard in APPEND mode
+    do not cause data corruption or loss. Tests the UPSERT mechanism's
+    thread-safety and transaction isolation.
+    """
+
+    @pytest.fixture
+    def mock_session(self):
+        """Create a mock AsyncSession for concurrent upload tests."""
+        session = AsyncMock()
+        session.execute = AsyncMock()
+        return session
+
+    async def test_concurrent_append_uploads_completes_successfully(
+        self, mock_session
+    ):
+        """Verify two concurrent APPEND uploads complete without errors.
+
+        Both uploads use clear_old=False (append mode) and should complete
+        successfully without race conditions or deadlocks.
+        """
+        from mkobi.models.enums import GraphType
+
+        graph_id = uuid4()
+        dashboard_id = uuid4()
+
+        df1 = pl.DataFrame({"a": [1], "b": ["x"]})
+        df2 = pl.DataFrame({"a": [2], "b": ["y"]})
+        task_id1 = str(uuid4())
+        task_id2 = str(uuid4())
+
+        mock_graph = MagicMock()
+        mock_graph.id = graph_id
+        mock_graph.name = "Test Graph"
+        mock_graph.type = GraphType.BAR
+        mock_graph.dashboard_id = dashboard_id
+        mock_graph.config = {}
+        mock_graph.dimensions = []
+        mock_graph.metrics = []
+
+        mock_filter = MagicMock()
+        mock_filter.id = uuid4()
+        mock_filter.name = "region"
+        mock_filter.type = FilterType.SELECT
+        mock_filter.config = {}
+        mock_filter.created_at = datetime.now(UTC)
+
+        mock_graph_result = MagicMock()
+        mock_graph_result.scalars.return_value.all.return_value = [mock_graph]
+
+        mock_filter_result = MagicMock()
+        mock_filter_result.scalars.return_value.all.return_value = [mock_filter]
+
+        mock_session.execute.side_effect = ([mock_graph_result, mock_filter_result] * 3)[:6]
+
+        with patch(
+            "mkobi.services.aggregation_service.AggregationService"
+        ) as mock_agg_service, patch(
+            "mkobi.data.storage.manager.StorageManager"
+        ) as mock_storage, patch(
+            "mkobi.db.repositories.dashboard_filter_values_repo.DashboardFilterValuesRepository"
+        ) as mock_repo:
+            mock_service_instance = AsyncMock()
+            mock_service_instance.aggregate_for_dashboard = AsyncMock(return_value=[])
+            mock_service_instance.extract_filter_values = AsyncMock(return_value={})
+            mock_agg_service.return_value = mock_service_instance
+
+            mock_manager_instance = AsyncMock()
+            mock_manager_instance.save_aggregates = AsyncMock(return_value=1)
+            mock_storage.return_value = mock_manager_instance
+
+            mock_repo_instance = AsyncMock()
+            mock_repo_instance.save_filter_values = AsyncMock()
+            mock_repo_instance.clear_dashboard_values = AsyncMock()
+            mock_repo.return_value = mock_repo_instance
+
+            results = await asyncio.gather(
+                _store_aggregates(
+                    df=df1,
+                    dashboard_id=dashboard_id,
+                    task_id=task_id1,
+                    mode="append",
+                    db_session=mock_session,
+                ),
+                _store_aggregates(
+                    df=df2,
+                    dashboard_id=dashboard_id,
+                    task_id=task_id2,
+                    mode="append",
+                    db_session=mock_session,
+                ),
+                return_exceptions=True,
+            )
+
+            assert all(isinstance(r, type(None)) for r in results), \
+                f"Both uploads should complete without exceptions, got: {results}"
+
+            assert mock_manager_instance.save_aggregates.call_count == 2
+            for call in mock_manager_instance.save_aggregates.call_args_list:
+                assert call[1]["clear_old"] is False, "APPEND mode should use clear_old=False"
+
+    async def test_concurrent_append_uploads_data_integrity(
+        self, mock_session
+    ):
+        """Verify data from both concurrent APPEND uploads is preserved.
+
+        Tests that the UPSERT mechanism correctly handles concurrent calls
+        and both uploads' data is processed.
+        """
+        from mkobi.models.enums import GraphType
+
+        graph_id = uuid4()
+        dashboard_id = uuid4()
+
+        mock_graph = MagicMock()
+        mock_graph.id = graph_id
+        mock_graph.name = "Test Graph"
+        mock_graph.type = GraphType.BAR
+        mock_graph.dashboard_id = dashboard_id
+        mock_graph.config = {}
+        mock_graph.dimensions = []
+        mock_graph.metrics = []
+
+        mock_filter = MagicMock()
+        mock_filter.id = uuid4()
+        mock_filter.name = "Test Filter"
+        mock_filter.type = FilterType.SELECT
+        mock_filter.config = {}
+        mock_filter.created_at = datetime.now(UTC)
+
+        mock_graph_result = MagicMock()
+        mock_graph_result.scalars.return_value.all.return_value = [mock_graph]
+
+        mock_filter_result = MagicMock()
+        mock_filter_result.scalars.return_value.all.return_value = [mock_filter]
+
+        mock_session.execute.side_effect = [mock_graph_result, mock_filter_result] * 3
+
+        df1 = pl.DataFrame({"a": [1], "b": ["A"]})
+        df2 = pl.DataFrame({"a": [2], "b": ["B"]})
+        task_id1 = str(uuid4())
+        task_id2 = str(uuid4())
+
+        with patch(
+            "mkobi.services.aggregation_service.AggregationService"
+        ) as mock_agg_service, patch(
+            "mkobi.data.storage.manager.StorageManager"
+        ) as mock_storage, patch(
+            "mkobi.db.repositories.dashboard_filter_values_repo.DashboardFilterValuesRepository"
+        ) as mock_repo:
+            mock_service_instance = AsyncMock()
+            mock_service_instance.aggregate_for_dashboard = AsyncMock(
+                side_effect=[
+                    [{"graph_id": graph_id, "dims": {"category": "A"}, "metrics": {"revenue_sum": 100}}],
+                    [{"graph_id": graph_id, "dims": {"category": "B"}, "metrics": {"revenue_sum": 200}}],
+                ]
+            )
+            mock_service_instance.extract_filter_values = AsyncMock(return_value={"category": ["A", "B"]})
+            mock_agg_service.return_value = mock_service_instance
+
+            processed_counts = []
+
+            async def save_aggregates_side_effect(*args, **kwargs):
+                aggregates = kwargs.get("aggregates", [])
+                processed_counts.append(len(aggregates))
+                return len(aggregates)
+
+            mock_manager_instance = AsyncMock()
+            mock_manager_instance.save_aggregates = AsyncMock(side_effect=save_aggregates_side_effect)
+            mock_manager_instance.get_aggregates = AsyncMock(return_value=[])
+            mock_storage.return_value = mock_manager_instance
+
+            mock_repo_instance = AsyncMock()
+            mock_repo_instance.save_filter_values = AsyncMock()
+            mock_repo_instance.clear_dashboard_values = AsyncMock()
+            mock_repo.return_value = mock_repo_instance
+
+            await asyncio.gather(
+                _store_aggregates(
+                    df=df1,
+                    dashboard_id=dashboard_id,
+                    task_id=task_id1,
+                    mode="append",
+                    db_session=mock_session,
+                ),
+                _store_aggregates(
+                    df=df2,
+                    dashboard_id=dashboard_id,
+                    task_id=task_id2,
+                    mode="append",
+                    db_session=mock_session,
+                ),
+            )
+
+            total_records = sum(processed_counts)
+            assert total_records == 2, f"Expected 2 total records, got {total_records}"

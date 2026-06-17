@@ -718,13 +718,22 @@ async def _store_aggregates(
             processed,
         )
 
-        # Extract and save filter values
+        # Extract and save filter values from ALL accumulated data
         filter_names = [f.name for f in filter_reads]
         if filter_names:
-            filter_values = await agg_service.extract_filter_values(records, filter_names)
             filter_values_repo = DashboardFilterValuesRepository()
             # Clear all existing filter values before saving new ones (idempotent rebuild)
             await filter_values_repo.clear_dashboard_values(dashboard_id, db_session)
+
+            # In APPEND mode, extract from all accumulated data in the database
+            # (save_aggregates already upserted the new data)
+            # In OVERWRITE mode, existing data was already cleared
+            if mode == UploadMode.APPEND:
+                combined_records = await manager.get_aggregates(dashboard_id)
+            else:
+                combined_records = records
+
+            filter_values = await agg_service.extract_filter_values(combined_records, filter_names)
             for fname, fvalues in filter_values.items():
                 if fvalues:
                     await filter_values_repo.save_filter_values(
@@ -787,13 +796,22 @@ async def _store_aggregates(
                     processed,
                 )
 
-                # Extract and save filter values
+                # Extract and save filter values from ALL accumulated data
                 filter_names = [f.name for f in filter_reads]
                 if filter_names:
-                    filter_values = await agg_service.extract_filter_values(records, filter_names)
                     filter_values_repo = DashboardFilterValuesRepository()
                     # Clear all existing filter values before saving new ones (idempotent rebuild)
                     await filter_values_repo.clear_dashboard_values(dashboard_id, session)
+
+                    # In APPEND mode, extract from all accumulated data in the database
+                    # (save_aggregates already upserted the new data)
+                    # In OVERWRITE mode, existing data was already cleared
+                    if mode == UploadMode.APPEND:
+                        combined_records = await manager.get_aggregates(dashboard_id)
+                    else:
+                        combined_records = records
+
+                    filter_values = await agg_service.extract_filter_values(combined_records, filter_names)
                     for fname, fvalues in filter_values.items():
                         if fvalues:
                             await filter_values_repo.save_filter_values(

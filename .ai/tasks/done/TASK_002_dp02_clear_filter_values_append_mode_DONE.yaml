@@ -2,7 +2,7 @@ id: TASK_002_dp02_clear_filter_values_append_mode
 
 title: Fix DP-02 — APPEND mode does not clear stale filter values, causing data drift
 
-status: pending
+status: done
 
 priority: high
 
