@@ -1,7 +1,6 @@
 import WarningAmber from '@mui/icons-material/WarningAmber'
 import { Box, Container, Typography, Button } from '@mui/material'
 import { Link as RouterLink } from 'react-router-dom'
-import { useAuth } from '../../features/auth/model/useAuth'
 
 interface ErrorPageProps {
   variant: '404' | '500'
@@ -9,9 +8,8 @@ interface ErrorPageProps {
 }
 
 export function ErrorPage({ variant, error }: ErrorPageProps) {
-  const { user } = useAuth()
   const isDev = import.meta.env.DEV
-  const goToHome = user ? '/dashboards' : '/login'
+  const goToHome = '/login'
 
   const handleReload = () => {
     window.location.reload()

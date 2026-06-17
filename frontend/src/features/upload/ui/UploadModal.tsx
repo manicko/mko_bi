@@ -52,49 +52,55 @@ export function UploadModal({ open, onClose, dashboardId, onUploadComplete }: Up
     onUploadCompleteRef.current = onUploadComplete
   }, [onUploadComplete])
 
+  // Guard to prevent double-invoke of onUploadComplete callback
+  const hasCompletedRef = useRef(false)
+
   // Get the first file's processing log ID for polling
   const processingLogId = fileStates.length > 0 ? fileStates[0].processingLogId ?? null : null
   const { data: statusData } = useProcessingStatus(processingLogId, uploadComplete)
 
-// Update processing status when polling returns data
-   useEffect(() => {
-     if (statusData?.status) {
-       const status = statusData.status
+  // Update processing status when polling returns data
+  useEffect(() => {
+    if (statusData?.status) {
+      const status = statusData.status
 
-       // eslint-disable-next-line react-hooks/set-state-in-effect
-       setFileStates((prev) =>
-         prev.map((f) =>
-           f.processingLogId
-             ? { ...f, processingStatus: status, status: status === 'failed' ? FileUploadStatus.ERROR : f.status }
-             : f
-         )
-       )
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setFileStates((prev) =>
+        prev.map((f) =>
+          f.processingLogId
+            ? { ...f, processingStatus: status, status: status === 'failed' ? FileUploadStatus.ERROR : f.status }
+            : f
+        )
+      )
 
-       // Handle completion
-       if (status === 'completed') {
-         toast.success('Processing complete!')
-         setProcessingFinished(true)
-         onUploadCompleteRef.current?.()
-       }
+      // Handle completion
+      if (status === 'completed') {
+        toast.success('Processing complete!')
+        setProcessingFinished(true)
+        if (!hasCompletedRef.current) {
+          hasCompletedRef.current = true
+          onUploadCompleteRef.current?.()
+        }
+      }
 
-       // Handle processing failure with RFC 7807 error code
-       if (status === 'failed' && statusData.error_code) {
-         const userMessage = getErrorMessage(
-           statusData.error_code,
-           uploadErrorMessages,
-           statusData.message || undefined
-         )
-         setFileStates((prev) =>
-           prev.map((f) =>
-             f.processingLogId
-               ? { ...f, status: FileUploadStatus.ERROR, error: userMessage, error_code: statusData.error_code }
-               : f
-           )
-         )
-         toast.error(`Processing failed for ${files[0]?.name || 'file'}: ${userMessage}`)
-       }
-     }
-   }, [statusData, files])
+      // Handle processing failure with RFC 7807 error code
+      if (status === 'failed' && statusData.error_code) {
+        const userMessage = getErrorMessage(
+          statusData.error_code,
+          uploadErrorMessages,
+          statusData.message || undefined
+        )
+        setFileStates((prev) =>
+          prev.map((f) =>
+            f.processingLogId
+              ? { ...f, status: FileUploadStatus.ERROR, error: userMessage, error_code: statusData.error_code }
+              : f
+          )
+        )
+        toast.error(`Processing failed for ${files[0]?.name || 'file'}: ${userMessage}`)
+      }
+    }
+  }, [statusData, files])
 
   const handleModeChange = (_: React.MouseEvent<HTMLElement>, newMode: UploadMode | null) => {
     if (newMode !== null) {
@@ -138,46 +144,46 @@ export function UploadModal({ open, onClose, dashboardId, onUploadComplete }: Up
         )
       )
 
-try {
-         const response = await uploadApi.uploadFile(
-           dashboardId,
-           file,
-           mode,
-           (percent) => {
-             setFileStates((prev) =>
-               prev.map((f, idx) =>
-                 idx === i ? { ...f, progress: percent } : f
-               )
-             )
-           }
-         )
+      try {
+        const response = await uploadApi.uploadFile(
+          dashboardId,
+          file,
+          mode,
+          (percent) => {
+            setFileStates((prev) =>
+              prev.map((f, idx) =>
+                idx === i ? { ...f, progress: percent } : f
+              )
+            )
+          }
+        )
 
-         setFileStates((prev) =>
-           prev.map((f, idx) =>
-             idx === i
-               ? {
-                   ...f,
-                   status: FileUploadStatus.SUCCESS,
-                   progress: 100,
-                   processingLogId: response.task_id,
-                 }
-               : f
-           )
-         )
-       } catch (err) {
-         const extracted = extractApiError(err)
-         const userMessage = getErrorMessage(
-           extracted.code,
-           uploadErrorMessages,
-           extracted.message
-         )
-         setFileStates((prev) =>
-           prev.map((f, idx) =>
-             idx === i ? { ...f, status: FileUploadStatus.ERROR, error: userMessage } : f
-           )
-         )
-         toast.error(`Failed to upload ${file.name}: ${userMessage}`)
-       }
+        setFileStates((prev) =>
+          prev.map((f, idx) =>
+            idx === i
+              ? {
+                  ...f,
+                  status: FileUploadStatus.SUCCESS,
+                  progress: 100,
+                  processingLogId: response.task_id,
+                }
+              : f
+          )
+        )
+      } catch (err) {
+        const extracted = extractApiError(err)
+        const userMessage = getErrorMessage(
+          extracted.code,
+          uploadErrorMessages,
+          extracted.message
+        )
+        setFileStates((prev) =>
+          prev.map((f, idx) =>
+            idx === i ? { ...f, status: FileUploadStatus.ERROR, error: userMessage } : f
+          )
+        )
+        toast.error(`Failed to upload ${file.name}: ${userMessage}`)
+      }
     }
 
     setIsUploading(false)
@@ -192,6 +198,7 @@ try {
       setFileStates([])
       setUploadComplete(false)
       setProcessingFinished(false)
+      hasCompletedRef.current = false
       onClose()
     }
   }
