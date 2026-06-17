@@ -252,10 +252,12 @@ def add_exception_handlers(app: FastAPI) -> None:
             code=exc.code,
             details=exc.details,
         )
+        # Filter out None header values
+        filtered_headers = {k: v for k, v in (exc.headers or {}).items() if v is not None}
         return JSONResponse(
             status_code=exc.status_code,
             content=response.model_dump(),
-            headers=exc.headers,
+            headers=filtered_headers if filtered_headers else None,
         )
 
     @app.exception_handler(RequestValidationError)

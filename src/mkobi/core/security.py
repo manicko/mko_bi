@@ -60,18 +60,32 @@ class RateLimiter:
         self._redis = redis_client
         self._fail_closed = fail_closed
 
-    def check_rate_limit(self, key: str, max_attempts: int, ttl: int) -> bool:
+    def check_rate_limit(
+        self, key: str, max_attempts: int, ttl: int
+    ) -> tuple[bool, int | None]:
+        """Check if request is allowed under rate limit.
+
+        Args:
+            key: Unique identifier for rate limiting scope (e.g., user ID or IP).
+            max_attempts: Maximum allowed attempts within the TTL window.
+            ttl: Time-to-live in seconds for the rate limit key.
+
+        Returns:
+            Tuple of (allowed, retry_after_seconds). If rate limit exceeded,
+            retry_after_seconds contains the remaining TTL for Retry-After header.
+        """
         try:
             attempts = self._redis.get(key)
             if attempts is not None and int(str(attempts)) >= max_attempts:
+                ttl_remaining = self._redis.ttl(key)
                 logger.warning("Rate limit exceeded for key: %s", key)
-                return False
+                return False, ttl_remaining if ttl_remaining > 0 else ttl
 
             pipeline = self._redis.pipeline()
             pipeline.incr(key)
             pipeline.expire(key, ttl)
             pipeline.execute()
-            return True
+            return True, None
         except Exception as e:
             logger.error("Rate limiter Redis error for key %s: %s", key, e)
             if self._fail_closed:
@@ -80,13 +94,13 @@ class RateLimiter:
                     "(Redis unavailable)",
                     key,
                 )
-                return False
+                return False, ttl
             logger.warning(
                 "Rate limiter fail-open: allowing request for key %s "
                 "(Redis unavailable)",
                 key,
             )
-            return True
+            return True, None
 
 
 class AsyncRateLimiter:
@@ -94,18 +108,32 @@ class AsyncRateLimiter:
         self._redis = redis_client
         self._fail_closed = fail_closed
 
-    async def check_rate_limit(self, key: str, max_attempts: int, ttl: int) -> bool:
+    async def check_rate_limit(
+        self, key: str, max_attempts: int, ttl: int
+    ) -> tuple[bool, int | None]:
+        """Check if request is allowed under rate limit.
+
+        Args:
+            key: Unique identifier for rate limiting scope (e.g., user ID or IP).
+            max_attempts: Maximum allowed attempts within the TTL window.
+            ttl: Time-to-live in seconds for the rate limit key.
+
+        Returns:
+            Tuple of (allowed, retry_after_seconds). If rate limit exceeded,
+            retry_after_seconds contains the remaining TTL for Retry-After header.
+        """
         try:
             attempts = await self._redis.get(key)
             if attempts is not None and int(str(attempts)) >= max_attempts:
+                ttl_remaining = await self._redis.ttl(key)
                 logger.warning("Rate limit exceeded for key: %s", key)
-                return False
+                return False, ttl_remaining if ttl_remaining > 0 else ttl
 
             async with self._redis.pipeline() as pipeline:
                 await pipeline.incr(key)
                 await pipeline.expire(key, ttl)
                 await pipeline.execute()
-            return True
+            return True, None
         except Exception as e:
             logger.error("Rate limiter Redis error for key %s: %s", key, e)
             if self._fail_closed:
@@ -114,13 +142,13 @@ class AsyncRateLimiter:
                     "(Redis unavailable)",
                     key,
                 )
-                return False
+                return False, ttl
             logger.warning(
                 "Rate limiter fail-open: allowing request for key %s "
                 "(Redis unavailable)",
                 key,
             )
-            return True
+            return True, None
 
 
 def _truncate_password(password: str) -> str:

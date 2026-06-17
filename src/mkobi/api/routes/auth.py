@@ -84,13 +84,15 @@ async def _handle_login(
         redis_client,
         fail_closed=get_config().rate_limiter_fail_closed,
     )
-    if not await rate_limiter.check_rate_limit(
+    allowed, retry_after = await rate_limiter.check_rate_limit(
         f"login:{client_ip}", max_attempts=5, ttl=300
-    ):
+    )
+    if not allowed:
         logger.warning("Login rate limit exceeded", extra={"ip": client_ip})
         raise AppException(
             code=ErrorCode.RATE_LIMIT_EXCEEDED,
             detail="Too many login attempts. Try again later.",
+            headers={"Retry-After": str(retry_after)} if retry_after else None,
         )
 
     logger.info("Login attempt", extra={"email": email})
@@ -309,12 +311,16 @@ async def refresh(
         fail_closed=get_config().rate_limiter_fail_closed,
     )
     rate_limit_key = f"refresh:{client_ip}" if client_ip else "refresh:unknown"
-    if not await rate_limiter.check_rate_limit(rate_limit_key, max_attempts=10, ttl=300):
+    allowed, retry_after = await rate_limiter.check_rate_limit(rate_limit_key, max_attempts=10, ttl=300)
+    if not allowed:
         logger.warning("Refresh rate limit exceeded", extra={"ip": client_ip})
+        headers = {"WWW-Authenticate": "Bearer"}
+        if retry_after is not None:
+            headers["Retry-After"] = str(retry_after)
         raise AppException(
             code=ErrorCode.RATE_LIMIT_EXCEEDED,
             detail="Too many refresh attempts. Try again later.",
-            headers={"WWW-Authenticate": "Bearer"},
+            headers=headers,
         )
 
     logger.info("Token refresh attempt")
@@ -555,9 +561,10 @@ async def register_request(
         fail_closed=get_config().rate_limiter_fail_closed,
     )
     rate_limit_key = f"register-request:{client_ip}" if client_ip else f"register-request:{request_data.email}"
-    if not await rate_limiter.check_rate_limit(
+    allowed, retry_after = await rate_limiter.check_rate_limit(
         rate_limit_key, max_attempts=3, ttl=3600
-    ):
+    )
+    if not allowed:
         logger.warning(
             "Registration request rate limit exceeded",
             extra={"email": request_data.email, "ip": client_ip},
@@ -565,6 +572,7 @@ async def register_request(
         raise AppException(
             code=ErrorCode.RATE_LIMIT_EXCEEDED,
             detail="Too many registration requests. Try again later.",
+            headers={"Retry-After": str(retry_after)} if retry_after else None,
         )
 
     logger.info(

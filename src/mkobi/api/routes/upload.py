@@ -145,11 +145,12 @@ async def upload_file_endpoint(
             redis_client.get_async_redis_client(),
             fail_closed=config.rate_limiter_fail_closed,
         )
-        if not await rate_limiter.check_rate_limit(
+        allowed, retry_after = await rate_limiter.check_rate_limit(
             f"upload:{current_user.id}",
             max_attempts=100,
             ttl=3600,
-        ):
+        )
+        if not allowed:
             logger.warning(
                 "Upload rate limit exceeded",
                 extra={"user_id": str(current_user.id)},
@@ -157,6 +158,7 @@ async def upload_file_endpoint(
             raise AppException(
                 code=ErrorCode.RATE_LIMIT_EXCEEDED,
                 detail="Rate limit exceeded for uploads",
+                headers={"Retry-After": str(retry_after)} if retry_after else None,
             )
 
         # Read and stream file content to temporary location

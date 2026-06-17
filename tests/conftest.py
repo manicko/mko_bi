@@ -178,6 +178,7 @@ class MockRedis:
 
     def __init__(self):
         self._data = {}
+        self._ttls = {}
 
     async def get(self, key):
         return self._data.get(key)
@@ -193,6 +194,7 @@ class MockRedis:
     async def setex(self, key, ttl, value):
         """Set key with TTL in mock Redis."""
         self._data[key] = value
+        self._ttls[key] = ttl
 
     def pipeline(self, transaction=True):
         return MockPipeline(self)
@@ -203,7 +205,11 @@ class MockRedis:
         return val
 
     async def expire(self, key, ttl):
-        pass
+        self._ttls[key] = ttl
+
+    async def ttl(self, key):
+        """Return TTL for key."""
+        return self._ttls.get(key, 300)
 
     async def execute(self):
         pass
@@ -214,6 +220,7 @@ class MockRedis:
     def clear(self):
         """Clear all stored data for test isolation."""
         self._data = {}
+        self._ttls = {}
 
 
 class MockPipeline:
@@ -320,7 +327,7 @@ def _auto_mock_redis(monkeypatch):
         original_init(self, *args, **kwargs)
         # Make check_rate_limit always return True (allow all)
         async def always_true(*a, **kw):
-            return True
+            return (True, None)
 
         self._rate_limiter.check_rate_limit = always_true
 
@@ -353,7 +360,7 @@ def mock_redis(monkeypatch):
         original_init(self, *args, **kwargs)
         # Make check_rate_limit always return True (allow all)
         async def always_true(*a, **kw):
-            return True
+            return (True, None)
 
         self._rate_limiter.check_rate_limit = always_true
 

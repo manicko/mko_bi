@@ -47,7 +47,8 @@ async def report_client_error(payload: ClientErrorPayload, request: Request) -> 
         fail_closed=config.rate_limiter_fail_closed,
     )
     rate_limit_key = f"client-errors:{client_ip}"
-    if not await rate_limiter.check_rate_limit(rate_limit_key, max_attempts=100, ttl=3600):
+    allowed, retry_after = await rate_limiter.check_rate_limit(rate_limit_key, max_attempts=100, ttl=3600)
+    if not allowed:
         logger.warning(
             "Rate limit exceeded for client-errors endpoint",
             extra={"ip": client_ip},
@@ -55,6 +56,7 @@ async def report_client_error(payload: ClientErrorPayload, request: Request) -> 
         raise AppException(
             code=ErrorCode.RATE_LIMIT_EXCEEDED,
             detail="Rate limit exceeded for client error reports",
+            headers={"Retry-After": str(retry_after)} if retry_after else None,
         )
 
     error_message = payload.error.get("message", "Unknown error")
