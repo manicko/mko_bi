@@ -16,12 +16,3 @@ export const SHORT_ID_LENGTH = 8
 export function shortUuid(id: string): string {
   return id.slice(0, SHORT_ID_LENGTH)
 }
-
-/**
- * Generates a new short ID by creating a UUID v4 and returning first 8 characters.
- * Uses crypto.randomUUID() for secure random generation.
- * @returns An 8-character short ID
- */
-export function generateShortId(): string {
-  return crypto.randomUUID().slice(0, SHORT_ID_LENGTH)
-}
