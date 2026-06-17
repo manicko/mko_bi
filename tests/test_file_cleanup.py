@@ -4,7 +4,7 @@ import shutil
 import tempfile
 import time
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 from uuid import uuid4
 
 import pytest
@@ -311,3 +311,64 @@ class TestCleanupOldProcessingLogs:
         for log_id in created_log_ids:
             log = await repo.get_by_id(log_id, db=async_db_session)
             assert log is not None, f"Log {log_id} should still exist"
+
+
+class TestTempFileCleanupOnProcessingFailure:
+    """Tests for temp file cleanup when processing fails during background job."""
+
+    @pytest.fixture
+    def mock_session(self):
+        """Create a mock AsyncSession for unit tests."""
+        session = AsyncMock()
+        session.execute = AsyncMock()
+        session.commit = AsyncMock()
+        session.rollback = AsyncMock()
+        return session
+
+    @pytest.mark.asyncio
+    async def test_temp_file_cleaned_up_when_processing_fails(
+        self, mock_session, tmp_path
+    ):
+        """Verify task file is cleaned up when CSV processing raises an exception.
+
+        Creates a malformed CSV file at a task location, then calls the processing
+        function directly and verifies cleanup happens in the exception handler.
+        Uses a temporary directory to avoid needing real database for file operations.
+        """
+        from mkobi.workers.data_worker import _process_csv_file_async
+
+        # Create malformed CSV file in temp directory
+        task_id = uuid4()
+        task_file = tmp_path / f"{task_id}.csv"
+        malformed_csv = b"category,sales\n1,\"unclosed quote\n"  # Malformed CSV
+        task_file.write_bytes(malformed_csv)
+
+        files_before = list(tmp_path.glob("*.csv*"))
+
+        # Process the malformed CSV - this should fail and clean up
+        with patch(
+            "mkobi.workers.data_worker._update_processing_log_status",
+            new_callable=AsyncMock,
+        ):
+            with patch(
+                "mkobi.workers.data_worker._store_aggregates",
+                new_callable=AsyncMock,
+            ):
+                try:
+                    await _process_csv_file_async(
+                        file_path_str=str(task_file),
+                        task_id=str(task_id),
+                        dashboard_id_str="00000000-0000-0000-0000-000000000000",
+                        processing_config_dict=None,
+                        mode="overwrite",
+                        db_session=mock_session,
+                    )
+                except Exception:
+                    pass  # Expected to fail due to malformed CSV
+
+        # Verify temp file is cleaned up after processing failure
+        files_after = list(tmp_path.glob("*.csv*"))
+        assert len(files_after) == len(files_before) - 1, (
+            f"Task file should be cleaned up after processing failure. "
+            f"Before: {len(files_before)}, After: {len(files_after)}"
+        )
