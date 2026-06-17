@@ -14,9 +14,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mkobi.api.deps import (
     CurrentUser,
     get_db_dependency,
-    require_admin_role,
     get_dashboard_service,
 )
+from mkobi.api.schemas.responses import admin_responses
 from mkobi.models.access import AccessGrant
 from mkobi.models.enums import ErrorCode
 from mkobi.services.dashboard_service import DashboardService
@@ -33,7 +33,7 @@ router = APIRouter(tags=["dashboards"])
     status_code=status.HTTP_200_OK,
     summary="Grant dashboard access",
     description="Grants user access to dashboard. Available only to owners.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def grant_dashboard_access_endpoint(
     dashboard_id: UUID,
@@ -133,7 +133,7 @@ async def grant_dashboard_access_endpoint(
     status_code=status.HTTP_200_OK,
     summary="List dashboard access",
     description="Returns all access records for a dashboard. Requires admin role.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def get_dashboard_access_endpoint(
     dashboard_id: UUID,
@@ -176,7 +176,7 @@ async def get_dashboard_access_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Revoke dashboard access",
     description="Revokes user's access to a dashboard. Requires admin role.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def revoke_dashboard_access_endpoint(
     dashboard_id: UUID,

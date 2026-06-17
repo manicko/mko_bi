@@ -20,6 +20,17 @@ from mkobi.api.deps import (
     get_db_dependency,
     get_data_service,
 )
+from mkobi.api.schemas.responses import (
+    auth_protected_responses,
+    error_400,
+    error_401,
+    error_403,
+    error_413,
+    error_415,
+    error_422,
+    error_429,
+    error_500,
+)
 from mkobi.config import get_config
 from mkobi.core.logging_config import get_logger
 from mkobi.core import redis_client
@@ -48,6 +59,16 @@ CHUNK_SIZE = 8192
     status_code=status.HTTP_201_CREATED,
     summary="Upload file",
     description="Uploads a CSV file for processing. Available to editors and admins only.",
+    responses={
+        400: error_400,
+        401: error_401,
+        403: error_403,
+        413: error_413,
+        415: error_415,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def upload_file_endpoint(
     dashboard_id: UUID,
@@ -232,6 +253,7 @@ async def upload_file_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Get processing status",
     description="Returns current processing status of file.",
+    responses=auth_protected_responses,
 )
 async def get_status_endpoint(
     task_id: UUID,
@@ -288,6 +310,7 @@ async def get_status_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Get processing result",
     description="Returns processing result of file.",
+    responses=auth_protected_responses,
 )
 async def get_result_endpoint(
     task_id: UUID,

@@ -21,10 +21,10 @@ from typing import Any
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
 
 from mkobi.core.logging_config import get_logger
 from mkobi.models.enums import ErrorCode
+from mkobi.models.error_response import ErrorResponse
 
 logger = get_logger(__name__)
 
@@ -72,26 +72,6 @@ _ERROR_CODE_STATUS_MAP: dict[ErrorCode, int] = {
     ErrorCode.PROCESSING_IN_PROGRESS: HTTP_500_INTERNAL_SERVER_ERROR,
     ErrorCode.INVALID_TRANSITION: HTTP_400_BAD_REQUEST,
 }
-
-
-class ErrorResponse(BaseModel):
-    """Standardized error response model following RFC 7807 Problem Details format.
-
-    Fields:
-        type: URI-style error type for documentation/reference.
-        title: Short human-readable summary.
-        status: HTTP status code.
-        detail: Developer-facing message (English, for logging/debug).
-        code: Machine-readable ErrorCode enum value.
-        details: Optional structured context (column names, field names, etc.).
-    """
-
-    type: str
-    title: str
-    status: int
-    detail: str
-    code: ErrorCode
-    details: dict[str, Any] | None = None
 
 
 class AppException(Exception):

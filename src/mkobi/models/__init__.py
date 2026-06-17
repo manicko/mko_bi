@@ -1,6 +1,10 @@
 from mkobi.models.auth import (
     LoginRequest,
     RegisterRequest,
+    RegistrationRequestCreate,
+    RegistrationRequestItem,
+    RegistrationRequestResponse,
+    SuccessResponse,
     Token,
     TokenData,
     TokenWithUser,
@@ -23,6 +27,7 @@ from mkobi.models.data import (
     UploadResponse,
     ValidationResult,
 )
+from mkobi.models.error_response import ErrorResponse
 from mkobi.models.filters import (
     FilterBase,
     FilterCreate,
@@ -79,9 +84,15 @@ __all__ = [
     # Auth
     "LoginRequest",
     "RegisterRequest",
+    "RegistrationRequestCreate",
+    "RegistrationRequestItem",
+    "RegistrationRequestResponse",
+    "SuccessResponse",
     "Token",
     "TokenData",
     "TokenWithUser",
+    # Error response
+    "ErrorResponse",
     # Users
     "UserCreate",
     "UserDB",
@@ -120,7 +131,6 @@ __all__ = [
     "ProcessingConfigRead",
     "ProcessingConfigUpdate",
     # Processing Logs
-    "ProcessingLogBase",
     "ProcessingLogCreate",
     "ProcessingLogRead",
     "ProcessingLogUpdate",

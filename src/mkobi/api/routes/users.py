@@ -15,7 +15,16 @@ from mkobi.api.deps import (
     CurrentUser,
     get_db_dependency,
     get_user_service,
-    require_admin_role,
+)
+from mkobi.api.schemas.responses import (
+    admin_responses,
+    auth_protected_responses,
+    error_401,
+    error_403,
+    error_404,
+    error_422,
+    error_429,
+    error_500,
 )
 from mkobi.models.enums import ErrorCode, UserRole
 from mkobi.models.user import UserCreateRequest, UserRead, UserUpdateRequest
@@ -33,7 +42,7 @@ router = APIRouter(prefix="/users", tags=["users"], redirect_slashes=False)
     status_code=status.HTTP_201_CREATED,
     summary="Create user",
     description="Creates a new user. Admin only.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def create_user_endpoint(
     user_data: UserCreateRequest,
@@ -83,7 +92,7 @@ async def create_user_endpoint(
     status_code=status.HTTP_200_OK,
     summary="List all users",
     description="Returns list of all users. Admin only.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def get_users_endpoint(
     user_service: UserService = Depends(get_user_service),
@@ -121,6 +130,14 @@ async def get_users_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Get user by ID",
     description="Returns user data by ID. Users can get their own data, admins can get any.",
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def get_user_endpoint(
     user_id: UUID,
@@ -187,7 +204,7 @@ async def get_user_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Update user role",
     description="Updates user role. Admin only.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def update_user_endpoint(
     user_id: UUID,
@@ -248,6 +265,7 @@ async def update_user_endpoint(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete own account",
     description="Deletes the current user's account.",
+    responses=auth_protected_responses,
 )
 async def delete_me_endpoint(
     current_user: CurrentUser,
@@ -299,7 +317,7 @@ async def delete_me_endpoint(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete user",
     description="Deletes a user from the system. Admin only.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def delete_user_endpoint(
     user_id: UUID,

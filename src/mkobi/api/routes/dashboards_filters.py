@@ -9,7 +9,6 @@ from typing import Any
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, status
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
@@ -17,9 +16,9 @@ from mkobi.api.deps import (
     get_db_dependency,
     get_dashboard_filter_repository,
     get_filter_repository,
-    require_admin_role,
     require_dashboard_read_access,
 )
+from mkobi.api.schemas.responses import admin_responses
 from mkobi.models.enums import ErrorCode
 from mkobi.models.user import UserRead
 from mkobi.utils.exceptions import AppException
@@ -35,7 +34,7 @@ router = APIRouter(tags=["dashboards"])
     status_code=status.HTTP_200_OK,
     summary="Bind filter to dashboard",
     description="Binds a filter to a dashboard. Requires admin role.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def bind_filter_endpoint(
     dashboard_id: UUID,
@@ -66,42 +65,17 @@ async def bind_filter_endpoint(
         return {"message": "Filter bound to dashboard", "bound": result}
     except AppException:
         raise
-    except IntegrityError:
-        await db.rollback()
+    except Exception as e:
         logger.error(
-            "Integrity error binding filter to dashboard dashboard_id=%s, filter_id=%s",
-            dashboard_id,
-            filter_id,
-            exc_info=True,
-        )
-        raise AppException(
-            code=ErrorCode.FILTER_ALREADY_BOUND,
-            detail="Conflict: filter binding failed",
-        ) from None
-    except ValueError as e:
-        await db.rollback()
-        logger.error(
-            "Validation error binding filter to dashboard dashboard_id=%s, filter_id=%s: %s",
+            "Error binding filter to dashboard dashboard_id=%s, filter_id=%s: %s",
             dashboard_id,
             filter_id,
             e,
             exc_info=True,
         )
         raise AppException(
-            code=ErrorCode.VALIDATION_ERROR,
-            detail=str(e),
-        ) from e
-    except Exception:
-        await db.rollback()
-        logger.error(
-            "Error binding filter to dashboard dashboard_id=%s, filter_id=%s",
-            dashboard_id,
-            filter_id,
-            exc_info=True,
-        )
-        raise AppException(
             code=ErrorCode.INTERNAL_ERROR,
-            detail="Internal server error",
+            detail="Error binding filter",
         ) from None
 
 
@@ -110,7 +84,7 @@ async def bind_filter_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Unbind filter from dashboard",
     description="Unbinds a filter from a dashboard. Requires admin role.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def unbind_filter_endpoint(
     dashboard_id: UUID,
@@ -139,42 +113,17 @@ async def unbind_filter_endpoint(
             )
     except AppException:
         raise
-    except IntegrityError:
-        await db.rollback()
+    except Exception as e:
         logger.error(
-            "Integrity error unbinding filter from dashboard dashboard_id=%s, filter_id=%s",
-            dashboard_id,
-            filter_id,
-            exc_info=True,
-        )
-        raise AppException(
-            code=ErrorCode.DUPLICATE_RESOURCE,
-            detail="Conflict: filter unbinding failed",
-        ) from None
-    except ValueError as e:
-        await db.rollback()
-        logger.error(
-            "Validation error unbinding filter from dashboard dashboard_id=%s, filter_id=%s: %s",
+            "Error unbinding filter from dashboard dashboard_id=%s, filter_id=%s: %s",
             dashboard_id,
             filter_id,
             e,
             exc_info=True,
         )
         raise AppException(
-            code=ErrorCode.VALIDATION_ERROR,
-            detail=str(e),
-        ) from e
-    except Exception:
-        await db.rollback()
-        logger.error(
-            "Error unbinding filter from dashboard dashboard_id=%s, filter_id=%s",
-            dashboard_id,
-            filter_id,
-            exc_info=True,
-        )
-        raise AppException(
             code=ErrorCode.INTERNAL_ERROR,
-            detail="Internal server error",
+            detail="Error unbinding filter",
         ) from None
 
 
@@ -184,6 +133,7 @@ async def unbind_filter_endpoint(
     status_code=status.HTTP_200_OK,
     summary="List dashboard filters",
     description="Returns all filters bound to a dashboard.",
+    responses=admin_responses,
 )
 async def get_dashboard_filters_endpoint(
     dashboard_id: UUID,

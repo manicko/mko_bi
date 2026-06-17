@@ -10,17 +10,23 @@ from mkobi.api.deps import (
     CurrentUser,
     get_db_dependency,
     get_processing_config_service,
-    require_editor_role,
-    require_viewer_role,
+)
+from mkobi.api.schemas.responses import (
+    error_401,
+    error_403,
+    error_404,
+    error_422,
+    error_429,
+    error_500,
 )
 from mkobi.models.processing_configs import (
     ProcessingConfigRead,
     ProcessingConfigUpdate,
 )
-from mkobi.services.processing_config_service import ProcessingConfigService
 from mkobi.models.enums import ErrorCode
 from mkobi.utils.exceptions import AppException
 from mkobi.core.permissions import check_dashboard_access
+from mkobi.services.processing_config_service import ProcessingConfigService
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +37,14 @@ router = APIRouter(prefix="/processing-configs", tags=["processing_configs"], re
     "/{dashboard_id}",
     response_model=ProcessingConfigRead,
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(require_viewer_role)],
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def get_config_endpoint(
     dashboard_id: UUID,
@@ -102,7 +115,14 @@ async def get_config_endpoint(
     "/{dashboard_id}",
     response_model=ProcessingConfigRead,
     status_code=status.HTTP_200_OK,
-    dependencies=[Depends(require_editor_role)],
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def upsert_config_endpoint(
     dashboard_id: UUID,
@@ -184,7 +204,14 @@ async def upsert_config_endpoint(
 @router.delete(
     "/{dashboard_id}",
     status_code=status.HTTP_204_NO_CONTENT,
-    dependencies=[Depends(require_editor_role)],
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def delete_config_endpoint(
     dashboard_id: UUID,

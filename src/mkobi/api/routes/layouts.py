@@ -15,6 +15,15 @@ from mkobi.api.deps import (
     CurrentUser,
     get_layout_service,
 )
+from mkobi.api.schemas.responses import (
+    auth_protected_responses,
+    error_401,
+    error_403,
+    error_404,
+    error_422,
+    error_429,
+    error_500,
+)
 from mkobi.core.permissions import check_dashboard_access
 from mkobi.db.repositories.access_repo import AccessRepository
 from mkobi.models.enums import ErrorCode, UserRole
@@ -37,6 +46,13 @@ router = APIRouter(prefix="/layouts", tags=["layouts"], redirect_slashes=False)
     status_code=status.HTTP_201_CREATED,
     summary="Create layout",
     description="Creates a new layout. Admin only.",
+    responses={
+        401: error_401,
+        403: error_403,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def create_layout_endpoint(
     layout: LayoutCreate,
@@ -109,6 +125,7 @@ async def create_layout_endpoint(
     status_code=status.HTTP_200_OK,
     summary="List layouts",
     description="Returns list of layouts. Non-admin users see layouts from accessible dashboards only.",
+    responses=auth_protected_responses,
 )
 async def get_layouts_endpoint(
     current_user: CurrentUser,
@@ -163,6 +180,14 @@ async def get_layouts_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Get layout by ID",
     description="Returns layout data by ID. Requires read access to associated dashboard.",
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def get_layout_endpoint(
     layout_id: UUID,
@@ -249,6 +274,14 @@ async def get_layout_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Update layout",
     description="Updates layout data. Admin only.",
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def update_layout_endpoint(
     layout_id: UUID,
@@ -329,6 +362,14 @@ async def update_layout_endpoint(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete layout",
     description="Deletes a layout. Admin only.",
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def delete_layout_endpoint(
     layout_id: UUID,

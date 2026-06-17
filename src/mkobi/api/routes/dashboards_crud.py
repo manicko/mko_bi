@@ -14,11 +14,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mkobi.api.deps import (
     CurrentUser,
     get_db_dependency,
-    require_admin_role,
-    require_viewer_role,
-    require_editor_role,
     get_dashboard_service,
     check_dashboard_access,
+)
+from mkobi.api.schemas.responses import (
+    admin_responses,
+    auth_protected_responses,
+    error_401,
+    error_403,
+    error_404,
+    error_422,
+    error_429,
+    error_500,
 )
 from mkobi.models.dashboard import (
     DashboardAdmin,
@@ -43,7 +50,7 @@ router = APIRouter(tags=["dashboards"], redirect_slashes=False)
     status_code=status.HTTP_200_OK,
     summary="List all dashboards (admin)",
     description="Returns list of all dashboards. Available only to admins.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def get_dashboards_admin_endpoint(
     db: AsyncSession = Depends(get_db_dependency),
@@ -85,7 +92,7 @@ async def get_dashboards_admin_endpoint(
     status_code=status.HTTP_201_CREATED,
     summary="Create dashboard",
     description="Creates new dashboard. Available only to admins.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def create_dashboard_endpoint(
     dashboard_data: DashboardCreate,
@@ -158,6 +165,7 @@ async def create_dashboard_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Get user dashboards",
     description="Returns list of dashboards available to current user.",
+    responses=auth_protected_responses,
 )
 async def get_my_dashboards_endpoint(
     current_user: CurrentUser,
@@ -207,7 +215,14 @@ async def get_my_dashboards_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Get dashboard by ID",
     description="Returns dashboard data by its ID with access check.",
-    dependencies=[Depends(require_viewer_role)],
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def get_dashboard_endpoint(
     dashboard_id: UUID,
@@ -270,7 +285,6 @@ async def get_dashboard_endpoint(
             "Error getting dashboard dashboard_id=%s: %s",
             dashboard_id,
             e,
-            exc_info=True,
         )
         raise AppException(
             code=ErrorCode.INTERNAL_ERROR,
@@ -284,7 +298,14 @@ async def get_dashboard_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Update dashboard",
     description="Updates dashboard configuration. Available to admins or editors with edit access.",
-    dependencies=[Depends(require_editor_role)],
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def update_dashboard_endpoint(
     dashboard_id: UUID,
@@ -379,7 +400,14 @@ async def update_dashboard_endpoint(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete dashboard",
     description="Deletes dashboard. Available to admins or users with admin access to the dashboard.",
-    dependencies=[Depends(require_editor_role)],
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def delete_dashboard_endpoint(
     dashboard_id: UUID,

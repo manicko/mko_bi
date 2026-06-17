@@ -25,6 +25,11 @@ from mkobi.api.deps import (
     require_admin_role,
     get_db_dependency,
 )
+from mkobi.api.schemas.responses import (
+    admin_responses,
+    auth_protected_responses,
+    auth_public_responses,
+)
 from mkobi.db.repositories.user_repo import UserRepository
 from mkobi.config import get_config
 from mkobi.core.logging_config import get_logger
@@ -127,6 +132,7 @@ async def _handle_login(
     status_code=status.HTTP_200_OK,
     summary="User login",
     description="Authenticates user by email and password, returns JWT token with user data.",
+    responses=auth_public_responses,
 )
 async def login(
     request: Request,
@@ -154,6 +160,7 @@ async def login(
     status_code=status.HTTP_200_OK,
     summary="User login (form)",
     description="Authentication via OAuth2 form. Calls common /login logic.",
+    responses=auth_public_responses,
 )
 async def login_form(
     request: Request,
@@ -181,6 +188,7 @@ async def login_form(
     status_code=status.HTTP_201_CREATED,
     summary="User registration (admin-only, deprecated for public)",
     description="Creates new user directly. Admin only. Public users should use /register-request instead.",
+    responses=admin_responses,
 )
 async def register(
     register_data: RegisterRequest,
@@ -259,6 +267,7 @@ async def register(
     status_code=status.HTTP_200_OK,
     summary="Refresh token",
     description="Refreshes expired JWT access token using httpOnly refresh token cookie.",
+    responses=auth_public_responses,
 )
 async def refresh(
     request: Request,
@@ -372,6 +381,7 @@ async def refresh(
     status_code=status.HTTP_200_OK,
     summary="Get current user data",
     description="Returns data of the currently authenticated user.",
+    responses=auth_protected_responses,
 )
 async def get_current_user_info(
     current_user: UserRead = Depends(get_current_user_dependency),
@@ -396,6 +406,7 @@ async def get_current_user_info(
     status_code=status.HTTP_200_OK,
     summary="User logout",
     description="Logout current user by revoking tokens and clearing refresh token cookie.",
+    responses=auth_protected_responses,
 )
 async def logout(
     request: Request,
@@ -449,6 +460,7 @@ async def logout(
     status_code=status.HTTP_200_OK,
     summary="Change password",
     description="Change current user password. Requires current password verification.",
+    responses=auth_protected_responses,
 )
 async def change_password(
     password_data: ChangePasswordRequest,
@@ -508,6 +520,7 @@ async def change_password(
     status_code=status.HTTP_201_CREATED,
     summary="Registration request",
     description="Creates registration request. Admin must approve the request.",
+    responses=auth_public_responses,
 )
 async def register_request(
     request_data: RegistrationRequestCreate,

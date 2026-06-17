@@ -16,9 +16,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from mkobi.api.deps import (
     get_db_dependency as get_db,
     get_graph_repository,
-    require_admin_role,
     CurrentUser,
     check_dashboard_access,
+)
+from mkobi.api.schemas.responses import (
+    auth_protected_responses,
+    error_401,
+    error_403,
+    error_404,
+    error_409,
+    error_422,
+    error_429,
+    error_500,
 )
 from mkobi.models.graph import (
     GraphCreate,
@@ -42,7 +51,15 @@ router = APIRouter(prefix="/graphs", tags=["graphs"], redirect_slashes=False)
     status_code=status.HTTP_201_CREATED,
     summary="Create a new graph",
     description="Creates a new graph. Requires admin role and dashboard access.",
-    dependencies=[Depends(require_admin_role)],
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        409: error_409,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def create_graph_endpoint(
     graph: GraphCreate,
@@ -128,6 +145,7 @@ async def create_graph_endpoint(
     status_code=status.HTTP_200_OK,
     summary="List all graphs",
     description="Returns a list of graphs available to the user.",
+    responses=auth_protected_responses,
 )
 async def get_graphs_endpoint(
     current_user: CurrentUser,
@@ -180,6 +198,14 @@ async def get_graphs_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Get graph by ID",
     description="Returns graph data by its ID.",
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def get_graph_endpoint(
     graph_id: UUID,
@@ -250,7 +276,15 @@ async def get_graph_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Update graph",
     description="Updates graph data. Requires admin role and dashboard access.",
-    dependencies=[Depends(require_admin_role)],
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        409: error_409,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def update_graph_endpoint(
     graph_id: UUID,
@@ -359,7 +393,14 @@ async def update_graph_endpoint(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete graph",
     description="Deletes a graph. Requires admin role and dashboard access.",
-    dependencies=[Depends(require_admin_role)],
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def delete_graph_endpoint(
     graph_id: UUID,

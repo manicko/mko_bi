@@ -8,6 +8,7 @@ import logging
 
 from fastapi import APIRouter, Request, status
 
+from mkobi.api.schemas.responses import auth_public_responses
 from mkobi.config import get_config
 from mkobi.core import redis_client
 from mkobi.core.security import AsyncRateLimiter
@@ -25,6 +26,7 @@ router = APIRouter(prefix="/client-errors", tags=["client-errors"], redirect_sla
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Report client-side error",
     description="Accepts client error details for logging. No authentication required.",
+    responses=auth_public_responses,
 )
 async def report_client_error(payload: ClientErrorPayload, request: Request) -> None:
     """Report client-side error.

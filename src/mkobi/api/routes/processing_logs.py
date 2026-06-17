@@ -17,6 +17,7 @@ from mkobi.api.deps import (
     get_processing_log_service,
     require_admin_role,
 )
+from mkobi.api.schemas.responses import admin_responses
 from mkobi.core.logging_config import get_logger
 from mkobi.models.enums import ErrorCode, ProcessingStatus
 from mkobi.models.processing_logs import ProcessingLogFilter, ProcessingLogRead
@@ -34,6 +35,7 @@ logger = get_logger(__name__)
     response_model=list[ProcessingLogRead],
     summary="Get processing logs",
     description="Returns list of processing logs with filtering and pagination. Admin only.",
+    responses=admin_responses,
 )
 async def get_logs_endpoint(
     dashboard_id: UUID | None = Query(
@@ -99,6 +101,7 @@ async def get_logs_endpoint(
     response_model=ProcessingLogRead,
     summary="Get log by ID",
     description="Returns processing log details by ID. Admin only.",
+    responses=admin_responses,
 )
 async def get_log_endpoint(
     log_id: UUID,

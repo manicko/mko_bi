@@ -18,10 +18,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.api.deps import (
     CurrentUser,
-    require_viewer_role,
     get_data_service,
     get_db_dependency,
     get_graph_repository,
+)
+from mkobi.api.schemas.responses import (
+    auth_protected_responses,
 )
 from mkobi.core.permissions import check_dashboard_access, DashboardPermissionError
 from mkobi.models.data import ProcessingResultData, AggregatedDataResponse, GraphDataResponse
@@ -40,7 +42,7 @@ router = APIRouter(prefix="/data", tags=["data"], redirect_slashes=False)
     status_code=status.HTTP_200_OK,
     summary="Get dashboard aggregated data",
     description="Returns data for all dashboard charts with applied filters.",
-    dependencies=[Depends(require_viewer_role)],
+    responses=auth_protected_responses,
 )
 async def get_aggregated_data_endpoint(
     current_user: CurrentUser,

@@ -14,9 +14,9 @@ from mkobi.api.deps import (
     get_registration_request_repository,
     get_user_service,
     get_redis_client_dependency,
-    require_admin_role,
     get_temp_password_store,
 )
+from mkobi.api.schemas.responses import admin_responses
 from mkobi.interfaces import IUserService
 from mkobi.models.enums import ErrorCode, RegistrationStatus, UserRole
 from mkobi.utils.exceptions import AppException
@@ -40,7 +40,7 @@ router = APIRouter(prefix="/admin", tags=["admin"], redirect_slashes=False)
     status_code=status.HTTP_200_OK,
     summary="List all users (admin)",
     description="Returns list of all users. Admin only.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def get_users_admin_endpoint(
     user_service: IUserService = Depends(get_user_service),
@@ -64,7 +64,7 @@ async def get_users_admin_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Update user role (admin)",
     description="Updates user role. Admin only.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def update_user_role_admin_endpoint(
     user_id: UUID,
@@ -101,7 +101,7 @@ async def update_user_role_admin_endpoint(
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete user (admin)",
     description="Deletes a user. Admin only.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def delete_user_admin_endpoint(
     user_id: UUID,
@@ -137,7 +137,7 @@ async def delete_user_admin_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Update user active status (admin)",
     description="Deactivates or reactivates a user. Revokes all tokens on deactivation. Admin only.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def update_user_active_admin_endpoint(
     user_id: UUID,
@@ -194,7 +194,7 @@ async def update_user_active_admin_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Reset user password (admin)",
     description="Generates a temporary password, sets force_password_change flag.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def reset_user_password_admin_endpoint(
     user_id: UUID,
@@ -245,7 +245,7 @@ async def reset_user_password_admin_endpoint(
     status_code=status.HTTP_200_OK,
     summary="List registration requests (admin)",
     description="Returns list of all registration requests. Admin only.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def get_registration_requests_admin_endpoint(
     db: AsyncSession = Depends(get_db_dependency),
@@ -269,7 +269,7 @@ async def get_registration_requests_admin_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Approve registration request (admin)",
     description="Approves a registration request and creates user. Admin only.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def approve_registration_request_admin_endpoint(
     request_id: UUID,
@@ -345,7 +345,7 @@ async def approve_registration_request_admin_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Reject registration request (admin)",
     description="Rejects a registration request. Admin only.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def reject_registration_request_admin_endpoint(
     request_id: UUID,
@@ -399,7 +399,7 @@ async def reject_registration_request_admin_endpoint(
     status_code=status.HTTP_200_OK,
     summary="Retrieve temporary password (admin)",
     description="Returns a one-time temporary password. Admin only. Password is deleted after retrieval.",
-    dependencies=[Depends(require_admin_role)],
+    responses=admin_responses,
 )
 async def retrieve_temp_password_admin_endpoint(
     retrieval_token: str,

@@ -15,6 +15,14 @@ from mkobi.api.deps import (
     require_dashboard_read_access,
     get_filter_values_service,
 )
+from mkobi.api.schemas.responses import (
+    error_401,
+    error_403,
+    error_404,
+    error_422,
+    error_429,
+    error_500,
+)
 from mkobi.models.data import FilterValuesResponse
 from mkobi.models.enums import ErrorCode
 from mkobi.models.user import UserRead
@@ -32,6 +40,14 @@ router = APIRouter(tags=["dashboards"])
     status_code=status.HTTP_200_OK,
     summary="Get filter values for a dashboard",
     description="Returns distinct filter values for a specified filter/dimension name.",
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def get_filter_values_endpoint(
     dashboard_id: UUID,

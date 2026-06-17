@@ -19,6 +19,15 @@ from mkobi.api.deps import (
     require_admin_role,
     require_dashboard_read_access,
 )
+from mkobi.api.schemas.responses import (
+    error_401,
+    error_403,
+    error_404,
+    error_409,
+    error_422,
+    error_429,
+    error_500,
+)
 from mkobi.models.enums import ErrorCode
 from mkobi.models.graph import GraphCreate, GraphRead
 from mkobi.models.user import UserRead
@@ -36,6 +45,14 @@ router = APIRouter(tags=["dashboards"])
     status_code=status.HTTP_201_CREATED,
     summary="Create a new graph for a dashboard",
     description="Creates a new graph for a specific dashboard. Requires admin role.",
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        409: error_409,
+        422: error_422,
+        500: error_500,
+    },
     dependencies=[Depends(require_admin_role)],
 )
 async def create_dashboard_graph_endpoint(
@@ -120,6 +137,14 @@ async def create_dashboard_graph_endpoint(
     status_code=status.HTTP_200_OK,
     summary="List graphs for a dashboard",
     description="Returns a list of all graphs for a specific dashboard.",
+    responses={
+        401: error_401,
+        403: error_403,
+        404: error_404,
+        422: error_422,
+        429: error_429,
+        500: error_500,
+    },
 )
 async def get_dashboard_graphs_endpoint(
     dashboard_id: UUID,
