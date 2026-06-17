@@ -7,3 +7,9 @@
 # Enforce LF for config files used by Linux containers
 *.conf text eol=lf
 *.cfg text eol=lf
+
+# Enforce LF and UTF-8 for source files (Windows editors may save with BOM)
+*.tsx text eol=lf
+*.ts text eol=lf
+*.jsx text eol=lf
+*.js text eol=lf
