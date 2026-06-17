@@ -1,7 +1,7 @@
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link } from 'react-router-dom'
-import { useAuth } from '../'
+import { useAuth } from '../model/useAuth'
 import { Box, Button, TextField, Typography, Alert } from '@mui/material'
 import { useState } from 'react'
 import { registerSchema, type RegisterFormData } from '../../../shared/types/formSchemas'

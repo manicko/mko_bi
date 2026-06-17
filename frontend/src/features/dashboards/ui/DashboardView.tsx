@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useState, lazy, Suspense } from 'react'
 import { useParams } from 'react-router-dom'
 import {
   Typography,
@@ -10,12 +10,15 @@ import {
   Stack,
 } from '@mui/material'
 import { useDashboard, useAggregatedData, useInvalidateDashboard } from '../api/dashboardApi'
-import { UploadModal } from '../../upload/ui/UploadModal'
 import { DashboardFilters } from './DashboardFilters'
 import { ChartRenderer } from './charts/ChartRenderer'
 import { SkeletonChart } from './charts/SkeletonChart'
 import type { GraphDataWithConfig, FilterDetail } from '../../../shared/types/api.types'
 import type { FilterType } from '../../../shared/types/enums'
+
+const UploadModal = lazy(() =>
+  import('../../upload/ui/UploadModal').then((module) => ({ default: module.UploadModal })),
+)
 
 export function DashboardView() {
   const { id } = useParams<{ id: string }>()
@@ -152,17 +155,19 @@ export function DashboardView() {
         </Grid>
       </Grid>
 
-      <UploadModal
-        open={uploadModalOpen}
-        onClose={() => setUploadModalOpen(false)}
-        dashboardId={id || ''}
-        onUploadComplete={() => {
-          setUploadModalOpen(false)
-          if (id) {
-            void invalidateAggregatedData(id)
-          }
-        }}
-      />
+      <Suspense fallback={null}>
+        <UploadModal
+          open={uploadModalOpen}
+          onClose={() => setUploadModalOpen(false)}
+          dashboardId={id || ''}
+          onUploadComplete={() => {
+            setUploadModalOpen(false)
+            if (id) {
+              void invalidateAggregatedData(id)
+            }
+          }}
+        />
+      </Suspense>
     </Stack>
   )
 }

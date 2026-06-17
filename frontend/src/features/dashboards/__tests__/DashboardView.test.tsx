@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { Suspense } from 'react'
 
 // Mock react-router-dom
 vi.mock('react-router-dom', () => ({
@@ -27,7 +28,7 @@ vi.mock('../ui/DashboardFilters', () => ({
   DashboardFilters: () => <div data-testid="dashboard-filters">Filters Component</div>,
 }))
 
-// Mock UploadModal
+// Mock UploadModal with lazy/suspense-compatible mock
 vi.mock('../../upload/ui/UploadModal', () => ({
   UploadModal: () => null,
 }))
@@ -90,7 +91,11 @@ const createWrapper = () => {
     },
   })
   return ({ children }: { children: React.ReactNode }) => (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <Suspense fallback={null}>
+        {children}
+      </Suspense>
+    </QueryClientProvider>
   )
 }
 

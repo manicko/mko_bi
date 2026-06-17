@@ -1,10 +1,6 @@
 import { axiosInstance } from '../../../shared/api/axiosInstance'
-import type { UserProfile, ChangePasswordRequest } from '../../../shared/types/api.types'
-
-export async function getProfile(): Promise<UserProfile> {
-  const response = await axiosInstance.get<UserProfile>('/auth/me')
-  return response.data
-}
+import type { ChangePasswordRequest } from '../../../shared/types/api.types'
+export { getProfile } from '../../auth/api/authApi'
 
 export async function deleteAccount(): Promise<void> {
   await axiosInstance.delete('/users/me')

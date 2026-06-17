@@ -6,6 +6,8 @@ import { getProfile, deleteAccount } from '../api/userApi'
 import { useAuth } from '../../auth/model/useAuth'
 import { toast } from 'react-hot-toast'
 
+// getProfile is re-exported from authApi.ts to maintain backwards compatibility
+
 export function UserProfile() {
   const navigate = useNavigate()
   const { logout } = useAuth()
