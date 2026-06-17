@@ -2,7 +2,7 @@ id: TASK_FE006_standardize_useAuth_import
 
 title: Fix FE-006 — Standardize useAuth import path in RegisterForm
 
-status: pending
+status: done
 
 priority: low
 

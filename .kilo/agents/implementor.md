@@ -4,24 +4,18 @@ mode: all
 color: "#10B981"
 
 permission:
-  read:
+  read: 
     "*": allow
     "*.env": allow
-    "C:\\py_dev\\mkobi\\.env": allow
-    "C:\\py_dev\\mkobi\\docker\\.env": allow
-    "C:\\py_dev\\mkobi\\docker\\.env*": allow
-    "C:\\py_dev\\mkobi\\docker\\.env.development": allow
-    "C:\\py_dev\\mkobi\\docker\\.env.production": allow
+    "*.env.*": allow
+
   grep: allow
   glob: allow
   edit:
     "*": allow
     "*.env": allow
-    "C:\\py_dev\\mkobi\\docker\\.env": allow
-    "C:\\py_dev\\mkobi\\.env": allow
-    "C:\\py_dev\\mkobi\\docker\\.env*": allow
-    "C:\\py_dev\\mkobi\\docker\\.env.development": allow
-    "C:\\py_dev\\mkobi\\docker\\.env.production": allow
+    "*.env.*": allow
+    
   bash:
     "*": allow
 

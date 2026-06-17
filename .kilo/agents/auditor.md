@@ -8,18 +8,8 @@ permission:
    read: 
     "*": allow
     "*.env": allow
-    "docker\\.env": allow
-    "docker\\.env.example": allow
-    "docker\\.env.development": allow
-    "docker\\.env.production": allow
-    ".env": allow
-    ".env.example": allow
-    "C:\\py_dev\\mkobi\\.env": allow
-    "C:\\py_dev\\mkobi\\.env.example": allow
-    "C:\\py_dev\\mkobi\\docker\\.env": allow
-    "C:\\py_dev\\mkobi\\docker\\.env.example": allow
-    "C:\\py_dev\\mkobi\\docker\\.env.development": allow
-    "C:\\py_dev\\mkobi\\docker\\.env.production": allow
+    "*.env.*": allow
+
    grep: allow
    glob: allow
    todoread: allow
@@ -33,6 +23,8 @@ permission:
      "*": deny
 
    bash:
+    # === DEFAULT: allow everything else ===
+     "*": allow
      # === READ-ONLY: always allowed ===
      "docker compose": allow
      "docker compose config*": allow
@@ -178,9 +170,6 @@ permission:
      "chmod -R 000 *": ask
      "chmod -R 777 *": ask
      "chown -R *": ask
-
-     # === DEFAULT: allow everything else ===
-     "*": allow
    
 ---
 

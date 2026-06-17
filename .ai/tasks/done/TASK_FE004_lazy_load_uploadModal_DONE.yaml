@@ -2,7 +2,7 @@ id: TASK_FE004_lazy_load_uploadModal
 
 title: Fix FE-004 — Convert UploadModal import to lazy() in DashboardView
 
-status: pending
+status: completed
 
 priority: medium
 

@@ -4,7 +4,11 @@ mode: all
 color: "#F59E0B"
 
 permission:
-  read: allow
+  read: 
+    "*": allow
+    "*.env": allow
+    "*.env.*": allow
+  
   grep: allow
   glob: allow
   task: allow
