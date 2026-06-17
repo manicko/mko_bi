@@ -13,6 +13,7 @@ import { useDashboard, useAggregatedData, useInvalidateDashboard } from '../api/
 import { UploadModal } from '../../upload/ui/UploadModal'
 import { DashboardFilters } from './DashboardFilters'
 import { ChartRenderer } from './charts/ChartRenderer'
+import { SkeletonChart } from './charts/SkeletonChart'
 import type { GraphDataWithConfig, FilterDetail } from '../../../shared/types/api.types'
 import type { FilterType } from '../../../shared/types/enums'
 
@@ -119,9 +120,7 @@ export function DashboardView() {
           }}
         >
           {dataLoading && (
-            <Stack sx={{ alignItems: 'center', p: 4 }}>
-              <CircularProgress />
-            </Stack>
+            <SkeletonChart count={dashboard.config.charts?.length ?? 1} />
           )}
 
           {dataError && (

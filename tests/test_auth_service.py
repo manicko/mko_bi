@@ -261,6 +261,27 @@ class TestAuthService:
 
         assert result is None
 
+    async def test_verify_token_expired(self, auth_service):
+        """Test that expired tokens are rejected and return None.
+
+        Creates a token with negative expires_delta to simulate an already-expired token.
+        The JWT library rejects expired tokens during decoding.
+        """
+        from datetime import timedelta
+
+        from mkobi.core.security import create_access_token
+
+        user_id = uuid4()
+        # Create token that expired 1 hour ago
+        expired_token = create_access_token(
+            {"user_id": str(user_id), "email": "expired@example.com", "role": UserRole.VIEWER},
+            expires_delta=timedelta(hours=-1),
+        )
+
+        result = auth_service.verify_token(expired_token)
+
+        assert result is None
+
     # --- refresh_token tests ---
 
     async def test_refresh_token_success(self, auth_service):

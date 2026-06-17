@@ -21,6 +21,7 @@
   layer: unknown
   imports:
     - '@tanstack/react-query'
+    - '@tanstack/react-query-devtools'
     - react-router-dom
     - '@mui/material/styles'
     - '@mui/material/CssBaseline'
@@ -397,6 +398,22 @@
   components:
     - RoleBasedAccess
   hooks: []
+  jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/shared/hooks/index.ts
+  module: C:.py_dev.mkobi.frontend.src.shared.hooks.index
+  layer: hook
+  imports: []
+  components: []
+  hooks: []
+  jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/shared/hooks/useApiError.ts
+  module: C:.py_dev.mkobi.frontend.src.shared.hooks.useApiError
+  layer: hook
+  imports:
+    - ../api/errorHandler
+  components: []
+  hooks:
+    - useApiError
   jsx_tags: []
 - path: C:/py_dev/mkobi/frontend/src/shared/hooks/useConfirmDialog.ts
   module: C:.py_dev.mkobi.frontend.src.shared.hooks.useConfirmDialog

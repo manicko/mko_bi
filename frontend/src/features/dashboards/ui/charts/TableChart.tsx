@@ -1,3 +1,5 @@
+import { formatDate } from '../../../../shared/utils/formatDate'
+
 interface TableChartData {
   columns?: string[]
   rows: Record<string, unknown>[]
@@ -14,6 +16,10 @@ function getDisplayValue(value: unknown): string {
   }
   if (typeof value === 'object') {
     return JSON.stringify(value)
+  }
+  // Handle date strings with consistent formatting
+  if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+    return formatDate(value)
   }
   // At this point value is string | number | boolean | bigint | symbol
   // eslint-disable-next-line @typescript-eslint/no-base-to-string

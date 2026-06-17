@@ -1,5 +1,7 @@
 """Tests for layouts API."""
 
+import pytest
+
 from fastapi import status
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -8,6 +10,7 @@ from mkobi.db.repositories.layout_repo import LayoutRepository
 from mkobi.models.enums import UserRole
 
 
+@pytest.mark.asyncio
 class TestLayoutsAPI:
     """Test cases for layouts API endpoints."""
 
@@ -345,3 +348,62 @@ class TestLayoutsAPI:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data["id"] == str(layout.id)
+
+    # --- Validation error tests ---
+
+    async def test_create_layout_missing_name_returns_422(
+        self, async_db_session: AsyncSession, authenticated_client: AsyncClient, test_user: dict
+    ) -> None:
+        """Test that creating layout without name returns validation error 422."""
+        response = await authenticated_client.post(
+            "/layouts",
+            json={"definition": {"grid": []}},
+        )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        data = response.json()
+        assert "detail" in data
+        # FastAPI validation errors contain an errors array
+        errors = data["detail"]
+        assert isinstance(errors, list)
+        # Find the error for the 'name' field
+        name_errors = [e for e in errors if "name" in e.get("loc", [])]
+        assert len(name_errors) > 0, "Expected validation error for 'name' field"
+
+    async def test_create_layout_missing_definition_returns_422(
+        self, async_db_session: AsyncSession, authenticated_client: AsyncClient, test_user: dict
+    ) -> None:
+        """Test that creating layout without definition returns validation error 422."""
+        response = await authenticated_client.post(
+            "/layouts",
+            json={"name": "test_layout_no_def"},
+        )
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        data = response.json()
+        assert "detail" in data
+        errors = data["detail"]
+        assert isinstance(errors, list)
+        # Find the error for the 'definition' field
+        definition_errors = [e for e in errors if "definition" in e.get("loc", [])]
+        assert len(definition_errors) > 0, "Expected validation error for 'definition' field"
+
+    async def test_create_layout_duplicate_name_returns_400(
+        self, async_db_session: AsyncSession, authenticated_client: AsyncClient, test_user: dict
+    ) -> None:
+        """Test that creating layout with duplicate name returns validation error."""
+        # Create first layout
+        repo = LayoutRepository()
+        await repo.create(
+            db=async_db_session,
+            name="duplicate_test_layout",
+            definition={"grid": []},
+        )
+        await async_db_session.flush()
+
+        # Try to create another layout with same name
+        response = await authenticated_client.post(
+            "/layouts",
+            json={"name": "duplicate_test_layout", "definition": {"grid": []}},
+        )
+        assert response.status_code == status.HTTP_400_BAD_REQUEST
+        data = response.json()
+        assert "already exists" in data["detail"].lower()

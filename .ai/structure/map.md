@@ -1,5 +1,5 @@
 Folder PATH listing for volume Windows
-Volume serial number is 000001E1 F012:D5D6
+Volume serial number is 000001A2 F012:D5D6
 C:\PY_DEV\MKOBI
 |   $null
 |   .coverage
@@ -110,11 +110,74 @@ C:\PY_DEV\MKOBI
 |   |           
 |   +---tasks
 |   |   +---done
+|   |   |       TASK_001_dp08_independent_session_for_failed_status_DONE.yaml
+|   |   |       TASK_002_dp02_clear_filter_values_append_mode_DONE.yaml
+|   |   |       TASK_004_dp01_remove_dead_datapipeline_class_DONE.yaml
+|   |   |       TASK_009_db001_fix_cleanup_old_logs_filter_DONE.yaml
+|   |   |       TASK_012_be001_fix_jwt_secret_test_for_container_DONE.yaml
+|   |   |       TASK_013_be002_update_mime_validation_test_regex_DONE.yaml
+|   |   |       TASK_015_be004_remove_redundant_cast_calls_DONE.yaml
+|   |   |       TASK_016_sec03_env_weak_passwords_guard_DONE.yaml
+|   |   |       TASK_017_sec04_cookie_secure_dev_override_DONE.yaml
+|   |   |       TASK_018_inf005_standardize_rqworker_command_DONE.yaml
+|   |   |       TASK_021_dc001_remove_xframe_from_app_DONE.yaml
+|   |   |       TASK_022_dc002_add_health_detailed_proxy_DONE.yaml
+|   |   |       TASK_023_dc003_fix_ratelimiter_doc_DONE.yaml
+|   |   |       TASK_024_dc004_weak_passwords_startup_warning_DONE.yaml
+|   |   |       TASK_025_dc006_refuse_placeholder_admin_password_DONE.yaml
+|   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
 |   |   |       task_template.yaml
 |   |   |       
 |   |   +---todo
+|   |   |       order.yaml
+|   |   |       TASK_011_db003_document_external_index_in_migration.yaml
+|   |   |       TASK_014_be003_fix_ruff_cache_permissions_in_tests.yaml
+|   |   |       TASK_019_inf006_db_port_bind_localhost.yaml
+|   |   |       TASK_020_inf007_fix_postgresql_healthcheck.yaml
+|   |   |       TASK_026_dc007_add_index_dashboards_method.yaml
+|   |   |       TASK_027_dc008_add_index_processing_logs_method.yaml
+|   |   |       TASK_028_dc009_add_index_filter_values_method.yaml
+|   |   |       TASK_029_dc010_align_rq_cooldown_docs.yaml
+|   |   |       TASK_030_fe002_add_react_query_devtools.yaml
+|   |   |       TASK_031_fe003_add_error_boundary.yaml
+|   |   |       TASK_032_fe004_fix_mui_lab_loadingbutton_deprecation.yaml
+|   |   |       TASK_033_fe006_consolidate_error_query_hooks.yaml
+|   |   |       TASK_034_fe007_add_debounce_to_filter_search.yaml
+|   |   |       TASK_035_fe008_add_zod_password_validation.yaml
+|   |   |       TASK_036_fe009_add_loading_skeleton.yaml
+|   |   |       TASK_037_fe010_add_date_fns_formatting.yaml
+|   |   |       TASK_038_tst004_rq_worker_retry_unit_test.yaml
+|   |   |       TASK_039_tst005_add_upload_mime_test.yaml
+|   |   |       TASK_040_tst006_add_expired_token_test.yaml
+|   |   |       TASK_041_tst007_add_concurrent_upload_test.yaml
+|   |   |       TASK_042_tst008_add_layout_crud_integration_test.yaml
+|   |   |       TASK_043_int002_add_openapi_error_schemas.yaml
+|   |   |       TASK_044_int003_add_cors_preflight_test.yaml
+|   |   |       TASK_045_int004_add_redis_connection_retry_test.yaml
+|   |   |       TASK_046_int005_add_db_connection_pool_exhaustion_test.yaml
+|   |   |       TASK_047_int006_add_rate_limiting_test.yaml
+|   |   |       TASK_048_int007_add_file_cleanup_test.yaml
+|   |   |       TASK_049_int008_add_dashboard_access_cascade_test.yaml
+|   |   |       TASK_050_int009_add_filter_values_consistency_test.yaml
+|   |   |       TASK_051_int010_add_auth_token_revocation_test.yaml
+|   |   |       TASK_052_int011_fix_frontend_env_validation.yaml
+|   |   |       TASK_053_int012_add_health_endpoint_test.yaml
+|   |   |       TASK_054_int013_add_websocket_reconnect_test.yaml
+|   |   |       TASK_055_research_placeholder_page_usage.yaml
+|   |   |       TASK_056_research_access_denied_usage.yaml
+|   |   |       TASK_057_int016_add_upload_progress_websocket_test.yaml
+|   |   |       TASK_058_int017_add_dashboard_filter_persistence_test.yaml
+|   |   |       TASK_059_int018_add_registration_flow_test.yaml
+|   |   |       TASK_060_int019_add_admin_user_management_test.yaml
+|   |   |       TASK_061_int020_add_data_export_test.yaml
+|   |   |       TASK_062_verify_data_processing_stage1.yaml
+|   |   |       TASK_063_verify_database_stage1.yaml
+|   |   |       TASK_064_verify_security_config_stage1.yaml
+|   |   |       TASK_065_verify_docker_stage1.yaml
+|   |   |       TASK_066_verify_frontend_stage1.yaml
+|   |   |       
 |   |   \---validation
 |   \---templates
 |           decision.md
@@ -4307,13 +4370,18 @@ C:\PY_DEV\MKOBI
 |   |       999224519614300536
 |   |       
 |   \---0.15.17
+|           10330102234014088215
+|           118243083711576204
 |           12677494854074373733
+|           12786802193448836532
 |           13837011016437660755
 |           15070302777659503799
 |           15141806382368711934
 |           17542036672745001782
 |           3191942672172237307
+|           3457565122451277431
 |           3739137510923691957
+|           6325553139690918572
 |           6552858498947234364
 |           8242261867021603117
 |           9199865814309567475
@@ -18647,23 +18715,23 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           AdminPanel-CG1uV7Hc.js
-|   |           ChangePasswordPage-BK-niaxH.js
-|   |           dashboardApi-BFqN-wq3.js
-|   |           DashboardList-DrPAeWZB.js
-|   |           DashboardView-Cgvo-39p.js
-|   |           formSchemas-BqZO3XbW.js
-|   |           index-b6BS_1J8.js
-|   |           LoginForm-CS7veBcg.js
+|   |           AdminPanel-BpycAsuO.js
+|   |           ChangePasswordPage-WtthkYQY.js
+|   |           dashboardApi-C2MiIvSs.js
+|   |           DashboardList-BZBmrOxr.js
+|   |           DashboardView-DKpD221P.js
+|   |           formSchemas-yVkXV2Hw.js
+|   |           index-BAQA-4cT.js
+|   |           LoginForm-Bfh_Xa9X.js
 |   |           mui-nuHIX8iL.js
 |   |           plotly-BxTkdUEp.js
 |   |           react-CuvdHX7R.js
-|   |           RegisterForm-B8GBuWF7.js
+|   |           RegisterForm-Bxip-n6M.js
 |   |           rolldown-runtime-S-ySWqyJ.js
 |   |           shortUuid-TYuFZJYs.js
-|   |           userApi-DmsGdY-f.js
-|   |           UserProfile-TaU2Ucrg.js
-|   |           vendor-Bx3jSdF9.js
+|   |           userApi-CEeRBx1_.js
+|   |           UserProfile-vMkNGOtZ.js
+|   |           vendor-Ck51I_mn.js
 |   |           
 |   +---node_modules
 |   |   |   .package-lock.json
@@ -75107,373 +75175,487 @@ C:\PY_DEV\MKOBI
 |   |   |   |           types.ts
 |   |   |   |           utils.ts
 |   |   |   |           
-|   |   |   \---react-query
+|   |   |   +---query-devtools
+|   |   |   |   |   LICENSE
+|   |   |   |   |   package.json
+|   |   |   |   |   
+|   |   |   |   +---build
+|   |   |   |   |   |   dev.cjs
+|   |   |   |   |   |   dev.js
+|   |   |   |   |   |   index.cjs
+|   |   |   |   |   |   index.d.cts
+|   |   |   |   |   |   index.d.ts
+|   |   |   |   |   |   index.js
+|   |   |   |   |   |   
+|   |   |   |   |   +---chunk
+|   |   |   |   |   |       B5IE7ZLN.js
+|   |   |   |   |   |       LLLYVUVC.js
+|   |   |   |   |   |       RJYFHVWH.js
+|   |   |   |   |   |       WLGSOJG7.js
+|   |   |   |   |   |       
+|   |   |   |   |   +---DevtoolsComponent
+|   |   |   |   |   |       I4EE2JD6.js
+|   |   |   |   |   |       KX7FEU5Y.js
+|   |   |   |   |   |       
+|   |   |   |   |   \---DevtoolsPanelComponent
+|   |   |   |   |           C2NHY6T5.js
+|   |   |   |   |           RTO6RD2J.js
+|   |   |   |   |           
+|   |   |   |   \---src
+|   |   |   |       |   constants.ts
+|   |   |   |       |   Devtools.tsx
+|   |   |   |       |   DevtoolsComponent.tsx
+|   |   |   |       |   DevtoolsPanelComponent.tsx
+|   |   |   |       |   Explorer.tsx
+|   |   |   |       |   index.ts
+|   |   |   |       |   TanstackQueryDevtools.tsx
+|   |   |   |       |   TanstackQueryDevtoolsPanel.tsx
+|   |   |   |       |   theme.ts
+|   |   |   |       |   utils.tsx
+|   |   |   |       |   
+|   |   |   |       +---contexts
+|   |   |   |       |       index.ts
+|   |   |   |       |       PiPContext.tsx
+|   |   |   |       |       QueryDevtoolsContext.ts
+|   |   |   |       |       ThemeContext.ts
+|   |   |   |       |       
+|   |   |   |       \---icons
+|   |   |   |               index.tsx
+|   |   |   |               
+|   |   |   +---react-query
+|   |   |   |   |   LICENSE
+|   |   |   |   |   package.json
+|   |   |   |   |   README.md
+|   |   |   |   |   
+|   |   |   |   +---build
+|   |   |   |   |   +---codemods
+|   |   |   |   |   |   \---src
+|   |   |   |   |   |       +---utils
+|   |   |   |   |   |       |   |   index.cjs
+|   |   |   |   |   |       |   |   
+|   |   |   |   |   |       |   \---transformers
+|   |   |   |   |   |       |           query-cache-transformer.cjs
+|   |   |   |   |   |       |           query-client-transformer.cjs
+|   |   |   |   |   |       |           use-query-like-transformer.cjs
+|   |   |   |   |   |       |           
+|   |   |   |   |   |       +---v4
+|   |   |   |   |   |       |   |   key-transformation.cjs
+|   |   |   |   |   |       |   |   replace-import-specifier.cjs
+|   |   |   |   |   |       |   |   
+|   |   |   |   |   |       |   \---utils
+|   |   |   |   |   |       |       \---replacers
+|   |   |   |   |   |       |               key-replacer.cjs
+|   |   |   |   |   |       |               
+|   |   |   |   |   |       \---v5
+|   |   |   |   |   |           +---is-loading
+|   |   |   |   |   |           |       is-loading.cjs
+|   |   |   |   |   |           |       
+|   |   |   |   |   |           +---keep-previous-data
+|   |   |   |   |   |           |   |   keep-previous-data.cjs
+|   |   |   |   |   |           |   |   README.md
+|   |   |   |   |   |           |   |   
+|   |   |   |   |   |           |   \---utils
+|   |   |   |   |   |           |           already-has-placeholder-data-property.cjs
+|   |   |   |   |   |           |           
+|   |   |   |   |   |           +---remove-overloads
+|   |   |   |   |   |           |   |   remove-overloads.cjs
+|   |   |   |   |   |           |   |   
+|   |   |   |   |   |           |   +---transformers
+|   |   |   |   |   |           |   |       filter-aware-usage-transformer.cjs
+|   |   |   |   |   |           |   |       query-fn-aware-usage-transformer.cjs
+|   |   |   |   |   |           |   |       
+|   |   |   |   |   |           |   \---utils
+|   |   |   |   |   |           |           index.cjs
+|   |   |   |   |   |           |           unknown-usage-error.cjs
+|   |   |   |   |   |           |           
+|   |   |   |   |   |           +---rename-hydrate
+|   |   |   |   |   |           |       rename-hydrate.cjs
+|   |   |   |   |   |           |       
+|   |   |   |   |   |           \---rename-properties
+|   |   |   |   |   |                   rename-properties.cjs
+|   |   |   |   |   |                   
+|   |   |   |   |   +---legacy
+|   |   |   |   |   |       errorBoundaryUtils.cjs
+|   |   |   |   |   |       errorBoundaryUtils.cjs.map
+|   |   |   |   |   |       errorBoundaryUtils.d.cts
+|   |   |   |   |   |       errorBoundaryUtils.d.ts
+|   |   |   |   |   |       errorBoundaryUtils.js
+|   |   |   |   |   |       errorBoundaryUtils.js.map
+|   |   |   |   |   |       HydrationBoundary.cjs
+|   |   |   |   |   |       HydrationBoundary.cjs.map
+|   |   |   |   |   |       HydrationBoundary.d.cts
+|   |   |   |   |   |       HydrationBoundary.d.ts
+|   |   |   |   |   |       HydrationBoundary.js
+|   |   |   |   |   |       HydrationBoundary.js.map
+|   |   |   |   |   |       index.cjs
+|   |   |   |   |   |       index.cjs.map
+|   |   |   |   |   |       index.d.cts
+|   |   |   |   |   |       index.d.ts
+|   |   |   |   |   |       index.js
+|   |   |   |   |   |       index.js.map
+|   |   |   |   |   |       infiniteQueryOptions.cjs
+|   |   |   |   |   |       infiniteQueryOptions.cjs.map
+|   |   |   |   |   |       infiniteQueryOptions.d.cts
+|   |   |   |   |   |       infiniteQueryOptions.d.ts
+|   |   |   |   |   |       infiniteQueryOptions.js
+|   |   |   |   |   |       infiniteQueryOptions.js.map
+|   |   |   |   |   |       IsRestoringProvider.cjs
+|   |   |   |   |   |       IsRestoringProvider.cjs.map
+|   |   |   |   |   |       IsRestoringProvider.d.cts
+|   |   |   |   |   |       IsRestoringProvider.d.ts
+|   |   |   |   |   |       IsRestoringProvider.js
+|   |   |   |   |   |       IsRestoringProvider.js.map
+|   |   |   |   |   |       mutationOptions.cjs
+|   |   |   |   |   |       mutationOptions.cjs.map
+|   |   |   |   |   |       mutationOptions.d.cts
+|   |   |   |   |   |       mutationOptions.d.ts
+|   |   |   |   |   |       mutationOptions.js
+|   |   |   |   |   |       mutationOptions.js.map
+|   |   |   |   |   |       QueryClientProvider.cjs
+|   |   |   |   |   |       QueryClientProvider.cjs.map
+|   |   |   |   |   |       QueryClientProvider.d.cts
+|   |   |   |   |   |       QueryClientProvider.d.ts
+|   |   |   |   |   |       QueryClientProvider.js
+|   |   |   |   |   |       QueryClientProvider.js.map
+|   |   |   |   |   |       QueryErrorResetBoundary.cjs
+|   |   |   |   |   |       QueryErrorResetBoundary.cjs.map
+|   |   |   |   |   |       QueryErrorResetBoundary.d.cts
+|   |   |   |   |   |       QueryErrorResetBoundary.d.ts
+|   |   |   |   |   |       QueryErrorResetBoundary.js
+|   |   |   |   |   |       QueryErrorResetBoundary.js.map
+|   |   |   |   |   |       queryOptions.cjs
+|   |   |   |   |   |       queryOptions.cjs.map
+|   |   |   |   |   |       queryOptions.d.cts
+|   |   |   |   |   |       queryOptions.d.ts
+|   |   |   |   |   |       queryOptions.js
+|   |   |   |   |   |       queryOptions.js.map
+|   |   |   |   |   |       suspense.cjs
+|   |   |   |   |   |       suspense.cjs.map
+|   |   |   |   |   |       suspense.d.cts
+|   |   |   |   |   |       suspense.d.ts
+|   |   |   |   |   |       suspense.js
+|   |   |   |   |   |       suspense.js.map
+|   |   |   |   |   |       types.cjs
+|   |   |   |   |   |       types.cjs.map
+|   |   |   |   |   |       types.d.cts
+|   |   |   |   |   |       types.d.ts
+|   |   |   |   |   |       types.js
+|   |   |   |   |   |       types.js.map
+|   |   |   |   |   |       useBaseQuery.cjs
+|   |   |   |   |   |       useBaseQuery.cjs.map
+|   |   |   |   |   |       useBaseQuery.d.cts
+|   |   |   |   |   |       useBaseQuery.d.ts
+|   |   |   |   |   |       useBaseQuery.js
+|   |   |   |   |   |       useBaseQuery.js.map
+|   |   |   |   |   |       useInfiniteQuery.cjs
+|   |   |   |   |   |       useInfiniteQuery.cjs.map
+|   |   |   |   |   |       useInfiniteQuery.d.cts
+|   |   |   |   |   |       useInfiniteQuery.d.ts
+|   |   |   |   |   |       useInfiniteQuery.js
+|   |   |   |   |   |       useInfiniteQuery.js.map
+|   |   |   |   |   |       useIsFetching.cjs
+|   |   |   |   |   |       useIsFetching.cjs.map
+|   |   |   |   |   |       useIsFetching.d.cts
+|   |   |   |   |   |       useIsFetching.d.ts
+|   |   |   |   |   |       useIsFetching.js
+|   |   |   |   |   |       useIsFetching.js.map
+|   |   |   |   |   |       useMutation.cjs
+|   |   |   |   |   |       useMutation.cjs.map
+|   |   |   |   |   |       useMutation.d.cts
+|   |   |   |   |   |       useMutation.d.ts
+|   |   |   |   |   |       useMutation.js
+|   |   |   |   |   |       useMutation.js.map
+|   |   |   |   |   |       useMutationState.cjs
+|   |   |   |   |   |       useMutationState.cjs.map
+|   |   |   |   |   |       useMutationState.d.cts
+|   |   |   |   |   |       useMutationState.d.ts
+|   |   |   |   |   |       useMutationState.js
+|   |   |   |   |   |       useMutationState.js.map
+|   |   |   |   |   |       usePrefetchInfiniteQuery.cjs
+|   |   |   |   |   |       usePrefetchInfiniteQuery.cjs.map
+|   |   |   |   |   |       usePrefetchInfiniteQuery.d.cts
+|   |   |   |   |   |       usePrefetchInfiniteQuery.d.ts
+|   |   |   |   |   |       usePrefetchInfiniteQuery.js
+|   |   |   |   |   |       usePrefetchInfiniteQuery.js.map
+|   |   |   |   |   |       usePrefetchQuery.cjs
+|   |   |   |   |   |       usePrefetchQuery.cjs.map
+|   |   |   |   |   |       usePrefetchQuery.d.cts
+|   |   |   |   |   |       usePrefetchQuery.d.ts
+|   |   |   |   |   |       usePrefetchQuery.js
+|   |   |   |   |   |       usePrefetchQuery.js.map
+|   |   |   |   |   |       useQueries.cjs
+|   |   |   |   |   |       useQueries.cjs.map
+|   |   |   |   |   |       useQueries.d.cts
+|   |   |   |   |   |       useQueries.d.ts
+|   |   |   |   |   |       useQueries.js
+|   |   |   |   |   |       useQueries.js.map
+|   |   |   |   |   |       useQuery.cjs
+|   |   |   |   |   |       useQuery.cjs.map
+|   |   |   |   |   |       useQuery.d.cts
+|   |   |   |   |   |       useQuery.d.ts
+|   |   |   |   |   |       useQuery.js
+|   |   |   |   |   |       useQuery.js.map
+|   |   |   |   |   |       useSuspenseInfiniteQuery.cjs
+|   |   |   |   |   |       useSuspenseInfiniteQuery.cjs.map
+|   |   |   |   |   |       useSuspenseInfiniteQuery.d.cts
+|   |   |   |   |   |       useSuspenseInfiniteQuery.d.ts
+|   |   |   |   |   |       useSuspenseInfiniteQuery.js
+|   |   |   |   |   |       useSuspenseInfiniteQuery.js.map
+|   |   |   |   |   |       useSuspenseQueries.cjs
+|   |   |   |   |   |       useSuspenseQueries.cjs.map
+|   |   |   |   |   |       useSuspenseQueries.d.cts
+|   |   |   |   |   |       useSuspenseQueries.d.ts
+|   |   |   |   |   |       useSuspenseQueries.js
+|   |   |   |   |   |       useSuspenseQueries.js.map
+|   |   |   |   |   |       useSuspenseQuery.cjs
+|   |   |   |   |   |       useSuspenseQuery.cjs.map
+|   |   |   |   |   |       useSuspenseQuery.d.cts
+|   |   |   |   |   |       useSuspenseQuery.d.ts
+|   |   |   |   |   |       useSuspenseQuery.js
+|   |   |   |   |   |       useSuspenseQuery.js.map
+|   |   |   |   |   |       _tsup-dts-rollup.d.cts
+|   |   |   |   |   |       _tsup-dts-rollup.d.ts
+|   |   |   |   |   |       
+|   |   |   |   |   +---modern
+|   |   |   |   |   |       errorBoundaryUtils.cjs
+|   |   |   |   |   |       errorBoundaryUtils.cjs.map
+|   |   |   |   |   |       errorBoundaryUtils.d.cts
+|   |   |   |   |   |       errorBoundaryUtils.d.ts
+|   |   |   |   |   |       errorBoundaryUtils.js
+|   |   |   |   |   |       errorBoundaryUtils.js.map
+|   |   |   |   |   |       HydrationBoundary.cjs
+|   |   |   |   |   |       HydrationBoundary.cjs.map
+|   |   |   |   |   |       HydrationBoundary.d.cts
+|   |   |   |   |   |       HydrationBoundary.d.ts
+|   |   |   |   |   |       HydrationBoundary.js
+|   |   |   |   |   |       HydrationBoundary.js.map
+|   |   |   |   |   |       index.cjs
+|   |   |   |   |   |       index.cjs.map
+|   |   |   |   |   |       index.d.cts
+|   |   |   |   |   |       index.d.ts
+|   |   |   |   |   |       index.js
+|   |   |   |   |   |       index.js.map
+|   |   |   |   |   |       infiniteQueryOptions.cjs
+|   |   |   |   |   |       infiniteQueryOptions.cjs.map
+|   |   |   |   |   |       infiniteQueryOptions.d.cts
+|   |   |   |   |   |       infiniteQueryOptions.d.ts
+|   |   |   |   |   |       infiniteQueryOptions.js
+|   |   |   |   |   |       infiniteQueryOptions.js.map
+|   |   |   |   |   |       IsRestoringProvider.cjs
+|   |   |   |   |   |       IsRestoringProvider.cjs.map
+|   |   |   |   |   |       IsRestoringProvider.d.cts
+|   |   |   |   |   |       IsRestoringProvider.d.ts
+|   |   |   |   |   |       IsRestoringProvider.js
+|   |   |   |   |   |       IsRestoringProvider.js.map
+|   |   |   |   |   |       mutationOptions.cjs
+|   |   |   |   |   |       mutationOptions.cjs.map
+|   |   |   |   |   |       mutationOptions.d.cts
+|   |   |   |   |   |       mutationOptions.d.ts
+|   |   |   |   |   |       mutationOptions.js
+|   |   |   |   |   |       mutationOptions.js.map
+|   |   |   |   |   |       QueryClientProvider.cjs
+|   |   |   |   |   |       QueryClientProvider.cjs.map
+|   |   |   |   |   |       QueryClientProvider.d.cts
+|   |   |   |   |   |       QueryClientProvider.d.ts
+|   |   |   |   |   |       QueryClientProvider.js
+|   |   |   |   |   |       QueryClientProvider.js.map
+|   |   |   |   |   |       QueryErrorResetBoundary.cjs
+|   |   |   |   |   |       QueryErrorResetBoundary.cjs.map
+|   |   |   |   |   |       QueryErrorResetBoundary.d.cts
+|   |   |   |   |   |       QueryErrorResetBoundary.d.ts
+|   |   |   |   |   |       QueryErrorResetBoundary.js
+|   |   |   |   |   |       QueryErrorResetBoundary.js.map
+|   |   |   |   |   |       queryOptions.cjs
+|   |   |   |   |   |       queryOptions.cjs.map
+|   |   |   |   |   |       queryOptions.d.cts
+|   |   |   |   |   |       queryOptions.d.ts
+|   |   |   |   |   |       queryOptions.js
+|   |   |   |   |   |       queryOptions.js.map
+|   |   |   |   |   |       suspense.cjs
+|   |   |   |   |   |       suspense.cjs.map
+|   |   |   |   |   |       suspense.d.cts
+|   |   |   |   |   |       suspense.d.ts
+|   |   |   |   |   |       suspense.js
+|   |   |   |   |   |       suspense.js.map
+|   |   |   |   |   |       types.cjs
+|   |   |   |   |   |       types.cjs.map
+|   |   |   |   |   |       types.d.cts
+|   |   |   |   |   |       types.d.ts
+|   |   |   |   |   |       types.js
+|   |   |   |   |   |       types.js.map
+|   |   |   |   |   |       useBaseQuery.cjs
+|   |   |   |   |   |       useBaseQuery.cjs.map
+|   |   |   |   |   |       useBaseQuery.d.cts
+|   |   |   |   |   |       useBaseQuery.d.ts
+|   |   |   |   |   |       useBaseQuery.js
+|   |   |   |   |   |       useBaseQuery.js.map
+|   |   |   |   |   |       useInfiniteQuery.cjs
+|   |   |   |   |   |       useInfiniteQuery.cjs.map
+|   |   |   |   |   |       useInfiniteQuery.d.cts
+|   |   |   |   |   |       useInfiniteQuery.d.ts
+|   |   |   |   |   |       useInfiniteQuery.js
+|   |   |   |   |   |       useInfiniteQuery.js.map
+|   |   |   |   |   |       useIsFetching.cjs
+|   |   |   |   |   |       useIsFetching.cjs.map
+|   |   |   |   |   |       useIsFetching.d.cts
+|   |   |   |   |   |       useIsFetching.d.ts
+|   |   |   |   |   |       useIsFetching.js
+|   |   |   |   |   |       useIsFetching.js.map
+|   |   |   |   |   |       useMutation.cjs
+|   |   |   |   |   |       useMutation.cjs.map
+|   |   |   |   |   |       useMutation.d.cts
+|   |   |   |   |   |       useMutation.d.ts
+|   |   |   |   |   |       useMutation.js
+|   |   |   |   |   |       useMutation.js.map
+|   |   |   |   |   |       useMutationState.cjs
+|   |   |   |   |   |       useMutationState.cjs.map
+|   |   |   |   |   |       useMutationState.d.cts
+|   |   |   |   |   |       useMutationState.d.ts
+|   |   |   |   |   |       useMutationState.js
+|   |   |   |   |   |       useMutationState.js.map
+|   |   |   |   |   |       usePrefetchInfiniteQuery.cjs
+|   |   |   |   |   |       usePrefetchInfiniteQuery.cjs.map
+|   |   |   |   |   |       usePrefetchInfiniteQuery.d.cts
+|   |   |   |   |   |       usePrefetchInfiniteQuery.d.ts
+|   |   |   |   |   |       usePrefetchInfiniteQuery.js
+|   |   |   |   |   |       usePrefetchInfiniteQuery.js.map
+|   |   |   |   |   |       usePrefetchQuery.cjs
+|   |   |   |   |   |       usePrefetchQuery.cjs.map
+|   |   |   |   |   |       usePrefetchQuery.d.cts
+|   |   |   |   |   |       usePrefetchQuery.d.ts
+|   |   |   |   |   |       usePrefetchQuery.js
+|   |   |   |   |   |       usePrefetchQuery.js.map
+|   |   |   |   |   |       useQueries.cjs
+|   |   |   |   |   |       useQueries.cjs.map
+|   |   |   |   |   |       useQueries.d.cts
+|   |   |   |   |   |       useQueries.d.ts
+|   |   |   |   |   |       useQueries.js
+|   |   |   |   |   |       useQueries.js.map
+|   |   |   |   |   |       useQuery.cjs
+|   |   |   |   |   |       useQuery.cjs.map
+|   |   |   |   |   |       useQuery.d.cts
+|   |   |   |   |   |       useQuery.d.ts
+|   |   |   |   |   |       useQuery.js
+|   |   |   |   |   |       useQuery.js.map
+|   |   |   |   |   |       useSuspenseInfiniteQuery.cjs
+|   |   |   |   |   |       useSuspenseInfiniteQuery.cjs.map
+|   |   |   |   |   |       useSuspenseInfiniteQuery.d.cts
+|   |   |   |   |   |       useSuspenseInfiniteQuery.d.ts
+|   |   |   |   |   |       useSuspenseInfiniteQuery.js
+|   |   |   |   |   |       useSuspenseInfiniteQuery.js.map
+|   |   |   |   |   |       useSuspenseQueries.cjs
+|   |   |   |   |   |       useSuspenseQueries.cjs.map
+|   |   |   |   |   |       useSuspenseQueries.d.cts
+|   |   |   |   |   |       useSuspenseQueries.d.ts
+|   |   |   |   |   |       useSuspenseQueries.js
+|   |   |   |   |   |       useSuspenseQueries.js.map
+|   |   |   |   |   |       useSuspenseQuery.cjs
+|   |   |   |   |   |       useSuspenseQuery.cjs.map
+|   |   |   |   |   |       useSuspenseQuery.d.cts
+|   |   |   |   |   |       useSuspenseQuery.d.ts
+|   |   |   |   |   |       useSuspenseQuery.js
+|   |   |   |   |   |       useSuspenseQuery.js.map
+|   |   |   |   |   |       _tsup-dts-rollup.d.cts
+|   |   |   |   |   |       _tsup-dts-rollup.d.ts
+|   |   |   |   |   |       
+|   |   |   |   |   \---query-codemods
+|   |   |   |   |           eslint.config.js
+|   |   |   |   |           package.json
+|   |   |   |   |           root.eslint.config.js
+|   |   |   |   |           tsconfig.json
+|   |   |   |   |           vite.config.ts
+|   |   |   |   |           
+|   |   |   |   \---src
+|   |   |   |           errorBoundaryUtils.ts
+|   |   |   |           HydrationBoundary.tsx
+|   |   |   |           index.ts
+|   |   |   |           infiniteQueryOptions.ts
+|   |   |   |           IsRestoringProvider.ts
+|   |   |   |           mutationOptions.ts
+|   |   |   |           QueryClientProvider.tsx
+|   |   |   |           QueryErrorResetBoundary.tsx
+|   |   |   |           queryOptions.ts
+|   |   |   |           suspense.ts
+|   |   |   |           types.ts
+|   |   |   |           useBaseQuery.ts
+|   |   |   |           useInfiniteQuery.ts
+|   |   |   |           useIsFetching.ts
+|   |   |   |           useMutation.ts
+|   |   |   |           useMutationState.ts
+|   |   |   |           usePrefetchInfiniteQuery.tsx
+|   |   |   |           usePrefetchQuery.tsx
+|   |   |   |           useQueries.ts
+|   |   |   |           useQuery.ts
+|   |   |   |           useSuspenseInfiniteQuery.ts
+|   |   |   |           useSuspenseQueries.ts
+|   |   |   |           useSuspenseQuery.ts
+|   |   |   |           
+|   |   |   \---react-query-devtools
 |   |   |       |   LICENSE
 |   |   |       |   package.json
-|   |   |       |   README.md
 |   |   |       |   
 |   |   |       +---build
-|   |   |       |   +---codemods
-|   |   |       |   |   \---src
-|   |   |       |   |       +---utils
-|   |   |       |   |       |   |   index.cjs
-|   |   |       |   |       |   |   
-|   |   |       |   |       |   \---transformers
-|   |   |       |   |       |           query-cache-transformer.cjs
-|   |   |       |   |       |           query-client-transformer.cjs
-|   |   |       |   |       |           use-query-like-transformer.cjs
-|   |   |       |   |       |           
-|   |   |       |   |       +---v4
-|   |   |       |   |       |   |   key-transformation.cjs
-|   |   |       |   |       |   |   replace-import-specifier.cjs
-|   |   |       |   |       |   |   
-|   |   |       |   |       |   \---utils
-|   |   |       |   |       |       \---replacers
-|   |   |       |   |       |               key-replacer.cjs
-|   |   |       |   |       |               
-|   |   |       |   |       \---v5
-|   |   |       |   |           +---is-loading
-|   |   |       |   |           |       is-loading.cjs
-|   |   |       |   |           |       
-|   |   |       |   |           +---keep-previous-data
-|   |   |       |   |           |   |   keep-previous-data.cjs
-|   |   |       |   |           |   |   README.md
-|   |   |       |   |           |   |   
-|   |   |       |   |           |   \---utils
-|   |   |       |   |           |           already-has-placeholder-data-property.cjs
-|   |   |       |   |           |           
-|   |   |       |   |           +---remove-overloads
-|   |   |       |   |           |   |   remove-overloads.cjs
-|   |   |       |   |           |   |   
-|   |   |       |   |           |   +---transformers
-|   |   |       |   |           |   |       filter-aware-usage-transformer.cjs
-|   |   |       |   |           |   |       query-fn-aware-usage-transformer.cjs
-|   |   |       |   |           |   |       
-|   |   |       |   |           |   \---utils
-|   |   |       |   |           |           index.cjs
-|   |   |       |   |           |           unknown-usage-error.cjs
-|   |   |       |   |           |           
-|   |   |       |   |           +---rename-hydrate
-|   |   |       |   |           |       rename-hydrate.cjs
-|   |   |       |   |           |       
-|   |   |       |   |           \---rename-properties
-|   |   |       |   |                   rename-properties.cjs
-|   |   |       |   |                   
 |   |   |       |   +---legacy
-|   |   |       |   |       errorBoundaryUtils.cjs
-|   |   |       |   |       errorBoundaryUtils.cjs.map
-|   |   |       |   |       errorBoundaryUtils.d.cts
-|   |   |       |   |       errorBoundaryUtils.d.ts
-|   |   |       |   |       errorBoundaryUtils.js
-|   |   |       |   |       errorBoundaryUtils.js.map
-|   |   |       |   |       HydrationBoundary.cjs
-|   |   |       |   |       HydrationBoundary.cjs.map
-|   |   |       |   |       HydrationBoundary.d.cts
-|   |   |       |   |       HydrationBoundary.d.ts
-|   |   |       |   |       HydrationBoundary.js
-|   |   |       |   |       HydrationBoundary.js.map
 |   |   |       |   |       index.cjs
 |   |   |       |   |       index.cjs.map
 |   |   |       |   |       index.d.cts
 |   |   |       |   |       index.d.ts
 |   |   |       |   |       index.js
 |   |   |       |   |       index.js.map
-|   |   |       |   |       infiniteQueryOptions.cjs
-|   |   |       |   |       infiniteQueryOptions.cjs.map
-|   |   |       |   |       infiniteQueryOptions.d.cts
-|   |   |       |   |       infiniteQueryOptions.d.ts
-|   |   |       |   |       infiniteQueryOptions.js
-|   |   |       |   |       infiniteQueryOptions.js.map
-|   |   |       |   |       IsRestoringProvider.cjs
-|   |   |       |   |       IsRestoringProvider.cjs.map
-|   |   |       |   |       IsRestoringProvider.d.cts
-|   |   |       |   |       IsRestoringProvider.d.ts
-|   |   |       |   |       IsRestoringProvider.js
-|   |   |       |   |       IsRestoringProvider.js.map
-|   |   |       |   |       mutationOptions.cjs
-|   |   |       |   |       mutationOptions.cjs.map
-|   |   |       |   |       mutationOptions.d.cts
-|   |   |       |   |       mutationOptions.d.ts
-|   |   |       |   |       mutationOptions.js
-|   |   |       |   |       mutationOptions.js.map
-|   |   |       |   |       QueryClientProvider.cjs
-|   |   |       |   |       QueryClientProvider.cjs.map
-|   |   |       |   |       QueryClientProvider.d.cts
-|   |   |       |   |       QueryClientProvider.d.ts
-|   |   |       |   |       QueryClientProvider.js
-|   |   |       |   |       QueryClientProvider.js.map
-|   |   |       |   |       QueryErrorResetBoundary.cjs
-|   |   |       |   |       QueryErrorResetBoundary.cjs.map
-|   |   |       |   |       QueryErrorResetBoundary.d.cts
-|   |   |       |   |       QueryErrorResetBoundary.d.ts
-|   |   |       |   |       QueryErrorResetBoundary.js
-|   |   |       |   |       QueryErrorResetBoundary.js.map
-|   |   |       |   |       queryOptions.cjs
-|   |   |       |   |       queryOptions.cjs.map
-|   |   |       |   |       queryOptions.d.cts
-|   |   |       |   |       queryOptions.d.ts
-|   |   |       |   |       queryOptions.js
-|   |   |       |   |       queryOptions.js.map
-|   |   |       |   |       suspense.cjs
-|   |   |       |   |       suspense.cjs.map
-|   |   |       |   |       suspense.d.cts
-|   |   |       |   |       suspense.d.ts
-|   |   |       |   |       suspense.js
-|   |   |       |   |       suspense.js.map
-|   |   |       |   |       types.cjs
-|   |   |       |   |       types.cjs.map
-|   |   |       |   |       types.d.cts
-|   |   |       |   |       types.d.ts
-|   |   |       |   |       types.js
-|   |   |       |   |       types.js.map
-|   |   |       |   |       useBaseQuery.cjs
-|   |   |       |   |       useBaseQuery.cjs.map
-|   |   |       |   |       useBaseQuery.d.cts
-|   |   |       |   |       useBaseQuery.d.ts
-|   |   |       |   |       useBaseQuery.js
-|   |   |       |   |       useBaseQuery.js.map
-|   |   |       |   |       useInfiniteQuery.cjs
-|   |   |       |   |       useInfiniteQuery.cjs.map
-|   |   |       |   |       useInfiniteQuery.d.cts
-|   |   |       |   |       useInfiniteQuery.d.ts
-|   |   |       |   |       useInfiniteQuery.js
-|   |   |       |   |       useInfiniteQuery.js.map
-|   |   |       |   |       useIsFetching.cjs
-|   |   |       |   |       useIsFetching.cjs.map
-|   |   |       |   |       useIsFetching.d.cts
-|   |   |       |   |       useIsFetching.d.ts
-|   |   |       |   |       useIsFetching.js
-|   |   |       |   |       useIsFetching.js.map
-|   |   |       |   |       useMutation.cjs
-|   |   |       |   |       useMutation.cjs.map
-|   |   |       |   |       useMutation.d.cts
-|   |   |       |   |       useMutation.d.ts
-|   |   |       |   |       useMutation.js
-|   |   |       |   |       useMutation.js.map
-|   |   |       |   |       useMutationState.cjs
-|   |   |       |   |       useMutationState.cjs.map
-|   |   |       |   |       useMutationState.d.cts
-|   |   |       |   |       useMutationState.d.ts
-|   |   |       |   |       useMutationState.js
-|   |   |       |   |       useMutationState.js.map
-|   |   |       |   |       usePrefetchInfiniteQuery.cjs
-|   |   |       |   |       usePrefetchInfiniteQuery.cjs.map
-|   |   |       |   |       usePrefetchInfiniteQuery.d.cts
-|   |   |       |   |       usePrefetchInfiniteQuery.d.ts
-|   |   |       |   |       usePrefetchInfiniteQuery.js
-|   |   |       |   |       usePrefetchInfiniteQuery.js.map
-|   |   |       |   |       usePrefetchQuery.cjs
-|   |   |       |   |       usePrefetchQuery.cjs.map
-|   |   |       |   |       usePrefetchQuery.d.cts
-|   |   |       |   |       usePrefetchQuery.d.ts
-|   |   |       |   |       usePrefetchQuery.js
-|   |   |       |   |       usePrefetchQuery.js.map
-|   |   |       |   |       useQueries.cjs
-|   |   |       |   |       useQueries.cjs.map
-|   |   |       |   |       useQueries.d.cts
-|   |   |       |   |       useQueries.d.ts
-|   |   |       |   |       useQueries.js
-|   |   |       |   |       useQueries.js.map
-|   |   |       |   |       useQuery.cjs
-|   |   |       |   |       useQuery.cjs.map
-|   |   |       |   |       useQuery.d.cts
-|   |   |       |   |       useQuery.d.ts
-|   |   |       |   |       useQuery.js
-|   |   |       |   |       useQuery.js.map
-|   |   |       |   |       useSuspenseInfiniteQuery.cjs
-|   |   |       |   |       useSuspenseInfiniteQuery.cjs.map
-|   |   |       |   |       useSuspenseInfiniteQuery.d.cts
-|   |   |       |   |       useSuspenseInfiniteQuery.d.ts
-|   |   |       |   |       useSuspenseInfiniteQuery.js
-|   |   |       |   |       useSuspenseInfiniteQuery.js.map
-|   |   |       |   |       useSuspenseQueries.cjs
-|   |   |       |   |       useSuspenseQueries.cjs.map
-|   |   |       |   |       useSuspenseQueries.d.cts
-|   |   |       |   |       useSuspenseQueries.d.ts
-|   |   |       |   |       useSuspenseQueries.js
-|   |   |       |   |       useSuspenseQueries.js.map
-|   |   |       |   |       useSuspenseQuery.cjs
-|   |   |       |   |       useSuspenseQuery.cjs.map
-|   |   |       |   |       useSuspenseQuery.d.cts
-|   |   |       |   |       useSuspenseQuery.d.ts
-|   |   |       |   |       useSuspenseQuery.js
-|   |   |       |   |       useSuspenseQuery.js.map
+|   |   |       |   |       production.cjs
+|   |   |       |   |       production.cjs.map
+|   |   |       |   |       production.d.cts
+|   |   |       |   |       production.d.ts
+|   |   |       |   |       production.js
+|   |   |       |   |       production.js.map
+|   |   |       |   |       ReactQueryDevtools.cjs
+|   |   |       |   |       ReactQueryDevtools.cjs.map
+|   |   |       |   |       ReactQueryDevtools.d.cts
+|   |   |       |   |       ReactQueryDevtools.d.ts
+|   |   |       |   |       ReactQueryDevtools.js
+|   |   |       |   |       ReactQueryDevtools.js.map
+|   |   |       |   |       ReactQueryDevtoolsPanel.cjs
+|   |   |       |   |       ReactQueryDevtoolsPanel.cjs.map
+|   |   |       |   |       ReactQueryDevtoolsPanel.d.cts
+|   |   |       |   |       ReactQueryDevtoolsPanel.d.ts
+|   |   |       |   |       ReactQueryDevtoolsPanel.js
+|   |   |       |   |       ReactQueryDevtoolsPanel.js.map
 |   |   |       |   |       _tsup-dts-rollup.d.cts
 |   |   |       |   |       _tsup-dts-rollup.d.ts
 |   |   |       |   |       
-|   |   |       |   +---modern
-|   |   |       |   |       errorBoundaryUtils.cjs
-|   |   |       |   |       errorBoundaryUtils.cjs.map
-|   |   |       |   |       errorBoundaryUtils.d.cts
-|   |   |       |   |       errorBoundaryUtils.d.ts
-|   |   |       |   |       errorBoundaryUtils.js
-|   |   |       |   |       errorBoundaryUtils.js.map
-|   |   |       |   |       HydrationBoundary.cjs
-|   |   |       |   |       HydrationBoundary.cjs.map
-|   |   |       |   |       HydrationBoundary.d.cts
-|   |   |       |   |       HydrationBoundary.d.ts
-|   |   |       |   |       HydrationBoundary.js
-|   |   |       |   |       HydrationBoundary.js.map
-|   |   |       |   |       index.cjs
-|   |   |       |   |       index.cjs.map
-|   |   |       |   |       index.d.cts
-|   |   |       |   |       index.d.ts
-|   |   |       |   |       index.js
-|   |   |       |   |       index.js.map
-|   |   |       |   |       infiniteQueryOptions.cjs
-|   |   |       |   |       infiniteQueryOptions.cjs.map
-|   |   |       |   |       infiniteQueryOptions.d.cts
-|   |   |       |   |       infiniteQueryOptions.d.ts
-|   |   |       |   |       infiniteQueryOptions.js
-|   |   |       |   |       infiniteQueryOptions.js.map
-|   |   |       |   |       IsRestoringProvider.cjs
-|   |   |       |   |       IsRestoringProvider.cjs.map
-|   |   |       |   |       IsRestoringProvider.d.cts
-|   |   |       |   |       IsRestoringProvider.d.ts
-|   |   |       |   |       IsRestoringProvider.js
-|   |   |       |   |       IsRestoringProvider.js.map
-|   |   |       |   |       mutationOptions.cjs
-|   |   |       |   |       mutationOptions.cjs.map
-|   |   |       |   |       mutationOptions.d.cts
-|   |   |       |   |       mutationOptions.d.ts
-|   |   |       |   |       mutationOptions.js
-|   |   |       |   |       mutationOptions.js.map
-|   |   |       |   |       QueryClientProvider.cjs
-|   |   |       |   |       QueryClientProvider.cjs.map
-|   |   |       |   |       QueryClientProvider.d.cts
-|   |   |       |   |       QueryClientProvider.d.ts
-|   |   |       |   |       QueryClientProvider.js
-|   |   |       |   |       QueryClientProvider.js.map
-|   |   |       |   |       QueryErrorResetBoundary.cjs
-|   |   |       |   |       QueryErrorResetBoundary.cjs.map
-|   |   |       |   |       QueryErrorResetBoundary.d.cts
-|   |   |       |   |       QueryErrorResetBoundary.d.ts
-|   |   |       |   |       QueryErrorResetBoundary.js
-|   |   |       |   |       QueryErrorResetBoundary.js.map
-|   |   |       |   |       queryOptions.cjs
-|   |   |       |   |       queryOptions.cjs.map
-|   |   |       |   |       queryOptions.d.cts
-|   |   |       |   |       queryOptions.d.ts
-|   |   |       |   |       queryOptions.js
-|   |   |       |   |       queryOptions.js.map
-|   |   |       |   |       suspense.cjs
-|   |   |       |   |       suspense.cjs.map
-|   |   |       |   |       suspense.d.cts
-|   |   |       |   |       suspense.d.ts
-|   |   |       |   |       suspense.js
-|   |   |       |   |       suspense.js.map
-|   |   |       |   |       types.cjs
-|   |   |       |   |       types.cjs.map
-|   |   |       |   |       types.d.cts
-|   |   |       |   |       types.d.ts
-|   |   |       |   |       types.js
-|   |   |       |   |       types.js.map
-|   |   |       |   |       useBaseQuery.cjs
-|   |   |       |   |       useBaseQuery.cjs.map
-|   |   |       |   |       useBaseQuery.d.cts
-|   |   |       |   |       useBaseQuery.d.ts
-|   |   |       |   |       useBaseQuery.js
-|   |   |       |   |       useBaseQuery.js.map
-|   |   |       |   |       useInfiniteQuery.cjs
-|   |   |       |   |       useInfiniteQuery.cjs.map
-|   |   |       |   |       useInfiniteQuery.d.cts
-|   |   |       |   |       useInfiniteQuery.d.ts
-|   |   |       |   |       useInfiniteQuery.js
-|   |   |       |   |       useInfiniteQuery.js.map
-|   |   |       |   |       useIsFetching.cjs
-|   |   |       |   |       useIsFetching.cjs.map
-|   |   |       |   |       useIsFetching.d.cts
-|   |   |       |   |       useIsFetching.d.ts
-|   |   |       |   |       useIsFetching.js
-|   |   |       |   |       useIsFetching.js.map
-|   |   |       |   |       useMutation.cjs
-|   |   |       |   |       useMutation.cjs.map
-|   |   |       |   |       useMutation.d.cts
-|   |   |       |   |       useMutation.d.ts
-|   |   |       |   |       useMutation.js
-|   |   |       |   |       useMutation.js.map
-|   |   |       |   |       useMutationState.cjs
-|   |   |       |   |       useMutationState.cjs.map
-|   |   |       |   |       useMutationState.d.cts
-|   |   |       |   |       useMutationState.d.ts
-|   |   |       |   |       useMutationState.js
-|   |   |       |   |       useMutationState.js.map
-|   |   |       |   |       usePrefetchInfiniteQuery.cjs
-|   |   |       |   |       usePrefetchInfiniteQuery.cjs.map
-|   |   |       |   |       usePrefetchInfiniteQuery.d.cts
-|   |   |       |   |       usePrefetchInfiniteQuery.d.ts
-|   |   |       |   |       usePrefetchInfiniteQuery.js
-|   |   |       |   |       usePrefetchInfiniteQuery.js.map
-|   |   |       |   |       usePrefetchQuery.cjs
-|   |   |       |   |       usePrefetchQuery.cjs.map
-|   |   |       |   |       usePrefetchQuery.d.cts
-|   |   |       |   |       usePrefetchQuery.d.ts
-|   |   |       |   |       usePrefetchQuery.js
-|   |   |       |   |       usePrefetchQuery.js.map
-|   |   |       |   |       useQueries.cjs
-|   |   |       |   |       useQueries.cjs.map
-|   |   |       |   |       useQueries.d.cts
-|   |   |       |   |       useQueries.d.ts
-|   |   |       |   |       useQueries.js
-|   |   |       |   |       useQueries.js.map
-|   |   |       |   |       useQuery.cjs
-|   |   |       |   |       useQuery.cjs.map
-|   |   |       |   |       useQuery.d.cts
-|   |   |       |   |       useQuery.d.ts
-|   |   |       |   |       useQuery.js
-|   |   |       |   |       useQuery.js.map
-|   |   |       |   |       useSuspenseInfiniteQuery.cjs
-|   |   |       |   |       useSuspenseInfiniteQuery.cjs.map
-|   |   |       |   |       useSuspenseInfiniteQuery.d.cts
-|   |   |       |   |       useSuspenseInfiniteQuery.d.ts
-|   |   |       |   |       useSuspenseInfiniteQuery.js
-|   |   |       |   |       useSuspenseInfiniteQuery.js.map
-|   |   |       |   |       useSuspenseQueries.cjs
-|   |   |       |   |       useSuspenseQueries.cjs.map
-|   |   |       |   |       useSuspenseQueries.d.cts
-|   |   |       |   |       useSuspenseQueries.d.ts
-|   |   |       |   |       useSuspenseQueries.js
-|   |   |       |   |       useSuspenseQueries.js.map
-|   |   |       |   |       useSuspenseQuery.cjs
-|   |   |       |   |       useSuspenseQuery.cjs.map
-|   |   |       |   |       useSuspenseQuery.d.cts
-|   |   |       |   |       useSuspenseQuery.d.ts
-|   |   |       |   |       useSuspenseQuery.js
-|   |   |       |   |       useSuspenseQuery.js.map
-|   |   |       |   |       _tsup-dts-rollup.d.cts
-|   |   |       |   |       _tsup-dts-rollup.d.ts
-|   |   |       |   |       
-|   |   |       |   \---query-codemods
-|   |   |       |           eslint.config.js
-|   |   |       |           package.json
-|   |   |       |           root.eslint.config.js
-|   |   |       |           tsconfig.json
-|   |   |       |           vite.config.ts
+|   |   |       |   \---modern
+|   |   |       |           index.cjs
+|   |   |       |           index.cjs.map
+|   |   |       |           index.d.cts
+|   |   |       |           index.d.ts
+|   |   |       |           index.js
+|   |   |       |           index.js.map
+|   |   |       |           production.cjs
+|   |   |       |           production.cjs.map
+|   |   |       |           production.d.cts
+|   |   |       |           production.d.ts
+|   |   |       |           production.js
+|   |   |       |           production.js.map
+|   |   |       |           ReactQueryDevtools.cjs
+|   |   |       |           ReactQueryDevtools.cjs.map
+|   |   |       |           ReactQueryDevtools.d.cts
+|   |   |       |           ReactQueryDevtools.d.ts
+|   |   |       |           ReactQueryDevtools.js
+|   |   |       |           ReactQueryDevtools.js.map
+|   |   |       |           ReactQueryDevtoolsPanel.cjs
+|   |   |       |           ReactQueryDevtoolsPanel.cjs.map
+|   |   |       |           ReactQueryDevtoolsPanel.d.cts
+|   |   |       |           ReactQueryDevtoolsPanel.d.ts
+|   |   |       |           ReactQueryDevtoolsPanel.js
+|   |   |       |           ReactQueryDevtoolsPanel.js.map
+|   |   |       |           _tsup-dts-rollup.d.cts
+|   |   |       |           _tsup-dts-rollup.d.ts
 |   |   |       |           
 |   |   |       \---src
-|   |   |               errorBoundaryUtils.ts
-|   |   |               HydrationBoundary.tsx
 |   |   |               index.ts
-|   |   |               infiniteQueryOptions.ts
-|   |   |               IsRestoringProvider.ts
-|   |   |               mutationOptions.ts
-|   |   |               QueryClientProvider.tsx
-|   |   |               QueryErrorResetBoundary.tsx
-|   |   |               queryOptions.ts
-|   |   |               suspense.ts
-|   |   |               types.ts
-|   |   |               useBaseQuery.ts
-|   |   |               useInfiniteQuery.ts
-|   |   |               useIsFetching.ts
-|   |   |               useMutation.ts
-|   |   |               useMutationState.ts
-|   |   |               usePrefetchInfiniteQuery.tsx
-|   |   |               usePrefetchQuery.tsx
-|   |   |               useQueries.ts
-|   |   |               useQuery.ts
-|   |   |               useSuspenseInfiniteQuery.ts
-|   |   |               useSuspenseQueries.ts
-|   |   |               useSuspenseQuery.ts
+|   |   |               production.ts
+|   |   |               ReactQueryDevtools.tsx
+|   |   |               ReactQueryDevtoolsPanel.tsx
 |   |   |               
 |   |   +---@testing-library
 |   |   |   +---dom
@@ -99754,6 +99936,8 @@ C:\PY_DEV\MKOBI
 |       |   |           index.ts
 |       |   |           
 |       |   +---hooks
+|       |   |       index.ts
+|       |   |       useApiError.ts
 |       |   |       useConfirmDialog.ts
 |       |   |       
 |       |   +---types
@@ -101260,6 +101444,7 @@ C:\PY_DEV\MKOBI
     |   test_resource_access_control.py
     |   test_security.py
     |   test_services_integration.py
+    |   test_starter.py
     |   test_storage_manager.py
     |   test_streaming_size_limit.py
     |   test_time_utils.py
@@ -101321,6 +101506,7 @@ C:\PY_DEV\MKOBI
             test_deps.cpython-314.pyc
             test_dev_seeders.cpython-314-pytest-9.0.3.pyc
             test_dev_seeders.cpython-314-pytest-9.1.0.pyc
+            test_dev_seeders.cpython-314.pyc
             test_e2e_upload.cpython-314-pytest-9.0.3.pyc
             test_e2e_upload.cpython-314-pytest-9.1.0.pyc
             test_enum_db_consistency.cpython-314-pytest-9.0.3.pyc
@@ -101357,6 +101543,7 @@ C:\PY_DEV\MKOBI
             test_services_integration.cpython-314-pytest-9.1.0.pyc
             test_share_calculation.cpython-314-pytest-9.0.3.pyc
             test_sql_expression.cpython-314-pytest-9.0.3.pyc
+            test_starter.cpython-314-pytest-9.1.0.pyc
             test_storage_manager.cpython-314-pytest-9.0.3.pyc
             test_storage_manager.cpython-314-pytest-9.1.0.pyc
             test_streaming_size_limit.cpython-314-pytest-9.0.3.pyc

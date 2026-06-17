@@ -23,6 +23,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useConfirmDialog } from '../../../shared/hooks/useConfirmDialog'
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog'
 import { shortUuid } from '../../../shared/utils/shortUuid'
+import { formatDate } from '../../../shared/utils/formatDate'
 import { toast } from 'react-hot-toast'
 import type { DashboardAdmin } from '../../../shared/types/api.types'
 import { extractApiError } from '../../../shared/api/errorHandler'
@@ -204,8 +205,8 @@ export function DashboardManagement() {
     id: dashboard.id,
     name: dashboard.name,
     description: dashboard.description || '',
-    created_at: new Date(dashboard.created_at).toLocaleString(),
-    updated_at: new Date(dashboard.updated_at).toLocaleString(),
+    created_at: formatDate(dashboard.created_at),
+    updated_at: formatDate(dashboard.updated_at),
   }))
 
   return (

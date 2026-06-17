@@ -562,6 +562,11 @@ class IProcessingLogService(abc.ABC):
         """Delete processing log entry."""
         pass
 
+    @abc.abstractmethod
+    async def ensure_indexes(self, db: AsyncSession) -> None:
+        """Create indexes on processing_logs table if they do not exist."""
+        pass
+
 
 class ILayoutService(abc.ABC):
     """Layout service interface."""

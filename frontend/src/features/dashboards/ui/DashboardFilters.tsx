@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, useRef } from 'react'
 import {
   FormControl,
   InputLabel,
@@ -40,21 +40,42 @@ export function DashboardFilters({
     setLocalFilters(values || {})
   }, [values])
 
+  // Debounce timer ref for filter changes (300ms delay)
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const handleFilterChange = useCallback(
     (filterName: string, value: string | string[] | number | number[]) => {
       const newFilters = { ...localFilters, [filterName]: value }
       setLocalFilters(newFilters)
+
+      // Debounce the parent onChange to avoid re-renders on every keystroke/drag
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current)
+      }
+      debounceTimeoutRef.current = setTimeout(() => {
+        onChange(newFilters)
+        debounceTimeoutRef.current = null
+      }, 300)
     },
-    [localFilters]
+    [localFilters, onChange]
   )
 
   const handleApplyFilters = useCallback(() => {
+    // Clear pending debounce and apply immediately
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+      debounceTimeoutRef.current = null
+    }
     onChange(localFilters)
   }, [localFilters, onChange])
 
   const handleResetFilters = useCallback(() => {
     const emptyFilters: Record<string, string | string[] | number | number[]> = {}
     setLocalFilters(emptyFilters)
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current)
+      debounceTimeoutRef.current = null
+    }
     onChange(emptyFilters)
   }, [onChange])
 

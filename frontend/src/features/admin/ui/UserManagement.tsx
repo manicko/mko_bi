@@ -9,6 +9,7 @@ import { useConfirmDialog } from '../../../shared/hooks/useConfirmDialog'
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog'
 import { ResetPasswordResultDialog } from './ResetPasswordResultDialog'
 import { shortUuid } from '../../../shared/utils/shortUuid'
+import { formatDate } from '../../../shared/utils/formatDate'
 import { toast } from 'react-hot-toast'
 import type { AdminUser } from '../../../shared/types/api.types'
 import { UserRole } from '../../../shared/types/enums'
@@ -234,7 +235,7 @@ export function UserManagement() {
     id: user.id,
     email: user.email,
     role: user.role,
-    created_at: new Date(user.created_at).toLocaleString(),
+    created_at: formatDate(user.created_at),
     force_password_change: user.force_password_change,
   }))
 

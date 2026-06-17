@@ -2,7 +2,7 @@ id: TASK_001_dp08_independent_session_for_failed_status
 
 title: Fix DP-08 — Error path status update rolls back, leaving no failure record
 
-status: pending
+status: completed
 
 priority: critical
 

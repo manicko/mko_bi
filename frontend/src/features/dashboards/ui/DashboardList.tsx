@@ -4,7 +4,7 @@ import type { GridColDef, GridRenderCellParams } from '@mui/x-data-grid'
 import { Stack, Typography, CircularProgress, Alert } from '@mui/material'
 import { useMyDashboards } from '../api/dashboardApi'
 import { shortUuid } from '../../../shared/utils/shortUuid'
-import { format } from 'date-fns'
+import { formatDateForGrid } from '../../../shared/utils/formatDate'
 import type { DashboardSummary } from '../../../shared/types/api.types'
 
 export function DashboardList() {
@@ -49,7 +49,7 @@ export function DashboardList() {
       width: 180,
       sortable: true,
       renderCell: (params: GridRenderCellParams<DashboardSummary>) =>
-        format(new Date(params.row.created_at), 'PPp'),
+        formatDateForGrid(params.row.created_at),
     },
   ]
 

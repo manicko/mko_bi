@@ -48,6 +48,12 @@
   value: DatabaseStarter
   stable_hash: 8f3c9f51
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
+- id: d8a9b2c6
+  symbol_path: []
+  type: function_call
+  value: mark_orphaned_uploaded_logs_failed
+  stable_hash: d8a9b2c6
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\app.py
 - id: fa441590
   symbol_path: []
   type: function_call
@@ -442,6 +448,13 @@
   value: field_validator
   stable_hash: 2cd450f1
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: c4398402
+  symbol_path:
+  - AppSettings
+  type: function_call
+  value: Field
+  stable_hash: c4398402
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
 - id: 0b6f9a04
   symbol_path:
   - UploadSettings
@@ -744,6 +757,37 @@
   value: model_validator
   stable_hash: a6dad9de
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: 92c00517
+  symbol_path:
+  - Settings
+  - validate_production_credentials
+  type: function_call
+  value: ValueError
+  stable_hash: 92c00517
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: 92c00517
+  symbol_path:
+  - Settings
+  - validate_production_credentials
+  type: function_call
+  value: ValueError
+  stable_hash: 92c00517
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: 534a20c3
+  symbol_path:
+  - Settings
+  - validate_production_credentials
+  type: return_statement
+  stable_hash: 534a20c3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: 008120c2
+  symbol_path:
+  - Settings
+  - validate_production_credentials
+  type: function_call
+  value: model_validator
+  stable_hash: 008120c2
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
 - id: f526a929
   symbol_path:
   - Settings
@@ -844,6 +888,13 @@
   type: function_call
   value: Path
   stable_hash: '81006210'
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
+- id: 227cc452
+  symbol_path:
+  - Settings
+  - _log_security_warnings
+  type: return_statement
+  stable_hash: 227cc452
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\config.py
 - id: d304704f
   symbol_path:
@@ -3280,6 +3331,13 @@
   value: get_config
   stable_hash: 8d138112
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
+- id: 851b1e2f
+  symbol_path:
+  - DatabaseStarter
+  type: function_call
+  value: ValueError
+  stable_hash: 851b1e2f
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\db\starter.py
 - id: 2e8c07b6
   symbol_path:
   - DatabaseStarter
@@ -4212,6 +4270,58 @@
   value: ConfigDict
   stable_hash: 18f0e036
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\user.py
+- id: 6b513582
+  symbol_path:
+  - _coerce_dim_value
+  type: return_statement
+  stable_hash: 6b513582
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+- id: e6d2029f
+  symbol_path:
+  - _coerce_dim_value
+  type: function_call
+  value: isinstance
+  stable_hash: e6d2029f
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+- id: 6b513582
+  symbol_path:
+  - _coerce_dim_value
+  type: return_statement
+  stable_hash: 6b513582
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+- id: fc817e69
+  symbol_path:
+  - _coerce_dim_value
+  type: function_call
+  value: hasattr
+  stable_hash: fc817e69
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+- id: 6b513582
+  symbol_path:
+  - _coerce_dim_value
+  type: return_statement
+  stable_hash: 6b513582
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+- id: a8d7e5d9
+  symbol_path:
+  - _coerce_dim_value
+  type: function_call
+  value: str
+  stable_hash: a8d7e5d9
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+- id: 6b513582
+  symbol_path:
+  - _coerce_dim_value
+  type: return_statement
+  stable_hash: 6b513582
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+- id: a8d7e5d9
+  symbol_path:
+  - _coerce_dim_value
+  type: function_call
+  value: str
+  stable_hash: a8d7e5d9
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
 - id: 7d9df170
   symbol_path:
   - AggregationService
@@ -4219,12 +4329,12 @@
   value: agg_fn
   stable_hash: 7d9df170
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
-- id: 0e826164
+- id: e1b79582
   symbol_path:
   - AggregationService
   type: function_call
-  value: str
-  stable_hash: 0e826164
+  value: _coerce_dim_value
+  stable_hash: e1b79582
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
 - id: f31bbff2
   symbol_path:
@@ -4238,13 +4348,6 @@
   type: function_call
   value: set
   stable_hash: 03849bb8
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
-- id: 0e826164
-  symbol_path:
-  - AggregationService
-  type: function_call
-  value: str
-  stable_hash: 0e826164
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
 - id: f31bbff2
   symbol_path:
@@ -4265,6 +4368,27 @@
   type: function_call
   value: list
   stable_hash: 57b32a33
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+- id: 477a34dd
+  symbol_path:
+  - AggregationService
+  type: function_call
+  value: isinstance
+  stable_hash: 477a34dd
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+- id: 4911f25f
+  symbol_path:
+  - AggregationService
+  - _apply_chart_sorting
+  type: return_statement
+  stable_hash: 4911f25f
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
+- id: 4911f25f
+  symbol_path:
+  - AggregationService
+  - _apply_chart_sorting
+  type: return_statement
+  stable_hash: 4911f25f
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\aggregation_service.py
 - id: 6358e82b
   symbol_path: []
@@ -5792,6 +5916,20 @@
   value: ValueError
   stable_hash: 5baa8a4f
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\file_processing.py
+- id: 459d03cc
+  symbol_path:
+  - find_task_file
+  type: function_call
+  value: len
+  stable_hash: 459d03cc
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\file_processing.py
+- id: 5baa8a4f
+  symbol_path:
+  - find_task_file
+  type: function_call
+  value: ValueError
+  stable_hash: 5baa8a4f
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\file_processing.py
 - id: bec7c10d
   symbol_path:
   - find_task_file
@@ -6567,13 +6705,6 @@
   type: return_statement
   stable_hash: 18b500a0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
-- id: 38d5a6c0
-  symbol_path:
-  - ProcessingLogService
-  type: function_call
-  value: cast
-  stable_hash: 38d5a6c0
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
 - id: 2e656bdc
   symbol_path:
   - ProcessingLogService
@@ -6593,13 +6724,6 @@
   - ProcessingLogService
   type: return_statement
   stable_hash: 18b500a0
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
-- id: 38d5a6c0
-  symbol_path:
-  - ProcessingLogService
-  type: function_call
-  value: cast
-  stable_hash: 38d5a6c0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
 - id: 18b500a0
   symbol_path:
@@ -6723,13 +6847,6 @@
   type: return_statement
   stable_hash: 18b500a0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
-- id: 38d5a6c0
-  symbol_path:
-  - ProcessingLogService
-  type: function_call
-  value: cast
-  stable_hash: 38d5a6c0
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
 - id: 1464b146
   symbol_path:
   - ProcessingLogService
@@ -6750,13 +6867,6 @@
   type: return_statement
   stable_hash: 18b500a0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
-- id: 38d5a6c0
-  symbol_path:
-  - ProcessingLogService
-  type: function_call
-  value: cast
-  stable_hash: 38d5a6c0
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
 - id: 2ea7e8b7
   symbol_path:
   - ProcessingLogService
@@ -6769,13 +6879,6 @@
   - ProcessingLogService
   type: return_statement
   stable_hash: 18b500a0
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
-- id: 38d5a6c0
-  symbol_path:
-  - ProcessingLogService
-  type: function_call
-  value: cast
-  stable_hash: 38d5a6c0
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\processing_log_service.py
 - id: 3e7e3503
   symbol_path:
@@ -7888,6 +7991,41 @@
   type: function_call
   value: get_session
   stable_hash: 7da8af41
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 3c75103c
+  symbol_path: []
+  type: function_call
+  value: timedelta
+  stable_hash: 3c75103c
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 71bdc9d8
+  symbol_path: []
+  type: function_call
+  value: update
+  stable_hash: 71bdc9d8
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 7da8af41
+  symbol_path: []
+  type: function_call
+  value: get_session
+  stable_hash: 7da8af41
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 71bdc9d8
+  symbol_path: []
+  type: function_call
+  value: update
+  stable_hash: 71bdc9d8
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: 2f6f6eb3
+  symbol_path: []
+  type: return_statement
+  stable_hash: 2f6f6eb3
+  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
+- id: ca6b712d
+  symbol_path: []
+  type: function_call
+  value: int
+  stable_hash: ca6b712d
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\workers\data_worker.py
 - id: 3c75103c
   symbol_path: []
@@ -12970,59 +13108,6 @@
   value: ValueError
   stable_hash: c528cd19
   file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\formula_parser.py
-- id: 15882f49
-  symbol_path:
-  - DataPipeline
-  type: return_statement
-  stable_hash: 15882f49
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\registry.py
-- id: 382dc128
-  symbol_path:
-  - DataPipeline
-  type: function_call
-  value: apply_transformations
-  stable_hash: 382dc128
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\registry.py
-- id: c10c6d2b
-  symbol_path:
-  - DataPipeline
-  type: function_call
-  value: cast
-  stable_hash: c10c6d2b
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\registry.py
-- id: 8a64fe96
-  symbol_path:
-  - DataPipeline
-  type: function_call
-  value: ValueError
-  stable_hash: 8a64fe96
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\registry.py
-- id: 5db1c28c
-  symbol_path:
-  - DataPipeline
-  type: function_call
-  value: aggregate_data
-  stable_hash: 5db1c28c
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\registry.py
-- id: 15882f49
-  symbol_path:
-  - DataPipeline
-  type: return_statement
-  stable_hash: 15882f49
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\registry.py
-- id: c7c80853
-  symbol_path:
-  - DataPipeline
-  type: function_call
-  value: str
-  stable_hash: c7c80853
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\registry.py
-- id: 15882f49
-  symbol_path:
-  - DataPipeline
-  type: return_statement
-  stable_hash: 15882f49
-  file: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\registry.py
 - id: 8178b4dc
   symbol_path:
   - apply_transformations

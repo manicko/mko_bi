@@ -7,6 +7,7 @@ import { getRegistrationRequests, approveRequest, rejectRequest, retrieveTempPas
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { ConfirmDialog } from '../../../shared/components/ConfirmDialog'
 import { ResetPasswordResultDialog } from './ResetPasswordResultDialog'
+import { formatDate } from '../../../shared/utils/formatDate'
 import { toast } from 'react-hot-toast'
 import type { RegistrationRequestItem } from '../../../shared/types/api.types'
 
@@ -180,7 +181,7 @@ export function RegistrationRequests() {
     id: req.id,
     email: req.email,
     status: req.status,
-    created_at: new Date(req.created_at).toLocaleString(),
+    created_at: formatDate(req.created_at),
   }))
 
   function NoRegistrationRequestsOverlay() {

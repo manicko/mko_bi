@@ -2,7 +2,7 @@ id: TASK_033_fe006_consolidate_error_query_hooks
 
 title: Fix FE-006 — Consolidate error/query hooks into a shared API error handler
 
-status: pending
+status: completed
 
 priority: low
 

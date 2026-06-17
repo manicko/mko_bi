@@ -82,6 +82,13 @@
   type: component
   value: RoleBasedAccess
   stable_hash: 64bcf966
+- id: e2fdd50d
+  file: C:/py_dev/mkobi/frontend/src/shared/hooks/useApiError.ts
+  symbol_path:
+    - useApiError
+  type: hook
+  value: useApiError
+  stable_hash: e2fdd50d
 - id: 0e8e2505
   file: C:/py_dev/mkobi/frontend/src/shared/hooks/useConfirmDialog.ts
   symbol_path:

@@ -74,11 +74,13 @@
   - validate_admin_credentials
   - validate_debug_mode
   - validate_cors_origins_not_placeholder
+  - validate_production_credentials
   - validate_cors_origins
   - settings_customise_sources
   - __init__
   - _log_initialization
   - _ensure_upload_dir
+  - _log_security_warnings
   - DATABASE_URL
   - TEST_DATABASE_URL
   - TEST_ADMIN_DATABASE_URL
@@ -664,6 +666,7 @@
   - AxisConfig
   - ChartLayoutConfig
   - YoYConfig
+  - SortConfig
   - GraphConfigDict
   - FilterConfigDict
   - ProcessingSettingsDict
@@ -721,7 +724,9 @@
   classes:
   - AggregationService
   functions:
+  - _coerce_dim_value
   - __init__
+  - _apply_chart_sorting
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\services\auth_service.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.services.auth_service
   layer: unknown
@@ -1621,22 +1626,9 @@
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\registry.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.data.processing.registry
   layer: unknown
-  imports:
-  - typing
-  - uuid
-  - sqlalchemy
-  - sqlalchemy.exc
-  - sqlalchemy.ext.asyncio
-  - mkobi.data.processing.transformations
-  - mkobi.data.storage.manager
-  - mkobi.interfaces.repository_interfaces
-  - mkobi.interfaces.service_interfaces
-  - mkobi.models.enums
-  - mkobi.models.processing_logs
-  classes:
-  - DataPipeline
-  functions:
-  - __init__
+  imports: []
+  classes: []
+  functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\data\processing\transformations.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.data.processing.transformations
   layer: unknown

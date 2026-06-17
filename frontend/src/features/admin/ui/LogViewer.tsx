@@ -19,6 +19,7 @@ import { getLogs } from '../api/adminApi'
 import { useQuery } from '@tanstack/react-query'
 import type { LogFilters } from '../../../shared/types/api.types'
 import { ProcessingStatus } from '../../../shared/types/enums'
+import { formatDate } from '../../../shared/utils/formatDate'
 
 const statusOptions = Object.values(ProcessingStatus)
 
@@ -65,8 +66,8 @@ export function LogViewer() {
     dashboard_name: log.dashboard_name || 'N/A',
     status: log.status,
     message: log.message || '',
-    started_at: log.started_at ? new Date(log.started_at).toLocaleString() : '',
-    finished_at: log.finished_at ? new Date(log.finished_at).toLocaleString() : '',
+    started_at: formatDate(log.started_at),
+    finished_at: formatDate(log.finished_at),
   }))
 
   return (
