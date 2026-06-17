@@ -1,0 +1,46 @@
+id: TASK_008_int007_add_response_model_register
+
+title: Fix INT-007 — Add response_model to register_request endpoint
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Add `response_model=RegistrationRequestResponse` to POST /register-request endpoint
+  in auth.py. This documents the actual response shape in OpenAPI schema.
+
+source_file: .ai/audit/99-validation/90-integration-validated.md
+source_section: INT-007 — Add response_model to register_request Endpoint
+
+files:
+  - path: src/mkobi/api/routes/auth.py
+    targets:
+      - type: function
+        name: register_request_endpoint
+      - type: decorator
+        name: router.post
+    semantic_anchors:
+      - type: decorator
+        value: router.post
+    changes:
+      - action: modify_decorator
+        description: >
+          Add response_model=RegistrationRequestResponse to the decorator and update
+          the return statement to use the model.
+
+acceptance_criteria:
+  - endpoint declares response_model
+  - OpenAPI schema shows RegistrationRequestResponse shape
+  - Response uses the model, not raw dict
+
+risk_notes: >
+  Low risk — Response shape already matches. Pure contract documentation.
+
+tests_to_run:
+  - command: uv run mypy src/mkobi/api/routes/auth.py
+    reason: Verify type correctness
+  - command: uv run pytest tests/test_auth_routes.py -v --no-cov -k "register"
+    reason: Verify registration tests pass

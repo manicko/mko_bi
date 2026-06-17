@@ -1,0 +1,45 @@
+id: TASK_023_fe009_guard_uploadmodal_callback
+
+title: Fix FE-009 — Guard against double-invoke of onUploadComplete callback
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Add a ref-based guard to ensure onUploadComplete fires exactly once when
+  status becomes 'completed'. Prevent duplicate API calls from polling + close.
+
+source_file: .ai/audit/99-validation/02-frontend-validated.md
+source_section: FE-009: UploadModal polling may double-invoke onUploadComplete callback
+
+files:
+  - path: frontend/src/features/upload/ui/UploadModal.tsx
+    targets:
+      - type: component
+        name: UploadModal
+      - type: ref
+        name: hasCompletedRef
+    semantic_anchors:
+      - type: hook_call
+        value: useRef
+      - type: conditional
+        value: status
+    changes:
+      - action: add_code
+        description: >
+          Add hasCompletedRef = useRef(false) and guard the callback invocation.
+
+acceptance_criteria:
+  - Callback fires exactly once per upload cycle
+  - Guard resets in handleClose
+  - No duplicate API calls
+
+risk_notes: >
+  Low risk — Defensive programming, no functional change.
+
+tests_to_run:
+  - command: cd frontend && npm run build
+    reason: Verify TypeScript compilation succeeds

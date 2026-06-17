@@ -1,20 +1,20 @@
 id: TASK_065_verify_docker_stage1
 
-title: Verify — Docker Stage 1 (INF-005 through INF-007)
+title: Verify — Docker Stage 1 (INF-001, INF-002, INF-006)
 
 type: verification
 
 status: pending
 
 depends_on:
-  - TASK_018_inf005_standardize_rqworker_command
-  - TASK_019_inf006_db_port_bind_localhost
-  - TASK_020_inf007_fix_postgresql_healthcheck
+  - TASK_002_inf001_fix_dockerfile_frontend_build
+  - TASK_003_inf002_fix_nginx_ipv6_healthcheck
+  - TASK_029_inf006_add_warning_and_bind_db_port
 
 verifies:
-  - TASK_018_inf005_standardize_rqworker_command
-  - TASK_019_inf006_db_port_bind_localhost
-  - TASK_020_inf007_fix_postgresql_healthcheck
+  - TASK_002_inf001_fix_dockerfile_frontend_build
+  - TASK_003_inf002_fix_nginx_ipv6_healthcheck
+  - TASK_029_inf006_add_warning_and_bind_db_port
 
 verification_steps:
   - build: docker compose -f docker/docker-compose.yml build

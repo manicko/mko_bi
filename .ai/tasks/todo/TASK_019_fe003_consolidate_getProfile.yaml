@@ -1,0 +1,52 @@
+id: TASK_019_fe003_consolidate_getProfile
+
+title: Fix FE-003 — Consolidate duplicate getProfile() implementations
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Remove duplicate getProfile() from userApi.ts and re-export from authApi.ts.
+  Both call GET /auth/me. Violates DRY principle.
+
+source_file: .ai/audit/99-validation/02-frontend-validated.md
+source_section: FE-003: getProfile() duplicated across authApi and userApi
+
+files:
+  - path: frontend/src/features/users/api/userApi.ts
+    targets:
+      - type: function
+        name: getProfile
+    semantic_anchors:
+      - type: function_definition
+        value: getProfile
+    changes:
+      - action: remove_code
+        description: >
+          Remove local getProfile definition and import from authApi instead.
+
+  - path: frontend/src/features/users/ui/UserProfile.tsx
+    targets:
+      - type: import_statement
+    semantic_anchors:
+      - type: import_statement
+        value: userApi
+    changes:
+      - action: modify_import
+        description: >
+          Update UserProfile to import getProfile from authApi instead of userApi.
+
+acceptance_criteria:
+  - Single source of truth for getProfile in authApi.ts
+  - UserProfile imports from correct location
+  - No duplicate implementations
+
+risk_notes: >
+  Low risk — Import-only change.
+
+tests_to_run:
+  - command: cd frontend && npm run build
+    reason: Verify TypeScript compilation succeeds

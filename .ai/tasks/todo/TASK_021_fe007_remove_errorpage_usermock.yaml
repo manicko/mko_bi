@@ -1,0 +1,46 @@
+id: TASK_021_fe007_remove_errorpage_usermock
+
+title: Fix FE-007 — Remove unnecessary useAuth() call from ErrorPage
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  ErrorPage triggers useAuth() for unauthenticated users hitting error pages.
+  This causes unnecessary API calls and potential error toasts. Replace with
+  synchronous token check and hardcode goToHome = '/login'.
+
+source_file: .ai/audit/99-validation/02-frontend-validated.md
+source_section: FE-007: ErrorPage triggers unnecessary useAuth() call
+
+files:
+  - path: frontend/src/shared/components/ErrorPage.tsx
+    targets:
+      - type: hook
+        name: useAuth
+      - type: function
+        name: goToHome
+    semantic_anchors:
+      - type: hook_call
+        value: useAuth
+      - type: variable_assignment
+        value: goToHome
+    changes:
+      - action: remove_code
+        description: >
+          Remove useAuth import and call. Hardcode goToHome to '/login'.
+
+acceptance_criteria:
+  - No useAuth hook in ErrorPage
+  - goToHome hardcoded to '/login'
+  - No unnecessary API calls on error pages
+
+risk_notes: >
+  Low risk — Correctly identifies that unauthenticated users see this component.
+
+tests_to_run:
+  - command: cd frontend && npm run build
+    reason: Verify TypeScript compilation succeeds

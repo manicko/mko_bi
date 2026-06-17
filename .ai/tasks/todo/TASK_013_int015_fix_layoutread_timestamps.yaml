@@ -1,0 +1,45 @@
+id: TASK_013_int015_fix_layoutread_timestamps
+
+title: Fix INT-015 — Fix LayoutRead nullable timestamps to match DB
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Change `created_at: datetime | None = None` and `updated_at: datetime | None = None`
+  to non-nullable `datetime` in LayoutRead model. The DB columns are nullable=False.
+
+source_file: .ai/audit/99-validation/90-integration-validated.md
+source_section: INT-015 — Fix LayoutRead.created_at Nullable Type to Match DB
+
+files:
+  - path: src/mkobi/models/layout.py
+    targets:
+      - type: class
+        name: LayoutRead
+      - type: field
+        name: created_at
+      - type: field
+        name: updated_at
+    semantic_anchors:
+      - type: field_definition
+        value: datetime
+    changes:
+      - action: modify_type
+        description: >
+          Remove `| None = None` from created_at and updated_at field definitions.
+
+acceptance_criteria:
+  - LayoutRead fields are non-nullable
+  - mypy passes on modified file
+  - OpenAPI schema shows fields as required
+
+risk_notes: >
+  Low risk — DB columns are always populated; this tightens the contract.
+
+tests_to_run:
+  - command: uv run mypy src/mkobi/models/layout.py
+    reason: Verify type correctness

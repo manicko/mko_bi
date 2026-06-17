@@ -1,0 +1,47 @@
+id: TASK_006_int004_tighten_error_code_type
+
+title: Fix INT-004 — Tighten ProcessingStatusResponse.error_code to ErrorCode
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Change `error_code: str | None = None` to `error_code: ErrorCode | None = None`
+  in ProcessingStatusResponse model. This enables Pydantic validation and explicit
+  OpenAPI schema documentation.
+
+source_file: .ai/audit/99-validation/90-integration-validated.md
+source_section: INT-004 — Tighten Frontend error_code Type to ErrorCode
+
+files:
+  - path: src/mkobi/models/data.py
+    targets:
+      - type: class
+        name: ProcessingStatusResponse
+      - type: field
+        name: error_code
+    semantic_anchors:
+      - type: field_definition
+        value: error_code
+    changes:
+      - action: modify_type
+        description: >
+          Import ErrorCode and change error_code field type from `str | None` to
+          `ErrorCode | None`.
+
+acceptance_criteria:
+  - ProcessingStatusResponse.error_code accepts only valid ErrorCode values
+  - Invalid error codes are rejected at validation time
+  - mypy passes on modified file
+
+risk_notes: >
+  Low risk — Type is already validated at runtime; this adds static validation.
+
+tests_to_run:
+  - command: uv run mypy src/mkobi/models/data.py
+    reason: Verify type correctness
+  - command: uv run pytest tests/test_processing_log_service.py -v --no-cov -k "error"
+    reason: Verify error handling tests pass

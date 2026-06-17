@@ -1,0 +1,46 @@
+id: TASK_016_int019_fix_refresh_token_empty_body
+
+title: Fix INT-019 — Remove misleading empty body from refreshToken() call
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Change `post<Token>('/auth/refresh', {})` to `post<Token>('/auth/refresh')` in
+  frontend authApi.ts. The backend reads refresh token from httpOnly cookie, not body.
+
+source_file: .ai/audit/99-validation/90-integration-validated.md
+source_section: INT-019 — Remove Misleading Empty Body from refreshToken() API Call
+
+files:
+  - path: frontend/src/features/auth/api/authApi.ts
+    targets:
+      - type: function
+        name: refreshToken
+    semantic_anchors:
+      - type: function_call
+        value: post
+    changes:
+      - action: modify_code
+        description: >
+          Remove empty object `{}` from refreshToken axios call.
+        code_hint: |
+          export async function refreshToken(): Promise<Token> {
+            const response = await axiosInstance.post<Token>('/auth/refresh')
+            return response.data
+          }
+
+acceptance_criteria:
+  - No body argument passed to POST /auth/refresh
+  - TypeScript compiles successfully
+  - No runtime behavior change
+
+risk_notes: >
+  No risk — Pure code clarity improvement. Backend reads from cookie.
+
+tests_to_run:
+  - command: cd frontend && npm run build
+    reason: Verify TypeScript compilation succeeds

@@ -1,0 +1,46 @@
+id: TASK_012_int012_align_layout_type
+
+title: Fix INT-012 — Align GraphDataWithConfig.layout with ChartLayoutConfig
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Replace Plotly's Layout type with explicit ChartLayoutConfig interface in
+  GraphDataWithConfig. Backend sends a specific subset of layout fields that
+  should be explicitly typed on the frontend.
+
+source_file: .ai/audit/99-validation/90-integration-validated.md
+source_section: INT-012 — Align Frontend GraphDataWithConfig.layout Type with Backend
+
+files:
+  - path: frontend/src/shared/types/api.types.ts
+    targets:
+      - type: interface
+        name: ChartLayoutConfig
+      - type: interface
+        name: GraphDataWithConfig
+    semantic_anchors:
+      - type: type_reference
+        value: Layout
+    changes:
+      - action: add_interface
+        description: >
+          Define ChartLayoutConfig interface with explicit fields (title, xaxis,
+          yaxis, showlegend, height, width, template) and update GraphDataWithConfig
+          to use it.
+
+acceptance_criteria:
+  - ChartLayoutConfig interface defined
+  - GraphDataWithConfig.layout uses ChartLayoutConfig
+  - TypeScript build succeeds
+
+risk_notes: >
+  Low risk — Makes frontend types match exact backend contract.
+
+tests_to_run:
+  - command: cd frontend && npm run build
+    reason: Verify TypeScript compilation succeeds

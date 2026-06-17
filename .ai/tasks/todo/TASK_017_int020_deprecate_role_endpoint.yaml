@@ -1,0 +1,43 @@
+id: TASK_017_int020_deprecate_role_endpoint
+
+title: Fix INT-020 — Deprecate redundant PUT /users/{user_id} role endpoint
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Add `deprecated=True` to PUT /users/{user_id} endpoint in users.py. The frontend
+  already uses PATCH /admin/users/{user_id}/role. Both do the same thing.
+
+source_file: .ai/audit/99-validation/90-integration-validated.md
+source_section: INT-020 — Deprecate Redundant PUT /users/{user_id} Role Update Path
+
+files:
+  - path: src/mkobi/api/routes/users.py
+    targets:
+      - type: function
+        name: update_user_endpoint
+      - type: decorator
+        name: router.put
+    semantic_anchors:
+      - type: decorator
+        value: router.put
+    changes:
+      - action: modify_decorator
+        description: >
+          Add deprecated=True to the endpoint decorator and update docstring.
+
+acceptance_criteria:
+  - deprecated=True flag added to endpoint
+  - OpenAPI schema shows endpoint as deprecated
+  - No functional change
+
+risk_notes: >
+  Low risk — Flags endpoint as deprecated; no functional change.
+
+tests_to_run:
+  - command: uv run mypy src/mkobi/api/routes/users.py
+    reason: Verify type correctness

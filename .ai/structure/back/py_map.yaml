@@ -19,6 +19,16 @@
   - mkobi.workers.data_worker
   - mkobi.core.task_queue
   - mkobi.db.session
+  - mkobi.db.session
+  - mkobi.services.dashboard_service
+  - mkobi.db.repositories.dashboard_repo
+  - mkobi.db.repositories.access_repo
+  - mkobi.db.session
+  - mkobi.services.processing_log_service
+  - mkobi.db.repositories.processing_log_repo
+  - mkobi.db.session
+  - mkobi.services.filter_values_service
+  - mkobi.db.repositories.dashboard_filter_values_repo
   - mkobi.utils.exceptions
   - pathlib
   - starlette.staticfiles
@@ -108,6 +118,14 @@
   classes: []
   functions:
   - check_dependencies
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\rq_worker_wrapper.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.rq_worker_wrapper
+  layer: unknown
+  imports:
+  - mkobi.config
+  classes: []
+  functions:
+  - start_rq_worker
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\deps.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.api.deps
   layer: unknown
@@ -559,6 +577,16 @@
   - valid_transitions
   - allowed_values
   - allowed_values
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\error_response.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.models.error_response
+  layer: unknown
+  imports:
+  - typing
+  - pydantic
+  - mkobi.models.enums
+  classes:
+  - ErrorResponse
+  functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\models\filters.py
   module: C:_dev.mkobi..ai.builders.......src.mkobi.models.filters
   layer: unknown
@@ -705,6 +733,7 @@
   imports:
   - mkobi.models.auth
   - mkobi.models.data
+  - mkobi.models.error_response
   - mkobi.models.filters
   - mkobi.models.graph
   - mkobi.models.processing_configs
@@ -761,6 +790,8 @@
   imports:
   - typing
   - uuid
+  - sqlalchemy
+  - sqlalchemy.engine.interfaces
   - sqlalchemy.ext.asyncio
   - mkobi.db.models
   - mkobi.interfaces.service_interfaces
@@ -860,6 +891,8 @@
   layer: unknown
   imports:
   - uuid
+  - sqlalchemy
+  - sqlalchemy.engine.interfaces
   - sqlalchemy.ext.asyncio
   - mkobi.interfaces.repository_interfaces
   classes:
@@ -922,6 +955,7 @@
   - datetime
   - typing
   - uuid
+  - sqlalchemy
   - sqlalchemy.ext.asyncio
   - mkobi.interfaces.repository_interfaces
   - mkobi.interfaces.service_interfaces
@@ -930,6 +964,7 @@
   - mkobi.utils.exceptions
   - mkobi.config
   - mkobi.db.session
+  - sqlalchemy.engine.interfaces
   classes:
   - ProcessingLogService
   functions:
@@ -981,11 +1016,10 @@
   - fastapi
   - fastapi.exceptions
   - fastapi.responses
-  - pydantic
   - mkobi.core.logging_config
   - mkobi.models.enums
+  - mkobi.models.error_response
   classes:
-  - ErrorResponse
   - AppException
   - NotFoundException
   - PermissionDeniedException
@@ -1683,6 +1717,7 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.api.schemas.responses
   - mkobi.interfaces
   - mkobi.models.enums
   - mkobi.utils.exceptions
@@ -1705,6 +1740,7 @@
   - fastapi.security
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.api.schemas.responses
   - mkobi.db.repositories.user_repo
   - mkobi.config
   - mkobi.core.logging_config
@@ -1722,6 +1758,7 @@
   layer: unknown
   imports:
   - fastapi
+  - mkobi.api.schemas.responses
   - mkobi.config
   - mkobi.core
   - mkobi.core.security
@@ -1751,6 +1788,7 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.api.schemas.responses
   - mkobi.models.access
   - mkobi.models.enums
   - mkobi.services.dashboard_service
@@ -1765,6 +1803,7 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.api.schemas.responses
   - mkobi.models.dashboard
   - mkobi.models.enums
   - mkobi.services.dashboard_service
@@ -1778,9 +1817,9 @@
   - typing
   - uuid
   - fastapi
-  - sqlalchemy.exc
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.api.schemas.responses
   - mkobi.models.enums
   - mkobi.models.user
   - mkobi.utils.exceptions
@@ -1796,6 +1835,7 @@
   - sqlalchemy.exc
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.api.schemas.responses
   - mkobi.models.enums
   - mkobi.models.graph
   - mkobi.models.user
@@ -1811,6 +1851,7 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.api.schemas.responses
   - mkobi.core.permissions
   - mkobi.models.data
   - mkobi.models.enums
@@ -1832,6 +1873,7 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.api.schemas.responses
   - mkobi.models.data
   - mkobi.models.enums
   - mkobi.models.user
@@ -1848,6 +1890,7 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.api.schemas.responses
   - mkobi.models.graph
   - mkobi.models.enums
   - mkobi.utils.exceptions
@@ -1862,6 +1905,7 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.api.schemas.responses
   - mkobi.core.permissions
   - mkobi.db.repositories.access_repo
   - mkobi.models.enums
@@ -1878,11 +1922,12 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.api.schemas.responses
   - mkobi.models.processing_configs
-  - mkobi.services.processing_config_service
   - mkobi.models.enums
   - mkobi.utils.exceptions
   - mkobi.core.permissions
+  - mkobi.services.processing_config_service
   classes: []
   functions: []
 - path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\routes\processing_logs.py
@@ -1895,6 +1940,7 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.api.schemas.responses
   - mkobi.core.logging_config
   - mkobi.models.enums
   - mkobi.models.processing_logs
@@ -1913,6 +1959,7 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.api.schemas.responses
   - mkobi.config
   - mkobi.core.logging_config
   - mkobi.core
@@ -1933,6 +1980,7 @@
   - fastapi
   - sqlalchemy.ext.asyncio
   - mkobi.api.deps
+  - mkobi.api.schemas.responses
   - mkobi.models.enums
   - mkobi.models.user
   - mkobi.services.user_service
@@ -1944,5 +1992,12 @@
   layer: unknown
   imports:
   - mkobi.api.routes
+  classes: []
+  functions: []
+- path: C:\py_dev\mkobi\.ai\builders\..\..\src\mkobi\api\schemas\responses.py
+  module: C:_dev.mkobi..ai.builders.......src.mkobi.api.schemas.responses
+  layer: unknown
+  imports:
+  - mkobi.models.error_response
   classes: []
   functions: []

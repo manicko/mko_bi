@@ -1,5 +1,5 @@
 Folder PATH listing for volume Windows
-Volume serial number is 000001A2 F012:D5D6
+Volume serial number is 00000208 F012:D5D6
 C:\PY_DEV\MKOBI
 |   $null
 |   .coverage
@@ -22,6 +22,9 @@ C:\PY_DEV\MKOBI
 |   |   
 |   +---audit
 |   |   +---00-bug_report
+|   |   |       02-missing-websocket-implementation.md
+|   |   |       03-task-057-upload-progress-websocket-mismatch.md
+|   |   |       
 |   |   +---01-backend
 |   |   |       findings.md
 |   |   |       
@@ -94,6 +97,8 @@ C:\PY_DEV\MKOBI
 |   |       models_to_use.md
 |   |       
 |   +---plans
+|   |       audit-fix-plan.md
+|   |       
 |   +---problems
 |   |   \---decisions
 |   +---researches
@@ -112,19 +117,68 @@ C:\PY_DEV\MKOBI
 |   |   +---done
 |   |   |       TASK_001_dp08_independent_session_for_failed_status_DONE.yaml
 |   |   |       TASK_002_dp02_clear_filter_values_append_mode_DONE.yaml
+|   |   |       TASK_003_dp07_lower_timeout_orphaned_uploaded_check_DONE.yaml
 |   |   |       TASK_004_dp01_remove_dead_datapipeline_class_DONE.yaml
+|   |   |       TASK_005_dp03_tighten_glob_pattern_DONE.yaml
+|   |   |       TASK_006_dp04_reraise_in_test_mode_DONE.yaml
+|   |   |       TASK_007_dp05_preserve_native_dim_types_DONE.yaml
+|   |   |       TASK_008_dp06_remove_round_from_storage_DONE.yaml
 |   |   |       TASK_009_db001_fix_cleanup_old_logs_filter_DONE.yaml
+|   |   |       TASK_010_db002_move_commit_after_none_check_DONE.yaml
+|   |   |       TASK_011_db003_document_external_index_in_migration_DONE.yaml
 |   |   |       TASK_012_be001_fix_jwt_secret_test_for_container_DONE.yaml
 |   |   |       TASK_013_be002_update_mime_validation_test_regex_DONE.yaml
+|   |   |       TASK_014_be003_fix_ruff_cache_permissions_in_tests_DONE.yaml
 |   |   |       TASK_015_be004_remove_redundant_cast_calls_DONE.yaml
 |   |   |       TASK_016_sec03_env_weak_passwords_guard_DONE.yaml
 |   |   |       TASK_017_sec04_cookie_secure_dev_override_DONE.yaml
 |   |   |       TASK_018_inf005_standardize_rqworker_command_DONE.yaml
+|   |   |       TASK_019_inf006_db_port_bind_localhost_DONE.yaml
+|   |   |       TASK_020_inf007_fix_postgresql_healthcheck_DONE.yaml
 |   |   |       TASK_021_dc001_remove_xframe_from_app_DONE.yaml
 |   |   |       TASK_022_dc002_add_health_detailed_proxy_DONE.yaml
 |   |   |       TASK_023_dc003_fix_ratelimiter_doc_DONE.yaml
 |   |   |       TASK_024_dc004_weak_passwords_startup_warning_DONE.yaml
 |   |   |       TASK_025_dc006_refuse_placeholder_admin_password_DONE.yaml
+|   |   |       TASK_026_dc007_add_index_dashboards_method_DONE.yaml
+|   |   |       TASK_027_dc008_add_index_processing_logs_method_DONE.yaml
+|   |   |       TASK_028_dc009_add_index_filter_values_method_DONE.yaml
+|   |   |       TASK_029_dc010_align_rq_cooldown_docs_DONE.yaml
+|   |   |       TASK_030_fe002_add_react_query_devtools_DONE.yaml
+|   |   |       TASK_031_fe003_add_error_boundary_DONE.yaml
+|   |   |       TASK_032_fe004_fix_mui_lab_loadingbutton_deprecation_DONE.yaml
+|   |   |       TASK_033_fe006_consolidate_error_query_hooks_DONE.yaml
+|   |   |       TASK_034_fe007_add_debounce_to_filter_search_DONE.yaml
+|   |   |       TASK_035_fe008_add_zod_password_validation_DONE.yaml
+|   |   |       TASK_036_fe009_add_loading_skeleton_DONE.yaml
+|   |   |       TASK_037_fe010_add_date_fns_formatting_DONE.yaml
+|   |   |       TASK_038_tst004_rq_worker_retry_unit_test_DONE.yaml
+|   |   |       TASK_039_tst005_add_upload_mime_test_DONE.yaml
+|   |   |       TASK_040_tst006_add_expired_token_test_DONE.yaml
+|   |   |       TASK_042_tst008_add_layout_crud_integration_test_DONE.yaml
+|   |   |       TASK_043_int002_add_openapi_error_schemas_DONE.yaml
+|   |   |       TASK_044_int003_add_cors_preflight_test_DONE.yaml
+|   |   |       TASK_045_int004_add_redis_connection_retry_test_DONE.yaml
+|   |   |       TASK_046_int005_add_db_connection_pool_exhaustion_test_DONE.yaml
+|   |   |       TASK_047_int006_add_rate_limiting_test_DONE.yaml
+|   |   |       TASK_048_int007_add_file_cleanup_test_DONE.yaml
+|   |   |       TASK_049_int008_add_dashboard_access_cascade_test_DONE.yaml
+|   |   |       TASK_050_int009_add_filter_values_consistency_test_DONE.yaml
+|   |   |       TASK_051_int010_add_auth_token_revocation_test_DONE.yaml
+|   |   |       TASK_052_int011_fix_frontend_env_validation_DONE.yaml
+|   |   |       TASK_053_int012_add_health_endpoint_test_DONE.yaml
+|   |   |       TASK_054_int013_add_websocket_reconnect_test_BLOCKED.yaml
+|   |   |       TASK_055_research_placeholder_page_usage_DONE.yaml
+|   |   |       TASK_056_research_access_denied_usage_DONE.yaml
+|   |   |       TASK_057_int016_add_upload_progress_websocket_test_BLOCKED.yaml
+|   |   |       TASK_FE002_remove_unused_generateShortId_DONE.yaml
+|   |   |       TASK_FE003_consolidate_getProfile_DONE.yaml
+|   |   |       TASK_FE004_lazy_load_uploadModal_DONE.yaml
+|   |   |       TASK_FE006_standardize_useAuth_import_DONE.yaml
+|   |   |       TASK_FE007_remove_useAuth_from_ErrorPage_DONE.yaml
+|   |   |       TASK_FE008_logViewer_dashboard_filter_DONE.yaml
+|   |   |       TASK_FE009_uploadModal_completion_guard_DONE.yaml
+|   |   |       TASK_FE010_dashboardFilters_deep_compare_DONE.yaml
 |   |   |       
 |   |   +---templates
 |   |   |       order_template.yaml
@@ -132,42 +186,7 @@ C:\PY_DEV\MKOBI
 |   |   |       
 |   |   +---todo
 |   |   |       order.yaml
-|   |   |       TASK_011_db003_document_external_index_in_migration.yaml
-|   |   |       TASK_014_be003_fix_ruff_cache_permissions_in_tests.yaml
-|   |   |       TASK_019_inf006_db_port_bind_localhost.yaml
-|   |   |       TASK_020_inf007_fix_postgresql_healthcheck.yaml
-|   |   |       TASK_026_dc007_add_index_dashboards_method.yaml
-|   |   |       TASK_027_dc008_add_index_processing_logs_method.yaml
-|   |   |       TASK_028_dc009_add_index_filter_values_method.yaml
-|   |   |       TASK_029_dc010_align_rq_cooldown_docs.yaml
-|   |   |       TASK_030_fe002_add_react_query_devtools.yaml
-|   |   |       TASK_031_fe003_add_error_boundary.yaml
-|   |   |       TASK_032_fe004_fix_mui_lab_loadingbutton_deprecation.yaml
-|   |   |       TASK_033_fe006_consolidate_error_query_hooks.yaml
-|   |   |       TASK_034_fe007_add_debounce_to_filter_search.yaml
-|   |   |       TASK_035_fe008_add_zod_password_validation.yaml
-|   |   |       TASK_036_fe009_add_loading_skeleton.yaml
-|   |   |       TASK_037_fe010_add_date_fns_formatting.yaml
-|   |   |       TASK_038_tst004_rq_worker_retry_unit_test.yaml
-|   |   |       TASK_039_tst005_add_upload_mime_test.yaml
-|   |   |       TASK_040_tst006_add_expired_token_test.yaml
 |   |   |       TASK_041_tst007_add_concurrent_upload_test.yaml
-|   |   |       TASK_042_tst008_add_layout_crud_integration_test.yaml
-|   |   |       TASK_043_int002_add_openapi_error_schemas.yaml
-|   |   |       TASK_044_int003_add_cors_preflight_test.yaml
-|   |   |       TASK_045_int004_add_redis_connection_retry_test.yaml
-|   |   |       TASK_046_int005_add_db_connection_pool_exhaustion_test.yaml
-|   |   |       TASK_047_int006_add_rate_limiting_test.yaml
-|   |   |       TASK_048_int007_add_file_cleanup_test.yaml
-|   |   |       TASK_049_int008_add_dashboard_access_cascade_test.yaml
-|   |   |       TASK_050_int009_add_filter_values_consistency_test.yaml
-|   |   |       TASK_051_int010_add_auth_token_revocation_test.yaml
-|   |   |       TASK_052_int011_fix_frontend_env_validation.yaml
-|   |   |       TASK_053_int012_add_health_endpoint_test.yaml
-|   |   |       TASK_054_int013_add_websocket_reconnect_test.yaml
-|   |   |       TASK_055_research_placeholder_page_usage.yaml
-|   |   |       TASK_056_research_access_denied_usage.yaml
-|   |   |       TASK_057_int016_add_upload_progress_websocket_test.yaml
 |   |   |       TASK_058_int017_add_dashboard_filter_persistence_test.yaml
 |   |   |       TASK_059_int018_add_registration_flow_test.yaml
 |   |   |       TASK_060_int019_add_admin_user_management_test.yaml
@@ -4373,11 +4392,14 @@ C:\PY_DEV\MKOBI
 |           10330102234014088215
 |           118243083711576204
 |           12677494854074373733
+|           1275545610143936076
 |           12786802193448836532
 |           13837011016437660755
 |           15070302777659503799
 |           15141806382368711934
+|           1591560612034930602
 |           17542036672745001782
+|           1839171301421398479
 |           3191942672172237307
 |           3457565122451277431
 |           3739137510923691957
@@ -18642,72 +18664,14 @@ C:\PY_DEV\MKOBI
 |   |   |   sort-arrow-sprite.png
 |   |   |   sorter.js
 |   |   |   
-|   |   +---features
-|   |   |   +---admin
-|   |   |   |   \---model
-|   |   |   |           errorMessages.ts.html
-|   |   |   |           index.html
-|   |   |   |           
-|   |   |   +---auth
-|   |   |   |   |   index.html
-|   |   |   |   |   index.ts.html
-|   |   |   |   |   
-|   |   |   |   +---model
-|   |   |   |   |       authToken.ts.html
-|   |   |   |   |       errorMessages.ts.html
-|   |   |   |   |       index.html
-|   |   |   |   |       useAuth.ts.html
-|   |   |   |   |       
-|   |   |   |   \---ui
-|   |   |   |           index.html
-|   |   |   |           LoginForm.tsx.html
-|   |   |   |           RegisterForm.tsx.html
-|   |   |   |           
-|   |   |   +---dashboards
-|   |   |   |   +---model
-|   |   |   |   |       errorMessages.ts.html
-|   |   |   |   |       index.html
-|   |   |   |   |       
-|   |   |   |   \---ui
-|   |   |   |       |   DashboardView.tsx.html
-|   |   |   |       |   index.html
-|   |   |   |       |   
-|   |   |   |       \---charts
-|   |   |   |               ChartRenderer.tsx.html
-|   |   |   |               index.html
-|   |   |   |               PlotlyChart.tsx.html
-|   |   |   |               
-|   |   |   +---upload
-|   |   |   |   +---model
-|   |   |   |   |       errorMessages.ts.html
-|   |   |   |   |       index.html
-|   |   |   |   |       
-|   |   |   |   \---ui
-|   |   |   |           FileDropzone.tsx.html
-|   |   |   |           index.html
-|   |   |   |           
-|   |   |   \---users
-|   |   |       \---model
-|   |   |               errorMessages.ts.html
-|   |   |               index.html
-|   |   |               
-|   |   \---shared
-|   |       +---api
-|   |       |       errorHandler.ts.html
-|   |       |       errorMessages.ts.html
-|   |       |       index.html
-|   |       |       
-|   |       +---components
-|   |       |       AccessDenied.tsx.html
-|   |       |       index.html
-|   |       |       PlotlyComponent.tsx.html
-|   |       |       ProtectedRoute.tsx.html
-|   |       |       RoleBasedAccess.tsx.html
-|   |       |       
-|   |       \---types
-|   |               enums.ts.html
-|   |               formSchemas.ts.html
+|   |   \---ui
+|   |       |   DashboardView.tsx.html
+|   |       |   index.html
+|   |       |   
+|   |       \---charts
+|   |               ChartRenderer.tsx.html
 |   |               index.html
+|   |               SkeletonChart.tsx.html
 |   |               
 |   +---dist
 |   |   |   favicon.svg
@@ -18715,23 +18679,25 @@ C:\PY_DEV\MKOBI
 |   |   |   index.html
 |   |   |   
 |   |   \---assets
-|   |           AdminPanel-BpycAsuO.js
-|   |           ChangePasswordPage-WtthkYQY.js
-|   |           dashboardApi-C2MiIvSs.js
-|   |           DashboardList-BZBmrOxr.js
-|   |           DashboardView-DKpD221P.js
-|   |           formSchemas-yVkXV2Hw.js
-|   |           index-BAQA-4cT.js
-|   |           LoginForm-Bfh_Xa9X.js
-|   |           mui-nuHIX8iL.js
-|   |           plotly-BxTkdUEp.js
-|   |           react-CuvdHX7R.js
-|   |           RegisterForm-Bxip-n6M.js
+|   |           AdminPanel-C-2eAp3J.js
+|   |           ChangePasswordPage-DIOeleyb.js
+|   |           dashboardApi-ChK0Amco.js
+|   |           DashboardList-C4NNANzD.js
+|   |           DashboardView-DyWoSp3z.js
+|   |           formatDate-CpOAjrMG.js
+|   |           formSchemas-Bqz5LLL-.js
+|   |           index-DRFfGMfy.js
+|   |           LoginForm-D7MsBSPW.js
+|   |           mui-CGguIcTq.js
+|   |           plotly-BNZeab9N.js
+|   |           react-D55vB9wj.js
+|   |           RegisterForm-DXQpnz1r.js
 |   |           rolldown-runtime-S-ySWqyJ.js
 |   |           shortUuid-TYuFZJYs.js
-|   |           userApi-CEeRBx1_.js
-|   |           UserProfile-vMkNGOtZ.js
-|   |           vendor-Ck51I_mn.js
+|   |           UploadModal-BsJcC4Da.js
+|   |           userApi-Dky1DGsa.js
+|   |           UserProfile-C0LHMNKL.js
+|   |           vendor-C7OYwY5A.js
 |   |           
 |   +---node_modules
 |   |   |   .package-lock.json
@@ -99870,10 +99836,12 @@ C:\PY_DEV\MKOBI
 |       |   |   |           LineChart.tsx
 |       |   |   |           PlotlyChart.test.tsx
 |       |   |   |           PlotlyChart.tsx
+|       |   |   |           SkeletonChart.tsx
 |       |   |   |           TableChart.tsx
 |       |   |   |           
 |       |   |   \---__tests__
 |       |   |           DashboardView.test.tsx
+|       |   |           filter-persistence.test.tsx
 |       |   |           
 |       |   +---upload
 |       |   |   |   index.ts
@@ -99923,7 +99891,6 @@ C:\PY_DEV\MKOBI
 |       |   |   |   ErrorPage.tsx
 |       |   |   |   index.ts
 |       |   |   |   NotFound.tsx
-|       |   |   |   PlaceholderPage.tsx
 |       |   |   |   PlotlyComponent.tsx
 |       |   |   |   ProtectedRoute.test.tsx
 |       |   |   |   ProtectedRoute.tsx
@@ -99935,10 +99902,14 @@ C:\PY_DEV\MKOBI
 |       |   |           Header.tsx
 |       |   |           index.ts
 |       |   |           
+|       |   +---config
+|       |   |       env.ts
+|       |   |       
 |       |   +---hooks
 |       |   |       index.ts
 |       |   |       useApiError.ts
 |       |   |       useConfirmDialog.ts
+|       |   |       useDebounce.ts
 |       |   |       
 |       |   +---types
 |       |   |   |   api.types.ts
@@ -99950,6 +99921,7 @@ C:\PY_DEV\MKOBI
 |       |   |           formSchemas.test.ts
 |       |   |           
 |       |   \---utils
+|       |           formatDate.ts
 |       |           shortUuid.ts
 |       |           
 |       \---test
@@ -101108,6 +101080,7 @@ C:\PY_DEV\MKOBI
 |   |   |   config.py
 |   |   |   main.py
 |   |   |   py.typed
+|   |   |   rq_worker_wrapper.py
 |   |   |   
 |   |   +---api
 |   |   |   |   deps.py
@@ -101152,6 +101125,12 @@ C:\PY_DEV\MKOBI
 |   |   |   |           upload.cpython-314.pyc
 |   |   |   |           users.cpython-314.pyc
 |   |   |   |           __init__.cpython-314.pyc
+|   |   |   |           
+|   |   |   +---schemas
+|   |   |   |   |   responses.py
+|   |   |   |   |   
+|   |   |   |   \---__pycache__
+|   |   |   |           responses.cpython-314.pyc
 |   |   |   |           
 |   |   |   \---__pycache__
 |   |   |           deps.cpython-314.pyc
@@ -101315,6 +101294,7 @@ C:\PY_DEV\MKOBI
 |   |   |   |   dashboard.py
 |   |   |   |   data.py
 |   |   |   |   enums.py
+|   |   |   |   error_response.py
 |   |   |   |   filters.py
 |   |   |   |   graph.py
 |   |   |   |   layout.py
@@ -101331,6 +101311,7 @@ C:\PY_DEV\MKOBI
 |   |   |           dashboard.cpython-314.pyc
 |   |   |           data.cpython-314.pyc
 |   |   |           enums.cpython-314.pyc
+|   |   |           error_response.cpython-314.pyc
 |   |   |           filters.cpython-314.pyc
 |   |   |           graph.cpython-314.pyc
 |   |   |           layout.cpython-314.pyc
@@ -101403,6 +101384,7 @@ C:\PY_DEV\MKOBI
 |   |           config.cpython-314.pyc
 |   |           dash_app.cpython-314.pyc
 |   |           main.cpython-314.pyc
+|   |           rq_worker_wrapper.cpython-314.pyc
 |   |           
 |   \---mkobi.egg-info
 |           dependency_links.txt
@@ -101414,34 +101396,46 @@ C:\PY_DEV\MKOBI
 |           
 \---tests
     |   conftest.py
+    |   test_admin_user_management.py
     |   test_aggregation_service.py
     |   test_auth.py
     |   test_auth_api.py
     |   test_auth_service.py
     |   test_config.py
+    |   test_cors.py
     |   test_dashboards_api.py
+    |   test_dashboard_access.py
     |   test_data_csv_loader.py
     |   test_data_endpoint.py
     |   test_data_service.py
     |   test_data_transformations.py
     |   test_data_validator.py
     |   test_data_worker.py
+    |   test_db_pool.py
     |   test_deps.py
     |   test_dev_seeders.py
     |   test_e2e_upload.py
     |   test_enum_db_consistency.py
     |   test_error_response_format.py
     |   test_file_cleanup.py
+    |   test_filter_persistence.py
+    |   test_filter_values_consistency.py
     |   test_force_password_change_backend.py
     |   test_graphs.py
     |   test_graph_service.py
+    |   test_health.py
     |   test_layouts.py
+    |   test_layout_service.py
     |   test_mime_validation.py
+    |   test_openapi.py
     |   test_permissions.py
     |   test_processing_logs.py
     |   test_pydantic_models.py
+    |   test_rate_limiting.py
+    |   test_registration_flow.py
     |   test_repositories.py
     |   test_resource_access_control.py
+    |   test_rq_worker.py
     |   test_security.py
     |   test_services_integration.py
     |   test_starter.py
@@ -101472,6 +101466,7 @@ C:\PY_DEV\MKOBI
             conftest.cpython-314-pytest-9.0.3.pyc
             conftest.cpython-314-pytest-9.1.0.pyc
             conftest.cpython-314.pyc
+            test_admin_user_management.cpython-314-pytest-9.1.0.pyc
             test_aggregation_service.cpython-314-pytest-9.0.3.pyc
             test_aggregation_service.cpython-314-pytest-9.1.0.pyc
             test_append_mode_bug.cpython-314-pytest-9.0.3.pyc
@@ -101484,8 +101479,10 @@ C:\PY_DEV\MKOBI
             test_auth_service.cpython-314-pytest-9.1.0.pyc
             test_config.cpython-314-pytest-9.0.3.pyc
             test_config.cpython-314-pytest-9.1.0.pyc
+            test_cors.cpython-314-pytest-9.1.0.pyc
             test_dashboards_api.cpython-314-pytest-9.0.3.pyc
             test_dashboards_api.cpython-314-pytest-9.1.0.pyc
+            test_dashboard_access.cpython-314-pytest-9.1.0.pyc
             test_data_csv_loader.cpython-314-pytest-9.0.3.pyc
             test_data_csv_loader.cpython-314-pytest-9.1.0.pyc
             test_data_endpoint.cpython-314-pytest-9.0.3.pyc
@@ -101501,6 +101498,7 @@ C:\PY_DEV\MKOBI
             test_data_validator.cpython-314-pytest-9.1.0.pyc
             test_data_worker.cpython-314-pytest-9.0.3.pyc
             test_data_worker.cpython-314-pytest-9.1.0.pyc
+            test_db_pool.cpython-314-pytest-9.1.0.pyc
             test_deps.cpython-314-pytest-9.0.3.pyc
             test_deps.cpython-314-pytest-9.1.0.pyc
             test_deps.cpython-314.pyc
@@ -101516,27 +101514,37 @@ C:\PY_DEV\MKOBI
             test_file_cleanup.cpython-314-pytest-9.0.3.pyc
             test_file_cleanup.cpython-314-pytest-9.1.0.pyc
             test_filters.cpython-314-pytest-9.0.3.pyc
+            test_filter_persistence.cpython-314-pytest-9.1.0.pyc
+            test_filter_values_consistency.cpython-314-pytest-9.1.0.pyc
             test_force_password_change_backend.cpython-314-pytest-9.0.3.pyc
             test_force_password_change_backend.cpython-314-pytest-9.1.0.pyc
             test_graphs.cpython-314-pytest-9.0.3.pyc
             test_graphs.cpython-314-pytest-9.1.0.pyc
             test_graph_service.cpython-314-pytest-9.0.3.pyc
             test_graph_service.cpython-314-pytest-9.1.0.pyc
+            test_health.cpython-314-pytest-9.1.0.pyc
             test_layouts.cpython-314-pytest-9.0.3.pyc
             test_layouts.cpython-314-pytest-9.1.0.pyc
+            test_layouts.cpython-314.pyc
+            test_layout_service.cpython-314-pytest-9.1.0.pyc
+            test_layout_service.cpython-314.pyc
             test_mime_validation.cpython-314-pytest-9.0.3.pyc
             test_mime_validation.cpython-314-pytest-9.1.0.pyc
             test_models.cpython-314-pytest-9.0.3.pyc
+            test_openapi.cpython-314-pytest-9.1.0.pyc
             test_permissions.cpython-314-pytest-9.0.3.pyc
             test_permissions.cpython-314-pytest-9.1.0.pyc
             test_processing_logs.cpython-314-pytest-9.0.3.pyc
             test_processing_logs.cpython-314-pytest-9.1.0.pyc
             test_pydantic_models.cpython-314-pytest-9.0.3.pyc
             test_pydantic_models.cpython-314-pytest-9.1.0.pyc
+            test_rate_limiting.cpython-314-pytest-9.1.0.pyc
+            test_registration_flow.cpython-314-pytest-9.1.0.pyc
             test_repositories.cpython-314-pytest-9.0.3.pyc
             test_repositories.cpython-314-pytest-9.1.0.pyc
             test_resource_access_control.cpython-314-pytest-9.0.3.pyc
             test_resource_access_control.cpython-314-pytest-9.1.0.pyc
+            test_rq_worker.cpython-314-pytest-9.1.0.pyc
             test_security.cpython-314-pytest-9.0.3.pyc
             test_security.cpython-314-pytest-9.1.0.pyc
             test_services_integration.cpython-314-pytest-9.0.3.pyc

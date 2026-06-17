@@ -5,6 +5,7 @@
     - react
     - react-dom/client
     - ./app/providers
+    - ./shared/config/env
   components: []
   hooks: []
   jsx_tags:
@@ -213,7 +214,6 @@
     - '@mui/icons-material/WarningAmber'
     - '@mui/material'
     - react-router-dom
-    - ../../features/auth/model/useAuth
   components:
     - ErrorPage
   hooks: []
@@ -294,18 +294,6 @@
     - NotFound
   hooks: []
   jsx_tags: []
-- path: C:/py_dev/mkobi/frontend/src/shared/components/PlaceholderPage.tsx
-  module: C:.py_dev.mkobi.frontend.src.shared.components.PlaceholderPage
-  layer: component
-  imports:
-    - '@mui/material'
-  components:
-    - PlaceholderPage
-  hooks: []
-  jsx_tags:
-    - '<div style={{ padding: ''20px'' }}>'
-    - <Typography variant="h4">
-    - <Typography>
 - path: C:/py_dev/mkobi/frontend/src/shared/components/PlotlyComponent.tsx
   module: C:.py_dev.mkobi.frontend.src.shared.components.PlotlyComponent
   layer: component
@@ -399,6 +387,13 @@
     - RoleBasedAccess
   hooks: []
   jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/shared/config/env.ts
+  module: C:.py_dev.mkobi.frontend.src.shared.config.env
+  layer: unknown
+  imports: []
+  components: []
+  hooks: []
+  jsx_tags: []
 - path: C:/py_dev/mkobi/frontend/src/shared/hooks/index.ts
   module: C:.py_dev.mkobi.frontend.src.shared.hooks.index
   layer: hook
@@ -424,6 +419,16 @@
   hooks:
     - useConfirmDialog
   jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/shared/hooks/useDebounce.ts
+  module: C:.py_dev.mkobi.frontend.src.shared.hooks.useDebounce
+  layer: hook
+  imports:
+    - react
+  components: []
+  hooks:
+    - useDebounce
+    - useDebouncedCallback
+  jsx_tags: []
 - path: C:/py_dev/mkobi/frontend/src/shared/types/api.types.ts
   module: C:.py_dev.mkobi.frontend.src.shared.types.api.types
   layer: unknown
@@ -446,6 +451,14 @@
   layer: unknown
   imports:
     - zod
+  components: []
+  hooks: []
+  jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/shared/utils/formatDate.ts
+  module: C:.py_dev.mkobi.frontend.src.shared.utils.formatDate
+  layer: unknown
+  imports:
+    - date-fns
   components: []
   hooks: []
   jsx_tags: []
@@ -508,6 +521,7 @@
     - ../../../shared/hooks/useConfirmDialog
     - ../../../shared/components/ConfirmDialog
     - ../../../shared/utils/shortUuid
+    - ../../../shared/utils/formatDate
     - react-hot-toast
     - ../../../shared/types/api.types
     - ../../../shared/api/errorHandler
@@ -521,16 +535,7 @@
   jsx_tags:
     - <Box>
     - '<Box sx={{ mb: 2 }}>'
-    - |-
-      <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                onClick={() => {
-                  resetCreateForm()
-                  setError(null)
-                  setCreateDialogOpen(true)
-                }}
-              >
+    - "<Button\r\n          variant=\"contained\"\r\n          startIcon={<AddIcon />}\r\n          onClick={() => {\r\n            resetCreateForm()\r\n            setError(null)\r\n            setCreateDialogOpen(true)\r\n          }}\r\n        >"
     - >-
       <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)}
       maxWidth="sm" fullWidth>
@@ -538,12 +543,7 @@
     - <DialogContent>
     - '<FormControl fullWidth sx={{ mt: 2 }}>'
     - <InputLabel>
-    - |-
-      <Select
-                    label="Layout"
-                    {...createRegister('layout')}
-                    error={!!createErrors.layout}
-                  >
+    - "<Select\r\n              label=\"Layout\"\r\n              {...createRegister('layout')}\r\n              error={!!createErrors.layout}\r\n            >"
     - <MenuItem value="single-column">
     - <MenuItem value="two-columns">
     - <MenuItem value="grid">
@@ -578,6 +578,7 @@
     - '@tanstack/react-query'
     - ../../../shared/types/api.types
     - ../../../shared/types/enums
+    - ../../../shared/utils/formatDate
   components:
     - LogViewer
   hooks: []
@@ -610,6 +611,7 @@
     - '@tanstack/react-query'
     - ../../../shared/components/ConfirmDialog
     - ./ResetPasswordResultDialog
+    - ../../../shared/utils/formatDate
     - react-hot-toast
     - ../../../shared/types/api.types
   components:
@@ -672,6 +674,7 @@
     - ../../../shared/components/ConfirmDialog
     - ./ResetPasswordResultDialog
     - ../../../shared/utils/shortUuid
+    - ../../../shared/utils/formatDate
     - react-hot-toast
     - ../../../shared/types/api.types
     - ../../../shared/types/enums
@@ -790,7 +793,7 @@
     - react-hook-form
     - '@hookform/resolvers/zod'
     - react-router-dom
-    - ../
+    - ../model/useAuth
     - '@mui/material'
     - react
     - ../../../shared/types/formSchemas
@@ -821,6 +824,7 @@
     - vitest
     - '@testing-library/react'
     - '@tanstack/react-query'
+    - react
     - ../ui/DashboardView
   components: []
   hooks: []
@@ -830,9 +834,45 @@
     - <div data-testid="table-chart">
     - <div data-testid="dashboard-filters">
     - <QueryClientProvider client={queryClient}>
+    - <Suspense fallback={null}>
     - <Wrapper>
     - <Wrapper>
     - <Wrapper>
+    - <Wrapper>
+    - <Wrapper>
+    - <Wrapper>
+    - <Wrapper>
+- path: >-
+    C:/py_dev/mkobi/frontend/src/features/dashboards/__tests__/filter-persistence.test.tsx
+  module: >-
+    C:.py_dev.mkobi.frontend.src.features.dashboards.__tests__.filter-persistence.test
+  layer: unknown
+  imports:
+    - vitest
+    - '@testing-library/react'
+    - '@tanstack/react-query'
+    - react
+    - ../ui/DashboardView
+  components: []
+  hooks: []
+  jsx_tags:
+    - <div data-testid="plotly-chart">
+    - <div data-testid="line-chart">
+    - <div data-testid="table-chart">
+    - <div data-testid="dashboard-filters">
+    - <div data-testid="filter-values">
+    - |-
+      <button
+              data-testid="set-filter-btn"
+              onClick={() => onChange({ region: 'North' })}
+            >
+    - |-
+      <button
+              data-testid="reset-filter-btn"
+              onClick={() => { onChange({}); onReset?.() }}
+            >
+    - <QueryClientProvider client={queryClient}>
+    - <Suspense fallback={null}>
     - <Wrapper>
     - <Wrapper>
     - <Wrapper>
@@ -882,11 +922,29 @@
     - <Button variant="outlined" onClick={handleResetFilters} size="small">
     - <FormControl fullWidth size="small">
     - <InputLabel>
-    - "<Select\r\n            value={(value as string) || ''}\r\n            label={filter.name}\r\n            onChange={(e) => onChange(e.target.value)}\r\n          >"
+    - |-
+      <Select
+                  value={(value as string) || ''}
+                  label={filter.name}
+                  onChange={(e) => onChange(e.target.value)}
+                >
     - <MenuItem key={opt.value} value={opt.value}>
     - <FormControl fullWidth size="small">
     - <InputLabel>
-    - "<Select\r\n            multiple\r\n            value={selectedValues}\r\n            label={filter.name}\r\n            onChange={(e) => onChange(e.target.value)}\r\n            renderValue={(selected) => (\r\n              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>\r\n                {(selected as string[]).map((val) => (\r\n                  <Chip key={val} label={val} size=\"small\" />\r\n                ))}\r\n              </Box>\r\n            )}\r\n          >"
+    - |-
+      <Select
+                  multiple
+                  value={selectedValues}
+                  label={filter.name}
+                  onChange={(e) => onChange(e.target.value)}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {(selected as string[]).map((val) => (
+                        <Chip key={val} label={val} size="small" />
+                      ))}
+                    </Box>
+                  )}
+                >
     - '<Box sx={{ display: ''flex'', flexWrap: ''wrap'', gap: 0.5 }}>'
     - <MenuItem key={opt.value} value={opt.value}>
     - <Box>
@@ -901,7 +959,7 @@
     - '@mui/material'
     - ../api/dashboardApi
     - ../../../shared/utils/shortUuid
-    - date-fns
+    - ../../../shared/utils/formatDate
     - ../../../shared/types/api.types
   components:
     - DashboardList
@@ -922,9 +980,9 @@
     - react-router-dom
     - '@mui/material'
     - ../api/dashboardApi
-    - ../../upload/ui/UploadModal
     - ./DashboardFilters
     - ./charts/ChartRenderer
+    - ./charts/SkeletonChart
     - ../../../shared/types/api.types
     - ../../../shared/types/enums
   components:
@@ -957,13 +1015,13 @@
                   md: dashboard.config.filters && dashboard.config.filters.length > 0 ? 9 : 12,
                 }}
               >
-    - '<Stack sx={{ alignItems: ''center'', p: 4 }}>'
     - '<Alert severity="error" sx={{ mb: 2 }}>'
     - <Stack spacing={2}>
     - '<Paper key={graph.graph_id} variant="outlined" sx={{ p: 2 }}>'
     - <Typography variant="h6" gutterBottom>
     - '<Stack sx={{ height: 400 }}>'
     - <Alert severity="info">
+    - <Suspense fallback={null}>
 - path: C:/py_dev/mkobi/frontend/src/features/upload/__tests__/FileDropzone.test.tsx
   module: C:.py_dev.mkobi.frontend.src.features.upload.__tests__.FileDropzone.test
   layer: unknown
@@ -1394,10 +1452,23 @@
   components: []
   hooks: []
   jsx_tags: []
+- path: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/SkeletonChart.tsx
+  module: C:.py_dev.mkobi.frontend.src.features.dashboards.ui.charts.SkeletonChart
+  layer: unknown
+  imports:
+    - '@mui/material'
+  components:
+    - SkeletonChart
+  hooks: []
+  jsx_tags:
+    - <Stack spacing={2}>
+    - '<Paper key={index} variant="outlined" sx={{ p: 2 }}>'
+    - '<Stack sx={{ height: 400 }}>'
 - path: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/TableChart.tsx
   module: C:.py_dev.mkobi.frontend.src.features.dashboards.ui.charts.TableChart
   layer: unknown
-  imports: []
+  imports:
+    - ../../../../shared/utils/formatDate
   components:
     - TableChart
   hooks: []

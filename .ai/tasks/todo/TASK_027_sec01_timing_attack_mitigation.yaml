@@ -1,0 +1,44 @@
+id: TASK_027_sec01_timing_attack_mitigation
+
+title: Fix SEC-01 — Add timing attack mitigation to login
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Add dummy bcrypt.checkpw call in the "user not found" path of authenticate_user
+  to prevent timing-based user enumeration attacks.
+
+source_file: .ai/audit/99-validation/04-security-validated.md
+source_section: SEC-01: Timing attacks possible during login
+
+files:
+  - path: src/mkobi/services/auth_service.py
+    targets:
+      - type: method
+        name: authenticate_user
+    semantic_anchors:
+      - type: function_call
+        value: user_repo.get_with_hash
+    changes:
+      - action: add_code
+        description: >
+          Add bcrypt.checkpw(dummy_hash, dummy_hash) when user not found to normalize
+          timing for both cases.
+
+acceptance_criteria:
+  - Timing consistent whether user exists or not
+  - No functional change to authentication
+  - Security test demonstrates constant-time behavior
+
+risk_notes: >
+  Low risk — Defense-in-depth improvement.
+
+tests_to_run:
+  - command: uv run mypy src/mkobi/services/auth_service.py
+    reason: Verify type correctness
+  - command: uv run pytest tests/test_auth_service.py -v --no-cov -k "login or authenticate"
+    reason: Verify auth tests pass

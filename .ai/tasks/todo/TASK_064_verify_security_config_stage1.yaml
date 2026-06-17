@@ -1,22 +1,22 @@
 id: TASK_064_verify_security_config_stage1
 
-title: Verify — Security & Config Stage 1 (SEC + DC credential validation chain)
+title: Verify — Security & Config Stage (SEC-03, SEC-04, DC-004, DC-006)
 
 type: verification
 
 status: pending
 
 depends_on:
-  - TASK_016_sec03_env_weak_passwords_guard
-  - TASK_017_sec04_cookie_secure_dev_override
   - TASK_024_dc004_weak_passwords_startup_warning
   - TASK_025_dc006_refuse_placeholder_admin_password
+  - TASK_016_sec03_env_weak_passwords_guard
+  - TASK_017_sec04_cookie_secure_dev_override
 
 verifies:
-  - TASK_016_sec03_env_weak_passwords_guard
-  - TASK_017_sec04_cookie_secure_dev_override
   - TASK_024_dc004_weak_passwords_startup_warning
   - TASK_025_dc006_refuse_placeholder_admin_password
+  - TASK_016_sec03_env_weak_passwords_guard
+  - TASK_017_sec04_cookie_secure_dev_override
 
 verification_steps:
   - build: docker compose -f docker/docker-compose.test.yml build

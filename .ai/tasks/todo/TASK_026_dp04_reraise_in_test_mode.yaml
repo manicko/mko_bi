@@ -1,0 +1,43 @@
+id: TASK_026_dp04_reraise_in_test_mode
+
+title: Fix DP-04 — Re-raise in _update_processing_log_status test mode
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Change silent swallow to `raise` after logging in
+  _update_processing_log_status when SQLAlchemyError occurs in test mode.
+
+source_file: .ai/audit/99-validation/07-data-processing-validated.md
+source_section: DP-04: _update_processing_log_status silently swallows errors in test mode
+
+files:
+  - path: src/mkobi/workers/data_worker.py
+    targets:
+      - type: function
+        name: _update_processing_log_status
+      - type: exception_handler
+        name: SQLAlchemyError
+    semantic_anchors:
+      - type: exception_handler
+        value: SQLAlchemyError
+    changes:
+      - action: modify_code
+        description: >
+          Add `raise` after logger.error in the SQLAlchemyError except block.
+
+acceptance_criteria:
+  - Exception re-raised in test mode
+  - Test failures propagate correctly
+  - Logging preserved
+
+risk_notes: >
+  Low risk — Makes test behavior match production.
+
+tests_to_run:
+  - command: uv run mypy src/mkobi/workers/data_worker.py
+    reason: Verify type correctness

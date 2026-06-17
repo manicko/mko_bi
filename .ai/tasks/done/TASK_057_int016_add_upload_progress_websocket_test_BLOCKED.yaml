@@ -2,7 +2,12 @@ id: TASK_057_int016_add_upload_progress_websocket_test
 
 title: Fix INT-016 — Add upload progress WebSocket integration test
 
-status: pending
+status: blocked
+notes: >
+  BLOCKED: WebSocket functionality does not exist in the codebase. The application uses
+  HTTP polling (GET /upload/status/{task_id}) with TanStack Query refetchInterval: 2000
+  instead of WebSocket. See .ai/audit/00-bug_report/03-task-057-upload-progress-websocket-mismatch.md
+  for details.
 
 priority: low
 

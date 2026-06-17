@@ -5,7 +5,8 @@ import { Suspense } from 'react'
 
 // Mock react-router-dom
 vi.mock('react-router-dom', () => ({
-  useParams: () => ({ id: 'test-dashboard-id' }),
+   useParams: () => ({ id: 'test-dashboard-id' }),
+   useLocation: () => ({ state: {} }),
 }))
 
 // Mock PlotlyChart component to avoid rendering issues in tests

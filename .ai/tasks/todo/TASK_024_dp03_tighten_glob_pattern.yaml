@@ -1,0 +1,43 @@
+id: TASK_024_dp03_tighten_glob_pattern
+
+title: Fix DP-03 — Tighten find_task_file glob pattern to exact match
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Change `*{task_id}*.csv*` to `{task_id}.csv*` in find_task_file to match exact
+  naming convention. Add validation for multiple file matches.
+
+source_file: .ai/audit/99-validation/07-data-processing-validated.md
+source_section: DP-03: find_task_file glob too broad
+
+files:
+  - path: src/mkobi/services/file_processing.py
+    targets:
+      - type: method
+        name: find_task_file
+    semantic_anchors:
+      - type: function_call
+        value: glob
+    changes:
+      - action: modify_code
+        description: >
+          Tighten glob pattern and add multiple-match validation.
+
+acceptance_criteria:
+  - Glob pattern uses exact match `{task_id}.csv*`
+  - Multiple-match raises ValueError
+  - File lookup works correctly
+
+risk_notes: >
+  Medium risk — Path resolution change could affect file discovery.
+
+tests_to_run:
+  - command: uv run mypy src/mkobi/services/file_processing.py
+    reason: Verify type correctness
+  - command: uv run pytest tests/ -v -k "find_task" --no-cov
+    reason: Verify file finding tests pass

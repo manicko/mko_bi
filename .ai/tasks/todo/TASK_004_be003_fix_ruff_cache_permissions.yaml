@@ -1,0 +1,43 @@
+id: TASK_004_be003_fix_ruff_cache_permissions
+
+title: Fix BE-003 — Fix ruff cache permissions in Docker tests
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  Fix the MEDIUM RUNTIME-ERROR where non-root `app` user can't write to `.ruff_cache`
+  in Docker container. Tests fail with permission denied errors.
+
+source_file: .ai/audit/99-validation/01-backend-validated.md
+source_section: BE-003: Fix Ruff Cache Permissions in Test Container
+
+files:
+  - path: tests/test_dev_seeders.py
+    targets:
+      - type: call
+        name: subprocess.run
+    semantic_anchors:
+      - type: function_call
+        value: ruff
+    changes:
+      - action: modify_code
+        description: >
+          Add --no-cache flag to ruff subprocess calls in test_seed_script_ruff_mypy
+          and test_dev_seeders_module_ruff_mypy functions.
+
+acceptance_criteria:
+  - Ruff tests pass in Docker container without permission errors
+  - --no-cache flag added to both ruff check invocations
+  - No .ruff_cache write permission issues
+
+risk_notes: >
+  Low risk — Adds --no-cache flag which disables caching. Negligible performance impact
+  for these targeted single-file checks.
+
+tests_to_run:
+  - command: docker compose -f docker/docker-compose.test.yml run --rm test pytest tests/test_dev_seeders.py -v --no-cov
+    reason: Verify ruff cache permission tests pass

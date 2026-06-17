@@ -1,0 +1,42 @@
+id: TASK_029_inf006_add_warning_and_bind_db_port
+
+title: Fix INF-006 — Add warning comment and bind DB port to localhost
+
+status: pending
+
+priority: low
+
+depends_on: []
+
+description: >
+  Add warning comment to docker-compose.override.yml about production dangers and
+  bind db port to 127.0.0.1 instead of 0.0.0.0 to limit exposure.
+
+source_file: .ai/audit/99-validation/05-docker-validated.md
+source_section: INF-006: Database Port Exposure — Add Warning Comment and Document Risk
+
+files:
+  - path: docker/docker-compose.override.yml
+    targets:
+      - type: comment
+        name: warning_header
+      - type: ports
+        name: db ports
+    semantic_anchors:
+      - type: yaml_comment
+    changes:
+      - action: modify_yaml
+        description: >
+          Add warning comment to header and change "5432:5432" to "127.0.0.1:5432:5432".
+
+acceptance_criteria:
+  - Warning comment added to override file header
+  - DB port bound to 127.0.0.1 only
+  - Compose file validates
+
+risk_notes: >
+  No risk — Configuration-only change.
+
+tests_to_run:
+  - command: docker compose -f docker/docker-compose.override.yml config
+    reason: Verify compose file validates

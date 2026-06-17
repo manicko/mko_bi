@@ -1,30 +1,24 @@
 id: TASK_062_verify_data_processing_stage1
 
-title: Verify — Data Processing Stage 1 (DP-01 through DP-08)
+title: Verify — Data Processing Stage 1 (DP-03, DP-04, DP-07)
 
 type: verification
 
 status: pending
 
 depends_on:
-  - TASK_001_dp08_independent_session_for_failed_status
+  - TASK_024_dp03_tighten_glob_pattern
+  - TASK_025_dp07_lower_timeout_and_orphaned_check
+  - TASK_026_dp04_reraise_in_test_mode
   - TASK_002_dp02_clear_filter_values_append_mode
-  - TASK_003_dp07_lower_timeout_orphaned_uploaded_check
   - TASK_004_dp01_remove_dead_datapipeline_class
-  - TASK_005_dp03_tighten_glob_pattern
-  - TASK_006_dp04_reraise_in_test_mode
-  - TASK_007_dp05_preserve_native_dim_types
-  - TASK_008_dp06_remove_round_from_storage
 
 verifies:
-  - TASK_001_dp08_independent_session_for_failed_status
+  - TASK_024_dp03_tighten_glob_pattern
+  - TASK_025_dp07_lower_timeout_and_orphaned_check
+  - TASK_026_dp04_reraise_in_test_mode
   - TASK_002_dp02_clear_filter_values_append_mode
-  - TASK_003_dp07_lower_timeout_orphaned_uploaded_check
   - TASK_004_dp01_remove_dead_datapipeline_class
-  - TASK_005_dp03_tighten_glob_pattern
-  - TASK_006_dp04_reraise_in_test_mode
-  - TASK_007_dp05_preserve_native_dim_types
-  - TASK_008_dp06_remove_round_from_storage
 
 verification_steps:
   - build: docker compose -f docker/docker-compose.test.yml build

@@ -1,0 +1,46 @@
+id: TASK_032_tst005_tst006_improve_mock_verification
+
+title: Fix TST-005/TST-006 — Improve test verification patterns
+
+status: pending
+
+priority: medium
+
+depends_on: []
+
+description: >
+  TST-005: Add argument verification to TestStoreAggregates to ensure correct
+  data transformation. TST-006: Fix tautological assertion in cleanup test to
+  actually verify file deletion.
+
+source_file: .ai/audit/99-validation/06-tests-validated.md
+source_section: TST-005, TST-006
+
+files:
+  - path: tests/test_data_worker.py
+    targets:
+      - type: method
+        name: test_store_aggregates_with_graphs
+  - path: tests/test_upload_api.py
+    targets:
+      - type: method
+        name: test_cleanup_task_files_called_during_processing
+    semantic_anchors:
+      - type: mock_assertion
+    changes:
+      - action: modify_code
+        description: >
+          TST-005: Verify aggregate_for_dashboard and save_aggregates called with
+          correct arguments. TST-006: Verify actual file deletion occurs.
+
+acceptance_criteria:
+  - TST-005: Argument verification added to store aggregates test
+  - TST-006: File deletion actually verified, not just mock call assertion
+  - Tests catch bugs in data transformation logic
+
+risk_notes: >
+  Low risk — Test improvement only.
+
+tests_to_run:
+  - command: uv run pytest tests/test_data_worker.py tests/test_upload_api.py -v --no-cov
+    reason: Verify improved tests pass

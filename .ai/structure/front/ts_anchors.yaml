@@ -54,13 +54,6 @@
   type: component
   value: NotFound
   stable_hash: ae8ca5e0
-- id: d3058edd
-  file: C:/py_dev/mkobi/frontend/src/shared/components/PlaceholderPage.tsx
-  symbol_path:
-    - PlaceholderPage
-  type: component
-  value: PlaceholderPage
-  stable_hash: d3058edd
 - id: 1b328f33
   file: C:/py_dev/mkobi/frontend/src/shared/components/PlotlyComponent.tsx
   symbol_path:
@@ -96,6 +89,20 @@
   type: hook
   value: useConfirmDialog
   stable_hash: 0e8e2505
+- id: af839b08
+  file: C:/py_dev/mkobi/frontend/src/shared/hooks/useDebounce.ts
+  symbol_path:
+    - useDebounce
+  type: hook
+  value: useDebounce
+  stable_hash: af839b08
+- id: 194efc11
+  file: C:/py_dev/mkobi/frontend/src/shared/hooks/useDebounce.ts
+  symbol_path:
+    - useDebouncedCallback
+  type: hook
+  value: useDebouncedCallback
+  stable_hash: 194efc11
 - id: 8c604949
   file: C:/py_dev/mkobi/frontend/src/features/admin/ui/AdminPanel.tsx
   symbol_path:
@@ -321,6 +328,13 @@
   type: component
   value: MockPlot
   stable_hash: 8fedc7fc
+- id: 3c09f53c
+  file: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/SkeletonChart.tsx
+  symbol_path:
+    - SkeletonChart
+  type: component
+  value: SkeletonChart
+  stable_hash: 3c09f53c
 - id: 1e6e2b62
   file: C:/py_dev/mkobi/frontend/src/features/dashboards/ui/charts/TableChart.tsx
   symbol_path:
