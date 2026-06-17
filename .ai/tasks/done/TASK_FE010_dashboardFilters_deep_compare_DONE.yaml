@@ -2,7 +2,7 @@ id: TASK_FE010_dashboardFilters_deep_compare
 
 title: Fix FE-010 — Fix DashboardFilters state desync with deep comparison
 
-status: pending
+status: completed
 
 priority: medium
 

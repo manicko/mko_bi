@@ -20,6 +20,7 @@ permission:
     "*": allow
 
     # === READ-ONLY GIT ===
+    "git *": ask
     "git status*": allow
     "git diff*": allow
     "git log*": allow
@@ -37,6 +38,7 @@ permission:
     "npm run build": allow
 
     # === DOCKER ===
+    "docker *": ask
     "docker compose": allow
     "docker compose config*": allow
     "docker compose up*": allow
@@ -71,7 +73,7 @@ permission:
 
     # === ASK: potentially destructive git ===
     "git reset *": ask
-    "git checkout *": ask
+    "git* checkout*": ask
     "git clean *": ask
     "git stash *": ask
     "git rebase *": ask

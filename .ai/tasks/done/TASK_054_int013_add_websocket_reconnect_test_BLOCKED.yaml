@@ -2,7 +2,7 @@ id: TASK_054_int013_add_websocket_reconnect_test
 
 title: Fix INT-013 — Add WebSocket reconnection test for processing status
 
-status: pending
+status: blocked
 
 priority: low
 
