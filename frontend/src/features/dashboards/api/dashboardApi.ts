@@ -68,7 +68,11 @@ export function useAggregatedData(
   return useQuery({
     queryKey: ['aggregatedData', dashboardId, filters],
     queryFn: () =>
-      dashboardApi.getAggregatedData({ dashboard_id: dashboardId, graph_id: graphId, filters }),
+      dashboardApi.getAggregatedData({
+        dashboard_id: dashboardId,
+        graph_id: graphId,
+        filters: filters ? JSON.stringify(filters) : undefined,
+      }),
     enabled: !!dashboardId && !!accessToken,
   })
 }

@@ -169,7 +169,7 @@ export interface DashboardDetail {
 export interface AggregatedDataRequest {
   dashboard_id: string
   graph_id?: string
-  filters?: Record<string, string | string[] | number | number[]>
+  filters?: string
 }
 
 export interface AggregatedDataResponse {

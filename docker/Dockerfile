@@ -14,9 +14,8 @@ WORKDIR /app/frontend
 # Copy package files first for layer caching
 COPY frontend/package*.json ./
 
-# Install dependencies with BuildKit cache mount for faster rebuilds
-RUN --mount=type=cache,target=/app/frontend/node_modules \
-    npm ci
+# Install dependencies (no cache mount - must persist to image layer for npm run build)
+RUN npm ci
 
 # Copy frontend source and build
 COPY frontend/ ./
