@@ -49,20 +49,20 @@ All environment variables use the double-underscore (`__`) delimiter for nesting
 | `DATABASE__HOST`              | `database.host`          | `localhost`    | PostgreSQL host                 |
 | `DATABASE__PORT`              | `database.port`          | `5432`         | PostgreSQL port                 |
 | `DATABASE__DBNAME`            | `database.dbname`        | `bidb`         | Main database name              |
-| `DATABASE__USER`              | `database.user`          | `postgres`     | Database user                   |
+| `DATABASE__USER`              | `database.user`          | `mkobi_app`    | Database user                   |
 | `DATABASE__PASSWORD`          | `database.password`      | `None`         | Database password (secret)      |
 | `DATABASE__TEST_DBNAME`       | `database.test_dbname`   | `bidb_test`    | Test database name              |
 | `JWT__SECRET_KEY`             | `jwt.secret_key`         | `None`         | JWT signing key (secret)        |
 | `JWT__ALGORITHM`              | `jwt.algorithm`          | `HS256`        | JWT signing algorithm           |
-| `JWT__ACCESS_TOKEN_EXPIRE_MINUTES` | `jwt.access_token_expire_minutes` | `30` | Token TTL      |
+| `JWT__ACCESS_TOKEN_EXPIRE_MINUTES` | `jwt.access_token_expire_minutes` | `15` | Token TTL      |
 | `REDIS__HOST`                 | `redis.host`             | `localhost`    | Redis host                      |
 | `REDIS__PORT`                 | `redis.port`             | `6379`         | Redis port                      |
 | `ADMIN_USERNAME`              | `admin_username`         | `admin`        | Admin user email                |
 | `ADMIN_PASSWORD`              | `admin_password`         | `admin`        | Admin user password (secret)    |
 | `AUTO_MIGRATE`                | `auto_migrate`           | `false`        | Auto-apply Alembic migrations   |
-| `RECREATE_TEST_DB`            | `recreate_test_db`       | `false`        | Recreate test DB on startup     |
+| `RECREATE_TEST_DB`            | `recreate_test_db`       | `false`        | Recreate test DB on startup. Set to `true` in test environment for automatic test database recreation. |
 | `STALE_FILE_THRESHOLD_HOURS`  | `stale_file_threshold_hours` | `24`      | Temp file cleanup threshold     |
-| `RATE_LIMITER_FAIL_CLOSED`    | `rate_limiter_fail_closed` | `false`      | Fail-closed on Redis outage     |
+| `RATE_LIMITER_FAIL_CLOSED`    | `rate_limiter_fail_closed` | `true`      | Fail-closed on Redis outage     |
 | `CORS_ORIGINS`                | `cors_origins`           | `[]`           | Allowed CORS origins            |
 | `TEMP_PASSWORD_TTL_SECONDS`   | `temp_password_ttl_seconds` | `86400`     | Temp password Redis TTL (min 60s) |
 

@@ -464,7 +464,17 @@ class TestAuthService:
         assert "user_id" in result
         assert result["user_id"] == str(target_user_id)
         assert "message" in result
+
+        # Verify user_repo.update was called with correct parameters
         mock_user_repo.update.assert_called_once()
+        call_args = mock_user_repo.update.call_args
+        # First positional arg is user_id
+        assert call_args[0][0] == target_user_id
+        # Verify password_hash is in kwargs
+        assert "password_hash" in call_args.kwargs
+        # Verify force_password_change is True
+        assert call_args.kwargs["force_password_change"] is True
+
         mock_db.commit.assert_called_once()
 
     async def test_reset_password_admin_db_commit_called(self, auth_service, mock_user_repo, mock_db):

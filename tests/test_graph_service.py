@@ -60,7 +60,19 @@ class TestGraphService:
         assert isinstance(result, GraphRead)
         assert result.name == "Sales"
         assert result.type == GraphType.BAR
+
+        # Verify repository.create was called with correct parameters
         mock_graph_repo.create.assert_called_once()
+        call_args = mock_graph_repo.create.call_args
+        assert call_args[0][0] == mock_db  # First positional arg is db session
+        assert call_args[1]["name"] == "Sales"
+        assert call_args[1]["type"] == GraphType.BAR
+        assert call_args[1]["dashboard_id"] == dashboard_id
+        assert call_args[1]["config"] == {"xaxis": {"title": "Month"}}
+        assert call_args[1]["dimensions"] == ["month"]
+        assert call_args[1]["metrics"] == ["revenue"]
+
+        mock_db.commit.assert_called_once()
 
     async def test_create_graph_empty_name_raises(self, graph_service, mock_graph_repo, mock_db):
         """Test graph creation fails with empty name."""

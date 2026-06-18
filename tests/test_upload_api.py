@@ -2,7 +2,7 @@
 import gzip
 import tempfile
 from pathlib import Path
-from typing import Generator
+from collections.abc import Generator
 from uuid import UUID
 
 import pytest
@@ -735,11 +735,16 @@ class TestTempFileCleanup:
         test_user: dict,
         test_dashboard_for_cleanup: Dashboard,
         simple_csv_content: bytes,
-        mocker,
     ) -> None:
-        """Verify cleanup_task_files is invoked after processing completes."""
+        """Verify cleanup_task_files actually deletes task files from upload directory.
+
+        This test verifies that task files are removed from the upload temp directory
+        after processing completes, rather than just asserting the cleanup function was mocked.
+        """
         from mkobi.config import get_config
-        from mkobi.services import file_cleanup
+        from mkobi.workers.data_worker import process_csv_background
+        from mkobi.models.enums import GraphType
+        from mkobi.db.repositories.graph_repo import GraphRepository
 
         config = get_config()
         upload_dir = Path(config.upload_temp_dir)
@@ -755,11 +760,17 @@ class TestTempFileCleanup:
         )
         await async_db_session.commit()
 
-        # Patch cleanup_task_files to track if it's called
-        mock_cleanup = mocker.patch(
-            "mkobi.services.file_cleanup.cleanup_task_files",
-            wraps=file_cleanup.cleanup_task_files,
+        # Create a minimal graph so the full pipeline is exercised
+        graph_repo = GraphRepository()
+        _ = await graph_repo.create(
+            db=async_db_session,
+            dashboard_id=test_dashboard_for_cleanup.id,
+            name="cleanup_test_graph",
+            type=GraphType.TABLE,
+            dimensions=["category"],
+            metrics=["sales"],
         )
+        await async_db_session.commit()
 
         # Create CSV file
         with tempfile.NamedTemporaryFile(mode="wb", suffix=".csv", delete=False) as f:
@@ -777,11 +788,21 @@ class TestTempFileCleanup:
             data = response.json()
             task_id = data["task_id"]
 
-            # Call cleanup_task_files directly (simulating post-processing cleanup)
-            file_cleanup.cleanup_task_files(task_id=UUID(task_id))
+            # Process the background job to create task files
+            await process_csv_background(
+                file_path_str=str(upload_dir / f"{task_id}.csv"),
+                task_id=str(task_id),
+                dashboard_id_str=str(test_dashboard_for_cleanup.id),
+                processing_config_dict=None,
+                mode="overwrite",
+                db_session=async_db_session,
+            )
 
-            # Verify cleanup_task_files was called with the task_id
-            mock_cleanup.assert_called()
+            # Verify the task file was cleaned up by checking the actual filesystem
+            task_files = list(upload_dir.glob(f"*{task_id}*.csv*"))
+            assert len(task_files) == 0, (
+                f"Expected no task files after cleanup, found: {task_files}"
+            )
         finally:
             csv_path.unlink(missing_ok=True)
 
