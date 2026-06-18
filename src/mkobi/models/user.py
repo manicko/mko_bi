@@ -44,7 +44,8 @@ class UserRead(UserBase):
 
     id: UUID
     is_active: bool
-    created_at: datetime | None = None
+    created_at: datetime
+    updated_at: datetime | None = None
     force_password_change: bool = False
 
     @computed_field  # type: ignore[prop-decorator]
@@ -63,6 +64,7 @@ class UserRead(UserBase):
                 "email": "user@example.com",
                 "role": UserRole.VIEWER,
                 "created_at": "2026-04-24T16:02:46+03:00",
+                "updated_at": "2026-04-24T16:02:46+03:00",
             }
         },
     )
@@ -75,6 +77,7 @@ class UserDB(UserBase):
     password_hash: str
     is_active: bool
     created_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -85,6 +88,7 @@ class UserDB(UserBase):
                 "password_hash": "$2b$12$examplehash",
                 "role": UserRole.VIEWER,
                 "created_at": "2026-04-24T16:02:46+03:00",
+                "updated_at": "2026-04-24T16:02:46+03:00",
             }
         },
     )

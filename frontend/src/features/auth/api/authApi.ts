@@ -9,7 +9,7 @@ export async function login(email: string, password: string): Promise<AuthRespon
 }
 
 export async function refreshToken(): Promise<Token> {
-  const response = await axiosInstance.post<Token>('/auth/refresh', {})
+  const response = await axiosInstance.post<Token>('/auth/refresh')
   return response.data
 }
 
