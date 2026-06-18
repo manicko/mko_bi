@@ -545,7 +545,21 @@ class DashboardService(IDashboardService):
         db: AsyncSession,
         permission: DashboardPermission | None = None,
     ) -> DashboardRead:
-        """Convert dashboard model to Pydantic DashboardRead model."""
+        """Convert dashboard ORM model to Pydantic DashboardRead model.
+
+        This method injects the `permission` field into DashboardRead, which is NOT
+        present in the database schema. The permission is determined at runtime based
+        on the requesting user's access level and passed explicitly to this method.
+
+        Args:
+            dashboard_obj: Dashboard ORM model instance from database.
+            db: Async database session (unused but kept for interface consistency).
+            permission: User's permission level for this dashboard. If not provided,
+                defaults to DashboardPermission.VIEW.
+
+        Returns:
+            DashboardRead: Pydantic model with permission injected.
+        """
         # Handle config which might be None or empty dict
         config_data = dashboard_obj.config
         if config_data is None or config_data == {}:

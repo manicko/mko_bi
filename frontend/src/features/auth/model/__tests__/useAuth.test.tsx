@@ -249,10 +249,10 @@ describe('useAuth', () => {
     })
   })
 
-  describe('logout', () => {
-    it('calls logout API and clears user', async () => {
-      vi.mocked(getToken).mockReturnValue(null)
-      vi.mocked(logout).mockResolvedValue()
+describe('logout', () => {
+     it('calls logout API and clears user', async () => {
+       vi.mocked(getToken).mockReturnValue(null)
+       vi.mocked(logout).mockResolvedValue({ message: 'Logged out successfully' })
 
       const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() })
 

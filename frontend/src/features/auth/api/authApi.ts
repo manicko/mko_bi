@@ -1,5 +1,5 @@
 import { axiosInstance } from '../../../shared/api/axiosInstance'
-import type { AuthResponse, Token, UserProfile, RegistrationResponse } from '../../../shared/types/api.types'
+import type { AuthResponse, Token, UserProfile, RegistrationResponse, SuccessResponse } from '../../../shared/types/api.types'
 import { removeToken } from '../model/authToken'
 import { registerRefreshHandler } from '../../../shared/api/refreshHandler'
 
@@ -23,8 +23,9 @@ export async function getProfile(): Promise<UserProfile> {
   return response.data
 }
 
-export async function logout(): Promise<void> {
-  await axiosInstance.post('/auth/logout')
+export async function logout(): Promise<SuccessResponse> {
+  const response = await axiosInstance.post<SuccessResponse>('/auth/logout')
+  return response.data
 }
 
 export function logoutClient(): void {

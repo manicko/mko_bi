@@ -6,6 +6,13 @@ import { ErrorCode } from './enums'
 export type { ErrorCode }
 
 /**
+ * SuccessResponse interface for endpoints returning a simple success message.
+ */
+export interface SuccessResponse {
+  message: string
+}
+
+/**
  * ApiError interface matching backend RFC 7807 Problem Details format.
  * All fields are required per the specification.
  */

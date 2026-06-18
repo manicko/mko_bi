@@ -90,7 +90,13 @@ class DashboardCreate(BaseModel):
 
 
 class DashboardRead(BaseModel):
-    """Model for reading dashboard data."""
+    """Model for reading dashboard data.
+
+    Note: The `permission` field is NOT a database column. It is injected at runtime
+    by the service layer based on the requesting user's access level. When constructing
+    DashboardRead from ORM, the permission must be provided explicitly via the
+    `_dashboard_to_read` method or by passing permission to the constructor.
+    """
 
     id: UUID
     name: str

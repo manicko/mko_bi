@@ -3,7 +3,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from datetime import datetime
 from uuid import UUID
 
-from mkobi.models.enums import FileExtensionEnum, GraphType, BarmodeEnum, OrientationEnum, ProcessingStatus
+from mkobi.models.enums import ErrorCode, FileExtensionEnum, GraphType, BarmodeEnum, OrientationEnum, ProcessingStatus
 from mkobi.models.transformation_configs import (
     AggregationConfig,
     CustomMetricConfig,
@@ -95,7 +95,7 @@ class ProcessingStatusResponse(BaseModel):
     started_at: datetime | None = None
     finished_at: datetime | None = None
     # Error code for RFC 7807 compliant error reporting when processing fails
-    error_code: str | None = None
+    error_code: ErrorCode | None = None
 
     model_config = ConfigDict(
         from_attributes=True,
