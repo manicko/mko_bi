@@ -208,6 +208,7 @@ async def get_user_endpoint(
     summary="Update user role",
     description="Updates user role. Admin only.",
     responses=admin_responses,
+    deprecated=True,
 )
 async def update_user_endpoint(
     user_id: UUID,
@@ -217,6 +218,8 @@ async def update_user_endpoint(
     db: AsyncSession = Depends(get_db_dependency),
 ) -> UserRead:
     """Update user role.
+
+    Deprecated: Use PATCH /admin/users/{user_id}/role instead.
 
     Args:
         user_id: User ID to update.
