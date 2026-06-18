@@ -53,11 +53,12 @@ from mkobi.models.auth import (
     LoginRequest,
     RegisterRequest,
     RegistrationRequestCreate,
+    RegistrationRequestResponse,
     SuccessResponse,
     Token,
     TokenWithUser,
 )
-from mkobi.models.enums import ErrorCode
+from mkobi.models.enums import ErrorCode, RegistrationStatus
 from mkobi.models.user import UserRead
 from mkobi.services.auth_service import AuthService
 from mkobi.utils.exceptions import AppException
@@ -463,6 +464,7 @@ async def logout(
 
 @router.post(
     "/change-password",
+    response_model=SuccessResponse,
     status_code=status.HTTP_200_OK,
     summary="Change password",
     description="Change current user password. Requires current password verification.",
@@ -473,7 +475,7 @@ async def change_password(
     current_user: UserRead = Depends(get_current_user_dependency),
     auth_service: AuthService = Depends(get_auth_service),
     db: AsyncSession = Depends(get_db_dependency),
-) -> dict[str, Any]:
+) -> SuccessResponse:
     """Password change endpoint.
 
     Validates new password confirmation and current password,
@@ -485,7 +487,7 @@ async def change_password(
         auth_service: Authentication service.
 
     Returns:
-        dict: Success message.
+        SuccessResponse: Success message.
 
     Raises:
         AppException 422: If password confirmation does not match.
@@ -518,11 +520,12 @@ async def change_password(
         ) from e
 
     logger.info("Password changed successfully", extra={"user_id": str(current_user.id)})
-    return {"message": "Password changed successfully"}
+    return SuccessResponse(message="Password changed successfully")
 
 
 @router.post(
     "/register-request",
+    response_model=RegistrationRequestResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Registration request",
     description="Creates registration request. Admin must approve the request.",
@@ -533,7 +536,7 @@ async def register_request(
     request: Request,
     auth_service: AuthService = Depends(get_auth_service),
     db: AsyncSession = Depends(get_db_dependency),
-) -> dict[str, Any]:
+) -> RegistrationRequestResponse:
     """Registration request creation endpoint.
 
     Saves request to database with PENDING status.
@@ -545,7 +548,7 @@ async def register_request(
         auth_service: Authentication service.
 
     Returns:
-        dict: Success message.
+        RegistrationRequestResponse: Created request with id, email, and status.
 
     Raises:
         AppException 422: Request already exists.
@@ -609,4 +612,8 @@ async def register_request(
         "Registration request created",
         extra={"email": request_data.email, "id": str(result["id"])},
     )
-    return {"message": "Request submitted", "id": result["id"]}
+    return RegistrationRequestResponse(
+        id=result["id"],
+        email=request_data.email,
+        status=RegistrationStatus(result["status"]),
+    )

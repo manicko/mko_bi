@@ -75,8 +75,9 @@ class TestRegisterRequest:
         )
         assert response.status_code == status.HTTP_201_CREATED
         data = response.json()
-        assert data["message"] == "Request submitted"
         assert "id" in data
+        assert data["email"] == "new_user@example.com"
+        assert data["status"] == "pending"
 
         # Cleanup
         repo = RegistrationRequestRepository()

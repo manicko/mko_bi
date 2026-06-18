@@ -21,7 +21,7 @@ from mkobi.interfaces import IUserService
 from mkobi.models.enums import ErrorCode, RegistrationStatus, UserRole
 from mkobi.utils.exceptions import AppException
 from mkobi.models.user import UserRead, UserUpdateRequest, UserUpdateActiveRequest
-from mkobi.models.auth import RegistrationRequestItem
+from mkobi.models.auth import RegistrationRequestItem, SuccessResponse
 from mkobi.services.auth_service import AuthService
 from mkobi.core.security import revoke_all_user_tokens
 from mkobi.core.temp_password_store import TempPasswordStore
@@ -347,6 +347,7 @@ async def approve_registration_request_admin_endpoint(
 
 @router.post(
     "/registration-requests/{request_id}/reject",
+    response_model=SuccessResponse,
     status_code=status.HTTP_200_OK,
     summary="Reject registration request (admin)",
     description="Rejects a registration request. Admin only.",
@@ -357,7 +358,7 @@ async def reject_registration_request_admin_endpoint(
     admin_user: AdminUser,
     db: AsyncSession = Depends(get_db_dependency),
     repo: Any = Depends(get_registration_request_repository),
-) -> dict[str, Any]:
+) -> SuccessResponse:
     """Reject registration request (admin endpoint)."""
     logger.info("Admin: rejecting registration request: id=%s", request_id)
     try:
@@ -384,7 +385,7 @@ async def reject_registration_request_admin_endpoint(
         )
         await db.commit()
 
-        return {"message": "Registration request rejected"}
+        return SuccessResponse(message="Registration request rejected")
     except AppException:
         raise
     except Exception as e:

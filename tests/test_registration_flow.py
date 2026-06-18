@@ -40,7 +40,8 @@ class TestRegistrationFlow:
         assert register_response.status_code == status.HTTP_201_CREATED
         register_data = register_response.json()
         assert "id" in register_data
-        assert register_data["message"] == "Request submitted"
+        assert register_data["email"] == registration_email
+        assert register_data["status"] == "pending"
         request_id = register_data["id"]
 
         # Step 2: Admin approves the registration request
