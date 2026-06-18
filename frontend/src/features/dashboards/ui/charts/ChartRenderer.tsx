@@ -1,8 +1,8 @@
 import { PlotlyChart } from './PlotlyChart'
 import { LineChart } from './LineChart'
 import { TableChart } from './TableChart'
-import type { GraphDataWithConfig } from '../../../../shared/types/api.types'
-import type { Data } from 'react-plotly.js'
+import type { GraphDataWithConfig, ChartLayoutConfig } from '../../../../shared/types/api.types'
+import type { Data, Layout } from 'react-plotly.js'
 
 interface ChartRendererProps {
   graph: GraphDataWithConfig
@@ -74,6 +74,50 @@ function convertToPlotlyData(
   return [makeTrace(xVals, yVals)]
 }
 
+/**
+ * Converts ChartLayoutConfig to Plotly's Layout format.
+ */
+function convertChartLayoutToPlotly(layout: ChartLayoutConfig | undefined): Partial<Layout> | undefined {
+  if (!layout) return undefined
+
+  const plotLayout: Partial<Layout> = {}
+
+  if (layout.title !== undefined) {
+    plotLayout.title = { text: layout.title } as Partial<Layout>['title']
+  }
+
+  if (layout.xaxis) {
+    plotLayout.xaxis = {
+      title: layout.xaxis.title ? { text: layout.xaxis.title } : undefined,
+      type: layout.xaxis.type as 'category' | 'linear' | 'log' | 'date' | undefined,
+      range: layout.xaxis.range,
+    } as Partial<Layout>['xaxis']
+  }
+
+  if (layout.yaxis) {
+    plotLayout.yaxis = {
+      title: layout.yaxis.title ? { text: layout.yaxis.title } : undefined,
+      type: layout.yaxis.type as 'category' | 'linear' | 'log' | 'date' | undefined,
+      range: layout.yaxis.range,
+    } as Partial<Layout>['yaxis']
+  }
+
+  if (layout.showlegend !== undefined) {
+    plotLayout.showlegend = layout.showlegend
+  }
+  if (layout.height !== undefined) {
+    plotLayout.height = layout.height
+  }
+  if (layout.width !== undefined) {
+    plotLayout.width = layout.width
+  }
+  if (layout.template !== undefined) {
+    plotLayout.template = layout.template as Partial<Layout>['template']
+  }
+
+  return plotLayout
+}
+
 export function ChartRenderer({ graph }: ChartRendererProps) {
   // Table charts render as native HTML tables (no Plotly conversion)
   if (graph.type === 'table') {
@@ -91,7 +135,7 @@ export function ChartRenderer({ graph }: ChartRendererProps) {
 
   // Line charts use LineChart component with scatter type
   if (graph.type === 'line') {
-    return <LineChart data={convertToPlotlyData(graph)[0]} layout={graph.layout} />
+    return <LineChart data={convertToPlotlyData(graph)[0]} layout={convertChartLayoutToPlotly(graph.layout)} />
   }
 
   // Bar and pie charts use PlotlyChart
@@ -99,13 +143,14 @@ export function ChartRenderer({ graph }: ChartRendererProps) {
 
   // Bar charts get default layout (barmode, xaxis type)
   if (graph.type === 'bar') {
-    const barLayout = {
-      ...graph.layout,
+    const convertedLayout = convertChartLayoutToPlotly(graph.layout)
+    const barLayout: Partial<Layout> = {
+      ...convertedLayout,
       barmode: (graph.config?.barmode || 'group') as 'group' | 'overlay' | 'relative' | 'stack',
       xaxis: { type: 'category' as const },
     }
     return <PlotlyChart data={plotlyData} layout={barLayout} />
   }
 
-  return <PlotlyChart data={plotlyData} layout={graph.layout} />
+  return <PlotlyChart data={plotlyData} layout={convertChartLayoutToPlotly(graph.layout)} />
 }

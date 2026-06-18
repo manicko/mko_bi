@@ -1,5 +1,5 @@
 import type { UserRole, DashboardPermission, GraphType, FilterType, ProcessingStatus, RegistrationStatus } from './enums'
-import type { Data, Layout } from 'react-plotly.js'
+import type { Data } from 'react-plotly.js'
 import { ErrorCode } from './enums'
 
 // Re-export ErrorCode type for external use
@@ -183,12 +183,29 @@ export interface AggregatedDataResponse {
   graphs: GraphDataWithConfig[]
 }
 
+export interface AxisConfig {
+  title?: string
+  label?: string
+  range?: number[]
+  type?: string
+}
+
+export interface ChartLayoutConfig {
+  title?: string
+  xaxis?: AxisConfig
+  yaxis?: AxisConfig
+  showlegend?: boolean
+  height?: number
+  width?: number
+  template?: string
+}
+
 export interface GraphDataWithConfig {
   graph_id: string
   type: GraphType
   name: string
   data: Data[]
-  layout?: Layout
+  layout?: ChartLayoutConfig
   config?: {
     x?: string
     color?: string
@@ -202,17 +219,17 @@ export interface GraphDataWithConfig {
 // UploadMode is now imported from './enums'
 
 export interface ProcessingStatusResponse {
-   task_id: string
-   filename: string
-   dashboard_id: string
-   status: ProcessingStatus
-   progress: number
-   message?: string
-   started_at: string | null
-   finished_at: string | null
-   // Error code for RFC 7807 compliant error reporting when processing fails
-   error_code?: ErrorCode | null
- }
+  task_id: string
+  filename: string
+  dashboard_id: string
+  status: ProcessingStatus
+  progress: number
+  message?: string
+  started_at: string | null
+  finished_at: string | null
+  // Error code for RFC 7807 compliant error reporting when processing fails
+  error_code?: ErrorCode | null
+}
 
 export interface ProcessingResult {
   success: boolean
@@ -291,20 +308,20 @@ export interface ChangePasswordRequest {
 }
 
 export interface ProcessingLog {
-   id: string
-   dashboard_id: string | null
-   dashboard_name?: string | null
-   status: ProcessingStatus
-   message?: string
-   started_at: string | null
-   finished_at: string | null
-   // Error code for RFC 7807 compliant error reporting when processing fails
-   error_code?: ErrorCode | null
- }
+  id: string
+  dashboard_id: string | null
+  dashboard_name?: string | null
+  status: ProcessingStatus
+  message?: string
+  started_at: string | null
+  finished_at: string | null
+  // Error code for RFC 7807 compliant error reporting when processing fails
+  error_code?: ErrorCode | null
+}
 
 export interface LogFilters {
-   dashboard_id?: string
-   status_filter?: ProcessingStatus
-   date_from?: string
-   date_to?: string
- }
+  dashboard_id?: string
+  status_filter?: ProcessingStatus
+  date_from?: string
+  date_to?: string
+}

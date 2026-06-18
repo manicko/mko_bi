@@ -113,8 +113,11 @@ export async function createDashboard(data: CreateDashboardRequest): Promise<Das
   return response.data
 }
 
-export async function updateDashboard(dashboardId: string, data: UpdateDashboardRequest): Promise<DashboardAdmin> {
-  const response = await axiosInstance.put<DashboardAdmin>(`/dashboards/${dashboardId}`, data)
+export async function updateDashboard(
+  dashboardId: string,
+  data: UpdateDashboardRequest,
+): Promise<DashboardDetail> {
+  const response = await axiosInstance.put<DashboardDetail>(`/dashboards/${dashboardId}`, data)
   return response.data
 }
 
