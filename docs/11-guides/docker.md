@@ -284,6 +284,8 @@ cp docker/.env.development docker/.env
 docker compose -f docker/docker-compose.yml --env-file docker/.env -f docker/docker-compose.override.yml up -d
 ```
 
+> **Note on Development Credentials:** In development mode, weak passwords are allowed for `ADMIN_USERNAME` and `ADMIN_PASSWORD`. The default `.env` uses `admin@example.com` for both login and password. This enables quick startup for development — **never use these credentials in production**. Production will reject known weak password values.
+
 ### Production Setup
 
 For production deployments, use `docker/.env.production`:

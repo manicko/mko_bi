@@ -151,6 +151,8 @@ After starting, the React SPA will be available at:
 
 > In development, the React dev server runs separately on http://localhost:5173 and proxies API requests to FastAPI on port 8000. See [Deployment](../10-deployment/deployment.md) for details.
 
+> **Development Login:** Use `admin@example.com` / `admin@example.com` to log in to the development environment. Weak passwords are allowed in development mode only — production rejects known weak password values.
+
 ## Health Checks
 
 ### API Endpoints
