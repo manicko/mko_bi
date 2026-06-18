@@ -125,19 +125,18 @@ Task(
 
   - **If checks pass:**
     ```powershell
-    git add <task-related files only>
+    git add <task-related files>
     git commit -m "{type}({scope}): {description}" -m "Task: {TASK_FILE_NAME}"
     ```
     **Rules:**
     - Always `git add <specific files>` — never `-A` or `.`
-    - Only stage task-required files.
+    - Multiple tasks can be joined in one commit if done in a batch.
+
     **If checks fail:**
     - `git restore <task-related files only>` (only if 100% sure of breakage)
     - Re-spawn implementor with error details
     - Do NOT continue or touch unrelated files
 
-    If you are not sure that task was implemented - rerun agent with the same task. 
-    If you are 100% sure that agent damaged/corrupted the file check git history, find damaged file (lost code oe) use  `git restore <damaged_file>` Never restore all files. Only the damaged.
 
 ### 4.5 Update Progress
 

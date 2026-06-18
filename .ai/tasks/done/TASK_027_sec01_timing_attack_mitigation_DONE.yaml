@@ -2,7 +2,7 @@ id: TASK_027_sec01_timing_attack_mitigation
 
 title: Fix SEC-01 — Add timing attack mitigation to login
 
-status: pending
+status: done
 
 priority: medium
 

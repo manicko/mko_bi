@@ -2,7 +2,7 @@ id: TASK_027_dc008_add_index_processing_logs_method
 
 title: Fix DC-008 — Add ensure_indexes to ProcessingLogService for processing_logs table
 
-status: pending
+status: done
 
 priority: low
 
@@ -13,6 +13,7 @@ description: >
   ProcessingLogService. Add ensure_indexes(db) and wire it into the startup sequence.
 
 source_file: .ai/audit/99-validation/08-deployment-config-validated.md
+
 source_section: DC-008: Missing Indexes on Startup — Processing Logs
 
 files:

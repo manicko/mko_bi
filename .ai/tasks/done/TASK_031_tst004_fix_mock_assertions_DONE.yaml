@@ -2,7 +2,7 @@ id: TASK_031_tst004_fix_mock_assertions
 
 title: Fix TST-004 — Replace mock call assertions with behavioral checks
 
-status: pending
+status: completed
 
 priority: medium
 

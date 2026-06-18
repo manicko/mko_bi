@@ -2,7 +2,7 @@ id: TASK_005_int002_document_permission_injection
 
 title: Fix INT-002 — Document DashboardRead.permission injection pattern
 
-status: pending
+status: done
 
 priority: medium
 

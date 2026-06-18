@@ -2,7 +2,7 @@ id: TASK_011_int010_fix_update_dashboard_return_type
 
 title: Fix INT-010 — Align updateDashboard return type with DashboardRead
 
-status: pending
+status: completed
 
 priority: medium
 

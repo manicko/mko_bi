@@ -329,15 +329,20 @@ class DatabaseStarter:
         admin_email = config.admin_username
         admin_password = config.admin_password
 
-        # Refuse to create admin user with a known placeholder password.
-        # This check runs in ALL environments to prevent accidental use of
-        # default credentials. Production already rejects weak passwords via
-        # Settings.validate_admin_credentials, but this provides defense-in-depth
-        # at the point where the password is actually consumed.
-        if admin_password.lower() in {p.lower() for p in WEAK_PASSWORDS}:
+        # Refuse to create admin user with a known placeholder password in production.
+        # Production already rejects weak passwords via Settings.validate_admin_credentials,
+        # but this provides defense-in-depth at the point where the password is consumed.
+        # In development, we allow weak passwords but log a warning.
+        is_weak = admin_password.lower() in {p.lower() for p in WEAK_PASSWORDS}
+        if is_weak and self._config.env != EnvironmentEnum.DEVELOPMENT:
             raise ValueError(
                 "Admin password is a known placeholder value. "
                 "Set ADMIN_PASSWORD to a strong, unique password."
+            )
+        if is_weak:
+            logger.warning(
+                "Admin password is a known placeholder value. "
+                "Set ADMIN_PASSWORD to a strong, unique password for production."
             )
 
         # Warn if using default username (not production due to config validation)

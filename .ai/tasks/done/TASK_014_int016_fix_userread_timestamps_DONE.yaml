@@ -2,7 +2,7 @@ id: TASK_014_int016_fix_userread_timestamps
 
 title: Fix INT-016 — Fix UserRead created_at to match non-nullable DB column
 
-status: pending
+status: completed
 
 priority: low
 

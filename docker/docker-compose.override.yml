@@ -28,10 +28,9 @@ services:
         condition: service_healthy
     restart: "no"
 
-  # Frontend development server with Vite hot reload (opt-in via profiles)
+  # Frontend development server with Vite hot reload
   # Uses dedicated build to avoid SIGBUS errors from Windows volume mounts
   frontend:
-    profiles: ["frontend"]
     build:
       context: ..
       dockerfile: docker/Dockerfile.frontend.dev

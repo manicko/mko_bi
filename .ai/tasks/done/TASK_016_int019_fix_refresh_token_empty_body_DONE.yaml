@@ -2,7 +2,7 @@ id: TASK_016_int019_fix_refresh_token_empty_body
 
 title: Fix INT-019 — Remove misleading empty body from refreshToken() call
 
-status: pending
+status: done
 
 priority: low
 

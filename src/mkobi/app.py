@@ -116,12 +116,6 @@ async def lifespan(app: FastAPI) -> Any:
         await mark_orphaned_uploaded_logs_failed()
         logger.info("Checked for orphaned UPLOADED entries")
 
-        # Ensure indexes on core tables for optimal query performance
-        await _ensure_dashboard_indexes()
-        await _ensure_processing_log_indexes()
-        await _ensure_filter_values_indexes()
-        logger.info("Ensured dashboard, processing log, and filter values indexes")
-
         # Start background cleanup task for stale processing logs
         cleanup_task = asyncio.create_task(
             start_stale_processing_cleanup_task(
@@ -184,71 +178,6 @@ async def lifespan(app: FastAPI) -> Any:
         await dispose_engine()
 
         await starter.shutdown()
-
-
-async def _ensure_dashboard_indexes() -> None:
-    """Ensure indexes on dashboards table exist.
-
-    Creates indexes on dashboards table if they do not exist.
-    This is called during application startup to ensure optimal
-    query performance in environments where migrations may not have run.
-
-    Uses CREATE INDEX IF NOT EXISTS which is idempotent and safe
-    to run on every startup. Only runs on PostgreSQL.
-    """
-    from mkobi.db.session import get_session
-    from mkobi.services.dashboard_service import DashboardService
-    from mkobi.db.repositories.dashboard_repo import DashboardRepository
-    from mkobi.db.repositories.access_repo import AccessRepository
-
-    async with get_session() as db:
-        service = DashboardService(
-            dashboard_repo=DashboardRepository(),
-            access_repo=AccessRepository(),
-        )
-        await service.ensure_indexes(db)
-
-
-async def _ensure_processing_log_indexes() -> None:
-    """Ensure indexes on processing_logs table exist.
-
-    Creates indexes on processing_logs table if they do not exist.
-    This is called during application startup to ensure optimal
-    query performance in environments where migrations may not have run.
-
-    Uses CREATE INDEX IF NOT EXISTS which is idempotent and safe
-    to run on every startup. Only runs on PostgreSQL.
-    """
-    from mkobi.db.session import get_session
-    from mkobi.services.processing_log_service import ProcessingLogService
-    from mkobi.db.repositories.processing_log_repo import ProcessingLogRepository
-
-    async with get_session() as db:
-        service = ProcessingLogService(
-            log_repo=ProcessingLogRepository(),
-        )
-        await service.ensure_indexes(db)
-
-
-async def _ensure_filter_values_indexes() -> None:
-    """Ensure indexes on dashboard_filter_values table exist.
-
-    Creates indexes on dashboard_filter_values table if they do not exist.
-    This is called during application startup to ensure optimal
-    query performance in environments where migrations may not have run.
-
-    Uses CREATE INDEX IF NOT EXISTS which is idempotent and safe
-    to run on every startup. Only runs on PostgreSQL.
-    """
-    from mkobi.db.session import get_session
-    from mkobi.services.filter_values_service import FilterValuesService
-    from mkobi.db.repositories.dashboard_filter_values_repo import DashboardFilterValuesRepository
-
-    async with get_session() as db:
-        service = FilterValuesService(
-            repo=DashboardFilterValuesRepository(),
-        )
-        await service.ensure_indexes(db)
 
 
 def create_app() -> FastAPI:

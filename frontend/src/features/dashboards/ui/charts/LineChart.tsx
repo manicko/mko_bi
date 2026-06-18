@@ -3,7 +3,7 @@ import type { Data, Layout } from 'react-plotly.js'
 
 interface LineChartProps {
   data: Data
-  layout?: Layout
+  layout?: Partial<Layout>
   title?: string
   xAxisLabel?: string
   yAxisLabel?: string

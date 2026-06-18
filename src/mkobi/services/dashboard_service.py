@@ -12,8 +12,6 @@ import logging
 from typing import Any, cast
 from uuid import UUID
 
-from sqlalchemy import text
-from sqlalchemy.engine.interfaces import Dialect
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from mkobi.db.models import dashboard as dashboard_model
@@ -337,35 +335,6 @@ class DashboardService(IDashboardService):
         await db.commit()
         return bool(result)
 
-    async def ensure_indexes(self, db: AsyncSession) -> None:
-        """Create indexes on dashboards table if they do not exist.
-
-        This method is called during application startup to ensure indexes
-        exist for optimal query performance. It uses CREATE INDEX IF NOT EXISTS
-        which is idempotent and safe to run on every startup.
-
-        Args:
-            db: Async database session.
-        """
-        # Get dialect to check if we're running on PostgreSQL
-        dialect: Dialect = db.bind().dialect
-
-        if dialect.name == "postgresql":
-            # Create index for name lookups (used in get_by_name queries)
-            await db.execute(
-                text("CREATE UNIQUE INDEX IF NOT EXISTS idx_dashboards_name ON dashboards (name)"),
-            )
-            # Create index for layout_id lookups (used in dashboard queries with layout)
-            await db.execute(
-                text("CREATE INDEX IF NOT EXISTS idx_dashboards_layout_id ON dashboards (layout_id)"),
-            )
-            # Create index for created_by lookups (used in user dashboard ownership queries)
-            await db.execute(
-                text("CREATE INDEX IF NOT EXISTS idx_dashboards_created_by ON dashboards (created_by)"),
-            )
-            await db.commit()
-            logger.info("Ensured indexes on dashboards table")
-
     async def get_all_dashboards(
         self,
         db: AsyncSession,
@@ -508,7 +477,7 @@ class DashboardService(IDashboardService):
             )
             raise
 
-# --- Helper methods ---
+    # --- Helper methods ---
 
     def _validate_permission(self, permission: str) -> None:
         """Validate that access level is allowed."""
